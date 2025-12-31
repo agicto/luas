@@ -1,28 +1,11 @@
 import { NextResponse } from 'next/server';
-
-// Mock database in memory
-let tasks = [
-  {
-    id: '1',
-    title: 'Design System Polish',
-    description: 'Update the card components with new surface tokens.',
-    status: 'doing',
-    priority: 'high',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Internationalization',
-    description: 'Translate the settings page to Japanese.',
-    status: 'todo',
-    priority: 'medium',
-    createdAt: new Date().toISOString(),
-  },
-];
+import { readTasks, writeTasks } from './db';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
+  
+  const tasks = await readTasks();
   
   let filteredTasks = tasks;
   if (status) {
@@ -52,7 +35,9 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
     
-    tasks = [newTask, ...tasks];
+    const tasks = await readTasks();
+    const updatedTasks = [newTask, ...tasks];
+    await writeTasks(updatedTasks);
     
     return NextResponse.json(newTask, { status: 201 });
   } catch (error) {

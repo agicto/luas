@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "title": "Design System Polish",
+    "description": "Update the card components with new surface tokens.",
+    "status": "doing",
+    "priority": "high",
+    "createdAt": "2025-12-31T19:43:06.434Z"
+  },
+  {
+    "id": "2",
+    "title": "Internationalization",
+    "description": "Translate the settings page to Japanese.",
+    "status": "todo",
+    "priority": "medium",
+    "createdAt": "2025-12-31T19:43:06.434Z"
+  }
+]

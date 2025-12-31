@@ -1,32 +1,13 @@
 import { NextResponse } from 'next/server';
-
-// In a real mock, this would be shared with the /tasks route.
-// For simplicity in this demo, we'll re-define it, but in a production scaffold 
-// you'd use a shared memory store or a local JSON file.
-let tasks = [
-  {
-    id: '1',
-    title: 'Design System Polish',
-    description: 'Update the card components with new surface tokens.',
-    status: 'doing',
-    priority: 'high',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Internationalization',
-    description: 'Translate the settings page to Japanese.',
-    status: 'todo',
-    priority: 'medium',
-    createdAt: new Date().toISOString(),
-  },
-];
+import { readTasks, writeTasks } from '../db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const task = tasks.find(t => t.id === params.id);
+  const { id } = await params;
+  const tasks = await readTasks();
+  const task = tasks.find(t => t.id === id);
   
   if (!task) {
     return NextResponse.json({ message: 'Task not found' }, { status: 404 });
@@ -37,10 +18,12 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const body = await request.json();
-  const index = tasks.findIndex(t => t.id === params.id);
+  const tasks = await readTasks();
+  const index = tasks.findIndex(t => t.id === id);
   
   if (index === -1) {
     return NextResponse.json({ message: 'Task not found' }, { status: 404 });
@@ -50,25 +33,30 @@ export async function PATCH(
     ...tasks[index],
     ...body,
     // Ensure ID doesn't change
-    id: params.id, 
+    id, 
   };
   
-  tasks[index] = updatedTask;
+  const updatedTasks = [...tasks];
+  updatedTasks[index] = updatedTask;
+  await writeTasks(updatedTasks);
   
   return NextResponse.json(updatedTask);
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const index = tasks.findIndex(t => t.id === params.id);
+  const { id } = await params;
+  const tasks = await readTasks();
+  const index = tasks.findIndex(t => t.id === id);
   
   if (index === -1) {
     return NextResponse.json({ message: 'Task not found' }, { status: 404 });
   }
   
-  tasks = tasks.filter(t => t.id !== params.id);
+  const updatedTasks = tasks.filter(t => t.id !== id);
+  await writeTasks(updatedTasks);
   
   return new NextResponse(null, { status: 204 });
 }

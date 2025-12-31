@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 
 interface NavItem {
   title: string;
@@ -79,6 +80,7 @@ export default function ConsoleLayout({
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
+          <LocaleSwitcher />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

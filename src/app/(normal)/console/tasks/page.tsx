@@ -13,6 +13,7 @@ import {
   Edit2
 } from "lucide-react";
 import { format } from "date-fns";
+import { useTranslations } from 'next-intl';
 
 import { cn } from "@/utils";
 import { 
@@ -73,9 +74,10 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Task, TaskCreateDto } from "@/services/task";
+import type { Task } from "@/services/task";
 
 export default function TasksPage() {
+  const t = useTranslations('tasks');
   const [statusFilter, setStatusFilter] = useState<Task['status'] | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -98,9 +100,9 @@ export default function TasksPage() {
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Tasks</h2>
+          <h2 className="text-3xl font-bold tracking-tight">{t('title')}</h2>
           <p className="text-muted-foreground italic text-sm">
-            Manage your project tasks with optimistic updates and global error handling.
+            {t('description')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -119,7 +121,7 @@ export default function TasksPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search tasks..."
+                  placeholder={t('searchPlaceholder')}
                   className="pl-8 bg-background/50 border-muted-foreground/20 focus-visible:ring-primary/30"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -130,13 +132,13 @@ export default function TasksPage() {
                 onValueChange={(val) => setStatusFilter(val as any)}
               >
                 <SelectTrigger className="w-[140px] bg-background/50 border-muted-foreground/20">
-                  <SelectValue placeholder="All Status" />
+                  <SelectValue placeholder={t('allStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="doing">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
+                  <SelectItem value="all">{t('allStatus')}</SelectItem>
+                  <SelectItem value="todo">{t('statusTodo')}</SelectItem>
+                  <SelectItem value="doing">{t('statusDoing')}</SelectItem>
+                  <SelectItem value="done">{t('statusDone')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -153,18 +155,18 @@ export default function TasksPage() {
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-muted/50">
-                  <TableHead className="w-[400px]">Task</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Created At</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[400px]">{t('task')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead>{t('priority')}</TableHead>
+                  <TableHead>{t('createdAt')}</TableHead>
+                  <TableHead className="text-right">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTasks.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground italic">
-                      No tasks found.
+                      {t('noTasks')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -199,7 +201,7 @@ export default function TasksPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuLabel>{t('actions')}</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               onClick={() => updateTask.mutate({ 
@@ -207,12 +209,12 @@ export default function TasksPage() {
                                 data: { status: task.status === 'done' ? 'todo' : 'done' } 
                               })}
                             >
-                              {task.status === 'done' ? 'Re-open' : 'Mark as Done'}
+                              {task.status === 'done' ? t('reOpen') : t('markAsDone')}
                             </DropdownMenuItem>
                             <TaskForm 
                               trigger={
                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                  Edit Details
+                                  {t('editDetails')}
                                 </DropdownMenuItem>
                               }
                               task={task}
@@ -225,7 +227,7 @@ export default function TasksPage() {
                               onClick={() => deleteTask.mutate(task.id)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Task
+                              {t('deleteTask')}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -247,10 +249,11 @@ export default function TasksPage() {
 // ============================================================================
 
 function StatusBadge({ status }: { status: Task['status'] }) {
+  const t = useTranslations('tasks');
   const configs = {
-    todo: { label: 'To Do', icon: Circle, className: 'bg-muted/50 text-muted-foreground border-muted-foreground/30' },
-    doing: { label: 'In Progress', icon: Clock, className: 'bg-info-subtle/50 text-info border-info/30' },
-    done: { label: 'Done', icon: CheckCircle2, className: 'bg-success-subtle/50 text-success border-success/30' },
+    todo: { label: t('statusTodo'), icon: Circle, className: 'bg-muted/50 text-muted-foreground border-muted-foreground/30' },
+    doing: { label: t('statusDoing'), icon: Clock, className: 'bg-info-subtle/50 text-info border-info/30' },
+    done: { label: t('statusDone'), icon: CheckCircle2, className: 'bg-success-subtle/50 text-success border-success/30' },
   };
   
   const config = configs[status];
@@ -265,10 +268,11 @@ function StatusBadge({ status }: { status: Task['status'] }) {
 }
 
 function PriorityBadge({ priority }: { priority: Task['priority'] }) {
+  const t = useTranslations('tasks');
   const configs = {
-    low: { label: 'Low', className: 'bg-muted/30 text-muted-foreground border-muted/50' },
-    medium: { label: 'Medium', className: 'bg-warning-subtle/40 text-warning-strong border-warning/30' },
-    high: { label: 'High', className: 'bg-destructive-subtle/40 text-destructive border-destructive/30 text-rose-600 dark:text-rose-400' },
+    low: { label: t('priorityLow'), className: 'bg-muted/30 text-muted-foreground border-muted/50' },
+    medium: { label: t('priorityMedium'), className: 'bg-warning-subtle/40 text-warning-strong border-warning/30' },
+    high: { label: t('priorityHigh'), className: 'bg-destructive-subtle/40 text-destructive border-destructive/30 text-rose-600 dark:text-rose-400' },
   };
   
   const config = configs[priority || 'medium'];
@@ -291,6 +295,7 @@ function TaskForm({
   onSubmit: (data: any) => void,
   isPending: boolean
 }) {
+  const t = useTranslations('tasks');
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: task?.title || '',
@@ -311,65 +316,65 @@ function TaskForm({
         {trigger || (
           <Button className="bg-primary hover:bg-primary-strong shadow-sm hover:shadow-md transition-all gap-2">
             <Plus className="h-4 w-4" />
-            Create Task
+            {t('createTask')}
           </Button>
         )}
       </SheetTrigger>
       <SheetContent className="bg-surface-1/95 backdrop-blur-md border-l-border/60">
         <form onSubmit={handleSubmit} className="flex flex-col h-full">
           <SheetHeader>
-            <SheetTitle>{task ? 'Edit Task' : 'Create New Task'}</SheetTitle>
+            <SheetTitle>{task ? t('editTask') : t('createTask')}</SheetTitle>
             <SheetDescription>
-              {task ? 'Modify the details of your existing task.' : 'Add a new task to your project tracking.'}
+              {task ? t('editTask') : t('createTask')}
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 py-6 overflow-auto">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-foreground/80 font-semibold">Title</Label>
+              <Label htmlFor="title" className="text-foreground/80 font-semibold">{t('titleLabel')}</Label>
               <Input 
                 id="title" 
                 value={formData.title} 
                 onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="e.g. Implement Auth Guard"
+                placeholder={t('titlePlaceholder')}
                 className="bg-background/40 focus-visible:ring-primary/20"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-foreground/80 font-semibold">Description</Label>
+              <Label htmlFor="description" className="text-foreground/80 font-semibold">{t('descriptionLabel')}</Label>
               <textarea 
                 id="description" 
                 rows={4}
                 value={formData.description} 
                 onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Detailed explanation of the task..."
+                placeholder={t('descriptionPlaceholder')}
                 className="w-full flex min-h-[80px] rounded-md border border-input bg-background/40 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="status" className="text-foreground/80 font-semibold">Status</Label>
+                <Label htmlFor="status" className="text-foreground/80 font-semibold">{t('status')}</Label>
                 <Select value={formData.status} onValueChange={val => setFormData(prev => ({ ...prev, status: val as any }))}>
                   <SelectTrigger className="bg-background/40 border-muted-foreground/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="doing">In Progress</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
+                    <SelectItem value="todo">{t('statusTodo')}</SelectItem>
+                    <SelectItem value="doing">{t('statusDoing')}</SelectItem>
+                    <SelectItem value="done">{t('statusDone')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="priority" className="text-foreground/80 font-semibold">Priority</Label>
+                <Label htmlFor="priority" className="text-foreground/80 font-semibold">{t('priority')}</Label>
                 <Select value={formData.priority} onValueChange={val => setFormData(prev => ({ ...prev, priority: val as any }))}>
                   <SelectTrigger className="bg-background/40 border-muted-foreground/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="low">{t('priorityLow')}</SelectItem>
+                    <SelectItem value="medium">{t('priorityMedium')}</SelectItem>
+                    <SelectItem value="high">{t('priorityHigh')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -381,7 +386,7 @@ function TaskForm({
               className="w-full bg-primary hover:bg-primary-strong" 
               disabled={isPending}
             >
-              {isPending ? 'Processing...' : (task ? 'Save Changes' : 'Create Task')}
+              {isPending ? t('processing') : (task ? t('saveChanges') : t('createTask'))}
             </Button>
           </SheetFooter>
         </form>
