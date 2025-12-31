@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut } from "lucide-react";
+import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, CheckSquare } from "lucide-react";
 
 import { cn } from "@/utils";
 import { ROUTES } from "@/constants/routes";
@@ -27,6 +27,11 @@ const mainNavItems: NavItem[] = [
     title: "Dashboard",
     href: ROUTES.CONSOLE.HOME,
     icon: Home,
+  },
+  {
+    title: "Tasks",
+    href: ROUTES.CONSOLE.TASKS,
+    icon: CheckSquare,
   },
   {
     title: "Analytics",

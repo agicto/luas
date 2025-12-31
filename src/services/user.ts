@@ -3,37 +3,35 @@
 
 import { z } from 'zod';
 import { request } from '@/http';
+import { components } from '@/types/api.generated';
 
 // ============================================================================
-// Zod Schemas - Define response structure with runtime validation
+// Types - Refenced from generated schema for single source of truth
+// ============================================================================
+
+export type User = components['schemas']['User'];
+export type UserListResponse = components['schemas']['UserListResponse'];
+
+// ============================================================================
+// Zod Schemas - Runtime validation matching the generated types
 // ============================================================================
 
 /**
  * User schema - validates API response structure
  * Use .parse() for strict validation (throws on invalid data)
- * Use .safeParse() for safe validation (returns success/error)
  */
 export const UserSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
   avatar: z.string().optional(),
-  createdAt: z.string().optional(),
+  role: z.enum(['admin', 'user']).optional(),
 });
 
 export const UserListResponseSchema = z.object({
   data: z.array(UserSchema),
   total: z.number(),
-  page: z.number(),
-  limit: z.number(),
 });
-
-// ============================================================================
-// Types - Infer from Zod schemas for single source of truth
-// ============================================================================
-
-export type User = z.infer<typeof UserSchema>;
-export type UserListResponse = z.infer<typeof UserListResponseSchema>;
 
 // Request DTOs (not from API, so no schema needed)
 export interface CreateUserDto {

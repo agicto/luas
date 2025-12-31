@@ -23,6 +23,7 @@ export const ROUTES = {
   CONSOLE: {
     HOME: '/console',
     ANALYTICS: '/console/analytics',
+    TASKS: '/console/tasks',
     SETTINGS: '/console/settings',
   },
 } as const;

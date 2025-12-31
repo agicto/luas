@@ -1,368 +1,240 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userApi } from '@/services';
-import type { CreateUserDto, UpdateUserDto, User, UserListParams, UserListResponse } from '@/services';
-import { eventBus } from '@/utils';
+import { taskApi } from '@/services/task';
+import type { Task, TaskCreateDto, TaskUpdateDto, TaskListResponse } from '@/services/task';
 import { toast } from 'sonner';
-import { useClientT } from '@/i18n';
-
-// =============== Query Keys Factory ===============
 
 /**
- * Query key factory - prevents typos and enables type-safe invalidation
+ * Gold Standard CRUD Example - Task Management
  * 
- * Structure:
- * - all: ['users'] - base key for all user-related queries
- * - lists: ['users', 'list'] - all paginated list queries
- * - list: ['users', 'list', params] - specific list with params
- * - all-list: ['users', 'all'] - non-paginated full list
- * - details: ['users', 'detail'] - all detail queries
- * - detail: ['users', 'detail', id] - specific user detail
+ * This example demonstrates:
+ * 1. Query Key Factories for safe invalidation.
+ * 2. Contract-based types from generated schema.
+ * 3. Zod-validated service calls.
+ * 4. Optimistic updates for high-performance UX.
+ * 5. Global Error Handling integration (automated toasts).
  */
-export const userKeys = {
-  all: ['users'] as const,
-  lists: () => [...userKeys.all, 'list'] as const,
-  list: (params?: UserListParams) => [...userKeys.lists(), params] as const,
-  allList: () => [...userKeys.all, 'all'] as const,
-  details: () => [...userKeys.all, 'detail'] as const,
-  detail: (id: string) => [...userKeys.details(), id] as const,
+
+// ============================================================================
+// Query Key Factory
+// ============================================================================
+
+export const taskKeys = {
+  all: ['tasks'] as const,
+  lists: () => [...taskKeys.all, 'list'] as const,
+  list: (status?: Task['status']) => [...taskKeys.lists(), { status }] as const,
+  details: () => [...taskKeys.all, 'detail'] as const,
+  detail: (id: string) => [...taskKeys.details(), id] as const,
 };
 
-// =============== Query Hooks ===============
+// ============================================================================
+// Queries
+// ============================================================================
 
 /**
- * Fetch paginated users list
- * 
- * @example
- * ```tsx
- * const { data, isLoading } = useUsers({ page: 1, limit: 10 });
- * // data.data - User[]
- * // data.total - total count
- * // data.page - current page
- * // data.limit - page size
- * ```
+ * Hook to fetch tasks list
  */
-export function useUsers(params?: UserListParams) {
+export function useTasks(status?: Task['status']) {
   return useQuery({
-    queryKey: userKeys.list(params),
-    queryFn: () => userApi.list(params),
+    queryKey: taskKeys.list(status),
+    queryFn: () => taskApi.list({ status }),
   });
 }
 
 /**
- * Fetch all users without pagination
- * Useful for dropdowns, selects, or when full list is needed
- * 
- * @example
- * ```tsx
- * const { data: users, isLoading } = useAllUsers();
- * // users - User[] (all users)
- * ```
+ * Hook to fetch task detail
  */
-export function useAllUsers() {
+export function useTask(id: string) {
   return useQuery({
-    queryKey: userKeys.allList(),
-    queryFn: async () => {
-      // Fetch with a high limit to get all users
-      const response = await userApi.list({ limit: 9999 });
-      return response.data;
-    },
-  });
-}
-
-/**
- * Fetch a single user by ID
- * 
- * @example
- * ```tsx
- * const { data: user, isLoading } = useUser('user-id');
- * ```
- */
-export function useUser(id: string) {
-  return useQuery({
-    queryKey: userKeys.detail(id),
-    queryFn: () => userApi.get(id),
+    queryKey: taskKeys.detail(id),
+    queryFn: () => taskApi.get(id),
     enabled: !!id,
   });
 }
 
-// =============== Mutation Hooks with Optimistic Updates ===============
+// ============================================================================
+// Mutations (Optimistic Updates)
+// ============================================================================
 
 /**
- * Create a user with optimistic update
- * 
- * Features:
- * - Optimistically adds user to list cache
- * - Shows toast on success/error
- * - Invalidates list queries on success to refetch with server-assigned ID
- * 
- * @example
- * ```tsx
- * const { mutate: createUser, isPending } = useCreateUser();
- * createUser({ name: 'John', email: 'john@example.com' });
- * ```
+ * Mutation to create a task with optimistic update
  */
-export function useCreateUser() {
+export function useCreateTask() {
   const queryClient = useQueryClient();
-  const t = useClientT();
 
   return useMutation({
-    mutationFn: (data: CreateUserDto) => userApi.create(data),
+    mutationFn: (data: TaskCreateDto) => taskApi.create(data),
     
-    onMutate: async (newUserData) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
-      await queryClient.cancelQueries({ queryKey: userKeys.allList() });
+    onMutate: async (newTask) => {
+      // 1. Cancel outgoing refetchs
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
       
-      // Snapshot previous values for rollback
-      const previousLists = queryClient.getQueriesData<UserListResponse>({ queryKey: userKeys.lists() });
-      const previousAllList = queryClient.getQueryData<User[]>(userKeys.allList());
+      // 2. Snapshot current state
+      const previousTasks = queryClient.getQueriesData<TaskListResponse>({ queryKey: taskKeys.lists() });
       
-      // Create optimistic user with temporary ID
-      const optimisticUser: User = {
+      // 3. Create optimistic task
+      const optimisticTask: Task = {
         id: `temp-${Date.now()}`,
-        name: newUserData.name,
-        email: newUserData.email,
+        title: newTask.title,
+        status: newTask.status || 'todo',
+        priority: newTask.priority || 'medium',
+        description: newTask.description || '',
         createdAt: new Date().toISOString(),
       };
       
-      // Optimistically update paginated lists
-      queryClient.setQueriesData<UserListResponse>(
-        { queryKey: userKeys.lists() },
+      // 4. Update cache
+      queryClient.setQueriesData<TaskListResponse>(
+        { queryKey: taskKeys.lists() },
         (old) => {
-          if (!old) return old;
+          if (!old || !old.data) return old;
           return {
             ...old,
-            data: [optimisticUser, ...old.data],
-            total: old.total + 1,
+            data: [optimisticTask, ...old.data],
+            total: (old.total ?? 0) + 1,
           };
         }
       );
       
-      // Optimistically update all users list
-      queryClient.setQueryData<User[]>(
-        userKeys.allList(),
-        (old) => old ? [optimisticUser, ...old] : [optimisticUser]
-      );
-      
-      return { previousLists, previousAllList };
+      return { previousTasks };
     },
     
-    onError: (error, _variables, context) => {
-      // Rollback to previous state on error
-      if (context?.previousLists) {
-        context.previousLists.forEach(([queryKey, data]) => {
+    onError: (err, _, context) => {
+      // Rollback to previous state
+      if (context?.previousTasks) {
+        context.previousTasks.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      if (context?.previousAllList) {
-        queryClient.setQueryData(userKeys.allList(), context.previousAllList);
-      }
-      
-      toast.error(t.common('userCreateFailed'), {
-        description: error instanceof Error ? error.message : t.common('retryLater'),
-      });
+      // Note: Global Error Handler will automatically show a toast. 
+      // We only need to rollback state here.
     },
     
-    onSuccess: (data: User) => {
-      toast.success(t.common('userCreateSuccess'), {
-        description: t.common('userCreated', { name: data.name }),
+    onSuccess: (data) => {
+      toast.success('Task created successfully', {
+        description: `"${data.title}" has been added to the list.`,
       });
-      eventBus.publish('user:created', data);
     },
     
     onSettled: () => {
-      // Invalidate and refetch to get server-assigned ID
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.allList() });
+      // Invalidate to ensures UI is in sync with server
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
 }
 
 /**
- * Update a user with optimistic update
- * 
- * Features:
- * - Optimistically updates user in list and detail caches
- * - Rolls back on error
- * - Shows toast on success/error
- * - Invalidates queries to ensure consistency
- * 
- * @example
- * ```tsx
- * const { mutate: updateUser, isPending } = useUpdateUser();
- * updateUser({ id: 'user-id', data: { name: 'New Name' } });
- * ```
+ * Mutation to update a task with optimistic update
  */
-export function useUpdateUser() {
+export function useUpdateTask() {
   const queryClient = useQueryClient();
-  const t = useClientT();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserDto }) =>
-      userApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: TaskUpdateDto }) => 
+      taskApi.update(id, data),
     
     onMutate: async ({ id, data }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: userKeys.detail(id) });
-      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
-      await queryClient.cancelQueries({ queryKey: userKeys.allList() });
+      await queryClient.cancelQueries({ queryKey: taskKeys.detail(id) });
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
       
-      // Snapshot previous values
-      const previousDetail = queryClient.getQueryData<User>(userKeys.detail(id));
-      const previousLists = queryClient.getQueriesData<UserListResponse>({ queryKey: userKeys.lists() });
-      const previousAllList = queryClient.getQueryData<User[]>(userKeys.allList());
+      const previousDetail = queryClient.getQueryData<Task>(taskKeys.detail(id));
+      const previousLists = queryClient.getQueriesData<TaskListResponse>({ queryKey: taskKeys.lists() });
       
-      // Optimistically update detail cache
+      // Update detail cache
       if (previousDetail) {
-        queryClient.setQueryData<User>(userKeys.detail(id), {
+        queryClient.setQueryData<Task>(taskKeys.detail(id), {
           ...previousDetail,
           ...data,
         });
       }
       
-      // Optimistically update paginated lists
-      queryClient.setQueriesData<UserListResponse>(
-        { queryKey: userKeys.lists() },
+      // Update lists cache
+      queryClient.setQueriesData<TaskListResponse>(
+        { queryKey: taskKeys.lists() },
         (old) => {
-          if (!old) return old;
+          if (!old || !old.data) return old;
           return {
             ...old,
-            data: old.data.map((user) =>
-              user.id === id ? { ...user, ...data } : user
+            data: old.data.map((task) => 
+              task.id === id ? { ...task, ...data } : task
             ),
           };
         }
       );
       
-      // Optimistically update all users list
-      queryClient.setQueryData<User[]>(
-        userKeys.allList(),
-        (old) => old?.map((user) => user.id === id ? { ...user, ...data } : user)
-      );
-      
-      return { previousDetail, previousLists, previousAllList };
+      return { previousDetail, previousLists };
     },
     
-    onError: (error, { id }, context) => {
-      // Rollback all caches on error
+    onError: (err, { id }, context) => {
       if (context?.previousDetail) {
-        queryClient.setQueryData(userKeys.detail(id), context.previousDetail);
+        queryClient.setQueryData(taskKeys.detail(id), context.previousDetail);
       }
       if (context?.previousLists) {
         context.previousLists.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      if (context?.previousAllList) {
-        queryClient.setQueryData(userKeys.allList(), context.previousAllList);
-      }
-      
-      toast.error(t.common('userUpdateFailed'), {
-        description: error instanceof Error ? error.message : t.common('retryLater'),
-      });
     },
     
-    onSuccess: (updatedUser: User) => {
-      toast.success(t.common('userUpdateSuccess'), {
-        description: t.common('userUpdated', { name: updatedUser.name }),
-      });
-      eventBus.publish('user:updated', updatedUser);
+    onSuccess: (data) => {
+      toast.success('Task updated');
     },
     
-    onSettled: (_data, _error, { id }) => {
-      // Invalidate to ensure consistency with server
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.allList() });
+    onSettled: (_, __, { id }) => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
     },
   });
 }
 
 /**
- * Delete a user with optimistic update
- * 
- * Features:
- * - Optimistically removes user from list cache
- * - Rolls back on error
- * - Shows toast on success/error
- * - Removes detail cache and invalidates lists on success
- * 
- * @example
- * ```tsx
- * const { mutate: deleteUser, isPending } = useDeleteUser();
- * deleteUser('user-id');
- * ```
+ * Mutation to delete a task with optimistic update
  */
-export function useDeleteUser() {
+export function useDeleteTask() {
   const queryClient = useQueryClient();
-  const t = useClientT();
 
   return useMutation({
-    mutationFn: (id: string) => userApi.delete(id),
+    mutationFn: (id: string) => taskApi.delete(id),
     
     onMutate: async (id) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: userKeys.lists() });
-      await queryClient.cancelQueries({ queryKey: userKeys.allList() });
+      await queryClient.cancelQueries({ queryKey: taskKeys.lists() });
       
-      // Snapshot previous values
-      const previousLists = queryClient.getQueriesData<UserListResponse>({ queryKey: userKeys.lists() });
-      const previousAllList = queryClient.getQueryData<User[]>(userKeys.allList());
-      const previousDetail = queryClient.getQueryData<User>(userKeys.detail(id));
+      const previousLists = queryClient.getQueriesData<TaskListResponse>({ queryKey: taskKeys.lists() });
+      const previousDetail = queryClient.getQueryData<Task>(taskKeys.detail(id));
       
-      // Optimistically remove from paginated lists
-      queryClient.setQueriesData<UserListResponse>(
-        { queryKey: userKeys.lists() },
+      queryClient.setQueriesData<TaskListResponse>(
+        { queryKey: taskKeys.lists() },
         (old) => {
-          if (!old) return old;
+          if (!old || !old.data) return old;
           return {
             ...old,
-            data: old.data.filter((user) => user.id !== id),
-            total: old.total - 1,
+            data: old.data.filter((task) => task.id !== id),
+            total: (old.total ?? 0) - 1,
           };
         }
       );
       
-      // Optimistically remove from all users list
-      queryClient.setQueryData<User[]>(
-        userKeys.allList(),
-        (old) => old?.filter((user) => user.id !== id)
-      );
-      
-      return { previousLists, previousAllList, previousDetail };
+      return { previousLists, previousDetail };
     },
     
-    onError: (error, id, context) => {
-      // Rollback all caches on error
+    onError: (err, id, context) => {
       if (context?.previousLists) {
         context.previousLists.forEach(([queryKey, data]) => {
           queryClient.setQueryData(queryKey, data);
         });
       }
-      if (context?.previousAllList) {
-        queryClient.setQueryData(userKeys.allList(), context.previousAllList);
-      }
       if (context?.previousDetail) {
-        queryClient.setQueryData(userKeys.detail(id), context.previousDetail);
+        queryClient.setQueryData(taskKeys.detail(id), context.previousDetail);
       }
-      
-      toast.error(t.common('userDeleteFailed'), {
-        description: error instanceof Error ? error.message : t.common('retryLater'),
-      });
     },
     
-    onSuccess: (_, id) => {
-      toast.success(t.common('userDeleteSuccess'));
-      eventBus.publish('user:deleted', id);
+    onSuccess: () => {
+      toast.success('Task deleted');
     },
     
-    onSettled: (_, _error, id) => {
-      // Invalidate lists and remove detail query
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: userKeys.allList() });
-      queryClient.removeQueries({ queryKey: userKeys.detail(id) });
+    onSettled: (_, __, id) => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+      queryClient.removeQueries({ queryKey: taskKeys.detail(id) });
     },
   });
 }
