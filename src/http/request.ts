@@ -99,6 +99,7 @@ function createAxiosInstance(baseURL?: string): AxiosInstance {
   const inst = axios.create({
     baseURL: baseURL || API_URL,
     timeout: API_TIMEOUT,
+    withCredentials: false,
     headers: {
       'Content-Type': 'application/json',
     },

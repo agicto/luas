@@ -36,8 +36,9 @@ src/
 ├── constants/              # Route constants, enums
 ├── hooks/                  # Custom React hooks
 ├── http/                   # HTTP client (axios wrapper)
-├── i18n/                   # Internationalization
-│   └── messages/           # Translation files (en.json, zh.json)
+├── i18n/                   # Internationalization (TypeScript modules)
+│   ├── config.ts           # Locale config + ENV variables
+│   └── modules/            # Per-module translations (common, auth, etc.)
 ├── providers/              # React context providers
 ├── services/               # API service layer
 ├── store/                  # Zustand stores
@@ -132,7 +133,7 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
 
 1. Create file in `src/app/(site)/page-name/page.tsx`
 2. Add route to `src/constants/routes.ts`
-3. Add translations to `src/i18n/messages/*.json`
+3. Add translations to `src/i18n/modules/[module]/zh-Hans.ts` and other locales
 
 ### Adding a New API Endpoint
 

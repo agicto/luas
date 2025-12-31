@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale } from '@/hooks/use-locale';
-import { locales, localeNames, type Locale } from '@/i18n';
+import { locales, localeNames, isLocaleSwitcherEnabled, type Locale } from '@/i18n';
 import {
   Select,
   SelectContent,
@@ -13,6 +13,11 @@ import { Globe } from 'lucide-react';
 
 export function LocaleSwitcher() {
   const { locale, setLocale, isPending } = useLocale();
+
+  // Don't render if locale switcher is disabled via environment variable
+  if (!isLocaleSwitcherEnabled) {
+    return null;
+  }
 
   return (
     <Select
