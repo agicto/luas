@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse as BaseApiResponse } from './types';
+import { handleError } from './error-handler';
 
 // Environment configuration
 // In the browser, a relative baseURL works best for same-origin Route Handlers.
@@ -63,33 +64,37 @@ function setupInterceptors(instance: AxiosInstance) {
       return data;
     },
     (error: AxiosError) => {
-      // Network error handling
-      if (!error.response) {
-        return Promise.reject(new ApiError(
-          'Network error, please check your connection', 
-          'NETWORK_ERROR'
-        ));
-      }
-      
-      const { status, data } = error.response as AxiosResponse;
-      
-      // Format error message based on response
       let message = 'Request failed';
-      let code: string | number = status;
-      
-      if (data && typeof data === 'object') {
-        if (data.message) {
-          message = data.message;
-        } else if (data.error) {
-          message = data.error;
-        }
-        
-        if (data.code) {
-          code = data.code;
+      let code: string | number = 'UNKNOWN_ERROR';
+      let data: unknown = undefined;
+      let status: number | undefined = undefined;
+
+      if (!error.response) {
+        message = 'Network error, please check your connection';
+        code = 'NETWORK_ERROR';
+      } else {
+        const response = error.response as AxiosResponse;
+        status = response.status;
+        data = response.data;
+        code = status;
+
+        if (data && typeof data === 'object') {
+          const body = data as Record<string, any>;
+          if (body.message) message = body.message;
+          else if (body.error) message = body.error;
+          if (body.code) code = body.code;
         }
       }
+
+      const apiError = new ApiError(message, code, data, status);
+
+      // Trigger global error handler unless skipped
+      const config = error.config as RequestConfig;
+      if (!config?.skipErrorHandler) {
+        handleError(apiError);
+      }
       
-      return Promise.reject(new ApiError(message, code, data, status));
+      return Promise.reject(apiError);
     }
   );
 }

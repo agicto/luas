@@ -119,6 +119,30 @@ export default function NormalLayout({ children }) {
 - **Tests**: Place in `tests/` directory at project root
 - **Hot reload**: Do NOT restart dev server (auto-updates)
 
+### 4. Theme System (OKLCH)
+
+The project uses a modular theme system based on OKLCH and CSS variables.
+
+- **Storage**: `src/themes/` contains `light.css`, `dark.css`, and `index.css`.
+- **Primary Tokens**: `primary`, `secondary`, `destructive`.
+- **State Tokens**: `success`, `warning`, `info`.
+- **Semantic Variations**:
+  - `-subtle`: 10-15% opacity version for backgrounds.
+  - `-strong`: Higher contrast version for borders or active states.
+  - `-deeper`: Even higher contrast/darker version.
+- **Surface Levels**:
+  - `surface-1`: Base background.
+  - `surface-2`: Elevated surface (card).
+  - `surface-3`: Highest elevation (popover/modal).
+- **Shadows**: Theme-aware shadows (`shadow-sm` to `shadow-2xl`) with dynamic color.
+
+**Usage in Tailwind**:
+```tsx
+<div className="bg-primary-subtle text-primary-strong border-border-strong border-x-primary/60 shadow-md p-4 rounded-lg">
+  {/* Content */}
+</div>
+```
+
 ### File Naming
 
 - Components: `kebab-case.tsx` (e.g., `login-form.tsx`)

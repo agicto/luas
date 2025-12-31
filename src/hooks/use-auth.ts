@@ -57,12 +57,6 @@ export function useLogin() {
       queryClient.invalidateQueries({ queryKey: authKeys.user() });
       router.push(authConfig.routes.afterLogin);
     },
-
-    onError: (error) => {
-      toast.error(t.auth('loginFailed'), {
-        description: error instanceof Error ? error.message : t.common('retryLater'),
-      });
-    },
   });
 }
 
@@ -105,12 +99,6 @@ export function useRegister() {
         password: variables.password 
       });
     },
-
-    onError: (error) => {
-      toast.error(t.auth('registerFailed'), {
-        description: error instanceof Error ? error.message : t.common('retryLater'),
-      });
-    },
   });
 }
 
@@ -145,13 +133,10 @@ export function useLogout() {
       router.push(authConfig.routes.afterLogout);
     },
 
-    onError: (error) => {
+    onError: () => {
       // Still logout locally even if API fails
       setUser(null);
       queryClient.clear();
-      toast.error(t.auth('logoutFailed'), {
-        description: error instanceof Error ? error.message : undefined,
-      });
       router.push(authConfig.routes.afterLogout);
     },
   });

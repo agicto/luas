@@ -1,0 +1,74 @@
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+  /* Shadow color */
+  --shadow-color: oklch(0 0 0);
+  
+  /* State Colors */
+  --success: oklch(0.627 0.194 149.214);
+  --success-foreground: oklch(0.985 0 0);
+  --success-subtle: oklch(from var(--success) l c h / 0.15);
+  
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
+  --warning-subtle: oklch(from var(--warning) l c h / 0.15);
+  
+  --error: var(--destructive);
+  --error-foreground: var(--destructive-foreground);
+  --error-subtle: oklch(from var(--error) l c h / 0.15);
+  
+  --info: oklch(0.6 0.118 184.704);
+  --info-foreground: oklch(0.985 0 0);
+  --info-subtle: oklch(from var(--info) l c h / 0.15);
+
+  --highlight: oklch(0.65 0.15 250); /* Bright Blue for Dark Mode */
+  --highlight-foreground: oklch(0.985 0 0);
+  --highlight-subtle: oklch(from var(--highlight) l c h / 0.2);
+  
+  /* Surface Layering (Dark - Elevation via Lightness) */
+  --surface-1: var(--background);
+  --surface-2: oklch(from var(--background) calc(l + 0.03) c h); /* Elevated */
+  --surface-3: oklch(from var(--background) calc(l + 0.06) c h); /* High elevation */
+  
+  /* Semantic variations using OKLCH relative syntax */
+  --primary-subtle: oklch(from var(--primary) l c h / 0.15);
+  --primary-strong: oklch(from var(--primary) calc(l + 0.1) c h);
+  --primary-deeper: oklch(from var(--primary) calc(l + 0.2) c h);
+  
+  --secondary-subtle: oklch(from var(--secondary) l c h / 0.15);
+  --secondary-deeper: oklch(from var(--secondary) calc(l + 0.1) c h);
+  
+  --border-subtle: oklch(from var(--border) l c h / 0.1);
+  --border-strong: oklch(from var(--border) calc(l + 0.1) c h);
+  
+  --background-subtle: oklch(from var(--background) calc(l + 0.02) c h);
+}
