@@ -175,7 +175,7 @@ export default async function Page() {
 // If you add a key with variables in zh-Hans.ts:
 // greeting: '你好，{name}！欢迎回来。'
 
-const t = useT();
+const t = useClientT();
 t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
 ```
 

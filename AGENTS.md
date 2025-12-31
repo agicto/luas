@@ -148,30 +148,78 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
 
 ### Adding a New Service
 
-1. Create `src/services/[name].ts` using functional API pattern:
+1. Create `src/services/[name].ts` using **Zod validation pattern**:
 
 ```typescript
 // services/example.ts
+import { z } from 'zod';
 import { request } from '@/http';
 
+// 1. Define Zod schemas for API responses
+const ExampleSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  status: z.enum(['active', 'inactive']),
+  createdAt: z.string().optional(),
+});
+
+const ExampleListResponseSchema = z.object({
+  data: z.array(ExampleSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+
+// 2. Infer types from schemas (single source of truth)
+export type Example = z.infer<typeof ExampleSchema>;
+export type ExampleListResponse = z.infer<typeof ExampleListResponseSchema>;
+
+// 3. Define request DTOs (no schema needed for outgoing data)
+export interface CreateExampleDto {
+  name: string;
+  status: 'active' | 'inactive';
+}
+
+// 4. Define endpoints
 const ENDPOINTS = {
   LIST: '/backend/api/examples',
   DETAIL: (id: string) => `/backend/api/examples/${id}`,
 } as const;
 
+// 5. Create API with Zod validation
 export const exampleApi = {
-  list: (params?: { page?: number }) =>
-    request.get<Example[]>(ENDPOINTS.LIST, { params }),
-  get: (id: string) =>
-    request.get<Example>(ENDPOINTS.DETAIL(id)),
-  create: (data: CreateExampleDto) =>
-    request.post<Example>(ENDPOINTS.LIST, data),
-  update: (id: string, data: UpdateExampleDto) =>
-    request.patch<Example>(ENDPOINTS.DETAIL(id), data),
-  delete: (id: string) =>
-    request.delete<void>(ENDPOINTS.DETAIL(id)),
+  list: async (params?: { page?: number }): Promise<ExampleListResponse> => {
+    const response = await request.get(ENDPOINTS.LIST, { params });
+    return ExampleListResponseSchema.parse(response); // Throws on invalid data
+  },
+  get: async (id: string): Promise<Example> => {
+    const response = await request.get(ENDPOINTS.DETAIL(id));
+    return ExampleSchema.parse(response);
+  },
+  create: async (data: CreateExampleDto): Promise<Example> => {
+    const response = await request.post(ENDPOINTS.LIST, data);
+    return ExampleSchema.parse(response);
+  },
+  delete: async (id: string): Promise<void> => {
+    await request.delete(ENDPOINTS.DETAIL(id));
+  },
 } as const;
 ```
+
+**Zod Validation Strategy (Selective):**
+
+| Scenario | Validate? |
+|----------|-----------|
+| List/Detail APIs (user-facing data) | ✅ Yes |
+| Create/Update response | ✅ Yes |
+| Delete (returns void) | ❌ No |
+| Internal data not directly displayed | ❌ Optional |
+
+**Key Rules:**
+- **Validate critical interfaces** - list, detail, create, update responses
+- **Infer types from schemas** - `z.infer<typeof Schema>` for single source of truth
+- **No schemas for request DTOs** - only validate incoming data, not outgoing
+- **Skip validation for simple operations** - delete, toggle, etc.
 
 2. Export from `src/services/index.ts`
 3. Create hooks in `src/hooks/use-[name].ts` that call the service

@@ -5,6 +5,7 @@ const messages: CommonMessages = {
   loading: 'Loading...',
   error: 'An error occurred',
   retry: 'Retry',
+  retryLater: 'Please try again later',
   save: 'Save',
   cancel: 'Cancel',
   confirm: 'Confirm',
@@ -15,6 +16,16 @@ const messages: CommonMessages = {
   noData: 'No data available',
   success: 'Success',
   failed: 'Failed',
+  
+  // User CRUD messages
+  userCreateSuccess: 'User created successfully',
+  userCreateFailed: 'Failed to create user',
+  userUpdateSuccess: 'User updated successfully',
+  userUpdateFailed: 'Failed to update user',
+  userDeleteSuccess: 'User deleted successfully',
+  userDeleteFailed: 'Failed to delete user',
+  userCreated: 'User {name} has been created',
+  userUpdated: 'User {name} has been updated',
 };
 
 export default messages;

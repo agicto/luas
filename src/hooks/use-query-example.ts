@@ -5,6 +5,7 @@ import { userApi } from '@/services';
 import type { CreateUserDto, UpdateUserDto, User, UserListParams, UserListResponse } from '@/services';
 import { eventBus } from '@/utils';
 import { toast } from 'sonner';
+import { useClientT } from '@/i18n';
 
 // =============== Query Keys Factory ===============
 
@@ -104,6 +105,7 @@ export function useUser(id: string) {
  */
 export function useCreateUser() {
   const queryClient = useQueryClient();
+  const t = useClientT();
 
   return useMutation({
     mutationFn: (data: CreateUserDto) => userApi.create(data),
@@ -158,14 +160,14 @@ export function useCreateUser() {
         queryClient.setQueryData(userKeys.allList(), context.previousAllList);
       }
       
-      toast.error('创建用户失败', {
-        description: error instanceof Error ? error.message : '请稍后重试',
+      toast.error(t.common('userCreateFailed'), {
+        description: error instanceof Error ? error.message : t.common('retryLater'),
       });
     },
     
     onSuccess: (data: User) => {
-      toast.success('用户创建成功', {
-        description: `用户 ${data.name} 已创建`,
+      toast.success(t.common('userCreateSuccess'), {
+        description: t.common('userCreated', { name: data.name }),
       });
       eventBus.publish('user:created', data);
     },
@@ -195,6 +197,7 @@ export function useCreateUser() {
  */
 export function useUpdateUser() {
   const queryClient = useQueryClient();
+  const t = useClientT();
 
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserDto }) =>
@@ -256,14 +259,14 @@ export function useUpdateUser() {
         queryClient.setQueryData(userKeys.allList(), context.previousAllList);
       }
       
-      toast.error('更新用户失败', {
-        description: error instanceof Error ? error.message : '请稍后重试',
+      toast.error(t.common('userUpdateFailed'), {
+        description: error instanceof Error ? error.message : t.common('retryLater'),
       });
     },
     
     onSuccess: (updatedUser: User) => {
-      toast.success('用户更新成功', {
-        description: `用户 ${updatedUser.name} 已更新`,
+      toast.success(t.common('userUpdateSuccess'), {
+        description: t.common('userUpdated', { name: updatedUser.name }),
       });
       eventBus.publish('user:updated', updatedUser);
     },
@@ -294,6 +297,7 @@ export function useUpdateUser() {
  */
 export function useDeleteUser() {
   const queryClient = useQueryClient();
+  const t = useClientT();
 
   return useMutation({
     mutationFn: (id: string) => userApi.delete(id),
@@ -344,13 +348,13 @@ export function useDeleteUser() {
         queryClient.setQueryData(userKeys.detail(id), context.previousDetail);
       }
       
-      toast.error('删除用户失败', {
-        description: error instanceof Error ? error.message : '请稍后重试',
+      toast.error(t.common('userDeleteFailed'), {
+        description: error instanceof Error ? error.message : t.common('retryLater'),
       });
     },
     
     onSuccess: (_, id) => {
-      toast.success('用户删除成功');
+      toast.success(t.common('userDeleteSuccess'));
       eventBus.publish('user:deleted', id);
     },
     

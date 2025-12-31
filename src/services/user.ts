@@ -1,17 +1,41 @@
 // User service layer
-// Example of functional API pattern for CRUD operations
+// Example of functional API pattern with Zod validation for type safety
 
+import { z } from 'zod';
 import { request } from '@/http';
 
-// Types
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-  createdAt?: string;
-}
+// ============================================================================
+// Zod Schemas - Define response structure with runtime validation
+// ============================================================================
 
+/**
+ * User schema - validates API response structure
+ * Use .parse() for strict validation (throws on invalid data)
+ * Use .safeParse() for safe validation (returns success/error)
+ */
+export const UserSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  avatar: z.string().optional(),
+  createdAt: z.string().optional(),
+});
+
+export const UserListResponseSchema = z.object({
+  data: z.array(UserSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+
+// ============================================================================
+// Types - Infer from Zod schemas for single source of truth
+// ============================================================================
+
+export type User = z.infer<typeof UserSchema>;
+export type UserListResponse = z.infer<typeof UserListResponseSchema>;
+
+// Request DTOs (not from API, so no schema needed)
 export interface CreateUserDto {
   name: string;
   email: string;
@@ -30,38 +54,70 @@ export interface UserListParams {
   search?: string;
 }
 
-export interface UserListResponse {
-  data: User[];
-  total: number;
-  page: number;
-  limit: number;
-}
+// ============================================================================
+// API Endpoints
+// ============================================================================
 
-// API endpoints
 const ENDPOINTS = {
   LIST: '/backend/api/users',
   DETAIL: (id: string) => `/backend/api/users/${id}`,
 } as const;
 
+// ============================================================================
+// User API - Functional pattern with Zod validation
+// ============================================================================
+
 /**
  * User API
- * Example service demonstrating the functional API pattern
+ * 
+ * All responses are validated with Zod schemas to ensure type safety at runtime.
+ * If the API returns malformed data, an error is thrown instead of silent failures.
+ * 
+ * @example
+ * ```tsx
+ * const user = await userApi.get('123');
+ * // user is guaranteed to have id, name, email
+ * ```
  */
 export const userApi = {
-  list: (params?: UserListParams) =>
-    request.get<UserListResponse>(ENDPOINTS.LIST, { params }),
+  /**
+   * List users with pagination
+   */
+  list: async (params?: UserListParams): Promise<UserListResponse> => {
+    const response = await request.get(ENDPOINTS.LIST, { params });
+    return UserListResponseSchema.parse(response);
+  },
 
-  get: (id: string) =>
-    request.get<User>(ENDPOINTS.DETAIL(id)),
+  /**
+   * Get single user by ID
+   */
+  get: async (id: string): Promise<User> => {
+    const response = await request.get(ENDPOINTS.DETAIL(id));
+    return UserSchema.parse(response);
+  },
 
-  create: (data: CreateUserDto) =>
-    request.post<User>(ENDPOINTS.LIST, data),
+  /**
+   * Create a new user
+   */
+  create: async (data: CreateUserDto): Promise<User> => {
+    const response = await request.post(ENDPOINTS.LIST, data);
+    return UserSchema.parse(response);
+  },
 
-  update: (id: string, data: UpdateUserDto) =>
-    request.patch<User>(ENDPOINTS.DETAIL(id), data),
+  /**
+   * Update an existing user
+   */
+  update: async (id: string, data: UpdateUserDto): Promise<User> => {
+    const response = await request.patch(ENDPOINTS.DETAIL(id), data);
+    return UserSchema.parse(response);
+  },
 
-  delete: (id: string) =>
-    request.delete<void>(ENDPOINTS.DETAIL(id)),
+  /**
+   * Delete a user
+   */
+  delete: async (id: string): Promise<void> => {
+    await request.delete(ENDPOINTS.DETAIL(id));
+  },
 } as const;
 
 export type UserApi = typeof userApi;
