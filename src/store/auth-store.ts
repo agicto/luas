@@ -43,10 +43,7 @@ interface AuthState {
   setSystemFeatures: (features: SystemFeatures | null) => void;
   setSetupStatus: (status: SetupStatus) => void;
   
-  // Complex actions
-  login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  // Global actions used during app startup or profile refresh
   refreshProfile: () => Promise<void>;
   initializeAuth: () => Promise<void>;
   
@@ -91,65 +88,7 @@ const useAuthStoreBase = create<AuthState>()(
       
       setSetupStatus: (setupStatus) => set({ setupStatus }),
       
-      // Complex auth actions
-      login: async (email, password, remember) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          const user = await authApi.login({ email, password, remember });
-
-          set({ 
-            user,
-            isAuthenticated: true,
-            isLoading: false,
-            error: null 
-          });
-        } catch (error: unknown) {
-          set({ 
-            error: getErrorMessage(error, 'Login failed'),
-            isLoading: false,
-            isAuthenticated: false,
-            user: null 
-          });
-          throw error;
-        }
-      },
-      
-      register: async (name, email, password) => {
-        set({ isLoading: true, error: null });
-        
-        try {
-          const response = await authApi.register({ name, email, password });
-          
-          if (response.result === 'success') {
-            // After successful registration, auto-login
-            await get().login(email, password);
-          }
-        } catch (error: unknown) {
-          set({ 
-            error: getErrorMessage(error, 'Registration failed'),
-            isLoading: false 
-          });
-          throw error;
-        }
-      },
-      
-      logout: async () => {
-        set({ isLoading: true });
-        
-        try {
-          await authApi.logout();
-        } catch (error) {
-          console.warn('Logout error:', error);
-        } finally {
-          set({
-            ...defaultState,
-            systemFeatures: get().systemFeatures, // Keep system features
-            setupStatus: get().setupStatus, // Keep setup status
-            isSystemReady: get().isSystemReady,
-          });
-        }
-      },
+      // Complex actions have been moved to React Query hooks in src/hooks/use-auth.ts
       
       refreshProfile: async () => {
         if (!get().isAuthenticated) return;
@@ -165,9 +104,9 @@ const useAuthStoreBase = create<AuthState>()(
             isLoading: false,
           });
 
-          // If profile fetch fails due to auth, logout
+          // If profile fetch fails due to auth, clear local user
           if (getErrorStatus(error) === 401) {
-            get().logout();
+            set({ user: null, isAuthenticated: false });
           }
         }
       },

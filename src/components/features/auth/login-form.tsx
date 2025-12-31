@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Icons } from '@/components/ui/icons';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
+import { useLogin } from '@/hooks/use-auth';
 
 // Form validation schema
 const loginSchema = z.object({
@@ -40,10 +41,19 @@ export function LoginForm({ className }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   
   // Auth state
-  const login = useAuthStore.use.login();
-  const isLoading = useAuthStore.use.isLoading();
-  const error = useAuthStore.use.error();
+  const { mutateAsync: login, isPending: isMutationLoading } = useLogin();
   const systemFeatures = useAuthStore.use.systemFeatures();
+
+  // Log mock credentials in development if mock auth is enabled
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
+      console.log('🚀 [Mock Auth] Available accounts:');
+      console.table([
+        { email: 'admin@example.com', password: 'admin123', role: 'admin' },
+        { email: 'user@example.com', password: 'user123', role: 'user' },
+      ]);
+    }
+  }, []);
   
   // Derived state - pass full state to selectors
   const canRegister = systemFeatures ? authSelectors.canRegister(useAuthStore.getState()) : false;
@@ -66,15 +76,14 @@ export function LoginForm({ className }: LoginFormProps) {
   // Form submission
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data.email, data.password, data.remember);
-      router.push('/console'); // Redirect to dashboard after successful login
+      await login(data);
     } catch (err) {
-      // Error is handled by the store
-      console.error('Login failed:', err);
+      // Error handled by hook's toast
+      console.error('Login submission error:', err);
     }
   };
 
-  const isFormLoading = isLoading || isSubmitting;
+  const isFormLoading = isMutationLoading || isSubmitting;
 
   return (
     <div className={cn('flex flex-col gap-6', className)}>
@@ -87,13 +96,7 @@ export function LoginForm({ className }: LoginFormProps) {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Error Alert */}
-          {error && (
-            <Alert variant="destructive">
-              <Icons.AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {/* Error Alert removed - now using toast */}
 
           {/* Login Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

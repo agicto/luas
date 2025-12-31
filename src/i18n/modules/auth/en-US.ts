@@ -12,10 +12,16 @@ const messages: AuthMessages = {
   rememberMe: 'Remember me',
   noAccount: "Don't have an account?",
   hasAccount: 'Already have an account?',
+  
+  // Toast messages
   loginSuccess: 'Login successful',
   loginFailed: 'Login failed',
+  welcomeBack: 'Welcome back, {name}',
   logoutSuccess: 'Logout successful',
+  logoutFailed: 'Logout failed',
   registerSuccess: 'Registration successful',
+  registerFailed: 'Registration failed',
+  accountCreated: 'Account created, signing in...',
   invalidCredentials: 'Invalid email or password',
 };
 

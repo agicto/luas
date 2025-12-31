@@ -2,6 +2,7 @@
 // Functional API pattern - stateless, pure functions
 
 import { request } from '@/http';
+import { authConfig } from '@/config/auth';
 import type {
   User,
   LoginRequest,
@@ -13,20 +14,30 @@ import type {
 } from '@/types/auth';
 
 // API endpoints (BFF layer)
-const ENDPOINTS = {
-  LOGIN: '/auth/login',
-  LOGOUT: '/auth/logout',
-  REGISTER: '/auth/register',
-  ME: '/auth/me',
-  SETUP_STATUS: '/auth/setup-status',
-  SETUP: '/auth/setup',
-  SYSTEM_FEATURES: '/auth/system-features',
-  PROFILE: '/backend/api/user/profile',
-} as const;
+// Switches between production and mock endpoints based on config
+const getEndpoints = () => {
+  const prefix = authConfig.useMockAuth ? '/auth/mock' : '/auth';
+  return {
+    LOGIN: `${prefix}/login`,
+    LOGOUT: `${prefix}/logout`,
+    ME: `${prefix}/me`,
+    // These are only available in production mode
+    REGISTER: '/auth/register',
+    SETUP_STATUS: '/auth/setup-status',
+    SETUP: '/auth/setup',
+    SYSTEM_FEATURES: '/auth/system-features',
+    PROFILE: '/backend/api/user/profile',
+  };
+};
+
+const ENDPOINTS = getEndpoints();
 
 /**
  * Authentication API
  * All methods are stateless pure functions
+ * 
+ * When NEXT_PUBLIC_USE_MOCK_AUTH=true, uses mock endpoints.
+ * Otherwise uses production endpoints that proxy to upstream.
  */
 export const authApi = {
   // System setup
@@ -67,4 +78,4 @@ export const authApi = {
 } as const;
 
 // Type exports for external use
-export type AuthApi = typeof authApi; 
+export type AuthApi = typeof authApi;

@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/ui/icons';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
+import { useRegister } from '@/hooks/use-auth';
 
 // Form validation schema
 const registerSchema = z.object({
@@ -59,9 +60,7 @@ export function RegisterForm({ className }: RegisterFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // Auth state
-  const register = useAuthStore.use.register();
-  const isLoading = useAuthStore.use.isLoading();
-  const error = useAuthStore.use.error();
+  const { mutateAsync: register, isPending: isMutationLoading } = useRegister();
   const systemFeatures = useAuthStore.use.systemFeatures();
   
   // Derived state - pass full state to selectors
@@ -87,15 +86,14 @@ export function RegisterForm({ className }: RegisterFormProps) {
   // Form submission
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      await register(data.name, data.email, data.password);
-      router.push('/console'); // Redirect to dashboard after successful registration
+      await register(data);
     } catch (err) {
-      // Error is handled by the store
-      console.error('Registration failed:', err);
+      // Error handled by hook's toast
+      console.error('Registration submission error:', err);
     }
   };
 
-  const isFormLoading = isLoading || isSubmitting;
+  const isFormLoading = isMutationLoading || isSubmitting;
 
   // Show message if registration is not allowed
   if (systemFeatures && !canRegister) {
@@ -139,13 +137,7 @@ export function RegisterForm({ className }: RegisterFormProps) {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Error Alert */}
-          {error && (
-            <Alert variant="destructive">
-              <Icons.AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {/* Error Alert removed - now using toast */}
 
           {/* Registration Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

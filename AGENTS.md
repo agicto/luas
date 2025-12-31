@@ -64,21 +64,56 @@ Browser → /api/backend/* → Upstream API (proxy)
 
 ### 2. Authentication Flow
 
+**Token Modes (configured via `NEXT_PUBLIC_AUTH_TOKEN_MODE`):**
+
+| Mode | Description |
+|------|-------------|
+| `basic` | Single access token, no refresh |
+| `refresh` | Access + refresh token pair (default) |
+
+**Auth Endpoints:**
+
 ```
-Login → POST /api/auth/login → Sets httpOnly cookies
-        └── scaffold_access_token
-        └── scaffold_refresh_token
+# Production (proxies to upstream)
+POST /api/auth/login → Upstream login
+POST /api/auth/logout → Clear cookies
+GET  /api/auth/me → Get current user
 
-Logout → POST /api/auth/logout → Clears cookies
+# Mock (for development/testing)
+POST /api/auth/mock/login → Mock login (admin@example.com / admin123)
+POST /api/auth/mock/refresh → Refresh tokens
+GET  /api/auth/mock/me → Get mock user
+POST /api/auth/mock/logout → Clear cookies
+```
 
-Session Check → GET /api/auth/me → Returns user or 401
+**Route Groups:**
+- `(auth)/*` - Public auth pages (login, register)
+- `(normal)/*` - Protected routes (requires authentication)
+- `(site)/*` - Public pages
+
+**Protecting Routes:**
+
+```typescript
+// app/(normal)/layout.tsx
+import { AuthGuard } from '@/components/auth-guard';
+
+export default function NormalLayout({ children }) {
+  return <AuthGuard>{children}</AuthGuard>;
+}
 ```
 
 ### 3. State Management
 
 - **Auth state**: `src/store/auth-store.ts` (Zustand + persist)
-- **Server state**: React Query for API data
-- **UI state**: `src/store/ui-store.ts` (Zustand)
+  - Stores user data, system features, and authentication status.
+  - **Dumb store**: Only contains state and simple setters.
+- **Auth actions**: `src/hooks/use-auth.ts` (React Query)
+  - Handles `login`, `register`, and `logout`.
+  - Includes built-in toast notifications and redirection.
+  - Usage: `const { mutate: login } = useLogin();`
+- **Server state**: React Query for all API data.
+- **UI state**: `src/store/ui-store.ts` (Zustand).
+- **Auth config**: `src/config/auth.ts` (token modes, routes).
 
 ## Code Conventions
 
@@ -125,6 +160,10 @@ UPSTREAM_API_BASE=https://your-backend.com/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
+
+# Auth configuration
+NEXT_PUBLIC_USE_MOCK_AUTH=true              # Use mock auth (dev without backend)
+NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 ```
 
 ## Common Tasks
