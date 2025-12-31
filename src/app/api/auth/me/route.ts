@@ -1,27 +1,63 @@
 import { NextResponse } from 'next/server';
-import { getAccessTokenFromCookies, getUpstreamBaseUrl } from '../../_lib/upstream';
+import { cookies } from 'next/headers';
+import { authConfig, decodeMockToken, mockUsers } from '@/config/auth';
 
+/**
+ * Auth Me API (Mock)
+ * 
+ * GET /api/auth/me
+ * 
+ * Returns current user info based on access token.
+ * Response format: { data: { user } }
+ */
 export async function GET() {
-  const token = await getAccessTokenFromCookies();
-  if (!token) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get(authConfig.cookies.accessToken)?.value;
+
+    if (!accessToken) {
+      return NextResponse.json(
+        { message: 'Not authenticated', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
+
+    // Decode and validate token
+    const decoded = decodeMockToken(accessToken);
+    if (!decoded || decoded.type !== 'access') {
+      return NextResponse.json(
+        { message: 'Invalid or expired token', code: 'INVALID_TOKEN' },
+        { status: 401 }
+      );
+    }
+
+    // Find user
+    const user = mockUsers.find((u) => u.id === decoded.userId);
+    if (!user) {
+      return NextResponse.json(
+        { message: 'User not found', code: 'USER_NOT_FOUND' },
+        { status: 401 }
+      );
+    }
+
+    // Return user data in expected format
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      avatar: user.avatar || null,
+    };
+
+    return NextResponse.json({
+      data: { user: userData },
+    });
+
+  } catch (error) {
+    console.error('Auth me error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
+    );
   }
-
-  const baseUrl = getUpstreamBaseUrl();
-  const profileRes = await fetch(`${baseUrl}/console/api/account-ex/profile`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
-  });
-
-  const payload = await profileRes.json().catch(() => null);
-  if (!profileRes.ok) {
-    return NextResponse.json(payload ?? { message: 'Unauthorized' }, { status: profileRes.status });
-  }
-
-  const user = payload?.data ?? payload;
-  return NextResponse.json({ data: { user } }, { status: 200 });
 }

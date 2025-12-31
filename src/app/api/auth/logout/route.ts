@@ -1,26 +1,33 @@
 import { NextResponse } from 'next/server';
-import { clearAuthCookies, getAccessTokenFromCookies, getUpstreamBaseUrl } from '../../_lib/upstream';
+import { cookies } from 'next/headers';
+import { authConfig } from '@/config/auth';
 
+/**
+ * Auth Logout API (Mock)
+ * 
+ * POST /api/auth/logout
+ * 
+ * Clears auth cookies.
+ */
 export async function POST() {
-  const baseUrl = getUpstreamBaseUrl();
-  const token = await getAccessTokenFromCookies();
-
   try {
-    if (token) {
-      await fetch(`${baseUrl}/console/api/logout`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-        cache: 'no-store',
-      });
-    }
-  } finally {
-    const res = NextResponse.json({ data: { ok: true } }, { status: 200 });
-    clearAuthCookies(res);
-    return res;
+    const cookieStore = await cookies();
+
+    // Clear access token cookie
+    cookieStore.delete(authConfig.cookies.accessToken);
+
+    // Clear refresh token cookie
+    cookieStore.delete(authConfig.cookies.refreshToken);
+
+    return NextResponse.json({ 
+      data: { success: true },
+    });
+
+  } catch (error) {
+    console.error('Auth logout error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
+    );
   }
 }

@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUpstreamBaseUrl, setAuthCookies } from '../../_lib/upstream';
+import { cookies } from 'next/headers';
+import { 
+  authConfig, 
+  mockUsers, 
+  generateMockToken, 
+  isRefreshModeEnabled 
+} from '@/config/auth';
 
 interface LoginBody {
   email: string;
@@ -7,58 +13,88 @@ interface LoginBody {
   remember?: boolean;
 }
 
+/**
+ * Auth Login API (Mock)
+ * 
+ * POST /api/auth/login
+ * 
+ * Authenticates against mock users and issues tokens.
+ * Supports both 'basic' and 'refresh' token modes.
+ * 
+ * Response format matches what auth service expects:
+ * { data: { user: User } }
+ */
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as LoginBody;
+  try {
+    const body = (await req.json()) as LoginBody;
 
-  if (!body?.email || !body?.password) {
-    return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
+    if (!body?.email || !body?.password) {
+      return NextResponse.json(
+        { message: 'Email and password are required', code: 'VALIDATION_ERROR' },
+        { status: 400 }
+      );
+    }
+
+    // Find mock user
+    const user = mockUsers.find(
+      (u) => u.email === body.email && u.password === body.password
+    );
+
+    if (!user) {
+      return NextResponse.json(
+        { message: 'Invalid email or password', code: 'INVALID_CREDENTIALS' },
+        { status: 401 }
+      );
+    }
+
+    // Generate tokens
+    const accessToken = generateMockToken(user.id, 'access');
+    const refreshToken = isRefreshModeEnabled() 
+      ? generateMockToken(user.id, 'refresh') 
+      : undefined;
+
+    // Set cookies
+    const cookieStore = await cookies();
+    const maxAge = body.remember 
+      ? authConfig.refreshTokenExpiry 
+      : authConfig.accessTokenExpiry;
+
+    cookieStore.set(authConfig.cookies.accessToken, accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge,
+    });
+
+    if (refreshToken) {
+      cookieStore.set(authConfig.cookies.refreshToken, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: authConfig.refreshTokenExpiry,
+      });
+    }
+
+    // Return user data in expected format: { data: { user } }
+    const userData = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      avatar: user.avatar || null,
+    };
+
+    return NextResponse.json({ 
+      data: { user: userData },
+    }, { status: 200 });
+
+  } catch (error) {
+    console.error('Auth login error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
+    );
   }
-
-  const baseUrl = getUpstreamBaseUrl();
-
-  const loginRes = await fetch(`${baseUrl}/console/api/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({
-      email: body.email,
-      password: body.password,
-    }),
-    cache: 'no-store',
-  });
-
-  const loginPayload = await loginRes.json().catch(() => null);
-  if (!loginRes.ok) {
-    return NextResponse.json(loginPayload ?? { message: 'Login failed' }, { status: loginRes.status });
-  }
-
-  const accessToken = loginPayload?.data?.access_token as string | undefined;
-  const refreshToken = loginPayload?.data?.refresh_token as string | undefined;
-
-  if (!accessToken) {
-    return NextResponse.json({ message: 'Login failed: invalid response format' }, { status: 502 });
-  }
-
-  const profileRes = await fetch(`${baseUrl}/console/api/account-ex/profile`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    },
-    cache: 'no-store',
-  });
-
-  const profilePayload = await profileRes.json().catch(() => null);
-  if (!profileRes.ok) {
-    return NextResponse.json(profilePayload ?? { message: 'Failed to fetch profile' }, { status: profileRes.status });
-  }
-
-  const user = profilePayload?.data ?? profilePayload;
-
-  const res = NextResponse.json({ data: { user } }, { status: 200 });
-  setAuthCookies(res, { access_token: accessToken, refresh_token: refreshToken }, Boolean(body.remember));
-
-  return res;
 }

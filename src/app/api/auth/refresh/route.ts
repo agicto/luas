@@ -13,9 +13,9 @@ interface RefreshBody {
 }
 
 /**
- * Mock Token Refresh API
+ * Auth Token Refresh API (Mock)
  * 
- * POST /api/auth/mock/refresh
+ * POST /api/auth/refresh
  * 
  * Refreshes access token using refresh token.
  * Only available when tokenMode is 'refresh'.
@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Mock refresh error:', error);
+    console.error('Auth refresh error:', error);
     return NextResponse.json(
       { message: 'Internal server error', code: 'INTERNAL_ERROR' },
       { status: 500 }

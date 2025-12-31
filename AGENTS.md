@@ -71,19 +71,14 @@ Browser → /api/backend/* → Upstream API (proxy)
 | `basic` | Single access token, no refresh |
 | `refresh` | Access + refresh token pair (default) |
 
-**Auth Endpoints:**
+**Auth Endpoints (Mock API):**
 
 ```
-# Production (proxies to upstream)
-POST /api/auth/login → Upstream login
-POST /api/auth/logout → Clear cookies
+# Mock Backend (using Next.js API routes)
+POST /api/auth/login → Mock login (admin@example.com / admin123)
+POST /api/auth/refresh → Refresh tokens
 GET  /api/auth/me → Get current user
-
-# Mock (for development/testing)
-POST /api/auth/mock/login → Mock login (admin@example.com / admin123)
-POST /api/auth/mock/refresh → Refresh tokens
-GET  /api/auth/mock/me → Get mock user
-POST /api/auth/mock/logout → Clear cookies
+POST /api/auth/logout → Clear cookies
 ```
 
 **Route Groups:**

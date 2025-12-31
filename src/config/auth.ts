@@ -16,12 +16,6 @@ export type TokenMode = 'basic' | 'refresh';
  */
 export const authConfig = {
   /**
-   * Use mock auth endpoints (for development without backend)
-   * Set via NEXT_PUBLIC_USE_MOCK_AUTH env variable
-   */
-  useMockAuth: process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true',
-
-  /**
    * Token mode: 'basic' | 'refresh'
    * Set via NEXT_PUBLIC_AUTH_TOKEN_MODE env variable
    */

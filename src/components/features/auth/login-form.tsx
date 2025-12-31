@@ -44,9 +44,9 @@ export function LoginForm({ className }: LoginFormProps) {
   const { mutateAsync: login, isPending: isMutationLoading } = useLogin();
   const systemFeatures = useAuthStore.use.systemFeatures();
 
-  // Log mock credentials in development if mock auth is enabled
+  // Log mock credentials in development
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK_AUTH === 'true') {
+    if (process.env.NODE_ENV === 'development') {
       console.log('🚀 [Mock Auth] Available accounts:');
       console.table([
         { email: 'admin@example.com', password: 'admin123', role: 'admin' },
