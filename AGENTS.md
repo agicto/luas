@@ -206,45 +206,59 @@ NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 
 ### Adding a New Service
 
-1. Create `src/services/[name].ts` using **Contract-First pattern**:
+1. Create `src/services/[name].ts` using **Zod validation pattern**:
 
 ```typescript
+// services/example.ts
 import { z } from 'zod';
 import { request } from '@/http';
-import { components } from '@/types/api.generated'; // Generated via pnpm gen:api
 
-// 1. Reference types from generated schema (Single Source of Truth)
-export type Entity = components['schemas']['Entity'];
-export type CreateEntityDto = components['schemas']['CreateEntityDto'];
-
-// 2. Define Zod schemas to match the contract (Runtime validation)
-export const EntitySchema = z.object({
+// 1. Define Zod schemas for API responses
+const ExampleSchema = z.object({
   id: z.string(),
   name: z.string(),
-  // ... other fields
+  status: z.enum(['active', 'inactive']),
+  createdAt: z.string().optional(),
 });
 
-// 3. Define endpoints
+const ExampleListResponseSchema = z.object({
+  data: z.array(ExampleSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+
+// 2. Infer types from schemas (single source of truth)
+export type Example = z.infer<typeof ExampleSchema>;
+export type ExampleListResponse = z.infer<typeof ExampleListResponseSchema>;
+
+// 3. Define request DTOs (no schema needed for outgoing data)
+export interface CreateExampleDto {
+  name: string;
+  status: 'active' | 'inactive';
+}
+
+// 4. Define endpoints
 const ENDPOINTS = {
-  BASE: '/backend/api/entities',
-  DETAIL: (id: string) => `/backend/api/entities/${id}`,
+  LIST: '/backend/api/examples',
+  DETAIL: (id: string) => `/backend/api/examples/${id}`,
 } as const;
 
-// 4. Create API with Zod validation
-export const entityApi = {
-  list: async (params?: any) => {
-    const response = await request.get(ENDPOINTS.BASE, { params });
-    return z.object({ data: z.array(EntitySchema), total: z.number() }).parse(response);
+// 5. Create API with Zod validation
+export const exampleApi = {
+  list: async (params?: { page?: number }): Promise<ExampleListResponse> => {
+    const response = await request.get(ENDPOINTS.LIST, { params });
+    return ExampleListResponseSchema.parse(response); // Throws on invalid data
   },
-  get: async (id: string) => {
+  get: async (id: string): Promise<Example> => {
     const response = await request.get(ENDPOINTS.DETAIL(id));
-    return EntitySchema.parse(response);
+    return ExampleSchema.parse(response);
   },
-  create: async (data: CreateEntityDto) => {
-    const response = await request.post(ENDPOINTS.BASE, data);
-    return EntitySchema.parse(response);
+  create: async (data: CreateExampleDto): Promise<Example> => {
+    const response = await request.post(ENDPOINTS.LIST, data);
+    return ExampleSchema.parse(response);
   },
-  delete: async (id: string) => {
+  delete: async (id: string): Promise<void> => {
     await request.delete(ENDPOINTS.DETAIL(id));
   },
 } as const;
@@ -270,45 +284,23 @@ export const entityApi = {
 
 ### Adding Query Hooks
 
-Use query key factory and optimistic update patterns:
+Use query key factory pattern:
 
 ```typescript
-// hooks/use-entities.ts
+// hooks/use-examples.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { entityApi } from '@/services';
-import { toast } from 'sonner';
+import { exampleApi } from '@/services';
 
-export const entityKeys = {
-  all: ['entities'] as const,
-  lists: () => [...entityKeys.all, 'list'] as const,
-  detail: (id: string) => [...entityKeys.all, 'detail', id] as const,
+export const exampleKeys = {
+  all: ['examples'] as const,
+  lists: () => [...exampleKeys.all, 'list'] as const,
+  detail: (id: string) => [...exampleKeys.all, 'detail', id] as const,
 };
 
-export function useEntities() {
+export function useExamples() {
   return useQuery({
-    queryKey: entityKeys.lists(),
-    queryFn: () => entityApi.list(),
-  });
-}
-
-export function useCreateEntity() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data) => entityApi.create(data),
-    onMutate: async (newData) => {
-      await queryClient.cancelQueries({ queryKey: entityKeys.lists() });
-      const previous = queryClient.getQueryData(entityKeys.lists());
-      // Apply optimistic update to cache...
-      return { previous };
-    },
-    onError: (err, _, context) => {
-      queryClient.setQueryData(entityKeys.lists(), context?.previous);
-      // NOTE: Global error handler handles toast automatically!
-    },
-    onSuccess: () => {
-      toast.success('Created successfully');
-      queryClient.invalidateQueries({ queryKey: entityKeys.lists() });
-    },
+    queryKey: exampleKeys.lists(),
+    queryFn: () => exampleApi.list(),
   });
 }
 ```

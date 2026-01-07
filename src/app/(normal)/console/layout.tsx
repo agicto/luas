@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, CheckSquare } from "lucide-react";
+import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut } from "lucide-react";
 
 import { cn } from "@/utils";
 import { ROUTES } from "@/constants/routes";
@@ -15,7 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LocaleSwitcher } from "@/components/locale-switcher";
 
 interface NavItem {
   title: string;
@@ -28,11 +27,6 @@ const mainNavItems: NavItem[] = [
     title: "Dashboard",
     href: ROUTES.CONSOLE.HOME,
     icon: Home,
-  },
-  {
-    title: "Tasks",
-    href: ROUTES.CONSOLE.TASKS,
-    icon: CheckSquare,
   },
   {
     title: "Analytics",
@@ -80,7 +74,6 @@ export default function ConsoleLayout({
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-4">
-          <LocaleSwitcher />
           <ThemeToggle />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

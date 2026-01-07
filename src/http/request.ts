@@ -56,15 +56,8 @@ function setupInterceptors(instance: AxiosInstance) {
     (response: AxiosResponse) => {
       const { data } = response;
 
-      // Only unwrap if it's a simple { data: ... } wrapper without metadata (like pagination).
-      // This prevents breaking Zod schemas that expect the full envelope with 'total'.
-      if (
-        data && 
-        typeof data === 'object' && 
-        'data' in data && 
-        !('total' in data) && 
-        !('page' in data)
-      ) {
+      // If the backend uses a common envelope like { data: ... }, unwrap it.
+      if (data && typeof data === 'object' && 'data' in data) {
         return (data as { data: unknown }).data;
       }
 
