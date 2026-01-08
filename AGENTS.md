@@ -26,6 +26,7 @@ zgo/
 │   │       ├── routes.go      # Route registration
 │   │       ├── provider.go    # Wire DI
 │   │       └── service_test.go
+│   ├── capabilities/      # Technical capabilities (idgen, crypto)
 │   ├── infra/             # Infrastructure (33+ components)
 │   └── wiring/            # Wire dependency injection
 ├── pkg/                   # Public libraries
@@ -54,6 +55,45 @@ make air           # Hot-reload dev server
 | `handler.go` | HTTP handlers |
 | `routes.go` | Route registration |
 | `provider.go` | Wire ProviderSet |
+
+## Capabilities Layer
+
+`internal/capabilities/` provides reusable, business-agnostic technical capabilities.
+
+```
+modules → capabilities → infra
+(业务)     (技术能力)     (基础设施)
+```
+
+### Available Capabilities
+
+| Package | Functions | Description |
+|---------|-----------|-------------|
+| `idgen` | `UUID()`, `Snowflake()`, `NanoID()`, `ShortID()` | ID generation |
+| `crypto` | `Encrypt()`, `Decrypt()`, `HashPassword()`, `HMACSHA256Hex()` | Encryption, hashing |
+
+### Usage
+
+```go
+import (
+    "github.com/zgiai/zgo/internal/capabilities/idgen"
+    "github.com/zgiai/zgo/internal/capabilities/crypto"
+)
+
+id := idgen.UUID()
+id := idgen.Snowflake()
+
+hash, _ := crypto.HashPassword("password")
+ok := crypto.VerifyPassword("password", hash)
+```
+
+### Guidelines
+
+- ✅ Provide single, clear technical capability
+- ✅ Use verb + object naming (`Encrypt()`, `Generate()`)
+- ✅ Only depend on `infra` layer
+- ❌ No business logic or rules
+- ❌ No dependency on `modules` layer
 
 ## Domain Layer
 
