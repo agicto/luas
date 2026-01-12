@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   zgo-app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: zgo-api
@@ -12,10 +12,10 @@ services:
     environment:
       - APP_ENV=production
       - SERVER_PORT=8025
-      - DB_CONNECTION=postgres
+      - DB_DRIVER=postgres
       - DB_HOST=zgo-db
       - DB_PORT=5432
-      - DB_DATABASE=zgo
+      - DB_NAME=zgo
       - DB_USERNAME=zgo_user
       - DB_PASSWORD=zgo_pass
       - JWT_SECRET=${JWT_SECRET:-zgo_secret_vibe_enterprise}
@@ -40,7 +40,28 @@ services:
     volumes:
       - zgo_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U zgo_user -d eogo"]
+      test: [ "CMD-SHELL", "pg_isready -U zgo_user -d zgo" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - zgo-network
+
+  zgo-clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: zgo-clickhouse
+    restart: always
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=trac
+      - CLICKHOUSE_USER=trac_user
+      - CLICKHOUSE_PASSWORD=trac_pass
+    volumes:
+      - zgo_ch_data:/var/lib/clickhouse
+    healthcheck:
+      test: [ "CMD", "wget", "--spider", "-q", "localhost:8123/ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -53,3 +74,4 @@ networks:
 
 volumes:
   zgo_db_data:
+  zgo_ch_data:

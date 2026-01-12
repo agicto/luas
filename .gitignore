@@ -99,3 +99,10 @@ _reference/
 # Built binaries
 zgo
 server
+
+# Examples (keep source code but ignore build artifacts)
+examples/*/bin/
+examples/*/dist/
+examples/*/tmp/
+examples/*/.env
+examples/*/*.log

@@ -7,7 +7,10 @@ import (
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/zgo/internal/modules/ingest"
+	"github.com/zgiai/zgo/internal/modules/issue"
 	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/project"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"gorm.io/gorm"
 )
@@ -28,6 +31,9 @@ type Application struct {
 type Handlers struct {
 	User       *user.Handler
 	Permission *permission.Handler
+	Project    *project.Handler
+	Ingest     *ingest.Handler
+	Issue      *issue.Handler
 }
 
 // Modules returns a list of all active modules
@@ -35,5 +41,8 @@ func (h *Handlers) Modules() []contracts.Module {
 	return []contracts.Module{
 		h.User,
 		h.Permission,
+		h.Project,
+		h.Ingest,
+		h.Issue,
 	}
 }

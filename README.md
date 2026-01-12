@@ -1,134 +1,204 @@
-# ZGO 🚀
+# Trac - 轻量化错误追踪系统
 
-**Enterprise Orchestration in Go**
+> Sentry 轻量替代方案 | 完全兼容 Sentry SDK | Go + ClickHouse
 
-The Orchestrable Go Framework for the Intelligent Era.
+## 📦 功能特性
 
-[![Website](https://img.shields.io/badge/Website-zgo.dev-blue?style=for-the-badge)](https://zgo.dev)
+- ✅ **Sentry SDK 兼容** - 直接使用官方 Go/JS/Python SDK
+- ✅ **高性能存储** - ClickHouse 列式存储，支持海量事件
+- ✅ **智能聚合** - 按 fingerprint 自动去重，生成 Issue
+- ✅ **实时监控** - 错误实时采集，毫秒级入库
 
-![Go Version](https://img.shields.io/badge/Go-1.22%2B-00ADD8?style=for-the-badge&logo=go)
-![Architecture](https://img.shields.io/badge/Arch-DDD-success?style=for-the-badge)
+## 🚀 快速开始
 
----
+### 1. 环境要求
 
-## ✨ Features
+- Go 1.21+
+- PostgreSQL 12+
+- ClickHouse 21+
+- Redis 6+ (可选)
 
-- **Domain-Driven Design (DDD)**: Clean domain layer + modular business logic
-- **Enterprise Infrastructure**: Circuit breaker, rate limiter, tracing, config hot-reload
-- **Developer First**: CLI code generation, Wire DI, comprehensive testing
-- **Production Ready**: CI/CD, code quality checks, OpenAPI documentation
-
----
-
-## 📂 Project Structure
-
-```text
-zgo/
-├── cmd/
-│   ├── zgo/              # CLI tool
-│   └── server/            # HTTP server entry
-├── internal/
-│   ├── bootstrap/         # Application lifecycle
-│   ├── domain/            # Core domain entities (DDD)
-│   ├── modules/           # Business modules (user, permission, llm)
-│   ├── infra/             # Infrastructure (33+ components)
-│   │   ├── breaker/       # Circuit breaker
-│   │   ├── ratelimit/     # Rate limiter (memory/Redis)
-│   │   ├── config/        # Config management (hot-reload)
-│   │   ├── tracing/       # OpenTelemetry
-│   │   └── ...
-│   └── wiring/            # Wire dependency injection
-├── pkg/                   # Reusable public libraries
-├── routes/                # Route registration
-├── tests/                 # Tests (unit/integration/e2e)
-├── docs/                  # Documentation
-└── .github/workflows/     # CI/CD
-```
-
----
-
-## 🚀 Quick Start
+### 2. 启动服务
 
 ```bash
-# Clone and configure
-git clone https://github.com/zgiai/zgo.git && cd zgo
+# 克隆项目
+git clone https://github.com/zgiai/trac-api.git
+cd trac-api
+
+# 配置环境变量
 cp .env.example .env
+# 编辑 .env 配置数据库连接
 
-# Install dependencies
-go mod download
+# 启动 ClickHouse (Docker)
+docker run -d --name zgo-clickhouse \
+  -p 9000:9000 \
+  -e CLICKHOUSE_DB=trac \
+  -e CLICKHOUSE_USER=trac_user \
+  -e CLICKHOUSE_PASSWORD=trac_pass \
+  clickhouse/clickhouse-server:latest
 
-# Install zgo CLI globally (recommended)
-make install
-# Now you can use 'zgo' command anywhere!
-
-# Or just build locally
-make build
-./zgo serve
-
-# Start development server with hot-reload
-make air
+# 启动服务
+go run cmd/server/main.go
 ```
 
-Visit: `http://localhost:8025`
-
-### Windows Users 🪟
-
-**Best Option: Git Bash** ⭐ (use same `make` commands as above)
-
-Or use PowerShell/Command Prompt scripts:
-
-```powershell
-# PowerShell
-.\make.ps1 setup
-.\make.ps1 install
-.\make.ps1 dev
-
-# Or Command Prompt
-make.bat setup
-make.bat install
-make.bat dev
-```
-
-See [Windows Development Guide](docs/WINDOWS.md) for detailed setup instructions.
-
-### Global Installation
-
-After `make install` (or `.\make.ps1 install` on Windows), use zgo from anywhere:
+### 3. 创建项目
 
 ```bash
-zgo version               # Show version
-zgo serve                 # Start server
-zgo make:module Blog      # Generate new module
-zgo db:migrate            # Run migrations
-zgo db:migrate --env=prod # Production migrations
+# 创建项目
+curl -X POST http://localhost:8025/v1/projects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"name": "My App", "platform": "go"}'
+
+# 获取 DSN
+curl http://localhost:8025/v1/projects/1/dsn \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# 响应: {"dsn": "http://abc123@localhost:8025/1"}
 ```
 
----
+### 4. 集成 Sentry SDK
 
-## 🛠️ Common Commands
+#### Go 应用
+
+```go
+import (
+    "github.com/getsentry/sentry-go"
+    sentrygin "github.com/getsentry/sentry-go/gin"
+)
+
+func main() {
+    // 初始化 Sentry，DSN 指向 Trac 服务器
+    sentry.Init(sentry.ClientOptions{
+        Dsn: "http://abc123@localhost:8025/1",
+        Environment: "production",
+        Release: "myapp@1.0.0",
+    })
+    defer sentry.Flush(2 * time.Second)
+
+    // Gin 中间件
+    r := gin.Default()
+    r.Use(sentrygin.New(sentrygin.Options{
+        Repanic: true,
+    }))
+
+    // 手动上报错误
+    sentry.CaptureException(errors.New("something went wrong"))
+}
+```
+
+#### JavaScript 应用
+
+```javascript
+import * as Sentry from "@sentry/browser";
+
+Sentry.init({
+  dsn: "http://abc123@localhost:8025/1",
+  environment: "production",
+});
+
+// 自动捕获未处理异常
+// 或手动上报
+Sentry.captureException(new Error("Something went wrong"));
+```
+
+#### Python 应用
+
+```python
+import sentry_sdk
+
+sentry_sdk.init(
+    dsn="http://abc123@localhost:8025/1",
+    environment="production",
+)
+
+# 手动上报
+sentry_sdk.capture_exception(Exception("Something went wrong"))
+```
+
+## 📊 API 端点
+
+### SDK 上报端点（公开）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/{project_id}/envelope/` | Sentry Envelope 上报 |
+| POST | `/api/{project_id}/store/` | 传统事件上报（已废弃） |
+
+### 管理端点（需认证）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/v1/projects` | 创建项目 |
+| GET | `/v1/projects/:id/dsn` | 获取 DSN |
+| GET | `/v1/projects/:id/issues/` | 获取 Issue 列表 |
+| POST | `/v1/projects/:id/issues/:fingerprint/resolve` | 标记已解决 |
+
+详细 API 文档见: [docs/api.md](docs/api.md)
+
+## 🏗️ 项目结构
+
+```
+trac-api/
+├── cmd/
+│   └── server/           # 主程序入口
+├── internal/
+│   ├── infra/           # 基础设施
+│   │   └── storage/     # ClickHouse 客户端
+│   └── modules/
+│       ├── project/     # 项目管理
+│       ├── ingest/      # SDK 数据接收
+│       ├── envelope/    # Sentry 信封解析
+│       ├── event/       # 事件存储
+│       └── issue/       # Issue 聚合
+├── docs/                # 文档
+└── examples/
+    └── gin-app/         # Gin 集成示例
+```
+
+## ⚙️ 环境变量
 
 ```bash
-make help          # Show all commands
-make build         # Build CLI
-make test          # Run tests
-make lint          # Code linting
-make cover         # Coverage report
-make wire          # Generate DI code
-make docs          # Generate API docs
+# 服务配置
+SERVER_PORT=8025
+
+# PostgreSQL
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=trac
+DB_USERNAME=postgres
+DB_PASSWORD=password
+
+# ClickHouse
+LOG_CH_ENABLED=true
+LOG_CH_ENDPOINT=localhost:9000
+LOG_CH_DATABASE=trac
+LOG_CH_USERNAME=trac_user
+LOG_CH_PASSWORD=trac_pass
 ```
 
----
+## 🔍 查看数据
 
-## 📖 Documentation
+### 查看事件
 
-- [Development Guide](docs/guide/README.md)
-- [**Windows Development Guide**](docs/WINDOWS.md) 🪟
-- [Module Development](internal/modules/README.md)
-- [Dependency Injection (Wire)](docs/dependency_injection.md)
-- [AI Collaboration Guide](AGENTS.md)
-- [API Documentation](docs/api/)
+```bash
+docker exec zgo-clickhouse clickhouse-client \
+  -u trac_user --password trac_pass -d trac \
+  -q "SELECT event_id, level, message FROM events ORDER BY timestamp DESC LIMIT 10"
+```
 
----
+### 查看 Issues
 
-## 📜 License
-MIT © 2025 ZGO Team
+```bash
+curl http://localhost:8025/v1/projects/1/issues/
+```
+
+## 📚 文档
+
+- [API 接口文档](docs/api.md)
+- [Sentry Go/Gin 集成指南](docs/sentry-go-gin-integration.md)
+- [部署指南](docs/usage_and_config.md)
+
+## 📄 License
+
+MIT License

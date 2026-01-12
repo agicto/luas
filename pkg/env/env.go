@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -232,6 +233,27 @@ func GetFloat(key string, defaultValue ...float64) float64 {
 		return 0
 	}
 	return f
+}
+
+// GetDuration returns the time.Duration value of an environment variable.
+func GetDuration(key string, defaultValue ...time.Duration) time.Duration {
+	Load()
+	value, exists := os.LookupEnv(key)
+	if !exists {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return 0
+	}
+
+	d, err := time.ParseDuration(strings.TrimSpace(value))
+	if err != nil {
+		if len(defaultValue) > 0 {
+			return defaultValue[0]
+		}
+		return 0
+	}
+	return d
 }
 
 // GetSlice returns a slice from a comma-separated environment variable.

@@ -24,6 +24,7 @@ type Config struct {
 	R2         R2Config
 	Middleware MiddlewareConfig
 	Tracing    TracingConfig
+	ClickHouse ClickHouseConfig
 }
 
 type AppConfig struct {
@@ -129,6 +130,17 @@ type TracingConfig struct {
 	SampleRate float64 // Sampling rate (0.0 to 1.0)
 }
 
+// ClickHouseConfig holds ClickHouse configuration
+type ClickHouseConfig struct {
+	Enabled   bool
+	Endpoint  string
+	Database  string
+	Username  string
+	Password  string
+	BatchSize int
+	Interval  time.Duration
+}
+
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
 	env.Load()
@@ -212,6 +224,15 @@ func Load() (*Config, error) {
 			Endpoint:   env.Get("TRACING_ENDPOINT", "localhost:4317"),
 			Insecure:   env.GetBool("TRACING_INSECURE", true),
 			SampleRate: env.GetFloat("TRACING_SAMPLE_RATE", 1.0),
+		},
+		ClickHouse: ClickHouseConfig{
+			Enabled:   env.GetBool("LOG_CH_ENABLED", false),
+			Endpoint:  env.Get("LOG_CH_ENDPOINT", "localhost:9000"),
+			Database:  env.Get("LOG_CH_DATABASE", "trac"),
+			Username:  env.Get("LOG_CH_USERNAME", "trac_user"),
+			Password:  env.Get("LOG_CH_PASSWORD", "trac_pass"),
+			BatchSize: env.GetInt("LOG_CH_BATCH_SIZE", 100),
+			Interval:  env.GetDuration("LOG_CH_INTERVAL", 5*time.Second),
 		},
 	}
 

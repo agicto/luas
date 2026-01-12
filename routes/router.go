@@ -1,13 +1,13 @@
 package routes
 
 import (
+	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/infra/monitor"
 	"github.com/zgiai/zgo/internal/infra/router"
-	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // Setup configures all application routes using the fluent router API
@@ -30,6 +30,13 @@ func Setup(engine *gin.Engine, handlers *app.Handlers) *router.Router {
 
 	// Root endpoint - Welcome page
 	RegisterWelcome(engine)
+
+	// === Sentry SDK Compatible Routes ===
+	// These routes are registered at root level (without /v1 prefix)
+	// because Sentry SDK sends to /api/:project_id/envelope/
+	if handlers.Ingest != nil {
+		handlers.Ingest.RegisterRoutes(r)
+	}
 
 	// Register V1 API Routes
 	r.Group("/v1", func(api *router.Router) {

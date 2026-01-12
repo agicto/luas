@@ -14,7 +14,12 @@ import (
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/zgo/internal/infra/storage"
+	"github.com/zgiai/zgo/internal/modules/event"
+	"github.com/zgiai/zgo/internal/modules/ingest"
+	"github.com/zgiai/zgo/internal/modules/issue"
 	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/project"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -42,9 +47,31 @@ func InitApplication() (*app.Application, error) {
 	permissionRepository := permission.NewRepository(db)
 	permissionService := permission.NewService(permissionRepository)
 	permissionHandler := permission.NewHandler(permissionService)
+	projectRepository := project.NewRepository(db)
+	projectService := project.NewService(projectRepository)
+	projectHandler := project.NewHandler(projectService)
+	conn, err := storage.NewCHClient(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	eventRepository, err := event.NewRepository(conn)
+	if err != nil {
+		return nil, err
+	}
+	eventService := event.NewService(eventRepository)
+	ingestHandler := ingest.NewHandler(projectService, eventService)
+	issueRepository, err := issue.NewRepository(conn)
+	if err != nil {
+		return nil, err
+	}
+	issueService := issue.NewService(issueRepository)
+	issueHandler := issue.NewHandler(issueService)
 	handlers := &app.Handlers{
 		User:       handler,
 		Permission: permissionHandler,
+		Project:    projectHandler,
+		Ingest:     ingestHandler,
+		Issue:      issueHandler,
 	}
 	application := &app.Application{
 		Config:       configConfig,

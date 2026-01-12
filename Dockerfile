@@ -19,6 +19,7 @@ COPY . .
 
 # Build application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o zgo-server cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o zgo cmd/zgo/main.go
 
 # Run stage
 FROM alpine:latest
@@ -38,6 +39,7 @@ WORKDIR /app
 
 # Copy binary from build stage
 COPY --from=builder /app/zgo-server .
+COPY --from=builder /app/zgo .
 COPY --from=builder /app/.env.example ./.env
 
 # Set permissions
@@ -51,7 +53,7 @@ EXPOSE 8025
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8025/api/v1/health/ping || exit 1
+  CMD curl -f http://localhost:8025/health || exit 1
 
 # Start command
 CMD ["./zgo-server"]
