@@ -15,21 +15,46 @@ import {
 } from "@/components/ui/select"
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { DatePicker } from "@/components/ui/date-picker"
 import { MailIcon, LockIcon, Bold, Italic, Underline } from "lucide-react"
+import * as React from "react"
 
 export function FormShowcase() {
+  const [date, setDate] = React.useState<Date | undefined>(new Date())
+
   return (
     <section className="space-y-8">
       <h2 className="text-2xl font-semibold">Form Controls</h2>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Style Comparison */}
+        {/* Specialized & Mixed Types */}
         <div className="space-y-6">
-          <h3 className="text-lg font-medium">Specialized Inputs</h3>
+          <h3 className="text-lg font-medium">Specialized & Mixed Types</h3>
           
           <div className="grid gap-6 p-6 border rounded-xl bg-card">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Premium Date Picker (with Year)</Label>
+                <DatePicker date={date} setDate={setDate} />
+              </div>
+              <div className="grid gap-2">
+                <Label>DateTime Picker (HMS)</Label>
+                <DatePicker showTime date={date} setDate={setDate} />
+              </div>
+            </div>
+
             <div className="grid gap-2">
-              <Label>Search Input (Rounded-full)</Label>
+              <Label>Color Picker</Label>
+              <Input type="color" className="h-12 p-1 cursor-pointer" />
+            </div>
+
+            <div className="grid gap-2">
+              <Label>File Upload</Label>
+              <Input type="file" className="cursor-pointer py-1.5 h-auto text-xs" />
+            </div>
+
+            <div className="grid gap-2 pt-4 border-t">
+              <Label>Search Input (Pill)</Label>
               <SearchInput placeholder="Quick search components..." />
             </div>
 
@@ -37,35 +62,25 @@ export function FormShowcase() {
               <Label>Password Input</Label>
               <PasswordInput placeholder="Enter your password" />
             </div>
-
-            <div className="grid gap-2">
-              <Label>Input with Icons</Label>
-              <Input 
-                leftIcon={<MailIcon className="size-4" />} 
-                placeholder="email@example.com" 
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label className="text-destructive">Integrated Error Message</Label>
-              <Input 
-                errorText="This field is required and must be a valid email." 
-                placeholder="email@example.com" 
-              />
-            </div>
-            
-            <div className="grid gap-2">
-              <Label className="text-destructive">Explicit Error State (No Text)</Label>
-              <Input error placeholder="Missing required field" />
-            </div>
           </div>
         </div>
 
         {/* Binary Choices & States */}
+        {/* Binary Choices & Style Variants */}
         <div className="space-y-6">
-          <h3 className="text-lg font-medium">Binary Choice & States</h3>
+          <h3 className="text-lg font-medium">Style Variants & States</h3>
           
           <div className="grid gap-6 p-6 border rounded-xl bg-card">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label>Outline Variant (Default)</Label>
+                <Input placeholder="Standard outline input" />
+              </div>
+              <div className="grid gap-2">
+                <Label>Filled Variant</Label>
+                <Input variant="filled" placeholder="Subtle filled background" />
+              </div>
+            </div>
             <div className="flex items-start gap-4">
               <Checkbox id="cb1" className="mt-1" />
               <div className="grid gap-1.5 leading-none">

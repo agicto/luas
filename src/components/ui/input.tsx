@@ -1,16 +1,17 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { SearchIcon, EyeIcon, EyeOffIcon, AlertCircleIcon } from "lucide-react"
+import { DatePicker } from "./date-picker"
 
 import { cn } from "@/utils"
 
 const inputVariants = cva(
-  "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-md px-3 py-1 text-base shadow-xs transition-all file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50 md:text-sm focus-border",
+  "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex h-9 w-full min-w-0 rounded-lg px-3 py-1 text-base shadow-xs transition-all file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50 md:text-sm input-depth focus-border",
   {
     variants: {
       variant: {
-        outline: "border border-input bg-transparent dark:bg-input/30",
-        filled: "border-transparent bg-muted/50 hover:bg-muted focus:bg-background focus:border-input",
+        outline: "border border-border bg-background hover:border-border-strong focus-visible:border-primary dark:bg-input/10",
+        filled: "border border-transparent bg-muted/30 hover:bg-muted/50 focus-visible:bg-background focus-visible:border-primary focus-visible:shadow-sm",
       },
       error: {
         true: "border-destructive focus-visible:border-destructive text-destructive placeholder:text-destructive/50",
@@ -41,6 +42,31 @@ function Input({
   root,
   ...props
 }: InputProps) {
+  if (type === "date" || type === "datetime-local") {
+    return (
+      <DatePicker 
+        showTime={type === "datetime-local"} 
+        error={error || !!errorText}
+        errorText={typeof errorText === 'string' ? errorText : undefined}
+        placeholder={props.placeholder}
+        className={className}
+        value={props.value as any}
+        onChange={props.onChange as any}
+      />
+    )
+  }
+
+  if (type === "color") {
+    return (
+      <ColorPicker 
+        error={error}
+        errorText={errorText}
+        className={className}
+        {...props}
+      />
+    )
+  }
+
   const isError = error || !!errorText
 
   const inputNode = (
@@ -120,4 +146,58 @@ function PasswordInput({ className, ...props }: InputProps) {
   )
 }
 
-export { Input, SearchInput, PasswordInput }
+function ColorPicker({ className, value, onChange, disabled, error, errorText, ...props }: InputProps) {
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [internalValue, setInternalValue] = React.useState(typeof value === 'string' ? value : "#000000")
+  
+  const color = typeof value === 'string' ? value : internalValue
+
+  const handleTrigger = () => {
+    if (disabled) return
+    inputRef.current?.click()
+  }
+
+  const isError = error || !!errorText
+
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      <div 
+        onClick={handleTrigger}
+        className={cn(
+          "flex h-9 w-full items-center gap-3 rounded-lg border border-border bg-background px-3 py-1 shadow-xs transition-all hover:border-border-strong cursor-pointer input-depth focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/20",
+          disabled && "opacity-50 cursor-not-allowed",
+          isError && "border-destructive focus-within:border-destructive",
+          className
+        )}
+      >
+        <div 
+          className="size-5 rounded-full border border-border-strong/20 shadow-sm shrink-0" 
+          style={{ backgroundColor: color }}
+        />
+        <span className="text-sm font-medium font-mono uppercase tracking-wider text-foreground/80 first-letter:uppercase">
+          {color}
+        </span>
+        <input 
+          ref={inputRef}
+          type="color" 
+          className="sr-only"
+          value={color}
+          disabled={disabled}
+          onChange={(e) => {
+            const newVal = e.target.value
+            setInternalValue(newVal)
+            onChange?.(e)
+          }}
+          {...props}
+        />
+      </div>
+      {errorText && (
+        <p className="text-xs font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+          {errorText}
+        </p>
+      )}
+    </div>
+  )
+}
+
+export { Input, SearchInput, PasswordInput, ColorPicker }

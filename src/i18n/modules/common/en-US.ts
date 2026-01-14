@@ -26,6 +26,15 @@ const messages: CommonMessages = {
   userDeleteFailed: 'Failed to delete user',
   userCreated: 'User {name} has been created',
   userUpdated: 'User {name} has been updated',
+  
+  // Date Picker
+  year: 'Year',
+  month: 'Month',
+  hour: 'Hour',
+  minute: 'Minute',
+  second: 'Second',
+  now: 'Now',
+  datePlaceholder: 'Select date',
 };
 
 export default messages;

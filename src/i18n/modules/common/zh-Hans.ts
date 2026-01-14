@@ -24,6 +24,15 @@ const messages = {
   userDeleteFailed: '删除用户失败',
   userCreated: '用户 {name} 已创建',
   userUpdated: '用户 {name} 已更新',
+  
+  // Date Picker
+  year: '年',
+  month: '月',
+  hour: '时',
+  minute: '分',
+  second: '秒',
+  now: '现在',
+  datePlaceholder: '选择日期',
 };
 
 export default messages;

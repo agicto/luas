@@ -117,6 +117,8 @@
   --shadow-button: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   --shadow-button-primary: 0 4px 12px -2px oklch(from var(--primary) l c h / 0.3), 0 2px 4px -1px oklch(from var(--primary) l c h / 0.1);
   --shadow-button-destructive: 0 4px 12px -2px oklch(from var(--destructive) l c h / 0.3), 0 2px 4px -1px oklch(from var(--destructive) l c h / 0.1);
+  --shadow-input: inset 0 1px 2px 0 oklch(0 0 0 / 0.05);
+  --shadow-input-focus: 0 0 0 3px oklch(from var(--primary) l c h / 0.12), 0 1px 2px 0 oklch(0 0 0 / 0.05);
   --glass-blur: 8px;
 
   /* Fonts */
@@ -246,7 +248,7 @@
 
   /* Border-only focus for inputs */
   .focus-border {
-    @apply outline-hidden focus-visible:border-primary aria-invalid:border-destructive transition-all;
+    @apply outline-hidden focus-visible:border-primary aria-invalid:border-destructive transition-all duration-200;
   }
 
   .button-lighting {
@@ -274,8 +276,12 @@
     opacity: 1;
   }
 
+  .input-depth {
+    box-shadow: var(--shadow-input);
+  }
+
   .interactive {
-    @apply transition-all duration-300 ease-(--ease-spring) cursor-pointer select-none;
+    @apply transition-all duration-300 ease-spring cursor-pointer select-none;
     @apply disabled:pointer-events-none disabled:opacity-50;
     @apply active:scale-95 active:brightness-90 active:duration-100;
     backface-visibility: hidden;
@@ -283,7 +289,7 @@
   }
 
   .interactive-subtle {
-    @apply transition-all duration-300 ease-(--ease-spring) cursor-pointer select-none;
+    @apply transition-all duration-300 ease-spring cursor-pointer select-none;
     @apply disabled:pointer-events-none disabled:opacity-50;
     @apply active:scale-[0.98] active:brightness-95 active:duration-100;
     backface-visibility: hidden;
@@ -312,5 +318,14 @@
       0 4px 24px -1px oklch(0 0 0 / 0.2),
       0 0 1px 0 oklch(0 0 0 / 0.1),
       inset 0 1px 0 0 oklch(1 0 0 / 0.05);
+  }
+
+  /* UTILS */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
