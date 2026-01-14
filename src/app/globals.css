@@ -11,16 +11,37 @@
   --container-xl: 1280px;
   --container-2xl: 1536px;
   
-  /* Color mappings */
+  /* Color mappings - Semantic Design Tokens */
   --color-background: var(--background);
-  --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
   
-  /* Surfaces */
+  /* Semantic Backgrounds */
+  --color-bg-canvas: var(--bg-canvas);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-subtle: var(--bg-subtle);
+  
+  /* Semantic Text */
+  --color-text-main: var(--text-main);
+  --color-text-subtle: var(--text-subtle);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-brand: var(--text-on-brand);
+  
+  /* Semantic Borders */
+  --color-border-main: var(--border-main);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  
+  /* Brand / Primary (Design Tokens) */
+  --color-brand: var(--brand-main);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-strong: var(--brand-strong);
+  
+  /* Surfaces (Legacy mapping maintains compatibility) */
   --color-surface-1: var(--surface-1);
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   
+  /* Legacy Primary mapping */
   --color-primary: var(--primary);
   --color-primary-subtle: var(--primary-subtle);
   --color-primary-strong: var(--primary-strong);
@@ -34,43 +55,30 @@
   
   /* States */
   --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
   --color-success-subtle: var(--success-subtle);
   
   --color-warning: var(--warning);
-  --color-warning-foreground: var(--warning-foreground);
   --color-warning-subtle: var(--warning-subtle);
   
   --color-error: var(--error);
-  --color-error-foreground: var(--error-foreground);
   --color-error-subtle: var(--error-subtle);
   
   --color-info: var(--info);
-  --color-info-foreground: var(--info-foreground);
   --color-info-subtle: var(--info-subtle);
 
   --color-highlight: var(--highlight);
-  --color-highlight-foreground: var(--highlight-foreground);
   --color-highlight-subtle: var(--highlight-subtle);
   
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
-  
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  
   --color-destructive: var(--destructive);
-  
   --color-border: var(--border);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-strong: var(--border-strong);
-  
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   

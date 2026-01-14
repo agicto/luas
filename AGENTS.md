@@ -119,27 +119,31 @@ export default function NormalLayout({ children }) {
 - **Tests**: Place in `tests/` directory at project root
 - **Hot reload**: Do NOT restart dev server (auto-updates)
 
-### 4. Theme System (OKLCH)
+### 4. Theme System (Design Tokens & OKLCH)
 
-The project uses a modular theme system based on OKLCH and CSS variables.
+The project uses a structured Design Token system based on OKLCH and CSS variables, layered for better governance and maintainability.
 
-- **Storage**: `src/themes/` contains `light.css`, `dark.css`, and `index.css`.
-- **Primary Tokens**: `primary`, `secondary`, `destructive`.
-- **State Tokens**: `success`, `warning`, `info`.
-- **Semantic Variations**:
-  - `-subtle`: 10-15% opacity version for backgrounds.
-  - `-strong`: Higher contrast version for borders or active states.
-  - `-deeper`: Even higher contrast/darker version.
-- **Surface Levels**:
-  - `surface-1`: Base background.
-  - `surface-2`: Elevated surface (card).
-  - `surface-3`: Highest elevation (popover/modal).
-- **Shadows**: Theme-aware shadows (`shadow-sm` to `shadow-2xl`) with dynamic color.
+#### Layered Architecture:
+1.  **Primitives (`src/themes/primitives.css`)**: Base color palette (e.g., `--neutral-500`, `--blue-500`). **Do not use directly.**
+2.  **Semantic Tokens (`light.css` / `dark.css`)**: Functional naming based on purpose.
+    - **Backgrounds**: `bg-canvas`, `bg-surface`, `bg-subtle`.
+    - **Foregrounds**: `text-main`, `text-subtle`, `text-muted`.
+    - **Borders**: `border-main`, `border-subtle`, `border-strong`.
+    - **Brand**: `brand-main`, `brand-subtle`, `brand-strong`.
+    - **States**: `success`, `warning`, `error`, `info`, `highlight`.
 
-**Usage in Tailwind**:
+#### Usage in Tailwind (Strict Mode):
+Always prefer semantic classes over raw color values.
 ```tsx
-<div className="bg-primary-subtle text-primary-strong border-border-strong border-x-primary/60 shadow-md p-4 rounded-lg">
-  {/* Content */}
+// Using Semantic Tokens
+<div className="bg-bg-surface text-text-main border-border-subtle shadow-md p-4 rounded-lg">
+  <h1 className="text-brand">Heading</h1>
+  <p className="text-text-subtle">Description using subtle text.</p>
+</div>
+
+// Opacity modifiers work on all semantic tokens
+<div className="border-brand/60 bg-brand-subtle/50">
+  Integrated opacity support
 </div>
 ```
 
