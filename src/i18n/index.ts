@@ -1,6 +1,3 @@
-// Import global type declarations for IDE auto-completion
-import './i18n.d';
-
 // i18n barrel export
 export { 
   locales, 

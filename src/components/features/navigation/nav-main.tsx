@@ -33,7 +33,7 @@ export function NavMain({
               <span>Quick Create</span>
             </SidebarMenuButton>
             <Button
-              size="icon"
+              isIcon
               className="size-8 group-data-[collapsible=icon]:opacity-0"
               variant="outline"
             >

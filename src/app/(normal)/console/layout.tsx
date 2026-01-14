@@ -69,7 +69,7 @@ export default function ConsoleLayout({
           >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
           </svg>
-          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Llamacto Console
           </span>
         </Link>
@@ -79,7 +79,7 @@ export default function ConsoleLayout({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
+                isIcon
                 className="rounded-full border-dashed"
               >
                 <Bell className="h-4 w-4" />
@@ -96,7 +96,7 @@ export default function ConsoleLayout({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                size="icon"
+                isIcon
                 className="rounded-full overflow-hidden"
               >
                 <Avatar>
