@@ -58,8 +58,9 @@ export function ButtonShowcase() {
             <Button size="sm" icon={<MailIcon className="size-4" />} loading>With Icon</Button>
             <Button size="sm" icon={<SearchIcon className="size-4" />} iconPosition="right" loading>Right Icon</Button>
             <Button variant="outline" isIcon loading>
-              <SearchIcon />
+              <SearchIcon className="size-4" />
             </Button>
+            <Button variant="ghost" isIcon icon={<InfoIcon className="size-4" />} loading />
           </div>
         </div>
       </div>

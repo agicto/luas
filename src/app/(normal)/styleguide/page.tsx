@@ -7,6 +7,7 @@ import { FormShowcase } from "./_components/form-showcase"
 import { DataDisplayShowcase } from "./_components/data-display-showcase"
 import { FeedbackShowcase } from "./_components/feedback-showcase"
 import { DepthShowcase } from "./_components/depth-showcase"
+import { TooltipShowcase } from "./_components/tooltip-showcase"
 
 export default function StyleguidePage() {
   return (
@@ -29,6 +30,7 @@ export default function StyleguidePage() {
       <FormShowcase />
       <DataDisplayShowcase />
       <FeedbackShowcase />
+      <TooltipShowcase />
       <DepthShowcase />
 
       {/* Footer Info */}

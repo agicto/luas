@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-ring interactive [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-ring interactive shrink-0",
   {
     variants: {
       variant: {
@@ -63,18 +63,13 @@ function Button({
 }: ButtonProps) {
   const Comp = asChild ? Slot : "button"
 
-  const spinner = (
-    <Loader2 
-      className={cn(
-        "animate-spin shrink-0",
-        size === "xs" || size === "sm" ? "size-3" : 
-        size === "xl" || size === "2xl" ? "size-6" : "size-4"
-      )} 
-    />
+  const spinnerSize = cn(
+    "animate-spin shrink-0",
+    size === "xs" || size === "sm" ? "size-3" : 
+    size === "xl" || size === "2xl" ? "size-6" : "size-4"
   )
 
-  const iconToRender = loading ? spinner : icon
-  const showIcon = icon || loading
+  const spinner = <Loader2 className={spinnerSize} />
 
   return (
     <Comp
@@ -82,24 +77,26 @@ function Button({
       disabled={props.disabled || loading}
       className={cn(
         buttonVariants({ variant, size, isIcon, className }),
-        loading && !icon && !isIcon && "relative pointer-events-none"
+        loading && "relative pointer-events-none"
       )}
       {...props}
     >
-      {loading && !icon && !isIcon && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/20 dark:bg-black/10 z-10 transition-all duration-200">
-          {spinner}
-        </div>
-      )}
-      
       <span className={cn(
         "inline-flex items-center gap-2",
-        isIcon ? "justify-center" : "justify-inherit",
-        loading && !icon && !isIcon && "opacity-0"
+        isIcon ? "justify-center" : "justify-inherit"
       )}>
-        {showIcon && iconPosition === "left" && iconToRender}
-        {children}
-        {showIcon && iconPosition === "right" && iconToRender}
+        {/* Left Slot: Show spinner if loading and position is left */}
+        {iconPosition === "left" && (
+          loading ? spinner : icon
+        )}
+
+        {/* Children Slot: Hidden only for isIcon buttons while loading */}
+        {!(isIcon && loading) && children}
+
+        {/* Right Slot: Show spinner if loading and position is right */}
+        {iconPosition === "right" && (
+          loading ? spinner : icon
+        )}
       </span>
     </Comp>
   )
