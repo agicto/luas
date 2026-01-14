@@ -125,17 +125,19 @@ const localeToExport: Record<Locale, 'zhHans' | 'enUS' | 'jaJP'> = {
 
 ## Usage
 
-### Client Components
+### Unified Translation Function ✨
 
-Use the `useClientT` hook for Client Components:
+The unified `useT` hook provides clean, type-safe access to all translation modules.
+
+#### Client Components
 
 ```tsx
 'use client';
 
-import { useClientT } from '@/i18n';
+import { useT } from '@/i18n';
 
 export function LoginForm() {
-  const t = useClientT();
+  const t = useT();
 
   return (
     <form>
@@ -148,16 +150,14 @@ export function LoginForm() {
 }
 ```
 
-### Server Components
-
-Use the `useServerT` function for Server Components:
+#### Server Components
 
 ```tsx
 // app/page.tsx (Server Component)
-import { useServerT } from '@/i18n';
+import { getT } from '@/i18n';
 
 export default async function Page() {
-  const t = await useServerT();
+  const t = await getT();
 
   return (
     <nav>
@@ -175,7 +175,9 @@ export default async function Page() {
 // If you add a key with variables in zh-Hans.ts:
 // greeting: '你好，{name}！欢迎回来。'
 
-const t = useClientT();
+const t = useT();
+t('common.greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+// or
 t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
 ```
 

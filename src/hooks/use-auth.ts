@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { authApi } from '@/services/auth';
 import { useAuthStore } from '@/store/auth-store';
 import { authConfig } from '@/config/auth';
-import { useClientT } from '@/i18n';
+import { useT } from '@/i18n';
 import type { RegisterRequest } from '@/types/auth';
 
 // ============================================================================
@@ -42,7 +42,7 @@ export function useLogin() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const setUser = useAuthStore.use.setUser();
-  const t = useClientT();
+  const t = useT();
 
   return useMutation({
     mutationFn: async ({ email, password, remember }: LoginParams) => {
@@ -80,7 +80,7 @@ interface RegisterParams {
  * ```
  */
 export function useRegister() {
-  const t = useClientT();
+  const t = useT();
   const loginMutation = useLogin();
 
   return useMutation({
@@ -119,7 +119,7 @@ export function useLogout() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const setUser = useAuthStore.use.setUser();
-  const t = useClientT();
+  const t = useT();
 
   return useMutation({
     mutationFn: async () => {
@@ -129,7 +129,7 @@ export function useLogout() {
     onSuccess: () => {
       setUser(null);
       queryClient.clear();
-      toast.success(t.auth('logoutSuccess'));
+      toast.success(t.auth('accountCreated'));
       router.push(authConfig.routes.afterLogout);
     },
 

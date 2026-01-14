@@ -4,25 +4,45 @@ import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 
 // ============================================================================
-// Client-side Translation Hook
+// Unified Translation Functions
 // ============================================================================
 
 /**
- * Client-side translation hook for Client Components.
- * Provides access to all i18n modules.
+ * Unified translation object type.
+ * Provides module-based access to all translation namespaces.
+ */
+export type UnifiedTranslations = {
+  common: ReturnType<typeof useTranslations<'common'>>;
+  auth: ReturnType<typeof useTranslations<'auth'>>;
+  nav: ReturnType<typeof useTranslations<'nav'>>;
+  settings: ReturnType<typeof useTranslations<'settings'>>;
+  errors: ReturnType<typeof useTranslations<'errors'>>;
+  metadata: ReturnType<typeof useTranslations<'metadata'>>;
+};
+
+/**
+ * Universal client-side translation hook.
+ * 
+ * Provides module-based access to all translation namespaces.
  * 
  * @example
  * ```tsx
  * 'use client';
- * import { useClientT } from '@/i18n';
+ * import { useT } from '@/i18n';
  * 
- * function LoginForm() {
- *   const t = useClientT();
- *   return <button>{t.common('save')}</button>;
+ * function MyComponent() {
+ *   const t = useT();
+ *   return (
+ *     <div>
+ *       <button>{t.common('save')}</button>
+ *       <p>{t.auth('login')}</p>
+ *       <span>{t.errors('networkError')}</span>
+ *     </div>
+ *   );
  * }
  * ```
  */
-export function useClientT() {
+export function useT(): UnifiedTranslations {
   return {
     common: useTranslations('common'),
     auth: useTranslations('auth'),
@@ -33,28 +53,28 @@ export function useClientT() {
   };
 }
 
-export type ClientTranslations = ReturnType<typeof useClientT>;
-
-// ============================================================================
-// Server-side Translation Function
-// ============================================================================
-
 /**
- * Server-side translation function for Server Components.
- * Provides access to all i18n modules.
+ * Universal server-side translation function.
+ * 
+ * Provides module-based access to all translation namespaces.
  * 
  * @example
  * ```tsx
  * // app/page.tsx (Server Component)
- * import { useServerT } from '@/i18n';
+ * import { getT } from '@/i18n';
  * 
  * export default async function Page() {
- *   const t = await useServerT();
- *   return <h1>{t.common('loading')}</h1>;
+ *   const t = await getT();
+ *   return (
+ *     <div>
+ *       <h1>{t.common('loading')}</h1>
+ *       <p>{t.nav('home')}</p>
+ *     </div>
+ *   );
  * }
  * ```
  */
-export async function useServerT() {
+export async function getT(): Promise<UnifiedTranslations> {
   const [common, auth, nav, settings, errors, metadata] = await Promise.all([
     getTranslations('common'),
     getTranslations('auth'),
@@ -74,4 +94,3 @@ export async function useServerT() {
   };
 }
 
-export type ServerTranslations = Awaited<ReturnType<typeof useServerT>>;
