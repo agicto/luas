@@ -2,80 +2,107 @@
 
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import type { Messages } from './modules';
 
 // ============================================================================
 // Unified Translation Functions
 // ============================================================================
 
 /**
- * Unified translation object type.
- * Provides module-based access to all translation namespaces.
+ * Namespace translator types for each module.
  */
-export type UnifiedTranslations = {
-  common: ReturnType<typeof useTranslations<'common'>>;
-  auth: ReturnType<typeof useTranslations<'auth'>>;
-  nav: ReturnType<typeof useTranslations<'nav'>>;
-  settings: ReturnType<typeof useTranslations<'settings'>>;
-  errors: ReturnType<typeof useTranslations<'errors'>>;
-  metadata: ReturnType<typeof useTranslations<'metadata'>>;
+type CommonTranslator = ReturnType<typeof useTranslations<'common'>>;
+type AuthTranslator = ReturnType<typeof useTranslations<'auth'>>;
+type NavTranslator = ReturnType<typeof useTranslations<'nav'>>;
+type SettingsTranslator = ReturnType<typeof useTranslations<'settings'>>;
+type ErrorsTranslator = ReturnType<typeof useTranslations<'errors'>>;
+type MetadataTranslator = ReturnType<typeof useTranslations<'metadata'>>;
+
+// ============================================================================
+// Dot Notation Type Utilities
+// ============================================================================
+
+/**
+ * Generate all valid dot-notation keys from the Messages type.
+ * This creates a union like 'common.save' | 'common.loading' | 'auth.login' | ...
+ */
+type DotNotationKeys<T, Prefix extends string = ''> = T extends object
+  ? {
+      [K in keyof T]: K extends string
+        ? T[K] extends object
+          ? DotNotationKeys<T[K], `${Prefix}${K}.`>
+          : `${Prefix}${K}`
+        : never;
+    }[keyof T]
+  : never;
+
+/**
+ * All valid translation keys in dot notation format.
+ * Example: 'common.save' | 'common.loading' | 'auth.login' | ...
+ */
+type AllTranslationKeys = DotNotationKeys<Messages>;
+
+/**
+ * Dot notation translator function type.
+ * Provides strong typing for t('module.key') style calls.
+ */
+type DotNotationTranslator = (
+  key: AllTranslationKeys,
+  values?: Record<string, string | number | Date>,
+) => string;
+
+/**
+ * Unified translation type.
+ * 
+ * This is a hybrid type that:
+ * 1. Can be called as a function with dot notation: `t('common.save')`
+ * 2. Has namespace properties for direct access: `t.common('save')`
+ * 
+ * Both usages are fully type-safe with IDE auto-completion.
+ */
+export type UnifiedTranslations = DotNotationTranslator & {
+  common: CommonTranslator;
+  auth: AuthTranslator;
+  nav: NavTranslator;
+  settings: SettingsTranslator;
+  errors: ErrorsTranslator;
+  metadata: MetadataTranslator;
 };
 
 /**
  * Universal client-side translation hook.
  * 
- * Provides module-based access to all translation namespaces.
- * 
- * @example
- * ```tsx
- * 'use client';
- * import { useT } from '@/i18n';
- * 
- * function MyComponent() {
- *   const t = useT();
- *   return (
- *     <div>
- *       <button>{t.common('save')}</button>
- *       <p>{t.auth('login')}</p>
- *       <span>{t.errors('networkError')}</span>
- *     </div>
- *   );
- * }
- * ```
+ * Supports both dot notation and namespace-based access:
+ * - t('common.save') - dot notation
+ * - t.common('save') - namespace-based (backward compatible)
  */
 export function useT(): UnifiedTranslations {
-  return {
-    common: useTranslations('common'),
-    auth: useTranslations('auth'),
-    nav: useTranslations('nav'),
-    settings: useTranslations('settings'),
-    errors: useTranslations('errors'),
-    metadata: useTranslations('metadata'),
-  };
+  const rootT = useTranslations();
+  
+  const t = ((key: AllTranslationKeys, values?: Record<string, string | number | Date>) => {
+    return rootT(key as Parameters<typeof rootT>[0], values);
+  }) as UnifiedTranslations;
+  
+  t.common = useTranslations('common');
+  t.auth = useTranslations('auth');
+  t.nav = useTranslations('nav');
+  t.settings = useTranslations('settings');
+  t.errors = useTranslations('errors');
+  t.metadata = useTranslations('metadata');
+  
+  return t;
 }
 
 /**
  * Universal server-side translation function.
  * 
- * Provides module-based access to all translation namespaces.
- * 
- * @example
- * ```tsx
- * // app/page.tsx (Server Component)
- * import { getT } from '@/i18n';
- * 
- * export default async function Page() {
- *   const t = await getT();
- *   return (
- *     <div>
- *       <h1>{t.common('loading')}</h1>
- *       <p>{t.nav('home')}</p>
- *     </div>
- *   );
- * }
- * ```
+ * Supports both dot notation and namespace-based access:
+ * - t('common.save') - dot notation
+ * - t.common('save') - namespace-based (backward compatible)
  */
 export async function getT(): Promise<UnifiedTranslations> {
-  const [common, auth, nav, settings, errors, metadata] = await Promise.all([
+  const [rootT, common, auth, nav, settings, errors, metadata] = await Promise.all([
+    getTranslations(),
     getTranslations('common'),
     getTranslations('auth'),
     getTranslations('nav'),
@@ -84,13 +111,16 @@ export async function getT(): Promise<UnifiedTranslations> {
     getTranslations('metadata'),
   ]);
 
-  return {
-    common,
-    auth,
-    nav,
-    settings,
-    errors,
-    metadata,
-  };
+  const t = ((key: AllTranslationKeys, values?: Record<string, string | number | Date>) => {
+    return rootT(key as Parameters<typeof rootT>[0], values);
+  }) as UnifiedTranslations;
+  
+  t.common = common;
+  t.auth = auth;
+  t.nav = nav;
+  t.settings = settings;
+  t.errors = errors;
+  t.metadata = metadata;
+  
+  return t;
 }
-

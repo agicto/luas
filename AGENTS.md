@@ -27,10 +27,8 @@ src/
 │   │   ├── console/        # Admin dashboard
 │   │   └── ai-demo/        # AI features demo
 │   ├── (site)/             # Public site route group
-│   ├── api/                # API Route Handlers (BFF layer)
-│   │   ├── _lib/           # Shared API utilities
-│   │   ├── auth/           # Auth endpoints (Mock by default)
-│   │   └── backend/        # Proxy to upstream API
+│   ├── api/                # API Route Handlers (Mock endpoints)
+│   │   └── auth/           # Auth endpoints (Mock by default)
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives (DO NOT MODIFY)
 │   └── features/           # Business feature components
@@ -119,7 +117,7 @@ export default function NormalLayout({ children }) {
 
 ### 4. Internationalization (i18n)
 
-The project uses `next-intl` with a unified translation pattern.
+The project uses `next-intl` with a unified translation pattern that supports both dot notation and namespace-based access.
 
 **Client Components:**
 ```tsx
@@ -127,7 +125,15 @@ import { useT } from '@/i18n';
 
 function MyComponent() {
   const t = useT();
-  return <button>{t.common('save')}</button>;
+  return (
+    <div>
+      {/* Dot notation (recommended) */}
+      <button>{t('common.save')}</button>
+      
+      {/* Namespace-based (backward compatible) */}
+      <button>{t.common('save')}</button>
+    </div>
+  );
 }
 ```
 
@@ -137,11 +143,13 @@ import { getT } from '@/i18n';
 
 export default async function Page() {
   const t = await getT();
-  return <h1>{t.common('loading')}</h1>;
+  return <h1>{t('common.loading')}</h1>;
 }
 ```
 
 **Available Namespaces:** `common`, `auth`, `nav`, `settings`, `errors`, `metadata`
+
+**Type Safety:** Invalid keys will cause TypeScript errors at compile time.
 
 ## Code Conventions
 
