@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from "lucide-react"
 
 import { cn } from "@/utils"
 
@@ -41,25 +42,66 @@ const buttonVariants = cva(
   }
 )
 
+interface ButtonProps extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
+  asChild?: boolean
+  loading?: boolean
+  icon?: React.ReactNode
+  iconPosition?: "left" | "right"
+}
+
 function Button({
   className,
   variant,
   size,
   isIcon,
+  loading = false,
   asChild = false,
+  icon,
+  iconPosition = "left",
+  children,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button"
+
+  const spinner = (
+    <Loader2 
+      className={cn(
+        "animate-spin shrink-0",
+        size === "xs" || size === "sm" ? "size-3" : 
+        size === "xl" || size === "2xl" ? "size-6" : "size-4"
+      )} 
+    />
+  )
+
+  const iconToRender = loading ? spinner : icon
+  const showIcon = icon || loading
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, isIcon, className }))}
+      disabled={props.disabled || loading}
+      className={cn(
+        buttonVariants({ variant, size, isIcon, className }),
+        loading && !icon && !isIcon && "relative pointer-events-none"
+      )}
       {...props}
-    />
+    >
+      {loading && !icon && !isIcon && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/20 dark:bg-black/10 z-10 transition-all duration-200">
+          {spinner}
+        </div>
+      )}
+      
+      <span className={cn(
+        "inline-flex items-center gap-2",
+        isIcon ? "justify-center" : "justify-inherit",
+        loading && !icon && !isIcon && "opacity-0"
+      )}>
+        {showIcon && iconPosition === "left" && iconToRender}
+        {children}
+        {showIcon && iconPosition === "right" && iconToRender}
+      </span>
+    </Comp>
   )
 }
 
