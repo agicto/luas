@@ -3,6 +3,3 @@
 
 export { authApi } from './auth';
 export type { AuthApi } from './auth';
-
-export { userApi } from './user';
-export type { UserApi, User, CreateUserDto, UpdateUserDto, UserListParams, UserListResponse } from './user';

@@ -13,7 +13,7 @@ import type {
 } from '@/types/auth';
 
 // API endpoints (Mock)
-// Next.js API routes are used exclusively for simulation
+// All endpoints point to Next.js API routes in src/app/api/auth/*
 const ENDPOINTS = {
   LOGIN: '/auth/login',
   LOGOUT: '/auth/logout',
@@ -22,7 +22,6 @@ const ENDPOINTS = {
   SETUP_STATUS: '/auth/setup-status',
   SETUP: '/auth/setup',
   SYSTEM_FEATURES: '/auth/system-features',
-  PROFILE: '/backend/api/user/profile',
 } as const;
 
 /**
@@ -64,9 +63,6 @@ export const authApi = {
     const result = await request.get<{ user: User }>(ENDPOINTS.ME);
     return result.user;
   },
-
-  updateProfile: (data: Partial<User>) =>
-    request.patch<User>(ENDPOINTS.PROFILE, data),
 } as const;
 
 // Type exports for external use

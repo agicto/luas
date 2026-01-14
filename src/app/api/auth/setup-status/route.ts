@@ -1,21 +1,19 @@
 import { NextResponse } from 'next/server';
-import { getUpstreamBaseUrl } from '../../_lib/upstream';
 
+/**
+ * Auth Setup Status API (Mock)
+ * 
+ * GET /api/auth/setup-status
+ * 
+ * Returns the current setup status.
+ * In a real app, this would check if initial setup has been completed.
+ */
 export async function GET() {
-  const baseUrl = getUpstreamBaseUrl();
-
-  const res = await fetch(`${baseUrl}/console/api/setup`, {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
+  // Mock: Always return that setup is finished
+  // In a real app, this would check a database flag
+  return NextResponse.json({
+    data: {
+      step: 'finished',
     },
-    cache: 'no-store',
   });
-
-  const payload = await res.json().catch(() => null);
-  if (!res.ok) {
-    return NextResponse.json(payload ?? { message: 'Failed to fetch setup status' }, { status: res.status });
-  }
-
-  return NextResponse.json({ data: payload?.data ?? payload }, { status: 200 });
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUpstreamBaseUrl } from '../../_lib/upstream';
+import { cookies } from 'next/headers';
+import { authConfig, mockUsers, generateMockToken, isRefreshModeEnabled } from '@/config/auth';
 
 interface RegisterBody {
   email: string;
@@ -7,33 +8,77 @@ interface RegisterBody {
   password: string;
 }
 
+/**
+ * Auth Register API (Mock)
+ * 
+ * POST /api/auth/register
+ * 
+ * Creates a new mock user and returns success.
+ * In a real app, this would create a user in the database.
+ */
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as RegisterBody;
+  try {
+    const body = (await req.json()) as RegisterBody;
 
-  if (!body?.email || !body?.name || !body?.password) {
-    return NextResponse.json({ message: 'Email, name, and password are required' }, { status: 400 });
-  }
+    if (!body?.email || !body?.name || !body?.password) {
+      return NextResponse.json(
+        { message: 'Email, name, and password are required', code: 'VALIDATION_ERROR' },
+        { status: 400 }
+      );
+    }
 
-  const baseUrl = getUpstreamBaseUrl();
+    // Check if email already exists in mock users
+    const existingUser = mockUsers.find((u) => u.email === body.email);
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'Email already registered', code: 'EMAIL_EXISTS' },
+        { status: 409 }
+      );
+    }
 
-  const res = await fetch(`${baseUrl}/console/api/account/register`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify({
+    // Create new mock user (in real app, this would save to database)
+    const newUser = {
+      id: `mock-user-${Date.now()}`,
       email: body.email,
       name: body.name,
-      password: body.password,
-    }),
-    cache: 'no-store',
-  });
+      role: 'user' as const,
+    };
 
-  const payload = await res.json().catch(() => null);
-  if (!res.ok) {
-    return NextResponse.json(payload ?? { message: 'Registration failed' }, { status: res.status });
+    // Generate tokens and set cookies (auto-login after registration)
+    const accessToken = generateMockToken(newUser.id, 'access');
+    const refreshToken = isRefreshModeEnabled()
+      ? generateMockToken(newUser.id, 'refresh')
+      : undefined;
+
+    const cookieStore = await cookies();
+
+    cookieStore.set(authConfig.cookies.accessToken, accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: authConfig.accessTokenExpiry,
+    });
+
+    if (refreshToken) {
+      cookieStore.set(authConfig.cookies.refreshToken, refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: authConfig.refreshTokenExpiry,
+      });
+    }
+
+    return NextResponse.json({
+      data: { user: newUser },
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Auth register error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ data: payload?.data ?? payload }, { status: 200 });
 }

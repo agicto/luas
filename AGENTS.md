@@ -22,13 +22,15 @@
 ```
 src/
 ├── app/                    # Next.js App Router
-│   ├── (auth)/             # Auth route group (login, register)
+│   ├── (auth)/             # Public auth route group (login, register)
+│   ├── (normal)/           # Protected route group
+│   │   ├── console/        # Admin dashboard
+│   │   └── ai-demo/        # AI features demo
 │   ├── (site)/             # Public site route group
 │   ├── api/                # API Route Handlers (BFF layer)
 │   │   ├── _lib/           # Shared API utilities
-│   │   ├── auth/           # Auth endpoints
+│   │   ├── auth/           # Auth endpoints (Mock by default)
 │   │   └── backend/        # Proxy to upstream API
-│   └── console/            # Admin dashboard
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives (DO NOT MODIFY)
 │   └── features/           # Business feature components
@@ -36,31 +38,33 @@ src/
 ├── constants/              # Route constants, enums
 ├── hooks/                  # Custom React hooks
 ├── http/                   # HTTP client (axios wrapper)
-├── i18n/                   # Internationalization (TypeScript modules)
+├── i18n/                   # Internationalization
 │   ├── config.ts           # Locale config + ENV variables
+│   ├── translations.ts     # Unified translation hooks (useT, getT)
 │   └── modules/            # Per-module translations (common, auth, etc.)
 ├── providers/              # React context providers
-├── services/               # API service layer
-├── store/                  # Zustand stores
+├── services/               # API service layer (Zod validated)
+├── store/                  # Zustand stores (dumb state only)
+├── test/                   # Test utilities and setup (unit tests in src/test)
+├── themes/                 # Design tokens (OKLCH, CSS variables)
 ├── types/                  # TypeScript type definitions
 └── utils/                  # Pure utility functions
 ```
 
 ## Architecture Patterns
 
-### 1. BFF (Backend For Frontend)
+### 1. Mock API Architecture
 
 All API calls go through Next.js Route Handlers under `/api/*`:
 
 ```
-Browser → /api/auth/login → Upstream API
-Browser → /api/backend/* → Upstream API (proxy)
+Browser → /api/auth/* → Mock handlers (Next.js API routes)
 ```
 
 **Benefits:**
-- No CORS issues (same-origin)
+- No external dependencies for development
 - httpOnly cookie sessions (secure)
-- Hide upstream API from client
+- Fast local development without backend
 
 ### 2. Authentication Flow
 
@@ -74,16 +78,19 @@ Browser → /api/backend/* → Upstream API (proxy)
 **Auth Endpoints (Mock API):**
 
 ```
-# Mock Backend (using Next.js API routes)
-POST /api/auth/login → Mock login (admin@example.com / admin123)
-POST /api/auth/refresh → Refresh tokens
-GET  /api/auth/me → Get current user
-POST /api/auth/logout → Clear cookies
+# Mock Backend (in src/app/api/auth)
+POST /api/auth/login     → Mock login (admin@example.com / admin123)
+POST /api/auth/register  → Mock user registration
+GET  /api/auth/me        → Get current user
+POST /api/auth/logout    → Clear cookies
+GET  /api/auth/setup-status    → Get setup status
+POST /api/auth/setup           → Initial system setup
+GET  /api/auth/system-features → Get feature flags
 ```
 
 **Route Groups:**
 - `(auth)/*` - Public auth pages (login, register)
-- `(normal)/*` - Protected routes (requires authentication)
+- `(normal)/*` - Protected routes (requires AuthGuard/Middleware)
 - `(site)/*` - Public pages
 
 **Protecting Routes:**
@@ -101,7 +108,7 @@ export default function NormalLayout({ children }) {
 
 - **Auth state**: `src/store/auth-store.ts` (Zustand + persist)
   - Stores user data, system features, and authentication status.
-  - **Dumb store**: Only contains state and simple setters.
+  - Contains state and setters; async initialization logic is included for convenience.
 - **Auth actions**: `src/hooks/use-auth.ts` (React Query)
   - Handles `login`, `register`, and `logout`.
   - Includes built-in toast notifications and redirection.
@@ -110,16 +117,42 @@ export default function NormalLayout({ children }) {
 - **UI state**: `src/store/ui-store.ts` (Zustand).
 - **Auth config**: `src/config/auth.ts` (token modes, routes).
 
+### 4. Internationalization (i18n)
+
+The project uses `next-intl` with a unified translation pattern.
+
+**Client Components:**
+```tsx
+import { useT } from '@/i18n';
+
+function MyComponent() {
+  const t = useT();
+  return <button>{t.common('save')}</button>;
+}
+```
+
+**Server Components:**
+```tsx
+import { getT } from '@/i18n';
+
+export default async function Page() {
+  const t = await getT();
+  return <h1>{t.common('loading')}</h1>;
+}
+```
+
+**Available Namespaces:** `common`, `auth`, `nav`, `settings`, `errors`, `metadata`
+
 ## Code Conventions
 
 ### Must Follow
 
 - **Package manager**: `pnpm` only
 - **Comments**: English only
-- **Tests**: Place in `tests/` directory at project root
+- **Tests**: Place in `src/test` directory
 - **Hot reload**: Do NOT restart dev server (auto-updates)
 
-### 4. Theme System (Design Tokens & OKLCH)
+### 5. Theme System (Design Tokens & OKLCH)
 
 The project uses a structured Design Token system based on OKLCH and CSS variables, layered for better governance and maintainability.
 
@@ -185,7 +218,6 @@ NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
 
 # Auth configuration
-NEXT_PUBLIC_USE_MOCK_AUTH=true              # Use mock auth (dev without backend)
 NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 ```
 
@@ -201,7 +233,7 @@ NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 
 1. Create folder in `src/app/api/endpoint-name/`
 2. Add `route.ts` with HTTP method handlers
-3. Use `getAccessTokenFromCookies()` for auth
+3. Use `cookies()` from `next/headers` for auth if needed
 
 ### Adding a New Component
 
