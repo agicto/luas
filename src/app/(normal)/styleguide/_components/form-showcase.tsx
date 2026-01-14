@@ -13,7 +13,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { MailIcon, LockIcon } from "lucide-react"
+import { Toggle } from "@/components/ui/toggle"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { MailIcon, LockIcon, Bold, Italic, Underline } from "lucide-react"
 
 export function FormShowcase() {
   return (
@@ -84,6 +86,27 @@ export function FormShowcase() {
               <Label className="text-destructive">Error State</Label>
               <Input aria-invalid="true" placeholder="Error field..." />
               <p className="text-xs text-destructive">Invalidated border and focus-ring colors.</p>
+            </div>
+
+            <div className="space-y-4 pt-4 border-t">
+              <Label>Selection Toggles</Label>
+              <div className="flex flex-wrap gap-4">
+                <Toggle aria-label="Toggle italic" className="interactive-subtle">
+                  <Italic className="h-4 w-4" />
+                </Toggle>
+                
+                <ToggleGroup type="multiple" variant="outline">
+                  <ToggleGroupItem value="bold" aria-label="Toggle bold" className="interactive-subtle">
+                    <Bold className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="italic" aria-label="Toggle italic">
+                    <Italic className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="underline" aria-label="Toggle underline">
+                    <Underline className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
             </div>
           </div>
         </div>

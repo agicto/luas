@@ -8,6 +8,8 @@ import { DataDisplayShowcase } from "./_components/data-display-showcase"
 import { FeedbackShowcase } from "./_components/feedback-showcase"
 import { DepthShowcase } from "./_components/depth-showcase"
 import { TooltipShowcase } from "./_components/tooltip-showcase"
+import { OverlayShowcase } from "./_components/overlay-showcase"
+import { NavigationShowcase } from "./_components/navigation-showcase"
 
 export default function StyleguidePage() {
   return (
@@ -31,7 +33,9 @@ export default function StyleguidePage() {
       <DataDisplayShowcase />
       <FeedbackShowcase />
       <TooltipShowcase />
+      <NavigationShowcase />    
       <DepthShowcase />
+      <OverlayShowcase />
 
       {/* Footer Info */}
       <footer className="pt-20 border-t flex flex-col md:flex-row justify-between gap-8 text-text-muted">

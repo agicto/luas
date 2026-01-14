@@ -12,6 +12,8 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
 
 const tableData = [
   { id: "1", name: "Premium Button", status: "Completed", date: "2024-01-14", value: "$420.00" },
@@ -72,10 +74,24 @@ export function DataDisplayShowcase() {
             <CardTitle>Premium Card</CardTitle>
             <CardDescription>Using the new --shadow-premium token.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-sm text-text-subtle">
               Elevated shadows provide better visual hierarchy than standard borders alone.
             </p>
+            <Separator />
+            <div className="flex h-5 items-center space-x-4 text-sm font-medium">
+              <div className="flex -space-x-2">
+                <Avatar className="border-2 border-background size-8">
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>CN</AvatarFallback>
+                </Avatar>
+                <Avatar className="border-2 border-background size-8">
+                  <AvatarFallback>JD</AvatarFallback>
+                </Avatar>
+              </div>
+              <Separator orientation="vertical" />
+              <div className="text-text-muted text-xs">Collaborators</div>
+            </div>
           </CardContent>
         </Card>
       </div>
