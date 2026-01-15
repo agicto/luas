@@ -248,106 +248,85 @@ NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 1. UI primitives → Use shadcn/ui: `npx shadcn@latest add [component]`
 2. Feature components → Create in `src/components/features/[feature]/`
 
-### Adding a New Service
+### Adding a New Data Module (Service-Hook-Type Pattern)
 
-1. Create `src/services/[name].ts` using **Zod validation pattern**:
+All data handling must follow the strict **Service-Hook-Type** layered architecture to ensure separation of concerns and type safety.
+
+#### 1. Define Types (`src/types/*.ts`)
+All data structures (Domain models, DTOs, Query schemas) must be strictly typed.
 
 ```typescript
-// services/example.ts
-import { z } from 'zod';
-import { request } from '@/http';
-
-// 1. Define Zod schemas for API responses
-const ExampleSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  status: z.enum(['active', 'inactive']),
-  createdAt: z.string().optional(),
-});
-
-const ExampleListResponseSchema = z.object({
-  data: z.array(ExampleSchema),
-  total: z.number(),
-  page: z.number(),
-  limit: z.number(),
-});
-
-// 2. Infer types from schemas (single source of truth)
-export type Example = z.infer<typeof ExampleSchema>;
-export type ExampleListResponse = z.infer<typeof ExampleListResponseSchema>;
-
-// 3. Define request DTOs (no schema needed for outgoing data)
-export interface CreateExampleDto {
-  name: string;
-  status: 'active' | 'inactive';
-}
-
-// 4. Define endpoints
-const ENDPOINTS = {
-  LIST: '/backend/api/examples',
-  DETAIL: (id: string) => `/backend/api/examples/${id}`,
-} as const;
-
-// 5. Create API with Zod validation
-export const exampleApi = {
-  list: async (params?: { page?: number }): Promise<ExampleListResponse> => {
-    const response = await request.get(ENDPOINTS.LIST, { params });
-    return ExampleListResponseSchema.parse(response); // Throws on invalid data
-  },
-  get: async (id: string): Promise<Example> => {
-    const response = await request.get(ENDPOINTS.DETAIL(id));
-    return ExampleSchema.parse(response);
-  },
-  create: async (data: CreateExampleDto): Promise<Example> => {
-    const response = await request.post(ENDPOINTS.LIST, data);
-    return ExampleSchema.parse(response);
-  },
-  delete: async (id: string): Promise<void> => {
-    await request.delete(ENDPOINTS.DETAIL(id));
-  },
-} as const;
+export interface ExampleItem { id: string; title: string; status: 'active' | 'inactive'; }
+export interface UpdateExampleRequest { title?: string; status?: 'active' | 'inactive'; }
 ```
 
-**Zod Validation Strategy (Selective):**
-
-| Scenario | Validate? |
-|----------|-----------|
-| List/Detail APIs (user-facing data) | ✅ Yes |
-| Create/Update response | ✅ Yes |
-| Delete (returns void) | ❌ No |
-| Internal data not directly displayed | ❌ Optional |
-
-**Key Rules:**
-- **Validate critical interfaces** - list, detail, create, update responses
-- **Infer types from schemas** - `z.infer<typeof Schema>` for single source of truth
-- **No schemas for request DTOs** - only validate incoming data, not outgoing
-- **Skip validation for simple operations** - delete, toggle, etc.
-
-2. Export from `src/services/index.ts`
-3. Create hooks in `src/hooks/use-[name].ts` that call the service
-
-### Adding Query Hooks
-
-Use query key factory pattern:
+#### 2. Implement Stateless Service (`src/services/*.ts`)
+Services are pure functional objects.
+- **Stateless**: They do not hold state or use hooks.
+- **Reusable**: Must be usable in both Client and Server Components.
+- **Simple**: Just wrappers around `request`.
 
 ```typescript
-// hooks/use-examples.ts
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { exampleApi } from '@/services';
+export const exampleService = {
+  get: (id: string) => request.get<ExampleItem>(`/api/example/${id}`),
+  update: (id: string, data: UpdateExampleRequest) => request.put<ExampleItem>(`/api/example/${id}`, data),
+};
+```
 
+#### 3. Implement Encapsulated Hooks (`src/hooks/*.ts`)
+Hooks manage React Query state and side effects.
+
+**Standard Pattern: Full CRUD Optimistic Updates**
+Provide immediate UI feedback and handle errors via **Refetch-on-Failure**.
+
+```typescript
+// 1. Key Factory
 export const exampleKeys = {
   all: ['examples'] as const,
   lists: () => [...exampleKeys.all, 'list'] as const,
   detail: (id: string) => [...exampleKeys.all, 'detail', id] as const,
 };
 
-export function useExamples() {
-  return useQuery({
-    queryKey: exampleKeys.lists(),
-    queryFn: () => exampleApi.list(),
+// 2. Query Hooks
+export const useExample = (id: string) => useQuery({
+  queryKey: exampleKeys.detail(id),
+  queryFn: () => exampleService.get(id),
+});
+
+// 3. Mutation Hooks (Optimistic Template)
+export function useUpdateExample() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string, data: UpdateExampleRequest }) => 
+      exampleService.update(id, data),
+    
+    // Step 1: Push optimistic update to UI
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: exampleKeys.detail(id) });
+      const prev = queryClient.getQueryData(exampleKeys.detail(id));
+      if (prev) queryClient.setQueryData(exampleKeys.detail(id), { ...prev as any, ...data });
+      return { prev };
+    },
+    
+    // Step 2: Rollback via Refetch on failure
+    onError: (err, { id }) => {
+      queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
+      toast.error(err.message);
+    },
+    
+    // Step 3: Final synchronization
+    onSettled: (data, err, { id }) => {
+      queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: exampleKeys.lists() });
+    }
   });
 }
 ```
+
+**Key Strategies:**
+- **Cancel outgoing refetches** in `onMutate` to prevent race conditions.
+- **Rollback via Invalidation**: Simpler and more robust than manual state restoration.
+- **Always Sync**: Final invalidation in `onSettled` ensures local state perfect alignment with the server.
 
 ## API Response Format
 

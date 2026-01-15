@@ -3,3 +3,6 @@
 
 export { authApi } from './auth';
 export type { AuthApi } from './auth';
+
+export { exampleService } from './example';
+export type { ExampleService } from './example';
