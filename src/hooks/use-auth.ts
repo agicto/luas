@@ -26,7 +26,6 @@ export const authKeys = {
 interface LoginParams {
   email: string;
   password: string;
-  remember?: boolean;
 }
 
 /**
@@ -35,7 +34,7 @@ interface LoginParams {
  * @example
  * ```tsx
  * const { mutate: login, isPending } = useLogin();
- * login({ email, password, remember });
+ * login({ email, password });
  * ```
  */
 export function useLogin() {
@@ -45,8 +44,8 @@ export function useLogin() {
   const t = useT();
 
   return useMutation({
-    mutationFn: async ({ email, password, remember }: LoginParams) => {
-      return authApi.login({ email, password, remember });
+    mutationFn: async ({ email, password }: LoginParams) => {
+      return authApi.login({ email, password });
     },
 
     onSuccess: (user) => {

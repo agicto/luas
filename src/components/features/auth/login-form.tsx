@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Icons } from '@/components/ui/icons';
 import { useLogin } from '@/hooks/use-auth';
-import { env } from '@/config/env';
+import { mockUsers } from '@/config/auth';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
 
 const loginSchema = z.object({
@@ -28,12 +28,22 @@ export function LoginForm({ className }: { className?: string }) {
   const { mutateAsync: login, isPending: isMutationLoading } = useLogin();
   const systemFeatures = useAuthStore.use.systemFeatures();
 
+  // Log mock accounts in development mode
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 Mock accounts available for login:');
+      mockUsers.forEach((user) => {
+        console.log(`   Email: ${user.email}, Password: ${user.password}`);
+      });
+    }
+  }, []);
+
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    try { await login({ ...data, remember: false }); } catch (err) { console.error(err); }
+    try { await login(data); } catch (err) { console.error(err); }
   };
 
   const isFormLoading = isMutationLoading || isSubmitting;

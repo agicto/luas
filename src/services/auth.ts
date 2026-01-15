@@ -42,7 +42,7 @@ export const authApi = {
     request.get<SystemFeatures>(ENDPOINTS.SYSTEM_FEATURES),
 
   // Authentication
-  login: async (credentials: LoginRequest & { remember?: boolean }) => {
+  login: async (credentials: LoginRequest) => {
     const result = await request.post<{ user: User }>(ENDPOINTS.LOGIN, credentials);
     return result.user;
   },

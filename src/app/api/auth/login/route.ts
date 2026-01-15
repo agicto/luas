@@ -5,7 +5,6 @@ import { authConfig, mockUsers, generateMockToken } from '@/config/auth';
 interface LoginBody {
   email: string;
   password: string;
-  remember?: boolean;
 }
 
 /**
@@ -44,16 +43,15 @@ export async function POST(req: NextRequest) {
     // Generate access token
     const accessToken = generateMockToken(user.id, 'access');
 
-    // Set cookie
+    // Set cookie (default 30 days)
     const cookieStore = await cookies();
-    const maxAge = body.remember ? 604800 : authConfig.accessTokenExpiry;
 
     cookieStore.set(authConfig.cookies.accessToken, accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge,
+      maxAge: authConfig.accessTokenExpiry,
     });
 
     // Return user data in expected format: { data: { user } }
