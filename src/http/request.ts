@@ -1,10 +1,9 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse as BaseApiResponse } from './types';
 import { handleError } from './error-handler';
+import { getAuthTokens, setAuthTokens } from '@/store/auth-store';
 
 // Environment configuration
-// In the browser, a relative baseURL works best for same-origin Route Handlers.
-// On the server, axios requires an absolute URL, so allow overriding via INTERNAL_API_URL.
 const API_URL =
   typeof window === 'undefined'
     ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api')
@@ -13,10 +12,10 @@ const API_TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT || 30000);
 
 // Request configuration type
 export interface RequestConfig extends AxiosRequestConfig {
-  // Custom configuration options
-  skipAuth?: boolean; // Skip authentication
-  skipErrorHandler?: boolean; // Skip error handling
-  baseURL?: string; // Optional custom baseURL
+  skipAuth?: boolean;
+  skipErrorHandler?: boolean;
+  baseURL?: string;
+  _retry?: boolean; // Internal flag for silent refresh
 }
 
 // Error type
@@ -34,36 +33,97 @@ export class ApiError extends Error {
   }
 }
 
-// Interceptor setup function
-function setupInterceptors(instance: AxiosInstance) {
-  // Request interceptor
-  instance.interceptors.request.use(
-    (config: InternalAxiosRequestConfig & RequestConfig) => {
-      // Add default content type
+// Token refresh state
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+/**
+ * Modular Interceptors
+ */
+const interceptors = {
+  request: {
+    // 1. Auth Interceptor: Inject Bearer Token
+    auth: (config: InternalAxiosRequestConfig & RequestConfig) => {
+      if (!config.skipAuth) {
+        const { accessToken } = getAuthTokens();
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+      }
+      
       if (!config.headers['Content-Type']) {
         config.headers['Content-Type'] = 'application/json';
       }
-      
       return config;
     },
-    (error: AxiosError) => {
-      return Promise.reject(error);
-    }
-  );
-
-  // Response interceptor
-  instance.interceptors.response.use(
-    (response: AxiosResponse) => {
+    error: (error: AxiosError) => Promise.reject(error),
+  },
+  
+  response: {
+    // 1. Success Interceptor: Unwrap data
+    success: (response: AxiosResponse) => {
       const { data } = response;
-
-      // If the backend uses a common envelope like { data: ... }, unwrap it.
       if (data && typeof data === 'object' && 'data' in data) {
         return (data as { data: unknown }).data;
       }
-
       return data;
     },
-    (error: AxiosError) => {
+    
+    // 2. Error Interceptor: Handle errors and Silent Refresh
+    error: async (error: AxiosError) => {
+      const originalRequest = error.config as InternalAxiosRequestConfig & RequestConfig;
+      
+      // Handle 401 Unauthorized - Silent Refresh logic
+      if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.skipAuth) {
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then((token) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`;
+              return axios(originalRequest);
+            })
+            .catch((err) => Promise.reject(err));
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        const { refreshToken } = getAuthTokens();
+        if (refreshToken) {
+          try {
+            // Using a clean axios instance to avoid interceptor recursion
+            const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+            const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data || response.data;
+            
+            setAuthTokens(newAccessToken, newRefreshToken);
+            processQueue(null, newAccessToken);
+            
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return axios(originalRequest);
+          } catch (refreshError) {
+            processQueue(refreshError, null);
+            // Optional: Logout user or redirect to login
+            setAuthTokens(null, null);
+            return Promise.reject(refreshError);
+          } finally {
+            isRefreshing = false;
+          }
+        }
+      }
+
+      // Format and normalize error
       let message = 'Request failed';
       let code: string | number = 'UNKNOWN_ERROR';
       let data: unknown = undefined;
@@ -88,15 +148,20 @@ function setupInterceptors(instance: AxiosInstance) {
 
       const apiError = new ApiError(message, code, data, status);
 
-      // Trigger global error handler unless skipped
       const config = error.config as RequestConfig;
       if (!config?.skipErrorHandler) {
         handleError(apiError);
       }
       
       return Promise.reject(apiError);
-    }
-  );
+    },
+  },
+};
+
+// Interceptor setup function
+function setupInterceptors(instance: AxiosInstance) {
+  instance.interceptors.request.use(interceptors.request.auth, interceptors.request.error);
+  instance.interceptors.response.use(interceptors.response.success, interceptors.response.error);
 }
 
 // Create axios instance factory
@@ -116,7 +181,7 @@ function createAxiosInstance(baseURL?: string): AxiosInstance {
 // Default instance
 const defaultInstance = createAxiosInstance();
 
-// Cache for custom baseURL instances to avoid recreating on every request
+// Cache for custom baseURL instances
 const instanceCache = new Map<string, AxiosInstance>();
 
 function getInstanceForBaseURL(baseURL?: string): AxiosInstance {
@@ -153,12 +218,10 @@ export const request = {
   },
 };
 
-// Export utilities for external use
 export const requestUtils = {
   createInstance: createAxiosInstance,
 };
 
-// Re-export types for convenience
 export type ApiResponse = BaseApiResponse;
 
 export default request;

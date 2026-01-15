@@ -27,6 +27,8 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
   
   // System state
   systemFeatures: SystemFeatures | null;
@@ -56,6 +58,8 @@ const defaultState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
+  accessToken: null,
+  refreshToken: null,
   systemFeatures: null,
   setupStatus: null,
   isSystemReady: false,
@@ -74,6 +78,8 @@ const useAuthStoreBase = create<AuthState>()(
       setUser: (user) => set({ 
         user, 
         isAuthenticated: !!user,
+        accessToken: user ? (user as any).accessToken : null,
+        refreshToken: user ? (user as any).refreshToken : null,
         error: null 
       }),
       
@@ -153,6 +159,8 @@ const useAuthStoreBase = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         systemFeatures: state.systemFeatures,
         setupStatus: state.setupStatus,
         isSystemReady: state.isSystemReady,
@@ -160,6 +168,24 @@ const useAuthStoreBase = create<AuthState>()(
     }
   )
 );
+
+/**
+ * Access tokens outside of React components/hooks
+ */
+export const getAuthTokens = () => {
+  const state = useAuthStoreBase.getState();
+  return {
+    accessToken: state.accessToken,
+    refreshToken: state.refreshToken,
+  };
+};
+
+/**
+ * Set tokens outside of React components/hooks
+ */
+export const setAuthTokens = (accessToken: string | null, refreshToken: string | null) => {
+  useAuthStoreBase.setState({ accessToken, refreshToken });
+};
 
 /**
  * Auth store with selectors for optimized component updates

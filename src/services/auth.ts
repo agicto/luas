@@ -63,6 +63,14 @@ export const authApi = {
     const result = await request.get<{ user: User }>(ENDPOINTS.ME);
     return result.user;
   },
+
+  refreshToken: async (token: string) => {
+    return request.post<{ accessToken: string; refreshToken: string }>(
+      '/auth/refresh',
+      { refreshToken: token },
+      { skipAuth: true }
+    );
+  },
 } as const;
 
 // Type exports for external use
