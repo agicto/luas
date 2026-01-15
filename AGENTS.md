@@ -244,8 +244,11 @@ NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
 
 ### Adding a New Component
 
-1. UI primitives → Use shadcn/ui: `npx shadcn@latest add [component]`
-2. Feature components → Create in `src/components/features/[feature]/`
+1. **UI primitives** → Use shadcn/ui: `npx shadcn@latest add [component]`. These always go in `src/components/ui/`.
+2. **Feature components** → Create in `src/components/features/[module]/`. 
+   - **CRITICAL**: Do NOT place components in `app/` (route) directories. All reusable or module-specific components MUST be centralized in `src/components/`.
+   - Organise by functional module (e.g., `src/components/features/console/`).
+3. **Common components** → Generic, non-business specific components should be in `src/components/common/`.
 
 ### Adding a New Data Module (Service-Hook-Type Pattern)
 

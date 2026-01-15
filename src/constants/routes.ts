@@ -24,6 +24,7 @@ export const ROUTES = {
     HOME: '/console',
     ANALYTICS: '/console/analytics',
     SETTINGS: '/console/settings',
+    STYLEGUIDE: '/styleguide',
   },
 } as const;
 

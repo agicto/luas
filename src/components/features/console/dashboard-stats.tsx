@@ -50,7 +50,7 @@ export function StatCard({
       )}
     >
       {/* Glass effect overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
       
       <div className="relative flex items-start justify-between">
         <div className="space-y-2">

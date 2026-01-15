@@ -23,9 +23,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { StatCard } from "./components/dashboard-stats"
-import { DashboardChart } from "./components/dashboard-chart"
-import { ActivityTimeline, type ActivityItem } from "./components/activity-timeline"
+import { StatCard } from "@/components/features/console/dashboard-stats"
+import { DashboardChart } from "@/components/features/console/dashboard-chart"
+import { ActivityTimeline, type ActivityItem } from "@/components/features/console/activity-timeline"
 
 // Mock data for demonstration
 const statsData = [
