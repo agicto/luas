@@ -15,20 +15,21 @@ import { Icons } from '@/components/ui/icons';
 import { useLogin } from '@/hooks/use-auth';
 import { mockUsers } from '@/config/auth';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
+import { useT } from '@/i18n';
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Required').email('Invalid email'),
-  password: z.string().min(6, 'Too short'),
+  email: z.string().min(1, 'emailRequired').email('emailInvalid'),
+  password: z.string().min(6, 'passwordTooShort'),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm({ className }: { className?: string }) {
+  const t = useT();
   const [showPassword, setShowPassword] = useState(false);
   const { mutateAsync: login, isPending: isMutationLoading } = useLogin();
   const systemFeatures = useAuthStore.use.systemFeatures();
 
-  // Log mock accounts in development mode
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log('📧 Mock accounts available for login:');
@@ -49,43 +50,124 @@ export function LoginForm({ className }: { className?: string }) {
   const isFormLoading = isMutationLoading || isSubmitting;
   const hasSocial = systemFeatures ? authSelectors.hasSocialLogin(useAuthStore.getState()) : false;
 
+  const getErrorMessage = (errorKey: string | undefined) => {
+    if (!errorKey) return undefined;
+    return t(`auth.${errorKey}` as any) || errorKey;
+  };
+
   return (
-    <div className={cn('flex flex-col gap-6', className)}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
+    <div className={cn('flex flex-col gap-4', className)}>
+      <Card className="border-border/60 shadow-xl dark:shadow-2xl dark:shadow-black/20 bg-card/95 backdrop-blur-sm">
+        {/* Reduced header padding, larger title */}
+        <CardHeader className="text-center space-y-1 px-6 pb-1 pt-5">
+          <CardTitle className="text-2xl font-bold">
+            {t('auth.welcomeBack')}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">{t('auth.signInToContinue')}</p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" disabled={isFormLoading} {...register('email')} />
-              {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+        
+        {/* Reduced vertical padding */}
+        <CardContent className="space-y-4 px-6 pb-5 pt-3">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+            {/* Email */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder={t('auth.enterEmail')}
+                disabled={isFormLoading} 
+                className="h-10 bg-muted/30 border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                {...register('email')} 
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive">{getErrorMessage(errors.email.message)}</p>
+              )}
             </div>
-            <div className="space-y-2">
+            
+            {/* Password */}
+            <div className="space-y-1">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-primary text-sm">Forgot password?</Link>
+                <Label htmlFor="password" className="text-sm font-medium">{t('auth.password')}</Label>
+                <Link href="/forgot-password" className="text-primary text-xs font-medium hover:underline transition-colors">
+                  {t('auth.forgotPassword')}
+                </Link>
               </div>
               <div className="relative">
-                <Input id="password" type={showPassword ? 'text' : 'password'} disabled={isFormLoading} {...register('password')} />
-                <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <Icons.EyeOff className="h-4 w-4" /> : <Icons.Eye className="h-4 w-4" />}
+                <Input 
+                  id="password" 
+                  type={showPassword ? 'text' : 'password'} 
+                  placeholder={t('auth.enterPassword')}
+                  disabled={isFormLoading} 
+                  className="h-10 pr-10 bg-muted/30 border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                  {...register('password')} 
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <Icons.EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Icons.Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
                 </Button>
               </div>
+              {errors.password && (
+                <p className="text-xs text-destructive">{getErrorMessage(errors.password.message)}</p>
+              )}
             </div>
-            <Button type="submit" className="w-full" disabled={isFormLoading}>
+            
+            {/* Submit Button */}
+            <Button 
+              type="submit" 
+              className="w-full h-10 font-medium bg-gradient-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200" 
+              disabled={isFormLoading}
+            >
               {isFormLoading && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
-              Sign in
+              {t('auth.signIn')}
             </Button>
           </form>
+          
+          {/* Social Login */}
           {hasSocial && (
-            <div className="grid grid-cols-3 gap-3">
-              <Button variant="outline"><Icons.Google className="h-4 w-4" /></Button>
-              <Button variant="outline"><Icons.Apple className="h-4 w-4" /></Button>
-              <Button variant="outline"><Icons.GitHub className="h-4 w-4" /></Button>
-            </div>
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/50" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-3 text-muted-foreground">
+                    {t('auth.orContinueWith')}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
+                  <Icons.Google className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
+                  <Icons.Apple className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
+                  <Icons.GitHub className="h-4 w-4" />
+                </Button>
+              </div>
+            </>
           )}
+          
+          {/* Register Link */}
+          <div className="text-center text-sm text-muted-foreground">
+            {t('auth.noAccount')}{' '}
+            <Link href="/register" className="font-semibold text-primary hover:underline transition-colors">
+              {t('auth.signUp')}
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

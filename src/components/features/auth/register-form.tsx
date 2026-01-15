@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
+import { Check, X } from 'lucide-react';
 
 import { cn } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -17,107 +17,132 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Icons } from '@/components/ui/icons';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
 import { useRegister } from '@/hooks/use-auth';
+import { useT } from '@/i18n';
 
-// Form validation schema
 const registerSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'Name is required')
-    .min(2, 'Name must be at least 2 characters')
-    .max(50, 'Name is too long'),
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Please enter a valid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(100, 'Password is too long')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
-      'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character'
-    ),
-  confirmPassword: z
-    .string()
-    .min(1, 'Please confirm your password'),
-  terms: z
-    .boolean()
-    .refine(val => val === true, 'You must accept the terms and conditions'),
+  name: z.string().min(1, 'nameRequired').min(2, 'nameMinLength').max(50, 'nameTooLong'),
+  email: z.string().min(1, 'emailRequired').email('emailInvalid'),
+  password: z.string().min(8, 'passwordMinLength').max(100, 'passwordTooLong')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, 'passwordInvalid'),
+  confirmPassword: z.string().min(1, 'confirmPasswordRequired'),
+  terms: z.boolean().refine(val => val === true, 'termsRequired'),
 }).refine(data => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
+  message: 'passwordsDoNotMatch',
   path: ['confirmPassword'],
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
-interface RegisterFormProps {
-  className?: string;
+// Password strength indicator
+function PasswordStrengthIndicator({ password, t }: { password: string; t: ReturnType<typeof useT> }) {
+  const requirements = [
+    { key: 'length', label: t('auth.passwordReqLength'), check: password.length >= 8 },
+    { key: 'case', label: t('auth.passwordReqCase'), check: /[a-z]/.test(password) && /[A-Z]/.test(password) },
+    { key: 'number', label: t('auth.passwordReqNumber'), check: /\d/.test(password) },
+    { key: 'special', label: t('auth.passwordReqSpecial'), check: /[@$!%*?&]/.test(password) },
+  ];
+
+  const passedCount = requirements.filter(r => r.check).length;
+  const strengthPercent = (passedCount / requirements.length) * 100;
+
+  return (
+    <div className="mt-2 p-2.5 rounded-lg bg-muted/40 border border-border/50 space-y-2">
+      {/* Strength Bar */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div 
+            className={cn(
+              "h-full rounded-full transition-all duration-500 ease-out",
+              passedCount === 0 && "bg-muted-foreground/30",
+              passedCount > 0 && passedCount < 3 && "bg-warning",
+              passedCount >= 3 && passedCount < 4 && "bg-info",
+              passedCount === 4 && "bg-success",
+            )}
+            style={{ width: `${strengthPercent}%` }}
+          />
+        </div>
+        <span className={cn(
+          "text-xs font-semibold tabular-nums",
+          passedCount === 4 ? "text-success" : "text-muted-foreground"
+        )}>
+          {passedCount}/4
+        </span>
+      </div>
+      
+      {/* Requirements */}
+      <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+        {requirements.map((req) => (
+          <div 
+            key={req.key}
+            className={cn(
+              "flex items-center gap-1.5 text-xs transition-colors",
+              req.check ? "text-success" : "text-muted-foreground"
+            )}
+          >
+            <div className={cn(
+              "flex items-center justify-center w-3.5 h-3.5 rounded-full transition-all",
+              req.check ? "bg-success/20" : "bg-muted"
+            )}>
+              {req.check ? <Check className="w-2 h-2" /> : <X className="w-2 h-2 opacity-50" />}
+            </div>
+            <span className="truncate">{req.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
-export function RegisterForm({ className }: RegisterFormProps) {
-  const router = useRouter();
+export function RegisterForm({ className }: { className?: string }) {
+  const t = useT();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Auth state
   const { mutateAsync: register, isPending: isMutationLoading } = useRegister();
   const systemFeatures = useAuthStore.use.systemFeatures();
   
-  // Derived state - pass full state to selectors
   const canRegister = systemFeatures ? authSelectors.canRegister(useAuthStore.getState()) : false;
   const hasSocialLogin = systemFeatures ? authSelectors.hasSocialLogin(useAuthStore.getState()) : false;
   
-  // Form setup
   const {
     register: registerField,
     handleSubmit,
     formState: { errors, isSubmitting },
+    control,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-      terms: false,
-    },
+    defaultValues: { name: '', email: '', password: '', confirmPassword: '', terms: false },
   });
 
-  // Form submission
-  const onSubmit = async (data: RegisterFormData) => {
-    try {
-      await register(data);
-    } catch (err) {
-      // Error handled by hook's toast
-      console.error('Registration submission error:', err);
-    }
-  };
-
+  const password = useWatch({ control, name: 'password' }) || '';
   const isFormLoading = isMutationLoading || isSubmitting;
 
-  // Show message if registration is not allowed
+  const onSubmit = async (data: RegisterFormData) => {
+    try { await register(data); } catch (err) { console.error(err); }
+  };
+
+  const getErrorMessage = (errorKey: string | undefined) => {
+    if (!errorKey) return undefined;
+    return t(`auth.${errorKey}` as any) || errorKey;
+  };
+
+  const inputClass = "h-10 bg-muted/30 border-border/80 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
+
   if (systemFeatures && !canRegister) {
     return (
-      <div className={cn('flex flex-col gap-6', className)}>
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Registration Disabled</CardTitle>
+      <div className={cn('flex flex-col gap-4', className)}>
+        <Card className="border-border/60 shadow-xl dark:shadow-2xl dark:shadow-black/20 bg-card/95 backdrop-blur-sm">
+          <CardHeader className="text-center px-6 pb-2 pt-5">
+            <CardTitle className="text-2xl font-bold">{t('auth.registrationDisabled')}</CardTitle>
           </CardHeader>
-          
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 px-6 pb-5">
             <Alert>
               <Icons.AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Registration is currently disabled for this platform. Please contact your administrator for access.
-              </AlertDescription>
+              <AlertDescription className="text-sm">{t('auth.registrationDisabledMessage')}</AlertDescription>
             </Alert>
-            
             <div className="text-center">
-              <Link
-                href="/login"
-                className="font-medium text-primary hover:underline"
-              >
-                Back to sign in
+              <Link href="/login" className="text-sm font-semibold text-primary hover:underline">
+                {t('auth.backToSignIn')}
               </Link>
             </div>
           </CardContent>
@@ -127,254 +152,112 @@ export function RegisterForm({ className }: RegisterFormProps) {
   }
 
   return (
-    <div className={cn('flex flex-col gap-6', className)}>
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Create account</CardTitle>
-          <p className="text-muted-foreground">
-            Get started with the platform
-          </p>
+    <div className={cn('flex flex-col gap-4', className)}>
+      <Card className="border-border/60 shadow-xl dark:shadow-2xl dark:shadow-black/20 bg-card/95 backdrop-blur-sm">
+        {/* Larger header, reduced padding */}
+        <CardHeader className="text-center space-y-0.5 px-6 pb-1 pt-5">
+          <CardTitle className="text-2xl font-bold">{t('auth.createAccount')}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t('auth.getStarted')}</p>
         </CardHeader>
         
-        <CardContent className="space-y-6">
-          {/* Error Alert removed - now using toast */}
-
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Name Field */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Enter your full name"
-                autoComplete="name"
-                disabled={isFormLoading}
-                {...registerField('name')}
-                aria-invalid={errors.name ? 'true' : 'false'}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+        {/* Tighter vertical spacing */}
+        <CardContent className="space-y-3 px-6 pb-5 pt-3">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2.5">
+            {/* Name */}
+            <div className="space-y-1">
+              <Label htmlFor="name" className="text-sm font-medium">{t('auth.fullName')}</Label>
+              <Input id="name" type="text" placeholder={t('auth.enterFullName')} autoComplete="name"
+                disabled={isFormLoading} className={inputClass} {...registerField('name')} />
+              {errors.name && <p className="text-xs text-destructive">{getErrorMessage(errors.name.message)}</p>}
             </div>
 
-            {/* Email Field */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                autoComplete="email"
-                disabled={isFormLoading}
-                {...registerField('email')}
-                aria-invalid={errors.email ? 'true' : 'false'}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
+            {/* Email */}
+            <div className="space-y-1">
+              <Label htmlFor="email" className="text-sm font-medium">{t('auth.email')}</Label>
+              <Input id="email" type="email" placeholder={t('auth.enterEmail')} autoComplete="email"
+                disabled={isFormLoading} className={inputClass} {...registerField('email')} />
+              {errors.email && <p className="text-xs text-destructive">{getErrorMessage(errors.email.message)}</p>}
             </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            {/* Password */}
+            <div className="space-y-1">
+              <Label htmlFor="password" className="text-sm font-medium">{t('auth.password')}</Label>
               <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a strong password"
-                  autoComplete="new-password"
-                  disabled={isFormLoading}
-                  {...registerField('password')}
-                  aria-invalid={errors.password ? 'true' : 'false'}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowPassword(!showPassword)}
-                  disabled={isFormLoading}
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <Icons.EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Icons.Eye className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {showPassword ? 'Hide password' : 'Show password'}
-                  </span>
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder={t('auth.createPassword')}
+                  autoComplete="new-password" disabled={isFormLoading} className={cn(inputClass, "pr-10")} {...registerField('password')} />
+                <Button type="button" variant="ghost" size="sm" tabIndex={-1}
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <Icons.EyeOff className="h-4 w-4 text-muted-foreground" /> : <Icons.Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
+              {password.length > 0 && <PasswordStrengthIndicator password={password} t={t} />}
+              {errors.password && password.length === 0 && <p className="text-xs text-destructive">{getErrorMessage(errors.password.message)}</p>}
             </div>
 
-            {/* Confirm Password Field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+            {/* Confirm Password */}
+            <div className="space-y-1">
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">{t('auth.confirmPassword')}</Label>
               <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  autoComplete="new-password"
-                  disabled={isFormLoading}
-                  {...registerField('confirmPassword')}
-                  aria-invalid={errors.confirmPassword ? 'true' : 'false'}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isFormLoading}
-                  tabIndex={-1}
-                >
-                  {showConfirmPassword ? (
-                    <Icons.EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Icons.Eye className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">
-                    {showConfirmPassword ? 'Hide password' : 'Show password'}
-                  </span>
+                <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder={t('auth.confirmYourPassword')}
+                  autoComplete="new-password" disabled={isFormLoading} className={cn(inputClass, "pr-10")} {...registerField('confirmPassword')} />
+                <Button type="button" variant="ghost" size="sm" tabIndex={-1}
+                  className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                  {showConfirmPassword ? <Icons.EyeOff className="h-4 w-4 text-muted-foreground" /> : <Icons.Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
-              {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
-              )}
+              {errors.confirmPassword && <p className="text-xs text-destructive">{getErrorMessage(errors.confirmPassword.message)}</p>}
             </div>
 
-            {/* Terms and Conditions */}
-            <div className="flex items-start space-x-2">
-              <Checkbox
-                id="terms"
-                disabled={isFormLoading}
-                {...registerField('terms')}
-                aria-invalid={errors.terms ? 'true' : 'false'}
-              />
-              <div className="grid gap-1.5 leading-none">
-                <Label htmlFor="terms" className="text-sm font-normal">
-                  I agree to the{' '}
-                  <Link
-                    href="/terms"
-                    className="underline hover:text-foreground"
-                    target="_blank"
-                  >
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link
-                    href="/privacy"
-                    className="underline hover:text-foreground"
-                    target="_blank"
-                  >
-                    Privacy Policy
-                  </Link>
+            {/* Terms */}
+            <div className="flex items-start gap-2.5 pt-0.5">
+              <Checkbox id="terms" disabled={isFormLoading} className="mt-0.5" {...registerField('terms')} />
+              <div className="space-y-0.5">
+                <Label htmlFor="terms" className="text-sm font-normal text-muted-foreground leading-relaxed">
+                  {t('auth.agreeToTerms')}{' '}
+                  <Link href="/terms" className="text-primary hover:underline" target="_blank">{t('auth.termsOfService')}</Link>{' '}
+                  {t('auth.and')}{' '}
+                  <Link href="/privacy" className="text-primary hover:underline" target="_blank">{t('auth.privacyPolicy')}</Link>
                 </Label>
-                {errors.terms && (
-                  <p className="text-sm text-destructive">{errors.terms.message}</p>
-                )}
+                {errors.terms && <p className="text-xs text-destructive">{getErrorMessage(errors.terms.message)}</p>}
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
+            {/* Submit */}
+            <Button 
+              type="submit" 
+              className="w-full h-10 font-medium bg-gradient-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200 mt-1" 
               disabled={isFormLoading}
             >
-              {isFormLoading && (
-                <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Create account
+              {isFormLoading && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
+              {t('auth.signUp')}
             </Button>
           </form>
 
-          {/* Social Registration */}
+          {/* Social */}
           {hasSocialLogin && (
             <>
               <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border/50" /></div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-card px-3 text-muted-foreground">{t('auth.orContinueWith')}</span>
                 </div>
               </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={isFormLoading}
-                  onClick={() => {
-                    // TODO: Implement Google OAuth
-                    console.log('Google registration');
-                  }}
-                >
-                  <Icons.Google className="h-4 w-4" />
-                  <span className="sr-only">Sign up with Google</span>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={isFormLoading}
-                  onClick={() => {
-                    // TODO: Implement Apple OAuth
-                    console.log('Apple registration');
-                  }}
-                >
-                  <Icons.Apple className="h-4 w-4" />
-                  <span className="sr-only">Sign up with Apple</span>
-                </Button>
-                
-                <Button
-                  variant="outline"
-                  type="button"
-                  disabled={isFormLoading}
-                  onClick={() => {
-                    // TODO: Implement GitHub OAuth
-                    console.log('GitHub registration');
-                  }}
-                >
-                  <Icons.GitHub className="h-4 w-4" />
-                  <span className="sr-only">Sign up with GitHub</span>
-                </Button>
+              <div className="grid grid-cols-3 gap-2">
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.Google className="h-4 w-4" /></Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.Apple className="h-4 w-4" /></Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.GitHub className="h-4 w-4" /></Button>
               </div>
             </>
           )}
 
-          {/* Login Link */}
-          <div className="text-center text-sm">
-            Already have an account?{' '}
-            <Link
-              href="/login"
-              className="font-medium text-primary hover:underline"
-            >
-              Sign in
-            </Link>
+          <div className="text-center text-sm text-muted-foreground">
+            {t('auth.hasAccount')}{' '}
+            <Link href="/login" className="font-semibold text-primary hover:underline transition-colors">{t('auth.signIn')}</Link>
           </div>
         </CardContent>
       </Card>
-
-      {/* Password Requirements */}
-      <div className="text-center text-xs text-muted-foreground">
-        <div className="mb-2 font-medium">Password requirements:</div>
-        <ul className="space-y-1 text-left max-w-sm mx-auto">
-          <li>• At least 8 characters long</li>
-          <li>• Contains uppercase and lowercase letters</li>
-          <li>• Contains at least one number</li>
-          <li>• Contains at least one special character</li>
-        </ul>
-      </div>
     </div>
   );
 }
