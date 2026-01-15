@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Icons } from '@/components/ui/icons';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
 import { useLogin } from '@/hooks/use-auth';
+import { serverEnv } from '@/config/env';
 
 // Form validation schema
 const loginSchema = z.object({
@@ -46,7 +47,7 @@ export function LoginForm({ className }: LoginFormProps) {
 
   // Log mock credentials in development
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
+    if (serverEnv.NODE_ENV === 'development') {
       console.log('🚀 [Mock Auth] Available accounts:');
       console.table([
         { email: 'admin@example.com', password: 'admin123', role: 'admin' },
@@ -54,6 +55,7 @@ export function LoginForm({ className }: LoginFormProps) {
       ]);
     }
   }, []);
+
   
   // Derived state - pass full state to selectors
   const canRegister = systemFeatures ? authSelectors.canRegister(useAuthStore.getState()) : false;

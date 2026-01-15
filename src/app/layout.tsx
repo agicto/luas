@@ -9,6 +9,7 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
+import { publicEnv } from "@/config/env";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -22,7 +23,8 @@ export const metadata: Metadata = {
   keywords: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Scaffold"],
   authors: [{ name: "Llamacto Team" }],
   creator: "Llamacto Team",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(publicEnv.NEXT_PUBLIC_APP_URL),
+
   openGraph: {
     type: "website",
     locale: "en_US",

@@ -1,13 +1,15 @@
 'use client';
 
 import Script from 'next/script';
+import { publicEnv } from '@/config/env';
 
-const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const GA_MEASUREMENT_ID = publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export function Analytics() {
   if (!GA_MEASUREMENT_ID) {
     return null;
   }
+
 
   return (
     <>

@@ -2,13 +2,14 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, In
 import type { ApiResponse as BaseApiResponse } from './types';
 import { handleError } from './error-handler';
 import { getAuthTokens, setAuthTokens } from '@/store/auth-store';
+import { publicEnv, serverEnv } from '@/config/env';
 
 // Environment configuration
 const API_URL =
   typeof window === 'undefined'
-    ? (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api')
-    : (process.env.NEXT_PUBLIC_API_URL || '/api');
-const API_TIMEOUT = Number(process.env.NEXT_PUBLIC_API_TIMEOUT || 30000);
+    ? (serverEnv.INTERNAL_API_URL || publicEnv.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api')
+    : (publicEnv.NEXT_PUBLIC_API_URL || '/api');
+const API_TIMEOUT = publicEnv.NEXT_PUBLIC_API_TIMEOUT;
 
 // Request configuration type
 export interface RequestConfig extends AxiosRequestConfig {

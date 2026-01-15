@@ -3,6 +3,8 @@
  * Centralized error handling and reporting
  */
 
+import { serverEnv, publicEnv } from '@/config/env';
+
 interface ErrorMetadata {
   userId?: string;
   url?: string;
@@ -79,7 +81,7 @@ class ErrorTrackingService {
     };
 
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (serverEnv.NODE_ENV === 'development') {
       console.error('Error captured:', error);
       console.error('Error metadata:', fullMetadata);
     }
@@ -135,10 +137,11 @@ export function setupErrorTracking(
   // Initialize with default metadata
   errorTracking.init({
     userId,
-    environment: process.env.NODE_ENV,
-    release: process.env.NEXT_PUBLIC_APP_VERSION,
+    environment: serverEnv.NODE_ENV,
+    // Note: NEXT_PUBLIC_APP_VERSION is not defined, removing this line for now
     ...customMetadata
   });
+
 
   // Example: Add handler to send errors to an external service
   errorTracking.addHandler((error, metadata) => {

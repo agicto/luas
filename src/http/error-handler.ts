@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { ApiError } from './request';
+import { serverEnv } from '@/config/env';
 
 /**
  * Global Error Handler Configuration
@@ -65,7 +66,7 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
   }
 
   // Log to console in development
-  if (process.env.NODE_ENV === 'development') {
+  if (serverEnv.NODE_ENV === 'development') {
     console.error('[GlobalErrorHandler]', {
       message,
       errorCode,
@@ -73,3 +74,4 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
     });
   }
 }
+

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuthStore } from '@/store/auth-store';
+import { publicEnv } from '@/config/env';
 
 interface AuthProviderProps {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     // Only initialize auth if API base URL is configured
-    const apiBase = process.env.NEXT_PUBLIC_UPSTREAM_API_BASE || process.env.NEXT_PUBLIC_ZGI_API_BASE;
+    const apiBase = publicEnv.NEXT_PUBLIC_UPSTREAM_API_BASE;
     
     if (apiBase) {
       // Initialize authentication with API calls
@@ -32,7 +33,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Don't show loading state if API is not configured
   // This allows the app to work without backend for demo/development
-  const shouldShowLoading = (process.env.NEXT_PUBLIC_UPSTREAM_API_BASE || process.env.NEXT_PUBLIC_ZGI_API_BASE) && !isSystemReady;
+  const shouldShowLoading = publicEnv.NEXT_PUBLIC_UPSTREAM_API_BASE && !isSystemReady;
+
   
   if (shouldShowLoading) {
     return (

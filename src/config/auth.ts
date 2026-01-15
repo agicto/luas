@@ -1,6 +1,8 @@
 // Authentication configuration
 // Configures token modes, expiry times, and mock users for development
 
+import { publicEnv, serverEnv } from '@/config/env';
+
 // ============================================================================
 // Token Mode Configuration
 // ============================================================================
@@ -19,19 +21,20 @@ export const authConfig = {
    * Token mode: 'basic' | 'refresh'
    * Set via NEXT_PUBLIC_AUTH_TOKEN_MODE env variable
    */
-  tokenMode: (process.env.NEXT_PUBLIC_AUTH_TOKEN_MODE || 'refresh') as TokenMode,
+  tokenMode: publicEnv.NEXT_PUBLIC_AUTH_TOKEN_MODE as TokenMode,
 
   /**
    * Access token expiry in seconds
    * Default: 15 minutes
    */
-  accessTokenExpiry: Number(process.env.AUTH_ACCESS_TOKEN_EXPIRY || 15 * 60),
+  accessTokenExpiry: serverEnv.AUTH_ACCESS_TOKEN_EXPIRY || 15 * 60,
 
   /**
    * Refresh token expiry in seconds
    * Default: 7 days
    */
-  refreshTokenExpiry: Number(process.env.AUTH_REFRESH_TOKEN_EXPIRY || 7 * 24 * 60 * 60),
+  refreshTokenExpiry: serverEnv.AUTH_REFRESH_TOKEN_EXPIRY || 7 * 24 * 60 * 60,
+
 
   /**
    * Cookie names for tokens
