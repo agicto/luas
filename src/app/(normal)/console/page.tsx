@@ -26,114 +26,16 @@ import {
 import { StatCard } from "@/components/features/console/dashboard-stats"
 import { DashboardChart } from "@/components/features/console/dashboard-chart"
 import { ActivityTimeline, type ActivityItem } from "@/components/features/console/activity-timeline"
-
-// Mock data for demonstration
-const statsData = [
-  {
-    title: "Active Workflows",
-    value: "12",
-    description: "3 pending approval",
-    trend: { value: "+2", isPositive: true },
-    icon: Zap,
-    variant: "primary" as const,
-  },
-  {
-    title: "API Calls Today",
-    value: "2,350",
-    description: "Avg. 98 per hour",
-    trend: { value: "+180", isPositive: true },
-    icon: Activity,
-    variant: "default" as const,
-  },
-  {
-    title: "Success Rate",
-    value: "99.2%",
-    description: "Last 24 hours",
-    trend: { value: "+0.1%", isPositive: true },
-    icon: CheckCircle,
-    variant: "success" as const,
-  },
-  {
-    title: "Avg. Response Time",
-    value: "142ms",
-    description: "Within SLA",
-    trend: { value: "-12ms", isPositive: true },
-    icon: Clock,
-    variant: "default" as const,
-  },
-]
-
-const chartData = [
-  { name: "Mon", value: 120 },
-  { name: "Tue", value: 180 },
-  { name: "Wed", value: 150 },
-  { name: "Thu", value: 220 },
-  { name: "Fri", value: 280 },
-  { name: "Sat", value: 190 },
-  { name: "Sun", value: 140 },
-]
-
-const activityItems: ActivityItem[] = [
-  {
-    id: "1",
-    type: "success",
-    title: "Workflow deployed successfully",
-    description: "GPT-4 Translation Pipeline is now live",
-    timestamp: "2 minutes ago",
-    user: { name: "Admin", initials: "AD" },
-  },
-  {
-    id: "2",
-    type: "action",
-    title: "New API key generated",
-    description: "Production environment key",
-    timestamp: "15 minutes ago",
-    user: { name: "John Doe", initials: "JD" },
-  },
-  {
-    id: "3",
-    type: "warning",
-    title: "Rate limit threshold reached",
-    description: "85% of daily quota consumed",
-    timestamp: "1 hour ago",
-  },
-  {
-    id: "4",
-    type: "config",
-    title: "Settings updated",
-    description: "Email notifications enabled",
-    timestamp: "3 hours ago",
-    user: { name: "Jane Smith", initials: "JS" },
-  },
-  {
-    id: "5",
-    type: "info",
-    title: "System maintenance scheduled",
-    description: "Planned for Sunday 2:00 AM UTC",
-    timestamp: "Yesterday",
-  },
-]
-
-const tableData = [
-  { id: "WF-001", name: "Translation Pipeline", status: "Active", calls: "1,234", success: "99.8%" },
-  { id: "WF-002", name: "Content Moderation", status: "Active", calls: "856", success: "98.5%" },
-  { id: "WF-003", name: "Data Extraction", status: "Paused", calls: "432", success: "97.2%" },
-  { id: "WF-004", name: "Sentiment Analysis", status: "Active", calls: "2,108", success: "99.1%" },
-]
-
 import { useT } from "@/i18n"
 
 /**
  * Premium Console Dashboard Page
- * Demonstrates exemplary patterns for building console pages with:
- * - Premium visual design with gradients and animations
- * - Reusable component composition
- * - Interactive data displays
+ * Demonstrates exemplary patterns for building console pages with i18n support.
  */
 export default function ConsolePage() {
   const t = useT()
 
-  // Generate localized stats data
+  // Data generated inside component to support translations
   const statsData = [
     {
       title: t('dashboard.stats.activeWorkflows'),
@@ -179,7 +81,6 @@ export default function ConsolePage() {
     { name: "Sun", value: 140 },
   ]
 
-  // activityItems should ideally be translated in the timeline component or passed as keys
   const activityItems: ActivityItem[] = [
     {
       id: "1",

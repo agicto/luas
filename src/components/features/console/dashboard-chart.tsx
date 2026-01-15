@@ -24,17 +24,17 @@ export function DashboardChart({
   height = 200,
   className,
 }: DashboardChartProps) {
-  const maxValue = Math.max(...data.map((d) => d.value))
+  const maxValue = Math.max(...data.map((d) => d.value), 1)
 
   return (
     <div
       className={cn(
-        "rounded-xl border border-border-subtle bg-bg-surface p-6",
-        "hover:shadow-premium transition-shadow duration-300",
+        "rounded-xl border border-border/50 bg-bg-surface p-6",
+        "hover:shadow-premium transition-all duration-300",
         className
       )}
     >
-      <h3 className="mb-4 text-sm font-medium text-text-muted">{title}</h3>
+      <h3 className="mb-4 text-xs font-bold text-text-muted uppercase tracking-wider">{title}</h3>
 
       {type === "bar" ? (
         <div className="flex items-end gap-2" style={{ height }}>
@@ -43,24 +43,24 @@ export function DashboardChart({
             return (
               <div
                 key={index}
-                className="group relative flex flex-1 flex-col items-center"
+                className="group relative flex flex-1 flex-col items-center h-full justify-end"
               >
                 {/* Tooltip */}
-                <div className="absolute -top-8 z-10 hidden rounded bg-bg-canvas px-2 py-1 text-xs font-medium shadow-lg group-hover:block">
+                <div className="absolute -top-8 z-10 hidden rounded bg-bg-canvas px-2 py-1 text-xs font-medium shadow-tooltip group-hover:block animate-in fade-in zoom-in-95 duration-200">
                   {item.value}
                 </div>
                 
                 {/* Bar */}
                 <div
-                  className="w-full rounded-t-md bg-linear-to-t from-primary to-primary/60 transition-all duration-500 ease-out group-hover:from-primary group-hover:to-primary/80"
+                  className="w-full rounded-t-md bg-primary transition-all duration-500 ease-out group-hover:brightness-110 shadow-sm"
                   style={{
-                    height: `${barHeight}%`,
-                    animationDelay: `${index * 50}ms`,
+                    height: `${Math.max(barHeight, 2)}%`,
+                    opacity: 0.8 + (barHeight / 100) * 0.2
                   }}
                 />
                 
                 {/* Label */}
-                <span className="mt-2 text-xs text-text-muted">{item.name}</span>
+                <span className="mt-2 text-[10px] font-medium text-text-muted uppercase">{item.name}</span>
               </div>
             )
           })}

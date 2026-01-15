@@ -79,10 +79,9 @@ export function ActivityTimeline({ items, className, title = "Recent Activity", 
             <div
               key={item.id}
               className={cn(
-                "relative flex gap-4 pl-10 opacity-0 animate-in fade-in slide-in-from-left-2",
-                "transition-all duration-300"
+                "relative flex gap-4 pl-10",
+                "transition-all duration-300 hover:translate-x-1"
               )}
-              style={{ animationDelay: `${index * 100}ms`, animationFillMode: "forwards" }}
             >
               {/* Icon marker */}
               <div
