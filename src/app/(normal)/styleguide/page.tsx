@@ -2,14 +2,14 @@
 
 import * as React from "react"
 import { Separator } from "@/components/ui/separator"
-import { ButtonShowcase } from "./_components/button-showcase"
-import { FormShowcase } from "./_components/form-showcase"
-import { DataDisplayShowcase } from "./_components/data-display-showcase"
-import { FeedbackShowcase } from "./_components/feedback-showcase"
-import { DepthShowcase } from "./_components/depth-showcase"
-import { TooltipShowcase } from "./_components/tooltip-showcase"
-import { OverlayShowcase } from "./_components/overlay-showcase"
-import { NavigationShowcase } from "./_components/navigation-showcase"
+import { ButtonShowcase } from "./components/button-showcase"
+import { FormShowcase } from "./components/form-showcase"
+import { DataDisplayShowcase } from "./components/data-display-showcase"
+import { FeedbackShowcase } from "./components/feedback-showcase"
+import { DepthShowcase } from "./components/depth-showcase"
+import { TooltipShowcase } from "./components/tooltip-showcase"
+import { OverlayShowcase } from "./components/overlay-showcase"
+import { NavigationShowcase } from "./components/navigation-showcase"
 
 export default function StyleguidePage() {
   return (

@@ -24,8 +24,7 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/             # Public auth route group (login, register)
 │   ├── (normal)/           # Protected route group
-│   │   ├── console/        # Admin dashboard
-│   │   └── ai-demo/        # AI features demo
+│   │   └── console/        # Admin dashboard
 │   ├── (site)/             # Public site route group
 │   ├── api/                # API Route Handlers (Mock endpoints)
 │   │   └── auth/           # Auth endpoints (Mock by default)
