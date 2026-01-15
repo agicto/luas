@@ -16,6 +16,7 @@ import {
 import { Toggle } from "@/components/ui/toggle"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { DatePicker } from "@/components/ui/date-picker"
+import { Textarea } from "@/components/ui/textarea"
 import { MailIcon, LockIcon, Bold, Italic, Underline } from "lucide-react"
 import * as React from "react"
 
@@ -81,6 +82,17 @@ export function FormShowcase() {
                 <Input variant="filled" placeholder="Subtle filled background" />
               </div>
             </div>
+
+            <div className="grid gap-4 pt-4 border-t">
+              <div className="grid gap-2">
+                <Label>Textarea Outline</Label>
+                <Textarea placeholder="Multi-line input support..." />
+              </div>
+              <div className="grid gap-2">
+                <Label>Textarea Filled</Label>
+                <Textarea variant="filled" placeholder="Filled background textarea..." />
+              </div>
+            </div>
             <div className="flex items-start gap-4">
               <Checkbox id="cb1" className="mt-1" />
               <div className="grid gap-1.5 leading-none">
@@ -101,6 +113,11 @@ export function FormShowcase() {
               <Label className="text-destructive">Error State</Label>
               <Input aria-invalid="true" placeholder="Error field..." />
               <p className="text-xs text-destructive">Invalidated border and focus-ring colors.</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="text-destructive">Textarea Error State</Label>
+              <Textarea error errorText="This field is required" placeholder="Error state with message..." />
             </div>
 
             <div className="space-y-4 pt-4 border-t">
