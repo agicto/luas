@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import * as z from 'zod';
-import { Check, X } from 'lucide-react';
+import { Check, X, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { cn } from '@/utils';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Icons } from '@/components/ui/icons';
+import { Google, Apple, GitHub } from '@/components/ui/icons';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
 import { useRegister } from '@/hooks/use-auth';
 import { useT } from '@/i18n';
@@ -137,7 +137,7 @@ export function RegisterForm({ className }: { className?: string }) {
           </CardHeader>
           <CardContent className="space-y-4 px-6 pb-5">
             <Alert>
-              <Icons.AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">{t('auth.registrationDisabledMessage')}</AlertDescription>
             </Alert>
             <div className="text-center">
@@ -188,7 +188,7 @@ export function RegisterForm({ className }: { className?: string }) {
                 <Button type="button" variant="ghost" size="sm" tabIndex={-1}
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <Icons.EyeOff className="h-4 w-4 text-muted-foreground" /> : <Icons.Eye className="h-4 w-4 text-muted-foreground" />}
+                  {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
               {password.length > 0 && <PasswordStrengthIndicator password={password} t={t} />}
@@ -204,7 +204,7 @@ export function RegisterForm({ className }: { className?: string }) {
                 <Button type="button" variant="ghost" size="sm" tabIndex={-1}
                   className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  {showConfirmPassword ? <Icons.EyeOff className="h-4 w-4 text-muted-foreground" /> : <Icons.Eye className="h-4 w-4 text-muted-foreground" />}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
                 </Button>
               </div>
               {errors.confirmPassword && <p className="text-xs text-destructive">{getErrorMessage(errors.confirmPassword.message)}</p>}
@@ -227,10 +227,10 @@ export function RegisterForm({ className }: { className?: string }) {
             {/* Submit */}
             <Button 
               type="submit" 
-              className="w-full h-10 font-medium bg-gradient-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200 mt-1" 
+              className="w-full h-10 font-medium bg-linear-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200 mt-1" 
               disabled={isFormLoading}
             >
-              {isFormLoading && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
+              {isFormLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('auth.signUp')}
             </Button>
           </form>
@@ -245,9 +245,9 @@ export function RegisterForm({ className }: { className?: string }) {
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.Google className="h-4 w-4" /></Button>
-                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.Apple className="h-4 w-4" /></Button>
-                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Icons.GitHub className="h-4 w-4" /></Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Google className="h-4 w-4" /></Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><Apple className="h-4 w-4" /></Button>
+                <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}><GitHub className="h-4 w-4" /></Button>
               </div>
             </>
           )}
@@ -261,3 +261,4 @@ export function RegisterForm({ className }: { className?: string }) {
     </div>
   );
 }
+

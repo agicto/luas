@@ -2,7 +2,7 @@
 
 import { PropsWithChildren } from 'react';
 import { Zap, Shield, Layers, Headphones } from 'lucide-react';
-import { Icons } from '@/components/ui/icons';
+import { Logo } from '@/components/ui/icons';
 import { LanguageSwitcher } from '@/components/common';
 import { useT } from '@/i18n';
 
@@ -58,7 +58,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
             <div className="relative">
               <div className="absolute inset-0 bg-white/30 rounded-xl blur-xl scale-150" />
               <div className="relative flex h-14 w-14 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm border border-white/20 shadow-lg">
-                <Icons.Logo className="h-8 w-8 text-white" />
+                <Logo className="h-8 w-8 text-white" />
               </div>
             </div>
             <span className="text-2xl font-bold tracking-tight drop-shadow-lg">Llama Web</span>
@@ -122,7 +122,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-6 flex flex-col items-center space-y-3">
             <div className="flex items-center space-x-3">
-              <Icons.Logo className="h-9 w-9 text-primary" />
+              <Logo className="h-9 w-9 text-primary" />
               <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary-deeper bg-clip-text text-transparent">
                 Llama Web
               </span>
@@ -146,3 +146,4 @@ export default function AuthLayout({ children }: PropsWithChildren) {
     </div>
   );
 }
+

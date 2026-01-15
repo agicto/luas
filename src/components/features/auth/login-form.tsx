@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 import { cn } from '@/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Icons } from '@/components/ui/icons';
+import { Google, Apple, GitHub } from '@/components/ui/icons';
 import { useLogin } from '@/hooks/use-auth';
 import { mockUsers } from '@/config/auth';
 import { useAuthStore, authSelectors } from '@/store/auth-store';
@@ -111,9 +112,9 @@ export function LoginForm({ className }: { className?: string }) {
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <Icons.EyeOff className="h-4 w-4 text-muted-foreground" />
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
                   ) : (
-                    <Icons.Eye className="h-4 w-4 text-muted-foreground" />
+                    <Eye className="h-4 w-4 text-muted-foreground" />
                   )}
                 </Button>
               </div>
@@ -125,10 +126,10 @@ export function LoginForm({ className }: { className?: string }) {
             {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full h-10 font-medium bg-gradient-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200" 
+              className="w-full h-10 font-medium bg-linear-to-r from-primary to-primary-deeper hover:from-primary/90 hover:to-primary-deeper/90 shadow-md hover:shadow-lg transition-all duration-200" 
               disabled={isFormLoading}
             >
-              {isFormLoading && <Icons.Spinner className="mr-2 h-4 w-4 animate-spin" />}
+              {isFormLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('auth.signIn')}
             </Button>
           </form>
@@ -149,13 +150,13 @@ export function LoginForm({ className }: { className?: string }) {
               
               <div className="grid grid-cols-3 gap-2">
                 <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
-                  <Icons.Google className="h-4 w-4" />
+                  <Google className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
-                  <Icons.Apple className="h-4 w-4" />
+                  <Apple className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" type="button" className="h-10 hover:bg-muted/50 hover:border-border transition-colors" disabled={isFormLoading}>
-                  <Icons.GitHub className="h-4 w-4" />
+                  <GitHub className="h-4 w-4" />
                 </Button>
               </div>
             </>
@@ -173,3 +174,4 @@ export function LoginForm({ className }: { className?: string }) {
     </div>
   );
 }
+
