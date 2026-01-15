@@ -1,7 +1,7 @@
 // Authentication service layer
 // Functional API pattern - stateless, pure functions
 
-import { request } from '@/http';
+import request from '@/http';
 import type {
   User,
   LoginRequest,

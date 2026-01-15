@@ -1,18 +1,10 @@
 import { MetadataRoute } from 'next';
-import { publicEnv } from '@/config/env';
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_APP_URL;
+const BASE_URL = 'http://localhost:3000';
 
 export default function robots(): MetadataRoute.Robots {
-
   return {
-    rules: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: ['/api/', '/console/', '/admin/'],
-      },
-    ],
+    rules: [{ userAgent: '*', allow: '/' }],
     sitemap: `${BASE_URL}/sitemap.xml`,
   };
 }

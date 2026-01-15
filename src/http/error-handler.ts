@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 import { ApiError } from './request';
-import { serverEnv } from '@/config/env';
+import { env } from '@/config/env';
 
 /**
  * Global Error Handler Configuration
@@ -19,9 +19,6 @@ const DEFAULT_CONFIG: ErrorHandlerConfig = {
 
 /**
  * Centralized error handler for API and application errors.
- * 
- * @param error The error object to handle
- * @param config Optional configuration for specific request
  */
 export function handleError(error: unknown, config: ErrorHandlerConfig = {}): void {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
@@ -35,43 +32,22 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
     message = error.message;
     errorCode = error.code;
     
-    // Handle specific status codes
     switch (error.status) {
-      case 401:
-        // Unauthorized logic could go here (e.g., redirect to login)
-        // We might want to use an event bus or a store to handle this
-        console.warn('[ErrorHandler] Unauthorized access detected');
-        break;
-      case 403:
-        message = 'You do not have permission to perform this action';
-        break;
-      case 404:
-        message = 'Resource not found';
-        break;
-      case 500:
-        message = 'Server error, please try again later';
-        break;
+      case 403: message = 'Permission denied'; break;
+      case 404: message = 'Resource not found'; break;
+      case 500: message = 'Server error'; break;
     }
   } else if (error instanceof Error) {
     message = error.message;
-  } else if (typeof error === 'string') {
-    message = error;
   }
 
-  // Notify user via Toast
   if (mergedConfig.notify) {
     toast.error(message, {
-      description: errorCode ? `Error Code: ${errorCode}` : undefined,
+      description: errorCode ? `Code: ${errorCode}` : undefined,
     });
   }
 
-  // Log to console in development
-  if (serverEnv.NODE_ENV === 'development') {
-    console.error('[GlobalErrorHandler]', {
-      message,
-      errorCode,
-      originalError: error,
-    });
+  if (env.NODE_ENV === 'development') {
+    console.error('[GlobalErrorHandler]', error);
   }
 }
-

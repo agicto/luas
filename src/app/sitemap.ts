@@ -1,20 +1,14 @@
 import { MetadataRoute } from 'next';
-import { publicEnv } from '@/config/env';
 
-const BASE_URL = publicEnv.NEXT_PUBLIC_APP_URL;
+const BASE_URL = 'http://localhost:3000';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-
-  const routes = [
-    '',
-    '/login',
-    '/register',
-  ];
-
-  return routes.map((route) => ({
+  const routes = ['', '/login', '/register', '/console'].map((route) => ({
     url: `${BASE_URL}${route}`,
     lastModified: new Date(),
-    changeFrequency: 'weekly' as const,
-    priority: route === '' ? 1 : 0.8,
+    changeFrequency: 'monthly' as const,
+    priority: 0.8,
   }));
+
+  return routes;
 }

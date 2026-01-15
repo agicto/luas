@@ -9,7 +9,6 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
-import { publicEnv } from "@/config/env";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -20,23 +19,7 @@ export const metadata: Metadata = {
     template: "%s | Llamacto",
   },
   description: "Modern web application scaffold built with Next.js, TypeScript, and Tailwind CSS",
-  keywords: ["Next.js", "React", "TypeScript", "Tailwind CSS", "Scaffold"],
-  authors: [{ name: "Llamacto Team" }],
-  creator: "Llamacto Team",
-  metadataBase: new URL(publicEnv.NEXT_PUBLIC_APP_URL),
-
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    siteName: "Llamacto Web Scaffold",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+  metadataBase: new URL("http://localhost:3000"), // Purified: Use hardcoded base
 };
 
 export default async function RootLayout({

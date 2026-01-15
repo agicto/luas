@@ -1,15 +1,12 @@
 'use client';
 
 import Script from 'next/script';
-import { publicEnv } from '@/config/env';
+import { env } from '@/config/env';
 
-const GA_MEASUREMENT_ID = publicEnv.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+const GA_MEASUREMENT_ID = env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 export function Analytics() {
-  if (!GA_MEASUREMENT_ID) {
-    return null;
-  }
-
+  if (!GA_MEASUREMENT_ID) return null;
 
   return (
     <>
@@ -27,20 +24,4 @@ export function Analytics() {
       </Script>
     </>
   );
-}
-
-// Analytics event tracking helper
-export function trackEvent(
-  action: string,
-  category: string,
-  label?: string,
-  value?: number
-) {
-  if (typeof window !== 'undefined' && 'gtag' in window) {
-    (window as typeof window & { gtag: (...args: unknown[]) => void }).gtag('event', action, {
-      event_category: category,
-      event_label: label,
-      value: value,
-    });
-  }
 }
