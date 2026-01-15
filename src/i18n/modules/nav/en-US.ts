@@ -7,6 +7,7 @@ const messages: NavMessages = {
   settings: 'Settings',
   profile: 'Profile',
   analytics: 'Analytics',
+  styleguide: 'Styleguide',
 };
 
 export default messages;

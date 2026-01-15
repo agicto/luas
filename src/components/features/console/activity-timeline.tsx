@@ -29,6 +29,8 @@ export interface ActivityItem {
 interface ActivityTimelineProps {
   items: ActivityItem[]
   className?: string
+  title?: string
+  viewAllLabel?: string
 }
 
 const iconMap: Record<ActivityItem["type"], LucideIcon> = {
@@ -49,16 +51,23 @@ const colorMap: Record<ActivityItem["type"], string> = {
   user: "text-primary bg-primary/10",
 }
 
-export function ActivityTimeline({ items, className }: ActivityTimelineProps) {
+export function ActivityTimeline({ items, className, title = "Recent Activity", viewAllLabel }: ActivityTimelineProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border-subtle bg-bg-surface p-6",
-        "hover:shadow-premium transition-shadow duration-300",
+        "rounded-xl border border-border/50 bg-bg-surface p-6 h-full flex flex-col",
+        "hover:shadow-premium transition-all duration-300",
         className
       )}
     >
-      <h3 className="mb-4 text-sm font-medium text-text-muted">Recent Activity</h3>
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-sm font-bold text-text-muted uppercase tracking-wider">{title}</h3>
+        {viewAllLabel && (
+          <button className="text-xs font-medium text-primary hover:underline transition-all">
+            {viewAllLabel}
+          </button>
+        )}
+      </div>
       
       <div className="relative space-y-4">
         {/* Timeline line */}

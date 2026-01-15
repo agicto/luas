@@ -5,6 +5,7 @@ import * as nav from './nav';
 import * as settings from './settings';
 import * as errors from './errors';
 import * as metadata from './metadata';
+import * as dashboard from './dashboard';
 
 import type { Locale } from '../config';
 
@@ -16,6 +17,7 @@ const modules = {
   settings,
   errors,
   metadata,
+  dashboard,
 } as const;
 
 // Locale key to export name mapping
@@ -37,6 +39,7 @@ export function getMessages(locale: Locale) {
     settings: modules.settings[exportKey],
     errors: modules.errors[exportKey],
     metadata: modules.metadata[exportKey],
+    dashboard: modules.dashboard[exportKey],
   };
 }
 

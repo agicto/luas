@@ -15,33 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageSwitcher } from "@/components/common";
+import { useT } from "@/i18n";
 
 interface NavItem {
-  title: string;
+  titleKey: string;
   href: string;
   icon: LucideIcon;
 }
-
-const mainNavItems: NavItem[] = [
-  {
-    title: "Dashboard",
-    href: ROUTES.CONSOLE.HOME,
-    icon: Home,
-  },
-];
-
-const secondaryNavItems: NavItem[] = [
-  {
-    title: "Styleguide",
-    href: ROUTES.CONSOLE.STYLEGUIDE,
-    icon: Palette,
-  },
-  {
-    title: "Settings",
-    href: ROUTES.CONSOLE.SETTINGS,
-    icon: Settings,
-  },
-];
 
 export default function ConsoleLayout({
   children,
@@ -49,69 +30,78 @@ export default function ConsoleLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const t = useT();
+
+  const mainNavItems: NavItem[] = [
+    {
+      titleKey: "nav.dashboard",
+      href: ROUTES.CONSOLE.HOME,
+      icon: Home,
+    },
+  ];
+
+  const secondaryNavItems: NavItem[] = [
+    {
+      titleKey: "nav.styleguide",
+      href: ROUTES.CONSOLE.STYLEGUIDE,
+      icon: Palette,
+    },
+    {
+      titleKey: "nav.settings",
+      href: ROUTES.CONSOLE.SETTINGS,
+      icon: Settings,
+    },
+  ];
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-muted/40">
+    <div className="flex h-screen flex-col overflow-hidden bg-bg-canvas text-text-main">
       {/* Fixed Header */}
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <Link
-          href={ROUTES.CONSOLE.HOME}
-          className="flex items-center gap-2 font-semibold"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-6 w-6 text-primary"
-          >
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
-          </svg>
-          <span className="bg-linear-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Llamacto Console
-          </span>
-        </Link>
-        <div className="ml-auto flex items-center gap-4">
-          <ThemeToggle />
+      <header className="flex h-16 shrink-0 items-center justify-between border-b bg-bg-surface px-4 md:px-6 shadow-sm z-50">
+        <div className="flex items-center gap-4">
+          <Link href={ROUTES.SITE.HOME} className="flex items-center gap-2 group">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <span className="text-xl font-bold tracking-tight">Zweb Console</span>
+          </Link>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <LanguageSwitcher />
+          
+          <Button variant="ghost" isIcon className="h-9 w-9 rounded-full relative">
+            <Bell className="h-4 w-4 text-text-muted" />
+            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary border-2 border-bg-surface" />
+            <span className="sr-only">Notifications</span>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 isIcon
-                className="rounded-full border-dashed"
+                className="h-9 w-9 rounded-full overflow-hidden border border-border/50 hover:border-primary/50 transition-colors"
               >
-                <Bell className="h-4 w-4" />
-                <span className="sr-only">Notifications</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                No new notifications
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                isIcon
-                className="rounded-full overflow-hidden"
-              >
-                <Avatar>
+                <Avatar className="h-full w-full">
                   <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>JD</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Profile</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Account Settings</DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href={ROUTES.AUTH.LOGIN} className="flex items-center">
+            <DropdownMenuContent align="end" className="w-56 rounded-xl p-1 shadow-premium">
+              <div className="px-2 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wider">
+                My Account
+              </div>
+              <DropdownMenuItem className="rounded-lg cursor-pointer">
+                {t('nav.profile')}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="rounded-lg cursor-pointer">
+                {t('nav.settings')}
+              </DropdownMenuItem>
+              <div className="h-px bg-border/50 my-1" />
+              <DropdownMenuItem className="rounded-lg cursor-pointer text-destructive focus:bg-destructive/10">
+                <Link href={ROUTES.AUTH.LOGIN} className="flex w-full items-center">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </Link>
@@ -138,15 +128,18 @@ export default function ConsoleLayout({
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
                       isActive
                         ? "bg-muted text-primary"
-                        : "text-muted-foreground"
+                        : "text-text-subtle hover:bg-muted/50"
                     )}
                   >
-                    <IconComponent className="h-4 w-4" />
-                    {item.title}
+                    <IconComponent className="h-4.5 w-4.5" />
+                    {t(item.titleKey as any)}
                   </Link>
                 );
               })}
-              <div className="my-2 h-px bg-muted" />
+            </nav>
+          </div>
+          <div className="mt-auto p-4">
+            <nav className="grid items-start gap-1 text-sm font-medium">
               {secondaryNavItems.map((item, index) => {
                 const IconComponent = item.icon;
                 const isActive = pathname === item.href;
@@ -158,17 +151,15 @@ export default function ConsoleLayout({
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
                       isActive
                         ? "bg-muted text-primary"
-                        : "text-muted-foreground"
+                        : "text-text-subtle hover:bg-muted/50"
                     )}
                   >
-                    <IconComponent className="h-4 w-4" />
-                    {item.title}
+                    <IconComponent className="h-4.5 w-4.5" />
+                    {t(item.titleKey as any)}
                   </Link>
                 );
               })}
             </nav>
-          </div>
-          <div className="shrink-0 p-4 border-t">
             <Link
               href={ROUTES.SITE.HOME}
               className="flex h-8 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
