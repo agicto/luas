@@ -211,22 +211,39 @@ import { useAuthStore } from '@/store/auth-store';
 
 ## Environment Variables
 
-### Required
+The project uses a **Strict Environment Variable** system to ensure type safety and prevent runtime errors.
 
-```bash
-UPSTREAM_API_BASE=https://your-backend.com/api
+### 1. Single Source of Truth
+All environment variables MUST be defined, validated, and exported from `src/config/env.ts`.
+
+**❌ DO NOT:**
+```typescript
+const apiUrl = process.env.NEXT_PUBLIC_API_URL; // Unsafe, untyped
 ```
 
-### Optional
+**✅ DO:**
+```typescript
+import { env } from '@/config/env';
 
-```bash
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_API_URL=/api
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXX
-
-# Auth configuration
-NEXT_PUBLIC_AUTH_TOKEN_MODE=refresh         # basic | refresh
+const apiUrl = env.NEXT_PUBLIC_API_URL; // Typed, validated
 ```
+
+### 2. Validation (Zod)
+We use `zod` to valid environment variables at runtime. If a required variable is missing, the app will fail to start only with a clear error message.
+
+### 3. Supported Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `NEXT_PUBLIC_API_URL` | No | `/api` | Base URL for API requests. |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
+| `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
+
+To add a new variable:
+1. Add it to `.env.local`
+2. Add validation schema to `src/config/env.ts`
+3. Export it in `env.ts`
+
 
 ## Common Tasks
 
