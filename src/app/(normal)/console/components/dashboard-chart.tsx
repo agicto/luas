@@ -52,7 +52,7 @@ export function DashboardChart({
                 
                 {/* Bar */}
                 <div
-                  className="w-full rounded-t-md bg-gradient-to-t from-primary to-primary/60 transition-all duration-500 ease-out group-hover:from-primary group-hover:to-primary/80"
+                  className="w-full rounded-t-md bg-linear-to-t from-primary to-primary/60 transition-all duration-500 ease-out group-hover:from-primary group-hover:to-primary/80"
                   style={{
                     height: `${barHeight}%`,
                     animationDelay: `${index * 50}ms`,

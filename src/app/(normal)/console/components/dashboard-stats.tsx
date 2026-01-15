@@ -28,9 +28,9 @@ export function StatCard({
 }: StatCardProps) {
   const variantStyles = {
     default: "bg-bg-surface border-border-subtle",
-    primary: "bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20",
-    success: "bg-gradient-to-br from-success/10 via-success/5 to-transparent border-success/20",
-    warning: "bg-gradient-to-br from-warning/10 via-warning/5 to-transparent border-warning/20",
+    primary: "bg-linear-to-br from-primary/10 via-primary/5 to-transparent border-primary/20",
+    success: "bg-linear-to-br from-success/10 via-success/5 to-transparent border-success/20",
+    warning: "bg-linear-to-br from-warning/10 via-warning/5 to-transparent border-warning/20",
   }
 
   const iconStyles = {

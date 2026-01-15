@@ -41,7 +41,7 @@ export function DataDisplayShowcase() {
             </TableHeader>
             <TableBody>
               {tableData.map((row) => (
-                <TableRow key={row.id} className="interactive-subtle transition-colors">
+                <TableRow key={row.id} className="interactive-bg transition-colors">
                   <TableCell className="font-mono text-xs">{row.id}</TableCell>
                   <TableCell className="font-medium">{row.name}</TableCell>
                   <TableCell>

@@ -100,7 +100,7 @@ export function ActivityTimeline({ items, className }: ActivityTimelineProps) {
                   </div>
                   
                   {item.user && (
-                    <Avatar className="h-6 w-6 flex-shrink-0">
+                    <Avatar className="h-6 w-6 shrink-0">
                       <AvatarImage src={item.user.avatar} />
                       <AvatarFallback className="text-[10px]">
                         {item.user.initials}

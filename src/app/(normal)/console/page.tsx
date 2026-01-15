@@ -132,7 +132,7 @@ export default function ConsolePage() {
   return (
     <div className="flex-1 space-y-8 p-6 pt-6">
       {/* Page Header with gradient accent */}
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary/10 via-purple-500/5 to-transparent p-6 border border-primary/10">
+      <div className="relative overflow-hidden rounded-xl bg-linear-to-r from-primary/10 via-purple-500/5 to-transparent p-6 border border-primary/10">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS1vcGFjaXR5PSIuMDUiLz48L2c+PC9zdmc+')] opacity-50" />
         <div className="relative flex items-center justify-between">
           <div className="space-y-1">
@@ -215,7 +215,7 @@ export default function ConsolePage() {
             </TableHeader>
             <TableBody>
               {tableData.map((row) => (
-                <TableRow key={row.id} className="interactive-subtle transition-colors cursor-pointer">
+                <TableRow key={row.id} className="interactive-bg transition-colors cursor-pointer">
                   <TableCell className="font-mono text-xs text-text-muted">{row.id}</TableCell>
                   <TableCell className="font-medium">{row.name}</TableCell>
                   <TableCell>
