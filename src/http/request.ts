@@ -1,6 +1,6 @@
-import axios, { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { handleError } from './error-handler';
-import { getAuthTokens, setAuthTokens } from '@/store/auth-store';
+import { getAuthTokens } from '@/store/auth-store';
 import { env } from '@/config/env';
 
 /**
@@ -14,7 +14,6 @@ const instance: AxiosInstance = axios.create({
 export interface RequestConfig extends AxiosRequestConfig {
   skipAuth?: boolean;
   skipErrorHandler?: boolean;
-  _retry?: boolean;
 }
 
 // Interceptors
@@ -37,22 +36,6 @@ instance.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as RequestConfig;
-    if (error.response?.status === 401 && !originalRequest?._retry && !originalRequest?.skipAuth) {
-      originalRequest._retry = true;
-      const { refreshToken } = getAuthTokens();
-      if (refreshToken) {
-        try {
-          const res = await axios.post(`${env.NEXT_PUBLIC_API_URL}/auth/refresh`, { refreshToken });
-          const { accessToken: nextAt, refreshToken: nextRt } = res.data.data || res.data;
-          setAuthTokens(nextAt, nextRt);
-          if (originalRequest.headers) originalRequest.headers.Authorization = `Bearer ${nextAt}`;
-          return instance(originalRequest);
-        } catch (refreshErr) {
-          setAuthTokens(null, null);
-          return Promise.reject(refreshErr);
-        }
-      }
-    }
 
     const body = error.response?.data as any;
     const apiError = new Error(body?.message || body?.error || error.message);

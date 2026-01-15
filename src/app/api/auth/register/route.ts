@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { authConfig, mockUsers, generateMockToken, isRefreshModeEnabled } from '@/config/auth';
+import { authConfig, mockUsers, generateMockToken } from '@/config/auth';
 
 interface RegisterBody {
   email: string;
@@ -44,12 +44,8 @@ export async function POST(req: NextRequest) {
       role: 'user' as const,
     };
 
-    // Generate tokens and set cookies (auto-login after registration)
+    // Generate access token and set cookie (auto-login after registration)
     const accessToken = generateMockToken(newUser.id, 'access');
-    const refreshToken = isRefreshModeEnabled()
-      ? generateMockToken(newUser.id, 'refresh')
-      : undefined;
-
     const cookieStore = await cookies();
 
     cookieStore.set(authConfig.cookies.accessToken, accessToken, {
@@ -59,16 +55,6 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: authConfig.accessTokenExpiry,
     });
-
-    if (refreshToken) {
-      cookieStore.set(authConfig.cookies.refreshToken, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: authConfig.refreshTokenExpiry,
-      });
-    }
 
     return NextResponse.json({
       data: { user: newUser },

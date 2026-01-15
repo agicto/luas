@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { 
-  authConfig, 
-  mockUsers, 
-  generateMockToken, 
-  isRefreshModeEnabled 
-} from '@/config/auth';
+import { authConfig, mockUsers, generateMockToken } from '@/config/auth';
 
 interface LoginBody {
   email: string;
@@ -18,8 +13,7 @@ interface LoginBody {
  * 
  * POST /api/auth/login
  * 
- * Authenticates against mock users and issues tokens.
- * Supports both 'basic' and 'refresh' token modes.
+ * Authenticates against mock users and issues access token.
  * 
  * Response format matches what auth service expects:
  * { data: { user: User } }
@@ -47,17 +41,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate tokens
+    // Generate access token
     const accessToken = generateMockToken(user.id, 'access');
-    const refreshToken = isRefreshModeEnabled() 
-      ? generateMockToken(user.id, 'refresh') 
-      : undefined;
 
-    // Set cookies
+    // Set cookie
     const cookieStore = await cookies();
-    const maxAge = body.remember 
-      ? authConfig.refreshTokenExpiry 
-      : authConfig.accessTokenExpiry;
+    const maxAge = body.remember ? 604800 : authConfig.accessTokenExpiry;
 
     cookieStore.set(authConfig.cookies.accessToken, accessToken, {
       httpOnly: true,
@@ -66,16 +55,6 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge,
     });
-
-    if (refreshToken) {
-      cookieStore.set(authConfig.cookies.refreshToken, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: authConfig.refreshTokenExpiry,
-      });
-    }
 
     // Return user data in expected format: { data: { user } }
     const userData = {

@@ -64,13 +64,15 @@ export const authApi = {
     return result.user;
   },
 
-  refreshToken: async (token: string) => {
-    return request.post<{ accessToken: string; refreshToken: string }>(
-      '/auth/refresh',
-      { refreshToken: token },
-      { skipAuth: true }
-    );
+  /**
+   * Silent profile check - used during auth initialization.
+   * Does not show error toasts on failure (e.g., 401 when not logged in).
+   */
+  getProfileSilent: async () => {
+    const result = await request.get<{ user: User }>(ENDPOINTS.ME, { skipErrorHandler: true });
+    return result.user;
   },
+
 } as const;
 
 // Type exports for external use

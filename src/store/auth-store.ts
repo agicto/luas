@@ -28,7 +28,6 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   accessToken: string | null;
-  refreshToken: string | null;
   
   // System state
   systemFeatures: SystemFeatures | null;
@@ -53,13 +52,11 @@ interface AuthState {
   reset: () => void;
 }
 
-// Default state
 const defaultState = {
   user: null,
   isAuthenticated: false,
   isLoading: false,
   accessToken: null,
-  refreshToken: null,
   systemFeatures: null,
   setupStatus: null,
   isSystemReady: false,
@@ -79,7 +76,6 @@ const useAuthStoreBase = create<AuthState>()(
         user, 
         isAuthenticated: !!user,
         accessToken: user ? (user as any).accessToken : null,
-        refreshToken: user ? (user as any).refreshToken : null,
         error: null 
       }),
       
@@ -134,8 +130,9 @@ const useAuthStoreBase = create<AuthState>()(
           });
 
           // Probe session on startup. If cookies are present, /auth/me will succeed.
+          // Use silent version to avoid error toasts on public pages.
           try {
-            const user = await authApi.getProfile();
+            const user = await authApi.getProfileSilent();
             set({ user, isAuthenticated: true });
           } catch {
             set({ user: null, isAuthenticated: false });
@@ -160,7 +157,6 @@ const useAuthStoreBase = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         systemFeatures: state.systemFeatures,
         setupStatus: state.setupStatus,
         isSystemReady: state.isSystemReady,
@@ -176,15 +172,11 @@ export const getAuthTokens = () => {
   const state = useAuthStoreBase.getState();
   return {
     accessToken: state.accessToken,
-    refreshToken: state.refreshToken,
   };
 };
 
-/**
- * Set tokens outside of React components/hooks
- */
-export const setAuthTokens = (accessToken: string | null, refreshToken: string | null) => {
-  useAuthStoreBase.setState({ accessToken, refreshToken });
+export const setAuthTokens = (accessToken: string | null) => {
+  useAuthStoreBase.setState({ accessToken });
 };
 
 /**

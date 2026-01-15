@@ -16,9 +16,6 @@ export async function POST() {
     // Clear access token cookie
     cookieStore.delete(authConfig.cookies.accessToken);
 
-    // Clear refresh token cookie
-    cookieStore.delete(authConfig.cookies.refreshToken);
-
     return NextResponse.json({ 
       data: { success: true },
     });

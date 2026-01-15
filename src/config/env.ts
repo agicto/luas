@@ -6,9 +6,8 @@ import { z } from 'zod';
  * Defaults are hardcoded as fallback.
  */
 const envSchema = z.object({
-  // Only the API entry point and essential Auth mode
+  // Only the API entry point
   NEXT_PUBLIC_API_URL: z.string().default('/api'),
-  NEXT_PUBLIC_AUTH_TOKEN_MODE: z.enum(['basic', 'refresh']).default('refresh'),
   
   // Optional but sometimes required
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
@@ -19,7 +18,6 @@ const envSchema = z.object({
 
 const parsed = envSchema.safeParse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_AUTH_TOKEN_MODE: process.env.NEXT_PUBLIC_AUTH_TOKEN_MODE,
   NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
   NODE_ENV: process.env.NODE_ENV,
 });

@@ -1,6 +1,7 @@
 import { PropsWithChildren } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { SiteHeaderNav } from '@/components/features/site/site-header-nav';
 
 /**
  * Site layout for public pages
@@ -52,15 +53,8 @@ export default function SiteLayout({ children }: PropsWithChildren) {
             </nav>
           </div>
 
-          {/* User actions */}
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm">Get Started</Button>
-            </Link>
-          </div>
+          {/* User actions - uses client component for auth-aware rendering */}
+          <SiteHeaderNav />
         </div>
       </header>
 

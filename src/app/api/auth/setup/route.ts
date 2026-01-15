@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { authConfig, generateMockToken, isRefreshModeEnabled } from '@/config/auth';
+import { authConfig, generateMockToken } from '@/config/auth';
 
 interface SetupBody {
   email: string;
@@ -35,12 +35,8 @@ export async function POST(req: NextRequest) {
       role: 'admin' as const,
     };
 
-    // Generate tokens and set cookies
+    // Generate access token and set cookie
     const accessToken = generateMockToken(adminUser.id, 'access');
-    const refreshToken = isRefreshModeEnabled()
-      ? generateMockToken(adminUser.id, 'refresh')
-      : undefined;
-
     const cookieStore = await cookies();
 
     cookieStore.set(authConfig.cookies.accessToken, accessToken, {
@@ -50,16 +46,6 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: authConfig.accessTokenExpiry,
     });
-
-    if (refreshToken) {
-      cookieStore.set(authConfig.cookies.refreshToken, refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: authConfig.refreshTokenExpiry,
-      });
-    }
 
     return NextResponse.json({
       data: { user: adminUser },
