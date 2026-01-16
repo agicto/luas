@@ -5,57 +5,56 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
 ## ✨ Frontend-First AI Features
 
 - 🎨 **Component-Driven**: Extensive UI component library with Radix UI and custom designs
-- 🚀 **Performance Optimized**: Next.js 16 App Router with automatic code splitting
+- 🚀 **Performance Optimized**: Next.js 16.1.1 App Router with automatic code splitting
 - 🌙 **Theme System**: Beautiful dark/light themes with CSS variables
 - 📱 **Mobile-First**: Responsive design for all screen sizes
-- 🔍 **TypeScript**: Full type safety and excellent DX
-- ⚡ **Hot Reload**: Instant development feedback
-- 🎯 **SEO Friendly**: Built-in meta tags and structured data
-- 🤖 **AI-Ready**: Clean patterns for AI code generation
-- 🔐 **Auth Integration**: Client-side authentication patterns
-- 📊 **State Management**: Zustand for predictable state handling
-- 🎭 **Form Handling**: React Hook Form with Zod validation
-- 🛠️ **Developer Tools**: Pre-configured linting and formatting
+- 🔍 **TypeScript**: Full type safety and excellent DX (TypeScript 5.9+)
+- ⚡ **Hot Reload**: Instant development feedback with Next.js Turbopack
+- 🤖 **AI-Ready**: Clean patterns for AI code generation and "vibe coding"
+- 🔐 **Auth Integration**: Built-in authentication patterns with persistent storage
+- 📊 **State Management**: Zustand 5.0 for predictable, granular state handling
+- 🌍 **I18n**: Full internationalization support with `next-intl`
+- 🎨 **Styleguide Explorer**: Pre-built component gallery and design system playground
+- 🛠️ **Developer Tools**: Pre-configured ESLint 9, Prettier, and Vitest
 
 ## 🤖 AI Developer Experience
 
-- **AI-Friendly Code Structure**: Clean, predictable patterns that AI tools understand
-- **Smart Component Design**: Components designed for AI generation and modification
-- **Type Safety**: Comprehensive TypeScript types for better AI code completion
+- **AI-Friendly Code Structure**: Clean, predictable patterns that AI tools (like Windsurf, Cursor, Bolt) understand
+- **Smart Component Design**: Components designed for AI generation and modification, utilizing Atomic Design principles
+- **Type Safety**: Comprehensive TypeScript types for better AI code completion and error prevention
 - **Documentation**: Rich JSDoc comments for AI context understanding
-- **Hot Reload**: Instant feedback for AI-assisted iterative development
-- **Error Handling**: Clear error messages for AI debugging assistance
+- **Error Handling**: Standardized error handling patterns for AI debugging assistance
 
-## 🆕 最新更新 (v2.1.0)
+## 🆕 Latest Updates (v2.1.0)
 
-- ✅ **Next.js 16.1.1** - 最新稳定版
-- ✅ **React 19.2.3** - 最新特性支持
-- ✅ **Tailwind CSS 4.1.18** - 最新版本
-- ✅ **性能优化** - 生产环境配置优化
-- ✅ **架构文档** - 完整的优化指南
+- ✅ **Next.js 16.1.1** - Latest stable version
+- ✅ **React 19.2.3** - Full support for React 19 features
+- ✅ **Tailwind CSS 4.1.18** - Modern utility-first CSS
+- ✅ **Next-Intl 4.6** - Comprehensive i18n solution
+- ✅ **Zustand 5.0** - Optimized state management
+- ✅ **Architecture Guide** - Comprehensive guide for building scalable AI-ready apps
 
-👉 查看 [优化总结报告](docs/OPTIMIZATION_SUMMARY.md) 了解详情
+👉 Check out the [Optimization Summary Report](docs/OPTIMIZATION_SUMMARY.md) for details.
 
 ## 🛠️ Frontend-Optimized Tech Stack
 
-- **Framework**: Next.js 16 with App Router (SSR/SSG/ISR)
-- **Language**: TypeScript (strict mode, AI-friendly)
-- **Styling**: Tailwind CSS (utility-first, design tokens)
-- **UI Components**: Radix UI (accessible primitives)
-- **State Management**: Zustand (simple, predictable)
-- **Forms**: React Hook Form + Zod validation
-- **Icons**: Lucide React (consistent icon system)
-- **Theme**: next-themes (system-aware theming)
-- **Data Fetching**: TanStack Query (caching, sync)
-- **Animations**: Framer Motion (smooth transitions)
-- **Package Manager**: pnpm (fast, reliable)
+- **Framework**: Next.js 16.1.1 (App Router)
+- **Library**: React 19.2.3
+- **Language**: TypeScript 5.9.3 (Strict Mode)
+- **Styling**: Tailwind CSS 4.1.18 + PostCSS
+- **UI Components**: Radix UI + Lucide Icons
+- **State Management**: Zustand 5.0.9
+- **Data Fetching**: TanStack Query v5
+- **Forms**: React Hook Form 7.69 + Zod 4.2
+- **Theming**: Next-Themes 0.4
+- **Testing**: Vitest 4.0 + Testing Library
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm (recommended) or npm
+- pnpm 10+ (Recommended)
 
 ### Installation
 
@@ -79,8 +78,6 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
    # Edit .env.local with your configuration
    ```
 
-   **Note**: This is a frontend scaffold. The `.env.example` only contains frontend-specific variables like API URLs and feature flags. Backend configurations should be handled in separate backend services.
-
 4. **Run the development server**
 
    ```bash
@@ -91,146 +88,79 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
 
    Navigate to [http://localhost:3000](http://localhost:3000)
 
-### Frontend vs Backend Configuration
-
-This scaffold includes two environment configuration files:
-
-- **`.env.example`** - Frontend-only variables (Next.js public variables)
-- **`.env.example.backend`** - Example backend configuration (for reference)
-
-The frontend scaffold focuses on client-side configuration, while backend services should handle their own environment variables separately.
-
 ## 📁 Project Structure
 
 ```text
 src/
 ├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication pages
-│   ├── (site)/            # Public pages
-│   └── console/           # Admin dashboard
+│   ├── (auth)/            # Authentication routes
+│   ├── (site)/            # Marketing/Public pages
+│   ├── (normal)/          # Authenticated layout group
+│   │   ├── console/       # Admin dashboard
+│   │   └── styleguide/    # Component explorer
+│   └── api/               # API Route handlers
 ├── components/            # Reusable components
-│   └── ui/               # UI component library
-├── config/               # Configuration files
-├── constants/            # Application constants
+│   ├── ui/               # Base UI library (Shadcn-like)
+│   ├── features/         # Domain-specific components
+│   │   ├── auth/         # Login, Register, Guards
+│   │   ├── console/      # Dashboard widgets
+│   │   └── styleguide/   # Styleguide specific components
+│   └── common/           # Shared layout components
 ├── hooks/                # Custom React hooks
-├── http/                 # HTTP layer (request, interceptors, types)
+├── services/             # API/Business logic layer
+├── store/                # Zustand state slices
+├── i18n/                 # Translation files
 ├── providers/            # React context providers
-├── services/             # API service layer
-├── store/                # Zustand stores
-├── types/                # TypeScript type definitions
-└── utils/                # Utility functions
+├── utils/                # Utility functions
+└── types/                # TypeScript definitions
 ```
 
-## 🎯 Why LlamaFront for Frontend Development?
+## 📊 Features in Depth
 
-### 🎨 **Component Excellence**
+### 🎨 **Styleguide**
+A built-in styleguide available at `/styleguide` allows you to explore all UI components, colors, and typography in isolation. This is perfect for maintaining visual consistency.
 
-- **Design System**: Consistent, reusable component library
-- **Accessibility**: WCAG compliant components out of the box
-- **Theming**: CSS variables for seamless theme switching
-- **Responsive**: Mobile-first, breakpoint-driven design
+### 🔐 **Authentication**
+Complete auth flow out-of-the-box:
+- Login/Register pages with validation
+- JWT & Session management in Zustand
+- `AuthGuard` component for route protection
+- Middleware-level protection patterns
 
-### ⚡ **Performance First**
+### 🌍 **Internationalization**
+Powered by `next-intl`, supporting:
+- Multi-language routing
+- Type-safe translation keys
+- Dynamic language switching
 
-- **Code Splitting**: Automatic route-based splitting
-- **Image Optimization**: Next.js Image component with lazy loading
-- **Bundle Analysis**: Built-in webpack bundle analyzer
-- **Core Web Vitals**: Optimized for Lighthouse scores
-
-### 🤖 **AI-Enhanced DX**
-
-- **Clean Patterns**: Predictable component structure for AI tools
-- **Type Safety**: Comprehensive TypeScript definitions
-- **Smart Imports**: Auto-import for components and utilities
-- **Error Boundaries**: Graceful error handling and debugging
-
-### 🚀 **Modern Standards**
-
-- **ESM**: Pure ES modules, no CommonJS
-- **CSS Modules**: Scoped styling with Tailwind
-- **SEO Ready**: Meta tags, structured data, sitemaps
-- **PWA Support**: Service worker and offline capabilities
-
-## 🔐 Authentication
-
-Pre-built authentication system includes:
-
-- **Login/Register**: Email and password authentication
-- **Protected Routes**: Route-level protection
-- **User Management**: User profiles and settings
-- **Password Reset**: Secure password recovery
-- **Session Management**: JWT-based sessions
-
-## 📊 Admin Dashboard
-
-Full-featured admin interface with:
-
-- **Analytics Dashboard**: Charts and metrics
-- **User Management**: CRUD operations for users
-- **Settings Panel**: Application configuration
-- **Data Tables**: Sortable, filterable tables
-- **Responsive Design**: Mobile-friendly admin interface
+### 📈 **Dashboard & Analytics**
+A ready-to-use console layout includes:
+- Performance monitoring charts (Recharts)
+- Activity timelines
+- Stats summaries
+- Responsive sidebar navigation
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Deploy with zero configuration
+Deployment is seamless on Vercel with zero configuration.
 
 ### Docker
-
 ```bash
-# Build the Docker image
-docker build -t llamacto-web .
-
-# Run the container
-docker run -p 3000:3000 llamacto-web
+docker build -t llamafront-web .
+docker run -p 3000:3000 llamafront-web
 ```
-
-### Other Platforms
-
-Llamacto can be deployed to any platform that supports Node.js:
-
-- Netlify
-- Railway
-- Heroku
-- AWS
-- Google Cloud
-- Azure
 
 ## 🧪 Scripts
 
 ```bash
-# Development
-pnpm dev          # Start development server
+pnpm dev          # Start development with Turbopack
 pnpm build        # Build for production
 pnpm start        # Start production server
-
-# Code Quality
-pnpm lint         # Run ESLint
-pnpm lint:fix     # Fix ESLint errors
-pnpm type-check   # Run TypeScript checks
-pnpm format       # Format code with Prettier
+pnpm lint         # Run ESLint & Type-check
+pnpm test         # Run unit tests
+pnpm format       # Format with Prettier
 ```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) - The React framework for production
-- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
-- [Radix UI](https://www.radix-ui.com/) - Low-level UI primitives
-- [Vercel](https://vercel.com/) - Platform for frontend frameworks
-
-## 📞 Support
-
-- 📧 Issues: [GitHub Issues](https://github.com/llamacto/llamafront-ai-scaffold/issues)
-- 📚 Documentation: Check the `docs/` directory for detailed guides
-- 🐛 Bug Reports: Please open an issue with detailed information
 
 ## 🤝 Contributing
 
