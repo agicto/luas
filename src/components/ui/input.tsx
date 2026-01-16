@@ -1,3 +1,13 @@
+/**
+ * @component Input
+ * @category UI
+ * @status Stable
+ * @description A standard input field with support for icons, error states, and specialized types like search, password, and color.
+ * @usage Use in forms for text, email, password, or search inputs. Automatically handles date and color types with custom pickers.
+ * @example
+ * <Input placeholder="Username" leftIcon={<User />} errorText="Username is required" />
+ * <PasswordInput placeholder="Password" />
+ */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { SearchIcon, EyeIcon, EyeOffIcon, AlertCircleIcon } from "lucide-react"

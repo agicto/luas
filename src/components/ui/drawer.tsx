@@ -1,3 +1,20 @@
+/**
+ * @component Drawer
+ * @category UI
+ * @status Stable
+ * @description A panel that slides out from the edge of the screen, typically used for mobile navigation or supplementary content.
+ * @usage Use for mobile-friendly menus or forms that don't need a full-screen modal.
+ * @example
+ * <Drawer>
+ *   <DrawerTrigger>Open</DrawerTrigger>
+ *   <DrawerContent>
+ *     <DrawerHeader>
+ *       <DrawerTitle>Settings</DrawerTitle>
+ *     </DrawerHeader>
+ *     <div className="p-4">Content</div>
+ *   </DrawerContent>
+ * </Drawer>
+ */
 "use client"
 
 import * as React from "react"

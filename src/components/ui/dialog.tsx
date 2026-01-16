@@ -1,3 +1,24 @@
+/**
+ * @component Dialog
+ * @category UI
+ * @status Stable
+ * @description A window overlaid on either the primary window or another dialog window, rendering the content underneath inert.
+ * @usage Use for modal windows, confirmations, or secondary content that requires focus.
+ * @example
+ * <Dialog>
+ *   <DialogTrigger>Open</DialogTrigger>
+ *   <DialogContent>
+ *     <DialogHeader>
+ *       <DialogTitle>Confirmation</DialogTitle>
+ *     </DialogHeader>
+ *     <DialogBody>Are you sure?</DialogBody>
+ *     <DialogFooter>
+ *       <Button>Cancel</Button>
+ *       <Button>Confirm</Button>
+ *     </DialogFooter>
+ *   </DialogContent>
+ * </Dialog>
+ */
 "use client"
 
 import * as React from "react"

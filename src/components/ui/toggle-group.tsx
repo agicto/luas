@@ -1,3 +1,15 @@
+/**
+ * @component ToggleGroup
+ * @category UI
+ * @status Stable
+ * @description A set of buttons that can be toggled on or off, with support for single or multiple selection.
+ * @usage Use for filtering or selecting multiple options from a small set.
+ * @example
+ * <ToggleGroup type="multiple">
+ *   <ToggleGroupItem value="bold">B</ToggleGroupItem>
+ *   <ToggleGroupItem value="italic">I</ToggleGroupItem>
+ * </ToggleGroup>
+ */
 "use client"
 
 import * as React from "react"

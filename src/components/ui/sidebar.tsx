@@ -1,3 +1,29 @@
+/**
+ * @component Sidebar
+ * @category UI
+ * @status Stable
+ * @description A comprehensive system for building complex, collapsible sidebars with support for navigation, menus, and groups.
+ * @usage Wraps the layout with SidebarProvider and uses SidebarTrigger to toggle visibility.
+ * @example
+ * <SidebarProvider>
+ *   <Sidebar>
+ *     <SidebarContent>
+ *       <SidebarGroup>
+ *         <SidebarGroupLabel>Application</SidebarGroupLabel>
+ *         <SidebarMenu>
+ *           <SidebarMenuItem>
+ *             <SidebarMenuButton>Home</SidebarMenuButton>
+ *           </SidebarMenuItem>
+ *         </SidebarMenu>
+ *       </SidebarGroup>
+ *     </SidebarContent>
+ *   </Sidebar>
+ *   <SidebarInset>
+ *     <SidebarTrigger />
+ *     {children}
+ *   </SidebarInset>
+ * </SidebarProvider>
+ */
 "use client"
 
 import * as React from "react"

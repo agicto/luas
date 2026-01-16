@@ -1,3 +1,15 @@
+/**
+ * @component Label
+ * @category UI
+ * @status Stable
+ * @description An accessible label component for form inputs.
+ * @usage Use with Input, Checkbox, or other form controls to provide descriptive text.
+ * @example
+ * <div className="grid gap-1.5">
+ *   <Label htmlFor="email">Email</Label>
+ *   <Input id="email" type="email" />
+ * </div>
+ */
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,12 @@
+/**
+ * @component Calendar
+ * @category UI
+ * @status Stable
+ * @description A date selection component with support for month/year navigation and today shortcut.
+ * @usage Use for choosing specific dates in forms or filters. Internal logic uses native Date objects.
+ * @example
+ * <Calendar selected={date} onSelect={setDate} />
+ */
 "use client"
 
 import * as React from "react"

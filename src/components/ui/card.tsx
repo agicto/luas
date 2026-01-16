@@ -1,3 +1,18 @@
+/**
+ * @component Card
+ * @category UI
+ * @status Stable
+ * @description A flexible container component with support for headers, content, actions, and footers.
+ * @usage Use to group related information in a visually distinct container.
+ * @example
+ * <Card>
+ *   <CardHeader>
+ *     <CardTitle>Title</CardTitle>
+ *     <CardDescription>Description</CardDescription>
+ *   </CardHeader>
+ *   <CardContent>Body</CardContent>
+ * </Card>
+ */
 import * as React from "react"
 
 import { cn } from "@/utils"

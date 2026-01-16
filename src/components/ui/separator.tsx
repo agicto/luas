@@ -1,3 +1,13 @@
+/**
+ * @component Separator
+ * @category UI
+ * @status Stable
+ * @description Visually or semantically separates content within a page or container.
+ * @usage Use to divide sections of content, either horizontally (default) or vertically.
+ * @example
+ * <Separator />
+ * <Separator orientation="vertical" />
+ */
 "use client"
 
 import * as React from "react"

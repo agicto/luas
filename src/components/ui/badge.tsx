@@ -1,3 +1,12 @@
+/**
+ * @component Badge
+ * @category UI
+ * @status Stable
+ * @description Displays a small badge or label for status, counts, or categories.
+ * @usage Use for pill-like status indicators or numeric counts.
+ * @example
+ * <Badge variant="outline">New</Badge>
+ */
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"

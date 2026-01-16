@@ -1,3 +1,12 @@
+/**
+ * @component Checkbox
+ * @category UI
+ * @status Stable
+ * @description A control that allows the user to select one or more options from a set.
+ * @usage Use in forms for boolean inputs or multiple choice selections.
+ * @example
+ * <Checkbox id="terms" label="Accept terms" />
+ */
 "use client"
 
 import * as React from "react"

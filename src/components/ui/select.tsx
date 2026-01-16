@@ -1,3 +1,18 @@
+/**
+ * @component Select
+ * @category UI
+ * @status Stable
+ * @description A control that allows the user to choose one option from a list of values.
+ * @usage Use in forms for mutually exclusive selections. Supports groupings, headers, and separators.
+ * @example
+ * <Select>
+ *   <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+ *   <SelectContent>
+ *     <SelectItem value="1">Option 1</SelectItem>
+ *     <SelectItem value="2">Option 2</SelectItem>
+ *   </SelectContent>
+ * </Select>
+ */
 "use client"
 
 import * as React from "react"

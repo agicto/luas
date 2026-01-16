@@ -1,3 +1,23 @@
+/**
+ * @component Table
+ * @category UI
+ * @status Stable
+ * @description A set of components for building responsive tables with support for headers, footers, rows, and captions.
+ * @usage Use for displaying structured data in a grid format.
+ * @example
+ * <Table>
+ *   <TableHeader>
+ *     <TableRow>
+ *       <TableHead>Header</TableHead>
+ *     </TableRow>
+ *   </TableHeader>
+ *   <TableBody>
+ *     <TableRow>
+ *       <TableCell>Data</TableCell>
+ *     </TableRow>
+ *   </TableBody>
+ * </Table>
+ */
 "use client"
 
 import * as React from "react"
@@ -70,7 +90,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap *:[[role=checkbox]]:translate-y-[2px] [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}
@@ -83,7 +103,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "p-2 align-middle whitespace-nowrap *:[[role=checkbox]]:translate-y-[2px] [&:has([role=checkbox])]:pr-0",
         className
       )}
       {...props}

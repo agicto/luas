@@ -1,3 +1,12 @@
+/**
+ * @component ActivityTimeline
+ * @category Feature
+ * @status Stable
+ * @description Displays a vertical timeline of activities, logs, or events.
+ * @usage Used in the dashboard console to show recent user or system activities.
+ * @example
+ * <ActivityTimeline items={mockActivities} title="System Logs" />
+ */
 "use client"
 
 import * as React from "react"

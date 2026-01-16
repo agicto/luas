@@ -1,3 +1,15 @@
+/**
+ * @component Popover
+ * @category UI
+ * @status Stable
+ * @description Displays rich content in a portal, triggered by a button or other element, typically used for small forms or settings.
+ * @usage Use for lightweight overlays that don't require the full surface of a dialog or drawer.
+ * @example
+ * <Popover>
+ *   <PopoverTrigger>Open</PopoverTrigger>
+ *   <PopoverContent>Content</PopoverContent>
+ * </Popover>
+ */
 "use client"
 
 import * as React from "react"

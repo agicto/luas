@@ -1,3 +1,22 @@
+/**
+ * @component Breadcrumb
+ * @category UI
+ * @status Stable
+ * @description A navigation aid that helps users understand their location within the app hierarchy.
+ * @usage Use at the top of pages to provide navigational context and history.
+ * @example
+ * <Breadcrumb>
+ *   <BreadcrumbList>
+ *     <BreadcrumbItem>
+ *       <BreadcrumbLink href="/">Home</BreadcrumbLink>
+ *     </BreadcrumbItem>
+ *     <BreadcrumbSeparator />
+ *     <BreadcrumbItem>
+ *       <BreadcrumbPage>Dashboard</BreadcrumbPage>
+ *     </BreadcrumbItem>
+ *   </BreadcrumbList>
+ * </Breadcrumb>
+ */
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"

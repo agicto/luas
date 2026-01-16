@@ -1,3 +1,18 @@
+/**
+ * @component DropdownMenu
+ * @category UI
+ * @status Stable
+ * @description Displays a list of options or actions to the user, triggered by a button or other element.
+ * @usage Use for navigation menus, context menus, or filtering options.
+ * @example
+ * <DropdownMenu>
+ *   <DropdownMenuTrigger>Actions</DropdownMenuTrigger>
+ *   <DropdownMenuContent>
+ *     <DropdownMenuItem>Edit</DropdownMenuItem>
+ *     <DropdownMenuItem>Delete</DropdownMenuItem>
+ *   </DropdownMenuContent>
+ * </DropdownMenu>
+ */
 "use client"
 
 import * as React from "react"

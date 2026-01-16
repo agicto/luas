@@ -1,3 +1,19 @@
+/**
+ * @component Tabs
+ * @category UI
+ * @status Stable
+ * @description A set of layered sections of content, or tabs, that are displayed one at a time.
+ * @usage Use to organize content into multiple views that can be toggled via a list of triggers.
+ * @example
+ * <Tabs defaultValue="account">
+ *   <TabsList>
+ *     <TabsTrigger value="account">Account</TabsTrigger>
+ *     <TabsTrigger value="password">Password</TabsTrigger>
+ *   </TabsList>
+ *   <TabsContent value="account">Account settings here.</TabsContent>
+ *   <TabsContent value="password">Change password here.</TabsContent>
+ * </Tabs>
+ */
 "use client"
 
 import * as React from "react"

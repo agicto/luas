@@ -1,3 +1,12 @@
+/**
+ * @component DatePicker
+ * @category UI
+ * @status Stable
+ * @description A combined date and time picker component using a popover and calendar.
+ * @usage Use for selecting specific points in time. Supports both date-only and date-time modes.
+ * @example
+ * <DatePicker date={date} setDate={setDate} showTime placeholder="Select meeting time" />
+ */
 "use client"
 
 import * as React from "react"

@@ -1,3 +1,12 @@
+/**
+ * @component LanguageSwitcher
+ * @category Common
+ * @status Stable
+ * @description A dropdown menu for switching application language/locale.
+ * @usage Place in the application header or settings for global language control.
+ * @example
+ * <LanguageSwitcher />
+ */
 'use client';
 
 import * as React from "react";
@@ -11,10 +20,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
 import { cn } from "@/utils";
 
 export function LanguageSwitcher() {
   const { locale, setLocale, isPending } = useLocale();
+  const t = useT();
 
   if (!isLocaleSwitcherEnabled) {
     return null;
@@ -29,13 +40,13 @@ export function LanguageSwitcher() {
           className="h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
           disabled={isPending}
         >
-          <Globe className={cn("h-4.5 w-4.5 text-text-muted transition-transform duration-300", isPending && "animate-spin")} />
-          <span className="sr-only">Toggle language</span>
+          <Globe className={cn("size-4.5 text-text-muted transition-transform duration-300", isPending && "animate-spin")} />
+          <span className="sr-only">{t('common.toggleLanguage')}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[160px] rounded-xl p-1 shadow-premium border-border/50 animate-in fade-in zoom-in-95 duration-200">
         <div className="px-2 py-1.5 text-xs font-semibold text-text-muted uppercase tracking-wider">
-          Select Language
+          {t('common.selectLanguage')}
         </div>
         {locales.map((loc) => (
           <DropdownMenuItem

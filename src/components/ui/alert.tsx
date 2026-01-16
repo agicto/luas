@@ -1,3 +1,16 @@
+/**
+ * @component Alert
+ * @category UI
+ * @status Stable
+ * @description Provides contextual feedback messages for typical user actions with optional title and description.
+ * @usage Use for success, warning, or error messages that require user attention.
+ * @example
+ * <Alert variant="destructive">
+ *   <AlertCircle className="h-4 w-4" />
+ *   <AlertTitle>Error</AlertTitle>
+ *   <AlertDescription>Your session has expired.</AlertDescription>
+ * </Alert>
+ */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

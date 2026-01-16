@@ -1,3 +1,15 @@
+/**
+ * @component Toaster
+ * @category UI
+ * @status Stable
+ * @description A toast notification component powered by Sonner, with customized themes for the scaffold.
+ * @usage Include at the root of the application to enable global toast notifications.
+ * @example
+ * <Toaster />
+ * // Usage in code:
+ * import { toast } from "sonner";
+ * toast.success("Operation successful");
+ */
 "use client"
 
 import { useTheme } from "next-themes"

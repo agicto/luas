@@ -1,3 +1,14 @@
+/**
+ * @component Button
+ * @category UI
+ * @status Stable
+ * @description A highly customizable button component with support for variants, sizes, loading states, and icons.
+ * @usage Use for primary actions, forms, or navigation triggers. Supports 'asChild' for semantic flexibility.
+ * @example
+ * <Button variant="default" size="md" loading={isLoading} onClick={handleClick}>
+ *   Click Me
+ * </Button>
+ */
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -43,9 +54,22 @@ const buttonVariants = cva(
 )
 
 interface ButtonProps extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
+  /**
+   * If true, the button will render as its child element while keeping button styles.
+   */
   asChild?: boolean
+  /**
+   * Displays a loading spinner and disables interaction.
+   */
   loading?: boolean
+  /**
+   * An optional icon to display inside the button.
+   */
   icon?: React.ReactNode
+  /**
+   * Positioning of the icon or loading spinner relative to children.
+   * @default "left"
+   */
   iconPosition?: "left" | "right"
 }
 

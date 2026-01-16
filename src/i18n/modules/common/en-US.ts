@@ -35,6 +35,8 @@ const messages: CommonMessages = {
   second: 'Second',
   now: 'Now',
   datePlaceholder: 'Select date',
+  toggleLanguage: 'Toggle language',
+  selectLanguage: 'Select language',
 };
 
 export default messages;

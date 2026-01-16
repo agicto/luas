@@ -1,3 +1,12 @@
+/**
+ * @component SiteHeaderNav
+ * @category Feature
+ * @status Stable
+ * @description The main navigation component for the public site header, supporting localized links and active state detection.
+ * @usage Place in the site header for global navigation.
+ * @example
+ * <SiteHeaderNav />
+ */
 'use client';
 
 import Link from 'next/link';

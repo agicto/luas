@@ -1,3 +1,14 @@
+/**
+ * @component Toggle
+ * @category UI
+ * @status Stable
+ * @description A two-state button that can be either on or off.
+ * @usage Use for simple binary toggles or within a ToggleGroup for multiple selections.
+ * @example
+ * <Toggle aria-label="Toggle bold">
+ *   <Bold className="h-4 w-4" />
+ * </Toggle>
+ */
 "use client"
 
 import * as React from "react"

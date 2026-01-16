@@ -267,6 +267,36 @@ To add a new variable:
    - Organise by functional module (e.g., `src/components/features/console/`).
 3. **Common components** → Generic, non-business specific components should be in `src/components/common/`.
 
+#### Atomic Component Contract
+
+To ensure engineering rigor and performance, all components MUST follow these rules:
+
+- **Named Exports**: Always use named exports. Do NOT use `export default`.
+  - `export function ComponentName({ ... }: ComponentNameProps) { ... }`
+- **Strict Typing**: Always define an interface for props named `[ComponentName]Props`.
+- **RSC First Strategy**: 
+  - Components are **Server Components** by default.
+  - If a component needs interactivity (hooks or events), extract the interactive logic into a **small, leaf-level Client Component** (marked with `'use client'`). 
+  - Avoid turning large feature components into Client Components.
+- **Zero Hardcoded Strings**: All user-facing text must use the `useT` hook for i18n.
+- **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
+
+#### Component Annotation Standard (CAS)
+
+All components MUST include a standardized JSDoc header for discovery and AI-assisted reuse:
+
+```typescript
+/**
+ * @component [Formal Name]
+ * @category [UI | Feature | Common]
+ * @status [Stable | Beta | Experimental]
+ * @description [Concise purpose]
+ * @usage [When/How to use]
+ * @example
+ * <ComponentName prop={value} />
+ */
+```
+
 ### Adding a New Data Module (Service-Hook-Type Pattern)
 
 All data handling must follow the strict **Service-Hook-Type** layered architecture to ensure separation of concerns and type safety.

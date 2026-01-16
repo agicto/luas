@@ -1,3 +1,17 @@
+/**
+ * @component Chart
+ * @category UI
+ * @status Stable
+ * @description A collection of components for building responsive and themed charts using Recharts.
+ * @usage Wraps Recharts components with a theme-aware container and provides standardized tooltips and legends.
+ * @example
+ * <ChartContainer config={chartConfig}>
+ *   <BarChart data={data}>
+ *     <ChartTooltip content={<ChartTooltipContent />} />
+ *     <Bar dataKey="value" fill="var(--color-value)" />
+ *   </BarChart>
+ * </ChartContainer>
+ */
 "use client"
 
 import * as React from "react"

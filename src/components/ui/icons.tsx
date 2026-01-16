@@ -1,3 +1,13 @@
+/**
+ * @component Icons
+ * @category UI
+ * @status Stable
+ * @description A collection of custom brand and utility SVG icons.
+ * @usage Use for social login buttons (Google, Apple, etc.) or app branding (Logo).
+ * @example
+ * <Google className="size-5" />
+ * <Logo className="size-10" />
+ */
 import React from 'react';
 
 // Custom brand icons

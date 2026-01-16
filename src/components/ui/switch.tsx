@@ -1,3 +1,15 @@
+/**
+ * @component Switch
+ * @category UI
+ * @status Stable
+ * @description A control that allows the user to toggle a setting on or off.
+ * @usage Use in forms or settings pages for boolean toggles.
+ * @example
+ * <div className="flex items-center space-x-2">
+ *   <Switch id="airplane-mode" />
+ *   <Label htmlFor="airplane-mode">Airplane Mode</Label>
+ * </div>
+ */
 "use client"
 
 import * as React from "react"

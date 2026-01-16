@@ -1,3 +1,15 @@
+/**
+ * @component Avatar
+ * @category UI
+ * @status Stable
+ * @description An image element with a fallback for representing the user.
+ * @usage Use for user profiles, comments, or team member lists.
+ * @example
+ * <Avatar>
+ *   <AvatarImage src="https://github.com/shadcn.png" />
+ *   <AvatarFallback>CN</AvatarFallback>
+ * </Avatar>
+ */
 "use client"
 
 import * as React from "react"

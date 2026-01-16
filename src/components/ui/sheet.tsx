@@ -1,3 +1,20 @@
+/**
+ * @component Sheet
+ * @category UI
+ * @status Stable
+ * @description An extension of Dialog that slides in from the edge of the screen, typically used for sidebars or mobile menus.
+ * @usage Use for secondary navigation or complex forms that slide in from any edge (top, right, bottom, left).
+ * @example
+ * <Sheet>
+ *   <SheetTrigger>Open</SheetTrigger>
+ *   <SheetContent side="right">
+ *     <SheetHeader>
+ *       <SheetTitle>Menu</SheetTitle>
+ *     </SheetHeader>
+ *     <div>Content</div>
+ *   </SheetContent>
+ * </Sheet>
+ */
 "use client"
 
 import * as React from "react"

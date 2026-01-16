@@ -1,3 +1,12 @@
+/**
+ * @component Textarea
+ * @category UI
+ * @status Stable
+ * @description A multi-line text input field with support for error states and variants.
+ * @usage Use in forms for longer text inputs (e.g., descriptions, comments).
+ * @example
+ * <Textarea placeholder="Type your message here." errorText="Message is too short." />
+ */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 

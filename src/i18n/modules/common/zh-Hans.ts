@@ -33,6 +33,8 @@ const messages = {
   second: '秒',
   now: '现在',
   datePlaceholder: '选择日期',
+  toggleLanguage: '切换语言',
+  selectLanguage: '选择语言',
 };
 
 export default messages;
