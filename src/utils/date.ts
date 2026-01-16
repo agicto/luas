@@ -4,40 +4,54 @@
  */
 
 /**
- * Format date according to specified format
+ * Format date according to specified format or locale options
  * @param date - Date to format
- * @param format - Format string (default 'YYYY-MM-DD')
+ * @param options - Intl.DateTimeFormatOptions or a format string (limited support for YYYY-MM-DD)
+ * @param locale - Locale string (default: from browser/system)
  */
-export function formatDate(date: Date | string | number, format = 'YYYY-MM-DD'): string {
+export function formatDate(
+  date: Date | string | number, 
+  options: Intl.DateTimeFormatOptions | string = 'YYYY-MM-DD',
+  locale?: string
+): string {
   const d = new Date(date);
   
   if (isNaN(d.getTime())) {
     return 'Invalid Date';
   }
   
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
+  if (typeof options === 'string') {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const seconds = String(d.getSeconds()).padStart(2, '0');
+    
+    return options
+      .replace('YYYY', String(year))
+      .replace('MM', month)
+      .replace('DD', day)
+      .replace('HH', hours)
+      .replace('mm', minutes)
+      .replace('ss', seconds);
+  }
   
-  return format
-    .replace('YYYY', String(year))
-    .replace('MM', month)
-    .replace('DD', day)
-    .replace('HH', hours)
-    .replace('mm', minutes)
-    .replace('ss', seconds);
+  return new Intl.DateTimeFormat(locale, options).format(d);
 }
 
 /**
  * Get relative time string (e.g., "2 hours ago", "in 3 days")
  * @param date - Date to compare
  * @param baseDate - Base date to compare against (default: now)
+ * @param locale - Locale string (default: 'en')
  */
-export function getRelativeTime(date: Date | string | number, baseDate: Date | string | number = new Date()): string {
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+export function getRelativeTime(
+  date: Date | string | number, 
+  baseDate: Date | string | number = new Date(),
+  locale = 'en'
+): string {
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
   const d1 = new Date(date);
   const d2 = new Date(baseDate);
   
@@ -46,6 +60,8 @@ export function getRelativeTime(date: Date | string | number, baseDate: Date | s
   const diffInMins = Math.round(diffInSecs / 60);
   const diffInHours = Math.round(diffInMins / 60);
   const diffInDays = Math.round(diffInHours / 24);
+  const diffInMonths = Math.round(diffInDays / 30);
+  const diffInYears = Math.round(diffInDays / 365);
   
   if (Math.abs(diffInSecs) < 60) {
     return rtf.format(diffInSecs, 'second');
@@ -55,9 +71,10 @@ export function getRelativeTime(date: Date | string | number, baseDate: Date | s
     return rtf.format(diffInHours, 'hour');
   } else if (Math.abs(diffInDays) < 30) {
     return rtf.format(diffInDays, 'day');
+  } else if (Math.abs(diffInMonths) < 12) {
+    return rtf.format(diffInMonths, 'month');
   } else {
-    // If more than a month, return formatted date
-    return formatDate(date);
+    return rtf.format(diffInYears, 'year');
   }
 }
 
@@ -68,9 +85,7 @@ export function getRelativeTime(date: Date | string | number, baseDate: Date | s
 export function isToday(date: Date | string | number): boolean {
   const d = new Date(date);
   const today = new Date();
-  return d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear();
+  return d.setHours(0, 0, 0, 0) === today.setHours(0, 0, 0, 0);
 }
 
 /**
@@ -87,24 +102,12 @@ export function addTime(
   const d = new Date(date);
   
   switch (unit) {
-    case 'day':
-      d.setDate(d.getDate() + amount);
-      break;
-    case 'month':
-      d.setMonth(d.getMonth() + amount);
-      break;
-    case 'year':
-      d.setFullYear(d.getFullYear() + amount);
-      break;
-    case 'hour':
-      d.setHours(d.getHours() + amount);
-      break;
-    case 'minute':
-      d.setMinutes(d.getMinutes() + amount);
-      break;
-    case 'second':
-      d.setSeconds(d.getSeconds() + amount);
-      break;
+    case 'day': d.setDate(d.getDate() + amount); break;
+    case 'month': d.setMonth(d.getMonth() + amount); break;
+    case 'year': d.setFullYear(d.getFullYear() + amount); break;
+    case 'hour': d.setHours(d.getHours() + amount); break;
+    case 'minute': d.setMinutes(d.getMinutes() + amount); break;
+    case 'second': d.setSeconds(d.getSeconds() + amount); break;
   }
   
   return d;

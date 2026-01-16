@@ -4,12 +4,16 @@
  */
 
 /**
- * Validates an email address
+ * Lightweight validation utility functions
+ * Note: For complex form validation, use Zod schemas as defined in the project.
+ */
+
+/**
+ * Validates an email address (Lightweight version)
  * @param email - Email to validate
  */
 export function isValidEmail(email: string): boolean {
-  const pattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return pattern.test(email);
+  return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 }
 
 /**
@@ -49,10 +53,7 @@ export function isValidPassword(
     errors.push('Password must include at least one lowercase letter');
   }
   
-  return {
-    valid: errors.length === 0,
-    errors
-  };
+  return { valid: errors.length === 0, errors };
 }
 
 /**
@@ -61,8 +62,7 @@ export function isValidPassword(
  */
 export function isValidUrl(url: string): boolean {
   try {
-    new URL(url);
-    return true;
+    return !!new URL(url);
   } catch {
     return false;
   }
@@ -73,27 +73,18 @@ export function isValidUrl(url: string): boolean {
  * @param cardNumber - Credit card number to validate
  */
 export function isValidCreditCard(cardNumber: string): boolean {
-  // Remove spaces and non-digit characters
   const digits = cardNumber.replace(/\D/g, '');
+  if (digits.length < 13 || digits.length > 19) return false;
   
-  if (digits.length < 13 || digits.length > 19) {
-    return false;
-  }
-  
-  // Luhn algorithm
   let sum = 0;
   let alternate = false;
   
   for (let i = digits.length - 1; i >= 0; i--) {
     let digit = parseInt(digits.charAt(i), 10);
-    
     if (alternate) {
       digit *= 2;
-      if (digit > 9) {
-        digit -= 9;
-      }
+      if (digit > 9) digit -= 9;
     }
-    
     sum += digit;
     alternate = !alternate;
   }
@@ -107,15 +98,8 @@ export function isValidCreditCard(cardNumber: string): boolean {
  * @param countryCode - Country code (default: 'US')
  */
 export function isValidPhoneNumber(phoneNumber: string, countryCode = 'US'): boolean {
-  // Remove non-digit characters
   const digits = phoneNumber.replace(/\D/g, '');
-  
-  if (countryCode === 'US') {
-    // US phone number validation (10 digits)
-    return digits.length === 10;
-  }
-  
-  // Basic international validation (minimum 8 digits)
+  if (countryCode === 'US') return digits.length === 10;
   return digits.length >= 8;
 }
 
@@ -124,7 +108,11 @@ export function isValidPhoneNumber(phoneNumber: string, countryCode = 'US'): boo
  * @param value - Value to check
  */
 export function isNumber(value: unknown): boolean {
-  return !isNaN(parseFloat(value as string)) && isFinite(value as number);
+  if (typeof value === 'number') return !isNaN(value) && isFinite(value);
+  if (typeof value === 'string' && value.trim() !== '') {
+    return !isNaN(Number(value)) && isFinite(Number(value));
+  }
+  return false;
 }
 
 /**
@@ -132,21 +120,9 @@ export function isNumber(value: unknown): boolean {
  * @param value - Value to check
  */
 export function isEmpty(value: unknown): boolean {
-  if (value === null || value === undefined) {
-    return true;
-  }
-  
-  if (typeof value === 'string') {
-    return value.trim() === '';
-  }
-  
-  if (Array.isArray(value)) {
-    return value.length === 0;
-  }
-  
-  if (typeof value === 'object') {
-    return Object.keys(value).length === 0;
-  }
-  
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') return Object.keys(value as object).length === 0;
   return false;
 }

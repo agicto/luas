@@ -68,26 +68,47 @@ export function toCamelCase(str: string): string {
 /**
  * Format a number as currency
  * @param value - Number to format
- * @param locale - Locale string (default 'en-US')
- * @param currency - Currency code (default 'USD')
+ * @param options - Intl.NumberFormatOptions or locale string
+ * @param currency - Currency code (default 'USD', only used if options is string)
  */
-export function formatCurrency(value: number, locale = 'en-US', currency = 'USD'): string {
-  return new Intl.NumberFormat(locale, {
+export function formatCurrency(
+  value: number, 
+  options: Intl.NumberFormatOptions | string = 'en-US', 
+  currency = 'USD'
+): string {
+  if (typeof options === 'string') {
+    return new Intl.NumberFormat(options, {
+      style: 'currency',
+      currency,
+    }).format(value);
+  }
+  return new Intl.NumberFormat(undefined, {
     style: 'currency',
     currency,
+    ...options
   }).format(value);
 }
 
 /**
  * Format a number as percentage
  * @param value - Number to format (0-1)
- * @param locale - Locale string (default 'en-US')
- * @param decimals - Number of decimal places (default 2)
+ * @param options - Intl.NumberFormatOptions or locale string
+ * @param decimals - Number of decimal places (default 2, only used if options is string)
  */
-export function formatPercent(value: number, locale = 'en-US', decimals = 2): string {
-  return new Intl.NumberFormat(locale, {
+export function formatPercent(
+  value: number, 
+  options: Intl.NumberFormatOptions | string = 'en-US', 
+  decimals = 2
+): string {
+  if (typeof options === 'string') {
+    return new Intl.NumberFormat(options, {
+      style: 'percent',
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value);
+  }
+  return new Intl.NumberFormat(undefined, {
     style: 'percent',
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
+    ...options
   }).format(value);
 }

@@ -5,9 +5,15 @@
 
 /**
  * Deep clones an object
+ * Uses the native structuredClone where available, with a basic fallback
  * @param obj - Object to clone
  */
 export function deepClone<T>(obj: T): T {
+  if (typeof structuredClone === 'function') {
+    return structuredClone(obj);
+  }
+
+  // Basic fallback for environments without structuredClone
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -19,7 +25,7 @@ export function deepClone<T>(obj: T): T {
   const clonedObj = {} as T;
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      clonedObj[key] = deepClone(obj[key]);
+      (clonedObj as any)[key] = deepClone((obj as any)[key]);
     }
   }
   
@@ -33,18 +39,20 @@ export function deepClone<T>(obj: T): T {
  * @param defaultValue - Default value if path doesn't exist
  */
 export function getNestedValue<T, D = undefined>(
-  obj: Record<string, unknown>,
+  obj: Record<string, unknown> | null | undefined,
   path: string,
   defaultValue?: D
 ): T | D {
+  if (!obj) return defaultValue as D;
+  
   const keys = path.split('.');
-  let result: unknown = obj;
+  let result: any = obj;
   
   for (const key of keys) {
     if (result === undefined || result === null) {
       return defaultValue as D;
     }
-    result = (result as Record<string, unknown>)[key];
+    result = result[key];
   }
   
   return (result === undefined) ? (defaultValue as D) : (result as T);
@@ -59,12 +67,13 @@ export function pick<T extends object, K extends keyof T>(
   obj: T, 
   keys: K[]
 ): Pick<T, K> {
-  return keys.reduce((result, key) => {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+  const result = {} as Pick<T, K>;
+  keys.forEach(key => {
+    if (obj && Object.prototype.hasOwnProperty.call(obj, key)) {
       result[key] = obj[key];
     }
-    return result;
-  }, {} as Pick<T, K>);
+  });
+  return result;
 }
 
 /**
@@ -78,7 +87,7 @@ export function omit<T extends object, K extends keyof T>(
 ): Omit<T, K> {
   const result = { ...obj };
   keys.forEach(key => {
-    delete result[key];
+    delete (result as any)[key];
   });
   return result;
 }
@@ -87,45 +96,62 @@ export function omit<T extends object, K extends keyof T>(
  * Checks if an object is empty
  * @param obj - Object to check
  */
-export function isEmptyObject(obj: object): boolean {
+export function isEmptyObject(obj: object | null | undefined): boolean {
+  if (!obj) return true;
   return Object.keys(obj).length === 0;
 }
 
 /**
- * Merges two objects deeply
+ * Merges objects deeply
  * @param target - Target object
- * @param source - Source object
+ * @param sources - Source objects
  */
-export function deepMerge<T extends object, S extends object>(
-  target: T,
-  source: S
-): T & S {
-  const output = { ...target } as T & S;
-  
+export function deepMerge<T extends object>(target: T, ...sources: object[]): T {
+  if (!sources.length) return target;
+  const source = sources.shift();
+
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach(key => {
-      if (isObject(source[key as keyof S])) {
-        if (!(key in target)) {
-          Object.assign(output, { [key]: source[key as keyof S] });
+      const sourceValue = (source as any)[key];
+      const targetValue = (target as any)[key];
+
+      if (isObject(sourceValue)) {
+        if (!targetValue) {
+          (target as any)[key] = deepClone(sourceValue);
         } else {
-          const merged = deepMerge(
-            target[key as keyof T] as object,
-            source[key as keyof S] as object
-          );
-          (output as Record<string, unknown>)[key] = merged;
+          (target as any)[key] = deepMerge(targetValue, sourceValue);
         }
       } else {
-        Object.assign(output, { [key]: source[key as keyof S] });
+        (target as any)[key] = sourceValue;
       }
     });
   }
-  
-  return output;
+
+  return deepMerge(target, ...sources);
 }
 
 /**
- * Helper: Checks if value is an object
+ * Deep freezes an object
+ * @param obj - Object to freeze
  */
-function isObject(item: unknown): item is object {
+export function deepFreeze<T extends object>(obj: T): T {
+  Object.freeze(obj);
+  Object.getOwnPropertyNames(obj).forEach(prop => {
+    const value = (obj as any)[prop];
+    if (
+      value !== null &&
+      (typeof value === 'object' || typeof value === 'function') &&
+      !Object.isFrozen(value)
+    ) {
+      deepFreeze(value);
+    }
+  });
+  return obj;
+}
+
+/**
+ * Helper: Checks if value is a plain object
+ */
+function isObject(item: unknown): item is Record<string, any> {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
 }

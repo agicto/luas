@@ -245,6 +245,35 @@ To add a new variable:
 3. Export it in `env.ts`
 
 
+## Tooling & Utility Standards (ARW)
+
+To maintain a lean and consistent codebase, AI agents MUST follow the **"Search First"** rule before implementing any new utility or hook.
+
+### 1. The "Search First" Rule
+Before writing a new utility function or React hook, you **MUST**:
+1.  **Check `src/utils/index.ts`**: Scan the exports to see if a similar utility already exists.
+2.  **Check `src/hooks/`**: Browse the file names and signatures for existing logic.
+3.  **Check Approved Libraries**: Verify if the functionality is provided by:
+    - `date-fns`: For all date manipulations.
+    - `lodash-es`: For complex object/array operations (use sparingly, prefer native).
+    - `validator`: For complex string validation.
+
+### 2. Implementation Priority
+Follow this order of preference:
+1.  **Native Web APIs**: `Intl`, `URL`, `Crypto`, etc.
+2.  **Existing Project Utils/Hooks**: Reuse what's already in `src/utils` or `src/hooks`.
+3.  **Approved Third-Party Libraries**: Use existing dependencies from `package.json`.
+4.  **Custom Implementation**: Only if the above options are exhausted.
+
+### 3. Utility & Hook Discovery Tags
+Use these tags in JSDoc headers to aid AI discovery:
+- `@util`: Marks a pure utility function.
+- `@hook`: Marks a reusable React hook.
+
+### 4. Contract for New Additions
+- **Utils**: Must be pure functions in `src/utils/[category].ts`, exported via `index.ts`, with tests in `__tests__/`.
+- **Hooks**: Must be in `src/hooks/use-[purpose].ts` and follow React Hook rules.
+
 ## Common Tasks
 
 ### Adding a New Page
