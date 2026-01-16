@@ -128,7 +128,7 @@ export function useLogout() {
     onSuccess: () => {
       setUser(null);
       queryClient.clear();
-      toast.success(t.auth('accountCreated'));
+      toast.success(t.auth('logoutSuccess'));
       router.push(authConfig.routes.afterLogout);
     },
 

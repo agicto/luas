@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 import { ApiError } from './request';
 import { env } from '@/config/env';
+import { ErrorCode, HttpStatusMap } from './codes';
 
 /**
  * Global Error Handler Configuration
@@ -29,13 +30,23 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
   let errorCode: string | number | undefined;
 
   if (error instanceof ApiError) {
-    message = error.message;
     errorCode = error.code;
+    message = error.message;
     
-    switch (error.status) {
-      case 403: message = 'Permission denied'; break;
-      case 404: message = 'Resource not found'; break;
-      case 500: message = 'Server error'; break;
+    // Automatically map status-based messages if no specific message is provided
+    // or if the message is too generic
+    if (error.status && !error.message) {
+      switch (error.status) {
+        case 401: message = 'Session expired, please login again'; break;
+        case 403: message = 'You do not have permission to perform this action'; break;
+        case 404: message = 'The requested resource was not found'; break;
+        case 500: message = 'Something went wrong on our server. Please try again later'; break;
+      }
+    }
+
+    // You can also add mapping based on ErrorCode here if needed
+    if (errorCode === ErrorCode.TOKEN_EXPIRED) {
+      message = 'Your session has expired. Please log in again.';
     }
   } else if (error instanceof Error) {
     message = error.message;
@@ -43,11 +54,15 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
 
   if (mergedConfig.notify) {
     toast.error(message, {
-      description: errorCode ? `Code: ${errorCode}` : undefined,
+      description: errorCode ? `Error Code: ${errorCode}` : undefined,
     });
   }
 
   if (env.NODE_ENV === 'development') {
-    console.error('[GlobalErrorHandler]', error);
+    console.error('[GlobalErrorHandler]', {
+      message,
+      errorCode,
+      originalError: error
+    });
   }
 }

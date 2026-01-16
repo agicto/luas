@@ -282,14 +282,25 @@ export interface UpdateExampleRequest { title?: string; status?: 'active' | 'ina
 #### 2. Implement Stateless Service (`src/services/*.ts`)
 Services are pure functional objects.
 - **Stateless**: They do not hold state or use hooks.
-- **Reusable**: Must be usable in both Client and Server Components.
-- **Simple**: Just wrappers around `request`.
+- **Dedicated Clients**: Use the appropriate HTTP client for the feature.
+- **Simple**: Just wrappers around named `request` instances.
+
+**Standard Pattern: Named Request Instances**
+Define specialized clients in `src/http/request.ts` to manage multiple base URLs (e.g., standard API vs. file service).
 
 ```typescript
-export const exampleService = {
-  get: (id: string) => request.get<ExampleItem>(`/api/example/${id}`),
-  update: (id: string, data: UpdateExampleRequest) => request.put<ExampleItem>(`/api/example/${id}`, data),
-};
+// 1. Define instances in src/http/request.ts
+export const request = createRequest({ baseURL: env.API_URL }); // Default
+export const fileRequest = createRequest({ baseURL: env.FILE_URL, timeout: 60000 }); // Specialized
+
+// 2. Map Services to the correct client
+// src/services/user.ts
+import request from '@/http/request'; 
+export const userService = { get: () => request.get('/user') };
+
+// src/services/file.ts
+import { fileRequest } from '@/http/request';
+export const fileService = { upload: (file) => fileRequest.post('/upload', file) };
 ```
 
 #### 3. Implement Encapsulated Hooks (`src/hooks/*.ts`)
@@ -347,17 +358,34 @@ export function useUpdateExample() {
 - **Rollback via Invalidation**: Simpler and more robust than manual state restoration.
 - **Always Sync**: Final invalidation in `onSettled` ensures local state perfect alignment with the server.
 
-## API Response Format
+## API Error Handling
 
-All BFF endpoints return consistent format:
+The project uses a standardized error code system to ensure consistency between the frontend and backend.
 
-```typescript
-// Success
-{ "data": { ... } }
-
-// Error
-{ "error": "message", "code": "ERROR_CODE" }
+### 1. Error Response Format
+All error responses from the backend (BFF or mock) MUST follow this format:
+```json
+{
+  "error": "Human-readable error message",
+  "code": "CATEGORY_DESCRIPTION"
+}
 ```
+
+### 2. Error Code Clusters
+Error codes follow the format `[CATEGORY]_[DESCRIPTION]`.
+
+| Category | Prefix | Description | Examples |
+|----------|--------|-------------|----------|
+| **System** | `SYS_` | Infrastructural or unexpected errors | `SYS_SERVER_ERROR`, `SYS_TIMEOUT` |
+| **Auth** | `AUTH_` | Authentication and authorization issues | `AUTH_TOKEN_EXPIRED`, `AUTH_FORBIDDEN` |
+| **Validation** | `VAL_` | Input parameter or schema validation | `VAL_MISSING_FIELD`, `VAL_INVALID_PARAMS` |
+| **Business** | `BIZ_` | Business logic constraints | `BIZ_RESOURCE_NOT_FOUND`, `BIZ_ALREADY_EXISTS` |
+
+### 3. Usage in Code
+- **Constants**: Always use `ErrorCode` from `@/http/codes` to check for specific errors.
+- **Handling**: Errors are automatically caught by `HttpClient` and passed to `handleError`. Use `skipErrorHandler: true` in request config to handle errors manually in components or hooks.
+
+## API Response Format
 
 ## Do NOT
 
