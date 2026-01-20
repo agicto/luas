@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { SearchIcon, Loader2, InfoIcon, MailIcon } from "lucide-react"
 
 const variants = ["default", "secondary", "outline", "ghost", "destructive", "link"] as const
@@ -65,13 +66,5 @@ export function ButtonShowcase() {
         </div>
       </div>
     </section>
-  )
-}
-
-function Badge({ children, variant }: { children: React.ReactNode; variant: "outline" }) {
-  return (
-    <span className="px-2 py-0.5 rounded-full border text-[10px] uppercase font-bold tracking-widest text-text-muted border-border">
-      {children}
-    </span>
   )
 }

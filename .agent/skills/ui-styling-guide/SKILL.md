@@ -1,17 +1,18 @@
 ---
 name: ui-styling-guide
-description: Guidelines for UI development, including shadcn/ui primitives, feature components, named exports, CAS/CASp annotations, and the OKLCH theme system.
+description: Guidelines for UI development, including shadcn/ui primitives, feature components, and the OKLCH theme system.
 ---
 
 # ui-styling-guide
 
 ## Overview
 
-This skill defines the standards for UI development within the project. It ensures visual consistency, accessibility, and maintainability by using a structured design system based on OKLCH, shadcn/ui, and strict component contracts.
+This skill defines the standards for UI development within the project. It ensures visual consistency, accessibility, and maintainability by using a structured design system based on OKLCH and shadcn/ui.
 
 ## Guidelines
 
 ### 1. Theme System (OKLCH & CSS Variables)
+
 The project uses a layered Design Token system. Always prefer semantic classes over raw colors.
 
 - **Primitives**: Base colors in `src/themes/primitives.css` (Do not use directly).
@@ -29,31 +30,19 @@ The project uses a layered Design Token system. Always prefer semantic classes o
 ```
 
 ### 2. Component Organization
+
 - **UI Primitives**: `src/components/ui/` (shadcn/ui managed, **DO NOT MODIFY**).
 - **Feature Components**: `src/components/features/[module]/` (Organized by business module).
 - **Common Components**: `src/components/common/` (Generic, non-business specific).
 
-### 3. Atomic Component Contract
-All components MUST follow these rules:
-- **Named Exports**: Never use `export default`.
-- **Strict Typing**: Define props interface named `[ComponentName]Props`.
-- **RSC First**: Use Server Components by default. Extract interactivity into small, leaf-level Client Components (`"use client"`).
-- **Icon Consistency**: Use `lucide-react` with `size-4` (16px) or `size-5` (20px).
+### 3. Component Standards
 
-### 4. Component Annotation Standard (CAS)
-Include a JSDoc header for all components:
+For detailed component contracts (Named Exports, RSC First, Props Typing, CAS annotations), refer to:
 
-```typescript
-/**
- * @component [Formal Name]
- * @category [UI | Feature | Common]
- * @status [Stable | Beta | Experimental]
- * @description [Concise purpose]
- * @usage [When/How to use]
- */
-```
+> **[AGENTS.md - Atomic Component Contract](file:///AGENTS.md#atomic-component-contract)**
 
-## File Naming
+### 4. File Naming
+
 - Components: `kebab-case.tsx` (e.g., `login-form.tsx`)
 - Hooks: `use-kebab-case.ts` (e.g., `use-mobile.ts`)
 

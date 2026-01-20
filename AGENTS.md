@@ -310,6 +310,42 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 - **Zero Hardcoded Strings**: All user-facing text must use the `useT` hook for i18n.
 - **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
 
+#### Performance Optimization Rules
+
+Following [Vercel React Best Practices](file:///.agent/skills/react-best-practices/SKILL.md) for optimal performance:
+
+- **Dynamic Imports** (`bundle-dynamic-imports`): Use `next/dynamic` for components > 50KB (charts, editors, rich-text, maps):
+  ```tsx
+  const HeavyEditor = dynamic(() => import('./heavy-editor'), {
+    loading: () => <Skeleton className="h-64" />,
+  });
+  ```
+
+- **React.memo** (`rerender-memo`): Use for expensive child components that receive stable props:
+  ```tsx
+  export const ExpensiveList = React.memo(function ExpensiveList({ items }: Props) {
+    // Heavy rendering logic
+  });
+  ```
+
+- **Conditional Rendering** (`rendering-conditional-render`): Use ternary operators, not `&&`:
+  ```tsx
+  // ✅ Correct
+  {condition ? <Component /> : null}
+  
+  // ❌ Avoid (may render '0' or 'false')
+  {condition && <Component />}
+  ```
+
+- **RSC Caching** (`server-cache-react`): Use `React.cache()` for per-request deduplication in Server Components:
+  ```tsx
+  import { cache } from 'react';
+  
+  export const getUser = cache(async (id: string) => {
+    return await db.user.findUnique({ where: { id } });
+  });
+  ```
+
 #### Component Annotation Standard (CAS)
 
 All components MUST include a standardized JSDoc header for discovery and AI-assisted reuse:
