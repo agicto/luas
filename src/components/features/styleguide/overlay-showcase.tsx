@@ -55,7 +55,7 @@ export function OverlayShowcase() {
           <div className="p-6 border rounded-xl bg-card flex justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="interactive">Open Menu</Button>
+                <Button variant="outline" noScale>Open Menu</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" sideOffset={8}>
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>

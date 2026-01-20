@@ -37,6 +37,7 @@ export function LanguageSwitcher() {
         <Button 
           variant="ghost" 
           isIcon
+          noScale
           className="h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
           disabled={isPending}
         >

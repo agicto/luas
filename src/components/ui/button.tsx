@@ -17,7 +17,7 @@ import { Loader2 } from "lucide-react"
 import { cn } from "@/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-ring interactive shrink-0 disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-ring shrink-0 disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -71,6 +71,11 @@ interface ButtonProps extends React.ComponentProps<"button">, VariantProps<typeo
    * @default "left"
    */
   iconPosition?: "left" | "right"
+  /**
+   * Disables the scale transform on click. Use when Button is used as a DropdownMenuTrigger
+   * to prevent dropdown jitter caused by transform conflicts.
+   */
+  noScale?: boolean
 }
 
 function Button({
@@ -82,6 +87,7 @@ function Button({
   asChild = false,
   icon,
   iconPosition = "left",
+  noScale = false,
   children,
   ...props
 }: ButtonProps) {
@@ -101,6 +107,8 @@ function Button({
       disabled={props.disabled || loading}
       className={cn(
         buttonVariants({ variant, size, isIcon, className }),
+        // Conditionally apply interactive class based on noScale
+        noScale ? "interactive-no-scale" : "interactive",
         // Dynamic rounding based on size
         size === "xs" || size === "sm" ? "rounded-md" : 
         size === "lg" || size === "xl" ? "rounded-xl" : 

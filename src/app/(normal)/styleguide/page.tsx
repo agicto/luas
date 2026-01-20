@@ -13,7 +13,7 @@ import { NavigationShowcase } from "@/components/features/styleguide/navigation-
 
 export default function StyleguidePage() {
   return (
-    <div className="container py-10 space-y-20 pb-40">
+    <div className="container max-w-7xl mx-auto py-10 space-y-20 pb-40">
       {/* Header */}
       <section className="space-y-4">
         <div className="space-y-2">

@@ -80,6 +80,7 @@ export default function ConsoleLayout({
               <Button
                 variant="ghost"
                 isIcon
+                noScale
                 className="h-9 w-9 rounded-full overflow-hidden border border-border/50 hover:border-primary/50 transition-colors"
               >
                 <Avatar className="h-full w-full">
@@ -112,7 +113,7 @@ export default function ConsoleLayout({
       </header>
 
       {/* Body: Sidebar + Main Content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex h-0 grow overflow-hidden">
         {/* Fixed Sidebar */}
         <aside className="hidden w-[220px] shrink-0 border-r bg-background md:flex md:flex-col">
           <div className="flex flex-1 flex-col overflow-y-auto py-2">
@@ -170,7 +171,7 @@ export default function ConsoleLayout({
         </aside>
 
         {/* Scrollable Main Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="h-full w-full overflow-y-auto">
           {children}
         </main>
       </div>
