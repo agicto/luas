@@ -6,6 +6,100 @@ Instructions for AI coding agents working on the ZGO framework.
 
 ZGO is a modern Go framework using Domain-Driven Design (DDD) + layered architecture.
 
+## 📖 AGENTS.md vs Skills - Positioning
+
+### AGENTS.md (This Document) - Quick Reference Manual
+
+**Purpose**: One-stop quick reference for most common commands, standards, and patterns.
+
+**Content**:
+- ✅ Project structure and common commands
+- ✅ **Coding standards and best practices** (mandatory)
+- ✅ Quick examples and common tools
+- ✅ Development guidelines and notes
+
+**Use Cases**:
+- Quick lookup for commands and tools
+- Verify coding standards
+- Daily development reference
+
+**Characteristics**: Concise, fast, at-a-glance
+
+---
+
+### Skills System - Complete Workflow Guides
+
+**Purpose**: In-depth workflow documentation with complete steps, scripts, and examples.
+
+**Content**:
+- ✅ Complete workflows (15+ steps)
+- ✅ Full code examples
+- ✅ Automation scripts
+- ✅ Troubleshooting guides
+
+**Use Cases**:
+- Create new modules (complete process)
+- Learn best practices (deep understanding)
+- Execute complex tasks (step-by-step)
+
+**Characteristics**: Detailed, complete, executable
+
+---
+
+**Relationship**: Complementary, not replacement
+- 📖 **AGENTS.md**: "How to use this command?" "What's this standard?"
+- 🎯 **Skills**: "How to create a module from scratch?" "What's the complete workflow?"
+
+---
+
+## AI Agent Skills
+
+This project includes a **Skills System** in `.agent/skills/` that provides modular workflows and best practices for AI agents.
+
+### What are Skills?
+
+Skills are self-contained packages of instructions, scripts, and examples that guide AI agents through complex tasks. They use a **Progressive Disclosure Architecture**:
+
+- **Level 1 (Metadata)**: Lightweight skill descriptions loaded at startup
+- **Level 2 (Instructions)**: Detailed SKILL.md content loaded when relevant
+- **Level 3 (Resources)**: Scripts and examples loaded on demand
+
+### Available Skills
+
+| Skill | Description | When to Use |
+|-------|-------------|-------------|
+| [`module-creation`](./.agent/skills/module-creation/) | Create DDD modules (8-file standard) | Creating new business modules |
+| [`coding-standards`](./.agent/skills/coding-standards/) | Verify code follows ZGO standards | Code review, PR submission |
+| [`api-development`](./.agent/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
+| [`logging-standards`](./.agent/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
+| [`code-review-guide`](./.agent/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |
+| [`testing-strategy`](./.agent/skills/testing-strategy/) | Test patterns (unit, integration), mocking, table-driven tests | Writing and organizing tests |
+| [`database-design`](./.agent/skills/database-design/) | Schema standards, indexing, migration, SQL optimization | Designing tables and improving DB performance |
+| [`deployment`](./.agent/skills/deployment/) | Deployment workflows, Docker, CI/CD, Cloud Run | Deploying to production |
+
+### How AI Agents Use Skills
+
+1. **Startup**: Scan `.agent/skills/` and load metadata (name, description)
+2. **Intent Analysis**: Match user request to relevant skills
+3. **Dynamic Loading**: Read full SKILL.md when needed
+4. **Execution**: Follow skill workflow steps
+5. **Resource Access**: Load scripts/examples as required
+
+### For Developers
+
+```bash
+# View available skills
+ls .agent/skills/
+
+# Read a skill
+cat .agent/skills/module-creation/SKILL.md
+
+# Run validation script
+.agent/skills/module-creation/scripts/validate-module.sh blog
+```
+
+See [`.agent/skills/README.md`](./.agent/skills/README.md) for detailed documentation.
+
 ## Directory Structure
 
 ```text
@@ -58,280 +152,111 @@ make air           # Hot-reload dev server
 
 ## Capabilities Layer
 
-`internal/capabilities/` provides reusable, business-agnostic technical capabilities.
+`internal/capabilities/` provides technical helpers (e.g., `idgen`, `crypto`).
 
-```
-modules → capabilities → infra
-(业务)     (技术能力)     (基础设施)
-```
-
-### Available Capabilities
-
-| Package | Functions | Description |
-|---------|-----------|-------------|
-| `idgen` | `UUID()`, `Snowflake()`, `NanoID()`, `ShortID()` | ID generation |
-| `crypto` | `Encrypt()`, `Decrypt()`, `HashPassword()`, `HMACSHA256Hex()` | Encryption, hashing |
-
-### Usage
+> **📚 Full Guide**: See [`testing-strategy` skill - Mocks](./.agent/skills/testing-strategy/) for dependency patterns.
 
 ```go
-import (
-    "github.com/zgiai/zgo/internal/capabilities/idgen"
-    "github.com/zgiai/zgo/internal/capabilities/crypto"
-)
-
 id := idgen.UUID()
-id := idgen.Snowflake()
-
 hash, _ := crypto.HashPassword("password")
-ok := crypto.VerifyPassword("password", hash)
 ```
 
-### Guidelines
-
-- ✅ Provide single, clear technical capability
-- ✅ Use verb + object naming (`Encrypt()`, `Generate()`)
-- ✅ Only depend on `infra` layer
-- ❌ No business logic or rules
-- ❌ No dependency on `modules` layer
+---
 
 ## Domain Layer
 
-`internal/domain/` contains core business entities with JSON tags:
+`internal/domain/` contains core business entities. Sensitive fields MUST use `json:"-"`.
 
-```go
-// internal/domain/user.go
-type User struct {
-    ID        uint       `json:"id"`
-    Username  string     `json:"username"`
-    Email     string     `json:"email"`
-    Password  string     `json:"-"`  // Always hidden!
-    CreatedAt time.Time  `json:"created_at"`
-}
+---
+
+## 📋 Coding Standards (Mandatory)
+
+> **📚 Full Guide**: See [`coding-standards` skill](./.agent/skills/coding-standards/)
+
+### 1. Naming Quick Reference
+
+- **Packages**: `singular`, lowercase (`package user`)
+- **Files**: `snake_case` (`user_handler.go`)
+- **DB Entities**: `{Name}PO` (`UserPO`)
+- **DTOs**: `{Action}{Name}Request` / `{Name}Response`
+- **Interfaces**: `Noun` (`Repository`)
+- **Private Impl**: lowercase (`repository`)
+- **Constructor**: `New{InterfaceName}`
+- **JSON Tags**: `snake_case` (`json:"user_id"`)
+
+### 2. Architecture Standards
+
+#### 8-File Module Structure (Mandatory)
+
+Each module **must** include the following 8 files:
+
+```
+internal/modules/user/
+├── model.go              # 1. Database entity (UserPO)
+├── dto.go                # 2. DTOs + Mapper functions
+├── repository.go         # 3. Data access layer
+├── service.go            # 4. Business logic layer
+├── handler.go            # 5. HTTP handlers
+├── routes.go             # 6. Route registration
+├── provider.go           # 7. Wire DI configuration
+└── service_test.go       # 8. Unit tests
 ```
 
-**Data Flow**: `Handler(DTO) → Service(domain.User) → Repository(UserPO)`
-
-## Handler Utilities
-
-```go
-import "github.com/zgiai/zgo/pkg/handler"
-
-// Parse URL parameters (auto sends error response)
-id, ok := handler.ParseID(c, "id")
-if !ok {
-    return  // 400 already sent
-}
-
-// Get authenticated user (auto sends 401)
-userID, ok := handler.GetUserID(c)
-if !ok {
-    return  // 401 already sent
-}
-
-// Bind JSON request (auto sends error response)
-var req CreateRequest
-if !handler.BindJSON(c, &req) {
-    return  // 400 already sent
-}
-
-// Query helpers
-page := handler.QueryInt(c, "page", 1)
-active := handler.QueryBool(c, "active", true)
-```
-
-## Unified Response
-
-```go
-import "github.com/zgiai/zgo/pkg/response"
-
-// All responses use Success() - it auto-detects pagination!
-response.Success(c, data)           // 200 with data
-response.Success(c, paginator)      // 200 with data + meta + links (auto-detected)
-response.Created(c, data)           // 201 created
-response.NoContent(c)               // 204 no content
-
-// Error responses
-response.BadRequest(c, "message", err)
-response.NotFound(c, "message", err)
-response.Unauthorized(c)
-response.Forbidden(c)
-response.HandleError(c, "message", err)  // Auto-maps error to status code
-
-// With inline transformation (optional, rare)
-response.Transform(c, user, func(u *User) any {
-    return map[string]any{"id": u.ID, "name": u.Username}
-})
-
-// Conditional fields (Laravel-style)
-response.Success(c, map[string]any{
-    "id":       user.ID,
-    "email":    response.When(user.IsVerified, user.Email),      // 条件输出
-    "avatar":   response.WhenNotNil(user.Avatar),                // 非nil才输出
-    "bio":      response.WhenNotEmpty(user.Bio),                 // 非空才输出
-    "is_admin": response.When(isAdmin, true),                    // 权限控制
-})
-```
-
-## Pagination
-
-```go
-import "github.com/zgiai/zgo/pkg/pagination"
-
-// ========== 方式1: Handler 直接查询 (最简单，AI推荐) ==========
-func (h *Handler) List(c *gin.Context) {
-    paginator, err := pagination.Auto[*domain.User](c, h.db.Model(&UserPO{}))
-    if err != nil {
-        response.HandleError(c, "Failed to list", err)
-        return
-    }
-    response.Success(c, paginator)  // 自动输出 data + meta + links
-}
-
-// 带条件查询
-paginator, err := pagination.AutoWithScope[*domain.User](c, h.db, func(db *gorm.DB) *gorm.DB {
-    return db.Where("status = ?", "active").Order("created_at DESC")
-})
-
-// ========== 方式2: 通过 Service 层 (DDD标准) ==========
-// Handler:
-func (h *Handler) List(c *gin.Context) {
-    req := pagination.FromContext(c)
-    result, err := h.service.List(c.Request.Context(), req.GetPage(), req.GetPerPage())
-    if err != nil {
-        response.HandleError(c, "Failed to list", err)
-        return
-    }
-    response.Success(c, result.ToPaginator(c))
-}
-
-// ========== 高级功能 (Laravel-style) ==========
-// Through - 转换每个item
-paginator.Through(func(u *domain.User) any {
-    return map[string]any{"id": u.ID, "name": u.Username}
-})
-
-// Additional - 添加额外元数据
-paginator.Additional(map[string]any{"filters": "active"})
-
-// Fragment - URL锚点
-paginator.Fragment("comments")  // URLs: /posts?page=2#comments
-
-// SetPageName - 自定义分页参数名
-paginator.SetPageName("p")  // URLs: /posts?p=2
-```
-
-## Complete Handler Example
-
-```go
-package user
-
-import (
-    "github.com/zgiai/zgo/pkg/handler"
-    "github.com/zgiai/zgo/pkg/pagination"
-    "github.com/zgiai/zgo/pkg/response"
-    "github.com/gin-gonic/gin"
-)
-
-// Get - single resource
-func (h *Handler) Get(c *gin.Context) {
-    id, ok := handler.ParseID(c, "id")
-    if !ok {
-        return
-    }
-
-    user, err := h.service.GetByID(c.Request.Context(), id)
-    if err != nil {
-        response.HandleError(c, "User not found", err)
-        return
-    }
-
-    response.Success(c, user)  // Domain直接输出
-}
-
-// List - paginated (最简方式)
-func (h *Handler) List(c *gin.Context) {
-    paginator, err := pagination.Auto[*domain.User](c, h.db.Model(&UserPO{}))
-    if err != nil {
-        response.HandleError(c, "Failed to list", err)
-        return
-    }
-    response.Success(c, paginator)
-}
-
-// List - 通过 Service (DDD标准)
-func (h *Handler) ListViaService(c *gin.Context) {
-    req := pagination.FromContext(c)
-    result, err := h.service.List(c.Request.Context(), req.GetPage(), req.GetPerPage())
-    if err != nil {
-        response.HandleError(c, "Failed to list", err)
-        return
-    }
-    response.Success(c, result.ToPaginator(c))
-}
-
-// Create - with binding
-func (h *Handler) Create(c *gin.Context) {
-    var req CreateRequest
-    if !handler.BindJSON(c, &req) {
-        return
-    }
-
-    user, err := h.service.Create(c.Request.Context(), &req)
-    if err != nil {
-        response.HandleError(c, "Create failed", err)
-        return
-    }
-
-    response.Created(c, user)
-}
-
-// Update - authenticated user
-func (h *Handler) UpdateProfile(c *gin.Context) {
-    userID, ok := handler.GetUserID(c)
-    if !ok {
-        return
-    }
-
-    var req UpdateRequest
-    if !handler.BindJSON(c, &req) {
-        return
-    }
-
-    user, err := h.service.Update(c.Request.Context(), userID, &req)
-    if err != nil {
-        response.HandleError(c, "Update failed", err)
-        return
-    }
-
-    response.Success(c, user)
-}
-```
-
-## Wire Dependency Injection
-
-```go
-// internal/modules/user/provider.go
-var ProviderSet = wire.NewSet(
-    NewRepository,
-    wire.Bind(new(Repository), new(*repository)),
-    NewService,
-    wire.Bind(new(Service), new(*service)),
-    NewHandler,
-)
-```
-
-Run `cd internal/wiring && wire` to generate code.
-
-## Creating New Modules
-
+**Validation**:
 ```bash
-./zgo make:module Blog
-
-# Then:
-# 1. Register routes in routes/api.go
-# 2. Run wire
+.agent/skills/module-creation/scripts/validate-module.sh user
 ```
+
+### 2. Architecture Standards
+
+> **📚 Full Guide**: See [`coding-standards` skill - Architecture](./.agent/skills/coding-standards/)
+
+- **Layered Flow**: `Handler` (DTO) → `Service` (Domain) → `Repository` (PO) → `Database`.
+- **8-File Module**: Mandatory structure for all business modules.
+  > **🚀 Create Module**: Use [`module-creation` skill](./.agent/skills/module-creation/)
+
+---
+
+### 3. File Organization & Coding Patterns
+
+Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved to the **Skills System**:
+
+- **Model Design**: See [`database-design` skill](./.agent/skills/database-design/)
+- **API & Handlers**: See [`api-development` skill](./.agent/skills/api-development/)
+- **Business Logic**: See [`coding-standards` skill](./.agent/skills/coding-standards/)
+- **Testing**: See [`testing-strategy` skill](./.agent/skills/testing-strategy/)
+
+---
+
+### 4. Error & Security Standards
+
+- **Errors**: Use `response.HandleError`, wrap with `fmt.Errorf("%w")`, and define package-level `Err...`.
+- **Security**: Hide sensitive fields (`json:"-"`), validate inputs (`binding`), and use `crypto` capability.
+
+---
+
+### 5. API Development Quick Reference
+
+> **📚 Full Details**: See [`api-development` skill](./.agent/skills/api-development/)
+
+- **Pagination**: REQUIRED for list endpoints.
+- **Unified Errors**: REQUIRED `response.HandleError`.
+- **Success**: 200 (Success), 201 (Created), 204 (NoContent).
+- **URLs**: Plural nouns, NO verbs (`/api/users`).
+- **Validation**: REQUIRED `handler.BindJSON()` with tags.
+
+#### Quick Verification
+
+Run the validation script:
+```bash
+.agent/skills/api-development/scripts/validate-api.sh <module_name>
+```
+
+#### Complete Example
+
+See [`.agent/skills/api-development/examples/complete-crud-handler.go`](./.agent/skills/api-development/examples/complete-crud-handler.go)
+
+---
 
 ## Development Guidelines
 
