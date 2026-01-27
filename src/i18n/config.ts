@@ -1,5 +1,3 @@
-import { env } from '@/config/env';
-
 // Supported locales
 export const locales = ['zh-Hans', 'en-US'] as const;
 export type Locale = (typeof locales)[number];
