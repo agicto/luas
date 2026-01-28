@@ -1,7 +1,7 @@
 import { getRequestConfig } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import { defaultLocale, locales, localeMapping, type Locale } from './config';
-import { getMessages } from './modules';
+import { loadAllModules } from './loader';
 
 export default getRequestConfig(async () => {
   // Try to get locale from cookie first
@@ -39,6 +39,6 @@ export default getRequestConfig(async () => {
 
   return {
     locale,
-    messages: getMessages(locale),
+    messages: await loadAllModules(locale),
   };
 });

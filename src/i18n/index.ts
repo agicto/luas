@@ -8,7 +8,8 @@ export {
   type Locale 
 } from './config';
 
-export { getMessages, type Messages } from './modules';
+export { messages, type Messages } from './modules';
+export { loadAllModules, loadModule } from './loader';
 
 // Translation hooks/functions
 export { 

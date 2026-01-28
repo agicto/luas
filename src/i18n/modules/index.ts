@@ -1,16 +1,17 @@
-// i18n Modules barrel export
-import * as common from './common';
-import * as auth from './auth';
-import * as nav from './nav';
-import * as settings from './settings';
-import * as errors from './errors';
-import * as metadata from './metadata';
-import * as dashboard from './dashboard';
+import common from './common/en-US';
+import auth from './auth/en-US';
+import nav from './nav/en-US';
+import settings from './settings/en-US';
+import errors from './errors/en-US';
+import metadata from './metadata/en-US';
+import dashboard from './dashboard/en-US';
+import test from './test/en-US';
 
-import type { Locale } from '../config';
-
-// Module definitions
-const modules = {
+/**
+ * Static messages type derived from English (en-US) files.
+ * This is used for IDE auto-completion and type checking.
+ */
+export const messages = {
   common,
   auth,
   nav,
@@ -18,30 +19,7 @@ const modules = {
   errors,
   metadata,
   dashboard,
+  test,
 } as const;
 
-// Locale key to export name mapping
-const localeToExport: Record<Locale, 'zhHans' | 'enUS'> = {
-  'zh-Hans': 'zhHans',
-  'en-US': 'enUS',
-};
-
-/**
- * Get all messages for a specific locale
- */
-export function getMessages(locale: Locale) {
-  const exportKey = localeToExport[locale];
-  
-  return {
-    common: modules.common[exportKey],
-    auth: modules.auth[exportKey],
-    nav: modules.nav[exportKey],
-    settings: modules.settings[exportKey],
-    errors: modules.errors[exportKey],
-    metadata: modules.metadata[exportKey],
-    dashboard: modules.dashboard[exportKey],
-  };
-}
-
-// Type definitions
-export type Messages = ReturnType<typeof getMessages>;
+export type Messages = typeof messages;

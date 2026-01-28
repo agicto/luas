@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
+import { AVAILABLE_MODULES } from './loader';
 import type { Messages } from './modules';
 
 // ============================================================================
@@ -11,12 +12,12 @@ import type { Messages } from './modules';
 /**
  * Namespace translator types for each module.
  */
-type CommonTranslator = ReturnType<typeof useTranslations<'common'>>;
-type AuthTranslator = ReturnType<typeof useTranslations<'auth'>>;
-type NavTranslator = ReturnType<typeof useTranslations<'nav'>>;
-type SettingsTranslator = ReturnType<typeof useTranslations<'settings'>>;
-type ErrorsTranslator = ReturnType<typeof useTranslations<'errors'>>;
-type MetadataTranslator = ReturnType<typeof useTranslations<'metadata'>>;
+export type Translators = {
+  [K in keyof Messages]: (
+    key: DotNotationKeys<Messages[K]>, 
+    values?: Record<string, string | number | Date>
+  ) => string;
+};
 
 // ============================================================================
 // Dot Notation Type Utilities
@@ -30,7 +31,7 @@ type DotNotationKeys<T, Prefix extends string = ''> = T extends object
   ? {
       [K in keyof T]: K extends string
         ? T[K] extends object
-          ? DotNotationKeys<T[K], `${Prefix}${K}.`>
+          ? `${Prefix}${K}` | DotNotationKeys<T[K], `${Prefix}${K}.`>
           : `${Prefix}${K}`
         : never;
     }[keyof T]
@@ -38,89 +39,76 @@ type DotNotationKeys<T, Prefix extends string = ''> = T extends object
 
 /**
  * All valid translation keys in dot notation format.
- * Example: 'common.save' | 'common.loading' | 'auth.login' | ...
  */
-type AllTranslationKeys = DotNotationKeys<Messages>;
+export type AllTranslationKeys = DotNotationKeys<Messages>;
 
 /**
- * Dot notation translator function type.
- * Provides strong typing for t('module.key') style calls.
+ * All valid paths that can be used as a prefix scope.
  */
-type DotNotationTranslator = (
-  key: AllTranslationKeys,
-  values?: Record<string, string | number | Date>,
-) => string;
+export type AllScopePaths = DotNotationKeys<Messages>; 
+
+/**
+ * Type utility to get the subtree of keys after a prefix.
+ */
+type ShiftingKeys<T, P extends string> = P extends `${infer Head}.${infer Tail}`
+  ? Head extends keyof T ? ShiftingKeys<T[Head], Tail> : never
+  : P extends keyof T ? DotNotationKeys<T[P]> : never;
 
 /**
  * Unified translation type.
- * 
- * This is a hybrid type that:
- * 1. Can be called as a function with dot notation: `t('common.save')`
- * 2. Has namespace properties for direct access: `t.common('save')`
- * 
- * Both usages are fully type-safe with IDE auto-completion.
  */
-export type UnifiedTranslations = DotNotationTranslator & {
-  common: CommonTranslator;
-  auth: AuthTranslator;
-  nav: NavTranslator;
-  settings: SettingsTranslator;
-  errors: ErrorsTranslator;
-  metadata: MetadataTranslator;
-};
+export type UnifiedTranslations = {
+  (key: AllTranslationKeys, values?: any): string;
+} & Translators;
+
+/**
+ * Scoped translation type.
+ */
+export type ScopedTranslations<P extends string> = (
+  key: ShiftingKeys<Messages, P>,
+  values?: any
+) => string;
 
 /**
  * Universal client-side translation hook.
- * 
- * Supports both dot notation and namespace-based access:
- * - t('common.save') - dot notation
- * - t.common('save') - namespace-based (backward compatible)
  */
-export function useT(): UnifiedTranslations {
-  const rootT = useTranslations();
+export function useT(): UnifiedTranslations;
+export function useT<P extends AllScopePaths>(scope: P): ScopedTranslations<P>;
+export function useT(scope?: string): any {
+  const rootT = useTranslations(scope as any);
   
-  const t = ((key: AllTranslationKeys, values?: Record<string, string | number | Date>) => {
-    return rootT(key as Parameters<typeof rootT>[0], values);
-  }) as UnifiedTranslations;
+  const h = (key: string, values?: any) => (rootT as any)(key, values);
+  const t = h as any;
   
-  t.common = useTranslations('common');
-  t.auth = useTranslations('auth');
-  t.nav = useTranslations('nav');
-  t.settings = useTranslations('settings');
-  t.errors = useTranslations('errors');
-  t.metadata = useTranslations('metadata');
+  if (!scope) {
+    AVAILABLE_MODULES.forEach(module => {
+      // @ts-ignore - dynamic assignment
+      t[module] = useTranslations(module);
+    });
+  }
   
   return t;
 }
 
 /**
  * Universal server-side translation function.
- * 
- * Supports both dot notation and namespace-based access:
- * - t('common.save') - dot notation
- * - t.common('save') - namespace-based (backward compatible)
  */
-export async function getT(): Promise<UnifiedTranslations> {
-  const [rootT, common, auth, nav, settings, errors, metadata] = await Promise.all([
-    getTranslations(),
-    getTranslations('common'),
-    getTranslations('auth'),
-    getTranslations('nav'),
-    getTranslations('settings'),
-    getTranslations('errors'),
-    getTranslations('metadata'),
-  ]);
+export async function getT(): Promise<UnifiedTranslations>;
+export async function getT<P extends AllScopePaths>(scope: P): Promise<ScopedTranslations<P>>;
+export async function getT(scope?: string): Promise<any> {
+  const rootT = await getTranslations(scope as any);
 
-  const t = ((key: AllTranslationKeys, values?: Record<string, string | number | Date>) => {
-    return rootT(key as Parameters<typeof rootT>[0], values);
-  }) as UnifiedTranslations;
+  const h = (key: string, values?: any) => (rootT as any)(key, values);
+  const t = h as any;
   
-  t.common = common;
-  t.auth = auth;
-  t.nav = nav;
-  t.settings = settings;
-  t.errors = errors;
-  t.metadata = metadata;
+  if (!scope) {
+    await Promise.all(
+      AVAILABLE_MODULES.map(async module => {
+         // @ts-ignore - dynamic assignment
+        t[module] = await getTranslations(module);
+      })
+    );
+  }
   
   return t;
 }
