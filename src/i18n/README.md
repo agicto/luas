@@ -2,6 +2,17 @@
 
 Internationalization (i18n) module using `next-intl` with TypeScript message files.
 
+## Key Concepts
+
+### Type System
+
+The i18n system provides full TypeScript type safety through:
+
+- **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
+- **`Messages`**: Root type containing all module namespaces and their translations
+- **`ScopedTranslations<P>`**: Type-safe scoped translator for a specific prefix path
+- **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
+
 ## Structure
 
 ```
@@ -9,13 +20,17 @@ i18n/
 ├── config.ts           # Locale configuration + ENV variables
 ├── request.ts          # next-intl server configuration
 ├── index.ts            # Barrel exports
+├── translations.ts     # useT and getT implementation with types
+├── loader.ts           # Dynamic module loading
 └── modules/            # Translation modules
     ├── common/         # Common translations (buttons, labels)
     ├── auth/           # Authentication translations
     ├── nav/            # Navigation translations
     ├── settings/       # Settings translations
     ├── errors/         # Error messages
-    └── metadata/       # Page metadata
+    ├── metadata/       # Page metadata
+    ├── dashboard/      # Dashboard translations
+    └── test/           # Testing translations
 ```
 
 Each module contains:
@@ -166,6 +181,38 @@ export default async function Page() {
       <span>{t.common('loading')}</span>
     </nav>
   );
+}
+```
+
+#### Scoped Translations
+
+For components with many translations from a single namespace, use the scoped pattern for cleaner code:
+
+```tsx
+'use client';
+
+import { useT } from '@/i18n';
+
+function SettingsPage() {
+  // Scoped to 'settings' namespace - only settings keys are valid
+  const t = useT('settings');
+  return (
+    <div>
+      <h1>{t('title')}</h1>        {/* settings.title */}
+      <p>{t('description')}</p>    {/* settings.description */}
+    </div>
+  );
+}
+```
+
+Server-side scoped translations:
+
+```tsx
+import { getT } from '@/i18n';
+
+export default async function ErrorPage() {
+  const t = await getT('errors');
+  return <p>{t('networkError')}</p>;  {/* errors.networkError */}
 }
 ```
 

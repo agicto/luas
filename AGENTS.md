@@ -118,7 +118,14 @@ export default function NormalLayout({ children }) {
 
 The project uses `next-intl` with a unified translation pattern that supports both dot notation and namespace-based access.
 
-**Client Components:**
+#### Type System
+
+The i18n system provides full TypeScript type safety through:
+- **`AllTranslationKeys`**: Union type of all valid dot-notation keys
+- **`ScopedTranslations<P>`**: Type-safe scoped translator for a specific prefix path
+- **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
+
+#### Client Components
 ```tsx
 import { useT } from '@/i18n';
 
@@ -136,7 +143,7 @@ function MyComponent() {
 }
 ```
 
-**Server Components:**
+#### Server Components
 ```tsx
 import { getT } from '@/i18n';
 
@@ -146,7 +153,37 @@ export default async function Page() {
 }
 ```
 
-**Available Namespaces:** `common`, `auth`, `nav`, `settings`, `errors`, `metadata`
+#### Scoped Translations
+For components with many translations from a single namespace:
+```tsx
+function SettingsPage() {
+  const t = useT('settings');  // Scoped to 'settings' namespace
+  return <h1>{t('title')}</h1>;  // settings.title
+}
+```
+
+#### Available Modules
+
+| Module | Description |
+|--------|-------------|
+| `common` | Common UI text (buttons, labels, messages) |
+| `auth` | Authentication-related text |
+| `nav` | Navigation labels |
+| `settings` | Settings page translations |
+| `errors` | Error messages |
+| `metadata` | Page titles and SEO metadata |
+| `dashboard` | Dashboard-specific translations |
+| `test` | Testing translations |
+
+#### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/i18n/config.ts` | Locale configuration and settings |
+| `src/i18n/translations.ts` | `useT` and `getT` implementation with types |
+| `src/i18n/loader.ts` | Dynamic module loading and `AVAILABLE_MODULES` |
+| `src/i18n/modules/index.ts` | Static type generation from modules |
+| `src/i18n/README.md` | Detailed documentation with examples |
 
 **Type Safety:** Invalid keys will cause TypeScript errors at compile time.
 
