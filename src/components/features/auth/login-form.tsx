@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useT } from '@/i18n';
+import { useRouter } from 'next/navigation';
 
 /**
  * LoginForm - Pure UI Component
@@ -15,11 +16,11 @@ import { useT } from '@/i18n';
  */
 export function LoginForm() {
   const t = useT();
+  const router = useRouter();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementation: Connect to your auth service/hook here
-    console.log('Login form submitted - Implement your logic here');
+    router.push('/console');
   };
 
   return (
