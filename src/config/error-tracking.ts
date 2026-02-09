@@ -1,5 +1,5 @@
 import { env } from '@/config/env';
-import { useAuthStore, authSelectors } from '@/store/auth-store';
+import { useAuthStore } from '@/store/auth-store';
 
 interface ErrorMetadata {
   userId?: string;

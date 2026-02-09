@@ -7,7 +7,7 @@ import { z } from 'zod';
  */
 const envSchema = z.object({
   // Only the API entry point
-  NEXT_PUBLIC_API_URL: z.string().default('/api'),
+  NEXT_PUBLIC_API_URL: z.string().default(''),
   
   // Optional but sometimes required
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
