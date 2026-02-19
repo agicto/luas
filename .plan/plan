@@ -1,5 +1,81 @@
 # ZGO Framework Development Plan
 
+## Development Workflow (Best Flow)
+
+### Step 1: Environment Setup
+```bash
+# Clone and setup
+git clone https://github.com/zgiai/zgo.git
+cd zgo
+cp .env.example .env
+
+# Install dependencies
+go mod download
+
+# Generate DI
+make wire
+
+# Run migrations
+make migrate
+
+# Start development server
+make dev
+```
+
+### Step 2: Create New Module (Best Practice)
+```bash
+# Use CLI to generate (Phase 1)
+./zgo make:module Blog
+
+# Or manually create 8-file structure:
+# - model.go      # Database entity (UserPO)
+# - dto.go        # DTO + Mapper functions
+# - repository.go # Data access layer
+# - service.go    # Business logic layer
+# - handler.go    # HTTP handlers
+# - routes.go     # Route registration
+# - provider.go   # Wire DI
+# - service_test.go # Unit tests
+```
+
+### Step 3: Development Cycle
+1. **Write DTO** → `dto.go`
+2. **Define Domain** → `domain/user.go`
+3. **Implement Model** → `model.go` + Mapper
+4. **Implement Repository** → `repository.go`
+5. **Implement Service** → `service.go`
+6. **Implement Handler** → `handler.go`
+7. **Register Routes** → `routes.go`
+8. **Wire DI** → `provider.go`
+9. **Run `make wire`**
+10. **Test API**
+
+### Step 4: Testing
+```bash
+# Unit tests
+go test ./internal/modules/user/...
+
+# Integration tests
+go test ./tests/integration/...
+
+# With coverage
+go test -cover ./...
+```
+
+### Step 5: Code Quality
+```bash
+# Lint
+make lint
+
+# Format
+go fmt ./...
+
+# Build
+make build
+```
+
+---
+
 ## Phase 1: CLI Enhancement (High Priority)
 
 ### 1.1 Make Commands

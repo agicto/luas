@@ -47,31 +47,9 @@ services:
     networks:
       - zgo-network
 
-  zgo-clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: zgo-clickhouse
-    restart: always
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-    environment:
-      - CLICKHOUSE_DB=trac
-      - CLICKHOUSE_USER=trac_user
-      - CLICKHOUSE_PASSWORD=trac_pass
-    volumes:
-      - zgo_ch_data:/var/lib/clickhouse
-    healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "localhost:8123/ping" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - zgo-network
-
 networks:
   zgo-network:
     driver: bridge
 
 volumes:
   zgo_db_data:
-  zgo_ch_data:

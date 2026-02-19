@@ -8,7 +8,6 @@ import (
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/infra/storage"
 )
 
 // ProviderSet aggregates all infrastructure providers for Wire DI.
@@ -16,9 +15,6 @@ import (
 var ProviderSet = wire.NewSet(
 	// Config - loaded from environment
 	config.Load,
-
-	// ClickHouse Client
-	storage.NewCHClient,
 
 	// Database - depends on Config
 	database.NewDB,

@@ -7,11 +7,7 @@ import (
 	"github.com/google/wire"
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra"
-	"github.com/zgiai/zgo/internal/modules/event"
-	"github.com/zgiai/zgo/internal/modules/ingest"
-	"github.com/zgiai/zgo/internal/modules/issue"
 	"github.com/zgiai/zgo/internal/modules/permission"
-	"github.com/zgiai/zgo/internal/modules/project"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -25,13 +21,6 @@ func InitApplication() (*app.Application, error) {
 		// Module providers
 		user.ProviderSet,
 		permission.ProviderSet,
-		project.ProviderSet,
-		event.ProviderSet,
-		issue.ProviderSet,
-		ingest.ProviderSet,
-
-		// Bind event.Service to ingest.EventProcessor
-		wire.Bind(new(ingest.EventProcessor), new(event.Service)),
 
 		// Aggregate handlers
 		wire.Struct(new(app.Handlers), "*"),

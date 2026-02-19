@@ -45,6 +45,7 @@ skill-name/
 | [`module-creation`](./module-creation/) | 创建 DDD 模块的完整流程 (8-file 标准) | P0 |
 | `api-development` | API 开发模式和最佳实践 | P0 |
 | `wire-di` | Wire 依赖注入配置指南 | P0 |
+| [`kest-flow`](./kest-flow/) | Kest Flow API 测试框架 | P1 |
 
 ### Quality & Testing
 
