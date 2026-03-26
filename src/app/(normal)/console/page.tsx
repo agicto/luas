@@ -81,6 +81,16 @@ export default function ConsolePage() {
     { name: "Sun", value: 140 },
   ]
 
+  const responseTimeData = [
+    { name: "Mon", value: 168 },
+    { name: "Tue", value: 142 },
+    { name: "Wed", value: 149 },
+    { name: "Thu", value: 131 },
+    { name: "Fri", value: 154 },
+    { name: "Sat", value: 146 },
+    { name: "Sun", value: 138 },
+  ]
+
   const activityItems: ActivityItem[] = [
     {
       id: "1",
@@ -182,7 +192,7 @@ export default function ConsolePage() {
           {/* Line Chart */}
           <DashboardChart 
             title={t('dashboard.charts.responseTimeTitle')} 
-            data={chartData.map(d => ({ ...d, value: Math.floor(100 + Math.random() * 100) }))} 
+            data={responseTimeData} 
             type="line"
             height={160}
           />
