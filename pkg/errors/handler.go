@@ -35,9 +35,13 @@ type Config struct {
 
 // DefaultConfig returns default error handler config
 func DefaultConfig() Config {
+	mode := os.Getenv("SERVER_MODE")
+	if mode == "" {
+		mode = os.Getenv("GIN_MODE")
+	}
 	return Config{
-		Debug:     os.Getenv("GIN_MODE") != "release",
-		ShowStack: os.Getenv("GIN_MODE") != "release",
+		Debug:     mode != "release",
+		ShowStack: mode != "release",
 		LogErrors: true,
 	}
 }
@@ -512,7 +516,7 @@ func renderDebugHTML(data DebugPageData) string {
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>%d %s | Eogo</title>
+	<title>%d %s | ZGO</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -817,7 +821,7 @@ func renderDebugHTML(data DebugPageData) string {
 	</div>
 	
 	<div class="footer">
-		<div class="logo">Eogo</div>
+		<div class="logo">ZGO</div>
 		<div>Framework Debug Mode • <a href="https://github.com/zgiai/zgo" target="_blank">Documentation</a></div>
 	</div>
 	

@@ -5,7 +5,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zgiai/zgo/pkg/response"
 )
+
+// KeyAuthResult carries validation output back into the request context.
+type KeyAuthResult struct {
+	Key    string
+	Values map[string]any
+}
 
 // KeyAuthConfig holds API key authentication configuration
 type KeyAuthConfig struct {
@@ -16,6 +23,10 @@ type KeyAuthConfig struct {
 	// Validator is a function to validate the API key
 	// Returns true if key is valid
 	Validator func(key string) bool
+
+	// ValidatorWithContext validates a key with access to the request context
+	// and can populate extra values into gin.Context on success.
+	ValidatorWithContext func(c *gin.Context, key string) (*KeyAuthResult, error)
 
 	// ContextKey is the key used to store the API key in context
 	// Default: "api_key"
@@ -58,7 +69,7 @@ func KeyAuthWithConfig(cfg KeyAuthConfig) gin.HandlerFunc {
 	if cfg.ErrorMessage == "" {
 		cfg.ErrorMessage = "Invalid or missing API key"
 	}
-	if cfg.Validator == nil {
+	if cfg.Validator == nil && cfg.ValidatorWithContext == nil {
 		panic("KeyAuth middleware requires a validator function")
 	}
 
@@ -88,26 +99,40 @@ func KeyAuthWithConfig(cfg KeyAuthConfig) gin.HandlerFunc {
 		case "form":
 			key = c.PostForm(name)
 		default:
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"error": gin.H{
-					"code":    "INTERNAL_ERROR",
-					"message": "Invalid key auth configuration",
-				},
-			})
+			response.Abort(c, http.StatusInternalServerError, "Invalid key auth configuration")
 			return
 		}
 
-		// Validate key
-		if key == "" || !cfg.Validator(key) {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"error": gin.H{
-					"code":    "UNAUTHORIZED",
-					"message": cfg.ErrorMessage,
-				},
-			})
+		if key == "" {
+			response.Abort(c, http.StatusUnauthorized, cfg.ErrorMessage)
 			return
+		}
+
+		var (
+			result *KeyAuthResult
+			err    error
+			valid  bool
+		)
+
+		if cfg.ValidatorWithContext != nil {
+			result, err = cfg.ValidatorWithContext(c, key)
+			valid = err == nil && result != nil
+		} else {
+			valid = cfg.Validator(key)
+		}
+
+		if !valid {
+			response.Abort(c, http.StatusUnauthorized, cfg.ErrorMessage)
+			return
+		}
+
+		if result != nil {
+			if result.Key != "" {
+				key = result.Key
+			}
+			for contextKey, value := range result.Values {
+				c.Set(contextKey, value)
+			}
 		}
 
 		// Store key in context

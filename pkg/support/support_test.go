@@ -140,6 +140,9 @@ func TestRetryWithDelay(t *testing.T) {
 	})
 
 	elapsed := time.Since(start)
+	if attempts != 3 {
+		t.Errorf("RetryWithDelay should retry until success, attempts: %d", attempts)
+	}
 	// Should have 2 delays of 10ms each
 	if elapsed < 15*time.Millisecond {
 		t.Errorf("RetryWithDelay should have delays, elapsed: %v", elapsed)

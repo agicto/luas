@@ -37,23 +37,7 @@ type UserRepository interface {
 - This enables dependency inversion and prevents circular dependencies
 - Easy to swap implementations (e.g., PostgreSQL → MongoDB)
 
-### 3. Domain Services
-Business logic that doesn't naturally belong to a single entity.
-
-```go
-// services.go
-type AuthenticationService struct {
-    userRepo UserRepository  // Depends on interface, not implementation
-    hasher   PasswordHasher
-    tokens   TokenGenerator
-}
-
-func (s *AuthenticationService) Authenticate(ctx context.Context, identifier, password string) (*AuthResult, error) {
-    // Pure business logic here
-}
-```
-
-### 4. Value Objects
+### 3. Value Objects
 Immutable objects that represent concepts with no identity.
 
 ```go
@@ -70,7 +54,7 @@ func NewEmail(s string) (Email, error) {
 }
 ```
 
-### 5. Domain Events
+### 4. Domain Events
 Events that represent something significant that happened in the domain.
 
 ```go
@@ -90,7 +74,7 @@ type OrderCompletedEvent struct {
 }
 ```
 
-### 6. Domain Errors
+### 5. Domain Errors
 Business-specific errors that are meaningful to the domain.
 
 ```go
@@ -111,7 +95,6 @@ domain/
 ├── README.md           # This file
 ├── user.go             # User entity + UserRepository interface
 ├── permission.go       # Permission entities + interfaces
-├── services.go         # Domain services (Authentication, Registration, etc.)
 ├── value_objects.go    # Value objects (Email, Username, etc.)
 ├── events.go           # Domain events
 ├── errors.go           # Domain-specific errors
@@ -171,6 +154,11 @@ type RoleAssigner interface {
 ```
 
 ---
+
+## Notes
+
+- In ZGO, most request-driven business logic belongs in `internal/modules/*/service.go`.
+- Add a dedicated domain service only when logic is shared across modules or does not fit an entity/aggregate cleanly.
 
 ## 🔄 Data Flow
 

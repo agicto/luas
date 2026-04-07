@@ -18,6 +18,12 @@ var (
 	ErrPermissionDenied = errors.New("permission denied")
 	ErrRoleNotFound     = errors.New("role not found")
 
+	// API key errors
+	ErrAPIKeyNotFound = errors.New("api key not found")
+	ErrAPIKeyInvalid  = errors.New("api key is invalid")
+	ErrAPIKeyExpired  = errors.New("api key is expired")
+	ErrAPIKeyRevoked  = errors.New("api key is revoked")
+
 	// Generic errors
 	ErrNotFound     = errors.New("resource not found")
 	ErrConflict     = errors.New("resource already exists")

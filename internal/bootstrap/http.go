@@ -17,7 +17,6 @@ import (
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/health"
 	"github.com/zgiai/zgo/internal/infra/metrics"
-	"github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/infra/tracing"
 	"github.com/zgiai/zgo/pkg/logger"
 	"github.com/zgiai/zgo/pkg/support"
@@ -34,9 +33,6 @@ type HttpKernel struct {
 
 // NewHttpKernel creates a new HTTP kernel from Wire-injected Application
 func NewHttpKernel(application *app.Application) *HttpKernel {
-	// Set JWT service for middleware
-	middleware.SetJWTService(application.JWTService)
-
 	// Set Mode
 	setGinMode(application.Config.Server.Mode)
 
@@ -135,7 +131,7 @@ func (k *HttpKernel) Handle() {
 		url := fmt.Sprintf("http://%s:%d", host, cfg.Server.Port)
 
 		log.Printf("\n")
-		log.Printf("  🚀 Eogo Server Started!")
+		log.Printf("  🚀 ZGO Server Started!")
 		log.Printf("  ➜ Local:   \033[36m%s\033[0m", url)
 		log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
 		log.Printf("\n")

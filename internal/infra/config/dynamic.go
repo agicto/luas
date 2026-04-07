@@ -56,16 +56,16 @@ func (r *Repository) loadFromEnv() {
 	env.Load()
 
 	// App
-	r.Set("app.name", env.Get("APP_NAME", "Llama GO"))
+	r.Set("app.name", env.Get("APP_NAME", "ZGO"))
 	r.Set("app.env", env.Get("APP_ENV", "development"))
 	r.Set("app.debug", env.GetBool("APP_DEBUG", true))
-	r.Set("app.url", env.Get("APP_URL", "http://localhost"))
+	r.Set("app.url", env.Get("APP_URL", "http://localhost:8025"))
 	r.Set("app.key", env.Get("APP_KEY", ""))
 
 	// Server
-	r.Set("server.port", env.GetInt("SERVER_PORT", 7030))
+	r.Set("server.port", env.GetInt("SERVER_PORT", 8025))
 	r.Set("server.host", env.Get("SERVER_HOST", ""))
-	r.Set("server.mode", env.Get("GIN_MODE", "debug"))
+	r.Set("server.mode", env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")))
 	r.Set("server.read_timeout", env.GetInt("SERVER_READ_TIMEOUT", 60))
 	r.Set("server.write_timeout", env.GetInt("SERVER_WRITE_TIMEOUT", 60))
 
@@ -94,18 +94,32 @@ func (r *Repository) loadFromEnv() {
 
 	// Log
 	r.Set("log.level", env.Get("LOG_LEVEL", "debug"))
-	r.Set("log.file", env.Get("LOG_FILE", "storage/logs/app.log"))
+	r.Set("log.file", env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")))
 
 	// CORS
-	r.Set("cors.allowed_origins", env.GetSlice("CORS_ALLOWED_ORIGINS", []string{"*"}))
-	r.Set("cors.allowed_methods", env.GetSlice("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}))
-	r.Set("cors.allowed_headers", env.GetSlice("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization"}))
+	r.Set("cors.allowed_origins", env.GetSlice("CORS_ALLOW_ORIGINS", env.GetSlice("CORS_ALLOWED_ORIGINS", []string{"*"})))
+	r.Set("cors.allowed_methods", env.GetSlice("CORS_ALLOW_METHODS", env.GetSlice("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})))
+	r.Set("cors.allowed_headers", env.GetSlice("CORS_ALLOW_HEADERS", env.GetSlice("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization"})))
+	r.Set("cors.expose_headers", env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length"}))
+	r.Set("cors.allow_credentials", env.GetBool("CORS_ALLOW_CREDENTIALS", true))
 
 	// Email
 	r.Set("mail.from", env.Get("MAIL_FROM", ""))
 	r.Set("mail.resend_api_key", env.Get("RESEND_API_KEY", ""))
 
-	// OpenAI
+	// AI
+	r.Set("ai.enabled", env.GetBool("AI_ENABLED", true))
+	r.Set("ai.default_provider", env.Get("AI_DEFAULT_PROVIDER", "openai"))
+	r.Set("ai.default_model", env.Get("AI_DEFAULT_MODEL", "gpt-5.4"))
+	r.Set("ai.request_timeout", env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second))
+	r.Set("ai.openai.api_key", env.Get("OPENAI_API_KEY", ""))
+	r.Set("ai.openai.base_url", env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+	r.Set("ai.anthropic.api_key", env.Get("ANTHROPIC_API_KEY", ""))
+	r.Set("ai.anthropic.base_url", env.Get("ANTHROPIC_BASE_URL", ""))
+	r.Set("ai.gemini.api_key", env.Get("GEMINI_API_KEY", ""))
+	r.Set("ai.gemini.base_url", env.Get("GEMINI_BASE_URL", ""))
+
+	// Backward-compatible alias
 	r.Set("openai.api_key", env.Get("OPENAI_API_KEY", ""))
 }
 

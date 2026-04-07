@@ -19,7 +19,7 @@ type MigrationStatus struct {
 	RanAt *time.Time
 }
 
-// getMigrator creates a new Migrator instance with all registered migrations.
+// getMigrator creates a new Migrator instance with the default scaffold migrations.
 // If eventBus is nil, events will not be fired.
 func getMigrator(db *gorm.DB, eventBus *events.EventBus) *migration.Migrator {
 	// Create repository with default table name
@@ -28,8 +28,8 @@ func getMigrator(db *gorm.DB, eventBus *events.EventBus) *migration.Migrator {
 	// Create migrator with optional event bus
 	migrator := migration.NewMigrator(repo, db, eventBus)
 
-	// Register all migrations from the registry
-	migrator.RegisterMany(migrations.All())
+	// Register only the default scaffold migrations.
+	migrator.RegisterMany(migrations.Default())
 
 	return migrator
 }

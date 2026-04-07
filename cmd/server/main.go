@@ -7,9 +7,9 @@ import (
 	"github.com/zgiai/zgo/internal/wiring"
 )
 
-// @title Eogo API
+// @title ZGO API
 // @version 1.0
-// @description An elegant Go web framework for production-ready development
+// @description A modular Go API scaffold for production-ready services
 // @host localhost:8025
 // @BasePath /v1
 

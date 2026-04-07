@@ -822,6 +822,10 @@ import (
 
 type {{.SeederName}}Seeder struct{}
 
+func (s *{{.SeederName}}Seeder) Name() string {
+	return "{{.SeederName}}"
+}
+
 func (s *{{.SeederName}}Seeder) Run(db *gorm.DB) error {
 	// TODO: Implement seeder logic
 	// Example:

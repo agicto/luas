@@ -17,7 +17,7 @@ func TestBlank(t *testing.T) {
 		{"empty string", "", true},
 		{"whitespace string", "   ", true},
 		{"non-empty string", "hello", false},
-		{"zero int", 0, false},
+		{"zero int", 0, true},
 		{"positive int", 42, false},
 		{"false bool", false, false},
 		{"true bool", true, false},

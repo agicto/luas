@@ -6,10 +6,9 @@ Business domain modules directory, following Domain-Driven Design (DDD) patterns
 
 | Module | Description | Type |
 |--------|-------------|------|
-| `user` | User authentication (register/login/JWT) | Simple |
-| `permission` | RBAC (roles/permissions) | Simple |
-| `llm` | LLM provider/model/channel management | Composite |
-| `finance` | Financial management (plans/transactions/recharge) | Composite |
+| `user` | Default auth starter (register/login/JWT/profile) | Starter |
+| `apikey` | Default API key starter (create/list/revoke + middleware) | Starter |
+| `permission` | Optional RBAC example module, not wired by default | Optional |
 
 ## Standard Module Structure (8 files)
 
@@ -87,8 +86,10 @@ llm/
 ./zgo make:module Blog
 
 # After generation:
-# 1. Register routes in routes/api.go
-# 2. Run: cd internal/wiring && wire
+# 1. Add the handler to internal/app/app.go
+# 2. Add the provider set to internal/wiring/wire.go
+# 3. If the module needs route middleware, implement RegisterMiddleware()
+# 4. Re-generate Wire output
 ```
 
 ## Naming Conventions

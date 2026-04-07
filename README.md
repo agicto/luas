@@ -1,204 +1,234 @@
-# Trac - 轻量化错误追踪系统
+# ZGO
 
-> Sentry 轻量替代方案 | 完全兼容 Sentry SDK | Go + ClickHouse
+> 面向模块化 Go API 的纯脚手架
 
-## 📦 功能特性
+ZGO 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定的项目结构、依赖注入、模块边界、统一响应、分页、迁移、测试工具和常用基础设施集成。
 
-- ✅ **Sentry SDK 兼容** - 直接使用官方 Go/JS/Python SDK
-- ✅ **高性能存储** - ClickHouse 列式存储，支持海量事件
-- ✅ **智能聚合** - 按 fingerprint 自动去重，生成 Issue
-- ✅ **实时监控** - 错误实时采集，毫秒级入库
+这个仓库的定位是“框架与模板”，不是某个具体业务系统。默认只保留最小可用的认证与 API key starter，增强型业务模块和示例能力不再自动挂载到主应用。
 
-## 🚀 快速开始
+## 核心能力
 
-### 1. 环境要求
+- 模块化目录结构，适合 DDD + 分层架构
+- Gin HTTP 服务入口与统一路由注册
+- Wire 依赖注入
+- GORM 数据访问与迁移体系
+- 内置 starter：`user`, `apikey`
+- Provider-neutral AI capability 与内置 CLI `ai:chat`
+- 统一 API 响应与错误处理
+- 分页、验证、日志、JWT、中间件
+- 测试辅助工具与集成测试基线
+- 可选集成：Redis、邮件、OpenTelemetry、ClickHouse 日志通道、Sentry
 
-- Go 1.21+
-- PostgreSQL 12+
-- ClickHouse 21+
-- Redis 6+ (可选)
+## 快速开始
 
-### 2. 启动服务
+### 1. 环境准备
+
+- Go 1.24+
+- PostgreSQL 12+ 或 SQLite
+- Redis 6+（可选）
+
+### 2. 初始化配置
 
 ```bash
-# 克隆项目
-git clone https://github.com/zgiai/trac-api.git
-cd trac-api
-
-# 配置环境变量
 cp .env.example .env
-# 编辑 .env 配置数据库连接
-
-# 启动 ClickHouse (Docker)
-docker run -d --name zgo-clickhouse \
-  -p 9000:9000 \
-  -e CLICKHOUSE_DB=trac \
-  -e CLICKHOUSE_USER=trac_user \
-  -e CLICKHOUSE_PASSWORD=trac_pass \
-  clickhouse/clickhouse-server:latest
-
-# 启动服务
-go run cmd/server/main.go
 ```
 
-### 3. 创建项目
+最少需要确认以下配置：
 
 ```bash
-# 创建项目
-curl -X POST http://localhost:8025/v1/projects \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"name": "My App", "platform": "go"}'
-
-# 获取 DSN
-curl http://localhost:8025/v1/projects/1/dsn \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 响应: {"dsn": "http://abc123@localhost:8025/1"}
-```
-
-### 4. 集成 Sentry SDK
-
-#### Go 应用
-
-```go
-import (
-    "github.com/getsentry/sentry-go"
-    sentrygin "github.com/getsentry/sentry-go/gin"
-)
-
-func main() {
-    // 初始化 Sentry，DSN 指向 Trac 服务器
-    sentry.Init(sentry.ClientOptions{
-        Dsn: "http://abc123@localhost:8025/1",
-        Environment: "production",
-        Release: "myapp@1.0.0",
-    })
-    defer sentry.Flush(2 * time.Second)
-
-    // Gin 中间件
-    r := gin.Default()
-    r.Use(sentrygin.New(sentrygin.Options{
-        Repanic: true,
-    }))
-
-    // 手动上报错误
-    sentry.CaptureException(errors.New("something went wrong"))
-}
-```
-
-#### JavaScript 应用
-
-```javascript
-import * as Sentry from "@sentry/browser";
-
-Sentry.init({
-  dsn: "http://abc123@localhost:8025/1",
-  environment: "production",
-});
-
-// 自动捕获未处理异常
-// 或手动上报
-Sentry.captureException(new Error("Something went wrong"));
-```
-
-#### Python 应用
-
-```python
-import sentry_sdk
-
-sentry_sdk.init(
-    dsn="http://abc123@localhost:8025/1",
-    environment="production",
-)
-
-# 手动上报
-sentry_sdk.capture_exception(Exception("Something went wrong"))
-```
-
-## 📊 API 端点
-
-### SDK 上报端点（公开）
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/api/{project_id}/envelope/` | Sentry Envelope 上报 |
-| POST | `/api/{project_id}/store/` | 传统事件上报（已废弃） |
-
-### 管理端点（需认证）
-
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | `/v1/projects` | 创建项目 |
-| GET | `/v1/projects/:id/dsn` | 获取 DSN |
-| GET | `/v1/projects/:id/issues/` | 获取 Issue 列表 |
-| POST | `/v1/projects/:id/issues/:fingerprint/resolve` | 标记已解决 |
-
-详细 API 文档见: [docs/api.md](docs/api.md)
-
-## 🏗️ 项目结构
-
-```
-trac-api/
-├── cmd/
-│   └── server/           # 主程序入口
-├── internal/
-│   ├── infra/           # 基础设施
-│   │   └── storage/     # ClickHouse 客户端
-│   └── modules/
-│       ├── project/     # 项目管理
-│       ├── ingest/      # SDK 数据接收
-│       ├── envelope/    # Sentry 信封解析
-│       ├── event/       # 事件存储
-│       └── issue/       # Issue 聚合
-├── docs/                # 文档
-└── examples/
-    └── gin-app/         # Gin 集成示例
-```
-
-## ⚙️ 环境变量
-
-```bash
-# 服务配置
+APP_NAME=ZGO
+APP_ENV=development
 SERVER_PORT=8025
 
-# PostgreSQL
+DB_DRIVER=postgres
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=trac
 DB_USERNAME=postgres
-DB_PASSWORD=password
+DB_PASSWORD=postgres
+DB_NAME=zgo
 
-# ClickHouse
-LOG_CH_ENABLED=true
-LOG_CH_ENDPOINT=localhost:9000
-LOG_CH_DATABASE=trac
-LOG_CH_USERNAME=trac_user
-LOG_CH_PASSWORD=trac_pass
+JWT_SECRET=replace-me
 ```
 
-## 🔍 查看数据
-
-### 查看事件
+### 3. 生成依赖注入代码
 
 ```bash
-docker exec zgo-clickhouse clickhouse-client \
-  -u trac_user --password trac_pass -d trac \
-  -q "SELECT event_id, level, message FROM events ORDER BY timestamp DESC LIMIT 10"
+make wire
 ```
 
-### 查看 Issues
+### 4. 启动 HTTP 服务
 
 ```bash
-curl http://localhost:8025/v1/projects/1/issues/
+go run ./cmd/server
 ```
 
-## 📚 文档
+默认地址：
 
-- [API 接口文档](docs/api.md)
-- [Sentry Go/Gin 集成指南](docs/sentry-go-gin-integration.md)
-- [部署指南](docs/usage_and_config.md)
+- 应用首页：`http://localhost:8025/`
+- 健康检查：`http://localhost:8025/v1/health`
+- Swagger：`http://localhost:8025/swagger/index.html`
 
-## 📄 License
+### 5. 使用 CLI
 
-MIT License
+```bash
+go run ./cmd/zgo version
+go run ./cmd/zgo route:list
+go run ./cmd/zgo migrate
+go run ./cmd/zgo seed
+go run ./cmd/zgo ai:chat "Summarize this scaffold in one sentence"
+```
+
+## 常用命令
+
+```bash
+make build
+make test
+make lint
+make wire
+make air
+```
+
+## 项目结构
+
+```text
+zgo/
+├── cmd/
+│   ├── server/               # HTTP 服务入口
+│   └── zgo/                  # CLI 入口
+├── internal/
+│   ├── app/                  # 应用聚合对象
+│   ├── bootstrap/            # 启动与生命周期
+│   ├── domain/               # 领域对象与领域错误
+│   ├── infra/                # 通用基础设施
+│   ├── modules/              # 业务模块
+│   └── wiring/               # Wire DI
+├── pkg/                      # 通用公共包
+├── routes/                   # 全局路由入口
+├── database/
+│   ├── migrations/           # 数据迁移
+│   └── seeders/              # 数据初始化
+└── tests/
+    ├── feature/
+    ├── integration/
+    └── unit/
+```
+
+## 模块约定
+
+默认模块边界：
+
+- `internal/modules/user` 是默认认证 starter，会参与默认路由、迁移和数据初始化
+- `internal/modules/apikey` 是默认 API key starter，会参与默认路由和迁移，并提供 `api_key` 中间件组
+- `internal/modules/permission` 保留为可选 RBAC 示例模块，不再默认装配到主应用
+
+业务模块建议遵循 8 文件结构：
+
+```text
+internal/modules/<module>/
+├── model.go
+├── dto.go
+├── repository.go
+├── service.go
+├── handler.go
+├── routes.go
+├── provider.go
+└── service_test.go
+```
+
+分层流向：
+
+```text
+Handler -> Service -> Repository -> Database
+DTO -> Domain -> PO
+```
+
+约束建议：
+
+- `handler` 负责参数绑定、鉴权上下文和响应输出
+- `service` 负责业务规则和错误语义
+- `repository` 负责 PO 与 domain 的边界转换
+- API 统一走 `pkg/response`
+- 列表接口统一使用分页
+
+## 测试
+
+```bash
+make test
+make test-kest
+go test ./...
+go test ./tests/feature/...
+go test ./tests/integration/...
+```
+
+Kest flow 入口：
+
+- `tests/kest/auth.flow.md`
+- `tests/kest/api_keys.flow.md`
+
+本地一键运行：
+
+```bash
+make test-kest
+./tests/kest/run_local.sh tests/kest/auth.flow.md
+```
+
+## AI Capability
+
+脚手架内置了 provider-neutral 的 `internal/capabilities/ai` 能力层，当前默认接了 OpenAI Responses API。
+
+最小配置：
+
+```bash
+AI_ENABLED=true
+AI_DEFAULT_PROVIDER=openai
+AI_DEFAULT_MODEL=gpt-5.4
+OPENAI_API_KEY=replace-me
+```
+
+命令示例：
+
+```bash
+go run ./cmd/zgo ai:chat "Write a short project summary"
+go run ./cmd/zgo ai:chat --system="Answer in JSON" --model=gpt-5.4 "List 3 scaffold priorities"
+```
+
+## API Key Starter
+
+脚手架默认内置 API key 管理模块，提供：
+
+- `GET /v1/api-keys`
+- `POST /v1/api-keys`
+- `DELETE /v1/api-keys/:id`
+
+并自动注册 `api_key` 中间件组与 `key` alias，业务模块可以直接使用：
+
+```go
+r.Group("/v1", func(api *router.Router) {
+    api.WithMiddleware("api_key")
+    api.GET("/inference", handler.Run)
+})
+```
+
+## 可选集成
+
+这些能力保留在仓库中，但都应该被视为可选基础设施，而不是脚手架默认业务身份：
+
+- `Redis`
+- `Sentry`
+- `ClickHouse` 日志输出
+- `OpenTelemetry`
+- `Resend` 邮件服务
+- `R2` 对象存储
+
+如果你的项目不需要这些能力，可以只保留核心 HTTP、配置、数据库、路由和模块层。
+
+## 设计原则
+
+- 根仓库只表达脚手架能力，不表达具体业务产品
+- 模块边界清晰，优先保证可替换和可测试
+- 默认配置最小化，额外能力显式开启
+- 框架自身必须遵守自己定义的模块规范
+
+## License
+
+MIT

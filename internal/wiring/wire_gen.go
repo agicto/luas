@@ -14,7 +14,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -36,20 +36,19 @@ func InitApplication() (*app.Application, error) {
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
+	apiKeyRepository := apikey.NewRepository(db)
+	apiKeyService := apikey.NewService(apiKeyRepository)
+	apiKeyHandler := apikey.NewHandler(apiKeyService)
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository, service, eventBus)
-	handler := user.NewHandler(userService)
-	permissionRepository := permission.NewRepository(db)
-	permissionService := permission.NewService(permissionRepository)
-	permissionHandler := permission.NewHandler(permissionService)
+	handler := user.NewHandler(userService, service)
 	handlers := &app.Handlers{
-		User:       handler,
-		Permission: permissionHandler,
+		APIKey: apiKeyHandler,
+		User:   handler,
 	}
 	application := &app.Application{
 		Config:       configConfig,
 		DB:           db,
-		JWTService:   service,
 		EmailService: emailService,
 		EventBus:     eventBus,
 		Migrator:     migrator,

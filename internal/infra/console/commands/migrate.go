@@ -1,4 +1,4 @@
-// Package commands provides CLI commands for the Eogo framework.
+// Package commands provides CLI commands for the ZGO scaffold.
 package commands
 
 import (
@@ -45,8 +45,8 @@ func createMigrator(cfg *config.Config) (*migration.Migrator, error) {
 	// Create migrator
 	migrator := migration.NewMigrator(repo, db, nil)
 
-	// Register all migrations from the registry
-	migrator.RegisterMany(migrations.All())
+	// Register only the default scaffold migrations.
+	migrator.RegisterMany(migrations.Default())
 
 	return migrator, nil
 }

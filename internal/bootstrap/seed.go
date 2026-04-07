@@ -10,13 +10,13 @@ import (
 
 // RunSeeders runs all registered database seeders with the given database connection
 func RunSeeders(db *gorm.DB) error {
-	log.Println("Running database seeders")
+	log.Println("Running default database seeders")
 
-	if err := seeders.RunAll(db); err != nil {
+	if err := seeders.RunDefault(db); err != nil {
 		log.Printf("Seeder failed: %v", err)
 		return err
 	}
 
-	log.Printf("Successfully ran %d seeders", len(seeders.All()))
+	log.Printf("Successfully ran %d seeders", len(seeders.Default()))
 	return nil
 }

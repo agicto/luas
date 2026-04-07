@@ -296,8 +296,9 @@ func NewTestEventBus() *TestEventBus {
 	bus := events.NewEventBus()
 	recorder := NewEventRecorder()
 
-	// Subscribe recorder to all events
-	bus.Subscribe("*", recorder.Handler())
+	// Subscribe recorder to all events. The matcher treats "*" as a single
+	// segment wildcard, so full capture needs "**".
+	bus.Subscribe("**", recorder.Handler())
 
 	return &TestEventBus{
 		EventBus: bus,

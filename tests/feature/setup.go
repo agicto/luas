@@ -13,9 +13,8 @@ import (
 	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/internal/infra/middleware"
 	test_platform "github.com/zgiai/zgo/internal/infra/testing"
-	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"github.com/zgiai/zgo/routes"
 )
@@ -52,28 +51,24 @@ func SetupApp() *gin.Engine {
 	emailService := email.NewService(cfg)
 	eventBus := events.NewEventBus()
 
-	// Set JWT service for middleware
-	middleware.SetJWTService(jwtService)
-
 	// 5. Create Repositories
+	apiKeyRepo := apikey.NewRepository(db)
 	userRepo := user.NewRepository(db)
-	permRepo := permission.NewRepository(db)
 
 	// 6. Create Services
+	apiKeyService := apikey.NewService(apiKeyRepo)
 	userService := user.NewService(userRepo, jwtService, eventBus)
-	permService := permission.NewService(permRepo)
 
 	// 7. Create Handlers
 	handlers := &app.Handlers{
-		User:       user.NewHandler(userService),
-		Permission: permission.NewHandler(permService),
+		APIKey: apikey.NewHandler(apiKeyService),
+		User:   user.NewHandler(userService, jwtService),
 	}
 
 	// 8. Build Application
 	_ = &app.Application{
 		Config:       cfg,
 		DB:           db,
-		JWTService:   jwtService,
 		EmailService: emailService,
 		Handlers:     handlers,
 	}

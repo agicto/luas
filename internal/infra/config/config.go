@@ -20,7 +20,7 @@ type Config struct {
 	Log        LogConfig
 	CORS       CORSConfig
 	Email      EmailConfig
-	OpenAI     OpenAIConfig
+	AI         AIConfig
 	R2         R2Config
 	Middleware MiddlewareConfig
 	Tracing    TracingConfig
@@ -108,8 +108,19 @@ type EmailConfig struct {
 	ResendAPIKey string
 }
 
-type OpenAIConfig struct {
-	APIKey string
+type AIProviderConfig struct {
+	APIKey  string
+	BaseURL string
+}
+
+type AIConfig struct {
+	Enabled         bool
+	DefaultProvider string
+	DefaultModel    string
+	RequestTimeout  time.Duration
+	OpenAI          AIProviderConfig
+	Anthropic       AIProviderConfig
+	Gemini          AIProviderConfig
 }
 
 type R2Config struct {
@@ -149,18 +160,18 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		App: AppConfig{
-			Name:      env.Get("APP_NAME", "Llama GO"),
+			Name:      env.Get("APP_NAME", "ZGO"),
 			Env:       env.Get("APP_ENV", "development"),
 			Debug:     env.GetBool("APP_DEBUG", true),
-			URL:       env.Get("APP_URL", "http://localhost"),
+			URL:       env.Get("APP_URL", "http://localhost:8025"),
 			Key:       env.Get("APP_KEY", ""),
 			JWTSecret: env.Get("JWT_SECRET", ""),
 			JWTExpire: time.Duration(expireDays) * 24 * time.Hour,
 		},
 		Server: ServerConfig{
 			Host:         env.Get("SERVER_HOST", ""),
-			Port:         env.GetInt("SERVER_PORT", 7030),
-			Mode:         env.Get("GIN_MODE", "debug"),
+			Port:         env.GetInt("SERVER_PORT", 8025),
+			Mode:         env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
 			ReadTimeout:  env.GetInt("SERVER_READ_TIMEOUT", 60),
 			WriteTimeout: env.GetInt("SERVER_WRITE_TIMEOUT", 60),
 		},
@@ -190,7 +201,7 @@ func Load() (*Config, error) {
 		},
 		Log: LogConfig{
 			Level: env.Get("LOG_LEVEL", "debug"),
-			File:  env.Get("LOG_FILE", "storage/logs/app.log"),
+			File:  env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")),
 		},
 		CORS: CORSConfig{
 			AllowOrigins:     env.GetSlice("CORS_ALLOW_ORIGINS", []string{"*"}),
@@ -203,8 +214,23 @@ func Load() (*Config, error) {
 			From:         env.Get("MAIL_FROM", ""),
 			ResendAPIKey: env.Get("RESEND_API_KEY", ""),
 		},
-		OpenAI: OpenAIConfig{
-			APIKey: env.Get("OPENAI_API_KEY", ""),
+		AI: AIConfig{
+			Enabled:         env.GetBool("AI_ENABLED", true),
+			DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
+			DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5.4"),
+			RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
+			OpenAI: AIProviderConfig{
+				APIKey:  env.Get("OPENAI_API_KEY", ""),
+				BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+			},
+			Anthropic: AIProviderConfig{
+				APIKey:  env.Get("ANTHROPIC_API_KEY", ""),
+				BaseURL: env.Get("ANTHROPIC_BASE_URL", ""),
+			},
+			Gemini: AIProviderConfig{
+				APIKey:  env.Get("GEMINI_API_KEY", ""),
+				BaseURL: env.Get("GEMINI_BASE_URL", ""),
+			},
 		},
 		R2: R2Config{
 			AccessKeyID:     env.Get("R2_ACCESS_KEY_ID", ""),
@@ -228,9 +254,9 @@ func Load() (*Config, error) {
 		ClickHouse: ClickHouseConfig{
 			Enabled:   env.GetBool("LOG_CH_ENABLED", false),
 			Endpoint:  env.Get("LOG_CH_ENDPOINT", "localhost:9000"),
-			Database:  env.Get("LOG_CH_DATABASE", "trac"),
-			Username:  env.Get("LOG_CH_USERNAME", "trac_user"),
-			Password:  env.Get("LOG_CH_PASSWORD", "trac_pass"),
+			Database:  env.Get("LOG_CH_DATABASE", "zgo_logs"),
+			Username:  env.Get("LOG_CH_USERNAME", "zgo_user"),
+			Password:  env.Get("LOG_CH_PASSWORD", "zgo_pass"),
 			BatchSize: env.GetInt("LOG_CH_BATCH_SIZE", 100),
 			Interval:  env.GetDuration("LOG_CH_INTERVAL", 5*time.Second),
 		},

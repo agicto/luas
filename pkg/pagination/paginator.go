@@ -1,4 +1,4 @@
-// Package pagination provides Laravel-style pagination for the Eogo framework.
+// Package pagination provides Laravel-style pagination helpers for ZGO services.
 //
 // This package implements full-featured pagination with:
 //   - Automatic URL generation for pagination links
@@ -27,8 +27,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zgiai/zgo/pkg/response"
 	"github.com/gin-gonic/gin"
+	"github.com/zgiai/zgo/pkg/response"
 	"gorm.io/gorm"
 )
 

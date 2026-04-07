@@ -1,8 +1,15 @@
 package user
 
 import (
+	"github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/infra/router"
 )
+
+// RegisterMiddleware registers the auth middleware group for JWT-protected routes.
+func (h *Handler) RegisterMiddleware(r *router.Router) {
+	r.MiddlewareGroup("auth", middleware.JWTAuth(h.jwtService))
+	r.AliasMiddleware("jwt", middleware.JWTAuth(h.jwtService))
+}
 
 // RegisterRoutes registers the user module routes
 // It uses the injected handler instance instead of creating a new one

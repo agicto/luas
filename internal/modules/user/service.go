@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 // Service defines the interface for user-related operations.
@@ -60,6 +62,9 @@ func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*doma
 	exists, err := s.repo.FindByEmail(ctx, req.Email)
 	if err == nil && exists != nil {
 		return nil, domain.ErrEmailAlreadyExists
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to check existing email: %w", err)
 	}
 
 	// Hash password
@@ -171,7 +176,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
-		return fmt.Errorf("incorrect old password")
+		return domain.ErrInvalidCredentials
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
@@ -196,7 +201,10 @@ func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
 func (s *service) ResetPassword(ctx context.Context, req *UserPasswordResetRequest) error {
 	user, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
-		return domain.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil
+		}
+		return fmt.Errorf("failed to lookup reset user: %w", err)
 	}
 
 	newPassword := utils.GenerateRandomString(12)

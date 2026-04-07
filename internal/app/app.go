@@ -5,9 +5,8 @@ import (
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"gorm.io/gorm"
 )
@@ -17,7 +16,6 @@ import (
 type Application struct {
 	Config       *config.Config
 	DB           *gorm.DB
-	JWTService   *jwt.Service
 	EmailService *email.Service
 	EventBus     *events.EventBus
 	Migrator     *migration.Migrator
@@ -26,14 +24,18 @@ type Application struct {
 
 // Handlers holds all HTTP handlers for modules.
 type Handlers struct {
-	User       *user.Handler
-	Permission *permission.Handler
+	APIKey *apikey.Handler
+	User   *user.Handler
 }
 
 // Modules returns a list of all active modules
 func (h *Handlers) Modules() []contracts.Module {
-	return []contracts.Module{
-		h.User,
-		h.Permission,
+	modules := make([]contracts.Module, 0, 2)
+	if h.APIKey != nil {
+		modules = append(modules, h.APIKey)
 	}
+	if h.User != nil {
+		modules = append(modules, h.User)
+	}
+	return modules
 }

@@ -24,7 +24,7 @@ func Boot() *Logger {
 	// Override from environment
 	cfg.Level = ParseLevel(env.Get("LOG_LEVEL", "debug"))
 	cfg.Path = env.Get("LOG_PATH", "storage/logs")
-	cfg.File = env.Get("LOG_FILE", "{Y}-{m}-{d}.log")
+	cfg.File = env.Get("LOG_FILE", env.Get("LOG_FILENAME", "{Y}-{m}-{d}.log"))
 	cfg.MaxSize = env.GetInt("LOG_MAX_SIZE", 100)
 	cfg.MaxAge = env.GetInt("LOG_MAX_AGE", 14)
 	cfg.MaxBackups = env.GetInt("LOG_MAX_BACKUPS", 7)
@@ -50,7 +50,10 @@ func Boot() *Logger {
 	if env.GetBool("LOG_CH_ENABLED", false) {
 		chLevel := ParseLevel(env.Get("LOG_CH_LEVEL", "info"))
 		chBatch := env.GetInt("LOG_CH_BATCH_SIZE", 100)
-		chInterval := time.Duration(env.GetInt("LOG_CH_INTERVAL_MS", 1000)) * time.Millisecond
+		chInterval := env.GetDuration("LOG_CH_INTERVAL", 0)
+		if chInterval == 0 {
+			chInterval = time.Duration(env.GetInt("LOG_CH_INTERVAL_MS", 1000)) * time.Millisecond
+		}
 		chEndpoint := env.Get("LOG_CH_ENDPOINT", "http://localhost:8123")
 		chHandler := NewClickHouseHandler(chLevel, chBatch, chInterval, chEndpoint)
 		l.AddHandler(chHandler)

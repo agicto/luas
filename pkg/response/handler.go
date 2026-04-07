@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/zgiai/zgo/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -26,12 +27,25 @@ type ErrorMapper struct {
 // DefaultErrorMapper provides default error to status code mappings.
 var DefaultErrorMapper = &ErrorMapper{
 	mappings: map[error]int{
-		ErrNotFound:            http.StatusNotFound,
-		ErrUnauthorized:        http.StatusUnauthorized,
-		ErrForbidden:           http.StatusForbidden,
-		ErrConflict:            http.StatusConflict,
-		ErrValidation:          http.StatusUnprocessableEntity,
-		gorm.ErrRecordNotFound: http.StatusNotFound,
+		ErrNotFound:                  http.StatusNotFound,
+		ErrUnauthorized:              http.StatusUnauthorized,
+		ErrForbidden:                 http.StatusForbidden,
+		ErrConflict:                  http.StatusConflict,
+		ErrValidation:                http.StatusUnprocessableEntity,
+		gorm.ErrRecordNotFound:       http.StatusNotFound,
+		domain.ErrNotFound:           http.StatusNotFound,
+		domain.ErrUserNotFound:       http.StatusNotFound,
+		domain.ErrRoleNotFound:       http.StatusNotFound,
+		domain.ErrAPIKeyNotFound:     http.StatusNotFound,
+		domain.ErrInvalidCredentials: http.StatusUnauthorized,
+		domain.ErrAPIKeyInvalid:      http.StatusUnauthorized,
+		domain.ErrAPIKeyExpired:      http.StatusUnauthorized,
+		domain.ErrAPIKeyRevoked:      http.StatusUnauthorized,
+		domain.ErrAccountDisabled:    http.StatusForbidden,
+		domain.ErrPermissionDenied:   http.StatusForbidden,
+		domain.ErrEmailAlreadyExists: http.StatusConflict,
+		domain.ErrConflict:           http.StatusConflict,
+		domain.ErrInvalidInput:       http.StatusUnprocessableEntity,
 	},
 }
 
