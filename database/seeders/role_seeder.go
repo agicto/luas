@@ -7,6 +7,10 @@ import (
 
 type RoleSeeder struct{}
 
+func (s *RoleSeeder) Name() string {
+	return "roles"
+}
+
 func (s *RoleSeeder) Run(db *gorm.DB) error {
 	roles := []permission.Role{
 		{Name: "admin", DisplayName: "Administrator", Description: "Full access to all resources", IsDefault: false},

@@ -8,7 +8,7 @@ import (
 
 // Module defines the contract for a ZGO business module.
 // Implementing this interface allows a module to register its own
-// routes, event listeners, and console commands.
+// routes, middleware, event listeners, and console commands.
 type Module interface {
 	// Name returns the unique name of the module
 	Name() string
@@ -19,6 +19,9 @@ type Module interface {
 
 	// RegisterRoutes registers the module's HTTP routes
 	RegisterRoutes(r *router.Router)
+
+	// RegisterMiddleware registers module-specific middleware groups or aliases
+	RegisterMiddleware(r *router.Router)
 
 	// RegisterEvents registers the module's event subscribers
 	RegisterEvents(bus *events.EventBus)
@@ -33,5 +36,6 @@ type BaseModule struct{}
 
 func (m BaseModule) Init() error                               { return nil }
 func (m BaseModule) RegisterRoutes(r *router.Router)           {}
+func (m BaseModule) RegisterMiddleware(r *router.Router)       {}
 func (m BaseModule) RegisterEvents(bus *events.EventBus)       {}
 func (m BaseModule) RegisterCommands(app *console.Application) {}

@@ -5,6 +5,7 @@ import (
 	"github.com/zgiai/zgo/internal/contracts"
 	"github.com/zgiai/zgo/internal/domain"
 	"github.com/zgiai/zgo/internal/infra/events"
+	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/pkg/handler"
 	"github.com/zgiai/zgo/pkg/pagination"
 	"github.com/zgiai/zgo/pkg/response"
@@ -13,12 +14,13 @@ import (
 // Handler handles user-related HTTP requests and implements contracts.Module
 type Handler struct {
 	contracts.BaseModule
-	service Service
+	service    Service
+	jwtService *jwt.Service
 }
 
 // NewHandler creates a new Handler instance
-func NewHandler(service Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service Service, jwtService *jwt.Service) *Handler {
+	return &Handler{service: service, jwtService: jwtService}
 }
 
 // Name returns the module name

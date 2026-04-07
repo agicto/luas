@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/gin-gonic/gin"
+	"github.com/zgiai/zgo/internal/infra/config"
 )
 
 // RegisterWelcome registers the welcome page route
 func RegisterWelcome(r *gin.Engine) {
 	r.GET("/", func(c *gin.Context) {
 		// Get config
-		appName := "Eogo"
+		appName := "ZGO"
 		appEnv := "local"
 		if config.GlobalConfig != nil {
 			appName = config.GlobalConfig.App.Name
@@ -85,7 +85,7 @@ func RegisterWelcome(r *gin.Engine) {
 				<span class="logo-text">%s</span>
 				<span class="version">v1.0</span>
 			</div>
-			<p class="subtitle">The Go framework for building modern APIs (Hot Reload Verified)</p>
+			<p class="subtitle">Scaffold for modular Go APIs with auth, API key starter, and AI capability</p>
 		</div>
 		
 		<div class="section">
@@ -112,7 +112,7 @@ func RegisterWelcome(r *gin.Engine) {
 				<div class="card">
 					<div class="card-header">
 						<div class="card-icon purple"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></div>
-						<div class="card-content"><h2 class="card-title">CLI Tools</h2><p class="card-desc">Run <code>./zgo --help</code></p></div>
+						<div class="card-content"><h2 class="card-title">CLI Tools</h2><p class="card-desc">Run <code>./zgo ai:chat "hello"</code></p></div>
 					</div>
 				</div>
 			</div>
@@ -130,13 +130,13 @@ func RegisterWelcome(r *gin.Engine) {
 				<div class="card">
 					<div class="card-header">
 						<div class="card-icon green"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg></div>
-						<div class="card-content"><div class="card-title">JWT Authentication</div><p class="card-desc">Secure token-based auth</p></div>
+						<div class="card-content"><div class="card-title">Auth Starter</div><p class="card-desc">JWT auth, profile APIs, and API key management</p></div>
 					</div>
 				</div>
 				<div class="card">
 					<div class="card-header">
 						<div class="card-icon blue"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
-						<div class="card-content"><div class="card-title">RBAC Permissions</div><p class="card-desc">Role-based access control</p></div>
+							<div class="card-content"><div class="card-title">Module Conventions</div><p class="card-desc">Structured layering for business modules</p></div>
 					</div>
 				</div>
 				<div class="card">
@@ -148,13 +148,13 @@ func RegisterWelcome(r *gin.Engine) {
 				<div class="card">
 					<div class="card-header">
 						<div class="card-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/></svg></div>
-						<div class="card-content"><div class="card-title">Redis Cache</div><p class="card-desc">Caching and session store</p></div>
+						<div class="card-content"><div class="card-title">AI Capability</div><p class="card-desc">Provider-neutral model calls via CLI or modules</p></div>
 					</div>
 				</div>
 				<div class="card">
 					<div class="card-header">
 						<div class="card-icon cyan"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div>
-						<div class="card-content"><div class="card-title">Email & Queue</div><p class="card-desc">Async jobs and notifications</p></div>
+							<div class="card-content"><div class="card-title">Events & Jobs</div><p class="card-desc">Background processing and async workflows</p></div>
 					</div>
 				</div>
 			</div>
@@ -195,7 +195,7 @@ func RegisterWelcome(r *gin.Engine) {
 		<div class="footer">
 			<div class="footer-info">
 				<div>Go <span>%s</span></div>
-				<div>Eogo <span>v1.0.0</span></div>
+				<div>ZGO <span>v1.0.0</span></div>
 				<div>Environment <span>%s</span></div>
 			</div>
 			<div class="footer-links">

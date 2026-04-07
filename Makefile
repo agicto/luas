@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all clean test cover lint lint-fix generate wire docs mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all clean test test-kest cover lint lint-fix generate wire docs mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -104,6 +104,11 @@ endif
 test:
 	@echo "Running tests..."
 	go test ./... -v
+
+# Run Kest flow tests against a local ephemeral server
+test-kest:
+	@echo "Running Kest flow tests..."
+	@./tests/kest/run_local.sh
 
 # Run tests with race detection
 test-race:
@@ -252,6 +257,7 @@ help:
 	@echo "  make server             - Run server (alias for dev)"
 	@echo "  make air                - Run with hot reload (Air)"
 	@echo "  make test               - Run tests"
+	@echo "  make test-kest          - Run Kest flow tests"
 	@echo "  make test-race          - Run tests with race detection"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

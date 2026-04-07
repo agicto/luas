@@ -59,6 +59,8 @@ func newUserPO(u *domain.User) *UserPO {
 	}
 	return &UserPO{
 		ID:        u.ID,
+		CreatedAt: u.CreatedAt,
+		UpdatedAt: u.UpdatedAt,
 		Username:  u.Username,
 		Email:     u.Email,
 		Password:  u.Password,

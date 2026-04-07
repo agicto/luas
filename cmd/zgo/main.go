@@ -87,6 +87,7 @@ func registerCommands(app *console.Application) {
 	app.RegisterAs("seed", dbSeed)
 
 	// Register other commands
+	app.Register(commands.NewAIChatCommand())
 	app.Register(commands.NewServeCommand())
 	app.Register(commands.NewEnvCommand())
 	app.Register(commands.NewVersionCommand(Version))
@@ -119,6 +120,7 @@ func isPluginCommand(cmd string) bool {
 		"db:status":        true,
 		"db:seed":          true,
 		"seed":             true,
+		"ai:chat":          true,
 		"serve":            true,
 		"env":              true,
 		"version":          true,

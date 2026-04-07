@@ -21,6 +21,7 @@ modules        →   capabilities   →   infra
 |------|--------|------|
 | **idgen** | `capabilities/idgen` | ID 生成（UUID、Snowflake、NanoID） |
 | **crypto** | `capabilities/crypto` | 加密解密、哈希、密码 |
+| **ai** | `capabilities/ai` | Provider-neutral AI 调用能力，默认支持 OpenAI Responses API |
 
 ---
 

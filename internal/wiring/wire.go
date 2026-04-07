@@ -7,7 +7,7 @@ import (
 	"github.com/google/wire"
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra"
-	"github.com/zgiai/zgo/internal/modules/permission"
+	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -19,8 +19,8 @@ func InitApplication() (*app.Application, error) {
 		infra.ProviderSet,
 
 		// Module providers
+		apikey.ProviderSet,
 		user.ProviderSet,
-		permission.ProviderSet,
 
 		// Aggregate handlers
 		wire.Struct(new(app.Handlers), "*"),

@@ -2,19 +2,13 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"os/signal"
-	"strings"
-	"syscall"
 
+	"github.com/gin-gonic/gin"
 	"github.com/zgiai/zgo/internal/bootstrap"
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/wiring"
 	"github.com/zgiai/zgo/routes"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
 )
 
 // ServeCommand starts the HTTP server
@@ -48,59 +42,8 @@ func (c *ServeCommand) Run(args []string) error {
 			fmt.Sscanf(args[i+1], "%d", &cfg.Server.Port)
 		}
 	}
-
-	// Set JWT service for middleware
-	middleware.SetJWTService(application.JWTService)
-
-	// Set Gin mode
-	switch strings.ToLower(cfg.Server.Mode) {
-	case "release", "prod", "production":
-		gin.SetMode(gin.ReleaseMode)
-	case "test":
-		gin.SetMode(gin.TestMode)
-	default:
-		gin.SetMode(gin.DebugMode)
-	}
-
-	// Create router
-	r := gin.Default()
-
-	// CORS
-	corsConfig := cors.Config{
-		AllowOrigins:     cfg.CORS.AllowOrigins,
-		AllowMethods:     cfg.CORS.AllowMethods,
-		AllowHeaders:     cfg.CORS.AllowHeaders,
-		ExposeHeaders:    cfg.CORS.ExposeHeaders,
-		AllowCredentials: cfg.CORS.AllowCredentials,
-	}
-	r.Use(cors.New(corsConfig))
-
-	// Register routes
-	routes.Setup(r, application.Handlers)
-
-	serverAddr := fmt.Sprintf(":%d", cfg.Server.Port)
-	c.output.Success("Server starting on http://localhost%s", serverAddr)
-
-	go func() {
-		if err := r.Run(serverAddr); err != nil {
-			c.output.Error("Server error: %v", err)
-		}
-	}()
-
-	// Graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	c.output.Info("Shutting down server...")
-
-	// Close database connection
-	if application.DB != nil {
-		if sqlDB, err := application.DB.DB(); err == nil {
-			sqlDB.Close()
-		}
-	}
-
+	kernel := bootstrap.NewHttpKernel(application)
+	kernel.Handle()
 	return nil
 }
 
@@ -176,9 +119,6 @@ func (c *RouteListCommand) Run(args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to init application: %w", err)
 	}
-
-	// Set JWT service for middleware
-	middleware.SetJWTService(application.JWTService)
 
 	r := gin.New()
 	routes.Setup(r, application.Handlers)

@@ -5,7 +5,6 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/zgiai/zgo/internal/app"
-	"github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/infra/monitor"
 	"github.com/zgiai/zgo/internal/infra/router"
 )
@@ -14,16 +13,10 @@ import (
 func Setup(engine *gin.Engine, handlers *app.Handlers) *router.Router {
 	r := router.New(engine)
 
-	// Register middleware groups
-	r.MiddlewareGroup("web", gin.Logger(), gin.Recovery())
-	r.MiddlewareGroup("api", gin.Logger(), gin.Recovery())
-	r.MiddlewareGroup("auth", middleware.JWTAuth())
-
-	// Register middleware aliases
-	r.AliasMiddleware("jwt", middleware.JWTAuth())
-
-	// Apply global middleware
-	r.Use(gin.Logger(), gin.Recovery())
+	// Let modules extend router middleware without editing the core route setup.
+	for _, m := range handlers.Modules() {
+		m.RegisterMiddleware(r)
+	}
 
 	// Swagger documentation
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

@@ -16,7 +16,8 @@ database/
     ├── migrations.go                              # Registry (auto-populated)
     ├── 2025_06_18_000000_create_users_table.go
     ├── 2025_06_18_000001_seed_default_users.go
-    ├── 2025_12_26_000000_create_roles_table.go
+    ├── 2026_04_06_000000_create_api_keys_table.go
+    ├── 2025_12_26_000000_create_roles_table.go      # Optional RBAC example
     ├── 2025_12_26_000001_create_permissions_table.go
     ├── 2025_12_26_000002_create_role_permissions_table.go
     ├── 2025_12_26_000003_create_user_roles_table.go
@@ -136,9 +137,16 @@ SELECT * FROM migrations;
 |-----------------------------------------|
 | 2025_06_18_000000_create_users_table    |
 | 2025_06_18_000001_seed_default_users    |
-| 2025_12_26_000000_create_roles_table    |
+| 2026_04_06_000000_create_api_keys_table |
 | ...                                     |
 ```
+
+## Default vs Optional Migrations
+
+- `migrations.Default()` 只注册脚手架默认启用的迁移
+- `migrations.All()` 保留全部迁移，包括像 `permission` 这样的可选示例模块
+
+当前默认脚手架只运行用户认证 starter 相关迁移；RBAC 示例迁移仍保留在仓库中，但不会自动执行。
 
 ## Best Practices
 

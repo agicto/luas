@@ -7,6 +7,10 @@ import (
 
 type UserSeeder struct{}
 
+func (s *UserSeeder) Name() string {
+	return "users"
+}
+
 func (s *UserSeeder) Run(db *gorm.DB) error {
 	users := []user.UserPO{
 		{

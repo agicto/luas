@@ -3,6 +3,7 @@ package support
 import (
 	"reflect"
 	"strings"
+	"time"
 )
 
 // Blank determines if the given value is "blank"
@@ -21,11 +22,11 @@ func Blank(value any) bool {
 	case reflect.Bool:
 		return false // booleans are never blank
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return false // numbers are never blank
+		return v.Int() == 0
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return false
+		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
-		return false
+		return v.Float() == 0
 	case reflect.Ptr, reflect.Interface:
 		if v.IsNil() {
 			return true
@@ -49,8 +50,11 @@ func Tap[T any](value T, callbacks ...func(T)) T {
 	return value
 }
 
-// With returns the given value, optionally passed through the given callback
-func With[T any, R any](value T, callback func(T) R) R {
+// With returns the given value, optionally passed through the given callback.
+func With[T any](value T, callback func(T) T) T {
+	if callback == nil {
+		return value
+	}
 	return callback(value)
 }
 
@@ -135,6 +139,44 @@ func Retry[T any](times int, callback func(attempt int) (T, error)) (T, error) {
 	return zero, lastErr
 }
 
+// RetryWithDelay retries the callback and sleeps between failed attempts.
+func RetryWithDelay[T any](times int, delay time.Duration, callback func(attempt int) (T, error)) (T, error) {
+	var lastErr error
+	var zero T
+
+	for i := 1; i <= times; i++ {
+		result, err := callback(i)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+		if i < times {
+			time.Sleep(delay)
+		}
+	}
+
+	return zero, lastErr
+}
+
+// RetryWhen retries the callback only when the predicate allows it.
+func RetryWhen[T any](times int, callback func(attempt int) (T, error), shouldRetry func(error) bool) (T, error) {
+	var lastErr error
+	var zero T
+
+	for i := 1; i <= times; i++ {
+		result, err := callback(i)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+		if i == times || !shouldRetry(err) {
+			break
+		}
+	}
+
+	return zero, lastErr
+}
+
 // Once ensures a callback is only called once (per key)
 var onceCache = make(map[string]any)
 
@@ -152,6 +194,16 @@ type Optional[T any] struct {
 	value *T
 }
 
+// Some creates an Optional from a concrete value.
+func Some[T any](value T) Optional[T] {
+	return Optional[T]{value: &value}
+}
+
+// None creates an empty Optional.
+func None[T any]() Optional[T] {
+	return Optional[T]{}
+}
+
 // Of creates an Optional from a value
 func Of[T any](value *T) Optional[T] {
 	return Optional[T]{value: value}
@@ -160,10 +212,33 @@ func Of[T any](value *T) Optional[T] {
 // Get returns the value or the default if nil
 func (o Optional[T]) Get(defaultVal T) T {
 	if o.value == nil {
-		var zero T
-		return zero
+		return defaultVal
 	}
 	return *o.value
+}
+
+// Value returns the value or the zero value if nil.
+func (o Optional[T]) Value() T {
+	var zero T
+	return o.Get(zero)
+}
+
+// MustValue returns the value or panics if nil.
+func (o Optional[T]) MustValue() T {
+	if o.value == nil {
+		panic("optional value is empty")
+	}
+	return *o.value
+}
+
+// IsEmpty returns true if the value is nil.
+func (o Optional[T]) IsEmpty() bool {
+	return o.value == nil
+}
+
+// ValueOr returns the value or the provided default.
+func (o Optional[T]) ValueOr(defaultVal T) T {
+	return o.Get(defaultVal)
 }
 
 // OrElse returns the value or calls the function if nil
@@ -172,6 +247,11 @@ func (o Optional[T]) OrElse(fn func() T) T {
 		return fn()
 	}
 	return *o.value
+}
+
+// ValueOrFunc returns the value or calls the function if nil.
+func (o Optional[T]) ValueOrFunc(fn func() T) T {
+	return o.OrElse(fn)
 }
 
 // IsPresent returns true if the value is not nil
@@ -184,6 +264,40 @@ func (o Optional[T]) IfPresent(callback func(T)) {
 	if o.value != nil {
 		callback(*o.value)
 	}
+}
+
+// Map transforms the value when present.
+func (o Optional[T]) Map(callback func(T) T) Optional[T] {
+	if o.value == nil {
+		return None[T]()
+	}
+	result := callback(*o.value)
+	return Some(result)
+}
+
+// Filter keeps the value only if the predicate returns true.
+func (o Optional[T]) Filter(predicate func(T) bool) Optional[T] {
+	if o.value == nil || !predicate(*o.value) {
+		return None[T]()
+	}
+	return o
+}
+
+// Or returns the current Optional or a fallback Optional when empty.
+func (o Optional[T]) Or(other Optional[T]) Optional[T] {
+	if o.value != nil {
+		return o
+	}
+	return other
+}
+
+// OptionalMap transforms an Optional into another Optional type.
+func OptionalMap[T any, R any](o Optional[T], callback func(T) R) Optional[R] {
+	if o.value == nil {
+		return None[R]()
+	}
+	result := callback(*o.value)
+	return Some(result)
 }
 
 // ThrowIf throws an error if the condition is true

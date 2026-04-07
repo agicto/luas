@@ -3,1004 +3,240 @@ package user
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
-	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/pkg/utils"
-	"github.com/zgiai/zgo/test/mocks"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-func TestService_Register(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := &jwt.Service{} // jwt service is not used in Register, so we can use a real one
-	service := NewService(mockRepo, mockJWT)
-
-	tests := []struct {
-		name        string
-		req         *UserRegisterRequest
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "successful registration",
-			req: &UserRegisterRequest{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-				Nickname: "Test User",
-				Phone:    "1234567890",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(nil, errors.New("not found"))
-				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, user *domain.User) error {
-					assert.Equal(t, "testuser", user.Username)
-					assert.Equal(t, "test@example.com", user.Email)
-					assert.NotEmpty(t, user.Password)
-					assert.Equal(t, "Test User", user.Nickname)
-					assert.Equal(t, "1234567890", user.Phone)
-					assert.Equal(t, int8(1), user.Status)
-					return nil
-				})
-			},
-			wantErr: false,
-		},
-		{
-			name: "email already exists",
-			req: &UserRegisterRequest{
-				Username: "testuser",
-				Email:    "existing@example.com",
-				Password: "password123",
-			},
-			setup: func() {
-				existingUser := &domain.User{ID: 1, Email: "existing@example.com"}
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "existing@example.com").Return(existingUser, nil)
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrEmailAlreadyExists,
-		},
-		{
-			name: "failed to hash password",
-			req: &UserRegisterRequest{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: string(make([]byte, 10000)), // extremely long password to cause error
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(nil, errors.New("not found"))
-			},
-			wantErr: true,
-		},
-		{
-			name: "failed to create user",
-			req: &UserRegisterRequest{
-				Username: "testuser",
-				Email:    "test@example.com",
-				Password: "password123",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(nil, errors.New("not found"))
-				mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to create user: database error"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.Register(context.Background(), tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, tt.req.Username, got.Username)
-				assert.Equal(t, tt.req.Email, got.Email)
-				assert.Equal(t, tt.req.Nickname, got.Nickname)
-				assert.Equal(t, tt.req.Phone, got.Phone)
-			}
-		})
-	}
+type fakeRepo struct {
+	createFn         func(context.Context, *domain.User) error
+	updateFn         func(context.Context, *domain.User) error
+	deleteFn         func(context.Context, uint) error
+	findByIDFn       func(context.Context, uint) (*domain.User, error)
+	findByEmailFn    func(context.Context, string) (*domain.User, error)
+	findByUsernameFn func(context.Context, string) (*domain.User, error)
+	findAllFn        func(context.Context, int, int) ([]*domain.User, int64, error)
 }
 
-func TestService_Login(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := mocks.NewMockJWTService(ctrl)
-	mockEventBus := mocks.NewMockEventBus(ctrl)            // Added mockEventBus
-	service := NewService(mockRepo, mockJWT, mockEventBus) // Updated NewService call
-
-	tests := []struct {
-		name        string
-		req         *UserLoginRequest
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "login with username success",
-			req: &UserLoginRequest{
-				Username: "testuser",
-				Password: "password123",
-			},
-			setup: func() {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedPassword),
-					Status:   1,
-				}
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "testuser").Return(user, nil)
-				mockJWT.EXPECT().GenerateToken(uint(1), "testuser").Return("token123", nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.NotNil(t, u.LastLogin)
-					return nil
-				}).AnyTimes()
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name: "login with email success",
-			req: &UserLoginRequest{
-				Username: "test@example.com",
-				Password: "password123",
-			},
-			setup: func() {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedPassword),
-					Status:   1,
-				}
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "test@example.com").Return(nil, errors.New("not found"))
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(user, nil)
-				mockJWT.EXPECT().GenerateToken(uint(1), "testuser").Return("token123", nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.NotNil(t, u.LastLogin)
-					return nil
-				}).AnyTimes()
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name: "invalid credentials - user not found",
-			req: &UserLoginRequest{
-				Username: "unknownuser",
-				Password: "password123",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "unknownuser").Return(nil, errors.New("not found"))
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "unknownuser").Return(nil, errors.New("not found"))
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrInvalidCredentials,
-		},
-		{
-			name: "invalid credentials - wrong password",
-			req: &UserLoginRequest{
-				Username: "testuser",
-				Password: "wrongpassword",
-			},
-			setup: func() {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedPassword),
-					Status:   1,
-				}
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "testuser").Return(user, nil)
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrInvalidCredentials,
-		},
-		{
-			name: "account disabled",
-			req: &UserLoginRequest{
-				Username: "disableduser",
-				Password: "password123",
-			},
-			setup: func() {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "disableduser",
-					Email:    "disabled@example.com",
-					Password: string(hashedPassword),
-					Status:   0, // disabled
-				}
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "disableduser").Return(user, nil)
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrAccountDisabled,
-		},
-		{
-			name: "failed to generate token",
-			req: &UserLoginRequest{
-				Username: "testuser",
-				Password: "password123",
-			},
-			setup: func() {
-				hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedPassword),
-					Status:   1,
-				}
-				mockRepo.EXPECT().FindByUsername(gomock.Any(), "testuser").Return(user, nil)
-				mockJWT.EXPECT().GenerateToken(uint(1), "testuser").Return("", errors.New("jwt error"))
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to generate token: jwt error"),
-		},
+func (r *fakeRepo) Create(ctx context.Context, user *domain.User) error {
+	if r.createFn != nil {
+		return r.createFn(ctx, user)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.Login(context.Background(), tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, "token123", got.AccessToken)
-				assert.Equal(t, uint(1), got.User.ID)
-			}
-		})
-	}
+	return nil
 }
 
-func TestService_GetProfile(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := mocks.NewMockJWTService(ctrl)               // Changed to mockJWT
-	mockEventBus := mocks.NewMockEventBus(ctrl)            // Added mockEventBus
-	service := NewService(mockRepo, mockJWT, mockEventBus) // Updated NewService call
-
-	tests := []struct {
-		name        string
-		userID      uint
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name:   "get profile success",
-			userID: 1,
-			setup: func() {
-				user := &domain.User{
-					ID:        1,
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Nickname:  "Test User",
-					Avatar:    "avatar.jpg",
-					Phone:     "1234567890",
-					Bio:       "Hello world",
-					Status:    1,
-					CreatedAt: time.Now().Add(-time.Hour),
-					UpdatedAt: time.Now(),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-			},
-			wantErr: false,
-		},
-		{
-			name:   "user not found",
-			userID: 999,
-			setup: func() {
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(999)).Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrUserNotFound,
-		},
+func (r *fakeRepo) Update(ctx context.Context, user *domain.User) error {
+	if r.updateFn != nil {
+		return r.updateFn(ctx, user)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.GetProfile(context.Background(), tt.userID)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, uint(1), got.ID)
-			}
-		})
-	}
+	return nil
 }
 
-func TestService_UpdateProfile(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := mocks.NewMockJWTService(ctrl)               // Changed to mockJWT
-	mockEventBus := mocks.NewMockEventBus(ctrl)            // Added mockEventBus
-	service := NewService(mockRepo, mockJWT, mockEventBus) // Updated NewService call
-
-	tests := []struct {
-		name        string
-		userID      uint
-		req         *UserUpdateRequest
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name:   "update profile success",
-			userID: 1,
-			req: &UserUpdateRequest{
-				Nickname: "New Nickname",
-				Avatar:   "new-avatar.jpg",
-				Phone:    "0987654321",
-				Bio:      "Updated bio",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:        1,
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Nickname:  "Old Nickname",
-					Avatar:    "old-avatar.jpg",
-					Phone:     "1111111111",
-					Bio:       "Old bio",
-					Status:    1,
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.Equal(t, "New Nickname", u.Nickname)
-					assert.Equal(t, "new-avatar.jpg", u.Avatar)
-					assert.Equal(t, "0987654321", u.Phone)
-					assert.Equal(t, "Updated bio", u.Bio)
-					return nil
-				})
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name:   "partial update - only nickname",
-			userID: 1,
-			req: &UserUpdateRequest{
-				Nickname: "New Nickname",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:        1,
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Nickname:  "Old Nickname",
-					Avatar:    "old-avatar.jpg",
-					Phone:     "1111111111",
-					Bio:       "Old bio",
-					Status:    1,
-					CreatedAt: time.Now(),
-					UpdatedAt: time.Now(),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.Equal(t, "New Nickname", u.Nickname)
-					assert.Equal(t, "old-avatar.jpg", u.Avatar) // unchanged
-					assert.Equal(t, "1111111111", u.Phone)      // unchanged
-					assert.Equal(t, "Old bio", u.Bio)           // unchanged
-					return nil
-				})
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name:   "user not found",
-			userID: 999,
-			req: &UserUpdateRequest{
-				Nickname: "New Nickname",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(999)).Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrUserNotFound,
-		},
-		{
-			name:   "failed to update user",
-			userID: 1,
-			req: &UserUpdateRequest{
-				Nickname: "New Nickname",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to update user: database error"),
-		},
+func (r *fakeRepo) Delete(ctx context.Context, id uint) error {
+	if r.deleteFn != nil {
+		return r.deleteFn(ctx, id)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.UpdateProfile(context.Background(), tt.userID, tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, tt.userID, got.ID)
-			}
-		})
-	}
+	return nil
 }
 
-func TestService_ChangePassword(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := mocks.NewMockJWTService(ctrl)               // Changed to mockJWT
-	mockEventBus := mocks.NewMockEventBus(ctrl)            // Added mockEventBus
-	service := NewService(mockRepo, mockJWT, mockEventBus) // Updated NewService call
-
-	tests := []struct {
-		name        string
-		userID      uint
-		req         *UserChangePasswordRequest
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name:   "change password success",
-			userID: 1,
-			req: &UserChangePasswordRequest{
-				OldPassword: "oldpassword123",
-				NewPassword: "newpassword123",
-			},
-			setup: func() {
-				hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedOldPassword),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.NotEqual(t, string(hashedOldPassword), u.Password)
-					err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte("newpassword123"))
-					assert.NoError(t, err)
-					return nil
-				})
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name:   "user not found",
-			userID: 999,
-			req: &UserChangePasswordRequest{
-				OldPassword: "oldpassword123",
-				NewPassword: "newpassword123",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(999)).Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrUserNotFound,
-		},
-		{
-			name:   "incorrect old password",
-			userID: 1,
-			req: &UserChangePasswordRequest{
-				OldPassword: "wrongpassword",
-				NewPassword: "newpassword123",
-			},
-			setup: func() {
-				hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedOldPassword),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("incorrect old password"),
-		},
-		{
-			name:   "failed to hash new password",
-			userID: 1,
-			req: &UserChangePasswordRequest{
-				OldPassword: "oldpassword123",
-				NewPassword: string(make([]byte, 10000)), // too long for bcrypt
-			},
-			setup: func() {
-				hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedOldPassword),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-			},
-			wantErr: true,
-		},
-		{
-			name:   "failed to update user",
-			userID: 1,
-			req: &UserChangePasswordRequest{
-				OldPassword: "oldpassword123",
-				NewPassword: "newpassword123",
-			},
-			setup: func() {
-				hashedOldPassword, _ := bcrypt.GenerateFromPassword([]byte("oldpassword123"), bcrypt.DefaultCost)
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: string(hashedOldPassword),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to update user: database error"),
-		},
+func (r *fakeRepo) FindByID(ctx context.Context, id uint) (*domain.User, error) {
+	if r.findByIDFn != nil {
+		return r.findByIDFn(ctx, id)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := service.ChangePassword(context.Background(), tt.userID, tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	return nil, gorm.ErrRecordNotFound
 }
 
-func TestService_ResetPassword(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := mocks.NewMockJWTService(ctrl)               // Changed to mockJWT
-	mockEventBus := mocks.NewMockEventBus(ctrl)            // Added mockEventBus
-	service := NewService(mockRepo, mockJWT, mockEventBus) // Updated NewService call
-
-	tests := []struct {
-		name        string
-		req         *UserPasswordResetRequest
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "reset password success",
-			req: &UserPasswordResetRequest{
-				Email: "test@example.com",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: "oldhash",
-				}
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, u *domain.User) error {
-					assert.NotEmpty(t, u.Password)
-					assert.NotEqual(t, "oldhash", u.Password)
-					return nil
-				})
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false,
-		},
-		{
-			name: "user not found",
-			req: &UserPasswordResetRequest{
-				Email: "unknown@example.com",
-			},
-			setup: func() {
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "unknown@example.com").Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: domain.ErrUserNotFound,
-		},
-		{
-			name: "failed to hash new password",
-			req: &UserPasswordResetRequest{
-				Email: "test@example.com",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: "oldhash",
-				}
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(user, nil)
-				// Force bcrypt to fail by using an invalid cost
-				utils.RandomStringLength = 0
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to hash password: crypto/bcrypt: cost is 0"),
-		},
-		{
-			name: "failed to update user",
-			req: &UserPasswordResetRequest{
-				Email: "test@example.com",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: "oldhash",
-				}
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: fmt.Errorf("failed to reset password: database error"),
-		},
-		{
-			name: "failed to send email",
-			req: &UserPasswordResetRequest{
-				Email: "test@example.com",
-			},
-			setup: func() {
-				user := &domain.User{
-					ID:       1,
-					Username: "testuser",
-					Email:    "test@example.com",
-					Password: "oldhash",
-				}
-				mockRepo.EXPECT().FindByEmail(gomock.Any(), "test@example.com").Return(user, nil)
-				mockRepo.EXPECT().Update(gomock.Any(), gomock.Any()).Return(nil)
-				// No mock for email service, so it would fail if it were a dependency.
-				// Assuming the current implementation handles email sending outside the core logic or logs errors.
-				mockEventBus.EXPECT().PublishAsync(gomock.Any(), gomock.Any()).AnyTimes() // Expect PublishAsync
-			},
-			wantErr: false, // email failure should not cause method to fail
-		},
+func (r *fakeRepo) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	if r.findByEmailFn != nil {
+		return r.findByEmailFn(ctx, email)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Reset utils.RandomStringLength after test that modifies it
-			if tt.name == "failed to hash new password" {
-				utils.RandomStringLength = 12
-			}
-			tt.setup()
-			err := service.ResetPassword(context.Background(), tt.req)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	return nil, gorm.ErrRecordNotFound
 }
 
-func TestService_DeleteAccount(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := &jwt.Service{}
-	service := NewService(mockRepo, mockJWT)
-
-	tests := []struct {
-		name        string
-		userID      uint
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name:   "delete account success",
-			userID: 1,
-			setup: func() {
-				mockRepo.EXPECT().Delete(gomock.Any(), uint(1)).Return(nil)
-			},
-			wantErr: false,
-		},
-		{
-			name:   "failed to delete account",
-			userID: 1,
-			setup: func() {
-				mockRepo.EXPECT().Delete(gomock.Any(), uint(1)).Return(errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: errors.New("database error"),
-		},
+func (r *fakeRepo) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	if r.findByUsernameFn != nil {
+		return r.findByUsernameFn(ctx, username)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			err := service.DeleteAccount(context.Background(), tt.userID)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	return nil, gorm.ErrRecordNotFound
 }
 
-func TestService_GetByID(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := &jwt.Service{}
-	service := NewService(mockRepo, mockJWT)
-
-	tests := []struct {
-		name        string
-		id          uint
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "get by id success",
-			id:   1,
-			setup: func() {
-				user := &domain.User{
-					ID:        1,
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Nickname:  "Test User",
-					Avatar:    "avatar.jpg",
-					Phone:     "1234567890",
-					Bio:       "Hello world",
-					Status:    1,
-					CreatedAt: time.Now().Add(-time.Hour),
-					UpdatedAt: time.Now(),
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-			},
-			wantErr: false,
-		},
-		{
-			name: "user not found",
-			id:   999,
-			setup: func() {
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(999)).Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: errors.New("user not found"),
-		},
+func (r *fakeRepo) FindAll(ctx context.Context, page, pageSize int) ([]*domain.User, int64, error) {
+	if r.findAllFn != nil {
+		return r.findAllFn(ctx, page, pageSize)
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.GetByID(context.Background(), tt.id)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, tt.id, got.ID)
-			}
-		})
-	}
+	return nil, 0, nil
 }
 
-func TestService_List(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := &jwt.Service{}
-	service := NewService(mockRepo, mockJWT)
-
-	tests := []struct {
-		name        string
-		page        int
-		pageSize    int
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name:     "list users success",
-			page:     1,
-			pageSize: 10,
-			setup: func() {
-				users := []*domain.User{
-					{
-						ID:        1,
-						Username:  "testuser1",
-						Email:     "test1@example.com",
-						Nickname:  "User One",
-						Avatar:    "avatar1.jpg",
-						Phone:     "1111111111",
-						Bio:       "Bio 1",
-						Status:    1,
-						CreatedAt: time.Now().Add(-time.Hour),
-						UpdatedAt: time.Now(),
-					},
-					{
-						ID:        2,
-						Username:  "testuser2",
-						Email:     "test2@example.com",
-						Nickname:  "User Two",
-						Avatar:    "avatar2.jpg",
-						Phone:     "2222222222",
-						Bio:       "Bio 2",
-						Status:    1,
-						CreatedAt: time.Now().Add(-2 * time.Hour),
-						UpdatedAt: time.Now().Add(-time.Minute),
-					},
-				}
-				mockRepo.EXPECT().FindAll(gomock.Any(), 1, 10).Return(users, int64(2), nil)
-			},
-			wantErr: false,
-		},
-		{
-			name:     "empty list",
-			page:     1,
-			pageSize: 10,
-			setup: func() {
-				mockRepo.EXPECT().FindAll(gomock.Any(), 1, 10).Return([]*domain.User{}, int64(0), nil)
-			},
-			wantErr: false,
-		},
-		{
-			name:     "failed to list users",
-			page:     1,
-			pageSize: 10,
-			setup: func() {
-				mockRepo.EXPECT().FindAll(gomock.Any(), 1, 10).Return(nil, int64(0), errors.New("database error"))
-			},
-			wantErr:     true,
-			expectedErr: errors.New("database error"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, total, err := service.List(context.Background(), tt.page, tt.pageSize)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.GreaterOrEqual(t, total, int64(0))
-			}
-		})
-	}
+func newTestService(repo domain.UserRepository) *service {
+	return NewService(repo, jwt.NewTestService(), events.NewEventBus())
 }
 
-func TestService_GetUserByID(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockRepo := mocks.NewMockUserRepository(ctrl)
-	mockJWT := &jwt.Service{}
-	service := NewService(mockRepo, mockJWT)
-
-	tests := []struct {
-		name        string
-		id          uint
-		setup       func()
-		wantErr     bool
-		expectedErr error
-	}{
-		{
-			name: "get user by id success",
-			id:   1,
-			setup: func() {
-				user := &domain.User{
-					ID:        1,
-					Username:  "testuser",
-					Email:     "test@example.com",
-					Nickname:  "Test User",
-					Avatar:    "avatar.jpg",
-					Phone:     "1234567890",
-					Bio:       "Hello world",
-					Status:    1,
-					LastLogin: &time.Time{},
-				}
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(1)).Return(user, nil)
-			},
-			wantErr: false,
-		},
-		{
-			name: "user not found",
-			id:   999,
-			setup: func() {
-				mockRepo.EXPECT().FindByID(gomock.Any(), uint(999)).Return(nil, errors.New("user not found"))
-			},
-			wantErr:     true,
-			expectedErr: errors.New("user not found"),
-		},
+func mustHashPassword(t *testing.T, password string) string {
+	t.Helper()
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("failed to hash password: %v", err)
 	}
+	return string(hash)
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			got, err := service.GetUserByID(context.Background(), tt.id)
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErr != nil {
-					assert.Equal(t, tt.expectedErr, err)
-				}
-			} else {
-				assert.NoError(t, err)
-				assert.NotNil(t, got)
-				assert.Equal(t, tt.id, got.ID)
-			}
-		})
-	}
+func TestServiceRegisterSuccess(t *testing.T) {
+	var created *domain.User
+
+	svc := newTestService(&fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+		createFn: func(_ context.Context, user *domain.User) error {
+			created = user
+			return nil
+		},
+	})
+
+	user, err := svc.Register(context.Background(), &UserRegisterRequest{
+		Username: "alice",
+		Email:    "alice@example.com",
+		Password: "password123",
+		Nickname: "Alice",
+		Phone:    "123",
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, user)
+	assert.NotNil(t, created)
+	assert.Equal(t, "alice", created.Username)
+	assert.Equal(t, "alice@example.com", created.Email)
+	assert.Equal(t, "Alice", created.Nickname)
+	assert.NotEqual(t, "password123", created.Password)
+	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(created.Password), []byte("password123")))
+}
+
+func TestServiceRegisterReturnsDomainErrorWhenEmailExists(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 1, Email: "alice@example.com"}, nil
+		},
+	})
+
+	user, err := svc.Register(context.Background(), &UserRegisterRequest{
+		Username: "alice",
+		Email:    "alice@example.com",
+		Password: "password123",
+	})
+
+	assert.Nil(t, user)
+	assert.ErrorIs(t, err, domain.ErrEmailAlreadyExists)
+}
+
+func TestServiceRegisterFailsFastOnLookupError(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return nil, errors.New("db unavailable")
+		},
+	})
+
+	user, err := svc.Register(context.Background(), &UserRegisterRequest{
+		Username: "alice",
+		Email:    "alice@example.com",
+		Password: "password123",
+	})
+
+	assert.Nil(t, user)
+	assert.EqualError(t, err, "failed to check existing email: db unavailable")
+}
+
+func TestServiceLoginFallsBackToEmailAndUpdatesLastLogin(t *testing.T) {
+	var updated *domain.User
+	hashedPassword := mustHashPassword(t, "password123")
+
+	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{
+				ID:       42,
+				Username: "alice",
+				Email:    "alice@example.com",
+				Password: hashedPassword,
+				Status:   1,
+			}, nil
+		},
+		updateFn: func(_ context.Context, user *domain.User) error {
+			updated = user
+			return nil
+		},
+	})
+
+	resp, err := svc.Login(context.Background(), &UserLoginRequest{
+		Username: "alice@example.com",
+		Password: "password123",
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+	assert.NotEmpty(t, resp.AccessToken)
+	assert.Equal(t, uint(42), resp.User.ID)
+	assert.NotNil(t, updated)
+	assert.NotNil(t, updated.LastLogin)
+}
+
+func TestServiceLoginReturnsInvalidCredentialsOnWrongPassword(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{
+				ID:       1,
+				Username: "alice",
+				Email:    "alice@example.com",
+				Password: mustHashPassword(t, "password123"),
+				Status:   1,
+			}, nil
+		},
+	})
+
+	resp, err := svc.Login(context.Background(), &UserLoginRequest{
+		Username: "alice",
+		Password: "wrong-password",
+	})
+
+	assert.Nil(t, resp)
+	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
+}
+
+func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByIDFn: func(context.Context, uint) (*domain.User, error) {
+			return &domain.User{
+				ID:       7,
+				Password: mustHashPassword(t, "password123"),
+				Status:   1,
+			}, nil
+		},
+	})
+
+	err := svc.ChangePassword(context.Background(), 7, &UserChangePasswordRequest{
+		OldPassword: "wrong-password",
+		NewPassword: "new-password-123",
+	})
+
+	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
+}
+
+func TestServiceResetPasswordDoesNotEnumerateUnknownEmail(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+	})
+
+	err := svc.ResetPassword(context.Background(), &UserPasswordResetRequest{
+		Email: "missing@example.com",
+	})
+
+	assert.NoError(t, err)
 }
