@@ -12,7 +12,7 @@
 import * as React from "react";
 import { Globe, Check } from "lucide-react";
 import { useLocale } from "@/hooks/use-locale";
-import { locales, localeNames, isLocaleSwitcherEnabled, type Locale } from "@/i18n";
+import { locales, localeNames, isLocaleSwitcherEnabled } from "@/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,

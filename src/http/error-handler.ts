@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
 import { ApiError } from './request';
 import { env } from '@/config/env';
-import { ErrorCode, HttpStatusMap } from './codes';
+import { ErrorCode } from './codes';
 
 /**
  * Global Error Handler Configuration

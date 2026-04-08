@@ -3,8 +3,7 @@
  * Central export point for all stores
  */
 
-// Global/app level stores
-export * from './app-store';
+// Shared global stores
 export * from './ui-store';
 
 // Re-export zustand for consistency

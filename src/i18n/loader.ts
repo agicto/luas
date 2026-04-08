@@ -1,4 +1,5 @@
 import { type Locale } from './config';
+import type { Messages as StrictMessages } from './modules';
 
 // Define available modules
 export const AVAILABLE_MODULES = [
@@ -14,13 +15,17 @@ export const AVAILABLE_MODULES = [
 
 export type ModuleName = (typeof AVAILABLE_MODULES)[number];
 
-import type { Messages as StrictMessages } from './modules';
-
 // Interface for loaded messages
 export type Messages = StrictMessages;
 
 // Translation module loader with type safety
-const moduleRegistry = {
+type MessageNamespace = Record<string, unknown>;
+type ModuleLoader = () => Promise<{ default: MessageNamespace } | MessageNamespace>;
+type ModuleRegistry = {
+  [K in ModuleName]: Record<Locale, ModuleLoader>;
+};
+
+const moduleRegistry: ModuleRegistry = {
   common: {
     'zh-Hans': () => import('./modules/common/zh-Hans'),
     'en-US': () => import('./modules/common/en-US'),
@@ -53,49 +58,47 @@ const moduleRegistry = {
     'zh-Hans': () => import('./modules/test/zh-Hans'),
     'en-US': () => import('./modules/test/en-US'),
   },
-} as const;
+};
 
 type ModuleKey = keyof typeof moduleRegistry;
+
+function unwrapModule(moduleData: Awaited<ReturnType<ModuleLoader>>): MessageNamespace {
+  if ('default' in moduleData) {
+    return moduleData.default as MessageNamespace;
+  }
+
+  return moduleData as MessageNamespace;
+}
 
 /**
  * Load all translation modules for a given locale
  */
 export async function loadAllModules(locale: Locale): Promise<Messages> {
-  const messages: any = {};
-
-  // Load all modules in parallel for better performance
-  const modulePromises = Object.entries(moduleRegistry).map(async ([key, modules]) => {
+  const entries = await Promise.all(AVAILABLE_MODULES.map(async (moduleName) => {
     try {
-      const module = await (modules as any)[locale]();
-      return [key, module.default || module];
+      const loadedModule = await moduleRegistry[moduleName][locale]();
+      return [moduleName, unwrapModule(loadedModule)] as const;
     } catch (error) {
-      console.warn(`Failed to load ${key} module for locale ${locale}:`, error);
-      return [key, {}];
+      console.warn(`Failed to load ${moduleName} module for locale ${locale}:`, error);
+      return [moduleName, {}] as const;
     }
-  });
+  }));
 
-  const loadedModules = await Promise.all(modulePromises);
-
-  // Merge all modules into the messages object
-  for (const [key, moduleData] of loadedModules) {
-    messages[key as string] = moduleData;
-  }
-
-  return messages as Messages;
+  return Object.fromEntries(entries) as Messages;
 }
 
 /**
  * Load a specific module for a given locale
  */
-export async function loadModule(
-  moduleKey: ModuleKey,
+export async function loadModule<K extends ModuleKey>(
+  moduleKey: K,
   locale: Locale
-): Promise<Record<string, any>> {
+): Promise<Messages[K]> {
   try {
-    const module = await (moduleRegistry[moduleKey] as any)[locale]();
-    return module.default || module;
+    const loadedModule = await moduleRegistry[moduleKey][locale]();
+    return unwrapModule(loadedModule) as Messages[K];
   } catch (error) {
     console.warn(`Failed to load ${moduleKey} module for locale ${locale}:`, error);
-    return {};
+    return {} as Messages[K];
   }
 }

@@ -1,7 +1,5 @@
 import { PropsWithChildren } from 'react';
 import Link from 'next/link';
-import { Github, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { SiteHeaderNav } from '@/components/features/site/site-header-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -32,7 +30,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                 </svg>
               </div>
-              <span className="text-xl font-bold tracking-tight">Zweb</span>
+              <span className="text-xl font-bold tracking-tight">LlamaFront</span>
             </Link>
 
             {/* Navigation links - only valid ones */}
@@ -85,7 +83,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                 </svg>
               </div>
-              <span className="text-sm font-medium">Zweb</span>
+              <span className="text-sm font-medium">LlamaFront</span>
               <span className="text-sm text-text-muted">
                 · AI-First Frontend Scaffold
               </span>
@@ -94,7 +92,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
             {/* Links & Copyright */}
             <div className="flex items-center gap-6 text-sm text-text-muted">
               <a 
-                href="https://github.com/nicepkg/zweb"
+                href="https://github.com/zgiai/zweb"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"
@@ -102,7 +100,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 GitHub
               </a>
               <span>
-                © {new Date().getFullYear()} Zweb. All rights reserved.
+                © {new Date().getFullYear()} LlamaFront. All rights reserved.
               </span>
             </div>
           </div>

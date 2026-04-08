@@ -4,6 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from '@/config';
 import { PropsWithChildren, useState } from 'react';
+import { isDev } from '@/config/env';
 
 /**
  * React Query provider.
@@ -16,7 +17,7 @@ export function QueryProvider({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={client}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} position="bottom" />
+      {isDev ? <ReactQueryDevtools initialIsOpen={false} position="bottom" /> : null}
     </QueryClientProvider>
   );
 }

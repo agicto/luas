@@ -11,7 +11,9 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/auth-store';
+import { ROUTES } from '@/constants/routes';
+import { useAuthStore } from '@/features/auth/store/auth-store';
+import { useT } from '@/i18n';
 
 /**
  * Site Header Navigation Component
@@ -21,6 +23,7 @@ import { useAuthStore } from '@/store/auth-store';
  * When not logged in: shows Sign In and Get Started buttons.
  */
 export function SiteHeaderNav() {
+  const t = useT();
   const isAuthenticated = useAuthStore.use.isAuthenticated();
   const user = useAuthStore.use.user();
   const isSystemReady = useAuthStore.use.isSystemReady();
@@ -29,11 +32,11 @@ export function SiteHeaderNav() {
   if (!isSystemReady) {
     return (
       <div className="flex items-center gap-4">
-        <Link href="/login">
-          <Button variant="ghost" size="sm">Sign In</Button>
+        <Link href={ROUTES.AUTH.LOGIN}>
+          <Button variant="ghost" size="sm">{t.auth('signIn')}</Button>
         </Link>
-        <Link href="/register">
-          <Button size="sm">Get Started</Button>
+        <Link href={ROUTES.AUTH.REGISTER}>
+          <Button size="sm">{t.auth('getStarted')}</Button>
         </Link>
       </div>
     );
@@ -42,11 +45,11 @@ export function SiteHeaderNav() {
   if (isAuthenticated && user) {
     return (
       <div className="flex items-center gap-4">
-        <Link href="/console">
-          <Button variant="ghost" size="sm">Dashboard</Button>
+        <Link href={ROUTES.CONSOLE.HOME}>
+          <Button variant="ghost" size="sm">{t('nav.dashboard')}</Button>
         </Link>
-        <Link href="/console/settings">
-          <Button size="sm" variant="outline">{user.name || 'Profile'}</Button>
+        <Link href={ROUTES.CONSOLE.SETTINGS}>
+          <Button size="sm" variant="outline">{user.name || t('nav.profile')}</Button>
         </Link>
       </div>
     );
@@ -54,11 +57,11 @@ export function SiteHeaderNav() {
 
   return (
     <div className="flex items-center gap-4">
-      <Link href="/login">
-        <Button variant="ghost" size="sm">Sign In</Button>
+      <Link href={ROUTES.AUTH.LOGIN}>
+        <Button variant="ghost" size="sm">{t.auth('signIn')}</Button>
       </Link>
-      <Link href="/register">
-        <Button size="sm">Get Started</Button>
+      <Link href={ROUTES.AUTH.REGISTER}>
+        <Button size="sm">{t.auth('getStarted')}</Button>
       </Link>
     </div>
   );

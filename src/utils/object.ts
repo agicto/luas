@@ -21,15 +21,13 @@ export function deepClone<T>(obj: T): T {
   if (Array.isArray(obj)) {
     return obj.map(item => deepClone(item)) as unknown as T;
   }
-  
-  const clonedObj = {} as T;
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      (clonedObj as any)[key] = deepClone((obj as any)[key]);
-    }
+
+  const clonedObj: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    clonedObj[key] = deepClone(value);
   }
-  
-  return clonedObj;
+
+  return clonedObj as T;
 }
 
 /**
@@ -46,13 +44,18 @@ export function getNestedValue<T, D = undefined>(
   if (!obj) return defaultValue as D;
   
   const keys = path.split('.');
-  let result: any = obj;
+  let result: unknown = obj;
   
   for (const key of keys) {
     if (result === undefined || result === null) {
       return defaultValue as D;
     }
-    result = result[key];
+
+    if (typeof result !== 'object') {
+      return defaultValue as D;
+    }
+
+    result = (result as Record<string, unknown>)[key];
   }
   
   return (result === undefined) ? (defaultValue as D) : (result as T);
@@ -85,9 +88,9 @@ export function omit<T extends object, K extends keyof T>(
   obj: T, 
   keys: K[]
 ): Omit<T, K> {
-  const result = { ...obj };
+  const result = { ...obj } as Omit<T, K> & Partial<T>;
   keys.forEach(key => {
-    delete (result as any)[key];
+    Reflect.deleteProperty(result, key);
   });
   return result;
 }
@@ -111,18 +114,21 @@ export function deepMerge<T extends object>(target: T, ...sources: object[]): T 
   const source = sources.shift();
 
   if (isObject(target) && isObject(source)) {
-    Object.keys(source).forEach(key => {
-      const sourceValue = (source as any)[key];
-      const targetValue = (target as any)[key];
+    const mutableTarget = target as Record<string, unknown>;
+    const sourceRecord = source as Record<string, unknown>;
+
+    Object.keys(sourceRecord).forEach(key => {
+      const sourceValue = sourceRecord[key];
+      const targetValue = mutableTarget[key];
 
       if (isObject(sourceValue)) {
         if (!targetValue) {
-          (target as any)[key] = deepClone(sourceValue);
+          mutableTarget[key] = deepClone(sourceValue);
         } else {
-          (target as any)[key] = deepMerge(targetValue, sourceValue);
+          mutableTarget[key] = deepMerge(targetValue as Record<string, unknown>, sourceValue);
         }
       } else {
-        (target as any)[key] = sourceValue;
+        mutableTarget[key] = sourceValue;
       }
     });
   }
@@ -137,7 +143,7 @@ export function deepMerge<T extends object>(target: T, ...sources: object[]): T 
 export function deepFreeze<T extends object>(obj: T): T {
   Object.freeze(obj);
   Object.getOwnPropertyNames(obj).forEach(prop => {
-    const value = (obj as any)[prop];
+    const value = (obj as Record<string, unknown>)[prop];
     if (
       value !== null &&
       (typeof value === 'object' || typeof value === 'function') &&
@@ -152,6 +158,6 @@ export function deepFreeze<T extends object>(obj: T): T {
 /**
  * Helper: Checks if value is a plain object
  */
-function isObject(item: unknown): item is Record<string, any> {
+function isObject(item: unknown): item is Record<string, unknown> {
   return item !== null && typeof item === 'object' && !Array.isArray(item);
 }

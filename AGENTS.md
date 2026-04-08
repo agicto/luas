@@ -23,28 +23,33 @@
 src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/             # Public auth route group (login, register)
-│   ├── (normal)/           # Protected route group
-│   │   └── console/        # Admin dashboard
+│   ├── (protected)/        # Protected route group
+│   │   ├── (console)/      # Console pages
+│   │   └── (devtools)/     # Internal demo/playground pages
 │   ├── (site)/             # Public site route group
 │   ├── api/                # API Route Handlers (Mock endpoints)
 │   │   └── auth/           # Auth endpoints (Mock by default)
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives (DO NOT MODIFY)
-│   └── features/           # Business feature components
+│   ├── common/             # Shared layout/common components
+│   └── features/           # Shared feature-facing UI blocks
+├── features/               # Feature-first modules (preferred)
+│   ├── auth/               # components, hooks, services, store, server, types
+│   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
 ├── constants/              # Route constants, enums
-├── hooks/                  # Custom React hooks
+├── hooks/                  # Shared generic hooks
 ├── http/                   # HTTP client (axios wrapper)
 ├── i18n/                   # Internationalization
 │   ├── config.ts           # Locale config + ENV variables
 │   ├── translations.ts     # Unified translation hooks (useT, getT)
 │   └── modules/            # Per-module translations (common, auth, etc.)
 ├── providers/              # React context providers
-├── services/               # API service layer (Zod validated)
-├── store/                  # Zustand stores (dumb state only)
+├── services/               # Compatibility exports for feature services
+├── store/                  # Shared global stores only
 ├── test/                   # Test utilities and setup (unit tests in src/test)
 ├── themes/                 # Design tokens (OKLCH, CSS variables)
-├── types/                  # TypeScript type definitions
+├── types/                  # Shared cross-feature type definitions
 └── utils/                  # Pure utility functions
 ```
 
@@ -65,13 +70,6 @@ Browser → /api/auth/* → Mock handlers (Next.js API routes)
 
 ### 2. Authentication Flow
 
-**Token Modes (configured via `NEXT_PUBLIC_AUTH_TOKEN_MODE`):**
-
-| Mode | Description |
-|------|-------------|
-| `basic` | Single access token, no refresh |
-| `refresh` | Access + refresh token pair (default) |
-
 **Auth Endpoints (Mock API):**
 
 ```
@@ -80,39 +78,41 @@ POST /api/auth/login     → Mock login (admin@example.com / admin123)
 POST /api/auth/register  → Mock user registration
 GET  /api/auth/me        → Get current user
 POST /api/auth/logout    → Clear cookies
-GET  /api/auth/setup-status    → Get setup status
-POST /api/auth/setup           → Initial system setup
-GET  /api/auth/system-features → Get feature flags
 ```
 
 **Route Groups:**
 - `(auth)/*` - Public auth pages (login, register)
-- `(normal)/*` - Protected routes (requires AuthGuard/Middleware)
+- `(protected)/*` - Protected routes (enforced by `middleware.ts` and `AuthGuard`)
+- `(protected)/(console)/*` - Business console pages
+- `(protected)/(devtools)/*` - Internal playground/demo pages
 - `(site)/*` - Public pages
 
 **Protecting Routes:**
 
 ```typescript
-// app/(normal)/layout.tsx
-import { AuthGuard } from '@/components/auth-guard';
+// middleware.ts
+// Redirects unauthenticated traffic away from /console, /styleguide, and /i18n-test
 
-export default function NormalLayout({ children }) {
+// app/(protected)/layout.tsx
+import { AuthGuard } from '@/features/auth';
+
+export default function ProtectedLayout({ children }) {
   return <AuthGuard>{children}</AuthGuard>;
 }
 ```
 
 ### 3. State Management
 
-- **Auth state**: `src/store/auth-store.ts` (Zustand + persist)
-  - Stores user data, system features, and authentication status.
-  - Contains state and setters; async initialization logic is included for convenience.
-- **Auth actions**: `src/hooks/use-auth.ts` (React Query)
+- **Auth state**: `src/features/auth/store/auth-store.ts` (Zustand)
+  - Mirrors the current server session in memory.
+  - Initializes via `/api/auth/me` on app startup.
+- **Auth actions**: `src/features/auth/hooks/use-auth.ts` (React Query)
   - Handles `login`, `register`, and `logout`.
   - Includes built-in toast notifications and redirection.
   - Usage: `const { mutate: login } = useLogin();`
 - **Server state**: React Query for all API data.
 - **UI state**: `src/store/ui-store.ts` (Zustand).
-- **Auth config**: `src/config/auth.ts` (token modes, routes).
+- **Auth config**: `src/config/auth.ts` (cookie names, routes, demo account).
 
 ### 4. Internationalization (i18n)
 
@@ -243,7 +243,7 @@ import { useQuery } from '@tanstack/react-query';
 
 // 3. Internal imports (absolute paths)
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore } from '@/features/auth/store/auth-store';
 ```
 
 ## Environment Variables
@@ -273,6 +273,7 @@ We use `zod` to valid environment variables at runtime. If a required variable i
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_API_URL` | No | `/api` | Base URL for API requests. |
+| `NEXT_PUBLIC_APP_URL` | No | `http://localhost:3000` | Absolute site URL for metadata, sitemap, and robots. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
 
@@ -328,9 +329,10 @@ Use these tags in JSDoc headers to aid AI discovery:
 ### Adding a New Component
 
 1. **UI primitives** → Use shadcn/ui: `npx shadcn@latest add [component]`. These always go in `src/components/ui/`.
-2. **Feature components** → Create in `src/components/features/[module]/`. 
-   - **CRITICAL**: Do NOT place components in `app/` (route) directories. All reusable or module-specific components MUST be centralized in `src/components/`.
-   - Organise by functional module (e.g., `src/components/features/console/`).
+2. **Feature components** → Prefer `src/features/[module]/components/`.
+   - **CRITICAL**: Do NOT place reusable components in `app/` route directories.
+   - Keep each feature's hooks, services, store, server helpers, and types inside the same `src/features/[module]/` folder.
+   - Use `src/components/features/` only for shared cross-feature UI blocks.
 3. **Common components** → Generic, non-business specific components should be in `src/components/common/`.
 
 #### Atomic Component Contract
@@ -403,7 +405,7 @@ All components MUST include a standardized JSDoc header for discovery and AI-ass
 
 All data handling must follow the strict **Service-Hook-Type** layered architecture to ensure separation of concerns and type safety.
 
-#### 1. Define Types (`src/types/*.ts`)
+#### 1. Define Types (`src/features/[feature]/types.ts`)
 All data structures (Domain models, DTOs, Query schemas) must be strictly typed.
 
 ```typescript
@@ -411,7 +413,7 @@ export interface ExampleItem { id: string; title: string; status: 'active' | 'in
 export interface UpdateExampleRequest { title?: string; status?: 'active' | 'inactive'; }
 ```
 
-#### 2. Implement Stateless Service (`src/services/*.ts`)
+#### 2. Implement Stateless Service (`src/features/[feature]/services/*.ts`)
 Services are pure functional objects.
 - **Stateless**: They do not hold state or use hooks.
 - **Dedicated Clients**: Use the appropriate HTTP client for the feature.
@@ -425,17 +427,17 @@ Define specialized clients in `src/http/request.ts` to manage multiple base URLs
 export const request = createRequest({ baseURL: env.API_URL }); // Default
 export const fileRequest = createRequest({ baseURL: env.FILE_URL, timeout: 60000 }); // Specialized
 
-// 2. Map Services to the correct client
-// src/services/user.ts
+// 2. Map services to the correct client
+// src/features/user/services/user-service.ts
 import request from '@/http/request'; 
 export const userService = { get: () => request.get('/user') };
 
-// src/services/file.ts
+// src/features/file/services/file-service.ts
 import { fileRequest } from '@/http/request';
 export const fileService = { upload: (file) => fileRequest.post('/upload', file) };
 ```
 
-#### 3. Implement Encapsulated Hooks (`src/hooks/*.ts`)
+#### 3. Implement Encapsulated Hooks (`src/features/[feature]/hooks/*.ts`)
 Hooks manage React Query state and side effects.
 
 **Standard Pattern: Full CRUD Optimistic Updates**

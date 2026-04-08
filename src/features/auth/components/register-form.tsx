@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useRegister } from '@/features/auth/hooks/use-auth';
 import { useT } from '@/i18n';
 
 /**
@@ -16,11 +18,19 @@ import { useT } from '@/i18n';
  */
 export function RegisterForm() {
   const t = useT();
+  const { mutate: register, isPending } = useRegister();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementation: Connect to your registration service/hook here
-    console.log('Register form submitted - Implement your logic here');
+    if (!acceptedTerms) {
+      return;
+    }
+
+    register({ name, email, password });
   };
 
   return (
@@ -39,9 +49,11 @@ export function RegisterForm() {
             <Label htmlFor="name">{t.auth('fullName')}</Label>
             <Input 
               id="name" 
-              placeholder="Your Name" 
+              placeholder={t.auth('enterFullName')}
               required 
               className="bg-bg-canvas"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -49,9 +61,11 @@ export function RegisterForm() {
             <Input 
               id="email" 
               type="email" 
-              placeholder="name@example.com" 
+              placeholder={t.auth('enterEmail')}
               required 
               className="bg-bg-canvas"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -61,11 +75,18 @@ export function RegisterForm() {
               type="password" 
               required 
               className="bg-bg-canvas"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
           </div>
           
           <div className="flex items-start space-x-2 pt-2">
-            <Checkbox id="terms" required />
+            <Checkbox
+              id="terms"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => setAcceptedTerms(Boolean(checked))}
+              required
+            />
             <div className="grid gap-1.5 leading-none">
               <label
                 htmlFor="terms"
@@ -76,7 +97,7 @@ export function RegisterForm() {
             </div>
           </div>
 
-          <Button type="submit" className="w-full font-semibold">
+          <Button type="submit" className="w-full font-semibold" disabled={isPending || !acceptedTerms}>
             {t.auth('signUp')}
           </Button>
         </form>

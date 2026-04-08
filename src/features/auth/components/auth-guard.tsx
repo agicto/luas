@@ -2,8 +2,9 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuthStore } from '@/store/auth-store';
 import { authConfig } from '@/config/auth';
+import { useAuthStore } from '@/features/auth/store/auth-store';
+import { useT } from '@/i18n';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -27,8 +28,8 @@ interface AuthGuardProps {
  * 
  * @example
  * ```tsx
- * // app/(normal)/layout.tsx
- * export default function NormalLayout({ children }) {
+ * // app/(protected)/layout.tsx
+ * export default function ProtectedLayout({ children }) {
  *   return <AuthGuard>{children}</AuthGuard>;
  * }
  * ```
@@ -44,6 +45,7 @@ export function AuthGuard({
   const isAuthenticated = useAuthStore.use.isAuthenticated();
   const isLoading = useAuthStore.use.isLoading();
   const isSystemReady = useAuthStore.use.isSystemReady();
+  const t = useT();
 
   useEffect(() => {
     // Wait for system to be ready before checking auth
@@ -64,7 +66,7 @@ export function AuthGuard({
         <div className="flex min-h-screen items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading...</p>
+            <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
           </div>
         </div>
       );
@@ -79,5 +81,3 @@ export function AuthGuard({
 
   return <>{children}</>;
 }
-
-export default AuthGuard;

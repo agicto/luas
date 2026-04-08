@@ -11,7 +11,7 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
 - 🔍 **TypeScript**: Full type safety and excellent DX (TypeScript 5.9+)
 - ⚡ **Hot Reload**: Instant development feedback with Next.js Turbopack
 - 🤖 **AI-Ready**: Clean patterns for AI code generation and "vibe coding"
-- 🔐 **Auth Integration**: Built-in authentication patterns with persistent storage
+- 🔐 **Auth Integration**: Mock auth routes with httpOnly session cookies and protected demo pages
 - 📊 **State Management**: Zustand 5.0 for predictable, granular state handling
 - 🌍 **I18n**: Full internationalization support with `next-intl`
 - 🎨 **Styleguide Explorer**: Pre-built component gallery and design system playground
@@ -61,8 +61,8 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/llamacto/llamafront-ai-scaffold.git
-   cd llamafront-ai-scaffold
+   git clone https://github.com/zgiai/zweb.git
+   cd zweb
    ```
 
 2. **Install dependencies**
@@ -94,38 +94,38 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
 src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # Authentication routes
+│   ├── (protected)/       # Authenticated route group
+│   │   ├── (console)/     # Console shell and business pages
+│   │   └── (devtools)/    # Internal demo and playground pages
 │   ├── (site)/            # Marketing/Public pages
-│   ├── (normal)/          # Authenticated layout group
-│   │   ├── console/       # Admin dashboard
-│   │   └── styleguide/    # Component explorer
 │   └── api/               # API Route handlers
-├── components/            # Reusable components
+├── components/            # Shared UI and generic components
 │   ├── ui/               # Base UI library (Shadcn-like)
-│   ├── features/         # Domain-specific components
-│   │   ├── auth/         # Login, Register, Guards
-│   │   ├── console/      # Dashboard widgets
-│   │   └── styleguide/   # Styleguide specific components
+│   ├── features/         # Shared feature-facing UI blocks
 │   └── common/           # Shared layout components
-├── hooks/                # Custom React hooks
-├── services/             # API/Business logic layer
-├── store/                # Zustand state slices
+├── features/             # Feature-first modules (auth, example, ...)
+│   ├── auth/             # components, hooks, services, store, server, types
+│   └── example/          # hooks, services, server, types
+├── hooks/                # Shared generic hooks only
+├── services/             # Compatibility exports for feature services
+├── store/                # Shared global stores only
 ├── i18n/                 # Translation files
 ├── providers/            # React context providers
 ├── utils/                # Utility functions
-└── types/                # TypeScript definitions
+└── types/                # Shared cross-feature types
 ```
 
 ## 📊 Features in Depth
 
 ### 🎨 **Styleguide**
-A built-in styleguide available at `/styleguide` allows you to explore all UI components, colors, and typography in isolation. This is perfect for maintaining visual consistency.
+A built-in styleguide available at `/styleguide` lives under the protected devtools route group, keeping internal playground pages separate from business pages.
 
 ### 🔐 **Authentication**
 Complete auth flow out-of-the-box:
 - Login/Register pages with validation
-- JWT & Session management in Zustand
-- `AuthGuard` component for route protection
-- Middleware-level protection patterns
+- Mock `/api/auth/*` routes with a demo account (`admin@example.com` / `admin123`)
+- httpOnly session cookie bootstrap via `AuthProvider`
+- `middleware.ts` + `AuthGuard` for protected routes
 
 ### 🌍 **Internationalization**
 Powered by `next-intl`, supporting:
@@ -157,7 +157,8 @@ docker run -p 3000:3000 llamafront-web
 pnpm dev          # Start development with Turbopack
 pnpm build        # Build for production
 pnpm start        # Start production server
-pnpm lint         # Run ESLint & Type-check
+pnpm lint         # Run ESLint
+pnpm type-check   # Run TypeScript checks
 pnpm test         # Run unit tests
 pnpm format       # Format with Prettier
 ```
@@ -168,4 +169,4 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ---
 
-Made with ❤️ by Llamacto Team for the AI Development Community
+Made with ❤️ by the LlamaFront contributors

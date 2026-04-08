@@ -9,17 +9,18 @@ import { AuthProvider } from "@/providers/auth-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
+import { env } from "@/config/env";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: "Llamacto Web Scaffold",
-    template: "%s | Llamacto",
+    default: "LlamaFront AI Scaffold",
+    template: "%s | LlamaFront",
   },
   description: "Modern web application scaffold built with Next.js, TypeScript, and Tailwind CSS",
-  metadataBase: new URL("http://localhost:3000"), // Purified: Use hardcoded base
+  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
 };
 
 export default async function RootLayout({

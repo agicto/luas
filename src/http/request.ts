@@ -1,14 +1,18 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { handleError } from './error-handler';
-import { getAuthTokens } from '@/store/auth-store';
 import { env } from '@/config/env';
 
 /**
  * Custom Request Configuration
  */
 export interface RequestConfig extends AxiosRequestConfig {
-  skipAuth?: boolean;
   skipErrorHandler?: boolean;
+}
+
+interface ApiErrorBody {
+  code?: string | number;
+  error?: string;
+  message?: string;
 }
 
 /**
@@ -34,6 +38,7 @@ class HttpClient {
   constructor(config: RequestConfig) {
     this.instance = axios.create({
       timeout: 30000,
+      withCredentials: true,
       ...config,
     });
 
@@ -41,21 +46,6 @@ class HttpClient {
   }
 
   private setupInterceptors() {
-    // Request Interceptor: Auth Handling
-    this.instance.interceptors.request.use(
-      (config) => {
-        const { skipAuth } = config as RequestConfig;
-        if (!skipAuth) {
-          const { accessToken } = getAuthTokens();
-          if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-          }
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-
     // Response Interceptor: Data Extraction & Error Handling
     this.instance.interceptors.response.use(
       (response) => {
@@ -65,7 +55,7 @@ class HttpClient {
       },
       async (error: AxiosError) => {
         const originalRequest = error.config as RequestConfig;
-        const body = error.response?.data as any;
+        const body = error.response?.data as ApiErrorBody | undefined;
 
         const apiError = new ApiError(
           body?.message || body?.error || error.message,
@@ -83,24 +73,24 @@ class HttpClient {
   }
 
   // Pure promise-based methods
-  public get<T = any>(url: string, config?: RequestConfig): Promise<T> {
-    return this.instance.get(url, config);
+  public get<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
+    return this.instance.get<T, T>(url, config);
   }
 
-  public post<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
-    return this.instance.post(url, data, config);
+  public post<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
+    return this.instance.post<T, T, D>(url, data, config);
   }
 
-  public put<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
-    return this.instance.put(url, data, config);
+  public put<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
+    return this.instance.put<T, T, D>(url, data, config);
   }
 
-  public patch<T = any>(url: string, data?: any, config?: RequestConfig): Promise<T> {
-    return this.instance.patch(url, data, config);
+  public patch<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
+    return this.instance.patch<T, T, D>(url, data, config);
   }
 
-  public delete<T = any>(url: string, config?: RequestConfig): Promise<T> {
-    return this.instance.delete(url, config);
+  public delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
+    return this.instance.delete<T, T>(url, config);
   }
 }
 

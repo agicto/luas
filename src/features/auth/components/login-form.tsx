@@ -1,12 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLogin } from '@/features/auth/hooks/use-auth';
 import { useT } from '@/i18n';
-import { useRouter } from 'next/navigation';
 
 /**
  * LoginForm - Pure UI Component
@@ -16,11 +17,13 @@ import { useRouter } from 'next/navigation';
  */
 export function LoginForm() {
   const t = useT();
-  const router = useRouter();
+  const { mutate: login, isPending } = useLogin();
+  const [email, setEmail] = useState('admin@example.com');
+  const [password, setPassword] = useState('admin123');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/console');
+    login({ email, password });
   };
 
   return (
@@ -40,32 +43,36 @@ export function LoginForm() {
             <Input 
               id="email" 
               type="email" 
-              placeholder="name@example.com" 
+              placeholder={t.auth('enterEmail')}
               required 
               className="bg-bg-canvas"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">{t.auth('password')}</Label>
-              <Link
-                href="/forgot-password"
-                className="text-sm font-medium text-primary hover:underline hover:text-primary-deep transition-colors"
-              >
-                {t.auth('forgotPassword')}
-              </Link>
+              <span className="text-sm text-text-muted">{t.auth('demoCredentialsHint')}</span>
             </div>
             <Input 
               id="password" 
               type="password" 
               required 
               className="bg-bg-canvas"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full font-semibold">
+          <Button type="submit" className="w-full font-semibold" disabled={isPending}>
             {t.auth('login')}
           </Button>
         </form>
+
+        <div className="mt-4 rounded-lg border border-border/60 bg-bg-surface/80 p-3 text-sm text-text-subtle">
+          <p className="font-medium text-text-main">{t.auth('demoCredentials')}</p>
+          <p>{t.auth('demoCredentialsValue')}</p>
+        </div>
         
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
@@ -78,8 +85,7 @@ export function LoginForm() {
           </div>
         </div>
         
-        <Button variant="outline" className="w-full" type="button">
-          {/* Use your icon component here */}
+        <Button variant="outline" className="w-full" type="button" disabled>
           Github
         </Button>
       </CardContent>

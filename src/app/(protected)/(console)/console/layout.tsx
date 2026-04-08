@@ -17,9 +17,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/common";
 import { useT } from "@/i18n";
+import { useLogout } from "@/features/auth/hooks/use-auth";
+import { useAuthStore } from "@/features/auth/store/auth-store";
+import type { AllTranslationKeys } from "@/i18n/translations";
 
 interface NavItem {
-  titleKey: string;
+  titleKey: Extract<AllTranslationKeys, `nav.${string}`>;
   href: string;
   icon: LucideIcon;
 }
@@ -31,6 +34,8 @@ export default function ConsoleLayout({
 }) {
   const pathname = usePathname();
   const t = useT();
+  const user = useAuthStore.use.user();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
   const mainNavItems: NavItem[] = [
     {
@@ -43,7 +48,7 @@ export default function ConsoleLayout({
   const secondaryNavItems: NavItem[] = [
     {
       titleKey: "nav.styleguide",
-      href: ROUTES.CONSOLE.STYLEGUIDE,
+      href: ROUTES.DEVTOOLS.STYLEGUIDE,
       icon: Palette,
     },
     {
@@ -62,12 +67,13 @@ export default function ConsoleLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Zweb Console</span>
+            <span className="text-xl font-bold tracking-tight">LlamaFront Console</span>
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
+          <ThemeToggle />
           
           <Button variant="ghost" isIcon className="h-9 w-9 rounded-full relative">
             <Bell className="h-4 w-4 text-text-muted" />
@@ -85,14 +91,21 @@ export default function ConsoleLayout({
               >
                 <Avatar className="h-full w-full">
                   <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback className="bg-primary/10 text-primary">JD</AvatarFallback>
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {user?.name
+                      ?.split(' ')
+                      .map((part) => part[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase() || 'LF'}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Profile</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 rounded-xl p-1 shadow-premium">
               <div className="px-2 py-1.5 text-xs font-medium text-text-muted uppercase tracking-wider">
-                My Account
+                {user?.name || t('nav.profile')}
               </div>
               <DropdownMenuItem className="rounded-lg cursor-pointer">
                 {t('nav.profile')}
@@ -101,11 +114,18 @@ export default function ConsoleLayout({
                 {t('nav.settings')}
               </DropdownMenuItem>
               <div className="h-px bg-border/50 my-1" />
-              <DropdownMenuItem className="rounded-lg cursor-pointer text-destructive focus:bg-destructive/10">
-                <Link href={ROUTES.AUTH.LOGIN} className="flex w-full items-center">
+              <DropdownMenuItem
+                className="rounded-lg cursor-pointer text-destructive focus:bg-destructive/10"
+                onSelect={(event) => {
+                  event.preventDefault();
+                  logout();
+                }}
+                disabled={isLoggingOut}
+              >
+                <div className="flex w-full items-center">
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Logout</span>
-                </Link>
+                  <span>{t('auth.logout')}</span>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -133,7 +153,7 @@ export default function ConsoleLayout({
                     )}
                   >
                     <IconComponent className="h-4.5 w-4.5" />
-                    {t(item.titleKey as any)}
+                    {t(item.titleKey)}
                   </Link>
                 );
               })}
@@ -156,7 +176,7 @@ export default function ConsoleLayout({
                     )}
                   >
                     <IconComponent className="h-4.5 w-4.5" />
-                    {t(item.titleKey as any)}
+                    {t(item.titleKey)}
                   </Link>
                 );
               })}

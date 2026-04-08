@@ -133,10 +133,7 @@ const localeToExport: Record<Locale, 'zhHans' | 'enUS' | 'jaJP'> = {
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_DEFAULT_LOCALE` | Default locale | `zh-Hans` |
-| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | Show language switcher | `true` |
+The i18n scaffold does not require dedicated environment variables. Locale behavior is configured in `src/i18n/config.ts`.
 
 ## Usage
 
@@ -248,10 +245,7 @@ export function LanguageButton() {
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_DEFAULT_LOCALE` | Default locale | `zh-Hans` |
-| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | Show language switcher | `true` |
+The i18n scaffold does not require dedicated environment variables. Locale behavior is configured in `src/i18n/config.ts`.
 
 ## Type Safety
 

@@ -10,7 +10,7 @@
  */
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
-import { SearchIcon, EyeIcon, EyeOffIcon, AlertCircleIcon } from "lucide-react"
+import { SearchIcon, EyeIcon, EyeOffIcon } from "lucide-react"
 import { DatePicker } from "./date-picker"
 
 import { cn } from "@/utils"
@@ -41,6 +41,9 @@ interface InputProps extends React.ComponentProps<"input">, VariantProps<typeof 
   root?: boolean
 }
 
+type DateInputValue = Date | string | undefined
+type DateInputChange = ((date: Date) => void) | undefined
+
 function Input({
   className,
   variant,
@@ -53,6 +56,11 @@ function Input({
   ...props
 }: InputProps) {
   if (type === "date" || type === "datetime-local") {
+    const dateValue = (props.value instanceof Date || typeof props.value === 'string')
+      ? props.value
+      : undefined
+    const dateOnChange = props.onChange as unknown as DateInputChange
+
     return (
       <DatePicker 
         showTime={type === "datetime-local"} 
@@ -60,8 +68,8 @@ function Input({
         errorText={typeof errorText === 'string' ? errorText : undefined}
         placeholder={props.placeholder}
         className={className}
-        value={props.value as any}
-        onChange={props.onChange as any}
+        value={dateValue as DateInputValue}
+        onChange={dateOnChange}
       />
     )
   }

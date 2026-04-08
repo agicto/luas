@@ -7,24 +7,24 @@ export const ROUTES = {
   // Public site routes
   SITE: {
     HOME: '/',
-    ABOUT: '/about',
-    CONTACT: '/contact',
   },
 
   // Auth routes
   AUTH: {
     LOGIN: '/login',
     REGISTER: '/register',
-    FORGOT_PASSWORD: '/forgot-password',
-    RESET_PASSWORD: '/reset-password',
   },
 
   // Console (Admin) routes
   CONSOLE: {
     HOME: '/console',
-    ANALYTICS: '/console/analytics',
     SETTINGS: '/console/settings',
+  },
+
+  // Internal devtools and demos
+  DEVTOOLS: {
     STYLEGUIDE: '/styleguide',
+    I18N_TEST: '/i18n-test',
   },
 } as const;
 
@@ -32,11 +32,13 @@ export const ROUTES = {
 type SiteRoutes = keyof typeof ROUTES.SITE;
 type AuthRoutes = keyof typeof ROUTES.AUTH;
 type ConsoleRoutes = keyof typeof ROUTES.CONSOLE;
+type DevtoolsRoutes = keyof typeof ROUTES.DEVTOOLS;
 
 // Type helpers for route segments
 export type SiteRoute = (typeof ROUTES.SITE)[SiteRoutes];
 export type AuthRoute = (typeof ROUTES.AUTH)[AuthRoutes];
 export type ConsoleRoute = (typeof ROUTES.CONSOLE)[ConsoleRoutes];
+export type DevtoolsRoute = (typeof ROUTES.DEVTOOLS)[DevtoolsRoutes];
 
 // Dynamic route builder with type checking
 export function buildRoute(
@@ -65,4 +67,8 @@ export function getAuthRoute(route: AuthRoutes): string {
 
 export function getConsoleRoute(route: ConsoleRoutes): string {
   return ROUTES.CONSOLE[route];
+}
+
+export function getDevtoolsRoute(route: DevtoolsRoutes): string {
+  return ROUTES.DEVTOOLS[route];
 }

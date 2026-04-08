@@ -18,11 +18,22 @@ export interface CreateExampleRequest {
   status?: 'active' | 'inactive';
 }
 
-export interface UpdateExampleRequest extends Partial<CreateExampleRequest> {}
+export type UpdateExampleRequest = Partial<CreateExampleRequest>;
 
 export interface ExampleQuerySchema {
   keyword?: string;
   status?: 'active' | 'inactive';
   page?: number;
   pageSize?: number;
+}
+
+export interface ExampleListResponse {
+  items: ExampleItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface DeleteExampleResponse {
+  id: string;
 }
