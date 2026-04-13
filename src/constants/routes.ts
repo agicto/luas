@@ -18,6 +18,7 @@ export const ROUTES = {
   // Console (Admin) routes
   CONSOLE: {
     HOME: '/console',
+    DEPLOYMENTS: '/console/deployments',
     SETTINGS: '/console/settings',
   },
 

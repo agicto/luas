@@ -1,6 +1,6 @@
-# 🚀 LlamaFront AI Scaffold
+# Hypership Web Console
 
-A modern, AI-powered frontend application scaffold designed for the AI era. Built specifically for vibe coding and AI-assisted development, LlamaFront provides everything you need to build intelligent, scalable, and performant frontend applications with maximum developer productivity.
+一个面向平台控制面的 Next.js 控制台，负责 GitHub 连接、仓库导入、服务创建、环境变量管理、部署触发与实时日志展示。
 
 ## ✨ Frontend-First AI Features
 
@@ -78,6 +78,13 @@ A modern, AI-powered frontend application scaffold designed for the AI era. Buil
    # Edit .env.local with your configuration
    ```
 
+   Platform console variables:
+
+   ```bash
+   NEXT_PUBLIC_DEPLOY_API_URL=http://localhost:8025/v1
+   NEXT_PUBLIC_PLATFORM_API_URL=http://localhost:8025/v1
+   ```
+
 4. **Run the development server**
 
    ```bash
@@ -133,12 +140,14 @@ Powered by `next-intl`, supporting:
 - Type-safe translation keys
 - Dynamic language switching
 
-### 📈 **Dashboard & Analytics**
-A ready-to-use console layout includes:
-- Performance monitoring charts (Recharts)
-- Activity timelines
-- Stats summaries
-- Responsive sidebar navigation
+### 🚀 **Platform Console**
+控制台首页现在是平台工作台，提供：
+- GitHub Token 连接与仓库浏览
+- 从仓库导入服务
+- 选择部署目标与部署策略
+- 环境变量编辑
+- 部署记录与实时日志流
+- 发布中心低层操作页
 
 ## 🚀 Deployment
 

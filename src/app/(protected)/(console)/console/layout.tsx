@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette } from "lucide-react";
+import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette, Rocket } from "lucide-react";
 
 import { cn } from "@/utils";
 import { ROUTES } from "@/constants/routes";
@@ -43,6 +43,11 @@ export default function ConsoleLayout({
       href: ROUTES.CONSOLE.HOME,
       icon: Home,
     },
+    {
+      titleKey: "nav.deployments",
+      href: ROUTES.CONSOLE.DEPLOYMENTS,
+      icon: Rocket,
+    },
   ];
 
   const secondaryNavItems: NavItem[] = [
@@ -67,7 +72,7 @@ export default function ConsoleLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">LlamaFront Console</span>
+            <span className="text-xl font-bold tracking-tight">Hypership Console</span>
           </Link>
         </div>
 

@@ -8,6 +8,8 @@ import { z } from 'zod';
 const envSchema = z.object({
   // Only the API entry point
   NEXT_PUBLIC_API_URL: z.string().min(1).default('/api'),
+  NEXT_PUBLIC_DEPLOY_API_URL: z.string().min(1).default('http://localhost:8025/v1'),
+  NEXT_PUBLIC_PLATFORM_API_URL: z.string().min(1).default('http://localhost:8025/v1'),
 
   // Absolute app URL for metadata, sitemap, and robots generation
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
@@ -21,6 +23,9 @@ const envSchema = z.object({
 
 const parsed = envSchema.safeParse({
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_DEPLOY_API_URL: process.env.NEXT_PUBLIC_DEPLOY_API_URL,
+  NEXT_PUBLIC_PLATFORM_API_URL:
+    process.env.NEXT_PUBLIC_PLATFORM_API_URL ?? process.env.NEXT_PUBLIC_DEPLOY_API_URL,
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
   NODE_ENV: process.env.NODE_ENV,
