@@ -8,6 +8,8 @@ import (
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra"
 	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/zgo/internal/modules/deployment"
+	"github.com/zgiai/zgo/internal/modules/platform"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -20,6 +22,8 @@ func InitApplication() (*app.Application, error) {
 
 		// Module providers
 		apikey.ProviderSet,
+		deployment.ProviderSet,
+		platform.ProviderSet,
 		user.ProviderSet,
 
 		// Aggregate handlers

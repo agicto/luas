@@ -10,11 +10,14 @@ import (
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/database"
+	"github.com/zgiai/zgo/internal/infra/deploycontrol"
 	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/zgo/internal/modules/deployment"
+	"github.com/zgiai/zgo/internal/modules/platform"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -31,25 +34,34 @@ func InitApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	service := jwt.NewService(configConfig)
-	emailService := email.NewService(configConfig)
+	service := email.NewService(configConfig)
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
-	apiKeyRepository := apikey.NewRepository(db)
-	apiKeyService := apikey.NewService(apiKeyRepository)
-	apiKeyHandler := apikey.NewHandler(apiKeyService)
+	apikeyRepository := apikey.NewRepository(db)
+	apikeyService := apikey.NewService(apikeyRepository)
+	handler := apikey.NewHandler(apikeyService)
+	manager := deploycontrol.NewManager()
+	deploymentService := deployment.NewService(manager)
+	deploymentHandler := deployment.NewHandler(deploymentService)
+	platformRepository := platform.NewRepository(db)
+	gitHubClient := platform.NewGitHubClient()
+	platformService := platform.NewService(platformRepository, manager, gitHubClient)
+	platformHandler := platform.NewHandler(platformService)
 	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository, service, eventBus)
-	handler := user.NewHandler(userService, service)
+	jwtService := jwt.NewService(configConfig)
+	userService := user.NewService(userRepository, jwtService, eventBus)
+	userHandler := user.NewHandler(userService, jwtService)
 	handlers := &app.Handlers{
-		APIKey: apiKeyHandler,
-		User:   handler,
+		APIKey:     handler,
+		Deployment: deploymentHandler,
+		Platform:   platformHandler,
+		User:       userHandler,
 	}
 	application := &app.Application{
 		Config:       configConfig,
 		DB:           db,
-		EmailService: emailService,
+		EmailService: service,
 		EventBus:     eventBus,
 		Migrator:     migrator,
 		Handlers:     handlers,

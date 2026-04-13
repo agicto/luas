@@ -7,6 +7,8 @@ import (
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/zgo/internal/modules/deployment"
+	"github.com/zgiai/zgo/internal/modules/platform"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"gorm.io/gorm"
 )
@@ -24,15 +26,23 @@ type Application struct {
 
 // Handlers holds all HTTP handlers for modules.
 type Handlers struct {
-	APIKey *apikey.Handler
-	User   *user.Handler
+	APIKey     *apikey.Handler
+	Deployment *deployment.Handler
+	Platform   *platform.Handler
+	User       *user.Handler
 }
 
 // Modules returns a list of all active modules
 func (h *Handlers) Modules() []contracts.Module {
-	modules := make([]contracts.Module, 0, 2)
+	modules := make([]contracts.Module, 0, 4)
 	if h.APIKey != nil {
 		modules = append(modules, h.APIKey)
+	}
+	if h.Deployment != nil {
+		modules = append(modules, h.Deployment)
+	}
+	if h.Platform != nil {
+		modules = append(modules, h.Platform)
 	}
 	if h.User != nil {
 		modules = append(modules, h.User)

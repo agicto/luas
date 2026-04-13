@@ -1,0 +1,34 @@
+{
+  "targets": [
+    {
+      "name": "render-api",
+      "displayName": "Render API Service",
+      "provider": "render",
+      "workingDirectory": ".",
+      "deployCommand": "render deploy --service srv_your_api_service_id",
+      "healthCheckUrl": "https://api.example.com/v1/health",
+      "healthCheckTimeout": "120s",
+      "domain": "api.example.com",
+      "certificateMode": "render-managed",
+      "autoDeployBranches": [
+        "main"
+      ],
+      "webhookSecret": "replace-me"
+    },
+    {
+      "name": "render-web",
+      "displayName": "Render Web Service",
+      "provider": "render",
+      "workingDirectory": "../web",
+      "deployCommand": "render deploy --service srv_your_web_service_id",
+      "healthCheckUrl": "https://app.example.com",
+      "healthCheckTimeout": "120s",
+      "domain": "app.example.com",
+      "certificateMode": "render-managed",
+      "autoDeployBranches": [
+        "main"
+      ],
+      "webhookSecret": "replace-me"
+    }
+  ]
+}
