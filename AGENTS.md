@@ -75,7 +75,6 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 | [`code-review-guide`](./.agent/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |
 | [`testing-strategy`](./.agent/skills/testing-strategy/) | Test patterns (unit, integration), mocking, table-driven tests | Writing and organizing tests |
 | [`database-design`](./.agent/skills/database-design/) | Schema standards, indexing, migration, SQL optimization | Designing tables and improving DB performance |
-| [`deployment`](./.agent/skills/deployment/) | Deployment workflows, Docker, CI/CD, Cloud Run | Deploying to production |
 
 ### How AI Agents Use Skills
 

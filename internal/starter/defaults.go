@@ -8,8 +8,6 @@ import (
 	"github.com/zgiai/zgo/database/seeders"
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
-	"github.com/zgiai/zgo/internal/modules/deployment"
-	"github.com/zgiai/zgo/internal/modules/platform"
 	"github.com/zgiai/zgo/internal/modules/user"
 )
 
@@ -27,8 +25,6 @@ var (
 // ProviderSet wires the default scaffold starters and their registry.
 var ProviderSet = wire.NewSet(
 	apikey.ProviderSet,
-	deployment.ProviderSet,
-	platform.ProviderSet,
 	user.ProviderSet,
 	NewDefaultRegistry,
 )
@@ -36,14 +32,10 @@ var ProviderSet = wire.NewSet(
 // NewDefaultRegistry creates the default scaffold starter registry.
 func NewDefaultRegistry(
 	apiKeyHandler *apikey.Handler,
-	deploymentHandler *deployment.Handler,
-	platformHandler *platform.Handler,
 	userHandler *user.Handler,
 ) (*Registry, error) {
 	registry := NewRegistry()
 	registry.RegisterModule(apiKeyHandler)
-	registry.RegisterModule(deploymentHandler)
-	registry.RegisterModule(platformHandler)
 	registry.RegisterModule(userHandler)
 
 	defaultMigrations, err := DefaultMigrations()

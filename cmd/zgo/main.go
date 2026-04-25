@@ -88,11 +88,6 @@ func registerCommands(app *console.Application) {
 
 	// Register other commands
 	app.Register(commands.NewAIChatCommand())
-	app.Register(commands.NewDeployTargetsCommand())
-	app.Register(commands.NewDeployListCommand())
-	app.Register(commands.NewDeployRunCommand())
-	app.Register(commands.NewDeployLogsCommand())
-	app.Register(commands.NewDeployCertificateCommand())
 	app.Register(commands.NewServeCommand())
 	app.Register(commands.NewEnvCommand())
 	app.Register(commands.NewVersionCommand(Version))
@@ -123,17 +118,12 @@ func isPluginCommand(cmd string) bool {
 		"db:rollback":      true,
 		"db:reset":         true,
 		"db:status":        true,
-		"db:seed":          true,
-		"seed":             true,
-		"ai:chat":          true,
-		"deploy:targets":   true,
-		"deploy:list":      true,
-		"deploy:run":       true,
-		"deploy:logs":      true,
-		"deploy:cert":      true,
-		"serve":            true,
-		"env":              true,
-		"version":          true,
+			"db:seed":          true,
+			"seed":             true,
+			"ai:chat":          true,
+			"serve":            true,
+			"env":              true,
+			"version":          true,
 		"route:list":       true,
 		"plugin:list":      true,
 		"help":             true,
