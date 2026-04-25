@@ -31,8 +31,9 @@ func All() map[string]migration.Migration {
 	return registry
 }
 
-// Default returns the migrations enabled by the default scaffold.
+// Default returns the legacy default scaffold migration set.
 // Optional example-module migrations remain available in All().
+// Deprecated: starter.DefaultMigrations() is the canonical source for default starter assembly.
 func Default() map[string]migration.Migration {
 	filtered := make(map[string]migration.Migration)
 	for name, m := range registry {

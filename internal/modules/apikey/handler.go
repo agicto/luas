@@ -12,9 +12,14 @@ import (
 
 // Handler handles API key HTTP requests.
 type Handler struct {
-	contracts.BaseModule
 	service Service
 }
+
+var (
+	_ contracts.Module           = (*Handler)(nil)
+	_ contracts.RouteModule      = (*Handler)(nil)
+	_ contracts.MiddlewareModule = (*Handler)(nil)
+)
 
 // NewHandler creates a new API key handler.
 func NewHandler(service Service) *Handler {

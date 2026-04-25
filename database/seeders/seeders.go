@@ -24,7 +24,8 @@ func All() []Seeder {
 	return registry
 }
 
-// Default returns the seeders enabled by the default scaffold.
+// Default returns the legacy default scaffold seeder set.
+// Deprecated: starter.DefaultSeeders() is the canonical source for default starter assembly.
 func Default() []Seeder {
 	filtered := make([]Seeder, 0, len(registry))
 	for _, seeder := range registry {
@@ -46,7 +47,8 @@ func RunAll(db *gorm.DB) error {
 	return nil
 }
 
-// RunDefault executes only the seeders enabled by the default scaffold.
+// RunDefault executes the legacy default scaffold seeder set.
+// Deprecated: starter.DefaultSeeders() is the canonical source for default starter assembly.
 func RunDefault(db *gorm.DB) error {
 	for _, seeder := range Default() {
 		if err := seeder.Run(db); err != nil {

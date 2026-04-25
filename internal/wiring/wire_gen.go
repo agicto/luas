@@ -16,6 +16,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/zgo/internal/starter"
 )
 
 // Injectors from wire.go:
@@ -31,28 +32,28 @@ func InitApplication() (*app.Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	service := jwt.NewService(configConfig)
-	emailService := email.NewService(configConfig)
+	service := email.NewService(configConfig)
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
-	apiKeyRepository := apikey.NewRepository(db)
-	apiKeyService := apikey.NewService(apiKeyRepository)
-	apiKeyHandler := apikey.NewHandler(apiKeyService)
+	apikeyRepository := apikey.NewRepository(db)
+	apikeyService := apikey.NewService(apikeyRepository)
+	handler := apikey.NewHandler(apikeyService)
 	userRepository := user.NewRepository(db)
-	userService := user.NewService(userRepository, service, eventBus)
-	handler := user.NewHandler(userService, service)
-	handlers := &app.Handlers{
-		APIKey: apiKeyHandler,
-		User:   handler,
+	jwtService := jwt.NewService(configConfig)
+	userService := user.NewService(userRepository, jwtService, eventBus)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService)
+	registry, err := starter.NewDefaultRegistry(handler, userHandler)
+	if err != nil {
+		return nil, err
 	}
 	application := &app.Application{
 		Config:       configConfig,
 		DB:           db,
-		EmailService: emailService,
+		EmailService: service,
 		EventBus:     eventBus,
 		Migrator:     migrator,
-		Handlers:     handlers,
+		Starters:     registry,
 	}
 	return application, nil
 }

@@ -24,6 +24,17 @@ module_name/
 └── service_test.go # Unit tests (optional)
 ```
 
+## Module Capability Interfaces
+
+Modules expose only the capabilities they actually need:
+
+- `contracts.Module`: identity only, via `Name()`
+- `contracts.RouteModule`: add `RegisterRoutes()`
+- `contracts.MiddlewareModule`: add `RegisterMiddleware()`
+- `contracts.EventModule`: add `RegisterEvents()`
+
+The starter registry dispatches these capabilities centrally, so route/bootstrap code does not need to know which optional hooks each module supports.
+
 ### File Responsibilities
 
 | File | Responsibility | Dependencies |
@@ -86,9 +97,9 @@ llm/
 ./zgo make:module Blog
 
 # After generation:
-# 1. Add the handler to internal/app/app.go
-# 2. Add the provider set to internal/wiring/wire.go
-# 3. If the module needs route middleware, implement RegisterMiddleware()
+# 1. Decide whether it is a starter, optional starter, or example
+# 2. If it is a starter, register it in internal/starter/defaults.go
+# 3. If it needs route middleware, implement RegisterMiddleware()
 # 4. Re-generate Wire output
 ```
 

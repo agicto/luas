@@ -11,16 +11,29 @@ import (
 	"github.com/zgiai/zgo/pkg/response"
 )
 
-// Handler handles user-related HTTP requests and implements contracts.Module
+// Handler handles user-related HTTP requests and exposes route, middleware, and event capabilities.
 type Handler struct {
-	contracts.BaseModule
-	service    Service
+	auth       AuthService
+	profile    ProfileService
+	query      UserQueryService
 	jwtService *jwt.Service
 }
 
-// NewHandler creates a new Handler instance
-func NewHandler(service Service, jwtService *jwt.Service) *Handler {
-	return &Handler{service: service, jwtService: jwtService}
+var (
+	_ contracts.Module           = (*Handler)(nil)
+	_ contracts.RouteModule      = (*Handler)(nil)
+	_ contracts.MiddlewareModule = (*Handler)(nil)
+	_ contracts.EventModule      = (*Handler)(nil)
+)
+
+// NewHandler creates a new Handler instance.
+func NewHandler(auth AuthService, profile ProfileService, query UserQueryService, jwtService *jwt.Service) *Handler {
+	return &Handler{
+		auth:       auth,
+		profile:    profile,
+		query:      query,
+		jwtService: jwtService,
+	}
 }
 
 // Name returns the module name
@@ -44,7 +57,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.Register(c.Request.Context(), &req)
+	user, err := h.auth.Register(c.Request.Context(), &req)
 	if err != nil {
 		response.HandleError(c, "Registration failed", err)
 		return
@@ -60,7 +73,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.service.Login(c.Request.Context(), &req)
+	resp, err := h.auth.Login(c.Request.Context(), &req)
 	if err != nil {
 		response.HandleError(c, "Login failed", err)
 		return
@@ -80,7 +93,7 @@ func (h *Handler) GetProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetProfile(c.Request.Context(), userID)
+	user, err := h.profile.GetProfile(c.Request.Context(), userID)
 	if err != nil {
 		response.HandleError(c, "Failed to get profile", err)
 		return
@@ -101,7 +114,7 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.UpdateProfile(c.Request.Context(), userID, &req)
+	user, err := h.profile.UpdateProfile(c.Request.Context(), userID, &req)
 	if err != nil {
 		response.HandleError(c, "Failed to update profile", err)
 		return
@@ -122,7 +135,7 @@ func (h *Handler) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.ChangePassword(c.Request.Context(), userID, &req); err != nil {
+	if err := h.profile.ChangePassword(c.Request.Context(), userID, &req); err != nil {
 		response.HandleError(c, "Failed to change password", err)
 		return
 	}
@@ -137,7 +150,7 @@ func (h *Handler) DeleteAccount(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.DeleteAccount(c.Request.Context(), userID); err != nil {
+	if err := h.profile.DeleteAccount(c.Request.Context(), userID); err != nil {
 		response.HandleError(c, "Failed to delete account", err)
 		return
 	}
@@ -156,7 +169,7 @@ func (h *Handler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.ResetPassword(c.Request.Context(), &req); err != nil {
+	if err := h.auth.ResetPassword(c.Request.Context(), &req); err != nil {
 		response.HandleError(c, "Failed to reset password", err)
 		return
 	}
@@ -175,7 +188,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetByID(c.Request.Context(), id)
+	user, err := h.query.GetByID(c.Request.Context(), id)
 	if err != nil {
 		response.HandleError(c, "User not found", err)
 		return
@@ -188,7 +201,7 @@ func (h *Handler) Get(c *gin.Context) {
 func (h *Handler) List(c *gin.Context) {
 	req := pagination.FromContext(c)
 
-	users, total, err := h.service.List(c.Request.Context(), req.GetPage(), req.GetPerPage())
+	users, total, err := h.query.List(c.Request.Context(), req.GetPage(), req.GetPerPage())
 	if err != nil {
 		response.HandleError(c, "Failed to get user list", err)
 		return

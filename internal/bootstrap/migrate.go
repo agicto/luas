@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/zgiai/zgo/database/migrations"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/zgo/internal/starter"
 	"gorm.io/gorm"
 )
 
@@ -19,19 +19,22 @@ type MigrationStatus struct {
 	RanAt *time.Time
 }
 
-// getMigrator creates a new Migrator instance with the default scaffold migrations.
+// getMigrator creates a new Migrator instance with the default starter migrations.
 // If eventBus is nil, events will not be fired.
-func getMigrator(db *gorm.DB, eventBus *events.EventBus) *migration.Migrator {
+func getMigrator(db *gorm.DB, eventBus *events.EventBus) (*migration.Migrator, error) {
 	// Create repository with default table name
 	repo := migration.NewDatabaseRepository(db, "migrations")
 
 	// Create migrator with optional event bus
 	migrator := migration.NewMigrator(repo, db, eventBus)
 
-	// Register only the default scaffold migrations.
-	migrator.RegisterMany(migrations.Default())
+	defaultMigrations, err := starter.DefaultMigrations()
+	if err != nil {
+		return nil, err
+	}
+	migrator.RegisterMany(defaultMigrations)
 
-	return migrator
+	return migrator, nil
 }
 
 // RunMigrations runs all pending migrations for the application.
@@ -44,7 +47,11 @@ func RunMigrationsWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
 	log.Println("Starting database migrations")
 	startTime := time.Now()
 
-	migrator := getMigrator(db, eventBus)
+	migrator, err := getMigrator(db, eventBus)
+	if err != nil {
+		log.Printf("Failed to load starter migrations: %v", err)
+		return err
+	}
 
 	// Execute migrations
 	opts := migration.NewMigratorOptions()
@@ -75,7 +82,11 @@ func RollbackLastMigration(db *gorm.DB) error {
 func RollbackLastMigrationWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
 	log.Println("Rolling back last migration batch")
 
-	migrator := getMigrator(db, eventBus)
+	migrator, err := getMigrator(db, eventBus)
+	if err != nil {
+		log.Printf("Failed to load starter migrations: %v", err)
+		return err
+	}
 
 	opts := migration.NewRollbackOptions()
 	rolledBack, err := migrator.Rollback(opts)
@@ -105,7 +116,11 @@ func RollbackMigrations(db *gorm.DB, steps int) error {
 func RollbackMigrationsWithEvents(db *gorm.DB, steps int, eventBus *events.EventBus) error {
 	log.Printf("Rolling back %d migration(s)", steps)
 
-	migrator := getMigrator(db, eventBus)
+	migrator, err := getMigrator(db, eventBus)
+	if err != nil {
+		log.Printf("Failed to load starter migrations: %v", err)
+		return err
+	}
 
 	opts := migration.NewRollbackOptions().WithSteps(steps)
 	rolledBack, err := migrator.Rollback(opts)
@@ -135,7 +150,11 @@ func ResetMigrations(db *gorm.DB) error {
 func ResetMigrationsWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
 	log.Println("Resetting all migrations")
 
-	migrator := getMigrator(db, eventBus)
+	migrator, err := getMigrator(db, eventBus)
+	if err != nil {
+		log.Printf("Failed to load starter migrations: %v", err)
+		return err
+	}
 
 	rolledBack, err := migrator.Reset(false)
 	if err != nil {
@@ -157,7 +176,10 @@ func ResetMigrationsWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
 
 // GetMigrationStatus returns the status of all migrations.
 func GetMigrationStatus(db *gorm.DB) ([]MigrationStatus, error) {
-	migrator := getMigrator(db, nil)
+	migrator, err := getMigrator(db, nil)
+	if err != nil {
+		return nil, err
+	}
 	repo := migrator.Repository()
 
 	// Ensure repository exists
@@ -263,7 +285,11 @@ func FreshMigrations(db *gorm.DB) error {
 
 // FreshMigrationsWithEvents drops all tables and re-runs all migrations with event bus.
 func FreshMigrationsWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
-	migrator := getMigrator(db, eventBus)
+	migrator, err := getMigrator(db, eventBus)
+	if err != nil {
+		log.Printf("Failed to load starter migrations: %v", err)
+		return err
+	}
 
 	opts := migration.NewMigratorOptions()
 	executed, err := migrator.Fresh(opts)

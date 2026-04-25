@@ -17,13 +17,13 @@ type seedDefaultRoles struct {
 
 // Up applies the migration.
 func (m *seedDefaultRoles) Up(db *gorm.DB) error {
-	roles := []permission.Role{
+	roles := []permission.RolePO{
 		{Name: "admin", DisplayName: "Administrator", Description: "Full access to all resources", IsDefault: false},
 		{Name: "user", DisplayName: "User", Description: "Standard user access", IsDefault: true},
 		{Name: "guest", DisplayName: "Guest", Description: "Read-only access", IsDefault: false},
 	}
 	for _, role := range roles {
-		if err := db.FirstOrCreate(&role, permission.Role{Name: role.Name}).Error; err != nil {
+		if err := db.FirstOrCreate(&role, permission.RolePO{Name: role.Name}).Error; err != nil {
 			return err
 		}
 	}
@@ -32,5 +32,5 @@ func (m *seedDefaultRoles) Up(db *gorm.DB) error {
 
 // Down reverts the migration.
 func (m *seedDefaultRoles) Down(db *gorm.DB) error {
-	return db.Where("name IN ?", []string{"admin", "user", "guest"}).Delete(&permission.Role{}).Error
+	return db.Where("name IN ?", []string{"admin", "user", "guest"}).Delete(&permission.RolePO{}).Error
 }

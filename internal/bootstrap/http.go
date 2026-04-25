@@ -85,18 +85,13 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	h.RegisterRoutes(r)
 	r.GET("/metrics", metrics.Handler())
 
-	// Initialize Modules (Events and Init)
-	for _, m := range application.Handlers.Modules() {
-		if err := m.Init(); err != nil {
-			log.Printf("Warning: Module %s failed to initialize: %v", m.Name(), err)
-		}
-		m.RegisterEvents(application.EventBus)
-	}
+	// Let event-aware starters attach subscribers without exposing that dispatch to callers.
+	application.Starters.RegisterEvents(application.EventBus)
 
 	// Register Routes
 	// We temporarily silence Gin's default route logging to keep console clean
 	gin.SetMode(gin.ReleaseMode) // Temporarily set to release to silence route logs
-	routes.Setup(r, application.Handlers)
+	routes.Setup(r, application.Starters)
 	setGinMode(application.Config.Server.Mode) // Restore correct mode
 
 	// Print Professional Banner

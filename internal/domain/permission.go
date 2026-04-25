@@ -11,6 +11,7 @@ type Role struct {
 	Name        string
 	DisplayName string
 	Description string
+	IsDefault   bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
@@ -21,6 +22,7 @@ type Permission struct {
 	Name        string
 	DisplayName string
 	Description string
+	Module      string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
