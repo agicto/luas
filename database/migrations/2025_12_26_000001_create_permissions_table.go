@@ -17,7 +17,7 @@ type createPermissionsTable struct {
 
 // Up applies the migration.
 func (m *createPermissionsTable) Up(db *gorm.DB) error {
-	return db.AutoMigrate(&permission.Permission{})
+	return db.AutoMigrate(&permission.PermissionPO{})
 }
 
 // Down reverts the migration.

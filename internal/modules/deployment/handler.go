@@ -14,9 +14,13 @@ import (
 )
 
 type Handler struct {
-	contracts.BaseModule
 	service Service
 }
+
+var (
+	_ contracts.Module      = (*Handler)(nil)
+	_ contracts.RouteModule = (*Handler)(nil)
+)
 
 func NewHandler(service Service) *Handler {
 	return &Handler{service: service}

@@ -879,7 +879,7 @@ import (
 // Register registers routes for this module.
 // Note: Handler should be injected via Wire DI, not created here.
 // This function is for reference - actual route registration should use
-// the handler from app.Handlers in routes/api.go
+// the handler registered by the starter registry in routes/api.go
 func Register(r *router.Router, handler *Handler) {
 	r.Group("/{{.Package}}s", func(g *router.Router) {
 		g.GET("", handler.List).Name("{{.Package}}.index")

@@ -6,16 +6,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/bootstrap"
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/database"
-	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	test_platform "github.com/zgiai/zgo/internal/infra/testing"
 	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/zgo/internal/starter"
 	"github.com/zgiai/zgo/routes"
 )
 
@@ -48,7 +47,6 @@ func SetupApp() *gin.Engine {
 
 	// 4. Create Services via DI
 	jwtService := jwt.NewService(cfg)
-	emailService := email.NewService(cfg)
 	eventBus := events.NewEventBus()
 
 	// 5. Create Repositories
@@ -59,25 +57,16 @@ func SetupApp() *gin.Engine {
 	apiKeyService := apikey.NewService(apiKeyRepo)
 	userService := user.NewService(userRepo, jwtService, eventBus)
 
-	// 7. Create Handlers
-	handlers := &app.Handlers{
-		APIKey: apikey.NewHandler(apiKeyService),
-		User:   user.NewHandler(userService, jwtService),
-	}
+	// 7. Create Starter Registry
+	starters := starter.NewRegistry()
+	starters.RegisterModule(apikey.NewHandler(apiKeyService))
+	starters.RegisterModule(user.NewHandler(userService, userService, userService, jwtService))
 
-	// 8. Build Application
-	_ = &app.Application{
-		Config:       cfg,
-		DB:           db,
-		EmailService: emailService,
-		Handlers:     handlers,
-	}
-
-	// 9. Setup Router
+	// 8. Build Application Routes
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
-	routes.Setup(r, handlers)
+	routes.Setup(r, starters)
 
 	return r
 }

@@ -12,7 +12,7 @@ func (s *RoleSeeder) Name() string {
 }
 
 func (s *RoleSeeder) Run(db *gorm.DB) error {
-	roles := []permission.Role{
+	roles := []permission.RolePO{
 		{Name: "admin", DisplayName: "Administrator", Description: "Full access to all resources", IsDefault: false},
 		{Name: "user", DisplayName: "User", Description: "Standard user access", IsDefault: true},
 		{Name: "guest", DisplayName: "Guest", Description: "Read-only access", IsDefault: false},
@@ -20,7 +20,7 @@ func (s *RoleSeeder) Run(db *gorm.DB) error {
 	}
 
 	for _, role := range roles {
-		if err := db.FirstOrCreate(&role, permission.Role{Name: role.Name}).Error; err != nil {
+		if err := db.FirstOrCreate(&role, permission.RolePO{Name: role.Name}).Error; err != nil {
 			return err
 		}
 	}

@@ -7,12 +7,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zgiai/zgo/database/migrations"
 	"github.com/zgiai/zgo/internal/bootstrap"
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/console"
 	"github.com/zgiai/zgo/internal/infra/database"
 	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/zgo/internal/starter"
 	"gorm.io/gorm"
 )
 
@@ -45,8 +45,11 @@ func createMigrator(cfg *config.Config) (*migration.Migrator, error) {
 	// Create migrator
 	migrator := migration.NewMigrator(repo, db, nil)
 
-	// Register only the default scaffold migrations.
-	migrator.RegisterMany(migrations.Default())
+	defaultMigrations, err := starter.DefaultMigrations()
+	if err != nil {
+		return nil, err
+	}
+	migrator.RegisterMany(defaultMigrations)
 
 	return migrator, nil
 }

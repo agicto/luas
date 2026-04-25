@@ -19,6 +19,7 @@ import (
 	"github.com/zgiai/zgo/internal/modules/deployment"
 	"github.com/zgiai/zgo/internal/modules/platform"
 	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/zgo/internal/starter"
 )
 
 // Injectors from wire.go:
@@ -51,12 +52,10 @@ func InitApplication() (*app.Application, error) {
 	userRepository := user.NewRepository(db)
 	jwtService := jwt.NewService(configConfig)
 	userService := user.NewService(userRepository, jwtService, eventBus)
-	userHandler := user.NewHandler(userService, jwtService)
-	handlers := &app.Handlers{
-		APIKey:     handler,
-		Deployment: deploymentHandler,
-		Platform:   platformHandler,
-		User:       userHandler,
+	userHandler := user.NewHandler(userService, userService, userService, jwtService)
+	registry, err := starter.NewDefaultRegistry(handler, deploymentHandler, platformHandler, userHandler)
+	if err != nil {
+		return nil, err
 	}
 	application := &app.Application{
 		Config:       configConfig,
@@ -64,7 +63,7 @@ func InitApplication() (*app.Application, error) {
 		EmailService: service,
 		EventBus:     eventBus,
 		Migrator:     migrator,
-		Handlers:     handlers,
+		Starters:     registry,
 	}
 	return application, nil
 }

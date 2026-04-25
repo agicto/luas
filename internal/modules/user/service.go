@@ -15,33 +15,48 @@ import (
 	"gorm.io/gorm"
 )
 
-// Service defines the interface for user-related operations.
-// Returns domain.User - transformation to DTO happens in Handler.
-type Service interface {
-	// Authentication
+// AuthService defines the authentication and public account flows.
+type AuthService interface {
 	Register(ctx context.Context, req *UserRegisterRequest) (*domain.User, error)
 	Login(ctx context.Context, req *UserLoginRequest) (*UserLoginResponse, error)
+	ResetPassword(ctx context.Context, req *UserPasswordResetRequest) error
+}
 
-	// Profile (authenticated user)
+// ProfileService defines authenticated profile management flows.
+type ProfileService interface {
 	GetProfile(ctx context.Context, userID uint) (*domain.User, error)
 	UpdateProfile(ctx context.Context, userID uint, req *UserUpdateRequest) (*domain.User, error)
 	ChangePassword(ctx context.Context, userID uint, req *UserChangePasswordRequest) error
 	DeleteAccount(ctx context.Context, userID uint) error
+}
 
-	// Public
-	ResetPassword(ctx context.Context, req *UserPasswordResetRequest) error
-
-	// Admin/Query
+// UserQueryService defines read-only user lookup flows.
+type UserQueryService interface {
 	GetByID(ctx context.Context, id uint) (*domain.User, error)
 	List(ctx context.Context, page, pageSize int) ([]*domain.User, int64, error)
 }
 
-// service implements the Service interface
+// Service is the full user service surface kept for compatibility.
+// Narrow seams should prefer AuthService, ProfileService, or UserQueryService.
+type Service interface {
+	AuthService
+	ProfileService
+	UserQueryService
+}
+
+// service implements the user service interfaces.
 type service struct {
 	repo       domain.UserRepository
 	jwtService *jwt.Service
 	eventBus   *events.EventBus
 }
+
+var (
+	_ Service          = (*service)(nil)
+	_ AuthService      = (*service)(nil)
+	_ ProfileService   = (*service)(nil)
+	_ UserQueryService = (*service)(nil)
+)
 
 // NewService creates a new service instance
 func NewService(repo domain.UserRepository, jwtService *jwt.Service, eventBus *events.EventBus) *service {

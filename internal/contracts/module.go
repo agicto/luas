@@ -1,41 +1,31 @@
 package contracts
 
 import (
-	"github.com/zgiai/zgo/internal/infra/console"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/router"
 )
 
-// Module defines the contract for a ZGO business module.
-// Implementing this interface allows a module to register its own
-// routes, middleware, event listeners, and console commands.
+// Module is the minimal contract shared by all ZGO modules.
+// Optional capabilities are expressed via narrower interfaces below.
 type Module interface {
-	// Name returns the unique name of the module
+	// Name returns the unique name of the module.
 	Name() string
-
-	// Init initializes the module with infrastructure components
-	// This is called after all dependencies are wired
-	Init() error
-
-	// RegisterRoutes registers the module's HTTP routes
-	RegisterRoutes(r *router.Router)
-
-	// RegisterMiddleware registers module-specific middleware groups or aliases
-	RegisterMiddleware(r *router.Router)
-
-	// RegisterEvents registers the module's event subscribers
-	RegisterEvents(bus *events.EventBus)
-
-	// RegisterCommands registers the module's console commands
-	RegisterCommands(app *console.Application)
 }
 
-// BaseModule provides default empty implementations for the Module interface.
-// Business modules can embed this to only implement needed methods.
-type BaseModule struct{}
+// RouteModule registers HTTP routes for a module.
+type RouteModule interface {
+	Module
+	RegisterRoutes(r *router.Router)
+}
 
-func (m BaseModule) Init() error                               { return nil }
-func (m BaseModule) RegisterRoutes(r *router.Router)           {}
-func (m BaseModule) RegisterMiddleware(r *router.Router)       {}
-func (m BaseModule) RegisterEvents(bus *events.EventBus)       {}
-func (m BaseModule) RegisterCommands(app *console.Application) {}
+// MiddlewareModule registers middleware aliases or groups for a module.
+type MiddlewareModule interface {
+	Module
+	RegisterMiddleware(r *router.Router)
+}
+
+// EventModule registers event subscribers for a module.
+type EventModule interface {
+	Module
+	RegisterEvents(bus *events.EventBus)
+}

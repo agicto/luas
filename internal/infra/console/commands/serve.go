@@ -121,7 +121,7 @@ func (c *RouteListCommand) Run(args []string) error {
 	}
 
 	r := gin.New()
-	routes.Setup(r, application.Handlers)
+	routes.Setup(r, application.Starters)
 
 	c.output.Title("Registered Routes")
 

@@ -143,10 +143,10 @@ SELECT * FROM migrations;
 
 ## Default vs Optional Migrations
 
-- `migrations.Default()` 只注册脚手架默认启用的迁移
+- `starter.DefaultMigrations()` 只注册脚手架默认启用的迁移
 - `migrations.All()` 保留全部迁移，包括像 `permission` 这样的可选示例模块
 
-当前默认脚手架只运行用户认证 starter 相关迁移；RBAC 示例迁移仍保留在仓库中，但不会自动执行。
+当前默认脚手架只运行 `user` 和 `apikey` starter 相关迁移；RBAC 示例迁移仍保留在仓库中，但不会自动执行。
 
 ## Best Practices
 

@@ -7,10 +7,7 @@ import (
 	"github.com/google/wire"
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra"
-	"github.com/zgiai/zgo/internal/modules/apikey"
-	"github.com/zgiai/zgo/internal/modules/deployment"
-	"github.com/zgiai/zgo/internal/modules/platform"
-	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/zgo/internal/starter"
 )
 
 // InitApplication initializes the entire application with all dependencies.
@@ -20,14 +17,8 @@ func InitApplication() (*app.Application, error) {
 		// Infrastructure providers
 		infra.ProviderSet,
 
-		// Module providers
-		apikey.ProviderSet,
-		deployment.ProviderSet,
-		platform.ProviderSet,
-		user.ProviderSet,
-
-		// Aggregate handlers
-		wire.Struct(new(app.Handlers), "*"),
+		// Default starter providers
+		starter.ProviderSet,
 
 		// Build final application
 		wire.Struct(new(app.Application), "*"),

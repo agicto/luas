@@ -1,15 +1,11 @@
 package app
 
 import (
-	"github.com/zgiai/zgo/internal/contracts"
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/apikey"
-	"github.com/zgiai/zgo/internal/modules/deployment"
-	"github.com/zgiai/zgo/internal/modules/platform"
-	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/zgo/internal/starter"
 	"gorm.io/gorm"
 )
 
@@ -21,31 +17,5 @@ type Application struct {
 	EmailService *email.Service
 	EventBus     *events.EventBus
 	Migrator     *migration.Migrator
-	Handlers     *Handlers
-}
-
-// Handlers holds all HTTP handlers for modules.
-type Handlers struct {
-	APIKey     *apikey.Handler
-	Deployment *deployment.Handler
-	Platform   *platform.Handler
-	User       *user.Handler
-}
-
-// Modules returns a list of all active modules
-func (h *Handlers) Modules() []contracts.Module {
-	modules := make([]contracts.Module, 0, 4)
-	if h.APIKey != nil {
-		modules = append(modules, h.APIKey)
-	}
-	if h.Deployment != nil {
-		modules = append(modules, h.Deployment)
-	}
-	if h.Platform != nil {
-		modules = append(modules, h.Platform)
-	}
-	if h.User != nil {
-		modules = append(modules, h.User)
-	}
-	return modules
+	Starters     *starter.Registry
 }

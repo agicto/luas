@@ -2,165 +2,178 @@ package permission
 
 import (
 	"context"
+	"errors"
 
+	"github.com/zgiai/zgo/internal/domain"
 	"gorm.io/gorm"
 )
 
-// Repository defines the interface for permission data operations
+// Repository defines the interface for permission data operations.
 type Repository interface {
-	// Role operations
-	CreateRole(ctx context.Context, role *Role) error
-	UpdateRole(ctx context.Context, role *Role) error
+	CreateRole(ctx context.Context, role *domain.Role) error
+	UpdateRole(ctx context.Context, role *domain.Role) error
 	DeleteRole(ctx context.Context, id uint) error
-	FindRoleByID(ctx context.Context, id uint) (*Role, error)
-	FindRoleByName(ctx context.Context, name string) (*Role, error)
-	FindAllRoles(ctx context.Context) ([]*Role, error)
-	FindDefaultRole(ctx context.Context) (*Role, error)
+	FindRoleByID(ctx context.Context, id uint) (*domain.Role, error)
+	FindRoleByName(ctx context.Context, name string) (*domain.Role, error)
+	FindAllRoles(ctx context.Context) ([]*domain.Role, error)
+	FindDefaultRole(ctx context.Context) (*domain.Role, error)
 
-	// Permission operations
-	CreatePermission(ctx context.Context, perm *Permission) error
-	FindAllPermissions(ctx context.Context) ([]*Permission, error)
-	FindPermissionsByModule(ctx context.Context, module string) ([]*Permission, error)
+	CreatePermission(ctx context.Context, permission *domain.Permission) error
+	FindAllPermissions(ctx context.Context) ([]*domain.Permission, error)
+	FindPermissionsByModule(ctx context.Context, module string) ([]*domain.Permission, error)
+	FindPermissionsByRoleID(ctx context.Context, roleID uint) ([]*domain.Permission, error)
 
-	// Role-Permission operations
 	AssignPermissionToRole(ctx context.Context, roleID, permissionID uint) error
 	RemovePermissionFromRole(ctx context.Context, roleID, permissionID uint) error
-	FindPermissionsByRoleID(ctx context.Context, roleID uint) ([]*Permission, error)
 
-	// User-Role operations
 	AssignRoleToUser(ctx context.Context, userID, roleID uint) error
 	RemoveRoleFromUser(ctx context.Context, userID, roleID uint) error
-	FindRolesByUserID(ctx context.Context, userID uint) ([]*Role, error)
+	FindRolesByUserID(ctx context.Context, userID uint) ([]*domain.Role, error)
 	HasPermission(ctx context.Context, userID uint, permissionName string) (bool, error)
 }
 
-// RepositoryImpl implements the Repository interface
 type repository struct {
 	db *gorm.DB
 }
 
-// NewRepository creates a new permission repository
 func NewRepository(db *gorm.DB) *repository {
 	return &repository{db: db}
 }
 
-// CreateRole creates a new role
-func (r *repository) CreateRole(ctx context.Context, role *Role) error {
-	return r.db.WithContext(ctx).Create(role).Error
+func (r *repository) CreateRole(ctx context.Context, role *domain.Role) error {
+	po := newRolePO(role)
+	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+		return err
+	}
+	role.ID = po.ID
+	role.CreatedAt = po.CreatedAt
+	role.UpdatedAt = po.UpdatedAt
+	return nil
 }
 
-// UpdateRole updates an existing role
-func (r *repository) UpdateRole(ctx context.Context, role *Role) error {
-	return r.db.WithContext(ctx).Save(role).Error
+func (r *repository) UpdateRole(ctx context.Context, role *domain.Role) error {
+	po := newRolePO(role)
+	if err := r.db.WithContext(ctx).Save(po).Error; err != nil {
+		return err
+	}
+	role.UpdatedAt = po.UpdatedAt
+	return nil
 }
 
-// DeleteRole deletes a role by ID
 func (r *repository) DeleteRole(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&Role{}, id).Error
+	return r.db.WithContext(ctx).Delete(&RolePO{}, id).Error
 }
 
-// FindRoleByID finds a role by ID
-func (r *repository) FindRoleByID(ctx context.Context, id uint) (*Role, error) {
-	var role Role
-	if err := r.db.WithContext(ctx).First(&role, id).Error; err != nil {
+func (r *repository) FindRoleByID(ctx context.Context, id uint) (*domain.Role, error) {
+	var po RolePO
+	if err := r.db.WithContext(ctx).First(&po, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRoleNotFound
+		}
 		return nil, err
 	}
-	return &role, nil
+	return po.toDomain(), nil
 }
 
-// FindRoleByName finds a role by name
-func (r *repository) FindRoleByName(ctx context.Context, name string) (*Role, error) {
-	var role Role
-	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&role).Error; err != nil {
+func (r *repository) FindRoleByName(ctx context.Context, name string) (*domain.Role, error) {
+	var po RolePO
+	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&po).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRoleNotFound
+		}
 		return nil, err
 	}
-	return &role, nil
+	return po.toDomain(), nil
 }
 
-// FindAllRoles returns all roles
-func (r *repository) FindAllRoles(ctx context.Context) ([]*Role, error) {
-	var roles []*Role
-	if err := r.db.WithContext(ctx).Find(&roles).Error; err != nil {
+func (r *repository) FindAllRoles(ctx context.Context) ([]*domain.Role, error) {
+	var poList []*RolePO
+	if err := r.db.WithContext(ctx).Find(&poList).Error; err != nil {
 		return nil, err
 	}
-	return roles, nil
+	return toRoleDomainList(poList), nil
 }
 
-// FindDefaultRole returns the default role
-func (r *repository) FindDefaultRole(ctx context.Context) (*Role, error) {
-	var role Role
-	if err := r.db.WithContext(ctx).Where("is_default = ?", true).First(&role).Error; err != nil {
+func (r *repository) FindDefaultRole(ctx context.Context) (*domain.Role, error) {
+	var po RolePO
+	if err := r.db.WithContext(ctx).Where("is_default = ?", true).First(&po).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRoleNotFound
+		}
 		return nil, err
 	}
-	return &role, nil
+	return po.toDomain(), nil
 }
 
-// CreatePermission creates a new permission
-func (r *repository) CreatePermission(ctx context.Context, perm *Permission) error {
-	return r.db.WithContext(ctx).Create(perm).Error
+func (r *repository) CreatePermission(ctx context.Context, permission *domain.Permission) error {
+	po := newPermissionPO(permission)
+	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+		return err
+	}
+	permission.ID = po.ID
+	permission.CreatedAt = po.CreatedAt
+	permission.UpdatedAt = po.UpdatedAt
+	return nil
 }
 
-// FindAllPermissions returns all permissions
-func (r *repository) FindAllPermissions(ctx context.Context) ([]*Permission, error) {
-	var perms []*Permission
-	if err := r.db.WithContext(ctx).Find(&perms).Error; err != nil {
+func (r *repository) FindAllPermissions(ctx context.Context) ([]*domain.Permission, error) {
+	var poList []*PermissionPO
+	if err := r.db.WithContext(ctx).Find(&poList).Error; err != nil {
 		return nil, err
 	}
-	return perms, nil
+	return toPermissionDomainList(poList), nil
 }
 
-// FindPermissionsByModule returns permissions by module
-func (r *repository) FindPermissionsByModule(ctx context.Context, module string) ([]*Permission, error) {
-	var perms []*Permission
-	if err := r.db.WithContext(ctx).Where("module = ?", module).Find(&perms).Error; err != nil {
+func (r *repository) FindPermissionsByModule(ctx context.Context, module string) ([]*domain.Permission, error) {
+	var poList []*PermissionPO
+	if err := r.db.WithContext(ctx).Where("module = ?", module).Find(&poList).Error; err != nil {
 		return nil, err
 	}
-	return perms, nil
+	return toPermissionDomainList(poList), nil
 }
 
-// AssignPermissionToRole assigns a permission to a role
 func (r *repository) AssignPermissionToRole(ctx context.Context, roleID, permissionID uint) error {
-	rp := &RolePermission{RoleID: roleID, PermissionID: permissionID}
-	return r.db.WithContext(ctx).FirstOrCreate(rp, rp).Error
+	po := &RolePermissionPO{RoleID: roleID, PermissionID: permissionID}
+	return r.db.WithContext(ctx).FirstOrCreate(po, po).Error
 }
 
-// RemovePermissionFromRole removes a permission from a role
 func (r *repository) RemovePermissionFromRole(ctx context.Context, roleID, permissionID uint) error {
-	return r.db.WithContext(ctx).Where("role_id = ? AND permission_id = ?", roleID, permissionID).Delete(&RolePermission{}).Error
+	return r.db.WithContext(ctx).Where("role_id = ? AND permission_id = ?", roleID, permissionID).Delete(&RolePermissionPO{}).Error
 }
 
-// FindPermissionsByRoleID returns permissions for a role
-func (r *repository) FindPermissionsByRoleID(ctx context.Context, roleID uint) ([]*Permission, error) {
-	var perms []*Permission
+func (r *repository) FindPermissionsByRoleID(ctx context.Context, roleID uint) ([]*domain.Permission, error) {
+	var poList []*PermissionPO
 	err := r.db.WithContext(ctx).
 		Joins("JOIN role_permissions ON role_permissions.permission_id = permissions.id").
 		Where("role_permissions.role_id = ?", roleID).
-		Find(&perms).Error
-	return perms, err
+		Find(&poList).Error
+	if err != nil {
+		return nil, err
+	}
+	return toPermissionDomainList(poList), nil
 }
 
-// AssignRoleToUser assigns a role to a user
 func (r *repository) AssignRoleToUser(ctx context.Context, userID, roleID uint) error {
-	ur := &UserRole{UserID: userID, RoleID: roleID}
-	return r.db.WithContext(ctx).FirstOrCreate(ur, ur).Error
+	po := &UserRolePO{UserID: userID, RoleID: roleID}
+	return r.db.WithContext(ctx).FirstOrCreate(po, po).Error
 }
 
-// RemoveRoleFromUser removes a role from a user
 func (r *repository) RemoveRoleFromUser(ctx context.Context, userID, roleID uint) error {
-	return r.db.WithContext(ctx).Where("user_id = ? AND role_id = ?", userID, roleID).Delete(&UserRole{}).Error
+	return r.db.WithContext(ctx).Where("user_id = ? AND role_id = ?", userID, roleID).Delete(&UserRolePO{}).Error
 }
 
-// FindRolesByUserID returns roles for a user
-func (r *repository) FindRolesByUserID(ctx context.Context, userID uint) ([]*Role, error) {
-	var roles []*Role
+func (r *repository) FindRolesByUserID(ctx context.Context, userID uint) ([]*domain.Role, error) {
+	var poList []*RolePO
 	err := r.db.WithContext(ctx).
 		Joins("JOIN user_roles ON user_roles.role_id = roles.id").
 		Where("user_roles.user_id = ?", userID).
-		Find(&roles).Error
-	return roles, err
+		Find(&poList).Error
+	if err != nil {
+		return nil, err
+	}
+	return toRoleDomainList(poList), nil
 }
 
-// HasPermission checks if a user has a specific permission
 func (r *repository) HasPermission(ctx context.Context, userID uint, permissionName string) (bool, error) {
 	var count int64
 	err := r.db.WithContext(ctx).

@@ -17,7 +17,7 @@ type createUserRolesTable struct {
 
 // Up applies the migration.
 func (m *createUserRolesTable) Up(db *gorm.DB) error {
-	return db.AutoMigrate(&permission.UserRole{})
+	return db.AutoMigrate(&permission.UserRolePO{})
 }
 
 // Down reverts the migration.
