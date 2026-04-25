@@ -1,8 +1,10 @@
 package starter
 
 import (
+	"fmt"
 	"slices"
 
+	"github.com/zgiai/zgo/database/migrations"
 	"github.com/zgiai/zgo/database/seeders"
 	"github.com/zgiai/zgo/internal/contracts"
 	"github.com/zgiai/zgo/internal/infra/events"
@@ -47,6 +49,58 @@ func (r *Registry) RegisterSeeder(seeder seeders.Seeder) {
 		return
 	}
 	r.seeders = append(r.seeders, seeder)
+}
+
+// RegisterMigrationByName resolves and registers a migration from the global catalog.
+func (r *Registry) RegisterMigrationByName(name string) error {
+	if name == "" {
+		return nil
+	}
+
+	m, ok := migrations.All()[name]
+	if !ok {
+		return fmt.Errorf("starter migration %q not registered", name)
+	}
+
+	r.RegisterMigration(name, m)
+	return nil
+}
+
+// RegisterSeederByName resolves and registers a seeder from the global catalog.
+func (r *Registry) RegisterSeederByName(name string) error {
+	if name == "" {
+		return nil
+	}
+
+	for _, seeder := range seeders.All() {
+		if seeder.Name() == name {
+			r.RegisterSeeder(seeder)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("starter seeder %q not registered", name)
+}
+
+// ApplyManifest lets a starter manifest register its modules and bootstrap assets.
+func (r *Registry) ApplyManifest(manifest contracts.StarterManifest) error {
+	if manifest == nil {
+		return nil
+	}
+	for _, module := range manifest.Modules() {
+		r.RegisterModule(module)
+	}
+	for _, name := range manifest.MigrationNames() {
+		if err := r.RegisterMigrationByName(name); err != nil {
+			return fmt.Errorf("register starter migration for %s: %w", manifest.Name(), err)
+		}
+	}
+	for _, name := range manifest.SeederNames() {
+		if err := r.RegisterSeederByName(name); err != nil {
+			return fmt.Errorf("register starter seeder for %s: %w", manifest.Name(), err)
+		}
+	}
+	return nil
 }
 
 // Modules returns the registered starter modules in registration order.

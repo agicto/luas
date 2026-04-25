@@ -55,6 +55,15 @@ func (app *Application) Register(cmd Command) {
 	app.RegisterAs(cmd.Name(), cmd)
 }
 
+// HasCommand reports whether a command or alias is already registered.
+func (app *Application) HasCommand(name string) bool {
+	if app == nil {
+		return false
+	}
+	_, ok := app.commands[name]
+	return ok
+}
+
 // Run executes the CLI application
 func (app *Application) Run(args []string) error {
 	if len(args) < 2 {

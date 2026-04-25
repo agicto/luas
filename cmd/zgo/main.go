@@ -29,11 +29,11 @@ func main() {
 	// Initialize Console Application
 	cli := console.New("zgo", Version)
 
-	// Register Commands
-	registerCommands(cli)
+	// Register command manifests
+	commands.RegisterManifests(cli, commands.DefaultManifests(Version)...)
 
 	// Check if first argument is a plugin command
-	if len(os.Args) > 1 && isPluginCommand(os.Args[1]) {
+	if len(os.Args) > 1 && isPluginCommand(cli, os.Args[1]) {
 		pluginName := os.Args[1]
 		pluginArgs := os.Args[2:]
 
@@ -50,86 +50,14 @@ func main() {
 	}
 }
 
-func registerCommands(app *console.Application) {
-	// Register make commands
-	app.Register(commands.NewMakeModelCommand())
-	app.Register(commands.NewMakeServiceCommand())
-	app.Register(commands.NewMakeHandlerCommand())
-	app.Register(commands.NewMakeRepositoryCommand())
-	app.Register(commands.NewMakeSeederCommand())
-	app.Register(commands.NewMakeMigrationCommand())
-	app.Register(commands.NewMakeModuleCommand())
-
-	// Register database migration commands (new Migrator-based)
-	dbMigrate := commands.NewMigrateCommand()
-	app.Register(dbMigrate)
-	app.RegisterAs("migrate", dbMigrate)
-
-	dbFresh := commands.NewFreshCommand()
-	app.Register(dbFresh)
-	app.RegisterAs("migrate:fresh", dbFresh)
-
-	dbRollback := commands.NewRollbackCommand()
-	app.Register(dbRollback)
-	app.RegisterAs("migrate:rollback", dbRollback)
-
-	dbReset := commands.NewResetCommand()
-	app.Register(dbReset)
-	app.RegisterAs("migrate:reset", dbReset)
-
-	dbStatus := commands.NewStatusCommand()
-	app.Register(dbStatus)
-	app.RegisterAs("migrate:status", dbStatus)
-
-	// Register seed command
-	dbSeed := commands.NewDBSeedCommand()
-	app.Register(dbSeed)
-	app.RegisterAs("seed", dbSeed)
-
-	// Register other commands
-	app.Register(commands.NewAIChatCommand())
-	app.Register(commands.NewServeCommand())
-	app.Register(commands.NewEnvCommand())
-	app.Register(commands.NewVersionCommand(Version))
-	app.Register(commands.NewRouteListCommand())
-
-	// Register plugin commands
-	app.Register(commands.NewPluginListCommand())
-}
-
 // isPluginCommand checks if a command is a plugin command
-func isPluginCommand(cmd string) bool {
-	// Skip if it's a known core command
-	coreCommands := map[string]bool{
-		"make:model":       true,
-		"make:service":     true,
-		"make:handler":     true,
-		"make:repository":  true,
-		"make:seeder":      true,
-		"make:migration":   true,
-		"make:module":      true,
-		"migrate":          true,
-		"migrate:fresh":    true,
-		"migrate:rollback": true,
-		"migrate:reset":    true,
-		"migrate:status":   true,
-		"db:migrate":       true,
-		"db:fresh":         true,
-		"db:rollback":      true,
-		"db:reset":         true,
-		"db:status":        true,
-			"db:seed":          true,
-			"seed":             true,
-			"ai:chat":          true,
-			"serve":            true,
-			"env":              true,
-			"version":          true,
-		"route:list":       true,
-		"plugin:list":      true,
-		"help":             true,
+func isPluginCommand(app *console.Application, cmd string) bool {
+	if app != nil && app.HasCommand(cmd) {
+		return false
 	}
 
-	if coreCommands[cmd] {
+	switch cmd {
+	case "help", "-h", "--help", "version", "-v", "--version", "list":
 		return false
 	}
 

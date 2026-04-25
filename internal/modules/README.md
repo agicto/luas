@@ -97,11 +97,15 @@ llm/
 ./zgo make:module Blog
 
 # After generation:
-# 1. Decide whether it is a starter, optional starter, or example
-# 2. If it is a starter, register it in internal/starter/defaults.go
-# 3. If it needs route middleware, implement RegisterMiddleware()
-# 4. Re-generate Wire output
+# 1. Refine the generated internal/domain/<module>.go file with real business fields
+# 2. Decide whether it is a starter, optional starter, or example
+# 3. If it is a default starter, add its starter manifest to internal/starter/defaults.go
+# 4. If it needs route middleware, implement RegisterMiddleware()
+# 5. Re-generate Wire output
 ```
+
+For new business modules, prefer `./zgo make:module <Name>`.
+The single-file generators such as `make:service` and `make:handler` are meant to fill missing files in an existing `internal/modules/<module>/` directory, not to start a module from scratch.
 
 ## Naming Conventions
 

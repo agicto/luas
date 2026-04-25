@@ -1,25 +1,12 @@
 package starter
 
 import (
-	"fmt"
-
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/database/migrations"
 	"github.com/zgiai/zgo/database/seeders"
+	"github.com/zgiai/zgo/internal/contracts"
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
 	"github.com/zgiai/zgo/internal/modules/user"
-)
-
-var (
-	defaultMigrationNames = []string{
-		"2025_06_18_000000_create_users_table",
-		"2025_06_18_000001_seed_default_users",
-		"2026_04_06_000000_create_api_keys_table",
-	}
-	defaultSeederNames = []string{
-		"users",
-	}
 )
 
 // ProviderSet wires the default scaffold starters and their registry.
@@ -35,56 +22,41 @@ func NewDefaultRegistry(
 	userHandler *user.Handler,
 ) (*Registry, error) {
 	registry := NewRegistry()
-	registry.RegisterModule(apiKeyHandler)
-	registry.RegisterModule(userHandler)
-
-	defaultMigrations, err := DefaultMigrations()
-	if err != nil {
-		return nil, err
-	}
-	for name, m := range defaultMigrations {
-		registry.RegisterMigration(name, m)
-	}
-
-	defaultSeeders, err := DefaultSeeders()
-	if err != nil {
-		return nil, err
-	}
-	for _, seeder := range defaultSeeders {
-		registry.RegisterSeeder(seeder)
+	for _, manifest := range DefaultManifests(apiKeyHandler, userHandler) {
+		if err := registry.ApplyManifest(manifest); err != nil {
+			return nil, err
+		}
 	}
 
 	return registry, nil
 }
 
+// DefaultManifests returns the starter manifests enabled in the default scaffold.
+func DefaultManifests(apiKeyHandler *apikey.Handler, userHandler *user.Handler) []contracts.StarterManifest {
+	return []contracts.StarterManifest{
+		apikey.NewStarterManifest(apiKeyHandler),
+		user.NewStarterManifest(userHandler),
+	}
+}
+
 // DefaultMigrations returns the migrations enabled by the default starters.
 func DefaultMigrations() (map[string]migration.Migration, error) {
-	all := migrations.All()
-	filtered := make(map[string]migration.Migration, len(defaultMigrationNames))
-	for _, name := range defaultMigrationNames {
-		m, ok := all[name]
-		if !ok {
-			return nil, fmt.Errorf("starter migration %q not registered", name)
+	registry := NewRegistry()
+	for _, manifest := range DefaultManifests(nil, nil) {
+		if err := registry.ApplyManifest(manifest); err != nil {
+			return nil, err
 		}
-		filtered[name] = m
 	}
-	return filtered, nil
+	return registry.Migrations(), nil
 }
 
 // DefaultSeeders returns the seeders enabled by the default starters.
 func DefaultSeeders() ([]seeders.Seeder, error) {
-	index := make(map[string]seeders.Seeder)
-	for _, seeder := range seeders.All() {
-		index[seeder.Name()] = seeder
-	}
-
-	filtered := make([]seeders.Seeder, 0, len(defaultSeederNames))
-	for _, name := range defaultSeederNames {
-		seeder, ok := index[name]
-		if !ok {
-			return nil, fmt.Errorf("starter seeder %q not registered", name)
+	registry := NewRegistry()
+	for _, manifest := range DefaultManifests(nil, nil) {
+		if err := registry.ApplyManifest(manifest); err != nil {
+			return nil, err
 		}
-		filtered = append(filtered, seeder)
 	}
-	return filtered, nil
+	return registry.Seeders(), nil
 }

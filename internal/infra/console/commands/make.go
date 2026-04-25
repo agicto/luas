@@ -31,25 +31,21 @@ func (c *MakeModelCommand) Run(args []string) error {
 	}
 
 	name := args[0]
-	snake := toSnakeCase(name)
-	pascal := toPascalCase(name)
-
-	// Create directory
-	dir := filepath.Join("app", snake)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	dir, domainPath, data, err := existingModuleScaffold(name)
+	if err != nil {
 		return err
 	}
 
-	// Generate model file
-	if err := generateFile(filepath.Join(dir, "model.go"), modelTemplate, map[string]string{
-		"Package":   snake,
-		"ModelName": pascal,
-		"TableName": snake + "s",
-	}); err != nil {
+	if err := ensureDomainScaffold(domainPath, data); err != nil {
 		return err
 	}
 
-	c.output.Success("Model created: %s", filepath.Join(dir, "model.go"))
+	path := filepath.Join(dir, "model.go")
+	if err := generateFile(path, modelTemplate, data); err != nil {
+		return err
+	}
+
+	c.output.Success("Model created: %s", path)
 	return nil
 }
 
@@ -72,22 +68,21 @@ func (c *MakeServiceCommand) Run(args []string) error {
 	}
 
 	name := args[0]
-	snake := toSnakeCase(name)
-	pascal := toPascalCase(name)
-
-	dir := filepath.Join("app", snake)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	dir, domainPath, data, err := existingModuleScaffold(name)
+	if err != nil {
 		return err
 	}
 
-	if err := generateFile(filepath.Join(dir, "service.go"), serviceTemplate, map[string]string{
-		"Package":     snake,
-		"ServiceName": pascal,
-	}); err != nil {
+	if err := ensureDomainScaffold(domainPath, data); err != nil {
 		return err
 	}
 
-	c.output.Success("Service created: %s", filepath.Join(dir, "service.go"))
+	path := filepath.Join(dir, "service.go")
+	if err := generateFile(path, serviceTemplate, data); err != nil {
+		return err
+	}
+
+	c.output.Success("Service created: %s", path)
 	return nil
 }
 
@@ -110,22 +105,21 @@ func (c *MakeHandlerCommand) Run(args []string) error {
 	}
 
 	name := args[0]
-	snake := toSnakeCase(name)
-	pascal := toPascalCase(name)
-
-	dir := filepath.Join("app", snake)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	dir, domainPath, data, err := existingModuleScaffold(name)
+	if err != nil {
 		return err
 	}
 
-	if err := generateFile(filepath.Join(dir, "handler.go"), handlerTemplate, map[string]string{
-		"Package":     snake,
-		"HandlerName": pascal,
-	}); err != nil {
+	if err := ensureDomainScaffold(domainPath, data); err != nil {
 		return err
 	}
 
-	c.output.Success("Handler created: %s", filepath.Join(dir, "handler.go"))
+	path := filepath.Join(dir, "handler.go")
+	if err := generateFile(path, handlerTemplate, data); err != nil {
+		return err
+	}
+
+	c.output.Success("Handler created: %s", path)
 	return nil
 }
 
@@ -148,22 +142,21 @@ func (c *MakeRepositoryCommand) Run(args []string) error {
 	}
 
 	name := args[0]
-	snake := toSnakeCase(name)
-	pascal := toPascalCase(name)
-
-	dir := filepath.Join("app", snake)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	dir, domainPath, data, err := existingModuleScaffold(name)
+	if err != nil {
 		return err
 	}
 
-	if err := generateFile(filepath.Join(dir, "repository.go"), repositoryTemplate, map[string]string{
-		"Package":        snake,
-		"RepositoryName": pascal,
-	}); err != nil {
+	if err := ensureDomainScaffold(domainPath, data); err != nil {
 		return err
 	}
 
-	c.output.Success("Repository created: %s", filepath.Join(dir, "repository.go"))
+	path := filepath.Join(dir, "repository.go")
+	if err := generateFile(path, repositoryTemplate, data); err != nil {
+		return err
+	}
+
+	c.output.Success("Repository created: %s", path)
 	return nil
 }
 
@@ -352,11 +345,14 @@ func (c *MakeModuleCommand) Run(args []string) error {
 
 	name := args[0]
 	snake := toSnakeCase(name)
-	pascal := toPascalCase(name)
 
 	// Target directory: internal/modules/[name]
 	dir := filepath.Join("internal", "modules", snake)
 	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	domainDir := filepath.Join("internal", "domain")
+	if err := os.MkdirAll(domainDir, 0755); err != nil {
 		return err
 	}
 
@@ -374,16 +370,13 @@ func (c *MakeModuleCommand) Run(args []string) error {
 		{"provider.go", providerTemplate},
 	}
 
-	data := map[string]string{
-		"Package":        snake,
-		"ModelName":      pascal,
-		"ServiceName":    pascal,
-		"HandlerName":    pascal,
-		"RepositoryName": pascal,
-		"TableName":      snake + "s",
-		"ModulePath":     "github.com/zgiai/zgo/internal/modules/" + snake,
-		"PlatformPath":   "github.com/zgiai/zgo/internal/infra",
+	data := moduleScaffoldData(name)
+
+	domainPath := filepath.Join(domainDir, snake+".go")
+	if err := generateFile(domainPath, domainTemplate, data); err != nil {
+		return err
 	}
+	c.output.Success("Created: %s", domainPath)
 
 	for _, f := range files {
 		path := filepath.Join(dir, f.name)
@@ -393,99 +386,13 @@ func (c *MakeModuleCommand) Run(args []string) error {
 		c.output.Success("Created: %s", path)
 	}
 
-	// Auto-inject route
-	if err := injectRoute(snake); err != nil {
-		c.output.Warning("Failed to inject route: %v", err)
-		c.output.Info("Please manually register routes in routes/api.go")
-	} else {
-		c.output.Success("Route injected into routes/api.go")
-	}
-
-	// Auto-inject provider
-	if err := injectProvider(snake); err != nil {
-		c.output.Warning("Failed to inject provider: %v", err)
-		c.output.Info("Please manually register provider in internal/modules/wire.go")
-	} else {
-		c.output.Success("Provider injected into internal/modules/wire.go")
-	}
-
 	c.output.Info("Module '%s' created successfully!", name)
+	c.output.Info("Next steps:")
+	c.output.Info("  1. Refine internal/domain/%s.go with real business fields", snake)
+	c.output.Info("  2. Decide whether the module is a starter, optional starter, or example")
+	c.output.Info("  3. If it becomes a default starter, add its starter manifest to internal/starter/defaults.go")
+	c.output.Info("  4. Run make wire and go test ./...")
 	return nil
-}
-
-func injectProvider(moduleName string) error {
-	path := "internal/modules/wire.go"
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	code := string(content)
-
-	// 1. Add Import
-	importPath := fmt.Sprintf("\"github.com/zgiai/zgo/internal/modules/%s\"", moduleName)
-	if !strings.Contains(code, importPath) {
-		importBlock := "import (\n"
-		if idx := strings.Index(code, importBlock); idx != -1 {
-			insertion := idx + len(importBlock)
-			code = code[:insertion] + "\t" + importPath + "\n" + code[insertion:]
-		}
-	}
-
-	// 2. Add Provider to wire.Build
-	providerEntry := fmt.Sprintf("\t\t%s.ProviderSet,\n", moduleName)
-	if !strings.Contains(code, providerEntry) {
-		anchor := "wire.Build(\n"
-		if idx := strings.Index(code, anchor); idx != -1 {
-			insertion := idx + len(anchor)
-			code = code[:insertion] + providerEntry + code[insertion:]
-		}
-	}
-
-	// 3. Add Handler to App struct
-	handlerName := toPascalCase(moduleName)
-	handlerField := fmt.Sprintf("\t%s *%s.Handler\n", handlerName, moduleName)
-	if !strings.Contains(code, handlerField) {
-		anchor := "type App struct {\n"
-		if idx := strings.Index(code, anchor); idx != -1 {
-			insertion := idx + len(anchor)
-			code = code[:insertion] + handlerField + code[insertion:]
-		}
-	}
-
-	return os.WriteFile(path, []byte(code), 0644)
-}
-
-func injectRoute(moduleName string) error {
-	path := "routes/api.go"
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	code := string(content)
-
-	// 1. Add Import
-	importPath := fmt.Sprintf("\"github.com/zgiai/zgo/internal/modules/%s\"", moduleName)
-	if !strings.Contains(code, importPath) {
-		importBlock := "import (\n"
-		if idx := strings.Index(code, importBlock); idx != -1 {
-			insertion := idx + len(importBlock)
-			code = code[:insertion] + "\t" + importPath + "\n" + code[insertion:]
-		}
-	}
-
-	// 2. Add Register Call
-	registerCall := fmt.Sprintf("\t%s.Register(r)\n", moduleName)
-	if !strings.Contains(code, registerCall) {
-		funcSig := "func RegisterAPI(r *router.Router) {\n"
-		if idx := strings.Index(code, funcSig); idx != -1 {
-			insertion := idx + len(funcSig)
-			code = code[:insertion] + registerCall + code[insertion:]
-		}
-	}
-
-	return os.WriteFile(path, []byte(code), 0644)
 }
 
 // Helper functions
@@ -508,6 +415,54 @@ func generateFile(path, tmpl string, data map[string]string) error {
 	return t.Execute(f, data)
 }
 
+func moduleScaffoldData(name string) map[string]string {
+	snake := toSnakeCase(name)
+	pascal := toPascalCase(name)
+
+	return map[string]string{
+		"Package":         snake,
+		"ModelName":       pascal,
+		"ServiceName":     pascal,
+		"HandlerName":     pascal,
+		"RepositoryName":  pascal,
+		"TableName":       snake + "s",
+		"RouteCollection": snake + "s",
+	}
+}
+
+func existingModuleScaffold(name string) (string, string, map[string]string, error) {
+	data := moduleScaffoldData(name)
+	dir := filepath.Join("internal", "modules", data["Package"])
+	if stat, err := os.Stat(dir); err != nil || !stat.IsDir() {
+		if err == nil {
+			err = fmt.Errorf("%s is not a directory", dir)
+		}
+		return "", "", nil, fmt.Errorf(
+			"module %q does not exist in %s; run 'zgo make:module %s' to scaffold a complete module",
+			data["Package"],
+			dir,
+			data["ModelName"],
+		)
+	}
+
+	domainPath := filepath.Join("internal", "domain", data["Package"]+".go")
+	return dir, domainPath, data, nil
+}
+
+func ensureDomainScaffold(path string, data map[string]string) error {
+	if _, err := os.Stat(path); err == nil {
+		return nil
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+
+	return generateFile(path, domainTemplate, data)
+}
+
 func toSnakeCase(s string) string {
 	var result strings.Builder
 	for i, r := range s {
@@ -520,7 +475,8 @@ func toSnakeCase(s string) string {
 }
 
 func toPascalCase(s string) string {
-	parts := strings.Split(strings.ReplaceAll(s, "-", "_"), "_")
+	normalized := toSnakeCase(strings.ReplaceAll(s, "-", "_"))
+	parts := strings.Split(normalized, "_")
 	for i, p := range parts {
 		if len(p) > 0 {
 			parts[i] = strings.ToUpper(string(p[0])) + strings.ToLower(p[1:])
@@ -530,25 +486,77 @@ func toPascalCase(s string) string {
 }
 
 // Templates
+const domainTemplate = `package domain
+
+import (
+	"context"
+	"time"
+)
+
+// {{.ModelName}} is the core domain entity for the {{.Package}} module.
+type {{.ModelName}} struct {
+	ID        uint      ` + "`json:\"id\"`" + `
+	Name      string    ` + "`json:\"name\"`" + `
+	CreatedAt time.Time ` + "`json:\"created_at\"`" + `
+	UpdatedAt time.Time ` + "`json:\"updated_at\"`" + `
+}
+
+// {{.ModelName}}Repository defines persistence for {{.ModelName}}.
+type {{.ModelName}}Repository interface {
+	Create(ctx context.Context, item *{{.ModelName}}) error
+	Update(ctx context.Context, item *{{.ModelName}}) error
+	Delete(ctx context.Context, id uint) error
+	FindByID(ctx context.Context, id uint) (*{{.ModelName}}, error)
+	FindAll(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error)
+}
+`
+
 const modelTemplate = `package {{.Package}}
 
 import (
 	"time"
 
+	"github.com/zgiai/zgo/internal/domain"
 	"gorm.io/gorm"
 )
 
-// {{.ModelName}} represents the {{.ModelName}} model
-type {{.ModelName}} struct {
-	ID        uint           ` + "`json:\"id\" gorm:\"primaryKey\"`" + `
-	CreatedAt time.Time      ` + "`json:\"created_at\"`" + `
-	UpdatedAt time.Time      ` + "`json:\"updated_at\"`" + `
-	DeletedAt gorm.DeletedAt ` + "`json:\"deleted_at,omitempty\" gorm:\"index\"`" + `
+// {{.ModelName}}PO is the persistent object for {{.ModelName}}.
+type {{.ModelName}}PO struct {
+	ID        uint           ` + "`gorm:\"primaryKey\"`" + `
+	Name      string         ` + "`gorm:\"size:255;not null;index\"`" + `
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt ` + "`gorm:\"index\"`" + `
 }
 
-// TableName returns the table name for the model
-func ({{.ModelName}}) TableName() string {
+func ({{.ModelName}}PO) TableName() string {
 	return "{{.TableName}}"
+}
+
+func (po *{{.ModelName}}PO) toDomain() *domain.{{.ModelName}} {
+	if po == nil {
+		return nil
+	}
+
+	return &domain.{{.ModelName}}{
+		ID:        po.ID,
+		Name:      po.Name,
+		CreatedAt: po.CreatedAt,
+		UpdatedAt: po.UpdatedAt,
+	}
+}
+
+func new{{.ModelName}}PO(item *domain.{{.ModelName}}) *{{.ModelName}}PO {
+	if item == nil {
+		return nil
+	}
+
+	return &{{.ModelName}}PO{
+		ID:        item.ID,
+		Name:      item.Name,
+		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
+	}
 }
 `
 
@@ -556,49 +564,81 @@ const serviceTemplate = `package {{.Package}}
 
 import (
 	"context"
+	"strings"
+
+	"github.com/zgiai/zgo/internal/domain"
 )
 
-// Service defines the service interface
+// Service defines the business interface for {{.ModelName}}.
 type Service interface {
-	Create(ctx context.Context, model *{{.ModelName}}) error
-	Update(ctx context.Context, model *{{.ModelName}}) error
+	Create(ctx context.Context, req *Create{{.ModelName}}Request) (*domain.{{.ModelName}}, error)
+	Update(ctx context.Context, id uint, req *Update{{.ModelName}}Request) (*domain.{{.ModelName}}, error)
 	Delete(ctx context.Context, id uint) error
-	Get(ctx context.Context, id uint) (*{{.ModelName}}, error)
-	List(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error)
+	GetByID(ctx context.Context, id uint) (*domain.{{.ModelName}}, error)
+	List(ctx context.Context, page, pageSize int) ([]*domain.{{.ModelName}}, int64, error)
 }
 
-// service implements Service
 type service struct {
-	repo Repository
+	repo domain.{{.ModelName}}Repository
 }
 
-// NewService creates a new service
-func NewService(repo Repository) Service {
+var _ Service = (*service)(nil)
+
+// NewService creates a new {{.Package}} service.
+func NewService(repo domain.{{.ModelName}}Repository) *service {
 	return &service{repo: repo}
 }
 
-// Create creates a new {{.ModelName}}
-func (s *service) Create(ctx context.Context, model *{{.ModelName}}) error {
-	return s.repo.Create(ctx, model)
+func (s *service) Create(ctx context.Context, req *Create{{.ModelName}}Request) (*domain.{{.ModelName}}, error) {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return nil, domain.ErrInvalidInput
+	}
+
+	item := &domain.{{.ModelName}}{
+		Name: name,
+	}
+
+	if err := s.repo.Create(ctx, item); err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }
 
-// Update updates an existing {{.ModelName}}
-func (s *service) Update(ctx context.Context, model *{{.ModelName}}) error {
-	return s.repo.Update(ctx, model)
+func (s *service) Update(ctx context.Context, id uint, req *Update{{.ModelName}}Request) (*domain.{{.ModelName}}, error) {
+	item, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.Name != nil {
+		name := strings.TrimSpace(*req.Name)
+		if name == "" {
+			return nil, domain.ErrInvalidInput
+		}
+		item.Name = name
+	}
+
+	if err := s.repo.Update(ctx, item); err != nil {
+		return nil, err
+	}
+
+	return item, nil
 }
 
-// Delete deletes a {{.ModelName}} by ID
 func (s *service) Delete(ctx context.Context, id uint) error {
+	if _, err := s.repo.FindByID(ctx, id); err != nil {
+		return err
+	}
 	return s.repo.Delete(ctx, id)
 }
 
-// Get retrieves a {{.ModelName}} by ID
-func (s *service) Get(ctx context.Context, id uint) (*{{.ModelName}}, error) {
+func (s *service) GetByID(ctx context.Context, id uint) (*domain.{{.ModelName}}, error) {
 	return s.repo.FindByID(ctx, id)
 }
 
-// List retrieves a paginated list of {{.ModelName}}
-func (s *service) List(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error) {
+func (s *service) List(ctx context.Context, page, pageSize int) ([]*domain.{{.ModelName}}, int64, error) {
 	return s.repo.FindAll(ctx, page, pageSize)
 }
 `
@@ -606,118 +646,105 @@ func (s *service) List(ctx context.Context, page, pageSize int) ([]*{{.ModelName
 const handlerTemplate = `package {{.Package}}
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
+	"github.com/zgiai/zgo/internal/contracts"
+	httphandler "github.com/zgiai/zgo/pkg/handler"
+	"github.com/zgiai/zgo/pkg/pagination"
 	"github.com/zgiai/zgo/pkg/response"
 )
 
-// Handler handles HTTP requests for {{.ModelName}}
+// Handler handles HTTP requests for {{.ModelName}}.
 type Handler struct {
 	service Service
 }
 
-// NewHandler creates a new handler
+var (
+	_ contracts.Module      = (*Handler)(nil)
+	_ contracts.RouteModule = (*Handler)(nil)
+)
+
+// NewHandler creates a new handler.
 func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-// List handles GET requests to list all items
+// Name returns the module name.
+func (h *Handler) Name() string {
+	return "{{.Package}}"
+}
+
 func (h *Handler) List(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+	req := pagination.FromContext(c)
 
-	items, total, err := h.service.List(c.Request.Context(), page, pageSize)
+	items, total, err := h.service.List(c.Request.Context(), req.GetPage(), req.GetPerPage())
 	if err != nil {
-		response.InternalServerError(c, "Failed to list items", err)
+		response.HandleError(c, "Failed to list {{.RouteCollection}}", err)
 		return
 	}
 
-	response.Success(c, gin.H{
-		"items": items,
-		"total": total,
-		"page":  page,
-	})
+	paginator := pagination.NewPaginator(to{{.ModelName}}Responses(items), total, req.GetPage(), req.GetPerPage())
+	paginator.SetPath(c.Request.URL.Path)
+	response.Success(c, paginator)
 }
 
-// Get handles GET requests to retrieve a single item
 func (h *Handler) Get(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		response.BadRequest(c, "Invalid ID", err)
+	id, ok := httphandler.ParseID(c, "id")
+	if !ok {
 		return
 	}
 
-	item, err := h.service.Get(c.Request.Context(), uint(id))
+	item, err := h.service.GetByID(c.Request.Context(), id)
 	if err != nil {
-		response.NotFound(c, "Item not found", err)
+		response.HandleError(c, "Failed to get {{.Package}}", err)
 		return
 	}
 
-	response.Success(c, item)
+	response.Success(c, to{{.ModelName}}Response(item))
 }
 
-// Create handles POST requests to create a new item
 func (h *Handler) Create(c *gin.Context) {
 	var req Create{{.ModelName}}Request
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request", err)
+	if !httphandler.BindJSON(c, &req) {
 		return
 	}
 
-	model := &{{.ModelName}}{
-		// Map fields here
-	}
-
-	if err := h.service.Create(c.Request.Context(), model); err != nil {
-		response.InternalServerError(c, "Failed to create item", err)
+	item, err := h.service.Create(c.Request.Context(), &req)
+	if err != nil {
+		response.HandleError(c, "Failed to create {{.Package}}", err)
 		return
 	}
 
-	response.Created(c, model)
+	response.Created(c, to{{.ModelName}}Response(item))
 }
 
-// Update handles PUT requests to update an item
 func (h *Handler) Update(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		response.BadRequest(c, "Invalid ID", err)
+	id, ok := httphandler.ParseID(c, "id")
+	if !ok {
 		return
 	}
 
 	var req Update{{.ModelName}}Request
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "Invalid request", err)
+	if !httphandler.BindJSON(c, &req) {
 		return
 	}
 
-	model, err := h.service.Get(c.Request.Context(), uint(id))
+	item, err := h.service.Update(c.Request.Context(), id, &req)
 	if err != nil {
-		response.NotFound(c, "Item not found", err)
+		response.HandleError(c, "Failed to update {{.Package}}", err)
 		return
 	}
 
-	// Map updates
-	// model.Name = req.Name
-
-	if err := h.service.Update(c.Request.Context(), model); err != nil {
-		response.InternalServerError(c, "Failed to update item", err)
-		return
-	}
-
-	response.Success(c, model)
+	response.Success(c, to{{.ModelName}}Response(item))
 }
 
-// Delete handles DELETE requests to remove an item
 func (h *Handler) Delete(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		response.BadRequest(c, "Invalid ID", err)
+	id, ok := httphandler.ParseID(c, "id")
+	if !ok {
 		return
 	}
 
-	if err := h.service.Delete(c.Request.Context(), uint(id)); err != nil {
-		response.InternalServerError(c, "Failed to delete item", err)
+	if err := h.service.Delete(c.Request.Context(), id); err != nil {
+		response.HandleError(c, "Failed to delete {{.Package}}", err)
 		return
 	}
 
@@ -729,88 +756,134 @@ const repositoryTemplate = `package {{.Package}}
 
 import (
 	"context"
+	"errors"
 
+	"github.com/zgiai/zgo/internal/domain"
 	"gorm.io/gorm"
 )
 
-// Repository defines the repository interface
-type Repository interface {
-	Create(ctx context.Context, model *{{.ModelName}}) error
-	Update(ctx context.Context, model *{{.ModelName}}) error
-	Delete(ctx context.Context, id uint) error
-	FindByID(ctx context.Context, id uint) (*{{.ModelName}}, error)
-	FindAll(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error)
-}
-
-// repository implements Repository
 type repository struct {
 	db *gorm.DB
 }
 
-// NewRepository creates a new repository
-func NewRepository(db *gorm.DB) Repository {
+var _ domain.{{.ModelName}}Repository = (*repository)(nil)
+
+// NewRepository creates a new repository.
+func NewRepository(db *gorm.DB) *repository {
 	return &repository{db: db}
 }
 
-// Create inserts a new record
-func (r *repository) Create(ctx context.Context, model *{{.ModelName}}) error {
-	return r.db.WithContext(ctx).Create(model).Error
+func (r *repository) Create(ctx context.Context, item *domain.{{.ModelName}}) error {
+	po := new{{.ModelName}}PO(item)
+	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+		return err
+	}
+
+	item.ID = po.ID
+	item.CreatedAt = po.CreatedAt
+	item.UpdatedAt = po.UpdatedAt
+	return nil
 }
 
-// Update updates an existing record
-func (r *repository) Update(ctx context.Context, model *{{.ModelName}}) error {
-	return r.db.WithContext(ctx).Save(model).Error
+func (r *repository) Update(ctx context.Context, item *domain.{{.ModelName}}) error {
+	po := new{{.ModelName}}PO(item)
+	if err := r.db.WithContext(ctx).Save(po).Error; err != nil {
+		return err
+	}
+
+	item.UpdatedAt = po.UpdatedAt
+	return nil
 }
 
-// Delete soft deletes a record
 func (r *repository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&{{.ModelName}}{}, id).Error
+	return r.db.WithContext(ctx).Delete(&{{.ModelName}}PO{}, id).Error
 }
 
-// FindByID finds a record by ID
-func (r *repository) FindByID(ctx context.Context, id uint) (*{{.ModelName}}, error) {
-	var model {{.ModelName}}
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
+func (r *repository) FindByID(ctx context.Context, id uint) (*domain.{{.ModelName}}, error) {
+	var po {{.ModelName}}PO
+	if err := r.db.WithContext(ctx).First(&po, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrNotFound
+		}
 		return nil, err
 	}
-	return &model, nil
+	return po.toDomain(), nil
 }
 
-// FindAll retrieves all records with pagination
-func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error) {
-	var models []*{{.ModelName}}
-	var total int64
+func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain.{{.ModelName}}, int64, error) {
+	var (
+		rows  []{{.ModelName}}PO
+		total int64
+	)
 
-	offset := (page - 1) * pageSize
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 15
+	}
 
-	if err := r.db.WithContext(ctx).Model(&{{.ModelName}}{}).Count(&total).Error; err != nil {
+	query := r.db.WithContext(ctx).Model(&{{.ModelName}}PO{})
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	if err := query.Order("id desc").Offset((page-1)*pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&models).Error; err != nil {
-		return nil, 0, err
+	items := make([]*domain.{{.ModelName}}, 0, len(rows))
+	for i := range rows {
+		items = append(items, rows[i].toDomain())
 	}
-
-	return models, total, nil
+	return items, total, nil
 }
 `
 
 const dtoTemplate = `package {{.Package}}
 
-// Create{{.ModelName}}Request represents the request to create a {{.ModelName}}
+import (
+	"time"
+
+	"github.com/zgiai/zgo/internal/domain"
+)
+
+// Create{{.ModelName}}Request represents the request to create a {{.ModelName}}.
 type Create{{.ModelName}}Request struct {
-	// Add your fields here
+	Name string ` + "`json:\"name\" binding:\"required,max=255\"`" + `
 }
 
-// Update{{.ModelName}}Request represents the request to update a {{.ModelName}}
+// Update{{.ModelName}}Request represents the request to update a {{.ModelName}}.
 type Update{{.ModelName}}Request struct {
-	// Add your fields here
+	Name *string ` + "`json:\"name,omitempty\" binding:\"omitempty,max=255\"`" + `
 }
 
-// {{.ModelName}}Response represents the response for a {{.ModelName}}
+// {{.ModelName}}Response represents the API response for {{.ModelName}}.
 type {{.ModelName}}Response struct {
-	ID uint ` + "`json:\"id\"`" + `
-	// Add your fields here
+	ID        uint      ` + "`json:\"id\"`" + `
+	Name      string    ` + "`json:\"name\"`" + `
+	CreatedAt time.Time ` + "`json:\"created_at\"`" + `
+	UpdatedAt time.Time ` + "`json:\"updated_at\"`" + `
+}
+
+func to{{.ModelName}}Response(item *domain.{{.ModelName}}) *{{.ModelName}}Response {
+	if item == nil {
+		return nil
+	}
+
+	return &{{.ModelName}}Response{
+		ID:        item.ID,
+		Name:      item.Name,
+		CreatedAt: item.CreatedAt,
+		UpdatedAt: item.UpdatedAt,
+	}
+}
+
+func to{{.ModelName}}Responses(items []*domain.{{.ModelName}}) []*{{.ModelName}}Response {
+	result := make([]*{{.ModelName}}Response, 0, len(items))
+	for _, item := range items {
+		result = append(result, to{{.ModelName}}Response(item))
+	}
+	return result
 }
 `
 
@@ -872,21 +945,16 @@ func init() {
 
 const routesTemplate = `package {{.Package}}
 
-import (
-	"github.com/zgiai/zgo/internal/infra/router"
-)
+import "github.com/zgiai/zgo/internal/infra/router"
 
-// Register registers routes for this module.
-// Note: Handler should be injected via Wire DI, not created here.
-// This function is for reference - actual route registration should use
-// the handler registered by the starter registry in routes/api.go
-func Register(r *router.Router, handler *Handler) {
-	r.Group("/{{.Package}}s", func(g *router.Router) {
-		g.GET("", handler.List).Name("{{.Package}}.index")
-		g.POST("", handler.Create).Name("{{.Package}}.store")
-		g.GET("/:id", handler.Get).Name("{{.Package}}.show")
-		g.PUT("/:id", handler.Update).Name("{{.Package}}.update")
-		g.DELETE("/:id", handler.Delete).Name("{{.Package}}.destroy")
+// RegisterRoutes registers HTTP routes for the {{.Package}} module.
+func (h *Handler) RegisterRoutes(r *router.Router) {
+	r.Group("/{{.RouteCollection}}", func(group *router.Router) {
+		group.GET("", h.List).Name("{{.Package}}.index")
+		group.POST("", h.Create).Name("{{.Package}}.store")
+		group.GET("/:id", h.Get).Name("{{.Package}}.show").WhereNumber("id")
+		group.PUT("/:id", h.Update).Name("{{.Package}}.update").WhereNumber("id")
+		group.DELETE("/:id", h.Delete).Name("{{.Package}}.destroy").WhereNumber("id")
 	})
 }
 `
@@ -899,54 +967,59 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/zgiai/zgo/internal/domain"
 )
 
-// Mock{{.RepositoryName}}Repository is a mock implementation
-type Mock{{.RepositoryName}}Repository struct {
+type mockRepository struct {
 	mock.Mock
 }
 
-func (m *Mock{{.RepositoryName}}Repository) Create(ctx context.Context, model *{{.ModelName}}) error {
-	args := m.Called(ctx, model)
+var _ domain.{{.ModelName}}Repository = (*mockRepository)(nil)
+
+func (m *mockRepository) Create(ctx context.Context, item *domain.{{.ModelName}}) error {
+	args := m.Called(ctx, item)
 	return args.Error(0)
 }
 
-func (m *Mock{{.RepositoryName}}Repository) Update(ctx context.Context, model *{{.ModelName}}) error {
-	args := m.Called(ctx, model)
+func (m *mockRepository) Update(ctx context.Context, item *domain.{{.ModelName}}) error {
+	args := m.Called(ctx, item)
 	return args.Error(0)
 }
 
-func (m *Mock{{.RepositoryName}}Repository) Delete(ctx context.Context, id uint) error {
+func (m *mockRepository) Delete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *Mock{{.RepositoryName}}Repository) FindByID(ctx context.Context, id uint) (*{{.ModelName}}, error) {
+func (m *mockRepository) FindByID(ctx context.Context, id uint) (*domain.{{.ModelName}}, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*{{.ModelName}}), args.Error(1)
+	return args.Get(0).(*domain.{{.ModelName}}), args.Error(1)
 }
 
-func (m *Mock{{.RepositoryName}}Repository) FindAll(ctx context.Context, page, pageSize int) ([]*{{.ModelName}}, int64, error) {
+func (m *mockRepository) FindAll(ctx context.Context, page, pageSize int) ([]*domain.{{.ModelName}}, int64, error) {
 	args := m.Called(ctx, page, pageSize)
-	return args.Get(0).([]*{{.ModelName}}), args.Get(1).(int64), args.Error(2)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*domain.{{.ModelName}}), args.Get(1).(int64), args.Error(2)
 }
 
-func Test{{.ServiceName}}Service_Get(t *testing.T) {
-	mockRepo := new(MockRepository)
-	service := NewService(mockRepo)
+func Test{{.ServiceName}}GetByID(t *testing.T) {
+	repo := new(mockRepository)
+	svc := NewService(repo)
 	ctx := context.Background()
 
-	expected := &{{.ModelName}}{ID: 1}
-	mockRepo.On("FindByID", ctx, uint(1)).Return(expected, nil)
+	expected := &domain.{{.ModelName}}{ID: 1, Name: "Example"}
+	repo.On("FindByID", ctx, uint(1)).Return(expected, nil)
 
-	result, err := service.Get(ctx, 1)
+	result, err := svc.GetByID(ctx, 1)
 
 	assert.NoError(t, err)
-	assert.Equal(t, expected.ID, result.ID)
-	mockRepo.AssertExpectations(t)
+	assert.Equal(t, expected.Name, result.Name)
+	repo.AssertExpectations(t)
 }
 `
 
@@ -954,11 +1027,13 @@ const providerTemplate = `package {{.Package}}
 
 import (
 	"github.com/google/wire"
+	"github.com/zgiai/zgo/internal/domain"
 )
 
-// ProviderSet is the provider set for this module
+// ProviderSet is the provider set for this module.
 var ProviderSet = wire.NewSet(
 	NewRepository,
+	wire.Bind(new(domain.{{.ModelName}}Repository), new(*repository)),
 	NewService,
 	wire.Bind(new(Service), new(*service)),
 	NewHandler,
