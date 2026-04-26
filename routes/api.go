@@ -16,5 +16,6 @@ func RegisterAPI(r *router.Router, starters *starter.Registry) {
 	}).Name("health")
 
 	// 2. Register Module Routes
+	r.WithMiddleware("audit")
 	starters.RegisterRoutes(r)
 }

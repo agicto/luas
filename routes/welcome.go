@@ -578,7 +578,7 @@ const welcomeHTML = `<!DOCTYPE html>
 				<div class="signal-row">
 					<div class="signal">
 						<span>Default starters</span>
-						<strong>User auth and API keys are already wired.</strong>
+						<strong>User auth, API keys, and audit logging are already wired.</strong>
 					</div>
 					<div class="signal">
 						<span>CLI seam</span>
@@ -614,8 +614,8 @@ const welcomeHTML = `<!DOCTYPE html>
 					</div>
 					<div class="status-card">
 						<span>Default scaffold</span>
-						<strong>2 starters</strong>
-						<small>User auth, API key access, and AI-ready core infra.</small>
+						<strong>3 starters</strong>
+						<small>User auth, API key access, audit history, and AI-ready core infra.</small>
 					</div>
 				</div>
 				<div class="terminal">
@@ -651,7 +651,7 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 				<article class="surface">
 					<div class="step-kicker">Step 02</div>
 					<h3>Explore the default API</h3>
-					<p>默认 scaffold 已经带了认证和 API key 管理。优先通过 Swagger 看清现成 surface，再决定加什么 starter。</p>
+					<p>默认 scaffold 已经带了认证、API key 管理和全局审计。优先通过 Swagger 看清现成 surface，再决定加什么 starter。</p>
 					<div class="command-snippet">open {{APP_URL}}/swagger/index.html</div>
 				</article>
 				<article class="surface">
@@ -680,9 +680,9 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 					<p>机器访问场景的 key 创建、列表、撤销和中间件组。默认 scaffold 已经能服务自动化调用和服务到服务请求。</p>
 				</article>
 				<article class="surface">
-					<div class="card-kicker">Capability</div>
-					<h3>AI-ready core</h3>
-					<p>Provider-neutral 的 AI capability 和 <code>ai:chat</code> CLI 已经就位，但它保持在 capability 层，不会冒充业务模块。</p>
+					<div class="card-kicker">Starter</div>
+					<h3>Audit logging</h3>
+					<p>默认对写请求做全局审计，并给当前用户提供历史查询接口。这样安全回溯不再是业务项目后补的一层。</p>
 				</article>
 			</div>
 		</section>
@@ -727,6 +727,7 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 						<li><span class="method">POST</span><code>/v1/login</code></li>
 						<li><span class="method">GET</span><code>/v1/users/profile</code></li>
 						<li><span class="method">GET</span><code>/v1/api-keys</code></li>
+						<li><span class="method">GET</span><code>/v1/audit-logs</code></li>
 						<li><span class="method">GET</span><code>/v1/health</code></li>
 					</ul>
 				</article>

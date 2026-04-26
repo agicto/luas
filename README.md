@@ -4,7 +4,7 @@
 
 ZGO 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定的项目结构、依赖注入、模块边界、统一响应、分页、迁移、测试工具和常用基础设施集成。
 
-这个仓库的定位是“框架与模板”，不是某个具体业务系统。默认只保留最小可用的认证与 API key starter，增强型业务模块和示例能力不再自动挂载到主应用。
+这个仓库的定位是“框架与模板”，不是某个具体业务系统。默认只保留最小可用的认证、API key 和审计 starter，增强型业务模块和示例能力不再自动挂载到主应用。
 
 ## 核心能力
 
@@ -12,7 +12,7 @@ ZGO 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定的
 - Gin HTTP 服务入口与统一路由注册
 - Wire 依赖注入
 - GORM 数据访问与迁移体系
-- 内置 starter：`user`, `apikey`
+- 内置 starter：`user`, `apikey`, `audit`
 - Provider-neutral AI capability 与内置 CLI `ai:chat`
 - 统一 API 响应与错误处理
 - 分页、验证、日志、JWT、中间件
@@ -119,6 +119,7 @@ zgo/
 
 - `internal/modules/user` 是默认认证 starter，会参与默认路由、迁移和数据初始化
 - `internal/modules/apikey` 是默认 API key starter，会参与默认路由和迁移，并提供 `api_key` 中间件组
+- `internal/modules/audit` 是默认审计 starter，会记录全局写请求，并提供当前用户的审计历史查询
 - `internal/modules/permission` 保留为可选 RBAC 示例模块，不再默认装配到主应用
 
 业务模块建议遵循 8 文件结构：

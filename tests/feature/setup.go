@@ -13,6 +13,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	test_platform "github.com/zgiai/zgo/internal/infra/testing"
 	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/zgo/internal/modules/audit"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"github.com/zgiai/zgo/internal/starter"
 	"github.com/zgiai/zgo/routes"
@@ -50,17 +51,23 @@ func SetupApp() *gin.Engine {
 	eventBus := events.NewEventBus()
 
 	// 5. Create Repositories
+	auditRepo := audit.NewRepository(db)
 	apiKeyRepo := apikey.NewRepository(db)
 	userRepo := user.NewRepository(db)
 
 	// 6. Create Services
+	auditService := audit.NewService(auditRepo)
 	apiKeyService := apikey.NewService(apiKeyRepo)
 	userService := user.NewService(userRepo, jwtService, eventBus)
 
 	// 7. Create Starter Registry
-	starters := starter.NewRegistry()
-	starters.RegisterModule(apikey.NewHandler(apiKeyService))
-	starters.RegisterModule(user.NewHandler(userService, userService, userService, jwtService))
+	auditHandler := audit.NewHandler(auditService)
+	apiKeyHandler := apikey.NewHandler(apiKeyService)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService)
+	starters, err := starter.NewDefaultRegistry(auditHandler, apiKeyHandler, userHandler)
+	if err != nil {
+		panic("failed to build starter registry: " + err.Error())
+	}
 
 	// 8. Build Application Routes
 	gin.SetMode(gin.TestMode)

@@ -63,6 +63,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
+	c.Set("userID", user.ID)
 	response.Created(c, user)
 }
 
@@ -79,6 +80,9 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	if resp.User != nil {
+		c.Set("userID", resp.User.ID)
+	}
 	response.Success(c, resp)
 }
 

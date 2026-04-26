@@ -184,6 +184,10 @@ func (r *Router) addRoute(method, path string, handler Handler) *Route {
 // wrapHandler wraps the handler with constraint middleware
 func (rt *Route) wrapHandler() Handler {
 	return func(c *gin.Context) {
+		if rt.name != "" {
+			c.Set("route_name", rt.name)
+		}
+
 		// Apply constraints
 		for param, pattern := range rt.constraints {
 			value := c.Param(param)

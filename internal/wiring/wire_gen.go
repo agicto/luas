@@ -15,6 +15,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"github.com/zgiai/zgo/internal/infra/migration"
 	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/zgo/internal/modules/audit"
 	"github.com/zgiai/zgo/internal/modules/user"
 	"github.com/zgiai/zgo/internal/starter"
 )
@@ -36,14 +37,17 @@ func InitApplication() (*app.Application, error) {
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
+	auditRepository := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepository)
+	handler := audit.NewHandler(auditService)
 	apikeyRepository := apikey.NewRepository(db)
 	apikeyService := apikey.NewService(apikeyRepository)
-	handler := apikey.NewHandler(apikeyService)
+	apikeyHandler := apikey.NewHandler(apikeyService)
 	userRepository := user.NewRepository(db)
 	jwtService := jwt.NewService(configConfig)
 	userService := user.NewService(userRepository, jwtService, eventBus)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService)
-	registry, err := starter.NewDefaultRegistry(handler, userHandler)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
 	if err != nil {
 		return nil, err
 	}

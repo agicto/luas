@@ -8,6 +8,7 @@ Business domain modules directory, following Domain-Driven Design (DDD) patterns
 |--------|-------------|------|
 | `user` | Default auth starter (register/login/JWT/profile) | Starter |
 | `apikey` | Default API key starter (create/list/revoke + middleware) | Starter |
+| `audit` | Default audit starter (global write-request logging + history API) | Starter |
 | `permission` | Optional RBAC example module, not wired by default | Optional |
 
 ## Standard Module Structure (8 files)
