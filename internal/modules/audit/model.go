@@ -18,6 +18,9 @@ type AuditLogPO struct {
 	APIKeyID   *uint  `gorm:"index"`
 	Action     string `gorm:"size:120;not null;index"`
 	Resource   string `gorm:"size:180;not null;index"`
+	TargetType string `gorm:"size:80;index"`
+	TargetID   string `gorm:"size:120;index"`
+	Result     string `gorm:"size:40;index"`
 	Method     string `gorm:"size:10;not null;index"`
 	Path       string `gorm:"size:255;not null"`
 	RouteName  string `gorm:"size:180;index"`
@@ -25,6 +28,7 @@ type AuditLogPO struct {
 	RequestID  string `gorm:"size:80;index"`
 	IPAddress  string `gorm:"size:64"`
 	UserAgent  string `gorm:"size:512"`
+	Changes    string `gorm:"type:text"`
 	Metadata   string `gorm:"type:text"`
 }
 
@@ -45,6 +49,9 @@ func (po *AuditLogPO) toDomain() *domain.AuditLog {
 		APIKeyID:   cloneUintPointer(po.APIKeyID),
 		Action:     po.Action,
 		Resource:   po.Resource,
+		TargetType: po.TargetType,
+		TargetID:   po.TargetID,
+		Result:     po.Result,
 		Method:     po.Method,
 		Path:       po.Path,
 		RouteName:  po.RouteName,
@@ -52,6 +59,7 @@ func (po *AuditLogPO) toDomain() *domain.AuditLog {
 		RequestID:  po.RequestID,
 		IPAddress:  po.IPAddress,
 		UserAgent:  po.UserAgent,
+		Changes:    decodeChanges(po.Changes),
 		Metadata:   decodeMetadata(po.Metadata),
 		CreatedAt:  po.CreatedAt,
 		UpdatedAt:  po.UpdatedAt,
@@ -73,6 +81,9 @@ func newAuditLogPO(entry *domain.AuditLog) *AuditLogPO {
 		APIKeyID:   cloneUintPointer(entry.APIKeyID),
 		Action:     entry.Action,
 		Resource:   entry.Resource,
+		TargetType: entry.TargetType,
+		TargetID:   entry.TargetID,
+		Result:     entry.Result,
 		Method:     entry.Method,
 		Path:       entry.Path,
 		RouteName:  entry.RouteName,
@@ -80,6 +91,7 @@ func newAuditLogPO(entry *domain.AuditLog) *AuditLogPO {
 		RequestID:  entry.RequestID,
 		IPAddress:  entry.IPAddress,
 		UserAgent:  entry.UserAgent,
+		Changes:    encodeChanges(entry.Changes),
 		Metadata:   encodeMetadata(entry.Metadata),
 	}
 }
@@ -104,6 +116,18 @@ func encodeMetadata(metadata map[string]any) string {
 	return string(payload)
 }
 
+func encodeChanges(changes map[string]domain.AuditValueChange) string {
+	if len(changes) == 0 {
+		return ""
+	}
+
+	payload, err := json.Marshal(changes)
+	if err != nil {
+		return ""
+	}
+	return string(payload)
+}
+
 func decodeMetadata(value string) map[string]any {
 	if value == "" {
 		return nil
@@ -114,4 +138,16 @@ func decodeMetadata(value string) map[string]any {
 		return nil
 	}
 	return metadata
+}
+
+func decodeChanges(value string) map[string]domain.AuditValueChange {
+	if value == "" {
+		return nil
+	}
+
+	var changes map[string]domain.AuditValueChange
+	if err := json.Unmarshal([]byte(value), &changes); err != nil {
+		return nil
+	}
+	return changes
 }

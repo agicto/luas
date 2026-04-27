@@ -21,5 +21,6 @@ func NewStarterManifest(handler *Handler) contracts.StarterManifest {
 		"audit",
 		contracts.WithStarterModule(handler),
 		contracts.WithStarterMigrationNames("2026_04_26_000000_create_audit_logs_table"),
+		contracts.WithStarterMigrationNames("2026_04_27_000002_add_business_fields_to_audit_logs"),
 	)
 }

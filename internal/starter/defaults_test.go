@@ -21,8 +21,9 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 	}
 
 	migrations := registry.Migrations()
-	assert.Len(t, migrations, 6)
+	assert.Len(t, migrations, 7)
 	assert.Contains(t, migrations, "2026_04_26_000000_create_audit_logs_table")
+	assert.Contains(t, migrations, "2026_04_27_000002_add_business_fields_to_audit_logs")
 	assert.Contains(t, migrations, "2025_06_18_000000_create_users_table")
 	assert.Contains(t, migrations, "2025_06_18_000001_seed_default_users")
 	assert.Contains(t, migrations, "2026_04_27_000000_create_password_reset_tokens_table")

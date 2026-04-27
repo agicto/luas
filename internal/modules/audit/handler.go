@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -67,6 +68,7 @@ func (h *Handler) List(c *gin.Context) {
 // AuditMiddleware records mutating API requests without blocking the primary request path.
 func (h *Handler) AuditMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		c.Request = c.Request.WithContext(withChangeCollector(c.Request.Context()))
 		c.Next()
 
 		if !shouldAudit(c) {
@@ -113,6 +115,11 @@ func buildAuditEntry(c *gin.Context) *domain.AuditLog {
 		UserAgent:  c.Request.UserAgent(),
 		RouteName:  c.GetString("route_name"),
 	}
+	if entry.StatusCode >= 400 {
+		entry.Result = domain.AuditResultFailure
+	} else {
+		entry.Result = domain.AuditResultSuccess
+	}
 
 	if userID, ok := getUintFromContext(c, "userID"); ok {
 		entry.UserID = &userID
@@ -121,7 +128,44 @@ func buildAuditEntry(c *gin.Context) *domain.AuditLog {
 		entry.APIKeyID = &apiKeyID
 	}
 
+	mergeBusinessChange(c.Request.Context(), entry)
+
 	return entry
+}
+
+func mergeBusinessChange(ctx context.Context, entry *domain.AuditLog) {
+	change := changeFromContext(ctx)
+	if entry == nil || change == nil {
+		return
+	}
+
+	if change.Action != "" {
+		entry.Action = change.Action
+	}
+	if change.Resource != "" {
+		entry.Resource = change.Resource
+	}
+	if change.TargetType != "" {
+		entry.TargetType = change.TargetType
+	}
+	if change.TargetID != "" {
+		entry.TargetID = change.TargetID
+	}
+	if change.Result != "" {
+		entry.Result = change.Result
+	}
+	if len(change.Changes) > 0 {
+		entry.Changes = change.Changes
+	}
+	if len(change.Metadata) > 0 {
+		if entry.Metadata == nil {
+			entry.Metadata = change.Metadata
+			return
+		}
+		for key, value := range change.Metadata {
+			entry.Metadata[key] = value
+		}
+	}
 }
 
 func getUintFromContext(c *gin.Context, key string) (uint, bool) {

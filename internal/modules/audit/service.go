@@ -29,12 +29,17 @@ func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
 		return domain.ErrInvalidInput
 	}
 
+	mergeBusinessChange(ctx, entry)
+
 	entry.Method = strings.ToUpper(strings.TrimSpace(entry.Method))
 	entry.Path = strings.TrimSpace(entry.Path)
 	entry.RouteName = strings.TrimSpace(entry.RouteName)
 	entry.RequestID = strings.TrimSpace(entry.RequestID)
 	entry.IPAddress = strings.TrimSpace(entry.IPAddress)
 	entry.UserAgent = strings.TrimSpace(entry.UserAgent)
+	entry.TargetType = strings.TrimSpace(entry.TargetType)
+	entry.TargetID = strings.TrimSpace(entry.TargetID)
+	entry.Result = strings.TrimSpace(entry.Result)
 
 	if entry.Method == "" || entry.Path == "" {
 		return domain.ErrInvalidInput
@@ -57,6 +62,13 @@ func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
 		}
 		if entry.Action == "" {
 			entry.Action = action
+		}
+	}
+	if entry.Result == "" {
+		if entry.StatusCode >= 400 {
+			entry.Result = domain.AuditResultFailure
+		} else {
+			entry.Result = domain.AuditResultSuccess
 		}
 	}
 

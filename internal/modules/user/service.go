@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/zgiai/zgo/internal/domain"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
+	auditstarter "github.com/zgiai/zgo/internal/modules/audit"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -201,22 +203,36 @@ func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdat
 		return nil, domain.ErrUserNotFound
 	}
 
+	changes := make(map[string]domain.AuditValueChange)
+
 	// Only update non-empty fields
-	if req.Nickname != "" {
+	if req.Nickname != "" && req.Nickname != user.Nickname {
+		changes["nickname"] = domain.AuditValueChange{Before: user.Nickname, After: req.Nickname}
 		user.Nickname = req.Nickname
 	}
-	if req.Avatar != "" {
+	if req.Avatar != "" && req.Avatar != user.Avatar {
+		changes["avatar"] = domain.AuditValueChange{Before: user.Avatar, After: req.Avatar}
 		user.Avatar = req.Avatar
 	}
-	if req.Phone != "" {
+	if req.Phone != "" && req.Phone != user.Phone {
+		changes["phone"] = domain.AuditValueChange{Before: user.Phone, After: req.Phone}
 		user.Phone = req.Phone
 	}
-	if req.Bio != "" {
+	if req.Bio != "" && req.Bio != user.Bio {
+		changes["bio"] = domain.AuditValueChange{Before: user.Bio, After: req.Bio}
 		user.Bio = req.Bio
 	}
 
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+	if len(changes) > 0 {
+		auditstarter.RecordChange(ctx, auditstarter.Change{
+			TargetType: "user",
+			TargetID:   strconv.FormatUint(uint64(userID), 10),
+			Result:     domain.AuditResultSuccess,
+			Changes:    changes,
+		})
 	}
 
 	return user, nil
@@ -239,12 +255,39 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 	}
 
 	user.Password = string(hashedPassword)
-	return s.repo.Update(ctx, user)
+	if err := s.repo.Update(ctx, user); err != nil {
+		return err
+	}
+
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		TargetType: "user",
+		TargetID:   strconv.FormatUint(uint64(userID), 10),
+		Result:     domain.AuditResultSuccess,
+		Changes: map[string]domain.AuditValueChange{
+			"password": {Before: "[redacted]", After: "[redacted]"},
+		},
+		Metadata: map[string]any{
+			"credential": "password",
+		},
+	})
+	return nil
 }
 
 // DeleteAccount deletes user account
 func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
-	return s.repo.Delete(ctx, userID)
+	if err := s.repo.Delete(ctx, userID); err != nil {
+		return err
+	}
+
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		TargetType: "user",
+		TargetID:   strconv.FormatUint(uint64(userID), 10),
+		Result:     domain.AuditResultSuccess,
+		Metadata: map[string]any{
+			"operation": "delete_account",
+		},
+	})
+	return nil
 }
 
 // ============================================================================

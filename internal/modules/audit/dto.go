@@ -17,23 +17,27 @@ type AuditLogListRequest struct {
 
 // AuditLogResponse is the API response shape for audit entries.
 type AuditLogResponse struct {
-	ID         uint           `json:"id"`
-	UserID     *uint          `json:"user_id,omitempty"`
-	ActorType  string         `json:"actor_type"`
-	ActorID    *uint          `json:"actor_id,omitempty"`
-	APIKeyID   *uint          `json:"api_key_id,omitempty"`
-	Action     string         `json:"action"`
-	Resource   string         `json:"resource"`
-	Method     string         `json:"method"`
-	Path       string         `json:"path"`
-	RouteName  string         `json:"route_name,omitempty"`
-	StatusCode int            `json:"status_code"`
-	RequestID  string         `json:"request_id,omitempty"`
-	IPAddress  string         `json:"ip_address,omitempty"`
-	UserAgent  string         `json:"user_agent,omitempty"`
-	Metadata   map[string]any `json:"metadata,omitempty"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
+	ID         uint                               `json:"id"`
+	UserID     *uint                              `json:"user_id,omitempty"`
+	ActorType  string                             `json:"actor_type"`
+	ActorID    *uint                              `json:"actor_id,omitempty"`
+	APIKeyID   *uint                              `json:"api_key_id,omitempty"`
+	Action     string                             `json:"action"`
+	Resource   string                             `json:"resource"`
+	TargetType string                             `json:"target_type,omitempty"`
+	TargetID   string                             `json:"target_id,omitempty"`
+	Result     string                             `json:"result,omitempty"`
+	Method     string                             `json:"method"`
+	Path       string                             `json:"path"`
+	RouteName  string                             `json:"route_name,omitempty"`
+	StatusCode int                                `json:"status_code"`
+	RequestID  string                             `json:"request_id,omitempty"`
+	IPAddress  string                             `json:"ip_address,omitempty"`
+	UserAgent  string                             `json:"user_agent,omitempty"`
+	Changes    map[string]domain.AuditValueChange `json:"changes,omitempty"`
+	Metadata   map[string]any                     `json:"metadata,omitempty"`
+	CreatedAt  time.Time                          `json:"created_at"`
+	UpdatedAt  time.Time                          `json:"updated_at"`
 }
 
 func (r *AuditLogListRequest) toFilter() domain.AuditLogFilter {
@@ -63,6 +67,9 @@ func toResponse(entry *domain.AuditLog) *AuditLogResponse {
 		APIKeyID:   cloneUintPointer(entry.APIKeyID),
 		Action:     entry.Action,
 		Resource:   entry.Resource,
+		TargetType: entry.TargetType,
+		TargetID:   entry.TargetID,
+		Result:     entry.Result,
 		Method:     entry.Method,
 		Path:       entry.Path,
 		RouteName:  entry.RouteName,
@@ -70,6 +77,7 @@ func toResponse(entry *domain.AuditLog) *AuditLogResponse {
 		RequestID:  entry.RequestID,
 		IPAddress:  entry.IPAddress,
 		UserAgent:  entry.UserAgent,
+		Changes:    entry.Changes,
 		Metadata:   entry.Metadata,
 		CreatedAt:  entry.CreatedAt,
 		UpdatedAt:  entry.UpdatedAt,

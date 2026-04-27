@@ -16,14 +16,18 @@ func TestAuditLogsCaptureProfileUpdates(t *testing.T) {
 
 	tc := NewTestCase(t)
 
-	tc.Post("/v1/register").
+	registerJSON := tc.Post("/v1/register").
 		WithJSON(map[string]any{
 			"username": "audituser",
 			"email":    email,
 			"password": password,
 		}).
 		Call().
-		AssertCreated()
+		AssertCreated().
+		JSON()
+
+	registerData := registerJSON["data"].(map[string]interface{})
+	userID := registerData["id"].(float64)
 
 	loginJSON := tc.Post("/v1/login").
 		WithJSON(map[string]any{
@@ -61,4 +65,14 @@ func TestAuditLogsCaptureProfileUpdates(t *testing.T) {
 	require.Equal(t, "update", entry["action"])
 	require.Equal(t, "PUT", entry["method"])
 	require.Equal(t, "users.profile.update", entry["route_name"])
+	require.Equal(t, "user", entry["target_type"])
+	require.Equal(t, fmt.Sprintf("%.0f", userID), entry["target_id"])
+	require.Equal(t, "success", entry["result"])
+
+	changes, ok := entry["changes"].(map[string]interface{})
+	require.True(t, ok)
+	nickname, ok := changes["nickname"].(map[string]interface{})
+	require.True(t, ok)
+	require.Equal(t, "", nickname["before"])
+	require.Equal(t, "audited-profile", nickname["after"])
 }

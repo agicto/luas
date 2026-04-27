@@ -71,3 +71,34 @@ func TestServiceListForUser(t *testing.T) {
 	assert.Equal(t, int64(1), total)
 	repo.AssertExpectations(t)
 }
+
+func TestServiceRecordMergesBusinessChangeFromContext(t *testing.T) {
+	repo := new(mockRepository)
+	svc := NewService(repo)
+
+	ctx := withChangeCollector(context.Background())
+	RecordChange(ctx, Change{
+		TargetType: "user",
+		TargetID:   "42",
+		Result:     domain.AuditResultSuccess,
+		Changes: map[string]domain.AuditValueChange{
+			"nickname": {Before: "old", After: "new"},
+		},
+	})
+
+	repo.On("Create", ctx, mock.MatchedBy(func(entry *domain.AuditLog) bool {
+		return entry.TargetType == "user" &&
+			entry.TargetID == "42" &&
+			entry.Result == domain.AuditResultSuccess &&
+			entry.Changes["nickname"].Before == "old" &&
+			entry.Changes["nickname"].After == "new"
+	})).Return(nil)
+
+	err := svc.Record(ctx, &domain.AuditLog{
+		Method: "PATCH",
+		Path:   "/v1/users/profile",
+	})
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
