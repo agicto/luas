@@ -2,6 +2,9 @@ package unit
 
 import (
 	"context"
+	"errors"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -237,6 +240,60 @@ func TestGlobalCache_Remember(t *testing.T) {
 	}
 }
 
+func TestRememberStore_SingleflightPreventsDuplicateComputation(t *testing.T) {
+	store := cache.NewMemoryStore()
+	ctx := context.Background()
+
+	var callCount atomic.Int32
+	callback := func() (interface{}, error) {
+		callCount.Add(1)
+		time.Sleep(50 * time.Millisecond)
+		return "computed_once", nil
+	}
+
+	const workers = 8
+	results := make([]interface{}, workers)
+	errs := make([]error, workers)
+
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for i := 0; i < workers; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			results[idx], errs[idx] = cache.RememberStore(ctx, store, "sf_key", time.Minute, callback)
+		}(i)
+	}
+	wg.Wait()
+
+	for i := 0; i < workers; i++ {
+		if errs[i] != nil {
+			t.Fatalf("RememberStore failed for worker %d: %v", i, errs[i])
+		}
+		if results[i] != "computed_once" {
+			t.Fatalf("Expected computed_once for worker %d, got %v", i, results[i])
+		}
+	}
+
+	if callCount.Load() != 1 {
+		t.Fatalf("Expected callback to run once, ran %d times", callCount.Load())
+	}
+}
+
+func TestRememberStore_ReturnsNonCacheMissErrorImmediately(t *testing.T) {
+	ctx := context.Background()
+	expectedErr := errors.New("backend unavailable")
+	store := &failingStore{err: expectedErr}
+
+	_, err := cache.RememberStore(ctx, store, "broken_key", time.Minute, func() (interface{}, error) {
+		t.Fatal("callback should not be executed on store failure")
+		return nil, nil
+	})
+
+	if !errors.Is(err, expectedErr) {
+		t.Fatalf("Expected %v, got %v", expectedErr, err)
+	}
+}
+
 func TestGlobalCache_Pull(t *testing.T) {
 	ctx := context.Background()
 
@@ -333,4 +390,40 @@ func TestMemoryStore_Len(t *testing.T) {
 	if store.Len() != 2 {
 		t.Errorf("Expected 2 items, got %d", store.Len())
 	}
+}
+
+type failingStore struct {
+	err error
+}
+
+func (s *failingStore) Get(ctx context.Context, key string) (interface{}, error) {
+	return nil, s.err
+}
+
+func (s *failingStore) Put(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
+	return nil
+}
+
+func (s *failingStore) Forever(ctx context.Context, key string, value interface{}) error {
+	return nil
+}
+
+func (s *failingStore) Forget(ctx context.Context, key string) error {
+	return nil
+}
+
+func (s *failingStore) Flush(ctx context.Context) error {
+	return nil
+}
+
+func (s *failingStore) Has(ctx context.Context, key string) bool {
+	return false
+}
+
+func (s *failingStore) Increment(ctx context.Context, key string, value int64) (int64, error) {
+	return 0, nil
+}
+
+func (s *failingStore) Decrement(ctx context.Context, key string, value int64) (int64, error) {
+	return 0, nil
 }

@@ -3,8 +3,13 @@ package cache
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 	"sync"
 	"time"
+
+	"github.com/zgiai/zgo/internal/infra/metrics"
+	"github.com/zgiai/zgo/internal/infra/singleflight"
 )
 
 // ErrCacheMiss is returned when a key is not found in the cache
@@ -47,6 +52,8 @@ type Manager struct {
 var (
 	manager *Manager
 	once    sync.Once
+
+	rememberFlights = singleflight.New()
 )
 
 // Global returns the global cache manager
@@ -159,25 +166,44 @@ func Remember(ctx context.Context, key string, ttl time.Duration, callback func(
 
 // RememberStore gets a value from a specific store or stores the result of callback
 func RememberStore(ctx context.Context, store Store, key string, ttl time.Duration, callback func() (interface{}, error)) (interface{}, error) {
+	label := metricLabelForStore(store)
+
 	// Try to get from cache first
 	if val, err := store.Get(ctx, key); err == nil {
+		metrics.RecordCacheHit(label)
 		return val, nil
-	}
-
-	// Execute callback
-	val, err := callback()
-	if err != nil {
+	} else if err != nil && !errors.Is(err, ErrCacheMiss) {
 		return nil, err
 	}
 
-	// Store in cache
-	if ttl > 0 {
-		_ = store.Put(ctx, key, val, ttl)
-	} else {
-		_ = store.Forever(ctx, key, val)
-	}
+	metrics.RecordCacheMiss(label)
 
-	return val, nil
+	return rememberFlights.DoCtx(ctx, flightKey(store, label, key), func() (any, error) {
+		// Re-check inside the flight in case another waiter filled the cache.
+		if val, err := store.Get(ctx, key); err == nil {
+			metrics.RecordCacheHit(label)
+			return val, nil
+		} else if err != nil && !errors.Is(err, ErrCacheMiss) {
+			return nil, err
+		}
+
+		val, err := callback()
+		if err != nil {
+			return nil, err
+		}
+
+		if ttl > 0 {
+			if err := store.Put(ctx, key, val, ttl); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := store.Forever(ctx, key, val); err != nil {
+				return nil, err
+			}
+		}
+
+		return val, nil
+	})
 }
 
 // RememberForever gets a value from cache or stores the result indefinitely
@@ -211,4 +237,33 @@ func Increment(ctx context.Context, key string, value int64) (int64, error) {
 // Decrement decrements a numeric value
 func Decrement(ctx context.Context, key string, value int64) (int64, error) {
 	return Global().Default().Decrement(ctx, key, value)
+}
+
+func metricLabelForStore(store Store) string {
+	switch store.(type) {
+	case *MemoryStore:
+		return "memory"
+	case *RedisStore:
+		return "redis"
+	case nil:
+		return "unknown"
+	default:
+		return "custom"
+	}
+}
+
+func flightKey(store Store, label, key string) string {
+	if store == nil {
+		return fmt.Sprintf("%s:nil:%s", label, key)
+	}
+
+	value := reflect.ValueOf(store)
+	switch value.Kind() {
+	case reflect.Pointer, reflect.Map, reflect.Slice, reflect.Func, reflect.Chan:
+		if !value.IsNil() {
+			return fmt.Sprintf("%s:%x:%s", label, value.Pointer(), key)
+		}
+	}
+
+	return fmt.Sprintf("%s:%T:%s", label, store, key)
 }
