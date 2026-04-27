@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/glebarez/sqlite"
+	"github.com/zgiai/zgo/internal/infra/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -21,39 +22,36 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, nil
 	}
 
-	return initDB(cfg.Database)
+	return initDB(cfg)
 }
 
 // initDB initializes database connection with the given config
-func initDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
+func initDB(cfg *config.Config) (*gorm.DB, error) {
+	dbCfg := cfg.Database
+
 	// Configure custom logger
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
-			IgnoreRecordNotFoundError: true,
-			Colorful:                  true,
-		},
+		buildLoggerConfig(cfg),
 	)
 
 	var dialector gorm.Dialector
 
-	if cfg.Driver == "sqlite" {
-		dsn := cfg.Name
-		if cfg.Memory {
+	if dbCfg.Driver == "sqlite" {
+		dsn := dbCfg.Name
+		if dbCfg.Memory {
 			dsn = ":memory:"
 		}
 		dialector = sqlite.Open(dsn)
 	} else {
 		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s timezone=%s",
-			cfg.Host,
-			cfg.Username,
-			cfg.Password,
-			cfg.Name,
-			cfg.Port,
-			cfg.SSLMode,
-			cfg.Timezone,
+			dbCfg.Host,
+			dbCfg.Username,
+			dbCfg.Password,
+			dbCfg.Name,
+			dbCfg.Port,
+			dbCfg.SSLMode,
+			dbCfg.Timezone,
 		)
 		dialector = postgres.New(postgres.Config{
 			DSN:                  dsn,
@@ -74,9 +72,9 @@ func initDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
 	}
 
 	// Set connection pool
-	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
-	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
-	sqlDB.SetConnMaxLifetime(0) // Disable connection max lifetime
+	sqlDB.SetMaxIdleConns(dbCfg.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(dbCfg.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(dbCfg.ConnMaxLifetime)
 
 	// Check if we can connect to the database
 	if err := sqlDB.Ping(); err != nil {
@@ -89,8 +87,47 @@ func initDB(cfg config.DatabaseConfig) (*gorm.DB, error) {
 // NewTestDB creates an in-memory SQLite database for testing.
 // This is a convenience function for tests that need a real database.
 func NewTestDB() (*gorm.DB, error) {
-	return initDB(config.DatabaseConfig{
-		Driver: "sqlite",
-		Memory: true,
+	return initDB(&config.Config{
+		App: config.AppConfig{
+			Env:   "test",
+			Debug: true,
+		},
+		Database: config.DatabaseConfig{
+			Driver:               "sqlite",
+			Memory:               true,
+			SlowThreshold:        time.Second,
+			IgnoreRecordNotFound: true,
+		},
 	})
+}
+
+func buildLoggerConfig(cfg *config.Config) logger.Config {
+	return logger.Config{
+		SlowThreshold:             cfg.Database.SlowThreshold,
+		LogLevel:                  resolveGormLogLevel(cfg),
+		IgnoreRecordNotFoundError: cfg.Database.IgnoreRecordNotFound,
+		Colorful:                  true,
+	}
+}
+
+func resolveGormLogLevel(cfg *config.Config) logger.LogLevel {
+	fallback := logger.Warn
+	if cfg.App.Debug || strings.EqualFold(cfg.App.Env, "test") {
+		fallback = logger.Info
+	}
+
+	switch strings.ToLower(strings.TrimSpace(cfg.Database.LogLevel)) {
+	case "":
+		return fallback
+	case "silent":
+		return logger.Silent
+	case "error":
+		return logger.Error
+	case "warn", "warning":
+		return logger.Warn
+	case "info":
+		return logger.Info
+	default:
+		return fallback
+	}
 }

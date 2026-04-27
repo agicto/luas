@@ -53,18 +53,22 @@ type MiddlewareConfig struct {
 }
 
 type DatabaseConfig struct {
-	Enabled      bool
-	Driver       string
-	Host         string
-	Port         int
-	Name         string
-	Username     string
-	Password     string
-	SSLMode      string
-	Timezone     string
-	MaxIdleConns int
-	MaxOpenConns int
-	Memory       bool
+	Enabled              bool
+	Driver               string
+	Host                 string
+	Port                 int
+	Name                 string
+	Username             string
+	Password             string
+	SSLMode              string
+	Timezone             string
+	MaxIdleConns         int
+	MaxOpenConns         int
+	ConnMaxLifetime      time.Duration
+	Memory               bool
+	LogLevel             string
+	SlowThreshold        time.Duration
+	IgnoreRecordNotFound bool
 }
 
 // DBName returns the database name (alias for Name)
@@ -176,17 +180,21 @@ func Load() (*Config, error) {
 			WriteTimeout: env.GetInt("SERVER_WRITE_TIMEOUT", 60),
 		},
 		Database: DatabaseConfig{
-			Enabled:      env.GetBool("DB_ENABLED", true),
-			Driver:       env.Get("DB_DRIVER", "postgres"),
-			Host:         env.Get("DB_HOST", "localhost"),
-			Port:         env.GetInt("DB_PORT", 5432),
-			Name:         env.Get("DB_NAME", ""),
-			Username:     env.Get("DB_USERNAME", ""),
-			Password:     env.Get("DB_PASSWORD", ""),
-			SSLMode:      env.Get("DB_SSLMODE", "disable"),
-			Timezone:     env.Get("DB_TIMEZONE", "Asia/Shanghai"),
-			MaxIdleConns: env.GetInt("DB_MAX_IDLE_CONNS", 10),
-			MaxOpenConns: env.GetInt("DB_MAX_OPEN_CONNS", 100),
+			Enabled:              env.GetBool("DB_ENABLED", true),
+			Driver:               env.Get("DB_DRIVER", "postgres"),
+			Host:                 env.Get("DB_HOST", "localhost"),
+			Port:                 env.GetInt("DB_PORT", 5432),
+			Name:                 env.Get("DB_NAME", ""),
+			Username:             env.Get("DB_USERNAME", ""),
+			Password:             env.Get("DB_PASSWORD", ""),
+			SSLMode:              env.Get("DB_SSLMODE", "disable"),
+			Timezone:             env.Get("DB_TIMEZONE", "Asia/Shanghai"),
+			MaxIdleConns:         env.GetInt("DB_MAX_IDLE_CONNS", 10),
+			MaxOpenConns:         env.GetInt("DB_MAX_OPEN_CONNS", 100),
+			ConnMaxLifetime:      time.Duration(env.GetInt("DB_CONN_MAX_LIFETIME", 3600)) * time.Second,
+			LogLevel:             env.Get("DB_LOG_LEVEL", ""),
+			SlowThreshold:        env.GetDuration("DB_SLOW_THRESHOLD", time.Second),
+			IgnoreRecordNotFound: env.GetBool("DB_LOG_IGNORE_NOT_FOUND", true),
 		},
 		Redis: RedisConfig{
 			Host:     env.Get("REDIS_HOST", "localhost"),
