@@ -108,7 +108,7 @@ if [ -f "${MODULE_DIR}/model.go" ]; then
     if grep -q 'DeletedAt.*gorm.DeletedAt' ${MODULE_DIR}/model.go; then
         echo "✅ Soft delete (DeletedAt) enabled"
     else
-        echo "❌ Soft delete (DeletedAt) missing"
+        echo "ℹ️  Soft delete (DeletedAt) not present - ensure this matches module lifecycle semantics"
     fi
 fi
 

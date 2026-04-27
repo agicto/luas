@@ -39,8 +39,8 @@ else
     echo "✅ TableName() method detected."
 fi
 
-# 3. Check for mandatory audit fields
-for field in "ID" "CreatedAt" "UpdatedAt" "DeletedAt"; do
+# 3. Check for baseline lifecycle fields
+for field in "ID" "CreatedAt" "UpdatedAt"; do
     if ! grep -q "$field" "$MODEL_FILE"; then
         echo "❌ Missing mandatory field: $field"
         ERRORS=$((ERRORS + 1))
@@ -48,7 +48,13 @@ for field in "ID" "CreatedAt" "UpdatedAt" "DeletedAt"; do
 done
 
 if [ $ERRORS -eq 0 ]; then
-    echo "✅ All mandatory audit fields present."
+    echo "✅ Baseline lifecycle fields present."
+fi
+
+if grep -q "DeletedAt" "$MODEL_FILE"; then
+    echo "✅ Soft delete field detected."
+else
+    echo "ℹ️  Soft delete field not detected. Confirm the table does not require soft delete."
 fi
 
 # 4. Check for snake_case in gorm labels

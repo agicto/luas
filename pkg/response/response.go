@@ -217,25 +217,50 @@ func Collection(c *gin.Context, collection Collectable) {
 // Error Responses
 // ============================================================================
 
-// Error sends a generic error response.
-func Error(c *gin.Context, statusCode int, message string) {
-	c.JSON(statusCode, ErrorResponse{
-		Code:    statusCode,
-		Message: message,
-	})
+func currentRequestID(c *gin.Context) string {
+	if c == nil {
+		return ""
+	}
+	return c.GetString("request_id")
 }
 
-// ErrorWithDetails sends an error response with error details.
-func ErrorWithDetails(c *gin.Context, statusCode int, message string, err error) {
+func writeErrorResponse(c *gin.Context, statusCode int, errorCode, message string, err error) {
 	errMsg := ""
 	if err != nil {
 		errMsg = err.Error()
 	}
+
 	c.JSON(statusCode, ErrorResponse{
-		Code:    statusCode,
-		Message: message,
-		Error:   errMsg,
+		Code:      statusCode,
+		ErrorCode: errorCode,
+		Message:   message,
+		Error:     errMsg,
+		RequestID: currentRequestID(c),
 	})
+}
+
+// ErrorWithCode sends an error response with an explicit machine-readable code.
+func ErrorWithCode(c *gin.Context, statusCode int, errorCode, message string, err ...error) {
+	var e error
+	if len(err) > 0 {
+		e = err[0]
+	}
+	writeErrorResponse(c, statusCode, errorCode, message, e)
+}
+
+// ErrorWithDescriptor sends an error response using a resolved descriptor.
+func ErrorWithDescriptor(c *gin.Context, descriptor ErrorDescriptor, message string, err error) {
+	writeErrorResponse(c, descriptor.StatusCode, descriptor.ErrorCode, message, err)
+}
+
+// Error sends a generic error response.
+func Error(c *gin.Context, statusCode int, message string) {
+	writeErrorResponse(c, statusCode, defaultErrorCodeForStatus(statusCode), message, nil)
+}
+
+// ErrorWithDetails sends an error response with error details.
+func ErrorWithDetails(c *gin.Context, statusCode int, message string, err error) {
+	writeErrorResponse(c, statusCode, defaultErrorCodeForStatus(statusCode), message, err)
 }
 
 // BadRequest sends a 400 Bad Request response.
@@ -322,9 +347,11 @@ func UnprocessableEntity(c *gin.Context, message string, err ...error) {
 //	})
 func ValidationFailed(c *gin.Context, errors map[string][]string) {
 	c.JSON(http.StatusUnprocessableEntity, ValidationErrorResponse{
-		Code:    http.StatusUnprocessableEntity,
-		Message: "Validation failed",
-		Errors:  errors,
+		Code:      http.StatusUnprocessableEntity,
+		ErrorCode: ErrorCodeValidationFailed,
+		Message:   "Validation failed",
+		Errors:    errors,
+		RequestID: currentRequestID(c),
 	})
 }
 

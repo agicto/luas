@@ -4,14 +4,12 @@ import (
 	"context"
 
 	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/pkg/logger"
 )
 
-// HandleUserCreated handles the welcome email when a user is created.
-// It matches the events.EventHandler signature.
-func HandleUserCreated(ctx context.Context, e events.Event) error {
+// handleUserCreated sends a welcome email when a user is created.
+func (h *Handler) handleUserCreated(ctx context.Context, e events.Event) error {
 	var user *domain.User
 
 	// Try to get the underlying domain event
@@ -30,7 +28,11 @@ func HandleUserCreated(ctx context.Context, e events.Event) error {
 		return nil
 	}
 
-	if err := email.SendWelcomeEmail(user.Email, user.Username); err != nil {
+	if h.mailer == nil {
+		return nil
+	}
+
+	if err := h.mailer.SendWelcomeEmail(user.Email, user.Username); err != nil {
 		logger.Error("failed to send welcome email", map[string]any{
 			"error": err,
 			"user":  user.Username,

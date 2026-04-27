@@ -5,7 +5,7 @@ version: 1.0.0
 category: architecture
 tags: [database, sql, gorm, migration, optimization]
 author: ZGO Team
-updated: 2026-01-24
+updated: 2026-04-26
 ---
 
 # Database Design Standards
@@ -31,12 +31,14 @@ This skill provides the definitive standards for database design in the ZGO proj
 - **Columns**: `snake_case` (e.g., `created_at`, `is_active`).
 - **Persistence Objects (PO)**: Must have a `PO` suffix and a `TableName()` method.
 
-### 2. Mandatory Columns
-Every table must include these core audit and identification fields:
-- `id`: BigInt / Serial (Primary Key)
-- `created_at`: Time with zone
-- `updated_at`: Time with zone
-- `deleted_at`: Indexable time (for GORM soft deletes)
+### 2. Lifecycle Columns
+Choose lifecycle columns based on module semantics:
+- `id`: required for almost every starter table
+- `created_at`: recommended for mutable and auditable records
+- `updated_at`: recommended for mutable records
+- `deleted_at`: only when the module uses soft delete
+
+Append-only tables such as audit logs may intentionally omit `deleted_at`.
 
 ```go
 // Example PO Structure
@@ -118,7 +120,7 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 
 ## ✅ Verification Checklist
 
-- [ ] All tables have `id`, `created_at`, `updated_at`, `deleted_at`.
+- [ ] Table lifecycle fields match the module semantics; `deleted_at` is not added by reflex.
 - [ ] Table names are plural `snake_case`.
 - [ ] Index tags are added for all search/filter criteria.
 - [ ] Unique constraints are placed on unique identifiers.

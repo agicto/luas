@@ -42,24 +42,47 @@ skill-name/
 
 | Skill | 描述 | 优先级 |
 |-------|------|--------|
-| [`module-creation`](./module-creation/) | 创建 DDD 模块的完整流程 (8-file 标准) | P0 |
-| `api-development` | API 开发模式和最佳实践 | P0 |
-| `wire-di` | Wire 依赖注入配置指南 | P0 |
+| [`architecture-principles`](./architecture-principles/) | `seam / depth / locality` 的上位架构规则 | P0 |
+| [`module-creation`](./module-creation/) | 创建 starter-style 业务模块的完整流程 | P0 |
+| [`coding-standards`](./coding-standards/) | 当前 scaffold 的代码规范、分层约束和 seam 判断 | P0 |
+| [`api-development`](./api-development/) | route-owning 模块的 HTTP / REST 规范 | P0 |
+| [`database-design`](./database-design/) | PO、索引、迁移和表生命周期设计 | P0 |
 | [`kest-flow`](./kest-flow/) | Kest Flow API 测试框架 | P1 |
+| [`logging-standards`](./logging-standards/) | 结构化日志与观测性规范 | P1 |
+| [`code-review-guide`](./code-review-guide/) | Review 流程、检查点和反馈规范 | P1 |
 
 ### Quality & Testing
 
 | Skill | 描述 | 优先级 |
 |-------|------|--------|
-| `testing-strategy` | 测试策略和模式 | P1 |
-| `swagger-docs` | Swagger 文档生成 | P1 |
+| [`testing-strategy`](./testing-strategy/) | 测试层级、真实 seam 与 mock 策略 | P1 |
 
 ### Operations
 
 | Skill | 描述 | 优先级 |
 |-------|------|--------|
-| `deployment` | 部署工作流和检查清单 | P1 |
-| `database-migration` | 数据库迁移最佳实践 | P1 |
+| [`deployment`](./deployment/) | 部署工作流和检查清单 | P1 |
+
+## 🧭 ZGO 架构词汇
+
+这些词汇和 `CONTEXT.md` 保持一致，避免文档和代码审查继续漂移：
+
+- `core`: 所有 ZGO 应用都会复用的运行时和基础设施
+- `starter`: 默认随新项目交付的业务起步模块，例如 `user`、`apikey`、`audit`
+- `capability`: 技术能力模块，例如 `internal/capabilities/ai`
+- `optional starter`: 质量达到 starter，但不默认装配，例如 `permission`
+- `example`: 以演示为主的代码或文档
+- `starter registry`: 决定默认 starter、迁移、seed 的装配 seam
+- `command manifest`: 决定 CLI 命令集合的装配 seam
+- `error contract`: route-owning modules return stable `error_code` values plus `request_id` for correlation
+
+### 重要说明
+
+- `8-file` 结构是 **starter-style route-owning 模块的默认模板**，不是所有代码形状的唯一合法答案。
+- `capability` 不应为了套模板而强行拥有 `handler.go`、`routes.go`、`dto.go`。
+- 默认先写 concrete implementation。只有当行为确实在 seam 上变化时，才引入额外 interface。
+
+`architecture-principles` 是这些规则的单一事实源；其他 skills 负责把这些原则翻译成具体动作。
 
 ## 🚀 如何使用 Skills
 
@@ -219,30 +242,9 @@ updated: 2026-01-24           # 可选：更新日期
 
 ## 📈 维护和演进
 
-### 版本控制
-
-使用语义化版本：
-- **Major**: 破坏性变更 (1.0.0 → 2.0.0)
-- **Minor**: 新增功能 (1.0.0 → 1.1.0)
-- **Patch**: Bug 修复 (1.0.0 → 1.0.1)
-
-### 更新日志
-
-在 skill 目录下维护 `CHANGELOG.md`:
-
-```markdown
-# Changelog
-
-## [1.1.0] - 2026-02-01
-### Added
-- Migration auto-generation
-
-### Fixed
-- Wire provider binding pattern
-
-### Improved
-- Validation script coverage
-```
+- 优先保持 `SKILL.md` 简洁，细节放 `examples/` 或 `scripts/`。
+- 不要为单个 skill 增加额外的 `README.md`、`CHANGELOG.md`、`INSTALLATION_GUIDE.md` 等辅助文档。
+- 当架构规则变化时，先更新 `architecture-principles`，再更新承接它的实施型 skills。
 
 ## 🤝 贡献指南
 

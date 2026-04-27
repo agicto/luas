@@ -15,7 +15,7 @@ type UserPO struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
-	Username  string         `gorm:"size:50;not null"`
+	Username  string         `gorm:"size:50;not null;uniqueIndex"`
 	Password  string         `gorm:"size:100;not null"`
 	Email     string         `gorm:"size:100;not null;unique"`
 	Nickname  string         `gorm:"size:50"`
@@ -29,6 +29,23 @@ type UserPO struct {
 // TableName specifies the database table name
 func (UserPO) TableName() string {
 	return "users"
+}
+
+// PasswordResetTokenPO stores one-time password reset tokens.
+// Tokens are stored as hashes so plaintext reset secrets never hit the database.
+type PasswordResetTokenPO struct {
+	ID        uint `gorm:"primaryKey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	UserID    uint       `gorm:"not null;index"`
+	TokenHash string     `gorm:"size:64;not null;uniqueIndex"`
+	ExpiresAt time.Time  `gorm:"not null;index"`
+	UsedAt    *time.Time `gorm:"index"`
+}
+
+// TableName specifies the password reset token table name.
+func (PasswordResetTokenPO) TableName() string {
+	return "password_reset_tokens"
 }
 
 // toDomain converts UserPO to domain.User

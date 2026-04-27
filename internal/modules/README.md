@@ -11,7 +11,7 @@ Business domain modules directory, following Domain-Driven Design (DDD) patterns
 | `audit` | Default audit starter (global write-request logging + history API) | Starter |
 | `permission` | Optional RBAC example module, not wired by default | Optional |
 
-## Standard Module Structure (8 files)
+## Standard Starter Structure (8 files)
 
 ```text
 module_name/
@@ -24,6 +24,8 @@ module_name/
 ├── provider.go     # Wire dependency injection
 └── service_test.go # Unit tests (optional)
 ```
+
+This is the default shape for route-owning starters and optional starters. `capability` modules may intentionally use a lighter structure.
 
 ## Module Capability Interfaces
 
@@ -116,12 +118,12 @@ The single-file generators such as `make:service` and `make:handler` are meant t
 | Domain Entity | `domain.{Entity}` | `domain.User` |
 | Request DTO | `{Action}{Entity}Request` | `CreateUserRequest` |
 | Response DTO | `{Entity}Response` | `UserResponse` |
-| Interface | `{Entity}{Layer}` | `UserRepository`, `UserService` |
+| Interface | `{Entity}{Layer}` or narrowed use-case name | `UserRepository`, `AuthService` |
 
 ## Best Practices
 
 1. **DTO includes Mapper** - Conversion functions in `dto.go`, no separate file
-2. **Interface + Impl together** - Repository/Service interface and impl in same file
+2. **Concrete first** - Default constructors return concrete types; expose interfaces only when a real seam exists
 3. **Use Domain Layer** - Business logic uses `domain.User`, don't expose `UserPO`
 4. **Private implementations** - Implementation struct names are unexported
-5. **Constructor returns interface** - `NewService() Service`
+5. **Wire owns binding** - Prefer `wire.Bind(...)` over constructors returning interface by default

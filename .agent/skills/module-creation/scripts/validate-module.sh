@@ -2,6 +2,7 @@
 
 # Module Validation Script
 # Usage: ./validate-module.sh <module_name>
+# Validates the default starter-style 8-file scaffold.
 
 set -e
 
@@ -70,23 +71,14 @@ if ! grep -q "var ProviderSet = wire.NewSet" "${MODULE_DIR}/provider.go"; then
 fi
 echo "✓ ProviderSet declared"
 
-# Check for repository interface
+# Check repository and service files exist and are non-empty
 echo ""
-echo "Checking repository interface..."
-if ! grep -q "type Repository interface" "${MODULE_DIR}/repository.go"; then
-    echo "❌ Repository interface not found"
+echo "Checking repository and service files..."
+if [ ! -s "${MODULE_DIR}/repository.go" ] || [ ! -s "${MODULE_DIR}/service.go" ]; then
+    echo "❌ repository.go or service.go is empty"
     exit 1
 fi
-echo "✓ Repository interface defined"
-
-# Check for service interface
-echo ""
-echo "Checking service interface..."
-if ! grep -q "type Service interface" "${MODULE_DIR}/service.go"; then
-    echo "❌ Service interface not found"
-    exit 1
-fi
-echo "✓ Service interface defined"
+echo "✓ Repository and service files present"
 
 # Check for handler struct
 echo ""
@@ -100,11 +92,11 @@ echo "✓ Handler struct defined"
 # Check for routes registration
 echo ""
 echo "Checking routes..."
-if ! grep -q "func RegisterRoutes" "${MODULE_DIR}/routes.go"; then
-    echo "❌ RegisterRoutes function not found"
+if ! grep -q "RegisterRoutes" "${MODULE_DIR}/routes.go"; then
+    echo "❌ RegisterRoutes entry not found"
     exit 1
 fi
-echo "✓ RegisterRoutes function defined"
+echo "✓ RegisterRoutes entry defined"
 
 # Try to build the module
 echo ""
@@ -129,7 +121,7 @@ echo "======================================="
 echo "✅ Module validation complete!"
 echo ""
 echo "Next steps:"
-echo "1. Run 'cd internal/wiring && wire' to generate DI code"
-echo "2. Register routes in routes/api.go"
-echo "3. Create database migration"
-echo "4. Test API endpoints"
+echo "1. Refine the generated internal/domain file with real business fields"
+echo "2. Decide whether this is a starter, optional starter, capability, or example"
+echo "3. If it becomes a default starter, add its starter manifest to internal/starter/defaults.go"
+echo "4. Run make wire and go test ./..."

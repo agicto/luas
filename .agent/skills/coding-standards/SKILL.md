@@ -5,7 +5,7 @@ version: 2.0.0
 category: development
 tags: [standards, code-review, quality, error-handling]
 author: ZGO Team
-updated: 2026-01-24
+updated: 2026-04-26
 ---
 
 # Coding Standards Skill
@@ -13,6 +13,8 @@ updated: 2026-01-24
 ## 📋 Purpose
 
 This skill provides a comprehensive checklist and verification guide for ensuring all code follows ZGO's coding standards and best practices.
+
+Use [`architecture-principles`](../architecture-principles/) as the source of truth for vocabulary and seam decisions. This skill operationalizes those rules during implementation and review.
 
 ## 🎯 When to Use
 
@@ -25,8 +27,23 @@ This skill provides a comprehensive checklist and verification guide for ensurin
 ## ⚙️ Prerequisites
 
 - [ ] Code committed to Git (for comparison)
-- [ ] Module follows 8-file structure
-- [ ] Tests written and passing
+- [ ] Module has been classified as `starter`, `optional starter`, `capability`, or `example`
+- [ ] Tests written and passing when behavior changed
+
+## 🧭 Architecture Vocabulary
+
+ZGO uses the vocabulary in `CONTEXT.md` and the architecture review skill:
+
+- `starter`: default business-ready module wired into the scaffold
+- `optional starter`: starter-quality module not wired by default
+- `capability`: technical helper or integration that does not own a route model
+- `seam`: the place where behavior can vary without editing callers
+
+Design rules:
+
+- Prefer **concrete-first construction**. Do not introduce an interface just because a file exists.
+- Introduce a seam only when something actually varies across it, or when callers/tests clearly benefit from the narrower interface.
+- The route-owning starter template is a good default, but it is not the only valid module shape.
 
 ## 🔍 Verification Checklist
 
@@ -63,9 +80,9 @@ This skill provides a comprehensive checklist and verification guide for ensurin
 ✅ type CreateUserRequest struct {}    // Verb + Noun + Request
 ✅ type UserResponse struct {}         // Noun + Response
 
-// Interface
-✅ type Repository interface {}   // Noun
-✅ type Service interface {}      
+// Interface (only when the seam is real)
+✅ type UserRepository interface {}
+✅ type AuthService interface {}
 ✅ type Handler struct {}         // Handler is struct, not interface
 
 // Private Implementation
@@ -76,8 +93,9 @@ This skill provides a comprehensive checklist and verification guide for ensurin
 #### 1.4 Function Names
 ```go
 // Constructor
-✅ func NewRepository() Repository       // New + InterfaceName, returns interface
-✅ func NewService() Service
+✅ func NewRepository(db *gorm.DB) *repository
+✅ func NewService(repo domain.UserRepository) *service
+✅ wire.Bind(new(domain.UserRepository), new(*repository))
 
 // Mapper Functions
 ✅ func ToUserPO(user *domain.User) *UserPO      // To + TargetType
@@ -101,8 +119,11 @@ type User struct {
 
 ### Level 2: Architecture Standards ✅
 
-#### 2.1 8-File Module Structure (Mandatory)
-Each module **must** include: `model.go`, `dto.go`, `repository.go`, `service.go`, `handler.go`, `routes.go`, `provider.go`, `service_test.go`.
+#### 2.1 Module Shape Matches Module Type
+
+- **starter / optional starter**: route-owning business modules usually use the 8-file scaffold
+- **capability**: may omit `handler.go`, `routes.go`, and DTO files entirely
+- **example**: may optimize for teaching value rather than default assembly
 
 > **📚 Full Guide**: See [`module-creation` skill](./.agent/skills/module-creation/)
 
@@ -115,12 +136,20 @@ Handler → Service → Repository → Model
 #### 2.3 Data Flow
 `Handler(DTO) → Service(domain.User) → Repository(UserPO) → Database`
 
+#### 2.4 Seam Discipline
+
+- [ ] Interface exists because behavior varies, not because the template said so
+- [ ] Constructors return concrete types by default
+- [ ] Wire or package-level contracts expose interfaces only where callers benefit
+- [ ] Narrow interfaces such as `AuthService` or `ProfileService` are preferred over one wide `Service`
+
 ---
 
 ### Level 3: File Organization ✅
 
 #### 3.1 model.go Requirements
-- [ ] Has `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt` fields
+- [ ] Has `ID` plus lifecycle fields that match the module semantics
+- [ ] Uses `DeletedAt` only when the module really supports soft delete
 - [ ] Has `TableName()` method
 - [ ] Uses GORM tags + indexes
 
@@ -130,7 +159,7 @@ Handler → Service → Repository → Model
 - [ ] Mappers handle `nil` input
 
 #### 3.3 repository.go Requirements
-- [ ] Constructor returns interface
+- [ ] Constructor returns concrete implementation by default
 - [ ] PO ↔ Domain conversion at boundary
 - [ ] Uses `WithContext(ctx)`
 
@@ -138,6 +167,7 @@ Handler → Service → Repository → Model
 - [ ] Defines custom business errors (`var Err...`)
 - [ ] Business logic + validation here
 - [ ] Uses domain entities, not POs
+- [ ] Splits wide business surfaces only when callers gain leverage from the narrower seam
 
 ---
 
@@ -166,6 +196,13 @@ func (s *service) GetByID(ctx context.Context, id uint) (*domain.User, error) {
 #### 4.3 Automatic Mapping
 Use `response.HandleError(c, "msg", err)` in handlers to auto-map errors to HTTP status codes.
 
+#### 4.4 Stable Error Contract
+
+- [ ] Non-2xx HTTP responses include a stable `error_code`
+- [ ] `error_code` is machine-readable and does not depend on the human message text
+- [ ] `request_id` is returned on error responses so logs and clients can correlate failures
+- [ ] Domain or framework errors are mapped centrally in `pkg/response`, not ad hoc in handlers
+
 ---
 
 ### Level 5: Security Standards ✅
@@ -179,6 +216,7 @@ Use `response.HandleError(c, "msg", err)` in handlers to auto-map errors to HTTP
 - [ ] Use `binding` tags in DTOs (e.g., `required`, `email`, `min=8`).
 - [ ] Perform business-level validation in the Service layer (e.g., check for duplicates).
 - [ ] Use `handler.BindJSON()` to trigger validation.
+- [ ] If login supports a public identifier such as `username`, its uniqueness semantics are enforced in both code and schema.
 
 ---
 
@@ -762,7 +800,7 @@ See the following examples:
 
 Before submitting code, verify:
 
-- [ ] 8-file structure complete
+- [ ] Module shape matches its type (`starter`, `optional starter`, `capability`, `example`)
 - [ ] Naming follows conventions (PO suffix, snake_case JSON, etc.)
 - [ ] Architecture layers respected (no cross-layer access)
 - [ ] All files have required content
@@ -778,6 +816,6 @@ Before submitting code, verify:
 ---
 
 **Version**: 2.0.0  
-**Last Updated**: 2026-01-24  
+**Last Updated**: 2026-04-26  
 **Maintainer**: ZGO Team  
 **Changelog**: Added Advanced Error Handling Patterns (Circuit Breaker, Retry, Timeout, Error Aggregation)

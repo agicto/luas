@@ -89,8 +89,6 @@ func (s *Service) SendEmail(to []string, subject, htmlContent string) error {
 		return fmt.Errorf("failed to marshal email request: %w", err)
 	}
 
-	logger.Info("Request data", map[string]any{"data": string(jsonData)})
-
 	req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonData))
 	if err != nil {
 		logger.Error("Failed to create request", map[string]any{"error": err})
@@ -113,8 +111,6 @@ func (s *Service) SendEmail(to []string, subject, htmlContent string) error {
 		logger.Error("Failed to read response", map[string]any{"error": err})
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
-
-	logger.Info("Received response", map[string]any{"body": string(body)})
 
 	if resp.StatusCode == http.StatusForbidden {
 		var resendError struct {
@@ -169,22 +165,23 @@ func SendEmail(to []string, subject, htmlContent string) error {
 	return defaultService.SendEmail(to, subject, htmlContent)
 }
 
-// SendPasswordResetEmail sends a password reset notification email
-func SendPasswordResetEmail(to string, newPassword string) error {
-	subject := "Password Reset Notification"
+// SendPasswordResetEmail sends a password reset token email.
+func (s *Service) SendPasswordResetEmail(to string, resetToken string) error {
+	subject := "Password Reset Request"
 	htmlContent := fmt.Sprintf(`
-		<h2>Password Reset Notification</h2>
-		<p>Your password has been reset. The new temporary password is:</p>
+		<h2>Password Reset Request</h2>
+		<p>We received a request to reset your password.</p>
+		<p>Use the token below to complete the reset:</p>
 		<p style="font-size: 18px; font-weight: bold; color: #333;">%s</p>
-		<p>Please use this temporary password to log in and change it to your own password immediately.</p>
-		<p>If this was not your action, please contact the administrator immediately.</p>
-	`, newPassword)
+		<p>This token expires in 30 minutes and can only be used once.</p>
+		<p>If you did not request this, you can ignore this email.</p>
+	`, resetToken)
 
-	return SendEmail([]string{to}, subject, htmlContent)
+	return s.SendEmail([]string{to}, subject, htmlContent)
 }
 
-// SendWelcomeEmail sends a welcome email
-func SendWelcomeEmail(to string, username string) error {
+// SendWelcomeEmail sends a welcome email.
+func (s *Service) SendWelcomeEmail(to string, username string) error {
 	subject := "Welcome to ZGO"
 	htmlContent := fmt.Sprintf(`
 		<h2>Welcome to ZGO</h2>
@@ -193,5 +190,23 @@ func SendWelcomeEmail(to string, username string) error {
 		<p>If you have any questions, please feel free to contact our support team.</p>
 	`, username)
 
-	return SendEmail([]string{to}, subject, htmlContent)
+	return s.SendEmail([]string{to}, subject, htmlContent)
+}
+
+// SendPasswordResetEmail sends a password reset notification email.
+// Deprecated: inject *Service and call the instance method instead.
+func SendPasswordResetEmail(to string, resetToken string) error {
+	if defaultService == nil {
+		return fmt.Errorf("email service not initialized")
+	}
+	return defaultService.SendPasswordResetEmail(to, resetToken)
+}
+
+// SendWelcomeEmail sends a welcome email.
+// Deprecated: inject *Service and call the instance method instead.
+func SendWelcomeEmail(to string, username string) error {
+	if defaultService == nil {
+		return fmt.Errorf("email service not initialized")
+	}
+	return defaultService.SendWelcomeEmail(to, username)
 }

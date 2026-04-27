@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/zgiai/zgo/internal/domain"
 	"gorm.io/gorm"
@@ -90,4 +92,62 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.Use
 		return nil, err
 	}
 	return po.toDomain(), nil
+}
+
+// StorePasswordResetToken stores a one-time password reset token hash.
+func (r *repository) StorePasswordResetToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("user_id = ? AND used_at IS NULL", userID).Delete(&PasswordResetTokenPO{}).Error; err != nil {
+			return err
+		}
+
+		token := &PasswordResetTokenPO{
+			UserID:    userID,
+			TokenHash: tokenHash,
+			ExpiresAt: expiresAt,
+		}
+		return tx.Create(token).Error
+	})
+}
+
+// ResetPasswordWithToken validates a reset token, updates the password, and consumes the token atomically.
+func (r *repository) ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var token PasswordResetTokenPO
+		if err := tx.Where("token_hash = ?", tokenHash).First(&token).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return domain.ErrPasswordResetTokenInvalid
+			}
+			return err
+		}
+
+		if token.UsedAt != nil {
+			return domain.ErrPasswordResetTokenInvalid
+		}
+		if now.After(token.ExpiresAt) {
+			return domain.ErrPasswordResetTokenExpired
+		}
+
+		if err := tx.Model(&UserPO{}).Where("id = ?", token.UserID).Update("password", passwordHash).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return domain.ErrUserNotFound
+			}
+			return err
+		}
+
+		result := tx.Model(&PasswordResetTokenPO{}).
+			Where("id = ? AND used_at IS NULL", token.ID).
+			Updates(map[string]any{
+				"used_at":    now,
+				"updated_at": now,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return domain.ErrPasswordResetTokenInvalid
+		}
+
+		return nil
+	})
 }

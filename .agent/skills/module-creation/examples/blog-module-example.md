@@ -213,13 +213,13 @@ Response:
 
 ## Key Takeaways
 
-1. **8-file structure** ensures consistency across all modules
+1. **starter-style scaffold** gives route-owning business modules a consistent default shape
 2. **Domain layer** is the source of truth for business entities
 3. **Repository** abstracts database details
 4. **Service** contains all business logic
 5. **Handler** is thin, delegates to service
 6. **Wire** automates dependency injection
-7. **Testing** focuses on business logic with mocks
+7. **Testing** should follow real seams first; mocks are for justified external dependencies
 
 ## Common Pitfalls to Avoid
 
@@ -235,8 +235,8 @@ Response:
 ❌ **Don't**: Use global state or singleton
 ✅ **Do**: Use dependency injection
 
-❌ **Don't**: Forget to add soft delete (DeletedAt)
-✅ **Do**: Always include GORM soft delete
+❌ **Don't**: Add soft delete just because the template once did
+✅ **Do**: Add `DeletedAt` only when the module lifecycle requires soft delete
 
 ## Further Reading
 

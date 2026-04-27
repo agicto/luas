@@ -28,11 +28,12 @@ func GinLogger() gin.HandlerFunc {
 
 		// Use the platform logger
 		fields := map[string]any{
-			"status":    statusCode,
-			"latency":   latency.String(),
-			"client_ip": clientIP,
-			"method":    method,
-			"path":      path,
+			"status":     statusCode,
+			"latency":    latency.String(),
+			"client_ip":  clientIP,
+			"method":     method,
+			"path":       path,
+			"request_id": c.GetString("request_id"),
 		}
 
 		if len(c.Errors) > 0 {

@@ -9,10 +9,13 @@ import (
 // These are business errors that can be returned by any layer
 var (
 	// User errors
-	ErrUserNotFound       = errors.New("user not found")
-	ErrEmailAlreadyExists = errors.New("email already registered")
-	ErrInvalidCredentials = errors.New("invalid username or password")
-	ErrAccountDisabled    = errors.New("account is disabled")
+	ErrUserNotFound              = errors.New("user not found")
+	ErrEmailAlreadyExists        = errors.New("email already registered")
+	ErrUsernameAlreadyExists     = errors.New("username already registered")
+	ErrInvalidCredentials        = errors.New("invalid username or password")
+	ErrAccountDisabled           = errors.New("account is disabled")
+	ErrPasswordResetTokenInvalid = errors.New("password reset token is invalid")
+	ErrPasswordResetTokenExpired = errors.New("password reset token is expired")
 
 	// Permission errors
 	ErrPermissionDenied = errors.New("permission denied")

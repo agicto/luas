@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/zgiai/zgo/internal/capabilities/crypto"
+	"github.com/zgiai/zgo/internal/capabilities/idgen"
 	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/pkg/utils"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -19,7 +20,8 @@ import (
 type AuthService interface {
 	Register(ctx context.Context, req *UserRegisterRequest) (*domain.User, error)
 	Login(ctx context.Context, req *UserLoginRequest) (*UserLoginResponse, error)
-	ResetPassword(ctx context.Context, req *UserPasswordResetRequest) error
+	RequestPasswordReset(ctx context.Context, req *UserPasswordResetRequest) error
+	ConfirmPasswordReset(ctx context.Context, req *UserPasswordResetConfirmRequest) error
 }
 
 // ProfileService defines authenticated profile management flows.
@@ -44,11 +46,25 @@ type Service interface {
 	UserQueryService
 }
 
+// UserMailer captures the email seam used by the user starter.
+// Email is a true external dependency, so this seam is worth naming explicitly.
+type UserMailer interface {
+	SendPasswordResetEmail(to string, resetToken string) error
+	SendWelcomeEmail(to string, username string) error
+}
+
+type passwordResetStore interface {
+	StorePasswordResetToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error
+	ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error
+}
+
 // service implements the user service interfaces.
 type service struct {
-	repo       domain.UserRepository
-	jwtService *jwt.Service
-	eventBus   *events.EventBus
+	repo           domain.UserRepository
+	passwordResets passwordResetStore
+	jwtService     *jwt.Service
+	eventBus       *events.EventBus
+	mailer         UserMailer
 }
 
 var (
@@ -59,11 +75,19 @@ var (
 )
 
 // NewService creates a new service instance
-func NewService(repo domain.UserRepository, jwtService *jwt.Service, eventBus *events.EventBus) *service {
+func NewService(
+	repo domain.UserRepository,
+	passwordResets passwordResetStore,
+	jwtService *jwt.Service,
+	eventBus *events.EventBus,
+	mailer UserMailer,
+) *service {
 	return &service{
-		repo:       repo,
-		jwtService: jwtService,
-		eventBus:   eventBus,
+		repo:           repo,
+		passwordResets: passwordResets,
+		jwtService:     jwtService,
+		eventBus:       eventBus,
+		mailer:         mailer,
 	}
 }
 
@@ -73,9 +97,17 @@ func NewService(repo domain.UserRepository, jwtService *jwt.Service, eventBus *e
 
 // Register handles user registration
 func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*domain.User, error) {
+	existingByUsername, err := s.repo.FindByUsername(ctx, req.Username)
+	if err == nil && existingByUsername != nil {
+		return nil, domain.ErrUsernameAlreadyExists
+	}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("failed to check existing username: %w", err)
+	}
+
 	// Check if email already exists
-	exists, err := s.repo.FindByEmail(ctx, req.Email)
-	if err == nil && exists != nil {
+	existingByEmail, err := s.repo.FindByEmail(ctx, req.Email)
+	if err == nil && existingByEmail != nil {
 		return nil, domain.ErrEmailAlreadyExists
 	}
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -112,9 +144,16 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 	// Try username first, then email
 	user, err := s.repo.FindByUsername(ctx, req.Username)
 	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("failed to lookup username: %w", err)
+		}
+
 		user, err = s.repo.FindByEmail(ctx, req.Username)
 		if err != nil {
-			return nil, domain.ErrInvalidCredentials
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, domain.ErrInvalidCredentials
+			}
+			return nil, fmt.Errorf("failed to lookup email: %w", err)
 		}
 	}
 
@@ -212,8 +251,8 @@ func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
 // Public
 // ============================================================================
 
-// ResetPassword resets user password via email
-func (s *service) ResetPassword(ctx context.Context, req *UserPasswordResetRequest) error {
+// RequestPasswordReset creates a one-time reset token and emails it to the user.
+func (s *service) RequestPasswordReset(ctx context.Context, req *UserPasswordResetRequest) error {
 	user, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -222,18 +261,40 @@ func (s *service) ResetPassword(ctx context.Context, req *UserPasswordResetReque
 		return fmt.Errorf("failed to lookup reset user: %w", err)
 	}
 
-	newPassword := utils.GenerateRandomString(12)
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	secret, err := crypto.GenerateKeyHex(24)
+	if err != nil {
+		return fmt.Errorf("failed to generate password reset token: %w", err)
+	}
+	resetToken := "zrp_" + strings.ToLower(idgen.ShortID()) + "." + secret
+	expiresAt := time.Now().Add(30 * time.Minute)
+
+	if err := s.passwordResets.StorePasswordResetToken(ctx, user.ID, crypto.SHA256Hex(resetToken), expiresAt); err != nil {
+		return fmt.Errorf("failed to store password reset token: %w", err)
+	}
+
+	if err := s.mailer.SendPasswordResetEmail(user.Email, resetToken); err != nil {
+		return fmt.Errorf("failed to send password reset email: %w", err)
+	}
+
+	return nil
+}
+
+// ConfirmPasswordReset consumes a one-time token and writes the new password hash.
+func (s *service) ConfirmPasswordReset(ctx context.Context, req *UserPasswordResetConfirmRequest) error {
+	token := strings.TrimSpace(req.Token)
+	if token == "" {
+		return domain.ErrInvalidInput
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user.Password = string(hashedPassword)
-	if err := s.repo.Update(ctx, user); err != nil {
-		return fmt.Errorf("failed to reset password: %w", err)
+	if err := s.passwordResets.ResetPasswordWithToken(ctx, crypto.SHA256Hex(token), string(hashedPassword), time.Now()); err != nil {
+		return err
 	}
-
-	return email.SendPasswordResetEmail(user.Email, newPassword)
+	return nil
 }
 
 // ============================================================================

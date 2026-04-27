@@ -42,7 +42,7 @@ zgo/
 |-----------|------|------|
 | `README.md` | Skills 概念、使用方法、渐进式加载机制、最佳实践 | ~200 |
 | `_template/SKILL.md` | 创建新 skill 的标准模板 | ~150 |
-| `module-creation/SKILL.md` | 创建 DDD 模块的完整工作流（8-file 标准） | ~800+ |
+| `module-creation/SKILL.md` | 创建 starter-style 模块的完整工作流 | ~800+ |
 | `module-creation/scripts/validate-module.sh` | 自动化验证脚本 | ~100 |
 | `module-creation/examples/blog-module-example.md` | Blog 模块完整示例和说明 | ~300 |
 
@@ -55,7 +55,7 @@ zgo/
    └─ 读取所有 SKILL.md 的 YAML frontmatter
 
 2. 用户请求 → 意图分析 → 匹配相关 skill
-   例: "创建一个 Blog 模块" → module-creation skill
+   例: "创建一个 Blog starter" → module-creation skill
 
 3. 动态加载 SKILL.md 完整内容
    └─ 获取详细的 15 步工作流
@@ -91,8 +91,8 @@ cat .agent/skills/module-creation/examples/blog-module-example.md
 │           Level 1: 元数据层 (Startup)                │
 │  ┌────────────────────────────────────────────┐     │
 │  │ name: module-creation                      │     │
-│  │ description: Create DDD modules following  │     │
-│  │              ZGO's 8-file standard         │     │
+│  │ description: Create starter-style modules  │     │
+│  │              for the current scaffold      │     │
 │  │ category: development                      │     │
 │  │ tags: [module, ddd, scaffolding]          │     │
 │  └────────────────────────────────────────────┘     │
@@ -127,7 +127,7 @@ cat .agent/skills/module-creation/examples/blog-module-example.md
 
 ```
 Step 1:  定义模块范围 (名称、实体、端点)
-Step 2:  创建模块目录
+Step 2:  生成默认 starter-style scaffold
 Step 3:  创建 model.go (BlogPostPO 数据库实体)
 Step 4:  创建 dto.go (DTOs + 映射函数)
 Step 5:  创建 repository.go (数据访问接口)
@@ -177,15 +177,15 @@ Step 15: 验证 (自动 + 手动检查)
 
 ### Phase 2 (本月)
 
-- [ ] 创建 `api-development` skill
-- [ ] 创建 `testing-strategy` skill
-- [ ] 创建 `wire-di` skill
-- [ ] 创建 `database-migration` skill
+- [ ] 基于当前 scaffold 继续打磨 `api-development`
+- [ ] 基于真实 seam 打磨 `testing-strategy`
+- [ ] 收敛 scripts/examples 与当前 starter 语义
+- [ ] 固化统一错误契约：`code + error_code + request_id`
 
 ### Phase 3 (下月)
 
-- [ ] 创建 `swagger-docs` skill
-- [ ] 创建 `deployment` skill
+- [ ] 根据需要补充 Swagger / 文档工作流
+- [ ] 根据需要深化 `deployment` skill
 - [ ] 建立 Skill 贡献流程
 - [ ] Skill 版本管理机制
 

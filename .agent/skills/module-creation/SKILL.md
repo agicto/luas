@@ -1,20 +1,22 @@
 ---
 name: module-creation
-description: Complete workflow for creating a new DDD module following ZGO's 8-file standard
+description: Complete workflow for creating a new starter-style DDD module in ZGO
 version: 1.0.0
 category: development
 tags: [module, ddd, scaffolding, architecture]
 author: ZGO Team
-updated: 2026-01-24
+updated: 2026-04-26
 ---
 
 # Module Creation Skill
 
 ## 📋 Purpose
 
-This skill guides you through creating a standardized DDD (Domain-Driven Design) module in the ZGO framework, ensuring adherence to the **8-file structure** and architectural best practices.
+This skill guides you through creating a starter-style DDD (Domain-Driven Design) module in the ZGO framework. It treats the 8-file layout as the default template for route-owning business modules, while keeping the architecture aligned with the current `core / starter / capability / optional starter / example` split.
 
-ZGO uses a layered architecture where each business module is self-contained with clear separation of concerns:
+Use [`architecture-principles`](../architecture-principles/) first when deciding whether a new module should exist, what kind of module it is, and whether any new seam is justified.
+
+ZGO uses a layered architecture where route-owning business modules are usually self-contained with clear separation of concerns:
 - **Model Layer** (Database entities)
 - **DTO Layer** (Data Transfer Objects + Mappers)
 - **Repository Layer** (Data access)
@@ -24,11 +26,13 @@ ZGO uses a layered architecture where each business module is self-contained wit
 - **Provider** (Dependency injection)
 - **Tests** (Unit/integration tests)
 
+Capabilities and examples may intentionally use lighter structures.
+
 ## 🎯 When to Use
 
 Use this skill when:
-- Creating a new business module (e.g., User, Blog, Product, Order)
-- Scaffolding a complete CRUD feature
+- Creating a new route-owning business module (e.g., User, Blog, Product, Order)
+- Scaffolding a default or optional starter
 - Ensuring consistency with ZGO's DDD architecture
 - Teaching or onboarding team members to ZGO patterns
 
@@ -39,6 +43,19 @@ Use this skill when:
 - [ ] Wire tool installed: `go install github.com/google/wire/cmd/wire@latest`
 - [ ] Basic understanding of DDD concepts
 - [ ] Database connection configured
+
+## 🧭 Step 0: Classify the Module First
+
+Before scaffolding, decide what you are building:
+
+| Type | Typical Location | Default Shape |
+|------|------------------|---------------|
+| `starter` | `internal/modules/<name>` | 8-file route-owning module + starter manifest |
+| `optional starter` | `internal/modules/<name>` | same as starter, but not added to default registry |
+| `capability` | `internal/capabilities/<name>` | no HTTP files unless the capability truly owns routes |
+| `example` | `examples/...` or docs | optimized for teaching, not default assembly |
+
+If the answer is `capability` or `example`, do not force the 8-file scaffold just to satisfy a template.
 
 ## 🚀 Workflow Steps
 
@@ -72,21 +89,16 @@ Fields:
   - created_at, updated_at, deleted_at (GORM standard)
 ```
 
-### Step 2: Create Module Directory
+### Step 2: Generate the Default Scaffold
 
 ```bash
-# Navigate to modules directory
-cd internal/modules
-
-# Create module folder (lowercase, singular)
-mkdir blog
-cd blog
+go run ./cmd/zgo make:module Blog
 ```
 
 **Expected structure**:
 ```
 internal/modules/blog/
-├── (8 files will be created below)
+├── (starter-style scaffold files will be created below)
 ```
 
 ### Step 3: Create Database Entity (model.go)
@@ -125,7 +137,7 @@ func (BlogPostPO) TableName() string {
 **Key points**:
 - Suffix `PO` for database models
 - Use GORM tags for constraints
-- Always include soft delete (`DeletedAt`)
+- Add soft delete (`DeletedAt`) only when the module lifecycle needs it
 - Use `TableName()` for explicit table names
 
 ### Step 4: Create Domain Entity and DTOs (dto.go)
@@ -243,22 +255,13 @@ import (
     "gorm.io/gorm"
 )
 
-// Repository defines blog post data access interface
-type Repository interface {
-    Create(ctx context.Context, post *domain.BlogPost) error
-    GetByID(ctx context.Context, id uint) (*domain.BlogPost, error)
-    Update(ctx context.Context, post *domain.BlogPost) error
-    Delete(ctx context.Context, id uint) error
-    List(ctx context.Context, page, pageSize int) ([]*domain.BlogPost, int64, error)
-}
-
 // repository is the private implementation
 type repository struct {
     db *gorm.DB
 }
 
 // NewRepository creates a new blog repository
-func NewRepository(db *gorm.DB) Repository {
+func NewRepository(db *gorm.DB) *repository {
     return &repository{db: db}
 }
 
@@ -315,9 +318,9 @@ func (r *repository) List(ctx context.Context, page, pageSize int) ([]*domain.Bl
 ```
 
 **Key patterns**:
-- Interface-based design
+- Concrete-first design
 - Private struct implementation
-- Constructor returns interface
+- Introduce an interface only when callers or tests truly need a seam
 - Always use `context.Context`
 - Convert PO ↔ Domain at repository boundary
 
@@ -342,22 +345,13 @@ var (
     ErrUnauthorized         = errors.New("unauthorized operation")
 )
 
-// Service defines blog post business logic interface
-type Service interface {
-    Create(ctx context.Context, req *CreateBlogPostRequest, authorID uint) (*domain.BlogPost, error)
-    GetByID(ctx context.Context, id uint) (*domain.BlogPost, error)
-    Update(ctx context.Context, id uint, req *UpdateBlogPostRequest) (*domain.BlogPost, error)
-    Delete(ctx context.Context, id uint) error
-    List(ctx context.Context, page, pageSize int) ([]*domain.BlogPost, int64, error)
-}
-
 // service is the private implementation
 type service struct {
-    repo Repository
+    repo domain.BlogPostRepository
 }
 
 // NewService creates a new blog service
-func NewService(repo Repository) Service {
+func NewService(repo domain.BlogPostRepository) *service {
     return &service{repo: repo}
 }
 
@@ -1001,9 +995,8 @@ See [`examples/blog-module-complete/`](./examples/blog-module-complete/) for the
 
 - [`api-development`](../api-development/): For handler patterns and pagination
 - [`testing-strategy`](../testing-strategy/): For comprehensive test coverage
-- [`wire-di`](../wire-di/): For advanced dependency injection scenarios
-- [`database-migration`](../database-migration/): For migration best practices
-- [`swagger-docs`](../swagger-docs/): For API documentation
+- [`coding-standards`](../coding-standards/): For seam and layering rules
+- [`database-design`](../database-design/): For lifecycle columns, indexes, and migration decisions
 
 ## 📖 References
 
@@ -1017,7 +1010,7 @@ See [`examples/blog-module-complete/`](./examples/blog-module-complete/) for the
 
 ## 🎉 Success!
 
-You've successfully created a complete DDD module following ZGO's 8-file standard!
+You've successfully created a starter-style DDD module using ZGO's default scaffold template!
 
 **What's next?**
 1. Add more business logic and validation

@@ -206,8 +206,8 @@ func Load() (*Config, error) {
 		CORS: CORSConfig{
 			AllowOrigins:     env.GetSlice("CORS_ALLOW_ORIGINS", []string{"*"}),
 			AllowMethods:     env.GetSlice("CORS_ALLOW_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
-			AllowHeaders:     env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization"}),
-			ExposeHeaders:    env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length"}),
+			AllowHeaders:     env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"}),
+			ExposeHeaders:    env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length", "X-Request-ID"}),
 			AllowCredentials: env.GetBool("CORS_ALLOW_CREDENTIALS", true),
 		},
 		Email: EmailConfig{
@@ -281,7 +281,7 @@ func MustLoad() *Config {
 }
 
 func validate(cfg *Config) error {
-	if cfg.Database.Enabled && cfg.Database.Password == "" {
+	if cfg.Database.Enabled && cfg.Database.Driver != "sqlite" && cfg.Database.Password == "" {
 		return fmt.Errorf("DB_PASSWORD is required when database is enabled")
 	}
 	if cfg.JWT.Secret == "" {
@@ -304,6 +304,20 @@ func IsDevelopment() bool {
 func LoadFresh() (*Config, error) {
 	env.LoadFresh()
 	return Load()
+}
+
+// Use registers an already-constructed config as the process-global config.
+// This is primarily used by tests and alternate bootstraps that still want to
+// reuse the standard DI graph and runtime assembly.
+func Use(cfg *Config) (*Config, error) {
+	if cfg == nil {
+		return nil, fmt.Errorf("config is required")
+	}
+	if err := validate(cfg); err != nil {
+		return nil, err
+	}
+	GlobalConfig = cfg
+	return cfg, nil
 }
 
 // CacheConfig caches config (no-op for simplified version)

@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/domain"
-	"gorm.io/gorm"
 )
 
 // Common domain errors that can be mapped to HTTP responses.
@@ -18,51 +16,6 @@ var (
 	ErrConflict     = errors.New("conflict")
 	ErrValidation   = errors.New("validation failed")
 )
-
-// ErrorMapper maps domain errors to HTTP status codes.
-type ErrorMapper struct {
-	mappings map[error]int
-}
-
-// DefaultErrorMapper provides default error to status code mappings.
-var DefaultErrorMapper = &ErrorMapper{
-	mappings: map[error]int{
-		ErrNotFound:                  http.StatusNotFound,
-		ErrUnauthorized:              http.StatusUnauthorized,
-		ErrForbidden:                 http.StatusForbidden,
-		ErrConflict:                  http.StatusConflict,
-		ErrValidation:                http.StatusUnprocessableEntity,
-		gorm.ErrRecordNotFound:       http.StatusNotFound,
-		domain.ErrNotFound:           http.StatusNotFound,
-		domain.ErrUserNotFound:       http.StatusNotFound,
-		domain.ErrRoleNotFound:       http.StatusNotFound,
-		domain.ErrAPIKeyNotFound:     http.StatusNotFound,
-		domain.ErrInvalidCredentials: http.StatusUnauthorized,
-		domain.ErrAPIKeyInvalid:      http.StatusUnauthorized,
-		domain.ErrAPIKeyExpired:      http.StatusUnauthorized,
-		domain.ErrAPIKeyRevoked:      http.StatusUnauthorized,
-		domain.ErrAccountDisabled:    http.StatusForbidden,
-		domain.ErrPermissionDenied:   http.StatusForbidden,
-		domain.ErrEmailAlreadyExists: http.StatusConflict,
-		domain.ErrConflict:           http.StatusConflict,
-		domain.ErrInvalidInput:       http.StatusUnprocessableEntity,
-	},
-}
-
-// Register adds a custom error mapping.
-func (m *ErrorMapper) Register(err error, statusCode int) {
-	m.mappings[err] = statusCode
-}
-
-// GetStatusCode returns the HTTP status code for an error.
-func (m *ErrorMapper) GetStatusCode(err error) int {
-	for mappedErr, code := range m.mappings {
-		if errors.Is(err, mappedErr) {
-			return code
-		}
-	}
-	return http.StatusInternalServerError
-}
 
 // HandleError automatically maps errors to appropriate HTTP responses.
 // It checks for common error types and returns the correct status code.
@@ -88,8 +41,7 @@ func HandleError(c *gin.Context, message string, err error) {
 		return
 	}
 
-	statusCode := DefaultErrorMapper.GetStatusCode(err)
-	ErrorWithDetails(c, statusCode, message, err)
+	ErrorWithDescriptor(c, DefaultErrorMapper.Resolve(err), message, err)
 }
 
 // HandleErrorWithMapper uses a custom error mapper.
@@ -99,8 +51,7 @@ func HandleErrorWithMapper(c *gin.Context, message string, err error, mapper *Er
 		return
 	}
 
-	statusCode := mapper.GetStatusCode(err)
-	ErrorWithDetails(c, statusCode, message, err)
+	ErrorWithDescriptor(c, mapper.Resolve(err), message, err)
 }
 
 // Abort sends an error response and aborts the request chain.
@@ -119,8 +70,10 @@ func HandleErrorWithMapper(c *gin.Context, message string, err error, mapper *Er
 //	}
 func Abort(c *gin.Context, statusCode int, message string) {
 	c.AbortWithStatusJSON(statusCode, ErrorResponse{
-		Code:    statusCode,
-		Message: message,
+		Code:      statusCode,
+		ErrorCode: defaultErrorCodeForStatus(statusCode),
+		Message:   message,
+		RequestID: currentRequestID(c),
 	})
 }
 
@@ -131,9 +84,11 @@ func AbortWithError(c *gin.Context, statusCode int, message string, err error) {
 		errMsg = err.Error()
 	}
 	c.AbortWithStatusJSON(statusCode, ErrorResponse{
-		Code:    statusCode,
-		Message: message,
-		Error:   errMsg,
+		Code:      statusCode,
+		ErrorCode: defaultErrorCodeForStatus(statusCode),
+		Message:   message,
+		Error:     errMsg,
+		RequestID: currentRequestID(c),
 	})
 }
 

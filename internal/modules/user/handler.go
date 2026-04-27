@@ -17,6 +17,7 @@ type Handler struct {
 	profile    ProfileService
 	query      UserQueryService
 	jwtService *jwt.Service
+	mailer     UserMailer
 }
 
 var (
@@ -27,12 +28,13 @@ var (
 )
 
 // NewHandler creates a new Handler instance.
-func NewHandler(auth AuthService, profile ProfileService, query UserQueryService, jwtService *jwt.Service) *Handler {
+func NewHandler(auth AuthService, profile ProfileService, query UserQueryService, jwtService *jwt.Service, mailer UserMailer) *Handler {
 	return &Handler{
 		auth:       auth,
 		profile:    profile,
 		query:      query,
 		jwtService: jwtService,
+		mailer:     mailer,
 	}
 }
 
@@ -43,7 +45,7 @@ func (h *Handler) Name() string {
 
 // RegisterEvents registers user module event listeners
 func (h *Handler) RegisterEvents(bus *events.EventBus) {
-	bus.Subscribe(domain.EventUserCreated, HandleUserCreated, events.WithAsync())
+	bus.Subscribe(domain.EventUserCreated, h.handleUserCreated, events.WithAsync())
 }
 
 // ============================================================================
@@ -166,19 +168,34 @@ func (h *Handler) DeleteAccount(c *gin.Context) {
 // Public
 // ============================================================================
 
-// ResetPassword initiates password reset
-func (h *Handler) ResetPassword(c *gin.Context) {
+// RequestPasswordReset initiates password reset.
+func (h *Handler) RequestPasswordReset(c *gin.Context) {
 	var req UserPasswordResetRequest
 	if !handler.BindJSON(c, &req) {
 		return
 	}
 
-	if err := h.auth.ResetPassword(c.Request.Context(), &req); err != nil {
+	if err := h.auth.RequestPasswordReset(c.Request.Context(), &req); err != nil {
 		response.HandleError(c, "Failed to reset password", err)
 		return
 	}
 
-	response.Success(c, gin.H{"message": "Password reset email sent"})
+	response.Success(c, gin.H{"message": "If the account exists, password reset instructions have been sent"})
+}
+
+// ConfirmPasswordReset consumes a reset token and writes a new password.
+func (h *Handler) ConfirmPasswordReset(c *gin.Context) {
+	var req UserPasswordResetConfirmRequest
+	if !handler.BindJSON(c, &req) {
+		return
+	}
+
+	if err := h.auth.ConfirmPasswordReset(c.Request.Context(), &req); err != nil {
+		response.HandleError(c, "Failed to confirm password reset", err)
+		return
+	}
+
+	response.Success(c, gin.H{"message": "Password has been reset successfully"})
 }
 
 // ============================================================================

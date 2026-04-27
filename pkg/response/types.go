@@ -105,9 +105,11 @@ type Links struct {
 //	    "error": "record not found"
 //	}
 type ErrorResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Error   string `json:"error,omitempty"`
+	Code      int    `json:"code"`
+	ErrorCode string `json:"error_code,omitempty"`
+	Message   string `json:"message"`
+	Error     string `json:"error,omitempty"`
+	RequestID string `json:"request_id,omitempty"`
 }
 
 // ValidationErrorResponse is returned for validation failures.
@@ -124,9 +126,11 @@ type ErrorResponse struct {
 //	    }
 //	}
 type ValidationErrorResponse struct {
-	Code    int                 `json:"code"`
-	Message string              `json:"message"`
-	Errors  map[string][]string `json:"errors"`
+	Code      int                 `json:"code"`
+	ErrorCode string              `json:"error_code,omitempty"`
+	Message   string              `json:"message"`
+	Errors    map[string][]string `json:"errors"`
+	RequestID string              `json:"request_id,omitempty"`
 }
 
 // Responder interface for custom response types.

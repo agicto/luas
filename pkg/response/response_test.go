@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
+	"github.com/zgiai/zgo/internal/domain"
 )
 
 func init() {
@@ -62,6 +63,7 @@ func TestNoContent(t *testing.T) {
 func TestBadRequest(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	c.Set("request_id", "req-1")
 
 	BadRequest(c, "Invalid input")
 
@@ -71,7 +73,9 @@ func TestBadRequest(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, resp.Code)
+	assert.Equal(t, ErrorCodeInvalidInput, resp.ErrorCode)
 	assert.Equal(t, "Invalid input", resp.Message)
+	assert.Equal(t, "req-1", resp.RequestID)
 }
 
 func TestNotFound(t *testing.T) {
@@ -86,6 +90,7 @@ func TestNotFound(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNotFound, resp.Code)
+	assert.Equal(t, ErrorCodeNotFound, resp.ErrorCode)
 	assert.Equal(t, "User not found", resp.Message)
 }
 
@@ -101,6 +106,7 @@ func TestUnauthorized(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, resp.Code)
+	assert.Equal(t, ErrorCodeUnauthorized, resp.ErrorCode)
 	assert.Equal(t, "Unauthorized", resp.Message)
 }
 
@@ -129,6 +135,7 @@ func TestForbidden(t *testing.T) {
 	var resp ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
+	assert.Equal(t, ErrorCodeForbidden, resp.ErrorCode)
 	assert.Equal(t, http.StatusForbidden, resp.Code)
 	assert.Equal(t, "Forbidden", resp.Message)
 }
@@ -136,6 +143,7 @@ func TestForbidden(t *testing.T) {
 func TestValidationFailed(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	c.Set("request_id", "req-2")
 
 	errors := map[string][]string{
 		"email":    {"The email field is required"},
@@ -149,9 +157,11 @@ func TestValidationFailed(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnprocessableEntity, resp.Code)
+	assert.Equal(t, ErrorCodeValidationFailed, resp.ErrorCode)
 	assert.Equal(t, "Validation failed", resp.Message)
 	assert.Len(t, resp.Errors["email"], 1)
 	assert.Len(t, resp.Errors["password"], 1)
+	assert.Equal(t, "req-2", resp.RequestID)
 }
 
 func TestInternalServerError(t *testing.T) {
@@ -166,7 +176,42 @@ func TestInternalServerError(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+	assert.Equal(t, ErrorCodeInternal, resp.ErrorCode)
 	assert.Equal(t, "Something went wrong", resp.Message)
+}
+
+func TestHandleErrorUsesStableErrorCode(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("request_id", "req-3")
+
+	HandleError(c, "Registration failed", domain.ErrUsernameAlreadyExists)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+
+	var resp ErrorResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusConflict, resp.Code)
+	assert.Equal(t, domain.CodeUsernameAlreadyExists, resp.ErrorCode)
+	assert.Equal(t, "Registration failed", resp.Message)
+	assert.Equal(t, "req-3", resp.RequestID)
+}
+
+func TestAbortIncludesErrorCodeAndRequestID(t *testing.T) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Set("request_id", "req-4")
+
+	Abort(c, http.StatusUnauthorized, "Authentication required")
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+
+	var resp ErrorResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	assert.NoError(t, err)
+	assert.Equal(t, ErrorCodeUnauthorized, resp.ErrorCode)
+	assert.Equal(t, "req-4", resp.RequestID)
 }
 
 // Mock resource for testing

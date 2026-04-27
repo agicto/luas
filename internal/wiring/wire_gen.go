@@ -45,14 +45,52 @@ func InitApplication() (*app.Application, error) {
 	apikeyHandler := apikey.NewHandler(apikeyService)
 	userRepository := user.NewRepository(db)
 	jwtService := jwt.NewService(configConfig)
-	userService := user.NewService(userRepository, jwtService, eventBus)
-	userHandler := user.NewHandler(userService, userService, userService, jwtService)
+	userMailer := user.NewUserMailer(service)
+	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
 	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
 	if err != nil {
 		return nil, err
 	}
 	application := &app.Application{
 		Config:       configConfig,
+		DB:           db,
+		EmailService: service,
+		EventBus:     eventBus,
+		Migrator:     migrator,
+		Starters:     registry,
+	}
+	return application, nil
+}
+
+// InitApplicationWithConfig initializes the application using an explicitly supplied config.
+// This is primarily used by tests so they can reuse the production DI graph and startup chain.
+func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
+	db, err := database.NewDB(cfg)
+	if err != nil {
+		return nil, err
+	}
+	service := email.NewService(cfg)
+	eventBus := events.NewEventBus()
+	repository := migration.NewDatabaseRepositoryProvider(db)
+	migrator := migration.NewMigratorProvider(repository, db, eventBus)
+	auditRepository := audit.NewRepository(db)
+	auditService := audit.NewService(auditRepository)
+	handler := audit.NewHandler(auditService)
+	apikeyRepository := apikey.NewRepository(db)
+	apikeyService := apikey.NewService(apikeyRepository)
+	apikeyHandler := apikey.NewHandler(apikeyService)
+	userRepository := user.NewRepository(db)
+	jwtService := jwt.NewService(cfg)
+	userMailer := user.NewUserMailer(service)
+	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
+	if err != nil {
+		return nil, err
+	}
+	application := &app.Application{
+		Config:       cfg,
 		DB:           db,
 		EmailService: service,
 		EventBus:     eventBus,

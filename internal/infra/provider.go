@@ -15,7 +15,12 @@ import (
 var ProviderSet = wire.NewSet(
 	// Config - loaded from environment
 	config.Load,
+	ConfiguredProviderSet,
+)
 
+// ConfiguredProviderSet aggregates infrastructure providers that depend on an already-resolved config.
+// Tests and alternate bootstraps can reuse the same graph by supplying config via config.Use.
+var ConfiguredProviderSet = wire.NewSet(
 	// Database - depends on Config
 	database.NewDB,
 

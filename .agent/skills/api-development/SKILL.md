@@ -5,14 +5,14 @@ version: 1.0.0
 category: development
 tags: [api, rest, pagination, errors, standards]
 author: ZGO Team
-updated: 2026-01-24
+updated: 2026-04-26
 ---
 
 # API Development Standards
 
 ## 📋 Purpose
 
-This skill provides comprehensive API development standards for the ZGO Go backend project, ensuring consistent and high-quality REST APIs across all modules.
+This skill provides HTTP standards for route-owning ZGO modules. It applies to `starter` and `optional starter` modules that expose REST endpoints. `capability` modules may not expose HTTP at all.
 
 ## 🎯 When to Use
 
@@ -26,7 +26,7 @@ This skill provides comprehensive API development standards for the ZGO Go backe
 
 - [ ] Understanding of Go and Gin framework
 - [ ] Familiarity with RESTful principles
-- [ ] Knowledge of ZGO's module structure (8-file standard)
+- [ ] Knowledge of the route-owning starter template
 
 ## 📚 Core Standards
 
@@ -56,21 +56,21 @@ import (
 
 // ✅ CORRECT - With pagination
 func (h *Handler) List(c *gin.Context) {
-    // One-liner pagination (recommended)
-    users, paginator, err := pagination.PaginateFromContext[*domain.User](c, h.db)
+    page := pagination.FromContext(c)
+    users, total, err := h.service.List(c.Request.Context(), page.GetPage(), page.GetPerPage())
     if err != nil {
         response.HandleError(c, "Failed to fetch users", err)
         return
     }
-    
-    // Auto-detects pagination and includes meta + links
+
+    paginator := pagination.NewPaginator(users, total, page.GetPage(), page.GetPerPage())
+    paginator.SetPath(c.Request.URL.Path)
     response.Success(c, paginator)
 }
 
 // ❌ WRONG - Without pagination
 func (h *Handler) List(c *gin.Context) {
-    var users []User
-    h.db.Find(&users)  // Loads ALL records!
+    users, _, _ := h.service.List(c.Request.Context(), 1, 10000)
     response.Success(c, users)
 }
 ```
@@ -157,7 +157,16 @@ GET /api/users?page=2&page_size=20&status=active&search=john
 1. **Consistency**: Same format across all APIs
 2. **Automatic Mapping**: Framework handles status code logic
 3. **User-Friendly**: Clean error messages for clients
-4. **Debugging**: Structured errors for logging
+4. **Debugging**: Structured errors for logging and client-side correlation
+
+#### Error Contract Rules
+
+- `code` = HTTP status code
+- `error_code` = stable machine-readable contract, suitable for frontend branching and alerts
+- `message` = human-readable text that may evolve
+- `request_id` = correlation identifier for logs and support/debug workflows
+
+Do not ask clients to branch on `message` text.
 
 #### Available Error Functions
 
@@ -210,8 +219,10 @@ func (h *Handler) Get(c *gin.Context) {
 ```json
 {
   "code": 404,
+  "error_code": "USER.NOT_FOUND",
   "message": "User not found",
-  "error": "record not found"
+  "error": "record not found",
+  "request_id": "req_123"
 }
 ```
 
@@ -219,7 +230,9 @@ func (h *Handler) Get(c *gin.Context) {
 ```json
 {
   "code": 422,
+  "error_code": "COMMON.VALIDATION_FAILED",
   "message": "Validation failed",
+  "request_id": "req_123",
   "errors": {
     "email": ["The email field is required", "Email format is invalid"],
     "password": ["The password must be at least 8 characters"]
@@ -514,6 +527,8 @@ Use this checklist before submitting API code:
 ### Error Handling
 - [ ] All errors use `response.*` functions
 - [ ] No manual `c.JSON(statusCode, ...)` for errors
+- [ ] Error responses include stable `error_code`
+- [ ] Clients can correlate failures via `request_id`
 - [ ] Error messages are user-friendly
 - [ ] Custom errors defined in service layer
 - [ ] No sensitive information in error responses

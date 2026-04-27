@@ -68,7 +68,8 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 
 | Skill | Description | When to Use |
 |-------|-------------|-------------|
-| [`module-creation`](./.agent/skills/module-creation/) | Create DDD modules (8-file standard) | Creating new business modules |
+| [`architecture-principles`](./.agent/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
+| [`module-creation`](./.agent/skills/module-creation/) | Create starter-style DDD modules | Creating new business modules |
 | [`coding-standards`](./.agent/skills/coding-standards/) | Verify code follows ZGO standards | Code review, PR submission |
 | [`api-development`](./.agent/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
 | [`logging-standards`](./.agent/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
@@ -137,7 +138,7 @@ make wire          # Generate DI
 make air           # Hot-reload dev server
 ```
 
-## Module Structure (8-file standard)
+## Module Structure (default starter template)
 
 | File | Responsibility |
 |------|----------------|
@@ -178,16 +179,16 @@ hash, _ := crypto.HashPassword("password")
 - **Files**: `snake_case` (`user_handler.go`)
 - **DB Entities**: `{Name}PO` (`UserPO`)
 - **DTOs**: `{Action}{Name}Request` / `{Name}Response`
-- **Interfaces**: `Noun` (`Repository`)
+- **Interfaces**: explicit seam names (`UserRepository`, `AuthService`) only when justified
 - **Private Impl**: lowercase (`repository`)
-- **Constructor**: `New{InterfaceName}`
+- **Constructor**: `New{TypeName}` returning the concrete implementation by default
 - **JSON Tags**: `snake_case` (`json:"user_id"`)
 
 ### 2. Architecture Standards
 
-#### 8-File Module Structure (Mandatory)
+#### 8-File Starter Structure (Recommended Default)
 
-Each module **must** include the following 8 files:
+Route-owning starter modules usually include the following 8 files:
 
 ```
 internal/modules/user/
@@ -201,6 +202,8 @@ internal/modules/user/
 └── service_test.go       # 8. Unit tests
 ```
 
+`capability` modules may intentionally omit HTTP-oriented files such as `handler.go` and `routes.go`.
+
 **Validation**:
 ```bash
 .agent/skills/module-creation/scripts/validate-module.sh user
@@ -211,7 +214,7 @@ internal/modules/user/
 > **📚 Full Guide**: See [`coding-standards` skill - Architecture](./.agent/skills/coding-standards/)
 
 - **Layered Flow**: `Handler` (DTO) → `Service` (Domain) → `Repository` (PO) → `Database`.
-- **8-File Module**: Mandatory structure for all business modules.
+- **8-File Starter Template**: Recommended for route-owning starter modules.
   > **🚀 Create Module**: Use [`module-creation` skill](./.agent/skills/module-creation/)
 
 ---
@@ -230,6 +233,8 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 ### 4. Error & Security Standards
 
 - **Errors**: Use `response.HandleError`, wrap with `fmt.Errorf("%w")`, and define package-level `Err...`.
+- **Error Contract**: Non-2xx responses MUST expose stable `error_code`; do not make clients branch on message text.
+- **Request Correlation**: Error responses SHOULD include `request_id`, and request logs SHOULD carry the same value.
 - **Security**: Hide sensitive fields (`json:"-"`), validate inputs (`binding`), and use `crypto` capability.
 
 ---
@@ -262,7 +267,7 @@ See [`.agent/skills/api-development/examples/complete-crud-handler.go`](./.agent
 1. **DTO includes Mapper** - Mapper functions go in `dto.go`
 2. **Use Domain Layer** - Business logic uses `domain.User`
 3. **Private implementations** - Struct names are unexported
-4. **Constructors return interfaces** - `NewService() Service`
+4. **Constructors return concrete types by default** - expose interfaces only when a real seam exists
 5. **snake_case JSON** - `json:"user_id"`
 6. **English comments** - All code and comments in English
 7. **Use handler package** - For ParseID, GetUserID, BindJSON

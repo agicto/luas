@@ -22,4 +22,4 @@ The application, route setup, migration bootstrap, and seed bootstrap should con
 
 - Starter assembly moves behind one seam.
 - Changing the default scaffold no longer requires edits across unrelated files.
-- Future work can deepen this seam further by moving command registration and optional starter selection into the same registry.
+- Future work can deepen this seam further by supporting optional starter selection without editing default assembly code.

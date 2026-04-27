@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/zgo/internal/infra/email"
 	"github.com/zgiai/zgo/internal/infra/events"
 	"github.com/zgiai/zgo/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
@@ -21,6 +24,8 @@ type fakeRepo struct {
 	findByEmailFn    func(context.Context, string) (*domain.User, error)
 	findByUsernameFn func(context.Context, string) (*domain.User, error)
 	findAllFn        func(context.Context, int, int) ([]*domain.User, int64, error)
+	storeResetFn     func(context.Context, uint, string, time.Time) error
+	resetByTokenFn   func(context.Context, string, string, time.Time) error
 }
 
 func (r *fakeRepo) Create(ctx context.Context, user *domain.User) error {
@@ -72,8 +77,23 @@ func (r *fakeRepo) FindAll(ctx context.Context, page, pageSize int) ([]*domain.U
 	return nil, 0, nil
 }
 
+func (r *fakeRepo) StorePasswordResetToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error {
+	if r.storeResetFn != nil {
+		return r.storeResetFn(ctx, userID, tokenHash, expiresAt)
+	}
+	return nil
+}
+
+func (r *fakeRepo) ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error {
+	if r.resetByTokenFn != nil {
+		return r.resetByTokenFn(ctx, tokenHash, passwordHash, now)
+	}
+	return nil
+}
+
 func newTestService(repo domain.UserRepository) *service {
-	return NewService(repo, jwt.NewTestService(), events.NewEventBus())
+	cfg := &config.Config{}
+	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), email.NewService(cfg))
 }
 
 func mustHashPassword(t *testing.T, password string) string {
@@ -118,6 +138,9 @@ func TestServiceRegisterSuccess(t *testing.T) {
 
 func TestServiceRegisterReturnsDomainErrorWhenEmailExists(t *testing.T) {
 	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
 		findByEmailFn: func(context.Context, string) (*domain.User, error) {
 			return &domain.User{ID: 1, Email: "alice@example.com"}, nil
 		},
@@ -133,8 +156,28 @@ func TestServiceRegisterReturnsDomainErrorWhenEmailExists(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrEmailAlreadyExists)
 }
 
+func TestServiceRegisterReturnsDomainErrorWhenUsernameExists(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 1, Username: "alice"}, nil
+		},
+	})
+
+	user, err := svc.Register(context.Background(), &UserRegisterRequest{
+		Username: "alice",
+		Email:    "alice@example.com",
+		Password: "password123",
+	})
+
+	assert.Nil(t, user)
+	assert.ErrorIs(t, err, domain.ErrUsernameAlreadyExists)
+}
+
 func TestServiceRegisterFailsFastOnLookupError(t *testing.T) {
 	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
 		findByEmailFn: func(context.Context, string) (*domain.User, error) {
 			return nil, errors.New("db unavailable")
 		},
@@ -208,6 +251,22 @@ func TestServiceLoginReturnsInvalidCredentialsOnWrongPassword(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
 }
 
+func TestServiceLoginFailsFastOnUsernameLookupError(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+			return nil, errors.New("db unavailable")
+		},
+	})
+
+	resp, err := svc.Login(context.Background(), &UserLoginRequest{
+		Username: "alice",
+		Password: "password123",
+	})
+
+	assert.Nil(t, resp)
+	assert.EqualError(t, err, "failed to lookup username: db unavailable")
+}
+
 func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *testing.T) {
 	svc := newTestService(&fakeRepo{
 		findByIDFn: func(context.Context, uint) (*domain.User, error) {
@@ -227,16 +286,81 @@ func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *tes
 	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
 }
 
-func TestServiceResetPasswordDoesNotEnumerateUnknownEmail(t *testing.T) {
+func TestServiceRequestPasswordResetDoesNotEnumerateUnknownEmail(t *testing.T) {
 	svc := newTestService(&fakeRepo{
 		findByEmailFn: func(context.Context, string) (*domain.User, error) {
 			return nil, gorm.ErrRecordNotFound
 		},
 	})
 
-	err := svc.ResetPassword(context.Background(), &UserPasswordResetRequest{
+	err := svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{
 		Email: "missing@example.com",
 	})
 
 	assert.NoError(t, err)
+}
+
+func TestServiceRequestPasswordResetStoresHashedToken(t *testing.T) {
+	var storedUserID uint
+	var storedTokenHash string
+	var storedExpiresAt time.Time
+
+	svc := newTestService(&fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 42, Email: "alice@example.com"}, nil
+		},
+		storeResetFn: func(_ context.Context, userID uint, tokenHash string, expiresAt time.Time) error {
+			storedUserID = userID
+			storedTokenHash = tokenHash
+			storedExpiresAt = expiresAt
+			return nil
+		},
+	})
+
+	err := svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{
+		Email: "alice@example.com",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, uint(42), storedUserID)
+	assert.Len(t, storedTokenHash, 64)
+	assert.WithinDuration(t, time.Now().Add(30*time.Minute), storedExpiresAt, 5*time.Second)
+}
+
+func TestServiceConfirmPasswordResetHashesNewPassword(t *testing.T) {
+	var seenTokenHash string
+	var seenPasswordHash string
+
+	svc := newTestService(&fakeRepo{
+		resetByTokenFn: func(_ context.Context, tokenHash string, passwordHash string, _ time.Time) error {
+			seenTokenHash = tokenHash
+			seenPasswordHash = passwordHash
+			return nil
+		},
+	})
+
+	err := svc.ConfirmPasswordReset(context.Background(), &UserPasswordResetConfirmRequest{
+		Token:       "reset-token-value",
+		NewPassword: "new-password-123",
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, seenTokenHash, 64)
+	assert.NotEqual(t, "new-password-123", seenPasswordHash)
+	assert.NoError(t, bcrypt.CompareHashAndPassword([]byte(seenPasswordHash), []byte("new-password-123")))
+}
+
+func TestServiceConfirmPasswordResetReturnsDomainErrorFromResetStore(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		resetByTokenFn: func(context.Context, string, string, time.Time) error {
+			return domain.ErrPasswordResetTokenExpired
+		},
+	})
+
+	err := svc.ConfirmPasswordReset(context.Background(), &UserPasswordResetConfirmRequest{
+		Token:       "expired-token",
+		NewPassword: "new-password-123",
+	})
+
+	assert.ErrorIs(t, err, domain.ErrPasswordResetTokenExpired)
 }

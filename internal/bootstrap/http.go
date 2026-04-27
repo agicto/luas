@@ -17,6 +17,7 @@ import (
 	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/health"
 	"github.com/zgiai/zgo/internal/infra/metrics"
+	infraMiddleware "github.com/zgiai/zgo/internal/infra/middleware"
 	"github.com/zgiai/zgo/internal/infra/tracing"
 	"github.com/zgiai/zgo/pkg/logger"
 	"github.com/zgiai/zgo/pkg/support"
@@ -68,6 +69,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	}
 
 	// Add custom logger and recovery middleware
+	r.Use(infraMiddleware.RequestID())
 	r.Use(logger.GinLogger())
 	r.Use(gin.Recovery())
 

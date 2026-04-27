@@ -10,15 +10,17 @@ ZGO is a scaffold, so a new project needs useful business-ready modules on day o
 
 ## Decision
 
-The default scaffold ships with two starters:
+The default scaffold ships with three starters:
 
 - `user`
 - `apikey`
+- `audit`
 
 The `permission` module remains an `optional starter`, not part of the default scaffold.
 
 ## Consequences
 
-- New projects get auth and machine access without extra setup.
+- New projects get auth, machine access, and write-side audit logging without extra setup.
+- Default starters should prefer self-service surfaces over admin/control-plane APIs.
 - RBAC stays available, but it does not increase default complexity for every app.
 - Default routes, migrations, and seeders should be derived from these starter decisions.

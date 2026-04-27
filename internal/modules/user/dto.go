@@ -42,6 +42,12 @@ type UserPasswordResetRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
+// UserPasswordResetConfirmRequest represents the reset confirmation request.
+type UserPasswordResetConfirmRequest struct {
+	Token       string `json:"token" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required,min=6,max=50"`
+}
+
 // ============================================================================
 // Response DTOs (Output)
 // ============================================================================

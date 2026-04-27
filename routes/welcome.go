@@ -701,7 +701,7 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 				<article class="arch-card">
 					<div class="arch-kicker">Starter</div>
 					<h3>Business-ready defaults</h3>
-					<p><code>user</code> 和 <code>apikey</code> 默认装配到新应用。它们通过 starter manifest 贡献模块、迁移和 seed。</p>
+					<p><code>user</code>、<code>apikey</code> 和 <code>audit</code> 默认装配到新应用。它们通过 starter manifest 贡献模块、迁移和 seed。</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Capability</div>

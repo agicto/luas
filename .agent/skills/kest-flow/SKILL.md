@@ -60,7 +60,7 @@ user_id = data.user.id
 
 **Use in Subsequent Requests:**
 ```kest
-GET /api/v1/users/{{user_id}}
+GET /api/v1/users/profile
 Authorization: Bearer {{token}}
 ```
 
