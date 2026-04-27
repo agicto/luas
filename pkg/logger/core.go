@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -42,6 +43,9 @@ func New(cfg *Config) *Logger {
 }
 
 func (l *Logger) inputHandlers(cfg *Config) {
+	// Keep a lightweight recent-log buffer available for local debugging.
+	l.AddHandler(DefaultMemoryHandler())
+
 	// Add File Handler
 	fileHandler := NewFileHandler(cfg)
 	l.AddHandler(fileHandler)
@@ -117,13 +121,15 @@ func (l *Logger) AddHandler(h Handler) {
 
 // Log logs a message with the specified level
 func (l *Logger) Log(level Level, msg string, ctx map[string]any) {
+	merged := l.mergeContext(ctx)
 	entry := &Entry{
 		Level:   level,
 		Message: msg,
-		Context: l.mergeContext(ctx),
+		Context: merged,
 		Time:    time.Now(),
 		Channel: l.channel,
 	}
+	decorateEntryIdentifiers(entry, merged)
 
 	l.mu.RLock()
 	handlers := l.handlers
@@ -135,13 +141,15 @@ func (l *Logger) Log(level Level, msg string, ctx map[string]any) {
 }
 
 func (l *Logger) log(ctx context.Context, level Level, msg string, logCtx map[string]any) {
+	merged := l.mergeContext(logCtx)
 	entry := &Entry{
 		Level:   level,
 		Message: msg,
-		Context: l.mergeContext(logCtx),
+		Context: merged,
 		Time:    time.Now(),
 		Channel: l.channel,
 	}
+	decorateEntryIdentifiers(entry, merged)
 
 	l.mu.RLock()
 	handlers := l.handlers
@@ -161,6 +169,31 @@ func (l *Logger) mergeContext(ctx map[string]any) map[string]any {
 		merged[k] = v
 	}
 	return merged
+}
+
+func decorateEntryIdentifiers(entry *Entry, ctx map[string]any) {
+	if entry == nil || ctx == nil {
+		return
+	}
+
+	if requestID, ok := stringValue(ctx["request_id"]); ok {
+		entry.RequestID = requestID
+	}
+	if traceID, ok := stringValue(ctx["trace_id"]); ok {
+		entry.TraceID = traceID
+	}
+}
+
+func stringValue(value any) (string, bool) {
+	s, ok := value.(string)
+	if !ok {
+		return "", false
+	}
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "", false
+	}
+	return s, true
 }
 
 // Helper methods for facade match

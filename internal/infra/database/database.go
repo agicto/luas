@@ -34,6 +34,7 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		buildLoggerConfig(cfg),
 	)
+	newLogger = wrapObservedLogger(newLogger)
 
 	var dialector gorm.Dialector
 

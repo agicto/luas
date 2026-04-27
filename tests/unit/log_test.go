@@ -164,6 +164,32 @@ func TestLog_Formatting(t *testing.T) {
 	l.Warningf("cache hit rate: %.2f%%", 95.5)
 }
 
+func TestLog_RecentEntriesCorrelateRequestAndTrace(t *testing.T) {
+	cfg := logger.DefaultConfig()
+	cfg.Level = logger.LevelDebug
+	l := logger.New(cfg)
+
+	memory := logger.NewMemoryHandler(10)
+	l.AddHandler(memory)
+
+	l.Info("request scoped log", map[string]any{
+		"request_id": "req-logger-1",
+		"trace_id":   "trace-logger-1",
+		"step":       "before_panic",
+	})
+
+	entries := memory.RecentByRequest("req-logger-1", "trace-logger-1", 5)
+	if len(entries) != 1 {
+		t.Fatalf("expected exactly one correlated entry, got %d", len(entries))
+	}
+	if entries[0].RequestID != "req-logger-1" {
+		t.Fatalf("expected request ID to be copied onto entry, got %q", entries[0].RequestID)
+	}
+	if entries[0].TraceID != "trace-logger-1" {
+		t.Fatalf("expected trace ID to be copied onto entry, got %q", entries[0].TraceID)
+	}
+}
+
 func TestLog_Close(t *testing.T) {
 	tmpFile := "test_log_close.log"
 	os.Remove(tmpFile)

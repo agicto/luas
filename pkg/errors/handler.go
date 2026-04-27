@@ -411,7 +411,12 @@ type DebugPageData struct {
 	File        string
 	Line        int
 	Stack       []StackFrame
+	RouteName   string
+	RequestID   string
+	TraceID     string
 	Request     RequestInfo
+	SQLQueries  []DebugSQLQuery
+	RecentLogs  []DebugLogEntry
 	Environment map[string]string
 }
 
@@ -422,6 +427,31 @@ type RequestInfo struct {
 	Headers map[string]string
 	Query   map[string]string
 	Body    string
+}
+
+// DebugSQLQuery captures a SQL statement shown on the debug page.
+type DebugSQLQuery struct {
+	Time         string
+	Duration     string
+	RowsAffected int64
+	Statement    string
+	Error        string
+}
+
+// DebugLogEntry captures a recent log line shown on the debug page.
+type DebugLogEntry struct {
+	Time      string
+	Level     string
+	Channel   string
+	Message   string
+	RequestID string
+	TraceID   string
+	Context   string
+}
+
+// DebugStackFrames parses a stack trace into frames for external debug builders.
+func DebugStackFrames(stack string) []StackFrame {
+	return parseStackTrace(stack)
 }
 
 // RenderDebugPage renders an HTML debug page
@@ -461,54 +491,92 @@ func RenderDebugPage(c *gin.Context, err *AppError) {
 		}
 	}
 
+	RenderDebugPageData(c, err.Status, data)
+}
+
+// RenderDebugPageData renders a debug page from pre-built data.
+func RenderDebugPageData(c *gin.Context, status int, data DebugPageData) {
 	html := renderDebugHTML(data)
-	c.Data(err.Status, "text/html; charset=utf-8", []byte(html))
+	c.Data(status, "text/html; charset=utf-8", []byte(html))
 }
 
 // renderDebugHTML generates a beautiful modern debug HTML page
 func renderDebugHTML(data DebugPageData) string {
-	// Build stack trace HTML
-	stackHTML := ""
-	for i, frame := range data.Stack {
-		activeClass := ""
-		if i == 0 {
-			activeClass = "active"
+	stackHTML := `<tr><td colspan="4" class="empty">No stack frames captured</td></tr>`
+	if len(data.Stack) > 0 {
+		stackHTML = ""
+		for index, frame := range data.Stack {
+			stackHTML += fmt.Sprintf(
+				`<tr><td class="mono">#%d</td><td class="mono">%s</td><td class="mono">%s</td><td class="mono">:%d</td></tr>`,
+				index, frame.Function, frame.File, frame.Line,
+			)
 		}
-		stackHTML += fmt.Sprintf(`
-			<div class="stack-frame %s" onclick="selectFrame(this)">
-				<div class="frame-num">#%d</div>
-				<div class="frame-content">
-					<div class="frame-func">%s</div>
-					<div class="frame-loc">%s<span class="line-num">:%d</span></div>
-				</div>
-			</div>`, activeClass, i, frame.Function, frame.File, frame.Line)
 	}
 
-	// Build headers HTML
+	requestHTML := fmt.Sprintf(
+		`<tr><td class="key">Method</td><td class="val mono">%s</td></tr>
+<tr><td class="key">URL</td><td class="val mono">%s</td></tr>
+<tr><td class="key">Route Name</td><td class="val mono">%s</td></tr>
+<tr><td class="key">Request ID</td><td class="val mono">%s</td></tr>
+<tr><td class="key">Trace ID</td><td class="val mono">%s</td></tr>`,
+		data.Request.Method,
+		data.Request.URL,
+		emptyDash(data.RouteName),
+		emptyDash(data.RequestID),
+		emptyDash(data.TraceID),
+	)
+
 	headersHTML := ""
-	for k, v := range data.Request.Headers {
-		headersHTML += fmt.Sprintf(`<tr><td class="key">%s</td><td class="val">%s</td></tr>`, k, v)
+	for key, value := range data.Request.Headers {
+		headersHTML += fmt.Sprintf(`<tr><td class="key mono">%s</td><td class="val mono">%s</td></tr>`, key, value)
+	}
+	if headersHTML == "" {
+		headersHTML = `<tr><td colspan="2" class="empty">No request headers captured</td></tr>`
 	}
 
-	// Build query params HTML
 	queryHTML := ""
-	for k, v := range data.Request.Query {
-		queryHTML += fmt.Sprintf(`<tr><td class="key">%s</td><td class="val">%s</td></tr>`, k, v)
+	for key, value := range data.Request.Query {
+		queryHTML += fmt.Sprintf(`<tr><td class="key mono">%s</td><td class="val mono">%s</td></tr>`, key, value)
 	}
 	if queryHTML == "" {
 		queryHTML = `<tr><td colspan="2" class="empty">No query parameters</td></tr>`
 	}
 
-	// Build environment HTML
-	envHTML := ""
-	for k, v := range data.Environment {
-		envHTML += fmt.Sprintf(`<tr><td class="key">%s</td><td class="val">%s</td></tr>`, k, v)
+	sqlHTML := ""
+	for _, query := range data.SQLQueries {
+		sqlHTML += fmt.Sprintf(
+			`<tr><td class="mono">%s</td><td class="mono">%s</td><td class="mono">%d</td><td class="mono sql">%s</td><td class="mono">%s</td></tr>`,
+			emptyDash(query.Time),
+			emptyDash(query.Duration),
+			query.RowsAffected,
+			emptyDash(query.Statement),
+			emptyDash(query.Error),
+		)
+	}
+	if sqlHTML == "" {
+		sqlHTML = `<tr><td colspan="5" class="empty">No SQL statements captured for this request</td></tr>`
 	}
 
-	// Generate markdown for copy
-	markdownStack := ""
-	for i, frame := range data.Stack {
-		markdownStack += fmt.Sprintf("%d. `%s` at %s:%d\\n", i, frame.Function, frame.File, frame.Line)
+	logsHTML := ""
+	for _, entry := range data.RecentLogs {
+		logsHTML += fmt.Sprintf(
+			`<tr><td class="mono">%s</td><td class="mono">%s</td><td class="mono">%s</td><td>%s</td><td class="mono">%s</td><td class="mono">%s</td><td class="mono context">%s</td></tr>`,
+			emptyDash(entry.Time),
+			emptyDash(entry.Level),
+			emptyDash(entry.Channel),
+			emptyDash(entry.Message),
+			emptyDash(entry.RequestID),
+			emptyDash(entry.TraceID),
+			emptyDash(entry.Context),
+		)
+	}
+	if logsHTML == "" {
+		logsHTML = `<tr><td colspan="7" class="empty">No recent logs correlated to this request</td></tr>`
+	}
+
+	envHTML := ""
+	for key, value := range data.Environment {
+		envHTML += fmt.Sprintf(`<tr><td class="key">%s</td><td class="val mono">%s</td></tr>`, key, value)
 	}
 
 	return fmt.Sprintf(`<!DOCTYPE html>
@@ -522,222 +590,55 @@ func renderDebugHTML(data DebugPageData) string {
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 	<style>
 		:root {
-			--bg-primary: #0f0f23;
-			--bg-secondary: #1a1a3e;
-			--bg-tertiary: #252550;
+			--bg-primary: #09111f;
+			--bg-secondary: #111c2d;
+			--bg-tertiary: #18253a;
 			--text-primary: #e4e4ef;
-			--text-secondary: #9999bb;
-			--text-muted: #666688;
-			--accent-red: #ff6b6b;
-			--accent-pink: #f472b6;
-			--accent-purple: #a78bfa;
+			--text-secondary: #b6c0d3;
+			--text-muted: #7b8aa8;
+			--accent-red: #f87171;
+			--accent-pink: #fb7185;
+			--accent-purple: #c084fc;
 			--accent-blue: #60a5fa;
-			--accent-cyan: #22d3ee;
+			--accent-cyan: #38bdf8;
 			--accent-green: #34d399;
-			--border: #333366;
+			--border: #29405e;
 			--radius: 12px;
 		}
 		* { margin: 0; padding: 0; box-sizing: border-box; }
-		body { 
-			font-family: 'Inter', -apple-system, sans-serif; 
-			background: var(--bg-primary); 
-			color: var(--text-primary);
-			line-height: 1.6;
-		}
+		body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; }
 		code, .mono { font-family: 'JetBrains Mono', monospace; }
-		
-		/* Header */
-		.header {
-			background: linear-gradient(135deg, #dc2626 0%%, #991b1b 100%%);
-			padding: 48px 40px;
-			position: relative;
-			overflow: hidden;
-		}
-		.header::before {
-			content: '';
-			position: absolute;
-			top: -50%%; right: -20%%;
-			width: 60%%; height: 200%%;
-			background: radial-gradient(circle, rgba(255,255,255,0.1) 0%%, transparent 70%%);
-		}
+		.header { background: linear-gradient(135deg, #ef4444 0%%, #7f1d1d 100%%); padding: 48px 40px; }
 		.header-inner { max-width: 1400px; margin: 0 auto; position: relative; }
-		.error-code { 
-			font-size: 72px; font-weight: 700; 
-			background: linear-gradient(135deg, #fff 0%%, rgba(255,255,255,0.7) 100%%);
-			-webkit-background-clip: text; -webkit-text-fill-color: transparent;
-			margin-bottom: 8px;
-		}
-		.error-type { 
-			font-size: 14px; font-weight: 500;
-			background: rgba(0,0,0,0.2); 
-			display: inline-block; padding: 6px 14px; 
-			border-radius: 20px; margin-bottom: 16px;
-			font-family: 'JetBrains Mono', monospace;
-		}
+		.error-code { font-size: 72px; font-weight: 700; margin-bottom: 8px; }
+		.error-type { font-size: 14px; font-weight: 600; background: rgba(0,0,0,0.24); display: inline-block; padding: 6px 14px; border-radius: 999px; margin-bottom: 16px; font-family: 'JetBrains Mono', monospace; }
 		.error-msg { font-size: 28px; font-weight: 500; max-width: 800px; }
-		
-		/* Toolbar */
-		.toolbar {
-			background: var(--bg-secondary);
-			border-bottom: 1px solid var(--border);
-			padding: 16px 40px;
-			display: flex; align-items: center; gap: 16px;
-		}
-		.toolbar-inner { max-width: 1400px; margin: 0 auto; width: 100%%; display: flex; align-items: center; gap: 16px; }
-		.file-loc {
-			flex: 1;
-			background: var(--bg-tertiary);
-			padding: 12px 20px;
-			border-radius: var(--radius);
-			font-family: 'JetBrains Mono', monospace;
-			font-size: 14px;
-		}
-		.file-loc .file { color: var(--accent-cyan); }
-		.file-loc .line { color: var(--accent-pink); }
-		.btn {
-			background: var(--bg-tertiary);
-			border: 1px solid var(--border);
-			color: var(--text-primary);
-			padding: 12px 20px;
-			border-radius: var(--radius);
-			font-size: 14px;
-			font-weight: 500;
-			cursor: pointer;
-			display: flex; align-items: center; gap: 8px;
-			transition: all 0.2s;
-		}
-		.btn:hover { background: var(--accent-purple); border-color: var(--accent-purple); }
-		.btn svg { width: 18px; height: 18px; }
-		.btn-success { background: var(--accent-green); border-color: var(--accent-green); color: #000; }
-		
-		/* Main Content */
-		.main { max-width: 1400px; margin: 0 auto; padding: 32px 40px; }
-		
-		/* Tabs */
-		.tabs { display: flex; gap: 4px; margin-bottom: 24px; }
-		.tab {
-			padding: 12px 24px;
-			background: transparent;
-			border: none;
-			color: var(--text-secondary);
-			font-size: 14px;
-			font-weight: 500;
-			cursor: pointer;
-			border-radius: var(--radius) var(--radius) 0 0;
-			transition: all 0.2s;
-		}
-		.tab:hover { color: var(--text-primary); }
-		.tab.active { 
-			background: var(--bg-secondary); 
-			color: var(--accent-purple);
-		}
-		
-		/* Panels */
-		.panel { display: none; }
-		.panel.active { display: block; }
-		
-		/* Card */
-		.card {
-			background: var(--bg-secondary);
-			border-radius: var(--radius);
-			overflow: hidden;
-			margin-bottom: 24px;
-		}
-		.card-header {
-			background: var(--bg-tertiary);
-			padding: 16px 24px;
-			font-size: 12px;
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 1px;
-			color: var(--text-secondary);
-			display: flex; align-items: center; gap: 10px;
-		}
-		.card-header svg { width: 16px; height: 16px; opacity: 0.7; }
-		.card-body { padding: 0; }
-		
-		/* Stack Trace */
-		.stack-frame {
-			display: flex;
-			padding: 16px 24px;
-			border-bottom: 1px solid var(--border);
-			cursor: pointer;
-			transition: background 0.2s;
-		}
-		.stack-frame:hover { background: var(--bg-tertiary); }
-		.stack-frame.active { 
-			background: linear-gradient(90deg, var(--bg-tertiary) 0%%, var(--bg-secondary) 100%%);
-			border-left: 3px solid var(--accent-purple);
-		}
-		.stack-frame:last-child { border-bottom: none; }
-		.frame-num { 
-			width: 40px; 
-			color: var(--text-muted); 
-			font-family: 'JetBrains Mono', monospace;
-			font-size: 12px;
-		}
-		.frame-func { 
-			color: var(--accent-pink); 
-			font-family: 'JetBrains Mono', monospace;
-			font-size: 14px;
-			margin-bottom: 4px;
-		}
-		.frame-loc { 
-			color: var(--text-muted); 
-			font-size: 13px;
-			font-family: 'JetBrains Mono', monospace;
-		}
-		.frame-loc .line-num { color: var(--accent-blue); }
-		
-		/* Table */
+		.main { max-width: 1400px; margin: 0 auto; padding: 32px 40px 56px; }
+		.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+		.summary-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; }
+		.summary-item .label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+		.summary-item .value { color: var(--text-primary); font-size: 15px; font-weight: 600; word-break: break-all; }
+		.grid { display: grid; gap: 24px; grid-template-columns: repeat(12, 1fr); }
+		.span-12 { grid-column: span 12; }
+		.span-6 { grid-column: span 6; }
+		.card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+		.card-header { background: var(--bg-tertiary); padding: 14px 18px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-secondary); }
 		table { width: 100%%; border-collapse: collapse; }
 		tr { border-bottom: 1px solid var(--border); }
 		tr:last-child { border-bottom: none; }
-		td { padding: 14px 24px; font-size: 14px; }
-		td.key { 
-			color: var(--accent-cyan); 
-			font-family: 'JetBrains Mono', monospace;
-			width: 280px;
-			font-weight: 500;
-		}
-		td.val { 
-			color: var(--text-secondary);
-			font-family: 'JetBrains Mono', monospace;
-			word-break: break-all;
-		}
+		td { padding: 14px 18px; font-size: 14px; vertical-align: top; }
+		td.key { color: var(--accent-cyan); width: 220px; font-weight: 500; }
+		td.val { color: var(--text-secondary); word-break: break-word; }
 		td.empty { color: var(--text-muted); font-style: italic; }
-		
-		/* Footer */
-		.footer {
-			text-align: center;
-			padding: 40px;
-			color: var(--text-muted);
-			font-size: 13px;
-		}
+		.sql, .context { white-space: pre-wrap; word-break: break-word; }
+		.footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 13px; }
 		.footer a { color: var(--accent-purple); text-decoration: none; }
-		.footer .logo { 
-			font-size: 24px; font-weight: 700; 
-			background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-			-webkit-background-clip: text; -webkit-text-fill-color: transparent;
-			margin-bottom: 8px;
-		}
-		
-		/* Toast */
-		.toast {
-			position: fixed;
-			bottom: 32px;
-			right: 32px;
-			background: var(--accent-green);
-			color: #000;
-			padding: 16px 24px;
-			border-radius: var(--radius);
-			font-weight: 500;
-			display: none;
-			animation: slideIn 0.3s ease;
-		}
-		@keyframes slideIn {
-			from { transform: translateY(20px); opacity: 0; }
-			to { transform: translateY(0); opacity: 1; }
+		.footer .logo { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+		@media (max-width: 960px) {
+			.main { padding: 24px 18px 40px; }
+			.header { padding: 36px 18px; }
+			.span-6, .span-12 { grid-column: span 12; }
+			td.key { width: 160px; }
 		}
 	</style>
 </head>
@@ -749,138 +650,72 @@ func renderDebugHTML(data DebugPageData) string {
 			<div class="error-msg">%s</div>
 		</div>
 	</div>
-	
-	<div class="toolbar">
-		<div class="toolbar-inner">
-			<div class="file-loc">
-				<span class="file">%s</span><span class="line">:%d</span>
-			</div>
-			<button class="btn" onclick="copyMarkdown()">
-				<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-				Copy as Markdown
-			</button>
-		</div>
-	</div>
-	
+
 	<div class="main">
-		<div class="tabs">
-			<button class="tab active" onclick="showPanel('stack')">Stack Trace</button>
-			<button class="tab" onclick="showPanel('request')">Request</button>
-			<button class="tab" onclick="showPanel('headers')">Headers</button>
-			<button class="tab" onclick="showPanel('env')">Environment</button>
+		<div class="summary">
+			<div class="summary-item"><div class="label">Source</div><div class="value mono">%s:%d</div></div>
+			<div class="summary-item"><div class="label">Route</div><div class="value mono">%s</div></div>
+			<div class="summary-item"><div class="label">Request ID</div><div class="value mono">%s</div></div>
+			<div class="summary-item"><div class="label">Trace ID</div><div class="value mono">%s</div></div>
 		</div>
-		
-		<div id="panel-stack" class="panel active">
-			<div class="card">
-				<div class="card-header">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-					Stack Trace
-				</div>
-				<div class="card-body">%s</div>
+
+		<div class="grid">
+			<div class="card span-12">
+				<div class="card-header">Stack Trace</div>
+				<table><thead><tr><td class="key mono">#</td><td class="key mono">Function</td><td class="key mono">File</td><td class="key mono">Line</td></tr></thead><tbody>%s</tbody></table>
 			</div>
-		</div>
-		
-		<div id="panel-request" class="panel">
-			<div class="card">
-				<div class="card-header">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-					Request Details
-				</div>
-				<div class="card-body">
-					<table>
-						<tr><td class="key">Method</td><td class="val">%s</td></tr>
-						<tr><td class="key">URL</td><td class="val">%s</td></tr>
-					</table>
-				</div>
+
+			<div class="card span-6">
+				<div class="card-header">Request</div>
+				<table>%s</table>
 			</div>
-			<div class="card">
+
+			<div class="card span-6">
 				<div class="card-header">Query Parameters</div>
-				<div class="card-body"><table>%s</table></div>
+				<table>%s</table>
 			</div>
-		</div>
-		
-		<div id="panel-headers" class="panel">
-			<div class="card">
-				<div class="card-header">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-					Request Headers
-				</div>
-				<div class="card-body"><table>%s</table></div>
+
+			<div class="card span-12">
+				<div class="card-header">Request Headers</div>
+				<table>%s</table>
 			</div>
-		</div>
-		
-		<div id="panel-env" class="panel">
-			<div class="card">
-				<div class="card-header">
-					<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-					Environment
-				</div>
-				<div class="card-body"><table>%s</table></div>
+
+			<div class="card span-12">
+				<div class="card-header">SQL Timeline</div>
+				<table><thead><tr><td class="key mono">Time</td><td class="key mono">Duration</td><td class="key mono">Rows</td><td class="key mono">Statement</td><td class="key mono">Error</td></tr></thead><tbody>%s</tbody></table>
+			</div>
+
+			<div class="card span-12">
+				<div class="card-header">Recent Logs</div>
+				<table><thead><tr><td class="key mono">Time</td><td class="key mono">Level</td><td class="key mono">Channel</td><td class="key">Message</td><td class="key mono">Request ID</td><td class="key mono">Trace ID</td><td class="key mono">Context</td></tr></thead><tbody>%s</tbody></table>
+			</div>
+
+			<div class="card span-12">
+				<div class="card-header">Environment</div>
+				<table>%s</table>
 			</div>
 		</div>
 	</div>
-	
+
 	<div class="footer">
 		<div class="logo">ZGO</div>
 		<div>Framework Debug Mode • <a href="https://github.com/zgiai/zgo" target="_blank">Documentation</a></div>
 	</div>
-	
-	<div id="toast" class="toast">✓ Copied to clipboard!</div>
-	
-	<script>
-		var markdown = "# " + %d + " %s\n\n" +
-			"**Error:** %s\n\n" +
-			"**File:** %s:%d\n\n" +
-			"## Stack Trace\n%s\n" +
-			"## Request\n" +
-			"- **Method:** %s\n" +
-			"- **URL:** %s\n\n" +
-			"## Environment\n" +
-			"- **Go Version:** %s\n" +
-			"- **OS:** %s\n" +
-			"- **Arch:** %s\n";
-		
-		function showPanel(name) {
-			document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
-			document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-			document.getElementById('panel-' + name).classList.add('active');
-			event.target.classList.add('active');
-		}
-		
-		function selectFrame(el) {
-			document.querySelectorAll('.stack-frame').forEach(function(f) { f.classList.remove('active'); });
-			el.classList.add('active');
-		}
-		
-		function copyMarkdown() {
-			navigator.clipboard.writeText(markdown).then(function() {
-				var btn = event.target.closest('.btn');
-				btn.classList.add('btn-success');
-				btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!';
-				var toast = document.getElementById('toast');
-				toast.style.display = 'block';
-				setTimeout(function() {
-					toast.style.display = 'none';
-					btn.classList.remove('btn-success');
-					btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy as Markdown';
-				}, 2000);
-			});
-		}
-	</script>
 </body>
 </html>`,
 		data.Status, data.Title,
 		data.Status, data.Code, data.Message,
-		data.File, data.Line,
+		emptyDash(data.File), data.Line,
+		emptyDash(data.RouteName),
+		emptyDash(data.RequestID),
+		emptyDash(data.TraceID),
 		stackHTML,
-		data.Request.Method, data.Request.URL, queryHTML,
+		requestHTML,
+		queryHTML,
 		headersHTML,
+		sqlHTML,
+		logsHTML,
 		envHTML,
-		// Markdown template values
-		data.Status, data.Code, data.Message, data.File, data.Line,
-		markdownStack,
-		data.Request.Method, data.Request.URL,
-		data.Environment["Go Version"], data.Environment["OS"], data.Environment["Arch"],
 	)
 }
 
@@ -908,4 +743,12 @@ func DebugHandler() gin.HandlerFunc {
 func PrettyJSON(v interface{}) string {
 	b, _ := json.MarshalIndent(v, "", "  ")
 	return string(b)
+}
+
+func emptyDash(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return "-"
+	}
+	return value
 }

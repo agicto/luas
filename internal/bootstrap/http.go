@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zgiai/zgo/internal/app"
 	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/zgo/internal/infra/exception"
 	"github.com/zgiai/zgo/internal/infra/health"
 	"github.com/zgiai/zgo/internal/infra/metrics"
 	infraMiddleware "github.com/zgiai/zgo/internal/infra/middleware"
@@ -71,7 +72,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Add custom logger and recovery middleware
 	r.Use(infraMiddleware.RequestID())
 	r.Use(logger.GinLogger())
-	r.Use(gin.Recovery())
+	r.Use(exception.Recovery(application.Config.App.Debug))
 
 	// Add Prometheus metrics middleware
 	r.Use(metrics.Middleware())
