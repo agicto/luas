@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/zgiai/zgo/internal/capabilities/crypto"
 	"github.com/zgiai/zgo/internal/capabilities/idgen"
 	"github.com/zgiai/zgo/internal/domain"
+	auditstarter "github.com/zgiai/zgo/internal/modules/audit"
 )
 
 // Service defines API key operations.
@@ -66,6 +68,19 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 		return nil, fmt.Errorf("failed to create api key: %w", err)
 	}
 
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		Action:     "create",
+		Resource:   "api_keys",
+		TargetType: "api_key",
+		TargetID:   strconv.FormatUint(uint64(apiKey.ID), 10),
+		Result:     domain.AuditResultSuccess,
+		Changes: map[string]domain.AuditValueChange{
+			"name":       {After: apiKey.Name},
+			"scopes":     {After: append([]string(nil), apiKey.Scopes...)},
+			"expires_at": {After: apiKey.ExpiresAt},
+		},
+	})
+
 	return &CreateResult{
 		APIKey:       apiKey,
 		PlaintextKey: plaintext,
@@ -86,10 +101,22 @@ func (s *service) RevokeForUser(ctx context.Context, userID, id uint) error {
 	}
 
 	now := time.Now()
+	before := key.RevokedAt
 	key.RevokedAt = &now
 	if err := s.repo.Update(ctx, key); err != nil {
 		return fmt.Errorf("failed to revoke api key: %w", err)
 	}
+
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		Action:     "revoke",
+		Resource:   "api_keys",
+		TargetType: "api_key",
+		TargetID:   strconv.FormatUint(uint64(key.ID), 10),
+		Result:     domain.AuditResultSuccess,
+		Changes: map[string]domain.AuditValueChange{
+			"revoked_at": {Before: before, After: now},
+		},
+	})
 	return nil
 }
 

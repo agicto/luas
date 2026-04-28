@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
@@ -66,10 +67,11 @@ type JobPayload struct {
 
 // Manager manages queue operations
 type Manager struct {
-	mu           sync.RWMutex
-	drivers      map[string]Driver
-	defaultQueue string
-	jobRegistry  map[string]reflect.Type
+	mu            sync.RWMutex
+	drivers       map[string]Driver
+	defaultDriver string
+	defaultQueue  string
+	jobRegistry   map[string]reflect.Type
 }
 
 var (
@@ -81,9 +83,10 @@ var (
 func Global() *Manager {
 	once.Do(func() {
 		manager = &Manager{
-			drivers:      make(map[string]Driver),
-			defaultQueue: "default",
-			jobRegistry:  make(map[string]reflect.Type),
+			drivers:       make(map[string]Driver),
+			defaultDriver: "sync",
+			defaultQueue:  "default",
+			jobRegistry:   make(map[string]reflect.Type),
 		}
 		// Register default sync driver
 		manager.drivers["sync"] = NewSyncDriver()
@@ -112,8 +115,35 @@ func (m *Manager) Driver(name string) Driver {
 	return m.drivers[name]
 }
 
+// SetDefaultDriver sets the default driver name used by dispatch operations.
+func (m *Manager) SetDefaultDriver(name string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, ok := m.drivers[name]; !ok {
+		return fmt.Errorf("queue driver %q is not registered", name)
+	}
+	m.defaultDriver = name
+	return nil
+}
+
+// DefaultDriverName returns the configured default driver name.
+func (m *Manager) DefaultDriverName() string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	if strings.TrimSpace(m.defaultDriver) == "" {
+		return "sync"
+	}
+	return m.defaultDriver
+}
+
 // DefaultDriver returns the default driver
 func (m *Manager) DefaultDriver() Driver {
+	name := m.DefaultDriverName()
+	driver := m.Driver(name)
+	if driver != nil {
+		return driver
+	}
 	return m.Driver("sync")
 }
 

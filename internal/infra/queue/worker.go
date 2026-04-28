@@ -114,6 +114,11 @@ func (w *Worker) Stop() {
 	w.wg.Wait()
 }
 
+// Wait blocks until all worker goroutines exit.
+func (w *Worker) Wait() {
+	w.wg.Wait()
+}
+
 // work is the main worker loop
 func (w *Worker) work(ctx context.Context, id int) {
 	defer w.wg.Done()

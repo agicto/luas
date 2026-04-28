@@ -16,6 +16,8 @@ type Config struct {
 	Server     ServerConfig
 	Database   DatabaseConfig
 	Redis      RedisConfig
+	Queue      QueueConfig
+	Scheduler  SchedulerConfig
 	JWT        JWTConfig
 	Log        LogConfig
 	CORS       CORSConfig
@@ -81,6 +83,19 @@ type RedisConfig struct {
 	Port     int
 	Password string
 	DB       int
+}
+
+type QueueConfig struct {
+	Driver            string
+	DefaultQueue      string
+	BufferSize        int
+	WorkerConcurrency int
+	WorkerSleep       time.Duration
+	WorkerTimeout     time.Duration
+}
+
+type SchedulerConfig struct {
+	Enabled bool
 }
 
 type JWTConfig struct {
@@ -201,6 +216,17 @@ func Load() (*Config, error) {
 			Port:     env.GetInt("REDIS_PORT", 6379),
 			Password: env.Get("REDIS_PASSWORD", ""),
 			DB:       env.GetInt("REDIS_DB", 0),
+		},
+		Queue: QueueConfig{
+			Driver:            env.Get("QUEUE_DRIVER", "sync"),
+			DefaultQueue:      env.Get("QUEUE_DEFAULT", "default"),
+			BufferSize:        env.GetInt("QUEUE_BUFFER_SIZE", 256),
+			WorkerConcurrency: env.GetInt("QUEUE_WORKER_CONCURRENCY", 1),
+			WorkerSleep:       env.GetDuration("QUEUE_WORKER_SLEEP", time.Second),
+			WorkerTimeout:     env.GetDuration("QUEUE_WORKER_TIMEOUT", 60*time.Second),
+		},
+		Scheduler: SchedulerConfig{
+			Enabled: env.GetBool("SCHEDULER_ENABLED", false),
 		},
 		JWT: JWTConfig{
 			Secret:     env.Get("JWT_SECRET", ""),

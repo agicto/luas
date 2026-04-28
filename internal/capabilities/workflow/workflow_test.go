@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/zgiai/zgo/internal/infra/config"
 	"github.com/zgiai/zgo/internal/infra/queue"
 	"github.com/zgiai/zgo/internal/infra/schedule"
 )
@@ -69,4 +70,22 @@ func TestSchedulePlanRegistersAndRunsDueWork(t *testing.T) {
 	err := manager.RunDue(context.Background(), time.Date(2026, time.April, 27, 10, 30, 0, 0, time.Local))
 	require.NoError(t, err)
 	require.Equal(t, 1, ran)
+}
+
+func TestBootstrapConfiguresMemoryQueueDriver(t *testing.T) {
+	t.Cleanup(func() {
+		queue.Global().RegisterDriver("sync", queue.NewSyncDriver())
+		require.NoError(t, queue.Global().SetDefaultDriver("sync"))
+		queue.Global().SetDefaultQueue("default")
+	})
+
+	cfg := &config.Config{}
+	cfg.Queue.Driver = "memory"
+	cfg.Queue.DefaultQueue = "jobs"
+	cfg.Queue.BufferSize = 32
+
+	manager, err := Bootstrap(cfg)
+	require.NoError(t, err)
+	require.NotNil(t, manager)
+	require.Equal(t, "memory", queue.Global().DefaultDriverName())
 }
