@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -70,10 +71,18 @@ func TimeoutWithConfig(cfg TimeoutConfig) gin.HandlerFunc {
 		// Channel to signal completion
 		done := make(chan struct{})
 
-		// Run handler in goroutine
+		// Run handler in goroutine. If the deadline fires before the
+		// handler returns, the timeout response is sent below but this
+		// goroutine keeps running until the handler finishes — recover
+		// any write-after-abort panics from gin so the server stays up.
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					log.Printf("timeout middleware: handler panic after timeout (request likely already aborted): %v", r)
+				}
+				close(done)
+			}()
 			c.Next()
-			close(done)
 		}()
 
 		// Wait for completion or timeout
