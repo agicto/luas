@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"log"
 	"sort"
 	"sync"
 
@@ -120,9 +121,11 @@ func (b *EventBus) Publish(ctx context.Context, e events.Event) error {
 		handler := b.buildMiddlewareChain(entry.handler, middleware)
 
 		if entry.async {
-			// Async handlers don't block and errors are not propagated
+			// Async handlers don't block; errors are logged but not propagated.
 			go func(h EventHandler, e Event) {
-				_ = h(ctx, e)
+				if err := h(ctx, e); err != nil {
+					log.Printf("event bus: async handler for %q failed: %v", e.EventName(), err)
+				}
 			}(handler, event)
 		} else {
 			// Sync handlers block and propagate errors
