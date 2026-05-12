@@ -12,10 +12,18 @@ import (
 
 // Limiter defines the rate limiter interface
 type Limiter interface {
-	// Allow checks if a request is allowed and returns remaining attempts
+	// Take atomically checks and decrements the budget in one step.
+	// Prefer this over the Allow / Hit pair, which is racy under load:
+	// two concurrent requests can both pass Allow before either records
+	// a Hit, letting bursts exceed the configured max.
+	Take(ctx context.Context, key string) (allowed bool, remaining int, resetAt time.Time)
+
+	// Allow checks if a request is allowed and returns remaining attempts.
+	// Kept for backwards compatibility; new code should use Take.
 	Allow(ctx context.Context, key string) (allowed bool, remaining int, resetAt time.Time)
 
-	// Hit records a hit for the given key
+	// Hit records a hit for the given key.
+	// Kept for backwards compatibility; new code should use Take.
 	Hit(ctx context.Context, key string) (remaining int, resetAt time.Time)
 
 	// Reset resets the limiter for a key
@@ -168,6 +176,33 @@ func (s *MemoryStore) Hit(ctx context.Context, key string) (int, time.Time) {
 	return remaining, e.resetAt
 }
 
+// Take atomically checks the quota and records the hit. Returns
+// allowed=false without incrementing when the window is exhausted.
+func (s *MemoryStore) Take(ctx context.Context, key string) (bool, int, time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	now := time.Now()
+	e, exists := s.entries[key]
+
+	if !exists || now.After(e.resetAt) {
+		e = &entry{hits: 1, resetAt: now.Add(s.window)}
+		s.entries[key] = e
+		return true, s.max - 1, e.resetAt
+	}
+
+	if e.hits >= s.max {
+		return false, 0, e.resetAt
+	}
+
+	e.hits++
+	remaining := s.max - e.hits
+	if remaining < 0 {
+		remaining = 0
+	}
+	return true, remaining, e.resetAt
+}
+
 // Reset resets the limiter for a key
 func (s *MemoryStore) Reset(ctx context.Context, key string) error {
 	s.mu.Lock()
@@ -201,16 +236,15 @@ func Middleware(cfg Config) gin.HandlerFunc {
 
 		key := cfg.KeyFunc(c)
 
-		// Check if allowed
-		allowed, _, resetAt := cfg.Store.Allow(c.Request.Context(), key)
+		// Atomically check the quota and record the hit. The previous
+		// Allow-then-Hit pattern let concurrent bursts slip past the cap
+		// (and on RedisStore actually consumed two tokens per request).
+		allowed, remaining, resetAt := cfg.Store.Take(c.Request.Context(), key)
 		if !allowed {
 			cfg.ErrorHandler(c, resetAt)
 			c.Abort()
 			return
 		}
-
-		// Record the hit
-		remaining, resetAt := cfg.Store.Hit(c.Request.Context(), key)
 
 		// Set rate limit headers
 		c.Header("X-RateLimit-Limit", strconv.Itoa(cfg.Max))

@@ -124,6 +124,24 @@ func (s *RedisStore) Hit(ctx context.Context, key string) (int, time.Time) {
 	return remaining, resetAt
 }
 
+// Take atomically checks the quota and consumes a token. allowRedis
+// already does this with a Lua script; the previous Allow + Hit pair
+// fired allowRedis twice and double-counted every request.
+func (s *RedisStore) Take(ctx context.Context, key string) (bool, int, time.Time) {
+	now := time.Now()
+	resetAt := now.Add(s.window)
+
+	if atomic.LoadUint32(&s.redisAlive) == 0 {
+		return s.allowLocal(key, now, resetAt)
+	}
+
+	allowed, remaining := s.allowRedis(ctx, key, now)
+	if !allowed {
+		return false, 0, resetAt
+	}
+	return true, remaining, resetAt
+}
+
 // Reset resets the limiter for a key
 func (s *RedisStore) Reset(ctx context.Context, key string) error {
 	if s.client == nil {
