@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -120,7 +121,11 @@ func (k *HttpKernel) Handle() {
 		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
 	}
 
-	// Start Server in goroutine
+	serverErr := make(chan error, 1)
+
+	// Start Server in goroutine. Errors are forwarded to the main
+	// goroutine so they go through the same shutdown path as SIGTERM
+	// (log.Fatal here would os.Exit and skip resource cleanup).
 	go func() {
 		host := cfg.Server.Host
 		if host == "" {
@@ -134,22 +139,26 @@ func (k *HttpKernel) Handle() {
 		log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
 		log.Printf("\n")
 
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
 		}
 	}()
 
 	// Graceful Shutdown
-	k.gracefulShutdown(srv)
+	k.gracefulShutdown(srv, serverErr)
 }
 
 // gracefulShutdown handles graceful shutdown of the server and resources
-func (k *HttpKernel) gracefulShutdown(srv *http.Server) {
+func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	log.Println("Shutting down server...")
+	select {
+	case <-quit:
+		log.Println("Shutting down server...")
+	case err := <-serverErr:
+		log.Printf("HTTP server failed to start: %v — shutting down", err)
+	}
 
 	// Create context with timeout for shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
