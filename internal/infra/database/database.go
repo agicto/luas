@@ -22,7 +22,13 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, nil
 	}
 
-	return initDB(cfg)
+	db, err := initDB(cfg)
+	if err != nil {
+		log.Printf("⚠️  Database unavailable: %v", err)
+		log.Printf("⚠️  The application will start without database. Please configure DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD/DB_NAME, or set DB_ENABLED=false to silence this warning.")
+		return nil, nil
+	}
+	return db, nil
 }
 
 // initDB initializes database connection with the given config
