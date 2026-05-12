@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -172,10 +173,13 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	// Update last login
+	// Update last login. Auth has already succeeded; a write failure
+	// here shouldn't fail the login, but it shouldn't be invisible either.
 	now := time.Now()
 	user.LastLogin = &now
-	_ = s.repo.Update(ctx, user)
+	if err := s.repo.Update(ctx, user); err != nil {
+		log.Printf("user: failed to update LastLogin for user %d: %v", user.ID, err)
+	}
 
 	return &UserLoginResponse{
 		AccessToken: token,
