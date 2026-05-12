@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo cmd/zgo/
 # Run stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata curl
+RUN apk --no-cache add ca-certificates tzdata
 
 ENV TZ=Asia/Shanghai
 
@@ -35,7 +35,6 @@ USER appuser
 
 EXPOSE 8025
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8025/health || exit 1
+HEALTHCHECK NONE
 
 CMD ["./zgo-server"]
