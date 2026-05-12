@@ -217,9 +217,18 @@ func Timeout(checker Checker, timeout time.Duration) Checker {
 	}
 }
 
-// DatabaseChecker creates a database health checker
+// DatabaseChecker creates a database health checker.
+// Tolerates a nil *gorm.DB so the /health endpoint stays alive when the
+// DB is intentionally disabled (DB_ENABLED=false) or the initial
+// connect failed and the app started in degraded mode.
 func DatabaseChecker(db *gorm.DB) Checker {
 	return func(ctx context.Context) CheckResult {
+		if db == nil {
+			return CheckResult{
+				Status:  StatusDown,
+				Message: "database disabled",
+			}
+		}
 		sqlDB, err := db.DB()
 		if err != nil {
 			return CheckResult{
