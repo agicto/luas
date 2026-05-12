@@ -39,6 +39,19 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,format=short
 
+      # Restore Go build/module cache mounts from GHA cache into BuildKit
+      # before the build runs, and write them back afterwards. Without this
+      # the `--mount=type=cache` directives in the Dockerfile only persist
+      # inside a single BuildKit daemon, which is wiped between runner VMs.
+      - uses: reproducible-containers/buildkit-cache-dance@v3.1.0
+        with:
+          cache-map: |
+            {
+              "go-build-cache": "/root/.cache/go-build",
+              "go-mod-cache": "/go/pkg/mod"
+            }
+          skip-extraction: ${{ github.event_name == 'pull_request' }}
+
       - uses: docker/build-push-action@v6
         with:
           context: .
