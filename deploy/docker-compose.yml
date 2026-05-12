@@ -5,8 +5,8 @@
 # Traffic flow:
 #   Internet -> Cloudflare (orange cloud, edge TLS)
 #     -> host openresty :80 (already running, manages other domains too)
-#       server_name *.zgi.app -> proxy_pass http://127.0.0.1:18080
-#         -> Traefik :18080 (bound to loopback only, internal HTTP)
+#       server_name *.zgi.app -> proxy_pass http://127.0.0.1:18090
+#         -> Traefik :18090 (bound to loopback only, internal HTTP)
 #           Host(zgo.zgi.app)  -> zgo-api:8025
 #           Host(logs.zgi.app) -> dozzle:8080
 
@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     ports:
       # Loopback-only: openresty (host net) proxies *.zgi.app here.
-      - "127.0.0.1:18080:80"
+      - "127.0.0.1:18090:80"
       # Loopback dashboard / API.
       - "127.0.0.1:18081:8080"
     volumes:
