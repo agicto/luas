@@ -1,4 +1,4 @@
-name: Build and Push Image
+name: Deploy
 
 on:
   push:
@@ -6,78 +6,41 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: build-image-${{ github.ref }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
-  build:
-    name: Build and push
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+  deploy:
+    name: Build and deploy on zgo-vps
+    runs-on: [self-hosted, zgo-vps]
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=short
-
-      # Restore Go build/module cache mounts from GHA cache into BuildKit
-      # before the build runs, and write them back afterwards. Without this
-      # the `--mount=type=cache` directives in the Dockerfile only persist
-      # inside a single BuildKit daemon, which is wiped between runner VMs.
-      - uses: reproducible-containers/buildkit-cache-dance@v3.1.0
-        with:
-          cache-map: |
-            {
-              "go-build-cache": "/root/.cache/go-build",
-              "go-mod-cache": "/go/pkg/mod"
-            }
-          skip-extraction: ${{ github.event_name == 'pull_request' }}
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-
-      - name: Trigger Zeabur redeploy
-        env:
-          ZEABUR_TOKEN: ${{ secrets.ZEABUR_TOKEN }}
-          ZEABUR_SERVICE_ID: 6a03711658ee177a59cb840e
-          ZEABUR_ENV_ID: 6a037100e5ed304c1d8508f0
+      - name: Build image
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          gql() {
-            curl -sf -X POST https://api.zeabur.com/graphql \
-              -H "Authorization: Bearer $ZEABUR_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "$1"
-          }
-          update=$(gql "{\"query\":\"mutation(\$s: ObjectID!, \$e: ObjectID!, \$t: String!) { updateServiceImage(serviceID: \$s, environmentID: \$e, tag: \$t) }\", \"variables\": {\"s\": \"$ZEABUR_SERVICE_ID\", \"e\": \"$ZEABUR_ENV_ID\", \"t\": \"sha-$SHORT_SHA\"}}")
-          echo "update: $update"
-          echo "$update" | jq -e '.data.updateServiceImage == true' >/dev/null
-          restart=$(gql "{\"query\":\"mutation(\$s: ObjectID!, \$e: ObjectID!) { restartService(serviceID: \$s, environmentID: \$e) }\", \"variables\": {\"s\": \"$ZEABUR_SERVICE_ID\", \"e\": \"$ZEABUR_ENV_ID\"}}")
-          echo "restart: $restart"
-          echo "$restart" | jq -e '.data.restartService == true' >/dev/null
+          docker build \
+            -t zgo-api:sha-$SHORT_SHA \
+            -t zgo-api:latest \
+            .
+
+      - name: Compose up
+        working-directory: deploy
+        run: docker compose up -d
+
+      - name: Wait for /health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8025/health >/dev/null 2>&1; then
+              echo "zgo-api healthy after ${i} tries"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "zgo-api did not become healthy; recent logs:"
+          docker logs --tail 80 zgo-api || true
+          exit 1
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f --filter "dangling=true" --filter "until=24h" || true

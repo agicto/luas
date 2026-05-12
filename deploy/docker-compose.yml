@@ -1,0 +1,38 @@
+# Compose file for self-hosted deploys (runs on the zgo-vps GH Actions
+# runner). Volume mounts use absolute paths under /opt/zgo-deploy so
+# persistent state survives ephemeral runner checkouts.
+
+services:
+  zgo-api:
+    image: zgo-api:latest
+    container_name: zgo-api
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      SERVER_PORT: 8025
+      SERVER_MODE: release
+      DB_ENABLED: "false"
+      TZ: Asia/Shanghai
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /opt/zgo-deploy/dozzle/users.yml:/data/users.yml:ro
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
+      DOZZLE_ENABLE_ACTIONS: "false"
+      DOZZLE_HOSTNAME: zgo-vps-cn
+      TZ: Asia/Shanghai
