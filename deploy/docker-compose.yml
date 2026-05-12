@@ -1,8 +1,36 @@
 # Compose file for self-hosted deploys (runs on the zgo-vps GH Actions
 # runner). Volume mounts use absolute paths under /opt/zgo-deploy so
 # persistent state survives ephemeral runner checkouts.
+#
+# Traffic flow:
+#   Internet -> Cloudflare (orange cloud, edge TLS)
+#     -> host openresty :80 (already running, manages other domains too)
+#       server_name *.zgi.app -> proxy_pass http://127.0.0.1:18080
+#         -> Traefik :18080 (bound to loopback only, internal HTTP)
+#           Host(zgo.zgi.app)  -> zgo-api:8025
+#           Host(logs.zgi.app) -> dozzle:8080
 
 services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      # Loopback-only: openresty (host net) proxies *.zgi.app here.
+      - "127.0.0.1:18080:80"
+      # Loopback dashboard / API.
+      - "127.0.0.1:18081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=deploy_default
+      - --entrypoints.web.address=:80
+      - --log.level=INFO
+      - --accesslog=true
+
   zgo-api:
     image: zgo-api:latest
     container_name: zgo-api
@@ -16,6 +44,11 @@ services:
       SERVER_MODE: release
       DB_ENABLED: "false"
       TZ: Asia/Shanghai
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.zgo.rule: "Host(`zgo.zgi.app`)"
+      traefik.http.routers.zgo.entrypoints: "web"
+      traefik.http.services.zgo.loadbalancer.server.port: "8025"
     logging:
       driver: json-file
       options:
@@ -36,3 +69,8 @@ services:
       DOZZLE_ENABLE_ACTIONS: "false"
       DOZZLE_HOSTNAME: zgo-vps-cn
       TZ: Asia/Shanghai
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dozzle.rule: "Host(`logs.zgi.app`)"
+      traefik.http.routers.dozzle.entrypoints: "web"
+      traefik.http.services.dozzle.loadbalancer.server.port: "8080"
