@@ -81,9 +81,14 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Apply Global Middleware (CORS mainly)
 	applyGlobalMiddleware(r, application.Config)
 
-	// Initialize Health Checks
+	// Initialize Health Checks. Skip the database checker entirely when
+	// the DB is disabled or unreachable at startup — otherwise the whole
+	// /health endpoint reports 503 and load balancers / k8s never see
+	// the service as ready.
 	h := health.New()
-	h.Register("database", health.DatabaseChecker(application.DB))
+	if application.DB != nil {
+		h.Register("database", health.DatabaseChecker(application.DB))
+	}
 
 	// Register health and metrics routes
 	h.RegisterRoutes(r)
