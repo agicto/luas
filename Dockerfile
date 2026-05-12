@@ -12,9 +12,9 @@ RUN go mod download
 COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo-server cmd/server/main.go
-RUN --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo cmd/zgo/main.go
+    --mount=type=cache,target=/go/pkg/mod \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
+        -o /out/ ./cmd/server ./cmd/zgo
 
 # Run stage
 FROM alpine:latest
@@ -27,8 +27,8 @@ ENV TZ=Asia/Shanghai
 
 WORKDIR /app
 
-COPY --from=builder /app/zgo-server .
-COPY --from=builder /app/zgo .
+COPY --from=builder /out/server ./zgo-server
+COPY --from=builder /out/zgo ./zgo
 COPY --from=builder /app/.env.example ./.env
 
 RUN chown -R appuser:appgroup /app
