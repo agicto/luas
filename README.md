@@ -223,6 +223,27 @@ r.Group("/v1", func(api *router.Router) {
 
 如果你的项目不需要这些能力，可以只保留核心 HTTP、配置、数据库、路由和模块层。
 
+## 部署
+
+仓库使用 GitHub Actions + GHCR 出镜像，Zeabur 拉镜像跑容器。`git push` 到 `main` 后整套链路全自动，端到端约 20 秒：
+
+```
+git push (main)
+  → GH Actions: docker build + push ghcr.io/zgiai/zgo:sha-<short>  (≈20s, 热缓存)
+  → GraphQL: updateServiceImage(serviceID, environmentID, tag)
+  → Zeabur 节点: docker pull (≈2s) + 滚动重启 (≈2s)
+  → 新容器对外提供服务
+```
+
+构建配置：
+
+- `Dockerfile`：多阶段构建，runtime 用 `gcr.io/distroless/static-debian12:nonroot`，最终镜像约 92MB
+- `.dockerignore`：排除 `.git`、`tmp`、`docs`、`tests` 等无关目录
+- `.github/workflows/build-image.yml`：buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
+- `ZEABUR_TOKEN` Secret：Zeabur GraphQL API 调用凭证
+
+镜像在 GHCR 是 public 的，编译产物可公开；源码仓库仍为 private。
+
 ## 设计原则
 
 - 根仓库只表达脚手架能力，不表达具体业务产品
