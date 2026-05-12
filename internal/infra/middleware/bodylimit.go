@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/zgiai/zgo/internal/infra/config"
@@ -72,7 +73,8 @@ func BodyLimitWithConfig(cfg BodyLimitConfig) gin.HandlerFunc {
 		c.Next()
 
 		// Check if we hit the limit during body read
-		if c.Errors.Last() != nil && c.Errors.Last().Error() == "http: request body too large" {
+		var maxBytesErr *http.MaxBytesError
+		if last := c.Errors.Last(); last != nil && errors.As(last.Err, &maxBytesErr) {
 			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
 				"success": false,
 				"error": gin.H{
