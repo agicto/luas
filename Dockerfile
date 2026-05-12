@@ -6,9 +6,6 @@ LABEL maintainer="ZGO Team <team@eogo-dev.com>"
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
 
 RUN --mount=type=cache,target=/root/.cache/go-build \
@@ -16,27 +13,17 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
         -o /out/ ./cmd/server ./cmd/zgo
 
-# Run stage
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates tzdata && \
-    addgroup -S appgroup && adduser -S appuser -G appgroup && \
-    mkdir -p /app/config /app/logs /app/storage
-
-ENV TZ=Asia/Shanghai
+# Run stage — distroless static for minimal image size and fast pull
+FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
 
-COPY --from=builder /out/server ./zgo-server
-COPY --from=builder /out/zgo ./zgo
-COPY --from=builder /app/.env.example ./.env
+COPY --from=builder /out/server /app/zgo-server
+COPY --from=builder /out/zgo /app/zgo
+COPY --from=builder /app/.env.example /app/.env
 
-RUN chown -R appuser:appgroup /app
-
-USER appuser
+ENV TZ=Asia/Shanghai
 
 EXPOSE 8025
 
-HEALTHCHECK NONE
-
-CMD ["./zgo-server"]
+ENTRYPOINT ["/app/zgo-server"]
