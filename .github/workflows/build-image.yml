@@ -52,13 +52,13 @@ jobs:
       - name: Trigger Zeabur redeploy
         env:
           ZEABUR_TOKEN: ${{ secrets.ZEABUR_TOKEN }}
+          ZEABUR_SERVICE_ID: 6a03711658ee177a59cb840e
+          ZEABUR_ENV_ID: 6a037100e5ed304c1d8508f0
         run: |
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          curl -sL -o /usr/local/bin/zeabur \
-            https://github.com/zeabur/cli/releases/download/v0.16.0/zeabur_0.16.0_linux_amd64
-          chmod +x /usr/local/bin/zeabur
-          zeabur auth login --token "$ZEABUR_TOKEN" -i=false
-          zeabur service update tag \
-            --id 6a03711658ee177a59cb840e \
-            --env-id 6a037100e5ed304c1d8508f0 \
-            -t "sha-$SHORT_SHA" -y -i=false
+          response=$(curl -sf -X POST https://api.zeabur.com/graphql \
+            -H "Authorization: Bearer $ZEABUR_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"mutation(\$s: ObjectID!, \$e: ObjectID!, \$t: String!) { updateServiceImage(serviceID: \$s, environmentID: \$e, tag: \$t) }\", \"variables\": {\"s\": \"$ZEABUR_SERVICE_ID\", \"e\": \"$ZEABUR_ENV_ID\", \"t\": \"sha-$SHORT_SHA\"}}")
+          echo "$response"
+          echo "$response" | jq -e '.data.updateServiceImage == true' >/dev/null
