@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Build stage
 FROM golang:1.24-alpine AS builder
 
@@ -10,18 +11,19 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo-server cmd/server/main.go
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo cmd/zgo/main.go
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo-server cmd/server/main.go
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o zgo cmd/zgo/main.go
 
 # Run stage
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata && \
+    addgroup -S appgroup && adduser -S appuser -G appgroup && \
+    mkdir -p /app/config /app/logs /app/storage
 
 ENV TZ=Asia/Shanghai
-
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-RUN mkdir -p /app/config /app/logs /app/storage
 
 WORKDIR /app
 
