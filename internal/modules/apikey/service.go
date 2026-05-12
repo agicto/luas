@@ -16,8 +16,8 @@ import (
 )
 
 // lastUsedAtThrottle skips the LastUsedAt write if the previous update is
-// fresher than this window. Sub-minute precision on "last used" is not
-// useful and the write amplification on hot keys is.
+// fresher than this window. Sub-minute precision on "last used" tracking
+// is not useful and the write amplification on hot keys is real.
 const lastUsedAtThrottle = time.Minute
 
 // Service defines API key operations.
