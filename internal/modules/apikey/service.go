@@ -3,6 +3,7 @@ package apikey
 import (
 	"context"
 	"fmt"
+	"log"
 	"slices"
 	"strconv"
 	"strings"
@@ -13,6 +14,11 @@ import (
 	"github.com/zgiai/zgo/internal/domain"
 	auditstarter "github.com/zgiai/zgo/internal/modules/audit"
 )
+
+// lastUsedAtThrottle skips the LastUsedAt write if the previous update is
+// fresher than this window. Sub-minute precision on "last used" is not
+// useful and the write amplification on hot keys is.
+const lastUsedAtThrottle = time.Minute
 
 // Service defines API key operations.
 type Service interface {
@@ -144,9 +150,12 @@ func (s *service) Validate(ctx context.Context, plaintext string, requiredScopes
 		}
 	}
 
-	key.LastUsedAt = &now
-	if err := s.repo.Update(ctx, key); err != nil {
-		return nil, fmt.Errorf("failed to update api key usage: %w", err)
+	if key.LastUsedAt == nil || now.Sub(*key.LastUsedAt) >= lastUsedAtThrottle {
+		key.LastUsedAt = &now
+		if err := s.repo.Update(ctx, key); err != nil {
+			// Auth already succeeded; degrade gracefully on the write.
+			log.Printf("apikey: failed to update LastUsedAt for key %d: %v", key.ID, err)
+		}
 	}
 
 	return key, nil
