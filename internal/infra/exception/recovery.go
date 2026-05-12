@@ -57,9 +57,21 @@ func panicToError(value any) *zerrors.AppError {
 		err = zerrors.LegacyInternal(fmt.Sprintf("Unknown panic: %v", v))
 	}
 
+	// Grow the buffer until runtime.Stack fits the whole trace. 8KB was
+	// silently truncating deep traces (gorm/gin pipelines easily hit 20KB+).
 	stack := make([]byte, 8192)
-	n := runtime.Stack(stack, false)
-	err.Stack = string(stack[:n])
+	for {
+		n := runtime.Stack(stack, false)
+		if n < len(stack) {
+			err.Stack = string(stack[:n])
+			break
+		}
+		if len(stack) >= 1<<20 { // 1MB safety ceiling
+			err.Stack = string(stack[:n])
+			break
+		}
+		stack = make([]byte, 2*len(stack))
+	}
 
 	frames := zerrors.DebugStackFrames(err.Stack)
 	if len(frames) > 0 {
