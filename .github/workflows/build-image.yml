@@ -48,3 +48,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+
+      - name: Trigger Zeabur redeploy
+        env:
+          ZEABUR_TOKEN: ${{ secrets.ZEABUR_TOKEN }}
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          curl -sL -o /usr/local/bin/zeabur \
+            https://github.com/zeabur/cli/releases/download/v0.16.0/zeabur_0.16.0_linux_amd64
+          chmod +x /usr/local/bin/zeabur
+          zeabur auth login --token "$ZEABUR_TOKEN" -i=false
+          zeabur service update tag \
+            --id 6a03711658ee177a59cb840e \
+            --env-id 6a037100e5ed304c1d8508f0 \
+            -t "sha-$SHORT_SHA" -y -i=false
