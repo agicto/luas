@@ -17,11 +17,7 @@ const nextConfig: NextConfig = {
 
   // Experimental features
   experimental: {
-    optimizePackageImports: [
-      'lucide-react',
-      '@radix-ui/react-icons',
-      '@tabler/icons-react',
-    ],
+    optimizePackageImports: ['lucide-react'],
   },
 
   productionBrowserSourceMaps: false,

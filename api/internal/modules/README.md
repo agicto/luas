@@ -97,7 +97,7 @@ llm/
 
 ```bash
 # Use CLI to generate
-./zgo make:module Blog
+./luas make:module Blog
 
 # After generation:
 # 1. Refine the generated internal/domain/<module>.go file with real business fields
@@ -107,7 +107,7 @@ llm/
 # 5. Re-generate Wire output
 ```
 
-For new business modules, prefer `./zgo make:module <Name>`.
+For new business modules, prefer `./luas make:module <Name>`.
 The single-file generators such as `make:service` and `make:handler` are meant to fill missing files in an existing `internal/modules/<module>/` directory, not to start a module from scratch.
 
 ## Naming Conventions

@@ -12,7 +12,7 @@
 # Binaries (root directory only)
 bin/
 dist/
-/zgo
+/luas
 /migrate
 /server
 test_output.txt
@@ -97,7 +97,7 @@ _reference/
 .ref/
 
 # Built binaries
-zgo
+luas
 server
 
 # Examples (keep source code but ignore build artifacts)

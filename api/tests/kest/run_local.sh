@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP_DIR="${ROOT_DIR}/tmp/kest"
-DB_PATH="${TMP_DIR}/zgo-kest.sqlite"
+DB_PATH="${TMP_DIR}/luas-kest.sqlite"
 SERVER_LOG="${TMP_DIR}/server.log"
 KEST_CONFIG_PATH="${ROOT_DIR}/.kest/config.yaml"
 KEST_CONFIG_BACKUP="${TMP_DIR}/config.yaml.bak"

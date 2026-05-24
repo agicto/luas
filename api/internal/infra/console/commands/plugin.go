@@ -28,7 +28,7 @@ func (c *PluginListCommand) Description() string {
 }
 
 func (c *PluginListCommand) Usage() string {
-	return "zgo plugin:list"
+	return "luas plugin:list"
 }
 
 func (c *PluginListCommand) Run(args []string) error {
@@ -60,8 +60,8 @@ func (c *PluginListCommand) Run(args []string) error {
 	}
 
 	c.output.Info("")
-	c.output.Info("Usage: zgo <plugin-name> <command> [args...]")
-	c.output.Info("Example: zgo ai docs user")
+	c.output.Info("Usage: luas <plugin-name> <command> [args...]")
+	c.output.Info("Example: luas ai docs user")
 
 	return nil
 }

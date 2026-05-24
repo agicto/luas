@@ -58,7 +58,7 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 		return nil, fmt.Errorf("failed to generate api key secret: %w", err)
 	}
 
-	keyPrefix := "zgo_" + strings.ToLower(idgen.ShortID())
+	keyPrefix := "luas_" + strings.ToLower(idgen.ShortID())
 	plaintext := keyPrefix + "." + secret
 
 	apiKey := &domain.APIKey{

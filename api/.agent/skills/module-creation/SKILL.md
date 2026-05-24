@@ -775,7 +775,7 @@ wire
 
 Expected output:
 ```
-wire: blog: wrote /path/to/zgo/internal/wiring/wire_gen.go
+wire: blog: wrote /path/to/luas/api/internal/wiring/wire_gen.go
 ```
 
 ### Step 12: Register Routes in Application
@@ -840,7 +840,7 @@ EOF
 
 ```bash
 make migrate
-# Or: ./zgo migrate
+# Or: ./luas migrate
 ```
 
 ### Step 14: Create Domain Entity
@@ -958,7 +958,7 @@ wire: blog: wire_gen.go:XX:YY: no provider found for ...
 
 ### Common Error 3: Database Table Not Found
 
-**Symptom**: `Error 1146: Table 'zgo.blog_posts' doesn't exist`
+**Symptom**: `Error 1146: Table 'luas.blog_posts' doesn't exist`
 
 **Cause**: Migration not run
 
@@ -968,7 +968,7 @@ wire: blog: wire_gen.go:XX:YY: no provider found for ...
 make migrate
 
 # Or manually
-./zgo migrate
+./luas migrate
 ```
 
 ### Common Error 4: JSON Binding Fails

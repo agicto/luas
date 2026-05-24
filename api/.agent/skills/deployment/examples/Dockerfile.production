@@ -24,7 +24,7 @@ COPY . .
 # -tags=prod adds production-specific build constraints if any
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X main.version=${VERSION}" \
-    -o /app/zgo-server \
+    -o /app/luas-server \
     ./cmd/server
 
 # --- Production Stage ---
@@ -43,7 +43,7 @@ RUN apk --no-cache add ca-certificates tzdata \
 WORKDIR /home/appuser
 
 # Copy bin from builder
-COPY --from=builder /app/zgo-server .
+COPY --from=builder /app/luas-server .
 COPY --from=builder /app/config ./config
 
 # Set ownership to non-root user
@@ -60,4 +60,4 @@ ENV APP_ENV=production
 ENV GIN_MODE=release
 
 # Run entry point
-CMD ["./zgo-server"]
+CMD ["./luas-server"]

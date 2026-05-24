@@ -236,7 +236,7 @@ else
 	@echo "✅ Git hooks configured"
 endif
 	@echo "✅ Dependencies downloaded"
-	@echo "Run 'make install' to install zgo CLI globally"
+	@echo "Run 'make install' to install luas CLI globally"
 
 # Show help
 help:

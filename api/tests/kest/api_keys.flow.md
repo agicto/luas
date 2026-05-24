@@ -1,5 +1,5 @@
 ```flow
-@flow id=zgo-api-keys-starter
+@flow id=luas-api-keys-starter
 @name Luas API Key Starter Flow
 @version 1.0
 @tags apikey, starter

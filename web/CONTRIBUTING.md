@@ -1,6 +1,6 @@
-# Contributing to Llamacto Web Scaffold
+# Contributing to Luas Web
 
-We love your input! We want to make contributing to Llamacto Web Scaffold as easy and transparent as possible, whether it's:
+We love your input! We want to make contributing to Luas Web as easy and transparent as possible, whether it's:
 
 - Reporting a bug
 - Discussing the current state of the code
@@ -27,8 +27,8 @@ Pull requests are the best way to propose changes to the codebase. We actively w
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/llamacto-web.git
-   cd llamacto-web
+   git clone https://github.com/yourusername/luas-web.git
+   cd luas-web
    ```
 
 2. **Install dependencies**
@@ -100,9 +100,9 @@ Use descriptive branch names:
 
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
-## Report bugs using GitHub's [issue tracker](https://github.com/yourusername/llamacto-web/issues)
+## Report bugs using GitHub's [issue tracker](https://github.com/yourusername/luas-web/issues)
 
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/llamacto-web/issues/new).
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/yourusername/luas-web/issues/new).
 
 ### Write bug reports with detail, background, and sample code
 
@@ -206,10 +206,10 @@ Examples of behavior that contributes to creating a positive environment include
 
 ## Getting Help
 
-- **Documentation**: Check our [docs](https://docs.llamacto.com)
-- **Discord**: Join our [community](https://discord.gg/llamacto)
-- **Issues**: Create a [GitHub issue](https://github.com/yourusername/llamacto-web/issues)
-- **Email**: Contact us at dev@llamacto.com
+- **Documentation**: Check our [docs](https://docs.luas.com)
+- **Discord**: Join our [community](https://discord.gg/luas)
+- **Issues**: Create a [GitHub issue](https://github.com/yourusername/luas-web/issues)
+- **Email**: Contact us at dev@luas.com
 
 ## License
 
@@ -221,4 +221,4 @@ This document was adapted from the open-source contribution guidelines for [Face
 
 ---
 
-Thank you for contributing to Llamacto Web Scaffold! 🚀 
+Thank you for contributing to Luas Web! 🚀 

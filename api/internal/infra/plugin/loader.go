@@ -15,7 +15,10 @@ type Plugin interface {
 }
 
 // Discover automatically discovers installed plugins in PATH
-// Looks for executables matching pattern: zgo-*
+// Looks for executables matching pattern: luas-*
+//
+// To author a plugin, ship an executable named `luas-<plugin>` on the user's
+// PATH and respond to `--version` for discovery.
 func Discover() []PluginInfo {
 	var plugins []PluginInfo
 
@@ -37,8 +40,8 @@ func Discover() []PluginInfo {
 	discovered := make(map[string]bool)
 
 	for _, dir := range paths {
-		// Find all zgo-* executables
-		pattern := filepath.Join(dir, "zgo-*")
+		// Find all luas-* executables
+		pattern := filepath.Join(dir, "luas-*")
 		matches, err := filepath.Glob(pattern)
 		if err != nil {
 			continue
@@ -50,8 +53,8 @@ func Discover() []PluginInfo {
 				continue
 			}
 
-			// Extract plugin name (remove zgo- prefix)
-			name := strings.TrimPrefix(filepath.Base(match), "zgo-")
+			// Extract plugin name (remove luas- prefix)
+			name := strings.TrimPrefix(filepath.Base(match), "luas-")
 
 			// Skip if already discovered
 			if discovered[name] {
@@ -110,7 +113,7 @@ func getPluginVersion(binary string) string {
 
 // Execute runs a plugin command
 func Execute(pluginName string, args []string) error {
-	binary := "zgo-" + pluginName
+	binary := "luas-" + pluginName
 	cmd := exec.Command(binary, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -120,7 +123,7 @@ func Execute(pluginName string, args []string) error {
 
 // IsInstalled checks if a plugin is installed
 func IsInstalled(pluginName string) bool {
-	binary := "zgo-" + pluginName
+	binary := "luas-" + pluginName
 	_, err := exec.LookPath(binary)
 	return err == nil
 }

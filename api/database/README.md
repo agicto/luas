@@ -29,7 +29,7 @@ database/
 ### Generate Migration File
 
 ```bash
-./zgo make:migration create_posts_table
+./luas make:migration create_posts_table
 ```
 
 **Output:**
@@ -84,7 +84,7 @@ func init() {
 ## Running Migrations
 
 ```bash
-./zgo migrate
+./luas migrate
 ```
 
 **Output:**

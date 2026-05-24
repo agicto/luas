@@ -14,9 +14,9 @@ echo -e "${GREEN}🔍 Running pre-commit checks...${NC}"
 
 # List of binary patterns to block
 BINARY_PATTERNS=(
-    "zgo"
+    "luas"
+    "luas-server"
     "server"
-    "eogo"
     "*.exe"
     "*.dll"
     "*.so"

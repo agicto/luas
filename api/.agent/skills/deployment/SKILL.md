@@ -71,12 +71,12 @@ Google Cloud Run is the preferred platform for Luas's serverless microservices.
 ### 1. Manual Deployment
 ```bash
 # Build and push to registry
-docker build -t gcr.io/[PROJECT_ID]/zgo-app:v1 .
-docker push gcr.io/[PROJECT_ID]/zgo-app:v1
+docker build -t gcr.io/[PROJECT_ID]/luas-app:v1 .
+docker push gcr.io/[PROJECT_ID]/luas-app:v1
 
 # Deploy to Cloud Run
-gcloud run deploy zgo-app \
-  --image gcr.io/[PROJECT_ID]/zgo-app:v1 \
+gcloud run deploy luas-app \
+  --image gcr.io/[PROJECT_ID]/luas-app:v1 \
   --region us-central1 \
   --allow-unauthenticated
 ```

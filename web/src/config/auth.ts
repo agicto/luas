@@ -7,7 +7,7 @@ export const authConfig = {
   sessionMaxAge: 60 * 60 * 24 * 7,
 
   cookies: {
-    session: 'zgi_session',
+    session: 'luas_session',
   },
 
   demoUser: {

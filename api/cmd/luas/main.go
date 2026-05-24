@@ -27,7 +27,7 @@ func main() {
 	}
 
 	// Initialize Console Application
-	cli := console.New("zgo", Version)
+	cli := console.New("luas", Version)
 
 	// Register command manifests
 	commands.RegisterManifests(cli, commands.DefaultManifests(Version)...)

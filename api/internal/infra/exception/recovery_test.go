@@ -47,7 +47,7 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 
 	engine := gin.New()
 	engine.Use(infraMiddleware.RequestID())
-	engine.Use(tracing.Middleware("zgo-test"))
+	engine.Use(tracing.Middleware("luas-test"))
 	engine.Use(tracing.InjectTraceID())
 	engine.Use(logger.GinLogger())
 	engine.Use(exception.Recovery(true))

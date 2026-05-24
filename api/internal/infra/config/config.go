@@ -288,9 +288,9 @@ func Load() (*Config, error) {
 		ClickHouse: ClickHouseConfig{
 			Enabled:   env.GetBool("LOG_CH_ENABLED", false),
 			Endpoint:  env.Get("LOG_CH_ENDPOINT", "localhost:9000"),
-			Database:  env.Get("LOG_CH_DATABASE", "zgo_logs"),
-			Username:  env.Get("LOG_CH_USERNAME", "zgo_user"),
-			Password:  env.Get("LOG_CH_PASSWORD", "zgo_pass"),
+			Database:  env.Get("LOG_CH_DATABASE", "luas_logs"),
+			Username:  env.Get("LOG_CH_USERNAME", "luas_user"),
+			Password:  env.Get("LOG_CH_PASSWORD", "luas_pass"),
 			BatchSize: env.GetInt("LOG_CH_BATCH_SIZE", 100),
 			Interval:  env.GetDuration("LOG_CH_INTERVAL", 5*time.Second),
 		},

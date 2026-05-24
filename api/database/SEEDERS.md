@@ -19,13 +19,13 @@ database/
 ### Generate Seeder File
 
 ```bash
-./zgo make:seeder Product
+./luas make:seeder Product
 ```
 
 **Output:**
 ```
 ✓ Seeder created: database/seeders/product_seeder.go
-ℹ Run with: ./zgo db:seed
+ℹ Run with: ./luas db:seed
 ```
 
 ### Generated File Structure
@@ -98,13 +98,13 @@ func init() {
 ### Run All Seeders
 
 ```bash
-./zgo db:seed
+./luas db:seed
 ```
 
 Or use the alias:
 
 ```bash
-./zgo seed
+./luas seed
 ```
 
 **Output:**
@@ -116,7 +116,7 @@ Or use the alias:
 ### Run with Migrations
 
 ```bash
-./zgo migrate --seed
+./luas migrate --seed
 ```
 
 ## Auto-Registration

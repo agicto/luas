@@ -103,9 +103,9 @@ See [`.agent/skills/README.md`](./.agent/skills/README.md) for detailed document
 ## Directory Structure
 
 ```text
-zgo/
+luas/
 ├── cmd/
-│   ├── zgo/              # CLI tool
+│   ├── luas/              # CLI tool
 │   └── server/            # HTTP server entry
 ├── internal/
 │   ├── bootstrap/         # Application startup

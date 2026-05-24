@@ -94,7 +94,6 @@ var (
 domain/
 ├── README.md           # This file
 ├── user.go             # User entity + UserRepository interface
-├── permission.go       # Permission entities + interfaces
 ├── value_objects.go    # Value objects (Email, Username, etc.)
 ├── events.go           # Domain events
 ├── errors.go           # Domain-specific errors
@@ -145,7 +144,7 @@ If Module A needs to call Module B:
 
 ```go
 // ❌ Wrong: Direct import causes circular dependency
-import "modules/permission"
+import "modules/billing"
 
 // ✅ Correct: Depend on domain interface
 type RoleAssigner interface {

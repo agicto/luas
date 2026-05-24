@@ -8,7 +8,7 @@ import (
 )
 
 func TestDefaultManifestsRegisterExpectedCommands(t *testing.T) {
-	app := console.New("zgo", "test")
+	app := console.New("luas", "test")
 	RegisterManifests(app, DefaultManifests("test")...)
 
 	assert.True(t, app.HasCommand("make:module"))

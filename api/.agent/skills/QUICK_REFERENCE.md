@@ -3,7 +3,7 @@
 ## 📁 已创建的文件结构
 
 ```
-zgo/
+luas/
 ├── .agent/skills/                             # 🆕 Skills 根目录
 │   ├── README.md                              # Skills 使用指南
 │   ├── _template/                             # Skill 创建模板

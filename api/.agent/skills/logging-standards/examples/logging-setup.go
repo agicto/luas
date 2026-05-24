@@ -44,7 +44,7 @@ func InitLogger() {
 
 	// Add global fields (environment characteristics)
 	Log = Log.WithFields(logrus.Fields{
-		"service":     "zgo-api",
+		"service":     "luas-api",
 		"environment": getEnv("ENV", "development"),
 		"version":     getEnv("VERSION", "1.0.0"),
 		"hostname":    getHostname(),

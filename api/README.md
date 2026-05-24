@@ -45,7 +45,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_NAME=zgo
+DB_NAME=luas
 
 JWT_SECRET=replace-me
 ```
@@ -91,10 +91,10 @@ make air
 ## 项目结构
 
 ```text
-zgo/
+luas/api/
 ├── cmd/
 │   ├── server/               # HTTP 服务入口
-│   └── zgo/                  # CLI 入口
+│   └── luas/                  # CLI 入口
 ├── internal/
 │   ├── app/                  # 应用聚合对象
 │   ├── bootstrap/            # 启动与生命周期
@@ -120,7 +120,6 @@ zgo/
 - `internal/modules/user` 是默认认证 starter，会参与默认路由、迁移和数据初始化
 - `internal/modules/apikey` 是默认 API key starter，会参与默认路由和迁移，并提供 `api_key` 中间件组
 - `internal/modules/audit` 是默认审计 starter，会记录全局写请求，并提供当前用户的审计历史查询
-- `internal/modules/permission` 保留为可选 RBAC 示例模块，不再默认装配到主应用
 
 业务模块建议遵循 8 文件结构：
 
@@ -229,7 +228,7 @@ r.Group("/v1", func(api *router.Router) {
 
 ```
 git push (main)
-  → GH Actions: docker build + push ghcr.io/zgiai/zgo:sha-<short>  (≈20s, 热缓存)
+  → GH Actions: docker build + push ghcr.io/zgiai/luas:sha-<short>  (≈20s, 热缓存)
   → GraphQL: updateServiceImage(serviceID, environmentID, tag)
   → Zeabur 节点: docker pull (≈2s) + 滚动重启 (≈2s)
   → 新容器对外提供服务

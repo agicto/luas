@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$BINARY_NAME = "zgo.exe"
+$BINARY_NAME = "luas.exe"
 $SERVER_NAME = "server.exe"
 
 # Get version information
@@ -199,7 +199,7 @@ function Setup {
     Write-Host "Setting up development environment..." -ForegroundColor Green
     go mod download
     Write-Host "✅ Dependencies downloaded" -ForegroundColor Green
-    Write-Host "Run '.\make.ps1 install' to install zgo CLI globally" -ForegroundColor Cyan
+    Write-Host "Run '.\make.ps1 install' to install luas CLI globally" -ForegroundColor Cyan
 }
 
 # Show help

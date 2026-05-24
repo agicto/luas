@@ -13,7 +13,7 @@ if "%GIT_COMMIT%"=="" set GIT_COMMIT=unknown
 
 for /f "tokens=*" %%i in ('powershell -Command "Get-Date -Format 'yyyy-MM-dd_HH:mm:ss'"') do set BUILD_TIME=%%i
 
-set BINARY_NAME=zgo.exe
+set BINARY_NAME=luas.exe
 set SERVER_NAME=server.exe
 set LDFLAGS=-ldflags "-s -w -X main.Version=%VERSION% -X main.GitCommit=%GIT_COMMIT% -X main.BuildTime=%BUILD_TIME%"
 
@@ -161,7 +161,7 @@ goto end
 echo Setting up development environment...
 go mod download
 echo Dependencies downloaded
-echo Run 'make.bat install' to install zgo CLI globally
+echo Run 'make.bat install' to install luas CLI globally
 goto end
 
 :help

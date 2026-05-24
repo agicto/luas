@@ -1,5 +1,5 @@
 ```flow
-@flow id=zgo-auth-starter
+@flow id=luas-auth-starter
 @name Luas Auth Starter Flow
 @version 1.0
 @tags auth, starter

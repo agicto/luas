@@ -195,7 +195,7 @@ func (c *MakeSeederCommand) Run(args []string) error {
 	}
 
 	c.output.Success("Seeder created: %s", filename)
-	c.output.Info("Run with: ./zgo db:seed")
+	c.output.Info("Run with: ./luas db:seed")
 	return nil
 }
 
@@ -438,7 +438,7 @@ func existingModuleScaffold(name string) (string, string, map[string]string, err
 			err = fmt.Errorf("%s is not a directory", dir)
 		}
 		return "", "", nil, fmt.Errorf(
-			"module %q does not exist in %s; run 'zgo make:module %s' to scaffold a complete module",
+			"module %q does not exist in %s; run 'luas make:module %s' to scaffold a complete module",
 			data["Package"],
 			dir,
 			data["ModelName"],

@@ -36,7 +36,7 @@ jobs:
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: zgo_test
+          POSTGRES_DB: luas_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -74,7 +74,7 @@ jobs:
         env:
           DB_HOST: localhost
           DB_PORT: 5432
-          DB_NAME: zgo_test
+          DB_NAME: luas_test
           DB_USERNAME: test
           DB_PASSWORD: test
           REDIS_HOST: localhost
@@ -101,7 +101,7 @@ jobs:
       
       - name: Build binary
         run: |
-          go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o zgo ./cmd/luas
+          go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o luas ./cmd/luas
           go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o server ./cmd/server
       
       - name: Upload artifacts
@@ -109,5 +109,5 @@ jobs:
         with:
           name: binaries
           path: |
-            zgo
+            luas
             server

@@ -143,7 +143,7 @@ logger.SetFormatter(&logrus.JSONFormatter{})
 // Global context for all logs
 logger = logger.WithFields(logrus.Fields{
     "environment": os.Getenv("ENV"),              // dev/staging/production
-    "service":     "zgo-api",
+    "service":     "luas-api",
     "version":     version.Version,
     "hostname":    hostname,
     "region":      os.Getenv("AWS_REGION"),
@@ -198,7 +198,7 @@ func Init() {
     
     // Add global fields
     Log = Log.WithFields(logrus.Fields{
-        "service":     "zgo-api",
+        "service":     "luas-api",
         "environment": os.Getenv("ENV"),
         "version":     os.Getenv("VERSION"),
     }).Logger
