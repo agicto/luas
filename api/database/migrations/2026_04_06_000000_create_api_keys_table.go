@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/apikey"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"gorm.io/gorm"
 )
 

@@ -3,8 +3,8 @@ package bootstrap
 import (
 	"log"
 
-	_ "github.com/zgiai/zgo/database/seeders" // Import to trigger init()
-	"github.com/zgiai/zgo/internal/starter"
+	_ "github.com/zgiai/luas/api/database/seeders" // Import to trigger init()
+	"github.com/zgiai/luas/api/internal/starter"
 	"gorm.io/gorm"
 )
 

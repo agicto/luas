@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/console"
 )
 
 func TestDefaultManifestsRegisterExpectedCommands(t *testing.T) {

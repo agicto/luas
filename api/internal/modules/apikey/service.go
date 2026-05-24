@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/zgo/internal/capabilities/crypto"
-	"github.com/zgiai/zgo/internal/capabilities/idgen"
-	"github.com/zgiai/zgo/internal/domain"
-	auditstarter "github.com/zgiai/zgo/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/capabilities/crypto"
+	"github.com/zgiai/luas/api/internal/capabilities/idgen"
+	"github.com/zgiai/luas/api/internal/domain"
+	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
 )
 
 // lastUsedAtThrottle skips the LastUsedAt write if the previous update is

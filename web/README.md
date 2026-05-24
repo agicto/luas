@@ -1,4 +1,4 @@
-# Hypership Web Console
+# Luas Web
 
 一个面向平台控制面的 Next.js 控制台，负责 GitHub 连接、仓库导入、服务创建、环境变量管理、部署触发与实时日志展示。
 
@@ -156,8 +156,8 @@ Deployment is seamless on Vercel with zero configuration.
 
 ### Docker
 ```bash
-docker build -t llamafront-web .
-docker run -p 3000:3000 llamafront-web
+docker build -t luas-web .
+docker run -p 3000:3000 luas-web
 ```
 
 ## 🧪 Scripts
@@ -178,4 +178,4 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ---
 
-Made with ❤️ by the LlamaFront contributors
+Made with ❤️ by the Luas contributors

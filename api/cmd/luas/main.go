@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/internal/infra/console/commands"
-	"github.com/zgiai/zgo/internal/infra/plugin"
+	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/console/commands"
+	"github.com/zgiai/luas/api/internal/infra/plugin"
 )
 
 const Version = "1.0.0"

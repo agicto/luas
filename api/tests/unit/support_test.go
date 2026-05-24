@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/zgiai/zgo/pkg/support"
+	"github.com/zgiai/luas/api/pkg/support"
 )
 
 func TestBlank(t *testing.T) {

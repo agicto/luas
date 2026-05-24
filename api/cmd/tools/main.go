@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/storage"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/storage"
 )
 
 func main() {

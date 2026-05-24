@@ -3,7 +3,7 @@ package audit
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // AuditLogListRequest filters audit log queries.

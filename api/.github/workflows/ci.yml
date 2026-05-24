@@ -101,7 +101,7 @@ jobs:
       
       - name: Build binary
         run: |
-          go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o zgo ./cmd/zgo
+          go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o zgo ./cmd/luas
           go build -ldflags "-s -w -X main.Version=${{ github.sha }}" -o server ./cmd/server
       
       - name: Upload artifacts

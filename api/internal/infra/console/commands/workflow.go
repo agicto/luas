@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zgiai/zgo/internal/bootstrap"
-	"github.com/zgiai/zgo/internal/capabilities/workflow"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/capabilities/workflow"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 // WorkflowWorkCommand runs a workflow queue worker.

@@ -1,4 +1,4 @@
-module github.com/zgiai/zgo
+module github.com/zgiai/luas/api
 
 go 1.24.0
 

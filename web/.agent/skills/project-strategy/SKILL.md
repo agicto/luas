@@ -7,7 +7,7 @@ description: High-level overview of project structure, mock API architecture, an
 
 ## Overview
 
-This skill provides a high-level strategic overview of the LlamaFront AI Scaffold. It covers the overall directory structure, the mock API architecture, and the authentication flow, ensuring that developers understand the core foundations of the project.
+This skill provides a high-level strategic overview of the Luas. It covers the overall directory structure, the mock API architecture, and the authentication flow, ensuring that developers understand the core foundations of the project.
 
 ## Project Structure
 

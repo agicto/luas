@@ -14,16 +14,16 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/app"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/exception"
-	"github.com/zgiai/zgo/internal/infra/health"
-	"github.com/zgiai/zgo/internal/infra/metrics"
-	infraMiddleware "github.com/zgiai/zgo/internal/infra/middleware"
-	"github.com/zgiai/zgo/internal/infra/tracing"
-	"github.com/zgiai/zgo/pkg/logger"
-	"github.com/zgiai/zgo/pkg/support"
-	"github.com/zgiai/zgo/routes"
+	"github.com/zgiai/luas/api/internal/app"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/exception"
+	"github.com/zgiai/luas/api/internal/infra/health"
+	"github.com/zgiai/luas/api/internal/infra/metrics"
+	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/infra/tracing"
+	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/support"
+	"github.com/zgiai/luas/api/routes"
 )
 
 // HttpKernel handles HTTP server lifecycle

@@ -2,9 +2,9 @@ package user
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/infra/email"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/email"
 )
 
 // ProviderSet is the provider set for this module

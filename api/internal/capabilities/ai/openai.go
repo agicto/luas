@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	infrahttp "github.com/zgiai/zgo/internal/infra/http"
+	infrahttp "github.com/zgiai/luas/api/internal/infra/http"
 )
 
 // OpenAIProvider implements text generation with the OpenAI Responses API.

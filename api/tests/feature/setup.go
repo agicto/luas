@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/bootstrap"
-	"github.com/zgiai/zgo/internal/infra/config"
-	test_platform "github.com/zgiai/zgo/internal/infra/testing"
-	"github.com/zgiai/zgo/internal/wiring"
+	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	test_platform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/zgiai/luas/api/internal/wiring"
 )
 
 // SetupApp initializes the feature-test application by reusing the production DI graph

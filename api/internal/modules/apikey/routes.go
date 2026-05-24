@@ -1,6 +1,6 @@
 package apikey
 
-import "github.com/zgiai/zgo/internal/infra/router"
+import "github.com/zgiai/luas/api/internal/infra/router"
 
 // RegisterRoutes registers API key management routes.
 func (h *Handler) RegisterRoutes(r *router.Router) {

@@ -5,7 +5,7 @@ package migrations
 import (
 	"slices"
 
-	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/migration"
 )
 
 // registry holds all registered migrations

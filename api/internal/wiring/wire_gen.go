@@ -7,17 +7,17 @@
 package wiring
 
 import (
-	"github.com/zgiai/zgo/internal/app"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/database"
-	"github.com/zgiai/zgo/internal/infra/email"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/apikey"
-	"github.com/zgiai/zgo/internal/modules/audit"
-	"github.com/zgiai/zgo/internal/modules/user"
-	"github.com/zgiai/zgo/internal/starter"
+	"github.com/zgiai/luas/api/internal/app"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/infra/email"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/jwt"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/apikey"
+	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // Injectors from wire.go:

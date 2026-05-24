@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	zerrors "github.com/zgiai/zgo/pkg/errors"
-	"github.com/zgiai/zgo/pkg/logger"
-	"github.com/zgiai/zgo/pkg/response"
+	zerrors "github.com/zgiai/luas/api/pkg/errors"
+	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/response"
 	"go.opentelemetry.io/otel/trace"
 )
 

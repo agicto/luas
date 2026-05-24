@@ -1,4 +1,4 @@
-# LlamaFront Architectural Optimization Roadmap
+# Luas Architectural Optimization Roadmap
 
 ## Phase 1: Engineering Foundation (🛡️ Critical)
 The highest priority is establishing a safety net for development.

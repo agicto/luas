@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-**LlamaFront AI Scaffold** - A production-ready Next.js scaffold optimized for rapid AI-assisted development.
+**Luas** - A production-ready Next.js scaffold optimized for rapid AI-assisted development.
 
 | Tech | Version | Purpose |
 |------|---------|---------|

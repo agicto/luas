@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/lifecycle"
+	"github.com/zgiai/luas/api/internal/infra/lifecycle"
 )
 
 // Example: How to use Lifecycle in ZGO

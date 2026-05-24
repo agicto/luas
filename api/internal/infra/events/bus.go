@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-	"github.com/zgiai/zgo/pkg/events"
+	"github.com/zgiai/luas/api/pkg/events"
 )
 
 // EventBus handles event publishing and subscription with priority support,

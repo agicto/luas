@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 // Bootstrap applies process-level workflow runtime configuration.

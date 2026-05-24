@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/infra/router"
-	"github.com/zgiai/zgo/internal/starter"
+	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // RegisterAPI registers all API routes using fluent router

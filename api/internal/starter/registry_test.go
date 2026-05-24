@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
 type counters struct {

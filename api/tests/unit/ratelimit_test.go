@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/ratelimit"
+	"github.com/zgiai/luas/api/internal/infra/ratelimit"
 	"github.com/gin-gonic/gin"
 )
 

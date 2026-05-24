@@ -4,8 +4,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/container"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/container"
 	"gorm.io/gorm"
 )
 

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/zgiai/zgo/internal/bootstrap"
-	"github.com/zgiai/zgo/internal/wiring"
+	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/wiring"
 )
 
 // @title ZGO API

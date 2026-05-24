@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 /**
- * LlamaFront AI Scaffold Homepage
+ * Luas Homepage
  * Unified design language with Auth and Console sections
  */
 export default function HomePage() {
@@ -157,7 +157,7 @@ export default function HomePage() {
             Ready to Build?
           </h2>
           <p className="mt-4 text-white/80 max-w-xl mx-auto md:text-lg">
-            Start building your next project with LlamaFront. 
+            Start building your next project with Luas. 
             Authentication, dashboard, and premium components included.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">

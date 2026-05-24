@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // KeyAuthResult carries validation output back into the request context.

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 // TestJob is a simple test job

@@ -1,6 +1,6 @@
 # Upgrade Guide: v2.0.0 → v2.1.0
 
-This guide outlines the changes and upgrade steps for migrating from LlamaFront AI Scaffold v2.0.0 to v2.1.0.
+This guide outlines the changes and upgrade steps for migrating from Luas v2.0.0 to v2.1.0.
 
 ## Overview
 

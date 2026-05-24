@@ -45,7 +45,7 @@ goto help
 :build
 echo Building %BINARY_NAME%...
 call :wire
-go build %LDFLAGS% -o %BINARY_NAME% cmd/zgo/main.go
+go build %LDFLAGS% -o %BINARY_NAME% cmd/luas/main.go
 goto end
 
 :build-server
@@ -61,7 +61,7 @@ goto end
 :install
 echo Installing %BINARY_NAME%...
 call :build
-go install %LDFLAGS% ./cmd/zgo
+go install %LDFLAGS% ./cmd/luas
 goto end
 
 :clean

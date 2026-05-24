@@ -38,7 +38,7 @@
 package resource
 
 import (
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Transformer is a function that transforms a model to API output.

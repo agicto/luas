@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/zgiai/zgo/pkg/events"
+	"github.com/zgiai/luas/api/pkg/events"
 )
 
 // Event represents a domain event with metadata support

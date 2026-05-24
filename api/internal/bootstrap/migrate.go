@@ -5,9 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/starter"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/starter"
 	"gorm.io/gorm"
 )
 

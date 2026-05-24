@@ -2,8 +2,8 @@ package audit
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // ProviderSet wires the audit starter.

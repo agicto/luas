@@ -35,7 +35,7 @@ linters-settings:
     simplify: true
   
   goimports:
-    local-prefixes: github.com/zgiai/zgo
+    local-prefixes: github.com/zgiai/luas/api
   
   misspell:
     locale: US

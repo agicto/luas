@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 func TestLog_Levels(t *testing.T) {

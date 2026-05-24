@@ -3,7 +3,7 @@ package unit
 import (
 	"testing"
 
-	"github.com/zgiai/zgo/pkg/encryption"
+	"github.com/zgiai/luas/api/pkg/encryption"
 )
 
 func TestEncryption_EncryptDecrypt(t *testing.T) {

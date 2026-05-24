@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"gorm.io/gorm/logger"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zgiai/zgo/internal/infra/notification"
+	"github.com/zgiai/luas/api/internal/infra/notification"
 )
 
 // TestNotification implements Notification interface

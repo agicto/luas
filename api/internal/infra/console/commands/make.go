@@ -8,8 +8,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/migration"
 )
 
 // MakeModelCommand creates a new model
@@ -516,7 +516,7 @@ const modelTemplate = `package {{.Package}}
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -566,7 +566,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // Service defines the business interface for {{.ModelName}}.
@@ -647,10 +647,10 @@ const handlerTemplate = `package {{.Package}}
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/contracts"
-	httphandler "github.com/zgiai/zgo/pkg/handler"
-	"github.com/zgiai/zgo/pkg/pagination"
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/internal/contracts"
+	httphandler "github.com/zgiai/luas/api/pkg/handler"
+	"github.com/zgiai/luas/api/pkg/pagination"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Handler handles HTTP requests for {{.ModelName}}.
@@ -758,7 +758,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
 )
 
@@ -844,7 +844,7 @@ const dtoTemplate = `package {{.Package}}
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // Create{{.ModelName}}Request represents the request to create a {{.ModelName}}.
@@ -945,7 +945,7 @@ func init() {
 
 const routesTemplate = `package {{.Package}}
 
-import "github.com/zgiai/zgo/internal/infra/router"
+import "github.com/zgiai/luas/api/internal/infra/router"
 
 // RegisterRoutes registers HTTP routes for the {{.Package}} module.
 func (h *Handler) RegisterRoutes(r *router.Router) {
@@ -967,7 +967,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type mockRepository struct {
@@ -1027,7 +1027,7 @@ const providerTemplate = `package {{.Package}}
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // ProviderSet is the provider set for this module.

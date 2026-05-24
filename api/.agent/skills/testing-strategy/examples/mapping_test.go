@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func TestToResponse(t *testing.T) {

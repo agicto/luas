@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/queue"
-	"github.com/zgiai/zgo/internal/infra/retry"
-	"github.com/zgiai/zgo/internal/infra/schedule"
+	"github.com/zgiai/luas/api/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/infra/retry"
+	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 var (

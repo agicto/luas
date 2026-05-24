@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/cache"
+	"github.com/zgiai/luas/api/internal/infra/cache"
 )
 
 func TestMemoryStore_PutAndGet(t *testing.T) {

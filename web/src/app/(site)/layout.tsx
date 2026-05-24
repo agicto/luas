@@ -30,7 +30,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                 </svg>
               </div>
-              <span className="text-xl font-bold tracking-tight">LlamaFront</span>
+              <span className="text-xl font-bold tracking-tight">Luas</span>
             </Link>
 
             {/* Navigation links - only valid ones */}
@@ -83,7 +83,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                 </svg>
               </div>
-              <span className="text-sm font-medium">LlamaFront</span>
+              <span className="text-sm font-medium">Luas</span>
               <span className="text-sm text-text-muted">
                 · AI-First Frontend Scaffold
               </span>
@@ -100,7 +100,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
                 GitHub
               </a>
               <span>
-                © {new Date().getFullYear()} LlamaFront. All rights reserved.
+                © {new Date().getFullYear()} Luas. All rights reserved.
               </span>
             </div>
           </div>

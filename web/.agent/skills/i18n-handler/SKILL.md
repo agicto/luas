@@ -7,7 +7,7 @@ description: Guidelines for managing internationalization (i18n) in the project 
 
 ## Overview
 
-This skill provides comprehensive instructions for implementing and maintaining internationalization (i18n) within the LlamaFront AI Scaffold. It covers client and server component usage, type-safe translation keys, module organization, and scoped translations.
+This skill provides comprehensive instructions for implementing and maintaining internationalization (i18n) within the Luas. It covers client and server component usage, type-safe translation keys, module organization, and scoped translations.
 
 ## Key Concepts
 

@@ -1,7 +1,7 @@
 {
-  "name": "llamafront-ai-scaffold",
-  "version": "2.1.0",
-  "description": "LlamaFront AI Scaffold - AI-powered frontend application scaffold built with Next.js, TypeScript, and Tailwind CSS for the AI era",
+  "name": "luas-web",
+  "version": "0.1.0",
+  "description": "Luas web — the Next.js + TypeScript half of the Luas AI scaffold (Luas: Irish for 'speed').",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -29,9 +29,9 @@
     "ai-development",
     "frontend",
     "ui-components",
-    "llamafront"
+    "luas"
   ],
-  "author": "Llamacto Team",
+  "author": "Luas Team",
   "license": "MIT",
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

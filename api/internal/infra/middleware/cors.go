@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/gin-gonic/gin"
 )
 

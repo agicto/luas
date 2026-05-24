@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/infra/storage"
+	"github.com/zgiai/luas/api/internal/infra/storage"
 )
 
 func TestLocalFilesystemSmoke(t *testing.T) {

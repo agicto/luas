@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 const welcomeHTML = `<!DOCTYPE html>
@@ -572,7 +572,7 @@ const welcomeHTML = `<!DOCTYPE html>
 				</p>
 				<div class="cta-row">
 					<a href="/swagger/index.html" class="button button-primary">Open Swagger</a>
-					<a href="https://github.com/zgiai/zgo" target="_blank" rel="noreferrer" class="button button-secondary">Read GitHub Docs</a>
+					<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer" class="button button-secondary">Read GitHub Docs</a>
 					<a href="/v1/health" class="button button-secondary">Check Health</a>
 				</div>
 				<div class="signal-row">
@@ -629,9 +629,9 @@ make wire
 go run ./cmd/server
 
 <span class="dim"># explore the scaffold</span>
-go run ./cmd/zgo route:list
-go run ./cmd/zgo migrate
-go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
+go run ./cmd/luas route:list
+go run ./cmd/luas migrate
+go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				</div>
 			</aside>
 		</section>
@@ -658,7 +658,7 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 					<div class="step-kicker">Step 03</div>
 					<h3>Generate the next module</h3>
 					<p>从完整模块脚手架起步，而不是零散补文件。单文件生成命令只用来修复现有模块，不用来起新模块。</p>
-					<div class="command-snippet">go run ./cmd/zgo make:module Invoice</div>
+					<div class="command-snippet">go run ./cmd/luas make:module Invoice</div>
 				</article>
 			</div>
 		</section>
@@ -738,8 +738,8 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 					<ul class="bullet-list">
 						<li><a href="/swagger/index.html">Swagger explorer</a><code>/swagger/index.html</code></li>
 						<li><a href="/v1/health">Health endpoint</a><code>/v1/health</code></li>
-						<li><a href="https://github.com/zgiai/zgo" target="_blank" rel="noreferrer">GitHub repository</a><code>README + source</code></li>
-						<li><span>CLI route listing</span><code>go run ./cmd/zgo route:list</code></li>
+						<li><a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub repository</a><code>README + source</code></li>
+						<li><span>CLI route listing</span><code>go run ./cmd/luas route:list</code></li>
 					</ul>
 				</article>
 			</div>
@@ -748,7 +748,7 @@ go run ./cmd/zgo ai:chat "Summarize this scaffold"</pre>
 		<footer class="footer reveal reveal-delay-3">
 			<div>{{APP_NAME}} is a modular Go API scaffold focused on fast product starts and clean architecture seams.</div>
 			<div class="footer-links">
-				<a href="https://github.com/zgiai/zgo" target="_blank" rel="noreferrer">GitHub</a>
+				<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub</a>
 				<a href="/swagger/index.html">Swagger</a>
 				<a href="/v1/health">Health</a>
 			</div>

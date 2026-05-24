@@ -2,9 +2,9 @@ package permission
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/pkg/handler"
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/pkg/handler"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Handler handles permission-related HTTP requests and exposes route capability.

@@ -2,12 +2,12 @@ package infra
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/database"
-	"github.com/zgiai/zgo/internal/infra/email"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/infra/email"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/jwt"
+	"github.com/zgiai/luas/api/internal/infra/migration"
 )
 
 // ProviderSet aggregates all infrastructure providers for Wire DI.

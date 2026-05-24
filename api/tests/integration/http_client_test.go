@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	httpclient "github.com/zgiai/zgo/internal/infra/http"
+	httpclient "github.com/zgiai/luas/api/internal/infra/http"
 )
 
 func TestHTTPClient_Get(t *testing.T) {

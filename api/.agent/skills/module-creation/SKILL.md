@@ -92,7 +92,7 @@ Fields:
 ### Step 2: Generate the Default Scaffold
 
 ```bash
-go run ./cmd/zgo make:module Blog
+go run ./cmd/luas make:module Blog
 ```
 
 **Expected structure**:
@@ -151,7 +151,7 @@ package blog
 
 import (
     "time"
-    "github.com/zgiai/zgo/internal/domain"
+    "github.com/zgiai/luas/api/internal/domain"
 )
 
 // ========== Domain Entity (lives in internal/domain) ==========
@@ -251,7 +251,7 @@ package blog
 
 import (
     "context"
-    "github.com/zgiai/zgo/internal/domain"
+    "github.com/zgiai/luas/api/internal/domain"
     "gorm.io/gorm"
 )
 
@@ -336,7 +336,7 @@ package blog
 import (
     "context"
     "errors"
-    "github.com/zgiai/zgo/internal/domain"
+    "github.com/zgiai/luas/api/internal/domain"
 )
 
 var (
@@ -442,8 +442,8 @@ package blog
 
 import (
     "github.com/gin-gonic/gin"
-    "github.com/zgiai/zgo/pkg/handler"
-    "github.com/zgiai/zgo/pkg/response"
+    "github.com/zgiai/luas/api/pkg/handler"
+    "github.com/zgiai/luas/api/pkg/response"
 )
 
 // Handler handles blog post HTTP requests
@@ -677,7 +677,7 @@ import (
     "testing"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
-    "github.com/zgiai/zgo/internal/domain"
+    "github.com/zgiai/luas/api/internal/domain"
 )
 
 // MockRepository is a mock implementation of Repository
@@ -752,7 +752,7 @@ Edit `internal/wiring/wire.go`:
 // Add blog import
 import (
     // ... existing imports ...
-    "github.com/zgiai/zgo/internal/modules/blog"
+    "github.com/zgiai/luas/api/internal/modules/blog"
 )
 
 // Add to initializeApplication function
@@ -785,7 +785,7 @@ Edit `routes/api.go` (or wherever routes are registered):
 ```go
 import (
     // ... existing imports ...
-    "github.com/zgiai/zgo/internal/modules/blog"
+    "github.com/zgiai/luas/api/internal/modules/blog"
 )
 
 func RegisterAPIRoutes(app *bootstrap.Application) {

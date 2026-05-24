@@ -5,10 +5,10 @@ package wiring
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/internal/app"
-	"github.com/zgiai/zgo/internal/infra"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/starter"
+	"github.com/zgiai/luas/api/internal/app"
+	"github.com/zgiai/luas/api/internal/infra"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // InitApplication initializes the entire application with all dependencies.

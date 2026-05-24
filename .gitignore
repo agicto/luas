@@ -1,0 +1,18 @@
+# Top-level Luas monorepo .gitignore
+# Per-half gitignores live at api/.gitignore and web/.gitignore.
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Local environment overrides (per-half .env files are handled by each half's gitignore)
+.env.local
+.env.*.local
+
+# Build artifacts that escape per-half scope
+/tmp/
+/dist/

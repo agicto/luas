@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/queue"
-	"github.com/zgiai/zgo/internal/infra/schedule"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 var counterJobCalls atomic.Int32

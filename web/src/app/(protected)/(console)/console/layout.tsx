@@ -72,7 +72,7 @@ export default function ConsoleLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Hypership Console</span>
+            <span className="text-xl font-bold tracking-tight">Luas Console</span>
           </Link>
         </div>
 

@@ -105,7 +105,7 @@ cd "${ROOT_DIR}"
 cp "${KEST_CONFIG_PATH}" "${KEST_CONFIG_BACKUP}"
 write_kest_config
 
-env "${COMMON_ENV[@]}" go run ./cmd/zgo/main.go migrate >/dev/null
+env "${COMMON_ENV[@]}" go run ./cmd/luas/main.go migrate >/dev/null
 env "${COMMON_ENV[@]}" go run ./cmd/server/main.go >"${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 

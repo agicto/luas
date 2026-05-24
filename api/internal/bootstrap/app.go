@@ -1,7 +1,7 @@
 package bootstrap
 
 import (
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 // InitLogger initializes the logger.

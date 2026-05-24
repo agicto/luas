@@ -71,11 +71,11 @@ go run ./cmd/server
 ### 5. 使用 CLI
 
 ```bash
-go run ./cmd/zgo version
-go run ./cmd/zgo route:list
-go run ./cmd/zgo migrate
-go run ./cmd/zgo seed
-go run ./cmd/zgo ai:chat "Summarize this scaffold in one sentence"
+go run ./cmd/luas version
+go run ./cmd/luas route:list
+go run ./cmd/luas migrate
+go run ./cmd/luas seed
+go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
 
 ## 常用命令
@@ -189,8 +189,8 @@ OPENAI_API_KEY=replace-me
 命令示例：
 
 ```bash
-go run ./cmd/zgo ai:chat "Write a short project summary"
-go run ./cmd/zgo ai:chat --system="Answer in JSON" --model=gpt-5.4 "List 3 scaffold priorities"
+go run ./cmd/luas ai:chat "Write a short project summary"
+go run ./cmd/luas ai:chat --system="Answer in JSON" --model=gpt-5.4 "List 3 scaffold priorities"
 ```
 
 ## API Key Starter

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/zgo/internal/capabilities/ai"
-	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/pkg/env"
+	"github.com/zgiai/luas/api/internal/capabilities/ai"
+	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/pkg/env"
 )
 
 // AIChatCommand sends a prompt to the configured AI provider.

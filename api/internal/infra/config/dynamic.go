@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zgiai/zgo/pkg/env"
+	"github.com/zgiai/luas/api/pkg/env"
 )
 
 // Repository is the main configuration storage and management tool

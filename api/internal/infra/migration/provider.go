@@ -2,7 +2,7 @@
 package migration
 
 import (
-	"github.com/zgiai/zgo/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/google/wire"
 	"gorm.io/gorm"
 )

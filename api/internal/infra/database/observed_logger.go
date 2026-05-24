@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/exception"
+	"github.com/zgiai/luas/api/internal/infra/exception"
 	"gorm.io/gorm/logger"
 )
 

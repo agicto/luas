@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/email"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/jwt"
+	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/email"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

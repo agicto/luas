@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // AuditLogPO is the persistent object for audit log records.

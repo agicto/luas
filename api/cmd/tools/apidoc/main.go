@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zgiai/zgo/cmd/tools/apidoc/parser"
+	"github.com/zgiai/luas/api/cmd/tools/apidoc/parser"
 )
 
 func main() {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 func main() {

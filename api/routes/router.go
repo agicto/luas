@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"github.com/zgiai/zgo/internal/infra/monitor"
-	"github.com/zgiai/zgo/internal/infra/router"
-	"github.com/zgiai/zgo/internal/starter"
+	"github.com/zgiai/luas/api/internal/infra/monitor"
+	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // Setup configures all application routes using the fluent router API

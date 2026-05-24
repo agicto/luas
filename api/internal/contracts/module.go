@@ -1,8 +1,8 @@
 package contracts
 
 import (
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
 // Module is the minimal contract shared by all ZGO modules.

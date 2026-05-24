@@ -3,7 +3,7 @@ package permission
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // CreateRoleRequest is the request for creating a role.

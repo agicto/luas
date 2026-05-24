@@ -34,7 +34,7 @@ database/
 package seeders
 
 import (
-    "github.com/zgiai/zgo/internal/infra/database"
+    "github.com/zgiai/luas/api/internal/infra/database"
 )
 
 type ProductSeeder struct{}
@@ -65,8 +65,8 @@ func init() {
 package seeders
 
 import (
-    "github.com/zgiai/zgo/internal/modules/blog"
-    "github.com/zgiai/zgo/internal/infra/database"
+    "github.com/zgiai/luas/api/internal/modules/blog"
+    "github.com/zgiai/luas/api/internal/infra/database"
 )
 
 type PostSeeder struct{}

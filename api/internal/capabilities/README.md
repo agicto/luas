@@ -29,8 +29,8 @@ modules        →   capabilities   →   infra
 
 ```go
 import (
-    "github.com/zgiai/zgo/internal/capabilities/idgen"
-    "github.com/zgiai/zgo/internal/capabilities/crypto"
+    "github.com/zgiai/luas/api/internal/capabilities/idgen"
+    "github.com/zgiai/luas/api/internal/capabilities/crypto"
 )
 
 // ID 生成

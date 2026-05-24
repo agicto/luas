@@ -13,7 +13,7 @@ ZGO is a Go application scaffold, not a framework-only kernel and not a product 
 ## Assembly Terms
 
 - `starter registry`: the single module that decides which starters, starter migrations, and starter seeders are active in the scaffold.
-- `command manifest`: the seam that groups related CLI commands so registration does not drift across `cmd/zgo` and command packages.
+- `command manifest`: the seam that groups related CLI commands so registration does not drift across `cmd/luas` and command packages.
 - `default scaffold`: the out-of-the-box ZGO app assembled from `core` plus the default `starter` set.
 
 ## Current Defaults

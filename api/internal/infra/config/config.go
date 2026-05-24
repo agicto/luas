@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zgiai/zgo/pkg/env"
+	"github.com/zgiai/luas/api/pkg/env"
 )
 
 // GlobalConfig stores the global configuration

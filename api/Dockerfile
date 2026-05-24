@@ -11,19 +11,19 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
-        -o /out/ ./cmd/server ./cmd/zgo
+        -o /out/ ./cmd/server ./cmd/luas
 
 # Run stage — distroless static for minimal image size and fast pull
 FROM gcr.io/distroless/static-debian12:nonroot
 
 WORKDIR /app
 
-COPY --from=builder /out/server /app/zgo-server
-COPY --from=builder /out/zgo /app/zgo
+COPY --from=builder /out/server /app/luas-server
+COPY --from=builder /out/luas /app/luas
 COPY --from=builder /app/.env.example /app/.env
 
 ENV TZ=Asia/Shanghai
 
 EXPOSE 8025
 
-ENTRYPOINT ["/app/zgo-server"]
+ENTRYPOINT ["/app/luas-server"]

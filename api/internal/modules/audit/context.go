@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type changeCollectorKey struct{}

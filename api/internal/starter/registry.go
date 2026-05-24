@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/zgiai/zgo/database/migrations"
-	"github.com/zgiai/zgo/database/seeders"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/infra/router"
+	"github.com/zgiai/luas/api/database/migrations"
+	"github.com/zgiai/luas/api/database/seeders"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
 // Registry is the single assembly point for the default scaffold starters.

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/metrics"
-	"github.com/zgiai/zgo/internal/infra/singleflight"
+	"github.com/zgiai/luas/api/internal/infra/metrics"
+	"github.com/zgiai/luas/api/internal/infra/singleflight"
 )
 
 // ErrCacheMiss is returned when a key is not found in the cache

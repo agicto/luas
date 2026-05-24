@@ -3,7 +3,7 @@ package logger
 import (
 	"time"
 
-	"github.com/zgiai/zgo/pkg/env"
+	"github.com/zgiai/luas/api/pkg/env"
 )
 
 // Boot initializes the logger from environment configuration

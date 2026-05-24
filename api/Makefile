@@ -1,4 +1,4 @@
-BINARY_NAME=zgo
+BINARY_NAME=luas
 SERVER_BINARY=server
 OUTPUT_DIR=bin
 
@@ -33,7 +33,7 @@ $(OUTPUT_DIR):
 # Build CLI binary for current platform (auto-runs wire first)
 build: wire $(OUTPUT_DIR)
 	@echo "Building $(BINARY_NAME)..."
-	go build $(LDFLAGS) -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/zgo/main.go
+	go build $(LDFLAGS) -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/luas/main.go
 
 # Build server binary for current platform
 build-server: $(OUTPUT_DIR)
@@ -47,23 +47,23 @@ build-all: build build-server
 # Build Windows binaries
 build-windows: $(OUTPUT_DIR)
 	@echo "Building Windows binaries..."
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME).exe cmd/zgo/main.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME).exe cmd/luas/main.go
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY).exe cmd/server/main.go
 	@echo "✅ Windows binaries built successfully"
 
 # Build Linux binaries
 build-linux: $(OUTPUT_DIR)
 	@echo "Building Linux binaries..."
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-linux cmd/zgo/main.go
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-linux cmd/luas/main.go
 	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-linux cmd/server/main.go
 	@echo "✅ Linux binaries built successfully"
 
 # Build macOS binaries (both Intel and Apple Silicon)
 build-darwin: $(OUTPUT_DIR)
 	@echo "Building macOS binaries..."
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64 cmd/zgo/main.go
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64 cmd/luas/main.go
 	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-darwin-amd64 cmd/server/main.go
-	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-arm64 cmd/zgo/main.go
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-arm64 cmd/luas/main.go
 	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-darwin-arm64 cmd/server/main.go
 	@echo "✅ macOS binaries built successfully"
 
@@ -74,7 +74,7 @@ build-all-platforms: build-windows build-linux build-darwin
 # Production build with optimizations
 build-prod: wire $(OUTPUT_DIR)
 	@echo "Building production binaries..."
-	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/zgo/main.go
+	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/luas/main.go
 	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(SERVER_BINARY)$(BINARY_EXT) cmd/server/main.go
 	@echo "✅ Production binaries built successfully"
 
@@ -82,9 +82,9 @@ build-prod: wire $(OUTPUT_DIR)
 install: build
 	@echo "Installing $(BINARY_NAME)..."
 ifeq ($(OS),Windows_NT)
-	go install $(LDFLAGS) ./cmd/zgo
+	go install $(LDFLAGS) ./cmd/luas
 else
-	go install $(LDFLAGS) ./cmd/zgo
+	go install $(LDFLAGS) ./cmd/luas
 endif
 	@echo "✅ $(BINARY_NAME) installed successfully"
 
@@ -176,34 +176,34 @@ server: dev
 migrate:
 	@echo "Running migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate) else (go run cmd/zgo/main.go migrate)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate) else (go run cmd/luas/main.go migrate)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate; else go run cmd/zgo/main.go migrate; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate; else go run cmd/luas/main.go migrate; fi
 endif
 
 migrate-fresh:
 	@echo "Running fresh migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:fresh) else (go run cmd/zgo/main.go migrate:fresh)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:fresh) else (go run cmd/luas/main.go migrate:fresh)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:fresh; else go run cmd/zgo/main.go migrate:fresh; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:fresh; else go run cmd/luas/main.go migrate:fresh; fi
 endif
 
 migrate-rollback:
 	@echo "Rolling back migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:rollback) else (go run cmd/zgo/main.go migrate:rollback)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:rollback) else (go run cmd/luas/main.go migrate:rollback)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:rollback; else go run cmd/zgo/main.go migrate:rollback; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:rollback; else go run cmd/luas/main.go migrate:rollback; fi
 endif
 
 # Database seeding
 seed:
 	@echo "Running seeders..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) db:seed) else (go run cmd/zgo/main.go db:seed)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) db:seed) else (go run cmd/luas/main.go db:seed)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) db:seed; else go run cmd/zgo/main.go db:seed; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) db:seed; else go run cmd/luas/main.go db:seed; fi
 endif
 
 # Tidy dependencies

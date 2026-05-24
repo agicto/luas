@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/schedule"
+	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 func TestEvent_EveryMinute(t *testing.T) {

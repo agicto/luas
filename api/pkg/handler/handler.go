@@ -19,7 +19,7 @@ package handler
 import (
 	"strconv"
 
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 

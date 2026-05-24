@@ -3,9 +3,9 @@ package user
 import (
 	"context"
 
-	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/internal/infra/events"
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 // handleUserCreated sends a welcome email when a user is created.

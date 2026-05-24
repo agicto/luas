@@ -205,7 +205,7 @@ func Init() {
 }
 
 // Usage in modules
-import "github.com/zgiai/zgo/pkg/logger"
+import "github.com/zgiai/luas/api/pkg/logger"
 
 func someFunction() {
     logger.Log.WithFields(logrus.Fields{

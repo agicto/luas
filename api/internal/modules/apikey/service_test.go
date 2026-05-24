@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type fakeRepository struct {

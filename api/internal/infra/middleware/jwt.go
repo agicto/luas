@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/infra/jwt"
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/internal/infra/jwt"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // JWTAuth creates a JWT authentication middleware with an explicit service dependency.

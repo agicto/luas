@@ -1,7 +1,7 @@
 package seeders
 
 import (
-	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/modules/user"
 	"gorm.io/gorm"
 )
 

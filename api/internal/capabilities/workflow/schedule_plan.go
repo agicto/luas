@@ -3,7 +3,7 @@ package workflow
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/schedule"
+	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 // SchedulePlan is the workflow-facing builder over scheduler events.

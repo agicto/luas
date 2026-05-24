@@ -2,10 +2,10 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/zgo/internal/domain"
-	"github.com/zgiai/zgo/pkg/handler"
-	"github.com/zgiai/zgo/pkg/pagination"
-	"github.com/zgiai/zgo/pkg/response"
+	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/pkg/handler"
+	"github.com/zgiai/luas/api/pkg/pagination"
+	"github.com/zgiai/luas/api/pkg/response"
 	"gorm.io/gorm"
 )
 

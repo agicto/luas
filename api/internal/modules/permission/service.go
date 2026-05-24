@@ -3,7 +3,7 @@ package permission
 import (
 	"context"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // Service defines the interface for permission operations.

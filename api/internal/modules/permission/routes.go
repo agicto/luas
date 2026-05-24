@@ -1,7 +1,7 @@
 package permission
 
 import (
-	"github.com/zgiai/zgo/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
 // RegisterRoutes registers permission module routes

@@ -3,7 +3,7 @@ package apikey
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // APIKeyCreateRequest represents an API key creation request.

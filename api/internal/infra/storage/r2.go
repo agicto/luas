@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/zgiai/zgo/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/google/uuid"
 )
 

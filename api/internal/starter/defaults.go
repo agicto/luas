@@ -2,12 +2,12 @@ package starter
 
 import (
 	"github.com/google/wire"
-	"github.com/zgiai/zgo/database/seeders"
-	"github.com/zgiai/zgo/internal/contracts"
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/apikey"
-	"github.com/zgiai/zgo/internal/modules/audit"
-	"github.com/zgiai/zgo/internal/modules/user"
+	"github.com/zgiai/luas/api/database/seeders"
+	"github.com/zgiai/luas/api/internal/contracts"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/apikey"
+	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 // ProviderSet wires the default scaffold starters and their registry.

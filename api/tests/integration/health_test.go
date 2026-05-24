@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/health"
+	"github.com/zgiai/luas/api/internal/infra/health"
 	"github.com/gin-gonic/gin"
 )
 

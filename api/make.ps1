@@ -43,7 +43,7 @@ function Test-CommandExists {
 function Build {
     Write-Host "Building $BINARY_NAME..." -ForegroundColor Green
     Wire
-    Invoke-Expression "go build $LDFLAGS -o $BINARY_NAME cmd/zgo/main.go"
+    Invoke-Expression "go build $LDFLAGS -o $BINARY_NAME cmd/luas/main.go"
 }
 
 # Build server
@@ -62,7 +62,7 @@ function Build-All {
 function Install {
     Write-Host "Installing $BINARY_NAME..." -ForegroundColor Green
     Build
-    Invoke-Expression "go install $LDFLAGS ./cmd/zgo"
+    Invoke-Expression "go install $LDFLAGS ./cmd/luas"
 }
 
 # Clean build artifacts

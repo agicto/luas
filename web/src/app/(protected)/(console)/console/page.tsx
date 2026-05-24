@@ -387,7 +387,7 @@ export default function ConsolePage() {
         <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-3xl space-y-3">
             <Badge className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-white">
-              Hypership Platform Control Plane
+              Luas Platform Control Plane
             </Badge>
             <div className="space-y-2">
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">

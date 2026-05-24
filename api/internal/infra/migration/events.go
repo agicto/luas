@@ -4,7 +4,7 @@ package migration
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/events"
 )
 
 // Event name constants for migration events

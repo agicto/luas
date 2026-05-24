@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"github.com/zgiai/zgo/internal/bootstrap"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/console"
-	"github.com/zgiai/zgo/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/database"
 )
 
 // DBSeedCommand runs database seeders

@@ -2,7 +2,7 @@
 import type { MetadataMessages } from './zh-Hans';
 
 const messages: MetadataMessages = {
-  title: 'LlamaFront AI Scaffold',
+  title: 'Luas',
   description: 'Modern web application scaffold built with Next.js, TypeScript, and Tailwind CSS',
 };
 

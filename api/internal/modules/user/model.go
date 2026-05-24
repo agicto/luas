@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/zgiai/zgo/internal/domain"
+	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
 )
 

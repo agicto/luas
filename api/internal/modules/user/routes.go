@@ -1,8 +1,8 @@
 package user
 
 import (
-	"github.com/zgiai/zgo/internal/infra/middleware"
-	"github.com/zgiai/zgo/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
 // RegisterMiddleware registers the auth middleware group for JWT-protected routes.

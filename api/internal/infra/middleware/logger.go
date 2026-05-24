@@ -3,7 +3,7 @@ package middleware
 import (
 	"time"
 
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 

@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/zgiai/zgo/pkg/env"
+	"github.com/zgiai/luas/api/pkg/env"
 )
 
 func TestEnv_Get(t *testing.T) {

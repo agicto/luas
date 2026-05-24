@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/zgiai/zgo/internal/infra/migration"
-	"github.com/zgiai/zgo/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/audit"
 	"gorm.io/gorm"
 )
 

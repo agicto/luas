@@ -10,12 +10,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
-	"github.com/zgiai/zgo/internal/infra/config"
-	"github.com/zgiai/zgo/internal/infra/database"
-	"github.com/zgiai/zgo/internal/infra/exception"
-	infraMiddleware "github.com/zgiai/zgo/internal/infra/middleware"
-	"github.com/zgiai/zgo/internal/infra/tracing"
-	"github.com/zgiai/zgo/pkg/logger"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/infra/exception"
+	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/infra/tracing"
+	"github.com/zgiai/luas/api/pkg/logger"
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )

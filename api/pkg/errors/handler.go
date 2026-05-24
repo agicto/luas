@@ -699,7 +699,7 @@ func renderDebugHTML(data DebugPageData) string {
 
 	<div class="footer">
 		<div class="logo">ZGO</div>
-		<div>Framework Debug Mode • <a href="https://github.com/zgiai/zgo" target="_blank">Documentation</a></div>
+		<div>Framework Debug Mode • <a href="https://github.com/zgiai/luas/api" target="_blank">Documentation</a></div>
 	</div>
 </body>
 </html>`,
