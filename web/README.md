@@ -5,7 +5,7 @@
 ## ✨ Frontend-First AI Features
 
 - 🎨 **Component-Driven**: Extensive UI component library with Radix UI and custom designs
-- 🚀 **Performance Optimized**: Next.js 16.1.1 App Router with automatic code splitting
+- 🚀 **Performance Optimized**: Next.js 16.2.1 App Router with automatic code splitting
 - 🌙 **Theme System**: Beautiful dark/light themes with CSS variables
 - 📱 **Mobile-First**: Responsive design for all screen sizes
 - 🔍 **TypeScript**: Full type safety and excellent DX (TypeScript 5.9+)
@@ -27,7 +27,7 @@
 
 ## 🆕 Latest Updates (v2.1.0)
 
-- ✅ **Next.js 16.1.1** - Latest stable version
+- ✅ **Next.js 16.2.1** - Current pinned framework version
 - ✅ **React 19.2.3** - Full support for React 19 features
 - ✅ **Tailwind CSS 4.1.18** - Modern utility-first CSS
 - ✅ **Next-Intl 4.6** - Comprehensive i18n solution
@@ -38,14 +38,14 @@
 
 ## 🛠️ Frontend-Optimized Tech Stack
 
-- **Framework**: Next.js 16.1.1 (App Router)
+- **Framework**: Next.js 16.2.1 (App Router)
 - **Library**: React 19.2.3
 - **Language**: TypeScript 5.9.3 (Strict Mode)
 - **Styling**: Tailwind CSS 4.1.18 + PostCSS
 - **UI Components**: Radix UI + Lucide Icons
 - **State Management**: Zustand 5.0.9
 - **Data Fetching**: TanStack Query v5
-- **Forms**: React Hook Form 7.69 + Zod 4.2
+- **Validation**: Zod 4.2
 - **Theming**: Next-Themes 0.4
 - **Testing**: Vitest 4.0 + Testing Library
 
@@ -53,7 +53,7 @@
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20.11+
 - pnpm 10+ (Recommended)
 
 ### Installation
@@ -61,8 +61,8 @@
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/zgiai/zweb.git
-   cd zweb
+   git clone https://github.com/zgiai/luas.git
+   cd luas/web
    ```
 
 2. **Install dependencies**

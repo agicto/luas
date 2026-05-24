@@ -224,24 +224,24 @@ r.Group("/v1", func(api *router.Router) {
 
 ## 部署
 
-仓库使用 GitHub Actions + GHCR 出镜像，Zeabur 拉镜像跑容器。`git push` 到 `main` 后整套链路全自动，端到端约 20 秒：
+仓库提供基础 GitHub Actions 质量门禁。镜像发布和 Zeabur 更新可以在此基础上按项目需要扩展：
 
 ```
-git push (main)
-  → GH Actions: docker build + push ghcr.io/zgiai/luas:sha-<short>  (≈20s, 热缓存)
-  → GraphQL: updateServiceImage(serviceID, environmentID, tag)
-  → Zeabur 节点: docker pull (≈2s) + 滚动重启 (≈2s)
-  → 新容器对外提供服务
+git push / pull request
+  → GH Actions: go test ./...
+  → 可选扩展: docker build + push ghcr.io/zgiai/luas-api:sha-<short>
+  → 可选扩展: 调用目标平台 API 滚动更新服务
 ```
 
 构建配置：
 
 - `Dockerfile`：多阶段构建，runtime 用 `gcr.io/distroless/static-debian12:nonroot`，最终镜像约 92MB
 - `.dockerignore`：排除 `.git`、`tmp`、`docs`、`tests` 等无关目录
-- `.github/workflows/build-image.yml`：buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
-- `ZEABUR_TOKEN` Secret：Zeabur GraphQL API 调用凭证
+- `.github/workflows/ci.yml`：API 测试与 Web 类型、lint、测试基线
+- 可选镜像发布工作流可以使用 buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
+- 可选平台部署需要配置对应平台的 API token Secret
 
-镜像在 GHCR 是 public 的，编译产物可公开；源码仓库仍为 private。
+是否公开镜像、使用哪个 registry、是否自动部署，都应由具体项目决定。
 
 ## 设计原则
 

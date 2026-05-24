@@ -10,9 +10,13 @@ export function GreetingClock({ name }: { name: string }) {
   const [now, setNow] = useState<Date | null>(null);
 
   useEffect(() => {
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
+    const update = () => setNow(new Date());
+    const firstTick = window.setTimeout(update, 0);
+    const interval = window.setInterval(update, 60_000);
+    return () => {
+      window.clearTimeout(firstTick);
+      window.clearInterval(interval);
+    };
   }, []);
 
   const greeting = pickGreeting(now);
