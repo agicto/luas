@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy on zgo-vps
+    runs-on: [self-hosted, zgo-vps]
+    steps:
+      - uses: actions/checkout@v4
+
+      # Capture the sha currently tagged as :latest BEFORE we overwrite it,
+      # so the rollback step (if needed) knows where to go back to.
+      - name: Snapshot previous image
+        id: prev
+        run: |
+          PREV=$(docker image inspect zgo-api:latest --format '{{index .Config.Labels "sha"}}' 2>/dev/null || true)
+          if [ -z "$PREV" ]; then
+            PREV=$(docker images zgo-api --format '{{.Tag}}' | grep -E '^sha-' | head -n 1 || true)
+          fi
+          echo "previous=$PREV" >> "$GITHUB_OUTPUT"
+          echo "Previous sha: $PREV"
+
+      - name: Build image
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          docker build \
+            -t zgo-api:sha-$SHORT_SHA \
+            -t zgo-api:latest \
+            --label sha=sha-$SHORT_SHA \
+            .
+
+      - name: Compose up
+        working-directory: deploy
+        run: docker compose up -d
+
+      - name: Wait for /health
+        id: health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8025/health >/dev/null 2>&1; then
+              echo "zgo-api healthy after ${i} tries"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "zgo-api did not become healthy; recent logs:"
+          docker logs --tail 80 zgo-api || true
+          exit 1
+
+      # Safety net: if the new image is unhealthy, instantly retag the
+      # previous sha as :latest and roll the container so prod stays up
+      # on the last known good version. The CI job still ends in failure
+      # so you know to look.
+      - name: Auto-rollback on failure
+        if: failure() && steps.prev.outputs.previous != ''
+        working-directory: deploy
+        run: |
+          PREV='${{ steps.prev.outputs.previous }}'
+          echo "::warning::Health check failed — rolling back to $PREV"
+          docker tag zgo-api:$PREV zgo-api:latest
+          docker compose up -d zgo-api
+          # Give it a few seconds, then confirm the rollback is healthy.
+          for i in {1..15}; do
+            if curl -fsS http://127.0.0.1:8025/health >/dev/null 2>&1; then
+              echo "::notice::Rolled back to $PREV and zgo-api is healthy"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Rollback to $PREV also unhealthy — manual intervention required"
+
+      - name: Prune dangling images
+        if: always()
+        run: docker image prune -f --filter "dangling=true" --filter "until=24h" || true

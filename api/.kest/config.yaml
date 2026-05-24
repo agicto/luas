@@ -1,0 +1,24 @@
+version: 1
+defaults:
+  timeout: 30
+  headers:
+    Content-Type: application/json
+    Accept: application/json
+
+environments:
+  local:
+    base_url: http://127.0.0.1:8025
+
+  dev:
+    base_url: http://127.0.0.1:8025
+    variables:
+      api_key: dev_key_123
+
+  staging:
+    base_url: https://staging-api.example.com
+
+  prod:
+    base_url: https://api.example.com
+
+active_env: local
+log_enabled: true

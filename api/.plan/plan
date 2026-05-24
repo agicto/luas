@@ -1,0 +1,362 @@
+# ZGO Framework Development Plan
+
+## Development Workflow (Best Flow)
+
+### Step 1: Environment Setup
+```bash
+# Clone and setup
+git clone https://github.com/zgiai/zgo.git
+cd zgo
+cp .env.example .env
+
+# Install dependencies
+go mod download
+
+# Generate DI
+make wire
+
+# Run migrations
+make migrate
+
+# Start development server
+make dev
+```
+
+### Step 2: Create New Module (Best Practice)
+```bash
+# Use CLI to generate (Phase 1)
+./zgo make:module Blog
+
+# Or manually create 8-file structure:
+# - model.go      # Database entity (UserPO)
+# - dto.go        # DTO + Mapper functions
+# - repository.go # Data access layer
+# - service.go    # Business logic layer
+# - handler.go    # HTTP handlers
+# - routes.go     # Route registration
+# - provider.go   # Wire DI
+# - service_test.go # Unit tests
+```
+
+### Step 3: Development Cycle
+1. **Write DTO** → `dto.go`
+2. **Define Domain** → `domain/user.go`
+3. **Implement Model** → `model.go` + Mapper
+4. **Implement Repository** → `repository.go`
+5. **Implement Service** → `service.go`
+6. **Implement Handler** → `handler.go`
+7. **Register Routes** → `routes.go`
+8. **Wire DI** → `provider.go`
+9. **Run `make wire`**
+10. **Test API**
+
+### Step 4: Testing
+```bash
+# Unit tests
+go test ./internal/modules/user/...
+
+# Integration tests
+go test ./tests/integration/...
+
+# With coverage
+go test -cover ./...
+```
+
+### Step 5: Code Quality
+```bash
+# Lint
+make lint
+
+# Format
+go fmt ./...
+
+# Build
+make build
+```
+
+---
+
+## Phase 1: CLI Enhancement (High Priority)
+
+### 1.1 Make Commands
+- [ ] `make:model` - Enhanced with flags (-m, -f, -s, -c, -r)
+- [ ] `make:migration` - Create migration files
+- [ ] `make:seeder` - Database seeder
+- [ ] `make:factory` - Model factory (Faker)
+- [ ] `make:controller` - REST/Resource controller
+- [ ] `make:request` - Form request validation
+- [ ] `make:resource` - API Resource
+- [ ] `make:middleware` - HTTP middleware
+- [ ] `make:event` - Event class
+- [ ] `make:listener` - Event listener
+- [ ] `make:job` - Queue job
+- [ ] `make:command` - Artisan command
+- [ ] `make:observer` - Eloquent observer
+- [ ] `make:policy` - Authorization policy
+- [ ] `make:test` - Unit/Feature test
+- [ ] `make:service` - Service layer
+- [ ] `make:repository` - Repository layer
+
+### 1.2 Database Commands
+- [ ] `migrate` - Run migrations
+- [ ] `migrate:rollback` - Rollback last batch
+- [ ] `migrate:reset` - Reset all migrations
+- [ ] `migrate:refresh` - Reset and re-run
+- [ ] `migrate:status` - Show migration status
+- [ ] `db:seed` - Run database seeder
+- [ ] `db:wipe` - Drop all tables
+
+### 1.3 Other Commands
+- [ ] `route:list` - Show routes (existing)
+- [ ] `cache:clear` - Clear cache
+- [ ] `config:cache` - Cache config
+- [ ] `tinker` - REPL shell
+
+---
+
+## Phase 2: Queue System (High Priority)
+
+### 2.1 Core Queue
+- [ ] Queue interface definition
+- [ ] Sync driver (immediate execution)
+- [ ] Database driver
+- [ ] Redis driver
+
+### 2.2 Job Features
+- [ ] Job class structure
+- [ ] Dispatch helper
+- [ ] Job chaining
+- [ ] Job batching
+- [ ] Retry mechanism
+- [ ] Failed job tracking
+- [ ] Job delay
+- [ ] Job priority
+
+### 2.3 Worker
+- [ ] `queue:work` command
+- [ ] `queue:listen` command
+- [ ] `queue:failed` command
+- [ ] `queue:retry` command
+
+---
+
+## Phase 3: API Enhancement (High Priority)
+
+### 3.1 API Versioning
+- [ ] URL version prefix (/api/v1/)
+- [ ] Version middleware
+- [ ] Version-specific routes
+
+### 3.2 OpenAPI/Swagger
+- [ ] Swagger integration (swaggo)
+- [ ] Auto-generate docs from annotations
+- [ ] UI endpoint (/swagger/index.html)
+
+### 3.3 API Resources
+- [ ] Resource class (transformer)
+- [ ] Resource collection
+- [ ] Pagination resource
+- [ ] Relationship loading
+
+---
+
+## Phase 4: Cache System (Medium Priority)
+
+### 4.1 Cache Drivers
+- [ ] File cache driver
+- [ ] Redis cache driver
+- [ ] Memory cache driver
+
+### 4.2 Cache Features
+- [ ] `Cache::get/set`
+- [ ] `Cache::remember`
+- [ ] `Cache::forever`
+- [ ] `Cache::forget`
+- [ ] `Cache::flush`
+- [ ] Cache tags
+- [ ] Atomic lock
+
+---
+
+## Phase 5: Authentication Enhancement (High Priority)
+
+### 5.1 Email Verification
+- [ ] Email verification flow
+- [ ] VerifyEmail notification
+- [ ] Verified middleware
+
+### 5.2 OAuth/Social
+- [ ] OAuth2 server (OAuth server)
+- [ ] Social login (Google, GitHub, etc.)
+
+### 5.3 Two-Factor Auth
+- [ ] 2FA setup
+- [ ] 2FA verification
+- [ ] Recovery codes
+
+---
+
+## Phase 6: Authorization Enhancement (High Priority)
+
+### 6.1 Gates
+- [ ] Gate facade
+- [ ] Define gates (closure-based)
+- [ ] Gate::authorize()
+- [ ] @can blade equivalent
+
+### 6.2 Policies
+- [ ] Policy class
+- [ ] Policy registration
+- [ ] Policy auto-discovery
+- [ ] Before/After hooks
+
+### 6.3 Casbin Integration
+- [ ] Casbin middleware
+- [ ] RBAC/ABAC support
+- [ ] Permission checking
+
+---
+
+## Phase 7: Database Enhancement (Medium Priority)
+
+### 7.1 Model Features
+- [ ] Observer pattern
+- [ ] Mutators (setXXXAttribute)
+- [ ] Accessors (getXXXAttribute)
+- [ ] Scope (global/local)
+- [ ] Model events (saving, saved, etc.)
+
+### 7.2 Query Builder
+- [ ] Soft delete scope
+- [ ] Query logging
+- [ ] N+1 detection
+
+---
+
+## Phase 8: Mail System (Medium Priority)
+
+### 8.1 Mail Features
+- [ ] Mailable class
+- [ ] Markdown mail
+- [ ] Mail queue
+- [ ] Mail fake (testing)
+
+### 8.2 Drivers
+- [ ] SMTP
+- [ ] Mailgun
+- [ ] SendGrid
+- [ ] SES
+
+---
+
+## Phase 9: Notifications (Medium Priority)
+
+### 9.1 Notification System
+- [ ] Notification class
+- [ ] Mail channel
+- [ ] Database channel
+- [ ] Slack channel
+- [ ] SMS channel (Twilio)
+- [ ] Notification fake (testing)
+
+---
+
+## Phase 10: Scheduling (Medium Priority)
+
+### 10.1 Task Scheduling
+- [ ] Schedule facade
+- [ ] Cron expression support
+- [ ] Task types (closure, command, job)
+- [ ] `schedule:work` command
+- [ ] Without overlapping
+- [ ] Run in background
+
+---
+
+## Phase 11: Testing (Medium Priority)
+
+### 11.1 Test Framework
+- [ ] Feature test base class
+- [ ] Unit test base class
+- [ ] Database transactions
+- [ ] `RefreshDatabase` trait
+- [ ] `Fake` helpers (Mail, Notification, Queue)
+
+### 11.2 Test Utilities
+- [ ] Faker integration
+- [ ] Factory states
+- [ ] Assertion helpers
+
+---
+
+## Phase 12: Localization (Low Priority)
+
+### 12.1 i18n System
+- [ ] Language file loader
+- [ ] trans() helper
+- [ ] Pluralization
+- [ ] Validation messages
+- [ ] Locale switching
+
+---
+
+## Phase 13: Events & Broadcasting (Medium Priority)
+
+### 13.1 Broadcasting
+- [ ] WebSocket server
+- [ ] Pusher driver
+- [ ] Client events
+- [ ] Presence channels
+- [ ] Private channels
+
+---
+
+## Phase 14: Developer Experience (Ongoing)
+
+### 14.1 Error Handling
+- [ ] Business error codes (E1001, E1002...)
+- [ ] Error code documentation
+
+### 14.2 Logging
+- [ ] Daily log channel
+- [ ] Slack log channel
+- [ ] Stack channel
+
+### 14.3 Validation
+- [ ] Form request class
+- [ ] Custom rule objects
+- [ ] Custom messages
+
+---
+
+## Priority Order Summary
+
+### High Priority (Phase 1-3)
+1. CLI Enhancement
+2. Queue System
+3. API Versioning + Swagger
+
+### Medium Priority (Phase 4-11)
+4. Cache System
+5. Authentication Enhancement
+6. Authorization Enhancement
+7. Database Enhancement
+8. Mail System
+9. Notifications
+10. Scheduling
+11. Testing
+
+### Low Priority (Phase 12-14)
+12. Localization
+13. Broadcasting
+14. Developer Experience
+
+---
+
+## Notes
+
+- Focus on developer experience and code elegance
+- Maintain DDD + Layered architecture
+- Keep 8-file module standard
+- Use Wire for DI
+- Follow Go best practices
