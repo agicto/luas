@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document defines the requirements for refactoring ZGO's database migration system to follow Laravel's elegant design patterns. The goal is to create a comprehensive, maintainable, and extensible migration system that provides:
+This document defines the requirements for refactoring Luas's database migration system to follow Laravel's elegant design patterns. The goal is to create a comprehensive, maintainable, and extensible migration system that provides:
 
 - Repository pattern for migration record storage
 - Core Migrator engine with event-driven architecture
@@ -130,7 +130,7 @@ This document defines the requirements for refactoring ZGO's database migration 
 4. THE system SHALL fire a `MigrationEnded` event after each individual migration with migration name and method
 5. THE system SHALL fire a `MigrationSkipped` event when a migration is skipped
 6. THE system SHALL fire a `NoPendingMigrations` event when there are no migrations to run
-7. WHEN events are fired, THE system SHALL use the existing ZGO event bus infrastructure
+7. WHEN events are fired, THE system SHALL use the existing Luas event bus infrastructure
 
 ### Requirement 8: CLI Commands
 

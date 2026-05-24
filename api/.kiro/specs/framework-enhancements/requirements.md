@@ -2,7 +2,7 @@
 
 ## Introduction
 
-本文档定义了 ZGO 框架三个核心增强模块的需求：事件系统（Event System）、模块化组织（Modular Organization）和测试工具（Testing Utilities）。这些增强旨在提升框架的可观测性、代码边界清晰度和测试体验。
+本文档定义了 Luas 框架三个核心增强模块的需求：事件系统（Event System）、模块化组织（Modular Organization）和测试工具（Testing Utilities）。这些增强旨在提升框架的可观测性、代码边界清晰度和测试体验。
 
 ## Glossary
 

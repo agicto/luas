@@ -1,4 +1,4 @@
-// Package main provides API documentation generator for ZGO.
+// Package main provides API documentation generator for Luas.
 // Usage: go run cmd/tools/apidoc/main.go
 package main
 
@@ -23,7 +23,7 @@ func main() {
 	diff := flag.Bool("diff", false, "Show changes since last generation")
 	flag.Parse()
 
-	fmt.Println("🔍 ZGO API Documentation Generator")
+	fmt.Println("🔍 Luas API Documentation Generator")
 	fmt.Println("====================================")
 
 	// Parse routes

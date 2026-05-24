@@ -9,7 +9,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/lifecycle"
 )
 
-// Example: How to use Lifecycle in ZGO
+// Example: How to use Lifecycle in Luas
 
 // ============================================
 // 1. Infrastructure Layer - Database (Mock)

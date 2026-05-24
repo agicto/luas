@@ -7,7 +7,7 @@ import (
 )
 
 // UserPO represents the persistent object for the users table.
-// It follows all ZGO database naming and column standards.
+// It follows all Luas database naming and column standards.
 type UserPO struct {
 	// 1. Primary Key
 	ID uint `gorm:"primaryKey;autoIncrement"`

@@ -1,4 +1,4 @@
-// Package commands provides CLI commands for the ZGO scaffold.
+// Package commands provides CLI commands for the Luas scaffold.
 package commands
 
 import (

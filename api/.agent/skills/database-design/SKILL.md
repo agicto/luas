@@ -1,10 +1,10 @@
 ---
 name: database-design
-description: Database design best practices, indexing strategies, and migration patterns for ZGO
+description: Database design best practices, indexing strategies, and migration patterns for Luas
 version: 1.0.0
 category: architecture
 tags: [database, sql, gorm, migration, optimization]
-author: ZGO Team
+author: Luas Team
 updated: 2026-04-26
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-04-26
 
 ## 📋 Purpose
 
-This skill provides the definitive standards for database design in the ZGO project. It ensures data integrity, query performance, and consistent migration workflows across all modules.
+This skill provides the definitive standards for database design in the Luas project. It ensures data integrity, query performance, and consistent migration workflows across all modules.
 
 ## 🎯 When to Use
 
@@ -147,4 +147,4 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

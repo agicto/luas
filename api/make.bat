@@ -1,5 +1,5 @@
 @echo off
-REM ZGO Build Script for Windows
+REM Luas Build Script for Windows
 REM Usage: make.bat [command]
 
 setlocal

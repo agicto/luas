@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the technical design for refactoring ZGO's database migration system to follow Laravel's elegant design patterns. The system will be built using Go idioms while maintaining the conceptual elegance of Laravel's migration architecture.
+This document describes the technical design for refactoring Luas's database migration system to follow Laravel's elegant design patterns. The system will be built using Go idioms while maintaining the conceptual elegance of Laravel's migration architecture.
 
 The migration system consists of several interconnected components:
 - **Migration Repository** - Abstraction for migration record storage

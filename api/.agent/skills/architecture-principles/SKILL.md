@@ -1,10 +1,10 @@
 ---
 name: architecture-principles
-description: Core ZGO architecture vocabulary and decision rules for seams, starter boundaries, depth, and locality
+description: Core Luas architecture vocabulary and decision rules for seams, starter boundaries, depth, and locality
 version: 1.0.0
 category: development
 tags: [architecture, seams, starter, locality, depth]
-author: ZGO Team
+author: Luas Team
 updated: 2026-04-27
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-04-27
 
 ## Purpose
 
-This skill is the top-level architecture rulebook for ZGO. Use it before creating or refactoring modules, changing default starter assembly, or introducing new interfaces.
+This skill is the top-level architecture rulebook for Luas. Use it before creating or refactoring modules, changing default starter assembly, or introducing new interfaces.
 
 It defines the shared language for:
 

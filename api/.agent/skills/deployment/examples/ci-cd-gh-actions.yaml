@@ -1,4 +1,4 @@
-name: ZGO CI/CD
+name: Luas CI/CD
 
 on:
   push:

@@ -1,10 +1,10 @@
 ---
 name: module-creation-template
-description: Template for creating new skills in the ZGO project
+description: Template for creating new skills in the Luas project
 version: 1.0.0
 category: meta
 tags: [template, scaffolding]
-author: ZGO Team
+author: Luas Team
 updated: 2026-01-24
 ---
 
@@ -14,7 +14,7 @@ updated: 2026-01-24
 
 [Describe what this skill does and what problem it solves]
 
-Example: This skill guides you through creating a standardized DDD module in the ZGO framework.
+Example: This skill guides you through creating a standardized DDD module in the Luas framework.
 
 ## 🎯 When to Use
 
@@ -22,7 +22,7 @@ Example: This skill guides you through creating a standardized DDD module in the
 
 Example:
 - Creating a new business module (e.g., User, Blog, Product)
-- Need to follow ZGO's DDD layered architecture
+- Need to follow Luas's DDD layered architecture
 - Want to ensure all necessary files and patterns are included
 
 ## ⚙️ Prerequisites

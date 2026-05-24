@@ -2,7 +2,7 @@
 # Build stage
 FROM golang:1.24-alpine AS builder
 
-LABEL maintainer="ZGO Team <team@eogo-dev.com>"
+LABEL maintainer="Luas Team <team@eogo-dev.com>"
 
 WORKDIR /app
 

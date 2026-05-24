@@ -1,4 +1,4 @@
-// Package response provides unified API response handling for ZGO services.
+// Package response provides unified API response handling for Luas services.
 //
 // This package implements Laravel-style API responses with support for:
 //   - Unified response structure with code, message, and data

@@ -1,4 +1,4 @@
-// Package pagination provides Laravel-style pagination helpers for ZGO services.
+// Package pagination provides Laravel-style pagination helpers for Luas services.
 //
 // This package implements full-featured pagination with:
 //   - Automatic URL generation for pagination links

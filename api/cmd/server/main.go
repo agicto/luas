@@ -7,7 +7,7 @@ import (
 	"github.com/zgiai/luas/api/internal/wiring"
 )
 
-// @title ZGO API
+// @title Luas API
 // @version 1.0
 // @description A modular Go API scaffold for production-ready services
 // @host localhost:8025

@@ -15,7 +15,7 @@ import (
 // and HTTP startup chain with a test-specific config.
 func SetupApp() *gin.Engine {
 	cfg := &config.Config{}
-	cfg.App.Name = "ZGO Test"
+	cfg.App.Name = "Luas Test"
 	cfg.App.Env = "test"
 	cfg.App.Debug = false
 	cfg.App.URL = "http://localhost:0"

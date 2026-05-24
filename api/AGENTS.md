@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Instructions for AI coding agents working on the ZGO framework.
+Instructions for AI coding agents working on the Luas framework.
 
 ## Project Overview
 
-ZGO is a modern Go framework using Domain-Driven Design (DDD) + layered architecture.
+Luas is a modern Go framework using Domain-Driven Design (DDD) + layered architecture.
 
 ## 📖 AGENTS.md vs Skills - Positioning
 
@@ -70,7 +70,7 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 |-------|-------------|-------------|
 | [`architecture-principles`](./.agent/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
 | [`module-creation`](./.agent/skills/module-creation/) | Create starter-style DDD modules | Creating new business modules |
-| [`coding-standards`](./.agent/skills/coding-standards/) | Verify code follows ZGO standards | Code review, PR submission |
+| [`coding-standards`](./.agent/skills/coding-standards/) | Verify code follows Luas standards | Code review, PR submission |
 | [`api-development`](./.agent/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
 | [`logging-standards`](./.agent/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
 | [`code-review-guide`](./.agent/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |

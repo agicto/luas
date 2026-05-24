@@ -94,7 +94,7 @@ func (c *VersionCommand) Description() string { return "Display application vers
 func (c *VersionCommand) Usage() string       { return "version" }
 
 func (c *VersionCommand) Run(args []string) error {
-	c.output.Info("ZGO v%s", c.version)
+	c.output.Info("Luas v%s", c.version)
 	return nil
 }
 

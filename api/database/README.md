@@ -2,7 +2,7 @@
 
 ## Overview
 
-ZGO uses a Laravel-style migration system with:
+Luas uses a Laravel-style migration system with:
 - **Timestamped filenames** for automatic ordering
 - **Auto-registration** using `init()` functions
 - **CLI generator** for creating new migrations

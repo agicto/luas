@@ -5,7 +5,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
-// Module is the minimal contract shared by all ZGO modules.
+// Module is the minimal contract shared by all Luas modules.
 // Optional capabilities are expressed via narrower interfaces below.
 type Module interface {
 	// Name returns the unique name of the module.

@@ -1,10 +1,10 @@
 ---
 name: api-development
-description: ZGO API development standards including pagination, error handling, and RESTful design
+description: Luas API development standards including pagination, error handling, and RESTful design
 version: 1.0.0
 category: development
 tags: [api, rest, pagination, errors, standards]
-author: ZGO Team
+author: Luas Team
 updated: 2026-04-26
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-04-26
 
 ## 📋 Purpose
 
-This skill provides HTTP standards for route-owning ZGO modules. It applies to `starter` and `optional starter` modules that expose REST endpoints. `capability` modules may not expose HTTP at all.
+This skill provides HTTP standards for route-owning Luas modules. It applies to `starter` and `optional starter` modules that expose REST endpoints. `capability` modules may not expose HTTP at all.
 
 ## 🎯 When to Use
 
@@ -691,4 +691,4 @@ if !handler.BindJSON(c, &req) { return }
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

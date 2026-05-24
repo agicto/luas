@@ -4,7 +4,7 @@ description: Test patterns, mocking strategies, and organization best practices
 version: 1.0.0
 category: development
 tags: [testing, unit-test, integration-test, mock, testify]
-author: ZGO Team
+author: Luas Team
 updated: 2026-04-26
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-04-26
 
 ## 📋 Purpose
 
-This skill defines the testing standards and strategies for the ZGO project. It ensures that code is reliable, maintainable, and verifiable through various testing tiers.
+This skill defines the testing standards and strategies for the Luas project. It ensures that code is reliable, maintainable, and verifiable through various testing tiers.
 
 Use [`architecture-principles`](../architecture-principles/) for the higher-level rules around seams, depth, and locality. This skill turns those rules into concrete test decisions.
 
@@ -254,4 +254,4 @@ mockery --all --dir=internal/modules/user
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

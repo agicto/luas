@@ -56,7 +56,7 @@ func (r *Repository) loadFromEnv() {
 	env.Load()
 
 	// App
-	r.Set("app.name", env.Get("APP_NAME", "ZGO"))
+	r.Set("app.name", env.Get("APP_NAME", "Luas"))
 	r.Set("app.env", env.Get("APP_ENV", "development"))
 	r.Set("app.debug", env.GetBool("APP_DEBUG", true))
 	r.Set("app.url", env.Get("APP_URL", "http://localhost:8025"))

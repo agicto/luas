@@ -4,7 +4,7 @@ description: Structured logging best practices including levels, context propaga
 version: 1.0.0
 category: development
 tags: [logging, monitoring, debugging, observability]
-author: ZGO Team
+author: Luas Team
 updated: 2026-01-24
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-01-24
 
 ## 📋 Purpose
 
-This skill provides comprehensive logging standards for the ZGO Go backend project, ensuring consistent, structured, and production-ready logging across all modules.
+This skill provides comprehensive logging standards for the Luas Go backend project, ensuring consistent, structured, and production-ready logging across all modules.
 
 ## 🎯 When to Use
 
@@ -663,4 +663,4 @@ log.WithFields(logrus.Fields{
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

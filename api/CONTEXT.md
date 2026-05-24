@@ -1,11 +1,11 @@
-# ZGO Context
+# Luas Context
 
-ZGO is a Go application scaffold, not a framework-only kernel and not a product application.
+Luas is a Go application scaffold, not a framework-only kernel and not a product application.
 
 ## Layers
 
-- `core`: reusable runtime and infrastructure used by every ZGO app. Examples: `internal/bootstrap`, `internal/infra`, `routes`, `pkg`.
-- `starter`: default business-ready building blocks that ship with a new ZGO app. Current starters are `user`, `apikey`, and `audit`.
+- `core`: reusable runtime and infrastructure used by every Luas app. Examples: `internal/bootstrap`, `internal/infra`, `routes`, `pkg`.
+- `starter`: default business-ready building blocks that ship with a new Luas app. Current starters are `user`, `apikey`, and `audit`.
 - `capability`: technical modules that expose reusable integrations or helpers without owning an application route model. Example: `internal/capabilities/ai`.
 - `optional starter`: starter-quality modules that are not wired into a new app by default. Example: `permission`.
 - `example`: code or docs whose main job is demonstration, not default assembly.
@@ -14,7 +14,7 @@ ZGO is a Go application scaffold, not a framework-only kernel and not a product 
 
 - `starter registry`: the single module that decides which starters, starter migrations, and starter seeders are active in the scaffold.
 - `command manifest`: the seam that groups related CLI commands so registration does not drift across `cmd/luas` and command packages.
-- `default scaffold`: the out-of-the-box ZGO app assembled from `core` plus the default `starter` set.
+- `default scaffold`: the out-of-the-box Luas app assembled from `core` plus the default `starter` set.
 
 ## Current Defaults
 

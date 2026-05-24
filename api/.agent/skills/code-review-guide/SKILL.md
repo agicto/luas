@@ -4,7 +4,7 @@ description: Comprehensive code review process, checklists, and best practices
 version: 1.0.0
 category: development
 tags: [code-review, quality, collaboration, pr]
-author: ZGO Team
+author: Luas Team
 updated: 2026-01-24
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-01-24
 
 ## 📋 Purpose
 
-This skill provides a comprehensive guide to performing effective code reviews in the ZGO project, ensuring code quality, knowledge sharing, and team collaboration.
+This skill provides a comprehensive guide to performing effective code reviews in the Luas project, ensuring code quality, knowledge sharing, and team collaboration.
 
 ## 🎯 When to Use
 
@@ -23,7 +23,7 @@ This skill provides a comprehensive guide to performing effective code reviews i
 
 ## ⚙️ Prerequisites
 
-- [ ] Understanding of ZGO coding standards
+- [ ] Understanding of Luas coding standards
 - [ ] Familiarity with Git and GitHub
 - [ ] Knowledge of the module being reviewed
 
@@ -737,4 +737,4 @@ git diff main...HEAD  # Self-review
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

@@ -4,7 +4,7 @@ description: Deployment workflows, containerization, and cloud-native practices
 version: 1.0.0
 category: DevOps
 tags: [deployment, docker, k8s, cloud-run, ci-cd]
-author: ZGO Team
+author: Luas Team
 updated: 2026-01-24
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-01-24
 
 ## 📋 Purpose
 
-This skill defines the deployment workflows and infrastructure standards for the ZGO project. it ensures that applications are delivered consistently, securely, and with high availability across environments.
+This skill defines the deployment workflows and infrastructure standards for the Luas project. it ensures that applications are delivered consistently, securely, and with high availability across environments.
 
 ## 🎯 When to Use
 
@@ -66,7 +66,7 @@ CMD ["./main"]
 
 ## 🛰️ Cloud Run Deployment (Recommended)
 
-Google Cloud Run is the preferred platform for ZGO's serverless microservices.
+Google Cloud Run is the preferred platform for Luas's serverless microservices.
 
 ### 1. Manual Deployment
 ```bash
@@ -161,4 +161,4 @@ Available in `scripts/`:
 
 **Version**: 1.0.0  
 **Last Updated**: 2026-01-24  
-**Maintainer**: ZGO Team
+**Maintainer**: Luas Team

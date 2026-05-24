@@ -139,7 +139,7 @@ func (k *HttpKernel) Handle() {
 		url := fmt.Sprintf("http://%s:%d", host, cfg.Server.Port)
 
 		log.Printf("\n")
-		log.Printf("  🚀 ZGO Server Started!")
+		log.Printf("  🚀 Luas Server Started!")
 		log.Printf("  ➜ Local:   \033[36m%s\033[0m", url)
 		log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
 		log.Printf("\n")

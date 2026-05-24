@@ -1,5 +1,5 @@
 // Package migration provides a Laravel-inspired database migration system
-// for the ZGO framework.
+// for the Luas framework.
 //
 // The migration system consists of several interconnected components:
 //

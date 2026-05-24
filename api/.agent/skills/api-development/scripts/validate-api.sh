@@ -180,7 +180,7 @@ echo "=============================================="
 if [ $ERRORS -eq 0 ]; then
     echo "✅ All API standards checks passed!"
     echo ""
-    echo "Module '${MODULE}' follows ZGO API development standards."
+    echo "Module '${MODULE}' follows Luas API development standards."
     exit 0
 else
     echo "❌ Found $ERRORS error(s)"

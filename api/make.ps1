@@ -1,4 +1,4 @@
-# ZGO Build Script for Windows PowerShell
+# Luas Build Script for Windows PowerShell
 # Usage: .\make.ps1 [command]
 
 param(

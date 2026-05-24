@@ -189,7 +189,7 @@ echo "=============================================="
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
     echo "✅ All logging standards checks passed!"
     echo ""
-    echo "Module '${MODULE}' follows ZGO logging standards."
+    echo "Module '${MODULE}' follows Luas logging standards."
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  Found $WARNINGS warning(s)"

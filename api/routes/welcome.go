@@ -696,7 +696,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="arch-card">
 					<div class="arch-kicker">Core</div>
 					<h3>Runtime and infra</h3>
-					<p>Bootstrap、router、response、migration、testing 和 shared packages. 这些是每个 ZGO 应用都会用到的底层能力。</p>
+					<p>Bootstrap、router、response、migration、testing 和 shared packages. 这些是每个 Luas 应用都会用到的底层能力。</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Starter</div>
@@ -760,7 +760,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 // RegisterWelcome registers the welcome page route.
 func RegisterWelcome(r *gin.Engine) {
 	r.GET("/", func(c *gin.Context) {
-		appName := "ZGO"
+		appName := "Luas"
 		appEnv := "development"
 		appURL := "http://localhost:8025"
 		aiProvider := "openai"

@@ -1,10 +1,10 @@
 ---
 name: coding-standards
-description: ZGO project coding standards and best practices verification
+description: Luas project coding standards and best practices verification
 version: 2.0.0
 category: development
 tags: [standards, code-review, quality, error-handling]
-author: ZGO Team
+author: Luas Team
 updated: 2026-04-26
 ---
 
@@ -12,7 +12,7 @@ updated: 2026-04-26
 
 ## 📋 Purpose
 
-This skill provides a comprehensive checklist and verification guide for ensuring all code follows ZGO's coding standards and best practices.
+This skill provides a comprehensive checklist and verification guide for ensuring all code follows Luas's coding standards and best practices.
 
 Use [`architecture-principles`](../architecture-principles/) as the source of truth for vocabulary and seam decisions. This skill operationalizes those rules during implementation and review.
 
@@ -32,7 +32,7 @@ Use [`architecture-principles`](../architecture-principles/) as the source of tr
 
 ## 🧭 Architecture Vocabulary
 
-ZGO uses the vocabulary in `CONTEXT.md` and the architecture review skill:
+Luas uses the vocabulary in `CONTEXT.md` and the architecture review skill:
 
 - `starter`: default business-ready module wired into the scaffold
 - `optional starter`: starter-quality module not wired by default
@@ -817,5 +817,5 @@ Before submitting code, verify:
 
 **Version**: 2.0.0  
 **Last Updated**: 2026-04-26  
-**Maintainer**: ZGO Team  
+**Maintainer**: Luas Team  
 **Changelog**: Added Advanced Error Handling Patterns (Circuit Breaker, Retry, Timeout, Error Aggregation)

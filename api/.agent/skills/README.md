@@ -1,8 +1,8 @@
-# ZGO Skills Library
+# Luas Skills Library
 
 ## 📚 什么是 Skills?
 
-Skills 是模块化、可复用的工作流和最佳实践，用于指导 AI Agent 在 ZGO 项目中执行特定任务。
+Skills 是模块化、可复用的工作流和最佳实践，用于指导 AI Agent 在 Luas 项目中执行特定任务。
 
 ## 🎯 核心理念
 
@@ -63,11 +63,11 @@ skill-name/
 |-------|------|--------|
 | [`deployment`](./deployment/) | 部署工作流和检查清单 | P1 |
 
-## 🧭 ZGO 架构词汇
+## 🧭 Luas 架构词汇
 
 这些词汇和 `CONTEXT.md` 保持一致，避免文档和代码审查继续漂移：
 
-- `core`: 所有 ZGO 应用都会复用的运行时和基础设施
+- `core`: 所有 Luas 应用都会复用的运行时和基础设施
 - `starter`: 默认随新项目交付的业务起步模块，例如 `user`、`apikey`、`audit`
 - `capability`: 技术能力模块，例如 `internal/capabilities/ai`
 - `optional starter`: 质量达到 starter，但不默认装配，例如 `permission`

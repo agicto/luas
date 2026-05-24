@@ -1,4 +1,4 @@
-# ZGO Skill 系统集成 - 快速参考
+# Luas Skill 系统集成 - 快速参考
 
 ## 📁 已创建的文件结构
 
@@ -33,7 +33,7 @@ zgo/
 | 文件 | 内容 | 字数 |
 |------|------|------|
 | `claude-skill-strategy-analysis.md` | Claude Skill 策略的核心设计理念、渐进式披露架构、与 MCP 的关系 | ~3,500 |
-| `skill-integration-proposal.md` | ZGO 项目的完整集成方案、目录结构、实施步骤、Phase 规划 | ~5,000 |
+| `skill-integration-proposal.md` | Luas 项目的完整集成方案、目录结构、实施步骤、Phase 规划 | ~5,000 |
 | `skill-integration-summary.md` | 实施总结、完成状态、使用示例、下一步规划 | ~2,000 |
 
 ### 2. Skills 系统 (.agent/skills/)
@@ -223,7 +223,7 @@ Step 15: 验证 (自动 + 手动检查)
 ---
 
 **Status**: ✅ Phase 1 完成  
-**Impact**: 显著提升 AI Agent 在 ZGO 项目中的开发效率  
+**Impact**: 显著提升 AI Agent 在 Luas 项目中的开发效率  
 **Ready**: 系统已可用，可开始创建更多 skills
 
 🚀 **Let's build smarter AI agents!**

@@ -1,6 +1,6 @@
 # Blog Module - Complete Example
 
-This is a complete implementation of a Blog module following ZGO's 8-file DDD standard.
+This is a complete implementation of a Blog module following Luas's 8-file DDD standard.
 
 ## Module Specification
 
@@ -89,7 +89,7 @@ Service layer:
 
 ### 5. Handler Best Practices
 
-Handlers use ZGO utilities:
+Handlers use Luas utilities:
 - `handler.ParseID()` - Parse URL params
 - `handler.GetUserID()` - Get authenticated user
 - `handler.BindJSON()` - Bind request body
@@ -240,7 +240,7 @@ Response:
 
 ## Further Reading
 
-- [ZGO AGENTS.md](../../../AGENTS.md)
+- [Luas AGENTS.md](../../../AGENTS.md)
 - [DDD Layered Architecture](https://martinfowler.com/bliki/DomainDrivenDesign.html)
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Wire Dependency Injection](https://github.com/google/wire)

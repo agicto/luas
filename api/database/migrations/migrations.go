@@ -1,4 +1,4 @@
-// Package migrations provides database migration files for the ZGO scaffold.
+// Package migrations provides database migration files for the Luas scaffold.
 // Migrations are registered using the new Migration interface from internal/infra/migration.
 package migrations
 

@@ -55,8 +55,8 @@ func loadEnvFiles() {
 		appEnv = systemEnv["GIN_MODE"]
 	}
 
-	// Check for explicit environment file (ZGO_ENV_FILE)
-	if envFile := systemEnv["ZGO_ENV_FILE"]; envFile != "" {
+	// Check for explicit environment file (LUAS_ENV_FILE)
+	if envFile := systemEnv["LUAS_ENV_FILE"]; envFile != "" {
 		if _, err := os.Stat(envFile); err == nil {
 			_ = godotenv.Load(envFile)
 			// Allow APP_ENV from this specific file if not set by system env

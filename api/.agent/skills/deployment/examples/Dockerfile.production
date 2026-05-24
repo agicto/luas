@@ -1,4 +1,4 @@
-# Production Dockerfile for ZGO Application
+# Production Dockerfile for Luas Application
 # Optimized for size and security
 
 # --- Build Stage ---

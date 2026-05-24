@@ -179,7 +179,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		App: AppConfig{
-			Name:      env.Get("APP_NAME", "ZGO"),
+			Name:      env.Get("APP_NAME", "Luas"),
 			Env:       env.Get("APP_ENV", "development"),
 			Debug:     env.GetBool("APP_DEBUG", true),
 			URL:       env.Get("APP_URL", "http://localhost:8025"),

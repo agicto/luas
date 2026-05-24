@@ -92,7 +92,7 @@ export default function SiteLayout({ children }: PropsWithChildren) {
             {/* Links & Copyright */}
             <div className="flex items-center gap-6 text-sm text-text-muted">
               <a 
-                href="https://github.com/zgiai/zweb"
+                href="https://github.com/zgiai/luas"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-primary transition-colors"

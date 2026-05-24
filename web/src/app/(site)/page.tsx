@@ -168,7 +168,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <a 
-              href="https://github.com/zgiai/zweb" 
+              href="https://github.com/zgiai/luas" 
               target="_blank" 
               rel="noopener noreferrer"
             >

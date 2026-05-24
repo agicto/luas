@@ -2,7 +2,7 @@
 
 ## Overview
 
-ZGO provides a Laravel-style seeder system for populating your database with test or default data.
+Luas provides a Laravel-style seeder system for populating your database with test or default data.
 
 ## Directory Structure
 

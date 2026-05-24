@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ZGO is a scaffold, so a new project needs useful business-ready modules on day one. At the same time, not every module belongs in the default app.
+Luas is a scaffold, so a new project needs useful business-ready modules on day one. At the same time, not every module belongs in the default app.
 
 ## Decision
 

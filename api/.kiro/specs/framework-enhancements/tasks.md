@@ -10,7 +10,7 @@ This implementation plan covers framework enhancements in two main areas: Event 
 
 Based on deep analysis of go-zero, Kratos, go-kit, and other enterprise Go projects:
 
-### What ZGO Already Has (Well Implemented)
+### What Luas Already Has (Well Implemented)
 - **Event System** (`internal/infra/events/`) - EventBus with priority, wildcard, middleware ✅
 - **Lifecycle** (`internal/infra/lifecycle/`) - Hook-based start/stop with rollback ✅
 - **Circuit Breaker** (`internal/infra/breaker/`) - Similar to go-zero's implementation ✅
@@ -148,17 +148,17 @@ Pending:
 
 ## ~~Module System (Tasks 6-7) - REMOVED~~
 
-> **Decision**: After deep analysis of Uber Fx and comparison with ZGO's current architecture,
+> **Decision**: After deep analysis of Uber Fx and comparison with Luas's current architecture,
 > the module system tasks (6.1-6.5, 7.1-7.6) have been **removed** from this plan.
 >
 > **Rationale**:
-> - ZGO already uses Wire + ProviderSet for modularization (see `internal/modules/*/provider.go`)
+> - Luas already uses Wire + ProviderSet for modularization (see `internal/modules/*/provider.go`)
 > - Go's package system provides natural module boundaries
 > - Lifecycle management is already implemented in `internal/infra/lifecycle/`
 > - Adding Fx-style module system would add complexity without significant benefit
-> - ZGO is a single-app framework, not a plugin system requiring dynamic module loading
+> - Luas is a single-app framework, not a plugin system requiring dynamic module loading
 >
-> **What ZGO Already Has**:
+> **What Luas Already Has**:
 > - `ProviderSet` in each module for DI grouping
 > - Central aggregation in `internal/wiring/wire.go`
 > - Route registration via `RegisterRoutes()` methods
