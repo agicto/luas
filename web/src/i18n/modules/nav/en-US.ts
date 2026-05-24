@@ -4,7 +4,6 @@ import type { NavMessages } from './zh-Hans';
 const messages: NavMessages = {
   home: 'Home',
   dashboard: 'Platform',
-  deployments: 'Deployments',
   settings: 'Settings',
   profile: 'Profile',
   analytics: 'Analytics',

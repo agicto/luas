@@ -95,6 +95,7 @@ func DefaultManifests(version string) []Manifest {
 	coreManifest := newManifest(
 		"core",
 		Registration{Command: NewAIChatCommand()},
+		Registration{Command: NewDoctorCommand()},
 		Registration{Command: NewServeCommand()},
 		Registration{Command: NewEnvCommand()},
 		Registration{Command: NewVersionCommand(version)},

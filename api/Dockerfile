@@ -22,7 +22,7 @@ COPY --from=builder /out/server /app/luas-server
 COPY --from=builder /out/luas /app/luas
 COPY --from=builder /app/.env.example /app/.env
 
-ENV TZ=Asia/Shanghai
+ENV TZ=UTC
 
 EXPOSE 8025
 

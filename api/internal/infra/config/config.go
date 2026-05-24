@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/zgiai/luas/api/pkg/env"
@@ -138,8 +139,8 @@ type AIConfig struct {
 	DefaultModel    string
 	RequestTimeout  time.Duration
 	OpenAI          AIProviderConfig
-	Anthropic       AIProviderConfig
-	Gemini          AIProviderConfig
+	// To add a new provider: add a field here, wire it in config.Load,
+	// and register the provider in ai.NewManager.
 }
 
 type R2Config struct {
@@ -203,7 +204,7 @@ func Load() (*Config, error) {
 			Username:             env.Get("DB_USERNAME", ""),
 			Password:             env.Get("DB_PASSWORD", ""),
 			SSLMode:              env.Get("DB_SSLMODE", "disable"),
-			Timezone:             env.Get("DB_TIMEZONE", "Asia/Shanghai"),
+			Timezone:             env.Get("DB_TIMEZONE", "UTC"),
 			MaxIdleConns:         env.GetInt("DB_MAX_IDLE_CONNS", 10),
 			MaxOpenConns:         env.GetInt("DB_MAX_OPEN_CONNS", 100),
 			ConnMaxLifetime:      time.Duration(env.GetInt("DB_CONN_MAX_LIFETIME", 3600)) * time.Second,
@@ -238,7 +239,10 @@ func Load() (*Config, error) {
 			File:  env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")),
 		},
 		CORS: CORSConfig{
-			AllowOrigins:     env.GetSlice("CORS_ALLOW_ORIGINS", []string{"*"}),
+			// Default to localhost-only. Production should set CORS_ALLOW_ORIGINS
+			// explicitly to a comma-separated list. "*" is rejected by validate()
+			// whenever AllowCredentials is true (browsers reject the combo anyway).
+			AllowOrigins:     env.GetSlice("CORS_ALLOW_ORIGINS", []string{"http://localhost:3000"}),
 			AllowMethods:     env.GetSlice("CORS_ALLOW_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
 			AllowHeaders:     env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"}),
 			ExposeHeaders:    env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length", "X-Request-ID"}),
@@ -251,19 +255,11 @@ func Load() (*Config, error) {
 		AI: AIConfig{
 			Enabled:         env.GetBool("AI_ENABLED", true),
 			DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
-			DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5.4"),
+			DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5"),
 			RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
 			OpenAI: AIProviderConfig{
 				APIKey:  env.Get("OPENAI_API_KEY", ""),
 				BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-			},
-			Anthropic: AIProviderConfig{
-				APIKey:  env.Get("ANTHROPIC_API_KEY", ""),
-				BaseURL: env.Get("ANTHROPIC_BASE_URL", ""),
-			},
-			Gemini: AIProviderConfig{
-				APIKey:  env.Get("GEMINI_API_KEY", ""),
-				BaseURL: env.Get("GEMINI_BASE_URL", ""),
 			},
 		},
 		R2: R2Config{
@@ -314,13 +310,60 @@ func MustLoad() *Config {
 	return cfg
 }
 
+// placeholderJWTSecrets are values shipped with .env.example or previously
+// used by the scaffold; treating them as "real" would silently weaken auth.
+var placeholderJWTSecrets = map[string]struct{}{
+	"":         {},
+	"replace_me_with_a_long_random_secret_at_least_32_chars": {},
+	"your_jwt_secret_key_here":                               {},
+	"replace-me":                                             {},
+	"change_me_in_production":                                {},
+}
+
 func validate(cfg *Config) error {
 	if cfg.Database.Enabled && cfg.Database.Driver != "sqlite" && cfg.Database.Password == "" {
 		return fmt.Errorf("DB_PASSWORD is required when database is enabled")
 	}
+
 	if cfg.JWT.Secret == "" {
 		return fmt.Errorf("JWT_SECRET is required")
 	}
+
+	isProd := strings.EqualFold(cfg.App.Env, "production")
+
+	// JWT_SECRET strength: in production, reject known placeholders and
+	// secrets shorter than 32 chars. In other envs, log a clear warning by
+	// returning a non-fatal hint — but we don't have a logger here yet, so
+	// we keep the hard rule production-only.
+	if isProd {
+		if _, isPlaceholder := placeholderJWTSecrets[cfg.JWT.Secret]; isPlaceholder {
+			return fmt.Errorf("JWT_SECRET is set to a known placeholder value; generate one with `openssl rand -hex 32`")
+		}
+		if len(cfg.JWT.Secret) < 32 {
+			return fmt.Errorf("JWT_SECRET must be at least 32 characters in production (current: %d)", len(cfg.JWT.Secret))
+		}
+	}
+
+	// CORS: wildcard origin + credentials is rejected by browsers anyway.
+	// Catch the misconfiguration early at startup.
+	if cfg.CORS.AllowCredentials {
+		for _, origin := range cfg.CORS.AllowOrigins {
+			if strings.TrimSpace(origin) == "*" {
+				return fmt.Errorf("CORS_ALLOW_ORIGINS cannot contain '*' when CORS_ALLOW_CREDENTIALS is true; list explicit origins instead")
+			}
+		}
+	}
+
+	// In production, refuse to start with localhost origins — almost
+	// certainly a forgotten config.
+	if isProd {
+		for _, origin := range cfg.CORS.AllowOrigins {
+			if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
+				return fmt.Errorf("CORS_ALLOW_ORIGINS contains a localhost origin in production: %q", origin)
+			}
+		}
+	}
+
 	return nil
 }
 

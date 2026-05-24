@@ -1,7 +1,9 @@
-import type { AuthUser } from '@/features/auth/types';
-
 /**
  * Mock auth configuration shared by client, middleware, and route handlers.
+ *
+ * The (de)serialization helpers that used to live here have been replaced
+ * by an HMAC-signed scheme in `@/lib/session-signing` and the server-only
+ * `@/features/auth/server/session` helpers. This file is now just config.
  */
 export const authConfig = {
   sessionMaxAge: 60 * 60 * 24 * 7,
@@ -10,6 +12,10 @@ export const authConfig = {
     session: 'luas_session',
   },
 
+  /**
+   * Demo credentials accepted by the mock /api/auth/login route handler.
+   * Delete this block when wiring up a real backend.
+   */
   demoUser: {
     id: 'demo-admin',
     email: 'admin@example.com',
@@ -28,30 +34,3 @@ export const authConfig = {
   protectedRoutes: ['/console', '/styleguide', '/i18n-test'] as const,
   publicOnlyRoutes: ['/login', '/register'] as const,
 } as const;
-
-export function serializeAuthSession(user: AuthUser): string {
-  return encodeURIComponent(JSON.stringify(user));
-}
-
-export function deserializeAuthSession(value?: string | null): AuthUser | null {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(decodeURIComponent(value)) as AuthUser;
-
-    if (
-      typeof parsed.id !== 'string' ||
-      typeof parsed.email !== 'string' ||
-      typeof parsed.name !== 'string' ||
-      typeof parsed.role !== 'string'
-    ) {
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    return null;
-  }
-}
