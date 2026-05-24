@@ -97,7 +97,7 @@ func (r *Repository) loadFromEnv() {
 	r.Set("log.file", env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")))
 
 	// CORS
-	r.Set("cors.allowed_origins", env.GetSlice("CORS_ALLOW_ORIGINS", env.GetSlice("CORS_ALLOWED_ORIGINS", []string{"*"})))
+	r.Set("cors.allowed_origins", env.GetSlice("CORS_ALLOW_ORIGINS", env.GetSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000"})))
 	r.Set("cors.allowed_methods", env.GetSlice("CORS_ALLOW_METHODS", env.GetSlice("CORS_ALLOWED_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"})))
 	r.Set("cors.allowed_headers", env.GetSlice("CORS_ALLOW_HEADERS", env.GetSlice("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization"})))
 	r.Set("cors.expose_headers", env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length"}))

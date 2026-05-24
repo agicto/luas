@@ -1,36 +1,17 @@
 version: '3.8'
 
 services:
-  app:
+  luas-web:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: luas-web
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:password@db:5432/myapp
-    depends_on:
-      - db
-    restart: unless-stopped
-
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=myapp
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+      - NEXT_PUBLIC_API_URL=/api
+      - NEXT_PUBLIC_DEPLOY_API_URL=http://localhost:8025/v1
+      - NEXT_PUBLIC_PLATFORM_API_URL=http://localhost:8025/v1
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000

@@ -28,7 +28,7 @@ func SetupApp() *gin.Engine {
 	cfg.JWT.Secret = "testing-secret"
 	cfg.JWT.Expire = time.Hour
 	cfg.JWT.ExpireDays = 1
-	cfg.CORS.AllowOrigins = []string{"*"}
+	cfg.CORS.AllowOrigins = []string{"http://localhost:3000"}
 	cfg.CORS.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	cfg.CORS.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-API-Key", "X-Request-ID"}
 	cfg.CORS.ExposeHeaders = []string{"Content-Length", "X-Request-ID"}
