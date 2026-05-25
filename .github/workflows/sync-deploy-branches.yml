@@ -1,0 +1,85 @@
+name: Sync deploy branches
+
+on:
+  push:
+    branches:
+      - dev
+      - dev-c
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: Source branch to release from
+        required: true
+        type: choice
+        options:
+          - dev
+          - dev-c
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-deploy-${{ github.event.inputs.source_branch || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync Luas deploy branch
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+
+    steps:
+      - name: Resolve branch mapping
+        id: mapping
+        shell: bash
+        run: |
+          source_branch="${{ github.event.inputs.source_branch || github.ref_name }}"
+
+          case "$source_branch" in
+            dev)
+              deploy_branch="deploy-dev"
+              vercel_project="luas"
+              ;;
+            dev-c)
+              deploy_branch="deploy-dev-c"
+              vercel_project="luas-c"
+              ;;
+            *)
+              echo "Unsupported source branch: $source_branch" >&2
+              exit 1
+              ;;
+          esac
+
+          {
+            echo "source_branch=$source_branch"
+            echo "deploy_branch=$deploy_branch"
+            echo "vercel_project=$vercel_project"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.mapping.outputs.source_branch }}
+          fetch-depth: 0
+
+      - name: Create empty deployment trigger commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_branch="${{ steps.mapping.outputs.source_branch }}"
+          deploy_branch="${{ steps.mapping.outputs.deploy_branch }}"
+          vercel_project="${{ steps.mapping.outputs.vercel_project }}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$deploy_branch" "origin/$source_branch"
+          git commit --allow-empty -m "chore: trigger Luas Vercel deployment"
+
+          if remote_sha="$(git ls-remote --heads origin "$deploy_branch" | awk '{print $1}')"; [ -n "$remote_sha" ]; then
+            git push --force-with-lease="refs/heads/$deploy_branch:$remote_sha" origin "HEAD:refs/heads/$deploy_branch"
+          else
+            git push origin "HEAD:refs/heads/$deploy_branch"
+          fi
+
+          echo "Synced $source_branch to $deploy_branch for Vercel project $vercel_project."

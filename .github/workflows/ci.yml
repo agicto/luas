@@ -5,11 +5,16 @@ on:
   push:
     branches:
       - main
+      - dev
+      - dev-c
+
+permissions:
+  contents: read
 
 jobs:
   api:
     name: API
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     defaults:
       run:
         working-directory: api
@@ -28,7 +33,7 @@ jobs:
 
   web:
     name: Web
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     defaults:
       run:
         working-directory: web
@@ -59,3 +64,6 @@ jobs:
 
       - name: Test
         run: pnpm test -- --run
+
+      - name: Build
+        run: pnpm build
