@@ -36,14 +36,10 @@ jobs:
           args: --version
           install-mode: binary
 
-      - name: Verification — Tier 1 (build + lint + test) on starter modules and capabilities
-        # Scoped to the clean trees; other subtrees (infra/, tools/, scripts/,
-        # tests/) carry pre-existing lint debt tracked separately. Expanding
-        # the scope here is a goal but requires that cleanup first.
-        run: |
-          bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 \
-            ./internal/modules/... \
-            ./internal/capabilities/...
+      - name: Verification — Tier 1 (build + lint + test) on the whole api/ tree
+        # The whole tree is now lint clean (golangci-lint run ./...). New
+        # debt anywhere blocks CI here.
+        run: bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
 
   web:
     name: Web
