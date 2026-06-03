@@ -62,6 +62,7 @@ skill-name/
 | Skill | 描述 | 优先级 |
 |-------|------|--------|
 | [`deployment`](./deployment/) | 部署工作流和检查清单 | P1 |
+| [`sql-migration-review`](./sql-migration-review/) | GORM/SQL 迁移的向后兼容、锁时长、索引、回滚审查 | P1 |
 
 ## 🧭 Luas 架构词汇
 

@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# Logging Standards Validation Script
+# Logging Standards Validation Script (slog)
 # Usage: ./validate-logging.sh <module_name>
+#
+# Checks that a module under api/internal/modules/<name>/ follows the
+# log/slog conventions documented in ../SKILL.md.
 
 set -e
 
@@ -21,164 +24,126 @@ fi
 echo "🔍 Validating logging standards for '${MODULE}' module..."
 echo "=============================================="
 
-# Track validation status
 ERRORS=0
 WARNINGS=0
 
 # =============================================================================
-# 1. Check for Structured Logging (logrus/zap)
+# 1. Forbidden loggers — no logrus / zap / zerolog allowed in new code
 # =============================================================================
 
 echo ""
-echo "📊 Level 1: Checking structured logging..."
+echo "🚫 Level 1: Checking for forbidden logger imports..."
 
-# Check for logger import
-if grep -r "github.com/sirupsen/logrus\|go.uber.org/zap" "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//"; then
-    echo "✅ Structured logging library detected"
+FORBIDDEN=$(grep -rn "github.com/sirupsen/logrus\|go.uber.org/zap\|github.com/rs/zerolog" "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
+if [ -n "$FORBIDDEN" ]; then
+    echo "❌ Found forbidden logger imports (use log/slog instead):"
+    echo "$FORBIDDEN"
+    ERRORS=$((ERRORS + 1))
 else
-    echo "⚠️  No structured logging library found"
-    echo "   Recommended: github.com/sirupsen/logrus or go.uber.org/zap"
-    WARNINGS=$((WARNINGS + 1))
+    echo "✅ No forbidden logger imports"
 fi
 
 # =============================================================================
-# 2. Check for String Interpolation in Logs (Anti-pattern)
+# 2. Legacy log.Printf — flag but don't fail
 # =============================================================================
 
 echo ""
-echo "🚫 Level 2: Checking for anti-patterns..."
+echo "📊 Level 2: Checking for legacy log.Printf usage..."
 
-# Check for fmt.Printf style logging (anti-pattern)
-STRING_LOGS=$(grep -rn 'logger\.Infof\|logger\.Debugf\|logger\.Warnf\|logger\.Errorf\|log\.Printf' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
-
-if [ -n "$STRING_LOGS" ]; then
-    echo "⚠️  Found string interpolation in logs (prefer structured fields):"
-    echo "$STRING_LOGS"
-    echo "   Use: logger.WithFields(logrus.Fields{...}).Info(...)"
+LEGACY=$(grep -rn 'log\.Printf\|log\.Println\|log\.Fatal\|log\.Fatalf' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" | grep -v 'log/slog' || true)
+if [ -n "$LEGACY" ]; then
+    echo "⚠️  Found stdlib log.Printf usage (prefer log/slog):"
+    echo "$LEGACY"
     WARNINGS=$((WARNINGS + 1))
 else
-    echo "✅ No string interpolation anti-patterns found"
+    echo "✅ No legacy log.Printf usage"
 fi
 
 # =============================================================================
-# 3. Check for Structured Fields Usage
+# 3. String interpolation in slog calls (anti-pattern)
 # =============================================================================
 
 echo ""
-echo "📋 Level 3: Checking structured fields..."
+echo "🔍 Level 3: Checking for fmt.Sprintf inside slog calls..."
 
-# Check for WithFields usage
-if grep -rq 'WithFields\|WithField' "${MODULE_DIR}"/*.go 2>/dev/null; then
-    echo "✅ Structured fields detected"
-    
-    # Count usage
-    FIELD_COUNT=$(grep -rc 'WithFields\|WithField' "${MODULE_DIR}"/*.go 2>/dev/null | awk -F: '{sum+=$2} END {print sum}')
-    echo "   Found $FIELD_COUNT structured field usages"
-else
-    echo "⚠️  No structured fields found"
-    echo "   Use: logger.WithFields(logrus.Fields{...})"
+INTERPOLATED=$(grep -rn 'slog\.\(Debug\|Info\|Warn\|Error\)\(Context\)\?.*fmt\.Sprintf' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
+if [ -n "$INTERPOLATED" ]; then
+    echo "⚠️  Found fmt.Sprintf inside slog calls (use structured args instead):"
+    echo "$INTERPOLATED"
     WARNINGS=$((WARNINGS + 1))
+else
+    echo "✅ No string interpolation anti-patterns"
 fi
 
 # =============================================================================
-# 4. Check for High-Cardinality Fields
+# 4. Sensitive data heuristic
 # =============================================================================
 
 echo ""
-echo "🔍 Level 4: Checking high-cardinality fields..."
+echo "🔐 Level 4: Checking for sensitive data in logs..."
 
-# Check for important identifiers
-for field in "request_id" "user_id" "tenant_id"; do
-    if grep -rq "\"${field}\"" "${MODULE_DIR}"/*.go 2>/dev/null; then
-        echo "✅ Found '${field}' field"
-    else
-        echo "⚠️  No '${field}' field detected"
-    fi
-done
-
-# =============================================================================
-# 5. Check for Context Propagation
-# =============================================================================
-
-echo ""
-echo "🔗 Level 5: Checking context propagation..."
-
-# Check if logger is passed through context
-if grep -rq 'FromContext\|WithLogger' "${MODULE_DIR}"/*.go 2>/dev/null; then
-    echo "✅ Context propagation patterns detected"
-else
-    echo "⚠️  No context propagation detected"
-    echo "   Recommended: Pass logger through context"
-    WARNINGS=$((WARNINGS + 1))
-fi
-
-# =============================================================================
-# 6. Check for Sensitive Data in Logs
-# =============================================================================
-
-echo ""
-echo "🔐 Level 6: Checking for sensitive data..."
-
-# Check for common sensitive field names
-SENSITIVE_FIELDS=$(grep -rin '"password"\|"credit_card"\|"ssn"\|"token"\|"secret"' "${MODULE_DIR}"/*.go 2>/dev/null | grep -i 'log\|info\|debug\|warn\|error' || true)
-
-if [ -n "$SENSITIVE_FIELDS" ]; then
-    echo "⚠️  Possible sensitive data in logs:"
-    echo "$SENSITIVE_FIELDS"
-    echo "   NEVER log passwords, credit cards, SSNs, tokens, secrets"
+SENSITIVE=$(grep -rin 'slog\.\(Debug\|Info\|Warn\|Error\).*"\(password\|credit_card\|ssn\|secret\)"' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
+if [ -n "$SENSITIVE" ]; then
+    echo "❌ Possible sensitive data in logs:"
+    echo "$SENSITIVE"
+    echo "   Never log passwords / credit cards / SSNs / secrets."
     ERRORS=$((ERRORS + 1))
 else
     echo "✅ No obvious sensitive data in logs"
 fi
 
 # =============================================================================
-# 7. Check for Error Logging
+# 5. Context-aware logging — prefer InfoContext / ErrorContext
 # =============================================================================
 
 echo ""
-echo "❌ Level 7: Checking error logging..."
+echo "🔗 Level 5: Checking context-aware logging..."
 
-# Check if errors are logged with context
-ERROR_LOGS=$(grep -rn '\.Error(' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
-
-if [ -n "$ERROR_LOGS" ]; then
-    ERROR_COUNT=$(echo "$ERROR_LOGS" | wc -l)
-    echo "✅ Found $ERROR_COUNT error log statements"
-    
-    # Check if errors include context
-    if grep -rq 'WithFields.*Error\|WithError' "${MODULE_DIR}"/*.go 2>/dev/null; then
-        echo "✅ Error logs include context"
-    else
-        echo "⚠️  Error logs may lack context"
-        echo "   Use: logger.WithFields(...).WithError(err).Error(...)"
-        WARNINGS=$((WARNINGS + 1))
-    fi
+NON_CTX=$(grep -rn 'slog\.\(Debug\|Info\|Warn\|Error\)(' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v 'Context(' | grep -v "//" || true)
+if [ -n "$NON_CTX" ]; then
+    NON_CTX_COUNT=$(echo "$NON_CTX" | wc -l | tr -d ' ')
+    echo "⚠️  Found ${NON_CTX_COUNT} slog calls without Context variant (prefer slog.InfoContext / ErrorContext etc.):"
+    echo "$NON_CTX" | head -5
+    WARNINGS=$((WARNINGS + 1))
 else
-    echo "⚠️  No error logging found (may not be needed)"
+    echo "✅ Slog calls use Context variants"
 fi
 
 # =============================================================================
-# 8. Check Log Levels
+# 6. Error logs include err field
 # =============================================================================
 
 echo ""
-echo "📊 Level 8: Checking log level usage..."
+echo "❌ Level 6: Checking error logging shape..."
+
+ERR_LOGS=$(grep -rn 'slog\.ErrorContext\|slog\.Error(' "${MODULE_DIR}"/*.go 2>/dev/null | grep -v "//" || true)
+if [ -n "$ERR_LOGS" ]; then
+    ERR_COUNT=$(echo "$ERR_LOGS" | wc -l | tr -d ' ')
+    echo "✅ Found ${ERR_COUNT} error log site(s)"
+    NO_ERR_FIELD=$(echo "$ERR_LOGS" | grep -v '"err"' || true)
+    if [ -n "$NO_ERR_FIELD" ]; then
+        echo "⚠️  Some error logs may not include an \"err\" field:"
+        echo "$NO_ERR_FIELD" | head -3
+        WARNINGS=$((WARNINGS + 1))
+    fi
+fi
+
+# =============================================================================
+# 7. Level counts
+# =============================================================================
+
+echo ""
+echo "📊 Level 7: Slog level distribution..."
 
 for level in "Debug" "Info" "Warn" "Error"; do
-    COUNT=$(grep -rc "\\.${level}(" "${MODULE_DIR}"/*.go 2>/dev/null | awk -F: '{sum+=$2} END {print sum}')
+    COUNT=$(grep -rc "slog\.${level}\(Context\)\?(" "${MODULE_DIR}"/*.go 2>/dev/null | awk -F: '{sum+=$2} END {print sum+0}')
     if [ "$COUNT" -gt 0 ]; then
-        echo "✅ ${level}: $COUNT occurrences"
+        echo "   ${level}: $COUNT call(s)"
     fi
 done
 
-# Check for Fatal (should be rare)
-FATAL_COUNT=$(grep -rc "\\.Fatal(" "${MODULE_DIR}"/*.go 2>/dev/null | awk -F: '{sum+=$2} END {print sum}')
-if [ "$FATAL_COUNT" -gt 0 ]; then
-    echo "⚠️  Fatal: $FATAL_COUNT occurrences (use sparingly!)"
-fi
-
 # =============================================================================
-# Generate Report
+# Summary
 # =============================================================================
 
 echo ""
@@ -187,20 +152,12 @@ echo "📊 Validation Summary"
 echo "=============================================="
 
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-    echo "✅ All logging standards checks passed!"
-    echo ""
-    echo "Module '${MODULE}' follows Luas logging standards."
+    echo "✅ All logging standards checks passed for '${MODULE}'."
     exit 0
 elif [ $ERRORS -eq 0 ]; then
-    echo "⚠️  Found $WARNINGS warning(s)"
-    echo ""
-    echo "Module '${MODULE}' mostly follows standards, but has some improvements."
-    echo "Refer to: .agents/skills/logging-standards/SKILL.md"
+    echo "⚠️  Found $WARNINGS warning(s). Refer to .agents/skills/logging-standards/SKILL.md."
     exit 0
 else
-    echo "❌ Found $ERRORS error(s) and $WARNINGS warning(s)"
-    echo ""
-    echo "Please fix the critical issues above."
-    echo "Refer to: .agents/skills/logging-standards/SKILL.md"
+    echo "❌ Found $ERRORS error(s) and $WARNINGS warning(s). Fix the critical issues above."
     exit 1
 fi

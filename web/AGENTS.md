@@ -17,6 +17,30 @@
 | React Query | 5.x | Server State |
 | next-intl | 4.x | i18n |
 
+## AI Agent Skills
+
+The web side ships with a Skills System in `.agents/skills/` that codex CLI auto-loads. Each skill is a self-contained workflow loaded only when its description matches the task.
+
+| Skill | When to Use |
+|---|---|
+| [`vercel-react-best-practices`](./.agents/skills/react-best-practices/) | Writing or refactoring React / Next.js code |
+| [`frontend-design`](./.agents/skills/frontend-design/) | Building components, pages, dashboards, landing pages |
+| [`web-design-guidelines`](./.agents/skills/web-design-guidelines/) | Applying project design tokens and component rules |
+| [`ui-styling-guide`](./.agents/skills/ui-styling-guide/) | Tailwind + shadcn styling patterns |
+| [`data-state-management`](./.agents/skills/data-state-management/) | Zustand / React Query / form state |
+| [`i18n-handler`](./.agents/skills/i18n-handler/) | next-intl translation keys and scoped translations |
+| [`api-error-handling`](./.agents/skills/api-error-handling/) | Client error contracts and user-facing surfaces |
+| [`environment-config`](./.agents/skills/environment-config/) | Env vars, runtime config, build-time vs runtime |
+| [`webapp-testing`](./.agents/skills/webapp-testing/) | Browser-driven test patterns (Playwright) |
+| [`testing-standards`](./.agents/skills/testing-standards/) | Unit / component test conventions |
+| [`utility-tooling`](./.agents/skills/utility-tooling/) | Project utility patterns |
+| [`project-strategy`](./.agents/skills/project-strategy/) | Long-term direction and trade-off framing |
+| [`skill-creator`](./.agents/skills/skill-creator/) | Creating or updating a skill |
+| [`accessibility-audit`](./.agents/skills/accessibility-audit/) | WCAG 2.2 AA review (keyboard, ARIA, contrast) |
+| [`web-perf`](./.agents/skills/web-perf/) | Core Web Vitals audit (LCP / INP / CLS) for Next 16 |
+
+Root-level skills under `../.agents/skills/` — `grill-before-build`, `systematic-debugging`, `verification-before-completion`, `pr-description-writer` — also apply here.
+
 ## Directory Structure
 
 ```
