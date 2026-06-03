@@ -351,7 +351,7 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 
 #### Performance Optimization Rules
 
-Following [Vercel React Best Practices](file:///.agent/skills/react-best-practices/SKILL.md) for optimal performance:
+Following [Vercel React Best Practices](file:///.agents/skills/react-best-practices/SKILL.md) for optimal performance:
 
 - **Dynamic Imports** (`bundle-dynamic-imports`): Use `next/dynamic` for components > 50KB (charts, editors, rich-text, maps):
   ```tsx

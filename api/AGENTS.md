@@ -54,7 +54,7 @@ Luas is a modern Go framework using Domain-Driven Design (DDD) + layered archite
 
 ## AI Agent Skills
 
-This project includes a **Skills System** in `.agent/skills/` that provides modular workflows and best practices for AI agents.
+This project includes a **Skills System** in `.agents/skills/` that provides modular workflows and best practices for AI agents.
 
 ### What are Skills?
 
@@ -68,18 +68,18 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 
 | Skill | Description | When to Use |
 |-------|-------------|-------------|
-| [`architecture-principles`](./.agent/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
-| [`module-creation`](./.agent/skills/module-creation/) | Create starter-style DDD modules | Creating new business modules |
-| [`coding-standards`](./.agent/skills/coding-standards/) | Verify code follows Luas standards | Code review, PR submission |
-| [`api-development`](./.agent/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
-| [`logging-standards`](./.agent/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
-| [`code-review-guide`](./.agent/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |
-| [`testing-strategy`](./.agent/skills/testing-strategy/) | Test patterns (unit, integration), mocking, table-driven tests | Writing and organizing tests |
-| [`database-design`](./.agent/skills/database-design/) | Schema standards, indexing, migration, SQL optimization | Designing tables and improving DB performance |
+| [`architecture-principles`](./.agents/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
+| [`module-creation`](./.agents/skills/module-creation/) | Create starter-style DDD modules | Creating new business modules |
+| [`coding-standards`](./.agents/skills/coding-standards/) | Verify code follows Luas standards | Code review, PR submission |
+| [`api-development`](./.agents/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
+| [`logging-standards`](./.agents/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
+| [`code-review-guide`](./.agents/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |
+| [`testing-strategy`](./.agents/skills/testing-strategy/) | Test patterns (unit, integration), mocking, table-driven tests | Writing and organizing tests |
+| [`database-design`](./.agents/skills/database-design/) | Schema standards, indexing, migration, SQL optimization | Designing tables and improving DB performance |
 
 ### How AI Agents Use Skills
 
-1. **Startup**: Scan `.agent/skills/` and load metadata (name, description)
+1. **Startup**: Scan `.agents/skills/` and load metadata (name, description)
 2. **Intent Analysis**: Match user request to relevant skills
 3. **Dynamic Loading**: Read full SKILL.md when needed
 4. **Execution**: Follow skill workflow steps
@@ -89,16 +89,16 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 
 ```bash
 # View available skills
-ls .agent/skills/
+ls .agents/skills/
 
 # Read a skill
-cat .agent/skills/module-creation/SKILL.md
+cat .agents/skills/module-creation/SKILL.md
 
 # Run validation script
-.agent/skills/module-creation/scripts/validate-module.sh blog
+.agents/skills/module-creation/scripts/validate-module.sh blog
 ```
 
-See [`.agent/skills/README.md`](./.agent/skills/README.md) for detailed documentation.
+See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed documentation.
 
 ## Directory Structure
 
@@ -154,7 +154,7 @@ make air           # Hot-reload dev server
 
 `internal/capabilities/` provides technical helpers (e.g., `idgen`, `crypto`).
 
-> **📚 Full Guide**: See [`testing-strategy` skill - Mocks](./.agent/skills/testing-strategy/) for dependency patterns.
+> **📚 Full Guide**: See [`testing-strategy` skill - Mocks](./.agents/skills/testing-strategy/) for dependency patterns.
 
 ```go
 id := idgen.UUID()
@@ -171,7 +171,7 @@ hash, _ := crypto.HashPassword("password")
 
 ## 📋 Coding Standards (Mandatory)
 
-> **📚 Full Guide**: See [`coding-standards` skill](./.agent/skills/coding-standards/)
+> **📚 Full Guide**: See [`coding-standards` skill](./.agents/skills/coding-standards/)
 
 ### 1. Naming Quick Reference
 
@@ -206,16 +206,16 @@ internal/modules/user/
 
 **Validation**:
 ```bash
-.agent/skills/module-creation/scripts/validate-module.sh user
+.agents/skills/module-creation/scripts/validate-module.sh user
 ```
 
 ### 2. Architecture Standards
 
-> **📚 Full Guide**: See [`coding-standards` skill - Architecture](./.agent/skills/coding-standards/)
+> **📚 Full Guide**: See [`coding-standards` skill - Architecture](./.agents/skills/coding-standards/)
 
 - **Layered Flow**: `Handler` (DTO) → `Service` (Domain) → `Repository` (PO) → `Database`.
 - **8-File Starter Template**: Recommended for route-owning starter modules.
-  > **🚀 Create Module**: Use [`module-creation` skill](./.agent/skills/module-creation/)
+  > **🚀 Create Module**: Use [`module-creation` skill](./.agents/skills/module-creation/)
 
 ---
 
@@ -223,10 +223,10 @@ internal/modules/user/
 
 Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved to the **Skills System**:
 
-- **Model Design**: See [`database-design` skill](./.agent/skills/database-design/)
-- **API & Handlers**: See [`api-development` skill](./.agent/skills/api-development/)
-- **Business Logic**: See [`coding-standards` skill](./.agent/skills/coding-standards/)
-- **Testing**: See [`testing-strategy` skill](./.agent/skills/testing-strategy/)
+- **Model Design**: See [`database-design` skill](./.agents/skills/database-design/)
+- **API & Handlers**: See [`api-development` skill](./.agents/skills/api-development/)
+- **Business Logic**: See [`coding-standards` skill](./.agents/skills/coding-standards/)
+- **Testing**: See [`testing-strategy` skill](./.agents/skills/testing-strategy/)
 
 ---
 
@@ -241,7 +241,7 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 
 ### 5. API Development Quick Reference
 
-> **📚 Full Details**: See [`api-development` skill](./.agent/skills/api-development/)
+> **📚 Full Details**: See [`api-development` skill](./.agents/skills/api-development/)
 
 - **Pagination**: REQUIRED for list endpoints.
 - **Unified Errors**: REQUIRED `response.HandleError`.
@@ -253,12 +253,12 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 
 Run the validation script:
 ```bash
-.agent/skills/api-development/scripts/validate-api.sh <module_name>
+.agents/skills/api-development/scripts/validate-api.sh <module_name>
 ```
 
 #### Complete Example
 
-See [`.agent/skills/api-development/examples/complete-crud-handler.go`](./.agent/skills/api-development/examples/complete-crud-handler.go)
+See [`.agents/skills/api-development/examples/complete-crud-handler.go`](./.agents/skills/api-development/examples/complete-crud-handler.go)
 
 ---
 
