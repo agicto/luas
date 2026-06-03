@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 // TimeoutConfig holds timeout middleware configuration

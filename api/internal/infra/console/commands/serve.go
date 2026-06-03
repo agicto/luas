@@ -40,7 +40,8 @@ func (c *ServeCommand) Run(args []string) error {
 	// Parse port override from args
 	for i, arg := range args {
 		if arg == "--port" && i+1 < len(args) {
-			fmt.Sscanf(args[i+1], "%d", &cfg.Server.Port)
+			// Parse failure leaves cfg.Server.Port at its configured default.
+			_, _ = fmt.Sscanf(args[i+1], "%d", &cfg.Server.Port) //nolint:errcheck
 		}
 	}
 	kernel := bootstrap.NewHttpKernel(application)

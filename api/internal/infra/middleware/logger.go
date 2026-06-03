@@ -3,8 +3,9 @@ package middleware
 import (
 	"time"
 
-	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 // Logger is the request logging middleware

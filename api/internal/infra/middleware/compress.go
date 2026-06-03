@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"compress/gzip"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -55,7 +56,12 @@ func (g *gzipWriter) WriteString(s string) (int, error) {
 // gzip writer pool
 var gzipWriterPool = sync.Pool{
 	New: func() interface{} {
-		w, _ := gzip.NewWriterLevel(io.Discard, gzip.DefaultCompression)
+		// gzip.NewWriterLevel only errors when the level is out of range;
+		// DefaultCompression is in range, so this cannot fail.
+		w, err := gzip.NewWriterLevel(io.Discard, gzip.DefaultCompression)
+		if err != nil {
+			panic(fmt.Sprintf("middleware: gzip writer init: %v", err))
+		}
 		return w
 	},
 }
@@ -97,8 +103,12 @@ func CompressWithConfig(cfg CompressConfig) gin.HandlerFunc {
 			}
 		}
 
-		// Get gzip writer from pool
-		gz := gzipWriterPool.Get().(*gzip.Writer)
+		// Get gzip writer from pool. The pool's New always returns
+		// *gzip.Writer (see gzipWriterPool above), so the assertion is safe.
+		gz, ok := gzipWriterPool.Get().(*gzip.Writer)
+		if !ok {
+			panic("middleware: gzip writer pool returned wrong type")
+		}
 		gz.Reset(c.Writer)
 
 		// Create wrapped writer

@@ -26,9 +26,11 @@ func NewDoctorCommand() *DoctorCommand {
 	return &DoctorCommand{output: console.NewOutput()}
 }
 
-func (c *DoctorCommand) Name() string        { return "doctor" }
-func (c *DoctorCommand) Description() string { return "Audit .env vs .env.example and flag misconfigurations" }
-func (c *DoctorCommand) Usage() string       { return "doctor" }
+func (c *DoctorCommand) Name() string { return "doctor" }
+func (c *DoctorCommand) Description() string {
+	return "Audit .env vs .env.example and flag misconfigurations"
+}
+func (c *DoctorCommand) Usage() string { return "doctor" }
 
 func (c *DoctorCommand) Run(args []string) error {
 	c.output.Title("luas doctor")

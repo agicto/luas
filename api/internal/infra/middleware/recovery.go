@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/zgiai/luas/api/pkg/response"
-	"github.com/gin-gonic/gin"
 )
 
 // Recovery middleware handles panic recovery

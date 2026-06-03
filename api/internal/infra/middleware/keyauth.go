@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
@@ -95,7 +96,8 @@ func KeyAuthWithConfig(cfg KeyAuthConfig) gin.HandlerFunc {
 		case "query":
 			key = c.Query(name)
 		case "cookie":
-			key, _ = c.Cookie(name)
+			// Cookie may be absent; treat that as empty key (handled below).
+			key, _ = c.Cookie(name) //nolint:errcheck // missing cookie → empty key by design
 		case "form":
 			key = c.PostForm(name)
 		default:
@@ -145,7 +147,9 @@ func KeyAuthWithConfig(cfg KeyAuthConfig) gin.HandlerFunc {
 // GetAPIKey retrieves the API key from context
 func GetAPIKey(c *gin.Context) string {
 	if key, exists := c.Get("api_key"); exists {
-		return key.(string)
+		if s, ok := key.(string); ok {
+			return s
+		}
 	}
 	return ""
 }

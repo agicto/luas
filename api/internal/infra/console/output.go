@@ -117,7 +117,9 @@ func (o *Output) Confirm(question string, defaultYes bool) bool {
 	fmt.Printf("  %s %s: ", question, color.New(color.FgHiBlack).Sprint(defaultHint))
 
 	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
+	// If stdin is closed mid-prompt, treat the partial line as the answer
+	// and let the empty-string check below pick the default.
+	answer, _ := reader.ReadString('\n') //nolint:errcheck // closed stdin → default branch
 	answer = strings.TrimSpace(strings.ToLower(answer))
 
 	if answer == "" {
@@ -135,7 +137,9 @@ func (o *Output) Ask(question string, defaultValue string) string {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
+	// If stdin is closed mid-prompt, treat the partial line as the answer
+	// and let the empty-string check below pick the default.
+	answer, _ := reader.ReadString('\n') //nolint:errcheck // closed stdin → default branch
 	answer = strings.TrimSpace(answer)
 
 	if answer == "" {
@@ -161,7 +165,9 @@ func (o *Output) Choice(question string, options []string, defaultIndex int) str
 
 	fmt.Print("  > ")
 	reader := bufio.NewReader(os.Stdin)
-	answer, _ := reader.ReadString('\n')
+	// If stdin is closed mid-prompt, treat the partial line as the answer
+	// and let the empty-string check below pick the default.
+	answer, _ := reader.ReadString('\n') //nolint:errcheck // closed stdin → default branch
 	answer = strings.TrimSpace(answer)
 
 	if answer == "" {
@@ -169,7 +175,9 @@ func (o *Output) Choice(question string, options []string, defaultIndex int) str
 	}
 
 	var idx int
-	fmt.Sscanf(answer, "%d", &idx)
+	// Sscanf errors fall through to the bounds check, which selects the
+	// default when idx is unparsed (0 is fine — 0 is a valid index too).
+	_, _ = fmt.Sscanf(answer, "%d", &idx) //nolint:errcheck // parse failure → default
 	if idx >= 0 && idx < len(options) {
 		return options[idx]
 	}

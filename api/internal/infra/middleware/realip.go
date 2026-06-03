@@ -136,7 +136,9 @@ func isTrusted(ipStr string, trustedNets []*net.IPNet) bool {
 // GetRealIP retrieves the real IP from context
 func GetRealIP(c *gin.Context) string {
 	if ip, exists := c.Get("real_ip"); exists {
-		return ip.(string)
+		if s, ok := ip.(string); ok {
+			return s
+		}
 	}
 	return c.ClientIP()
 }

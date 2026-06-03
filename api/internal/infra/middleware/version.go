@@ -15,7 +15,9 @@ func VersionMiddleware(version string) gin.HandlerFunc {
 // GetVersion gets the current API version
 func GetVersion(c *gin.Context) string {
 	if v, exists := c.Get("api_version"); exists {
-		return v.(string)
+		if s, ok := v.(string); ok {
+			return s
+		}
 	}
 	return "v1" // Default version
 }

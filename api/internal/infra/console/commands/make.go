@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/infra/migration"
@@ -279,47 +278,6 @@ func (c *MakeMigrationCommand) Run(args []string) error {
 		c.output.Info("Table: %s (modify)", modifyTable)
 	}
 
-	return nil
-}
-
-// legacyMakeMigrationCommand is kept for backward compatibility reference.
-// It uses the old gormigrate-style template.
-func legacyMakeMigrationCommand(args []string, output *console.Output) error {
-	if len(args) < 1 {
-		return fmt.Errorf("migration name is required")
-	}
-
-	name := args[0]
-
-	// Generate timestamp: YYYY_MM_DD_HHMMSS
-	timestamp := time.Now().Format("2006_01_02_150405")
-
-	// Create filename with timestamp
-	filename := fmt.Sprintf("%s_%s.go", timestamp, name)
-	dir := filepath.Join("database", "migrations")
-
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	filePath := filepath.Join(dir, filename)
-
-	// Check if file already exists
-	if _, err := os.Stat(filePath); err == nil {
-		return fmt.Errorf("migration file already exists: %s", filePath)
-	}
-
-	// Migration ID
-	migrationID := fmt.Sprintf("%s_%s", timestamp, name)
-
-	if err := generateFile(filePath, legacyMigrationTemplate, map[string]string{
-		"MigrationID": migrationID,
-	}); err != nil {
-		return err
-	}
-
-	output.Success("Migration created: %s", filePath)
-	output.Info("Migration ID: %s", migrationID)
 	return nil
 }
 
@@ -914,32 +872,6 @@ func (s *{{.SeederName}}Seeder) Run(db *gorm.DB) error {
 
 func init() {
 	register(&{{.SeederName}}Seeder{})
-}
-`
-
-// legacyMigrationTemplate is the old gormigrate-style template.
-// Kept for backward compatibility reference.
-const legacyMigrationTemplate = `package migrations
-
-import (
-	"github.com/go-gormigrate/gormigrate/v2"
-	"gorm.io/gorm"
-)
-
-func init() {
-	register(&gormigrate.Migration{
-		ID: "{{.MigrationID}}",
-		Migrate: func(db *gorm.DB) error {
-			// TODO: Implement migration logic
-			// Example: return db.AutoMigrate(&YourModel{})
-			return nil
-		},
-		Rollback: func(db *gorm.DB) error {
-			// TODO: Implement rollback logic
-			// Example: return db.Migrator().DropTable("your_table")
-			return nil
-		},
-	})
 }
 `
 
