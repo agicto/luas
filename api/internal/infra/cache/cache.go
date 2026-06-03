@@ -263,6 +263,8 @@ func flightKey(store Store, label, key string) string {
 		if !value.IsNil() {
 			return fmt.Sprintf("%s:%x:%s", label, value.Pointer(), key)
 		}
+	default:
+		// Non-pointerish kinds fall through to the type-string form below.
 	}
 
 	return fmt.Sprintf("%s:%T:%s", label, store, key)

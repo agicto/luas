@@ -195,8 +195,10 @@ func (v *Validator) registerDefaultRules() {
 			return fl.Field().Uint() > 0
 		case reflect.Float32, reflect.Float64:
 			return fl.Field().Float() > 0
+		default:
+			// Non-numeric kinds cannot satisfy a numeric positivity rule.
+			return false
 		}
-		return false
 	}, "must be a positive number")
 
 	// Non-negative number
@@ -208,8 +210,10 @@ func (v *Validator) registerDefaultRules() {
 			return true
 		case reflect.Float32, reflect.Float64:
 			return fl.Field().Float() >= 0
+		default:
+			// Non-numeric kinds cannot satisfy a numeric non-negativity rule.
+			return false
 		}
-		return false
 	}, "must be a non-negative number")
 }
 

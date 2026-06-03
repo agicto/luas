@@ -135,6 +135,9 @@ func (cb *circuitBreaker) currentState() State {
 		if now.Sub(cb.lastStateChange) >= cb.timeout {
 			cb.setState(StateHalfOpen)
 		}
+	default:
+		// StateClosed and StateHalfOpen need no state-driven transition here;
+		// they advance only via Allow / RecordSuccess / RecordFailure.
 	}
 
 	return cb.state
@@ -252,6 +255,9 @@ func (cb *circuitBreaker) onSuccess() {
 		if cb.successes >= cb.maxHalfOpenRequests {
 			cb.setState(StateClosed)
 		}
+	default:
+		// StateOpen: success during open state is not expected (Allow gates
+		// execution), so ignore.
 	}
 }
 
@@ -275,6 +281,8 @@ func (cb *circuitBreaker) onFailure(reason string) {
 		}
 	case StateHalfOpen:
 		cb.setState(StateOpen)
+	default:
+		// StateOpen: failure while already open changes nothing.
 	}
 }
 

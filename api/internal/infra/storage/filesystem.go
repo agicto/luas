@@ -166,8 +166,8 @@ func (fs *LocalFilesystem) Copy(from, to string) error {
 
 	// Ensure destination directory exists
 	destPath := fs.path(to)
-	if err := os.MkdirAll(filepath.Dir(destPath), 0755); err != nil {
-		return err
+	if mkdirErr := os.MkdirAll(filepath.Dir(destPath), 0755); mkdirErr != nil {
+		return mkdirErr
 	}
 
 	dst, err := os.Create(destPath)

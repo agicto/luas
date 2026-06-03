@@ -29,11 +29,11 @@ func Middleware(serviceName string) gin.HandlerFunc {
 		ctx, span := tracer.Start(ctx, spanName,
 			trace.WithSpanKind(trace.SpanKindServer),
 			trace.WithAttributes(
-				semconv.HTTPMethod(c.Request.Method),
-				semconv.HTTPTarget(c.Request.URL.Path),
+				semconv.HTTPRequestMethodKey.String(c.Request.Method),
+				semconv.URLPath(c.Request.URL.Path),
 				semconv.HTTPRoute(c.FullPath()),
-				semconv.HTTPScheme(c.Request.URL.Scheme),
-				semconv.NetHostName(c.Request.Host),
+				semconv.URLScheme(c.Request.URL.Scheme),
+				semconv.ServerAddress(c.Request.Host),
 				semconv.UserAgentOriginal(c.Request.UserAgent()),
 				attribute.String("http.client_ip", c.ClientIP()),
 			),
@@ -49,7 +49,7 @@ func Middleware(serviceName string) gin.HandlerFunc {
 		// Record response attributes
 		status := c.Writer.Status()
 		span.SetAttributes(
-			semconv.HTTPStatusCode(status),
+			semconv.HTTPResponseStatusCode(status),
 			attribute.Int("http.response_size", c.Writer.Size()),
 		)
 

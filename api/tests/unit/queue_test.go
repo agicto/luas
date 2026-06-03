@@ -342,7 +342,7 @@ func TestMemoryDriver_ContextCancellation(t *testing.T) {
 	// Pop should return context error
 	_, err := driver.Pop(ctx, "test")
 	if err == nil {
-		t.Error("Expected error on cancelled context")
+		t.Error("Expected error on canceled context")
 	}
 }
 

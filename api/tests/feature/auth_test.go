@@ -9,7 +9,6 @@ import (
 
 func TestUserRegistration(t *testing.T) {
 	// Generate unique email to avoid constraint errors if DB persists
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("test_%d@example.com", rand.Intn(100000))
 
 	tc := NewTestCase(t)
@@ -28,7 +27,6 @@ func TestUserRegistration(t *testing.T) {
 
 func TestUserLogin(t *testing.T) {
 	// 1. Register
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("login_%d@example.com", rand.Intn(100000))
 	password := "password123"
 
@@ -54,7 +52,6 @@ func TestUserLogin(t *testing.T) {
 }
 
 func TestPasswordResetRequestReturnsGenericSuccessMessage(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("reset_%d@example.com", rand.Intn(100000))
 
 	tc := NewTestCase(t)
@@ -84,7 +81,6 @@ func TestUserDirectoryRoutesAreNotExposedByDefaultStarter(t *testing.T) {
 }
 
 func TestRegistrationConflictReturnsStableErrorCodeAndRequestID(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("dup_%d@example.com", rand.Intn(100000))
 
 	tc := NewTestCase(t)

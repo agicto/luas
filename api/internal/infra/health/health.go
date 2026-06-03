@@ -118,6 +118,8 @@ func (h *Health) OverallStatus(ctx context.Context) Status {
 			hasDown = true
 		case StatusDegraded:
 			hasDegraded = true
+		default:
+			// StatusUp or other non-failing statuses don't change the aggregate.
 		}
 	}
 

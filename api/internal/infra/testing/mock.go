@@ -299,8 +299,10 @@ func (m *notNilMatcher) Match(actual interface{}) bool {
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
 		return !v.IsNil()
+	default:
+		// Non-nilable kinds (Int, String, Struct, etc.) are non-nil by construction.
+		return true
 	}
-	return true
 }
 
 func (m *notNilMatcher) String() string {

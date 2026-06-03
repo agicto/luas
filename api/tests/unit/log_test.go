@@ -209,7 +209,8 @@ func TestLog_Close(t *testing.T) {
 		t.Errorf("Close() returned error: %v", err)
 	}
 
-	// Close again should not panic
-	err = l.Close()
-	// err may be nil since file is already nil
+	// Close again should not panic. The second close may or may not return
+	// an error depending on the underlying implementation; we only assert
+	// no panic.
+	_ = l.Close()
 }

@@ -372,8 +372,10 @@ func isNil(value interface{}) bool {
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
 		return v.IsNil()
+	default:
+		// Other kinds (Int, String, Struct, etc.) can never be nil.
+		return false
 	}
-	return false
 }
 
 func isGreater(a, b interface{}) bool {
@@ -433,6 +435,8 @@ func compare(a, b interface{}) int {
 			return -1
 		}
 		return 0
+	default:
+		// Fall through to the panic below for non-comparable kinds.
 	}
 	panic(fmt.Sprintf("cannot compare %T and %T", a, b))
 }

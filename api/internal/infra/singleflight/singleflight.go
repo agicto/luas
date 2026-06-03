@@ -101,10 +101,10 @@ func (g *flightGroup) Forget(key string) {
 
 func (g *flightGroup) createCall(key string) (c *call, done bool) {
 	g.mu.Lock()
-	if c, ok := g.calls[key]; ok {
+	if existing, ok := g.calls[key]; ok {
 		g.mu.Unlock()
-		c.wg.Wait()
-		return c, true
+		existing.wg.Wait()
+		return existing, true
 	}
 
 	c = new(call)

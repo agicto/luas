@@ -434,9 +434,9 @@ func existingModuleScaffold(name string) (string, string, map[string]string, err
 	data := moduleScaffoldData(name)
 	dir := filepath.Join("internal", "modules", data["Package"])
 	if stat, err := os.Stat(dir); err != nil || !stat.IsDir() {
-		if err == nil {
-			err = fmt.Errorf("%s is not a directory", dir)
-		}
+		// Return a guidance-oriented error regardless of whether the stat
+		// failed or the path exists but is a file; the user's next action
+		// is the same.
 		return "", "", nil, fmt.Errorf(
 			"module %q does not exist in %s; run 'luas make:module %s' to scaffold a complete module",
 			data["Package"],

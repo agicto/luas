@@ -29,7 +29,7 @@ type EventMetadata struct {
 // EventHandler processes events
 type EventHandler func(ctx context.Context, event Event) error
 
-// Subscription represents an active subscription that can be cancelled
+// Subscription represents an active subscription that can be canceled
 type Subscription interface {
 	// Unsubscribe removes this subscription
 	Unsubscribe()

@@ -119,7 +119,7 @@ func TestRetry(t *testing.T) {
 	}
 
 	// All attempts fail
-	result, err = Retry(3, func(attempt int) (string, error) {
+	_, err = Retry(3, func(attempt int) (string, error) {
 		return "", errors.New("fail")
 	})
 	if err == nil {
@@ -155,7 +155,7 @@ func TestRetryWhen(t *testing.T) {
 
 	// Should retry on temporary error
 	attempts := 0
-	_, err := RetryWhen(3, func(attempt int) (string, error) {
+	_, _ = RetryWhen(3, func(attempt int) (string, error) {
 		attempts = attempt
 		return "", tempErr
 	}, func(err error) bool {
@@ -167,7 +167,7 @@ func TestRetryWhen(t *testing.T) {
 
 	// Should not retry on permanent error
 	attempts = 0
-	_, err = RetryWhen(3, func(attempt int) (string, error) {
+	_, err := RetryWhen(3, func(attempt int) (string, error) {
 		attempts = attempt
 		return "", permErr
 	}, func(err error) bool {

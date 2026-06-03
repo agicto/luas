@@ -174,9 +174,9 @@ func (w *Worker) processJob(ctx context.Context, data []byte) {
 	}
 
 	// Unmarshal job data
-	if err := json.Unmarshal(payload.Data, job); err != nil {
-		log.Printf("Failed to unmarshal job data: %v", err)
-		w.handleFailedJob(ctx, &payload, err)
+	if unmarshalErr := json.Unmarshal(payload.Data, job); unmarshalErr != nil {
+		log.Printf("Failed to unmarshal job data: %v", unmarshalErr)
+		w.handleFailedJob(ctx, &payload, unmarshalErr)
 		return
 	}
 

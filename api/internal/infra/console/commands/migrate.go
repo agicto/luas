@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"strings"
 
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/infra/database"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/starter"
-	"gorm.io/gorm"
 )
 
 // consoleOutputWriter implements migration.OutputWriter for console output.
@@ -292,7 +293,7 @@ func (c *ResetCommand) Run(args []string) error {
 	// Require explicit confirmation if not forced
 	if !force {
 		if !c.output.Confirm("This will rollback ALL migrations. Continue?", false) {
-			c.output.Info("Operation cancelled")
+			c.output.Info("Operation canceled")
 			return nil
 		}
 	}
@@ -388,7 +389,7 @@ func (c *FreshCommand) Run(args []string) error {
 	if !force {
 		// First confirmation
 		if !c.output.Confirm("This will DROP ALL TABLES and DELETE ALL DATA. Continue?", false) {
-			c.output.Info("Operation cancelled")
+			c.output.Info("Operation canceled")
 			return nil
 		}
 
@@ -396,7 +397,7 @@ func (c *FreshCommand) Run(args []string) error {
 		c.output.Warning("To confirm, please type the database name '%s':", cfg.Database.Name)
 		dbName := c.output.Ask("Database name", "")
 		if dbName != cfg.Database.Name {
-			c.output.Error("Database name does not match. Operation cancelled.")
+			c.output.Error("Database name does not match. Operation canceled.")
 			return nil
 		}
 	}

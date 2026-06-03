@@ -6,7 +6,14 @@ import (
 	"regexp"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
+
+// titleCaser is the Unicode-aware replacement for the deprecated strings.Title.
+// Created once at package init since cases.Caser is concurrency-safe.
+var titleCaser = cases.Title(language.English)
 
 // Str provides common string manipulation utilities.
 type Str struct{}
@@ -59,7 +66,7 @@ func (Str) Camel(value string) string {
 		if i == 0 {
 			words[i] = strings.ToLower(words[i])
 		} else {
-			words[i] = strings.Title(strings.ToLower(words[i]))
+			words[i] = titleCaser.String(strings.ToLower(words[i]))
 		}
 	}
 	return strings.Join(words, "")
@@ -107,7 +114,7 @@ func (Str) Finish(value, cap string) string {
 func (Str) Headline(value string) string {
 	words := splitWords(value)
 	for i := range words {
-		words[i] = strings.Title(strings.ToLower(words[i]))
+		words[i] = titleCaser.String(strings.ToLower(words[i]))
 	}
 	return strings.Join(words, " ")
 }
@@ -195,7 +202,7 @@ func (Str) PadRight(value string, length int, pad string) string {
 func (Str) Pascal(value string) string {
 	words := splitWords(value)
 	for i := range words {
-		words[i] = strings.Title(strings.ToLower(words[i]))
+		words[i] = titleCaser.String(strings.ToLower(words[i]))
 	}
 	return strings.Join(words, "")
 }
@@ -294,7 +301,7 @@ func (Str) Substr(value string, start int, length int) string {
 
 // Title converts a string to Title Case
 func (Str) Title(value string) string {
-	return strings.Title(strings.ToLower(value))
+	return titleCaser.String(strings.ToLower(value))
 }
 
 // Trim trims whitespace from both ends of a string

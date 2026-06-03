@@ -10,7 +10,6 @@ import (
 )
 
 func TestAuditLogsCaptureProfileUpdates(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("audit_%d@example.com", rand.Intn(100000))
 	password := "password123"
 
@@ -78,7 +77,6 @@ func TestAuditLogsCaptureProfileUpdates(t *testing.T) {
 }
 
 func TestAuditLogsCaptureAPIKeyLifecycle(t *testing.T) {
-	rand.Seed(time.Now().UnixNano())
 	email := fmt.Sprintf("audit_api_key_%d@example.com", rand.Intn(100000))
 	password := "password123"
 

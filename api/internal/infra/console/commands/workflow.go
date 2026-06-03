@@ -77,8 +77,8 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 		Sleep:       cfg.Queue.WorkerSleep,
 		Timeout:     cfg.Queue.WorkerTimeout,
 	}
-	if err := applyWorkflowWorkerArgs(args, &workerCfg); err != nil {
-		return err
+	if applyErr := applyWorkflowWorkerArgs(args, &workerCfg); applyErr != nil {
+		return applyErr
 	}
 	if strings.TrimSpace(workerCfg.Queue) == "" {
 		workerCfg.Queue = "default"

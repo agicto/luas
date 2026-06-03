@@ -39,8 +39,8 @@ func TestMakeModuleCommandCreatesDDDScaffold(t *testing.T) {
 	}
 
 	for _, path := range requiredFiles {
-		_, err := os.Stat(path)
-		assert.NoError(t, err, path)
+		_, statErr := os.Stat(path)
+		assert.NoError(t, statErr, path)
 	}
 
 	handlerContent, err := os.ReadFile(filepath.Join(moduleDir, "handler.go"))

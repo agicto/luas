@@ -52,6 +52,8 @@ func LoggingMiddleware(logger Logger, level LogLevel) EventMiddleware {
 				logger.Debug(logMsg, logArgs...)
 			case LogLevelInfo:
 				logger.Info(logMsg, logArgs...)
+			default:
+				// LogLevelWarn / LogLevelError: only emit on failure (below).
 			}
 
 			err := next(ctx, event)
@@ -68,6 +70,8 @@ func LoggingMiddleware(logger Logger, level LogLevel) EventMiddleware {
 					logger.Debug("event handled: "+event.EventName(), logArgs...)
 				case LogLevelInfo:
 					logger.Info("event handled: "+event.EventName(), logArgs...)
+				default:
+					// LogLevelWarn / LogLevelError: success completion is not noteworthy.
 				}
 			}
 
