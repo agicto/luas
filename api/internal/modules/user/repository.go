@@ -5,8 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // repository implements domain.UserRepository

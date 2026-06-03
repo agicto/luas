@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/capabilities/idgen"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
 	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 // AuthService defines the authentication and public account flows.
@@ -164,7 +165,7 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 		return nil, domain.ErrAccountDisabled
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	if cmpErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); cmpErr != nil {
 		return nil, domain.ErrInvalidCredentials
 	}
 
@@ -249,7 +250,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 		return domain.ErrUserNotFound
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); err != nil {
+	if cmpErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); cmpErr != nil {
 		return domain.ErrInvalidCredentials
 	}
 

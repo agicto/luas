@@ -4,8 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type repository struct {

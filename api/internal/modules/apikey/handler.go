@@ -2,6 +2,7 @@ package apikey
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"

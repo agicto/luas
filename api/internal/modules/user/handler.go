@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"

@@ -32,8 +32,8 @@ func withChangeCollector(ctx context.Context) context.Context {
 
 // RecordChange enriches the current request's audit entry with business-level semantics.
 func RecordChange(ctx context.Context, change Change) {
-	collector, _ := ctx.Value(changeCollectorKey{}).(*changeCollector)
-	if collector == nil {
+	collector, ok := ctx.Value(changeCollectorKey{}).(*changeCollector)
+	if !ok || collector == nil {
 		return
 	}
 
@@ -81,8 +81,8 @@ func RecordChange(ctx context.Context, change Change) {
 }
 
 func changeFromContext(ctx context.Context) *Change {
-	collector, _ := ctx.Value(changeCollectorKey{}).(*changeCollector)
-	if collector == nil {
+	collector, ok := ctx.Value(changeCollectorKey{}).(*changeCollector)
+	if !ok || collector == nil {
 		return nil
 	}
 

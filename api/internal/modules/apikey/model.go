@@ -4,8 +4,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // APIKeyPO is the persistent object for API keys.

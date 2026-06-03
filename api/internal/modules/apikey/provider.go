@@ -2,6 +2,7 @@ package apikey
 
 import (
 	"github.com/google/wire"
+
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
 )
