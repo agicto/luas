@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/fsnotify/fsnotify"
+
+	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 // Observer is a callback function that's called when config changes

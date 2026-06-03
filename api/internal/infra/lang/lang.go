@@ -95,7 +95,9 @@ func (t *Translator) Load(locale string) error {
 		// Load from directory
 		dirPath := filepath.Join(basePath, locale)
 		if info, err := os.Stat(dirPath); err == nil && info.IsDir() {
-			files, _ := filepath.Glob(filepath.Join(dirPath, "*.json"))
+			// filepath.Glob only errors on malformed patterns; we control
+			// the pattern here so this can't fail.
+			files, _ := filepath.Glob(filepath.Join(dirPath, "*.json")) //nolint:errcheck
 			for _, file := range files {
 				if err := t.loadJSONFile(locale, file); err != nil {
 					return err
@@ -278,11 +280,6 @@ func Get(key string, replacements ...map[string]string) string {
 
 // Trans is an alias for Get
 func Trans(key string, replacements ...map[string]string) string {
-	return Get(key, replacements...)
-}
-
-// __ is a shorthand for Get translation.
-func __(key string, replacements ...map[string]string) string {
 	return Get(key, replacements...)
 }
 

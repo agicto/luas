@@ -208,7 +208,7 @@ func (d *EventDispatcher) DispatchAsync(ctx context.Context, event Event) {
 
 	for _, handler := range handlers {
 		go func(h EventHandler) {
-			_ = h(ctx, event)
+			_ = h(ctx, event) //nolint:errcheck // async dispatch; handler errors surface in its own logging
 		}(handler)
 	}
 }

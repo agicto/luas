@@ -3,9 +3,10 @@ package bootstrap
 import (
 	"log"
 
+	"gorm.io/gorm"
+
 	_ "github.com/zgiai/luas/api/database/seeders" // Import to trigger init()
 	"github.com/zgiai/luas/api/internal/starter"
-	"gorm.io/gorm"
 )
 
 // RunSeeders runs all registered database seeders with the given database connection

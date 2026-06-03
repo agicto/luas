@@ -26,7 +26,6 @@ type Event struct {
 	expression      string
 	timezone        *time.Location
 	withoutOverlap  bool
-	onOneServer     bool
 	runInBackground bool
 	mutex           sync.Mutex
 	running         bool

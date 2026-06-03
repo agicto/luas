@@ -3,8 +3,9 @@ package unit
 import (
 	"testing"
 
-	"github.com/zgiai/luas/api/pkg/validation"
 	"github.com/go-playground/validator/v10"
+
+	"github.com/zgiai/luas/api/pkg/validation"
 )
 
 func TestValidation_Required(t *testing.T) {

@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/glebarez/sqlite"
-	"github.com/zgiai/luas/api/internal/infra/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 // NewDB creates a new database connection via Wire DI.

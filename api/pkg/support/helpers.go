@@ -182,7 +182,11 @@ var onceCache = make(map[string]any)
 
 func Once[T any](key string, callback func() T) T {
 	if v, ok := onceCache[key]; ok {
-		return v.(T)
+		if typed, typeOK := v.(T); typeOK {
+			return typed
+		}
+		// Type mismatch: callers reused the key with a different T.
+		// Recompute and overwrite rather than panic.
 	}
 	result := callback()
 	onceCache[key] = result

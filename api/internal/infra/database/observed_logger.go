@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/exception"
 	"gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/exception"
 )
 
 type observedLogger struct {

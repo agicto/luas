@@ -278,7 +278,14 @@ func (r *Repository) set(key string, value any) {
 		if _, ok := current[part]; !ok {
 			current[part] = make(map[string]any)
 		}
-		current = current[part].(map[string]any)
+		next, ok := current[part].(map[string]any)
+		if !ok {
+			// Existing scalar at this path: overwrite with a fresh map so
+			// the rest of the key path can land.
+			next = make(map[string]any)
+			current[part] = next
+		}
+		current = next
 	}
 
 	current[parts[len(parts)-1]] = value
@@ -332,7 +339,10 @@ func ConfigDynamic(key string, defaultVal ...any) any {
 // ConfigString returns a string configuration value
 func ConfigString(key string, defaultVal ...string) string {
 	if Global == nil {
-		Load()
+		// Initialize on first use; ignore the (*Config, error) return — the
+		// global accessor that follows tolerates a nil Global by returning
+		// the supplied default.
+		_, _ = Load() //nolint:errcheck
 	}
 	return Global.String(key, defaultVal...)
 }
@@ -340,7 +350,10 @@ func ConfigString(key string, defaultVal ...string) string {
 // ConfigInt returns an integer configuration value
 func ConfigInt(key string, defaultVal ...int) int {
 	if Global == nil {
-		Load()
+		// Initialize on first use; ignore the (*Config, error) return — the
+		// global accessor that follows tolerates a nil Global by returning
+		// the supplied default.
+		_, _ = Load() //nolint:errcheck
 	}
 	return Global.Int(key, defaultVal...)
 }
@@ -348,7 +361,10 @@ func ConfigInt(key string, defaultVal ...int) int {
 // ConfigBool returns a boolean configuration value
 func ConfigBool(key string, defaultVal ...bool) bool {
 	if Global == nil {
-		Load()
+		// Initialize on first use; ignore the (*Config, error) return — the
+		// global accessor that follows tolerates a nil Global by returning
+		// the supplied default.
+		_, _ = Load() //nolint:errcheck
 	}
 	return Global.Bool(key, defaultVal...)
 }

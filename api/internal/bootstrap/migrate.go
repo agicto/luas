@@ -5,10 +5,11 @@ import (
 	"log"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/starter"
-	"gorm.io/gorm"
 )
 
 // MigrationStatus represents the status of a migration.

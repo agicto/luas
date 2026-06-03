@@ -308,12 +308,7 @@ func TestQueue_JobWithDelay(t *testing.T) {
 }
 
 func TestQueue_RegisterJob(t *testing.T) {
-	// This should not panic
-	type NewJob struct {
-		Data string `json:"data"`
-	}
-
-	// Create a temporary job type
+	// This should not panic. Create a temporary job type.
 	job := &struct {
 		Name string `json:"name"`
 	}{}

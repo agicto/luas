@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"

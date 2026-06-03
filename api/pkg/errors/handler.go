@@ -233,7 +233,9 @@ func parseStackTrace(stack string) []StackFrame {
 		line := 0
 		if idx := strings.LastIndex(fileLine, ":"); idx != -1 {
 			file = fileLine[:idx]
-			fmt.Sscanf(fileLine[idx+1:], "%d", &line)
+			// Sscanf failure leaves `line` at 0, which is the sentinel for
+			// "unknown" used downstream.
+			_, _ = fmt.Sscanf(fileLine[idx+1:], "%d", &line) //nolint:errcheck
 		}
 
 		// Parse function name
@@ -285,7 +287,8 @@ func logError(c *gin.Context, err *AppError, config Config) {
 
 // Abort aborts with an error
 func Abort(c *gin.Context, err *AppError) {
-	c.Error(err)
+	// c.Error never returns nil error here — it just appends to c.Errors.
+	_ = c.Error(err) //nolint:errcheck
 	c.Abort()
 }
 
@@ -739,9 +742,10 @@ func DebugHandler() gin.HandlerFunc {
 	}
 }
 
-// PrettyJSON returns indented JSON for debugging
+// PrettyJSON returns indented JSON for debugging. A value that cannot
+// marshal yields an empty string, which is fine for the debug-only use.
 func PrettyJSON(v interface{}) string {
-	b, _ := json.MarshalIndent(v, "", "  ")
+	b, _ := json.MarshalIndent(v, "", "  ") //nolint:errcheck
 	return string(b)
 }
 

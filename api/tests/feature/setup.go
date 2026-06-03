@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	test_platform "github.com/zgiai/luas/api/internal/infra/testing"

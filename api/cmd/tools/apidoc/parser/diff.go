@@ -105,7 +105,8 @@ func buildState(endpoints []Endpoint) map[string]string {
 			Auth:     !ep.Route.IsPublic,
 		}
 
-		data, _ := json.Marshal(content)
+		// `content` is a struct of primitives/strings; marshal cannot fail.
+		data, _ := json.Marshal(content) //nolint:errcheck
 		hash := fmt.Sprintf("%x", md5.Sum(data))
 		state[key] = hash
 	}
@@ -128,13 +129,14 @@ func loadState(filename string) map[string]string {
 	return state
 }
 
-// saveState saves current state to file
+// saveState saves current state to file. Best-effort: a write failure is
+// not fatal — the tool will rebuild the state on the next diff.
 func saveState(filename string, state map[string]string) {
 	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return
 	}
-	os.WriteFile(filename, data, 0644)
+	_ = os.WriteFile(filename, data, 0644) //nolint:errcheck // best-effort cache write
 }
 
 // GenerateSingleModuleDoc generates documentation for a single module

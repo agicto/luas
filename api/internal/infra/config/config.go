@@ -313,7 +313,7 @@ func MustLoad() *Config {
 // placeholderJWTSecrets are values shipped with .env.example or previously
 // used by the scaffold; treating them as "real" would silently weaken auth.
 var placeholderJWTSecrets = map[string]struct{}{
-	"":         {},
+	"": {},
 	"replace_me_with_a_long_random_secret_at_least_32_chars": {},
 	"your_jwt_secret_key_here":                               {},
 	"replace-me":                                             {},

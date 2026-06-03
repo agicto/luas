@@ -28,8 +28,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/zgiai/luas/api/pkg/response"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Paginator holds pagination state and generates URLs.

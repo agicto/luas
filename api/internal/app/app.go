@@ -1,12 +1,13 @@
 package app
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/starter"
-	"gorm.io/gorm"
 )
 
 // Application holds all application dependencies injected via Wire.

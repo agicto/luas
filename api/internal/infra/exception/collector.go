@@ -73,7 +73,7 @@ func FromContext(ctx context.Context) *Collector {
 	if ctx == nil {
 		return nil
 	}
-	collector, _ := ctx.Value(collectorKey{}).(*Collector)
+	collector, _ := ctx.Value(collectorKey{}).(*Collector) //nolint:errcheck // missing key → nil collector
 	return collector
 }
 

@@ -196,7 +196,15 @@ func setNested(m map[string]interface{}, keys []string, value interface{}) {
 		if _, ok := m[key]; !ok {
 			m[key] = make(map[string]interface{})
 		}
-		m = m[key].(map[string]interface{})
+		next, ok := m[key].(map[string]interface{})
+		if !ok {
+			// Existing scalar at this path — overwrite with an empty map
+			// rather than panicking; the caller's intent is to set a leaf
+			// at the full key path.
+			next = make(map[string]interface{})
+			m[key] = next
+		}
+		m = next
 	}
 	m[keys[len(keys)-1]] = value
 }

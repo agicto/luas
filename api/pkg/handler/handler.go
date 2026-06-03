@@ -19,8 +19,9 @@ package handler
 import (
 	"strconv"
 
-	"github.com/zgiai/luas/api/pkg/response"
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // ParseID extracts and validates an ID parameter from the URL.

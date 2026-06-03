@@ -245,7 +245,9 @@ func TestRememberStore_SingleflightPreventsDuplicateComputation(t *testing.T) {
 	ctx := context.Background()
 
 	var callCount atomic.Int32
-	callback := func() (interface{}, error) {
+	// The (interface{}, error) shape is required by RememberStore; the nil
+	// error is intentional for the happy-path test.
+	callback := func() (interface{}, error) { //nolint:unparam // error required by cache.RememberStore signature
 		callCount.Add(1)
 		time.Sleep(50 * time.Millisecond)
 		return "computed_once", nil

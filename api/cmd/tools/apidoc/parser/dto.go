@@ -28,7 +28,7 @@ func ParseDTOs(appDir string) (map[string]*DTO, error) {
 		fset := token.NewFileSet()
 		node, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
-			return nil // Skip files that can't be parsed
+			return nil //nolint:nilerr // intentional: skip unparseable files, surface no error
 		}
 
 		// Get module name from directory

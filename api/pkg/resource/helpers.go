@@ -82,10 +82,9 @@ func Filter(m map[string]any) map[string]any {
 func Merge(maps ...map[string]any) map[string]any {
 	result := make(map[string]any)
 	for _, m := range maps {
-		if m != nil {
-			for k, v := range m {
-				result[k] = v
-			}
+		// range over a nil map is a no-op in Go, so the nil check is redundant.
+		for k, v := range m {
+			result[k] = v
 		}
 	}
 	return result

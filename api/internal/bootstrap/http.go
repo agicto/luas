@@ -14,6 +14,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/internal/app"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/exception"

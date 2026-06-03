@@ -7,8 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/zgiai/luas/api/pkg/request"
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/request"
 )
 
 func init() {

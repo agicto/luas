@@ -1,8 +1,9 @@
 package seeders
 
 import (
-	"github.com/zgiai/luas/api/internal/modules/user"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 type UserSeeder struct{}

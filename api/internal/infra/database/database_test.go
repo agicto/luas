@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/zgiai/luas/api/internal/infra/config"
 	"gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 func TestResolveGormLogLevel_DefaultsToInfoForDebugAndTest(t *testing.T) {

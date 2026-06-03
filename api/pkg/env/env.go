@@ -19,7 +19,6 @@ import (
 // 6. Default values in code
 
 var (
-	loaded     bool
 	loadedOnce sync.Once
 	appEnv     string
 )
@@ -28,17 +27,13 @@ var (
 // System environment variables always have highest priority.
 // This function is idempotent - calling it multiple times has no effect.
 func Load() {
-	loadedOnce.Do(func() {
-		loadEnvFiles()
-		loaded = true
-	})
+	loadedOnce.Do(loadEnvFiles)
 }
 
 // LoadFresh forces reload of environment files.
 // Useful for testing.
 func LoadFresh() {
 	loadedOnce = sync.Once{}
-	loaded = false
 	Load()
 }
 
@@ -58,7 +53,7 @@ func loadEnvFiles() {
 	// Check for explicit environment file (LUAS_ENV_FILE)
 	if envFile := systemEnv["LUAS_ENV_FILE"]; envFile != "" {
 		if _, err := os.Stat(envFile); err == nil {
-			_ = godotenv.Load(envFile)
+			_ = godotenv.Load(envFile) //nolint:errcheck // missing/unreadable env file falls back to system env
 			// Allow APP_ENV from this specific file if not set by system env
 			if appEnv == "" {
 				appEnv = os.Getenv("APP_ENV")
@@ -70,8 +65,8 @@ func loadEnvFiles() {
 	// godotenv.Load does NOT override existing values
 	files := []string{".env"}
 
-	// Load base first, then check APP_ENV from it if not set
-	_ = godotenv.Load(".env")
+	// Load base first, then check APP_ENV from it if not set.
+	_ = godotenv.Load(".env") //nolint:errcheck // base .env missing is normal
 
 	// Re-check APP_ENV after loading base .env
 	if appEnv == "" {
@@ -97,7 +92,7 @@ func loadEnvFiles() {
 	// Load remaining files (godotenv.Load won't override existing)
 	for _, file := range files[1:] {
 		if _, err := os.Stat(file); err == nil {
-			_ = godotenv.Load(file)
+			_ = godotenv.Load(file) //nolint:errcheck // optional overlay
 		}
 	}
 

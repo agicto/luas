@@ -1,9 +1,10 @@
 package migrations
 
 import (
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/user"
-	"gorm.io/gorm"
 )
 
 func init() {

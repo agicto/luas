@@ -16,7 +16,6 @@ type Logger struct {
 	config   *Config
 	channel  string
 	context  map[string]any
-	defaultH Handler
 }
 
 var defaultLogger *Logger
@@ -136,7 +135,9 @@ func (l *Logger) Log(level Level, msg string, ctx map[string]any) {
 	l.mu.RUnlock()
 
 	for _, h := range handlers {
-		_ = h.Handle(context.Background(), entry)
+		// Logging handlers are best-effort; a failing handler must not
+		// take down the call site.
+		_ = h.Handle(context.Background(), entry) //nolint:errcheck
 	}
 }
 
@@ -156,7 +157,7 @@ func (l *Logger) log(ctx context.Context, level Level, msg string, logCtx map[st
 	l.mu.RUnlock()
 
 	for _, h := range handlers {
-		_ = h.Handle(ctx, entry)
+		_ = h.Handle(ctx, entry) //nolint:errcheck // best-effort logging
 	}
 }
 

@@ -8,8 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/health"
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/internal/infra/health"
 )
 
 func init() {

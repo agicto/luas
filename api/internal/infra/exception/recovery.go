@@ -9,10 +9,11 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/trace"
+
 	zerrors "github.com/zgiai/luas/api/pkg/errors"
 	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/zgiai/luas/api/pkg/response"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Recovery creates a development-friendly exception center middleware.
@@ -45,7 +46,7 @@ func Recovery(debug bool) gin.HandlerFunc {
 }
 
 func panicToError(value any) *zerrors.AppError {
-	err := zerrors.LegacyInternal("A panic occurred")
+	var err *zerrors.AppError
 	switch v := value.(type) {
 	case *zerrors.AppError:
 		err = v

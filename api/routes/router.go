@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/zgiai/luas/api/internal/infra/monitor"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter"

@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 // Service provides JWT helpers bound to a configuration instance.

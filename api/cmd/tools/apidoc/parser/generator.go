@@ -237,7 +237,7 @@ func GenerateModuleDocs(endpoints []Endpoint, outputDir string) error {
 
 		// Base URL reference
 		sb.WriteString("## Base URL\n\n")
-		sb.WriteString(fmt.Sprintf("See [API Documentation](./api.md) for environment-specific base URLs.\n\n"))
+		sb.WriteString("See [API Documentation](./api.md) for environment-specific base URLs.\n\n")
 
 		// Summary table
 		sb.WriteString("## Endpoints\n\n")
@@ -351,7 +351,9 @@ func generateJSONExample(dto *DTO) string {
 		example[jsonName] = getExampleValue(field)
 	}
 
-	data, _ := json.MarshalIndent(example, "", "  ")
+	// `example` is a map of primitives produced by getExampleValue;
+	// json cannot fail to marshal it.
+	data, _ := json.MarshalIndent(example, "", "  ") //nolint:errcheck
 	return string(data)
 }
 

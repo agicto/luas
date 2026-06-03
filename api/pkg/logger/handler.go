@@ -86,7 +86,10 @@ func (h *ConsoleHandler) Handle(ctx context.Context, entry *Entry) error {
 	// Context
 	if len(entry.Context) > 0 {
 		sb.WriteString(" ")
-		contextBytes, _ := json.Marshal(entry.Context)
+		// Context is map[string]any; values that can't marshal (e.g. funcs)
+		// produce an empty result — falling back to an empty trailer is
+		// acceptable for a logger.
+		contextBytes, _ := json.Marshal(entry.Context) //nolint:errcheck
 		sb.Write(contextBytes)
 	}
 
@@ -207,7 +210,10 @@ func (h *FileHandler) formatText(entry *Entry) []byte {
 
 	if len(entry.Context) > 0 {
 		sb.WriteString(" ")
-		contextBytes, _ := json.Marshal(entry.Context)
+		// Context is map[string]any; values that can't marshal (e.g. funcs)
+		// produce an empty result — falling back to an empty trailer is
+		// acceptable for a logger.
+		contextBytes, _ := json.Marshal(entry.Context) //nolint:errcheck
 		sb.Write(contextBytes)
 	}
 

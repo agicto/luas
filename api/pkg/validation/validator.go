@@ -57,38 +57,61 @@ func New() *Validator {
 	return val
 }
 
+// mustMatch compiles and matches a literal regex pattern. Used inside
+// registerDefaultRules where all patterns are package-local constants;
+// regexp.MatchString here can only error if the literal is malformed,
+// which is a programmer bug we want to surface at startup, not silently.
+func mustMatch(pattern, s string) bool {
+	// MatchString uses package-level cache; the error path means the
+	// pattern is invalid Go regexp syntax and the developer must fix it.
+	matched, err := regexp.MatchString(pattern, s)
+	if err != nil {
+		panic("validation: invalid regex pattern: " + pattern + ": " + err.Error())
+	}
+	return matched
+}
+
+// mustRegisterRule registers a validation rule and panics on registration
+// failure (only happens for tag-name collisions, which would be a
+// programmer error here).
+func (v *Validator) mustRegisterRule(tag string, fn validator.Func, message string) {
+	if err := v.RegisterRule(tag, fn, message); err != nil {
+		panic("validation: registering rule " + tag + ": " + err.Error())
+	}
+}
+
 // registerDefaultRules registers commonly used custom validation rules
 func (v *Validator) registerDefaultRules() {
 	// Phone number validation (simple)
-	v.RegisterRule("phone", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("phone", func(fl validator.FieldLevel) bool {
 		phone := fl.Field().String()
-		matched, _ := regexp.MatchString(`^1[3-9]\d{9}$`, phone)
+		matched := mustMatch(`^1[3-9]\d{9}$`, phone)
 		return matched
 	}, "must be a valid phone number")
 
 	// International phone
-	v.RegisterRule("phone_intl", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("phone_intl", func(fl validator.FieldLevel) bool {
 		phone := fl.Field().String()
-		matched, _ := regexp.MatchString(`^\+?[1-9]\d{1,14}$`, phone)
+		matched := mustMatch(`^\+?[1-9]\d{1,14}$`, phone)
 		return matched
 	}, "must be a valid international phone number")
 
 	// Username (alphanumeric with underscore)
-	v.RegisterRule("username", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("username", func(fl validator.FieldLevel) bool {
 		username := fl.Field().String()
-		matched, _ := regexp.MatchString(`^[a-zA-Z][a-zA-Z0-9_]{2,31}$`, username)
+		matched := mustMatch(`^[a-zA-Z][a-zA-Z0-9_]{2,31}$`, username)
 		return matched
 	}, "must be 3-32 characters starting with a letter, containing only letters, numbers and underscores")
 
 	// Slug validation
-	v.RegisterRule("slug", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("slug", func(fl validator.FieldLevel) bool {
 		slug := fl.Field().String()
-		matched, _ := regexp.MatchString(`^[a-z0-9]+(?:-[a-z0-9]+)*$`, slug)
+		matched := mustMatch(`^[a-z0-9]+(?:-[a-z0-9]+)*$`, slug)
 		return matched
 	}, "must be a valid slug (lowercase letters, numbers, and hyphens)")
 
 	// Password strength (at least 8 chars, 1 upper, 1 lower, 1 digit)
-	v.RegisterRule("password", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("password", func(fl validator.FieldLevel) bool {
 		password := fl.Field().String()
 		if len(password) < 8 {
 			return false
@@ -108,7 +131,7 @@ func (v *Validator) registerDefaultRules() {
 	}, "must be at least 8 characters with uppercase, lowercase and digit")
 
 	// Strong password (8+ chars, upper, lower, digit, special)
-	v.RegisterRule("password_strong", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("password_strong", func(fl validator.FieldLevel) bool {
 		password := fl.Field().String()
 		if len(password) < 8 {
 			return false
@@ -130,28 +153,28 @@ func (v *Validator) registerDefaultRules() {
 	}, "must be at least 8 characters with uppercase, lowercase, digit and special character")
 
 	// Chinese ID card
-	v.RegisterRule("id_card", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("id_card", func(fl validator.FieldLevel) bool {
 		id := fl.Field().String()
-		matched, _ := regexp.MatchString(`^\d{17}[\dXx]$`, id)
+		matched := mustMatch(`^\d{17}[\dXx]$`, id)
 		return matched
 	}, "must be a valid ID card number")
 
 	// URL without protocol
-	v.RegisterRule("url_path", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("url_path", func(fl validator.FieldLevel) bool {
 		path := fl.Field().String()
-		matched, _ := regexp.MatchString(`^/[a-zA-Z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*$`, path)
+		matched := mustMatch(`^/[a-zA-Z0-9\-._~:/?#\[\]@!$&'()*+,;=%]*$`, path)
 		return matched
 	}, "must be a valid URL path")
 
 	// Domain name
-	v.RegisterRule("domain", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("domain", func(fl validator.FieldLevel) bool {
 		domain := fl.Field().String()
-		matched, _ := regexp.MatchString(`^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`, domain)
+		matched := mustMatch(`^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$`, domain)
 		return matched
 	}, "must be a valid domain name")
 
 	// Safe string (no HTML/script injection)
-	v.RegisterRule("safe_string", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("safe_string", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		dangerousPatterns := []string{"<script", "<iframe", "javascript:", "onerror=", "onclick="}
 		lower := strings.ToLower(s)
@@ -164,19 +187,19 @@ func (v *Validator) registerDefaultRules() {
 	}, "contains potentially unsafe content")
 
 	// No whitespace
-	v.RegisterRule("no_whitespace", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("no_whitespace", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		return !strings.ContainsAny(s, " \t\n\r")
 	}, "must not contain whitespace")
 
 	// Trimmed (no leading/trailing whitespace)
-	v.RegisterRule("trimmed", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("trimmed", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		return s == strings.TrimSpace(s)
 	}, "must not have leading or trailing whitespace")
 
 	// Alphanumeric with spaces
-	v.RegisterRule("alpha_space", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("alpha_space", func(fl validator.FieldLevel) bool {
 		s := fl.Field().String()
 		for _, c := range s {
 			if !unicode.IsLetter(c) && !unicode.IsSpace(c) {
@@ -187,7 +210,7 @@ func (v *Validator) registerDefaultRules() {
 	}, "must contain only letters and spaces")
 
 	// Positive number
-	v.RegisterRule("positive", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("positive", func(fl validator.FieldLevel) bool {
 		switch fl.Field().Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return fl.Field().Int() > 0
@@ -202,7 +225,7 @@ func (v *Validator) registerDefaultRules() {
 	}, "must be a positive number")
 
 	// Non-negative number
-	v.RegisterRule("non_negative", func(fl validator.FieldLevel) bool {
+	v.mustRegisterRule("non_negative", func(fl validator.FieldLevel) bool {
 		switch fl.Field().Kind() {
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			return fl.Field().Int() >= 0

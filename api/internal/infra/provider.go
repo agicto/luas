@@ -2,6 +2,7 @@ package infra
 
 import (
 	"github.com/google/wire"
+
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/database"
 	"github.com/zgiai/luas/api/internal/infra/email"

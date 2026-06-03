@@ -2,6 +2,7 @@ package singleflight
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -145,7 +146,12 @@ func (t *Typed[T]) Do(key string, fn func() (T, error)) (T, error) {
 		var zero T
 		return zero, err
 	}
-	return val.(T), nil
+	out, ok := val.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("singleflight: result type mismatch for key %q", key)
+	}
+	return out, nil
 }
 
 // DoEx is like Do but also returns whether the result was freshly computed
@@ -157,7 +163,12 @@ func (t *Typed[T]) DoEx(key string, fn func() (T, error)) (val T, fresh bool, er
 		var zero T
 		return zero, fresh, err
 	}
-	return v.(T), fresh, nil
+	out, ok := v.(T)
+	if !ok {
+		var zero T
+		return zero, fresh, fmt.Errorf("singleflight: result type mismatch for key %q", key)
+	}
+	return out, fresh, nil
 }
 
 // DoCtx is like Do but respects context cancellation
@@ -169,7 +180,12 @@ func (t *Typed[T]) DoCtx(ctx context.Context, key string, fn func() (T, error)) 
 		var zero T
 		return zero, err
 	}
-	return val.(T), nil
+	out, ok := val.(T)
+	if !ok {
+		var zero T
+		return zero, fmt.Errorf("singleflight: result type mismatch for key %q", key)
+	}
+	return out, nil
 }
 
 // Forget removes a key from the group

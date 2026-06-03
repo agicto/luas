@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 func TestUserRegistration(t *testing.T) {

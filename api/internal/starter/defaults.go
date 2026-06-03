@@ -2,6 +2,7 @@ package starter
 
 import (
 	"github.com/google/wire"
+
 	"github.com/zgiai/luas/api/database/seeders"
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/migration"

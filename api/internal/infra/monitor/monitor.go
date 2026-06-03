@@ -4,9 +4,10 @@ import (
 	"runtime"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/container"
-	"gorm.io/gorm"
 )
 
 var StartTime = time.Now()

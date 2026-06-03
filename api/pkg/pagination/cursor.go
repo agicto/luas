@@ -25,7 +25,6 @@ import (
 type CursorPaginator[T any] struct {
 	items      []T
 	perPage    int
-	cursor     *Cursor
 	nextCursor *string
 	prevCursor *string
 	hasMore    bool
@@ -40,9 +39,10 @@ type Cursor struct {
 	Direction string `json:"d"` // "next" or "prev"
 }
 
-// Encode encodes the cursor to a base64 string.
+// Encode encodes the cursor to a base64 string. Cursor is a plain struct
+// with primitive-typed fields, so json.Marshal here cannot fail.
 func (c *Cursor) Encode() string {
-	data, _ := json.Marshal(c)
+	data, _ := json.Marshal(c) //nolint:errcheck // struct-only payload; marshal is total
 	return base64.URLEncoding.EncodeToString(data)
 }
 
@@ -239,7 +239,10 @@ func CursorPaginate[T any](
 }
 
 // buildCursor creates a cursor from an item.
-func buildCursor[T any](item T, cursorField, idField, direction string) *Cursor {
+// idField is reserved for callers that need to include the primary key in
+// the cursor payload; current callers use the cursorField + ID-on-record
+// pair instead.
+func buildCursor[T any](item T, cursorField, _ /*idField*/, direction string) *Cursor {
 	// Use reflection to get field values
 	// This is a simplified version - in production you'd want more robust reflection
 	cursor := &Cursor{
