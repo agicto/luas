@@ -71,6 +71,19 @@ If you skipped a tier, say why explicitly (e.g., "Tier 2 skipped: no UI change i
 - Saying "lint passed" without actually running the linter.
 - Saying the change is "non-invasive" to skip verification. Non-invasive changes still need Tier 0.
 
+## Helper Script
+
+`scripts/run-tiers.sh <tier>` wraps tier 0/1/2 for the current subtree. It
+auto-detects whether you're in `api/` (Go: build, golangci-lint, test, -race)
+or `web/` (Node: type-check, lint, test, build). Exit code is 0 iff every
+tier passes.
+
+```bash
+bash .agents/skills/verification-before-completion/scripts/run-tiers.sh 0
+bash .agents/skills/verification-before-completion/scripts/run-tiers.sh 1
+bash .agents/skills/verification-before-completion/scripts/run-tiers.sh 2
+```
+
 ## Pair With
 
 - `code-review-guide` for what *quality* looks like once verified.

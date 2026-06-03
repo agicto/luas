@@ -86,6 +86,20 @@ Do not invent rationale not present in code, commits, or the user's intent.
 - Marketing language ("this awesome feature unlocks…") — keep it neutral.
 - Listing every commit message — synthesize, don't dump.
 
+## Helper Script
+
+`scripts/scaffold-pr-body.sh [base-branch]` generates a draft PR description
+in the structure above from `git log` and `git diff` against the base branch
+(default `main`). It pre-fills the Summary skeleton, the What Changed list
+grouped by top-level subtree, the Test Plan checklist, and a Risk/Rollback
+template. You fill in the Motivation and the actual risk by hand.
+
+```bash
+bash .agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh main > /tmp/pr.md
+# review /tmp/pr.md, edit the TODOs, then:
+gh pr create --body-file /tmp/pr.md
+```
+
 ## Pair With
 
 - `code-review-guide` for the reviewer's perspective on the same diff.

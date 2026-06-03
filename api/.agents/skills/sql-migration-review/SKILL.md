@@ -101,6 +101,22 @@ If no findings, say so explicitly: "Reviewed N migrations, no findings."
 - Using ORM auto-migration in production. Migrations should be explicit, reviewed, and versioned.
 - "It's a small table" — confirm with `SELECT COUNT(*)`, don't guess.
 
+## Helper Script
+
+`scripts/check-migration.sh <path/to/migration.{sql,go}>` runs the cheap
+static checks: filename pattern, Down path exists, high-risk patterns
+(`ADD COLUMN ... DEFAULT ... NOT NULL`, `DROP COLUMN`, bare `RENAME`,
+unbounded `DELETE`, non-`CONCURRENTLY` index creation on Postgres,
+unbatched `UPDATE`), and migrations bundling too many concerns.
+
+The script is a first pass; the human review (backward compat, lock
+duration, rollback safety against real prod data) still applies.
+
+```bash
+bash api/.agents/skills/sql-migration-review/scripts/check-migration.sh \
+    api/internal/modules/user/migrations/202604_add_email_verified.sql
+```
+
 ## Pair With
 
 - `database-design` for steady-state schema standards.
