@@ -710,6 +710,10 @@ jobs:
 - [`api-development`](../api-development/) - API best practices
 - [`module-creation`](../module-creation/) - Module structure
 - [`logging-standards`](../logging-standards/) - Logging practices
+- [`sql-migration-review`](../sql-migration-review/) - Migration safety review
+- [`pr-description-writer`](../../../.agents/skills/pr-description-writer/) - What the PR body should look like before review starts
+- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/) - What the author should have done before opening
+- [`systematic-debugging`](../../../.agents/skills/systematic-debugging/) - When review surfaces a bug
 
 ---
 

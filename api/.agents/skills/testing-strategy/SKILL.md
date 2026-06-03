@@ -249,6 +249,9 @@ mockery --all --dir=internal/modules/user
 - [`module-creation`](../module-creation/): Structure of test files in modules.
 - [`coding-standards`](../coding-standards/): General code quality that affects testability.
 - [`api-development`](../api-development/): Testing API responses and pagination.
+- [`kest-flow`](../kest-flow/): HTTP-level scenario test framework.
+- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): Running tests at end of turn before claiming done.
+- [`systematic-debugging`](../../../.agents/skills/systematic-debugging/): When a failing test surfaces a bug that needs a real fix.
 
 ---
 

@@ -1,0 +1,72 @@
+name: Skill Self-Test
+
+# Runs each skill's own validation script against the canonical starter
+# modules (user, apikey, audit). This catches drift between what a skill
+# prescribes and what the codebase actually does.
+#
+# A PR that breaks any starter module — or a skill change whose validator
+# rejects working code — will fail here before it reaches main.
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+      - '.agents/skills/**'
+      - 'api/.agents/skills/**'
+      - '.github/workflows/skill-self-test.yml'
+  push:
+    branches:
+      - main
+      - dev
+      - dev-c
+    paths:
+      - 'api/**'
+      - '.agents/skills/**'
+      - 'api/.agents/skills/**'
+
+permissions:
+  contents: read
+
+jobs:
+  starter-modules:
+    name: Starter Modules
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    defaults:
+      run:
+        working-directory: api
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [user, apikey, audit]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: api
+          args: --version
+          install-mode: binary
+
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: coding-standards self-test (${{ matrix.module }})
+        run: bash .agents/skills/coding-standards/scripts/verify-standards.sh ${{ matrix.module }}
+
+      - name: api-development self-test (${{ matrix.module }})
+        run: bash .agents/skills/api-development/scripts/validate-api.sh ${{ matrix.module }}
+
+      - name: database-design self-test (${{ matrix.module }})
+        run: bash .agents/skills/database-design/scripts/validate-db.sh ${{ matrix.module }}
+
+      - name: logging-standards self-test (${{ matrix.module }})
+        run: bash .agents/skills/logging-standards/scripts/validate-logging.sh ${{ matrix.module }}

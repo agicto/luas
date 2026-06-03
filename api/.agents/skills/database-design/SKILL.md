@@ -142,6 +142,8 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 
 - [`module-creation`](../module-creation/): Where `model.go` lives.
 - [`coding-standards`](../coding-standards/): General naming and error handling.
+- [`sql-migration-review`](../sql-migration-review/): For reviewing the migrations this schema produces.
+- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): For running migrations up and down on a scratch DB.
 
 ---
 

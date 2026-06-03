@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -179,7 +179,10 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 	now := time.Now()
 	user.LastLogin = &now
 	if err := s.repo.Update(ctx, user); err != nil {
-		log.Printf("user: failed to update LastLogin for user %d: %v", user.ID, err)
+		slog.WarnContext(ctx, "user.last_login_update_failed",
+			"user_id", user.ID,
+			"err", err,
+		)
 	}
 
 	return &UserLoginResponse{

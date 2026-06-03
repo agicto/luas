@@ -103,3 +103,10 @@ See `.agents/skills/kest-flow/examples/` for complete flow examples:
 3. **Add assertions** - Verify response status and data
 4. **Use exec for preprocessing** - HMAC, token generation
 5. **Tag flows** - `@tags auth, user` for organization
+
+## Related Skills
+
+- [`testing-strategy`](../testing-strategy/): Where kest-flow fits in the broader testing layers.
+- [`api-development`](../api-development/): The endpoints these flows exercise.
+- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): End-to-end flows are Tier-2 verification.
+- [`systematic-debugging`](../../../.agents/skills/systematic-debugging/): When a flow fails, the 4-phase debug loop applies.

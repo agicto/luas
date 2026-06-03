@@ -2,11 +2,16 @@
 
 # Coding Standards Verification Script
 # Usage: ./verify-standards.sh <module_name>
+#
+# Exit code: 0 if tests and linter both pass, 1 otherwise. Use this in CI.
 
 set -e
 
 MODULE=$1
 MODULE_DIR="internal/modules/${MODULE}"
+
+# Track failures (don't exit on first one — want a full report)
+FAILED=0
 
 if [ -z "$MODULE" ]; then
     echo "Usage: ./verify-standards.sh <module_name>"
@@ -165,9 +170,11 @@ if [ -f "${MODULE_DIR}/service_test.go" ]; then
         echo "✅ Tests passed"
     else
         echo "❌ Tests failed"
+        FAILED=1
     fi
 else
     echo "❌ Test file missing: service_test.go"
+    FAILED=1
 fi
 
 # 8. Code quality
@@ -188,7 +195,8 @@ if command -v golangci-lint &> /dev/null; then
     if golangci-lint run ./${MODULE_DIR}/... --timeout=2m 2>&1; then
         echo "✅ Linter passed"
     else
-        echo "⚠️  Linter found issues (see above)"
+        echo "❌ Linter found issues (see above)"
+        FAILED=1
     fi
 else
     echo "⚠️  golangci-lint not installed, skipping..."
@@ -196,7 +204,11 @@ fi
 
 echo ""
 echo "================================================"
-echo "✅ Standards verification complete!"
+if [ $FAILED -eq 0 ]; then
+    echo "✅ Standards verification complete!"
+else
+    echo "❌ Standards verification FAILED (see above)"
+fi
 echo ""
 echo "Summary:"
 echo "  - File structure checked"
@@ -205,3 +217,5 @@ echo "  - Architecture compliance checked"
 echo "  - Security rules verified"
 echo "  - Tests executed"
 echo "  - Code quality assessed"
+
+exit $FAILED

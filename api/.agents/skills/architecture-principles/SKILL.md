@@ -158,3 +158,11 @@ Before finishing an architecture change, ask:
 - What caller got simpler?
 - What change is now more local?
 - Which skill should encode this rule so future AI output stays aligned?
+
+## Related Skills
+
+- [`module-creation`](../module-creation/): Translates these principles into the DDD module template.
+- [`coding-standards`](../coding-standards/): Translates these principles into code-level layering rules.
+- [`database-design`](../database-design/): Translates these principles into schema and PO boundaries.
+- [`grill-before-build`](../../../.agents/skills/grill-before-build/): Forces principle conversations before code.
+- [`pr-description-writer`](../../../.agents/skills/pr-description-writer/): When recording an architecture decision, the PR body is its first home.

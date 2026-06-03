@@ -156,6 +156,9 @@ Available in `scripts/`:
 
 - [`coding-standards`](../coding-standards/): For log and config standards.
 - [`api-development`](../api-development/): For health check endpoint standards.
+- [`sql-migration-review`](../sql-migration-review/): For migration safety review before any deploy that ships schema changes.
+- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): For Tier-3 wide-impact checks before a deploy.
+- [`pr-description-writer`](../../../.agents/skills/pr-description-writer/): For risk / rollback sections in the PR body.
 
 ---
 

@@ -1,15 +1,26 @@
 #!/bin/bash
 
 # Database Standards Validation Script
-# Usage: ./validate-db.sh <path_to_model_file>
+# Usage: ./validate-db.sh <module_name | path_to_model_file>
+#
+# Accepts either a module name (resolved to internal/modules/<name>/model.go)
+# or an explicit file path, so this validator can be used in the same CI
+# loop as the other skill validators.
 
 set -e
 
-MODEL_FILE=$1
+ARG=$1
 
-if [ -z "$MODEL_FILE" ]; then
-    echo "Usage: ./validate-db.sh <path_to_model_file>"
+if [ -z "$ARG" ]; then
+    echo "Usage: ./validate-db.sh <module_name | path_to_model_file>"
     exit 1
+fi
+
+# Resolve: if the arg is a file, use it directly; otherwise treat as module name.
+if [ -f "$ARG" ]; then
+    MODEL_FILE="$ARG"
+else
+    MODEL_FILE="internal/modules/${ARG}/model.go"
 fi
 
 if [ ! -f "$MODEL_FILE" ]; then

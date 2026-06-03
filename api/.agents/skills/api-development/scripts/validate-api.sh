@@ -40,12 +40,19 @@ echo "📋 Level 1: Checking pagination..."
 
 # Check if there's a List function
 if grep -q "func.*List.*gin.Context" "${HANDLER_FILE}"; then
-    # Check if pagination is used
+    # Two equivalent pagination patterns documented in api-development SKILL.md:
+    #   1) pagination.PaginateFromContext[T](c, db)        — high-level helper
+    #   2) pagination.FromContext(c) + pagination.NewPaginator(...) — manual pair
     if grep -q "pagination.PaginateFromContext\|pagination.Paginate" "${HANDLER_FILE}"; then
-        echo "✅ Pagination detected in list endpoints"
+        echo "✅ Pagination detected (PaginateFromContext pattern)"
+    elif grep -q "pagination.FromContext" "${HANDLER_FILE}" && \
+         grep -q "pagination.NewPaginator" "${HANDLER_FILE}"; then
+        echo "✅ Pagination detected (FromContext + NewPaginator pattern)"
     else
         echo "❌ List endpoint found but no pagination detected!"
-        echo "   Required: pagination.PaginateFromContext[T](c, db)"
+        echo "   Required either:"
+        echo "     - pagination.PaginateFromContext[T](c, db)"
+        echo "     - pagination.FromContext(c) + pagination.NewPaginator(...)"
         ERRORS=$((ERRORS + 1))
     fi
 else
