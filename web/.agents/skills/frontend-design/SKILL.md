@@ -46,4 +46,4 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 - [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics.
 - [`accessibility-audit`](../accessibility-audit/): A11y is part of "production-grade" — not optional.
 - [`web-perf`](../web-perf/): Animation and effects must not regress Core Web Vitals.
-- [`vercel-react-best-practices`](../react-best-practices/): Avoid render thrash from creative effects.
+- [`vercel-react-best-practices`](../vercel-react-best-practices/): Avoid render thrash from creative effects.

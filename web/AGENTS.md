@@ -23,7 +23,7 @@ The web side ships with a Skills System in `.agents/skills/` that codex CLI auto
 
 | Skill | When to Use |
 |---|---|
-| [`vercel-react-best-practices`](./.agents/skills/react-best-practices/) | Writing or refactoring React / Next.js code |
+| [`vercel-react-best-practices`](./.agents/skills/vercel-react-best-practices/) | Writing or refactoring React / Next.js code |
 | [`frontend-design`](./.agents/skills/frontend-design/) | Building components, pages, dashboards, landing pages |
 | [`web-design-guidelines`](./.agents/skills/web-design-guidelines/) | Applying project design tokens and component rules |
 | [`ui-styling-guide`](./.agents/skills/ui-styling-guide/) | Tailwind + shadcn styling patterns |
@@ -375,7 +375,7 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 
 #### Performance Optimization Rules
 
-Following [Vercel React Best Practices](file:///.agents/skills/react-best-practices/SKILL.md) for optimal performance:
+Following [Vercel React Best Practices](file:///.agents/skills/vercel-react-best-practices/SKILL.md) for optimal performance:
 
 - **Dynamic Imports** (`bundle-dynamic-imports`): Use `next/dynamic` for components > 50KB (charts, editors, rich-text, maps):
   ```tsx
