@@ -23,6 +23,7 @@ on:
       - 'api/**'
       - '.agents/skills/**'
       - 'api/.agents/skills/**'
+      - '.github/workflows/skill-self-test.yml'
 
 permissions:
   contents: read
