@@ -253,7 +253,13 @@ func NanoID() string {
 // Snowflake generates a Snowflake ID.
 func Snowflake() string {
 	snowflakeOnce.Do(func() {
-		defaultSnowflake, _ = NewSnowflakeGenerator(1)
+		// Node ID 1 is always within range; NewSnowflakeGenerator only errors
+		// when nodeID is out of range, so this can't fail.
+		gen, err := NewSnowflakeGenerator(1)
+		if err != nil {
+			panic(fmt.Sprintf("idgen: default snowflake init: %v", err))
+		}
+		defaultSnowflake = gen
 	})
 	return defaultSnowflake.Generate()
 }
@@ -261,7 +267,13 @@ func Snowflake() string {
 // SnowflakeInt64 generates a Snowflake ID as int64.
 func SnowflakeInt64() int64 {
 	snowflakeOnce.Do(func() {
-		defaultSnowflake, _ = NewSnowflakeGenerator(1)
+		// Node ID 1 is always within range; NewSnowflakeGenerator only errors
+		// when nodeID is out of range, so this can't fail.
+		gen, err := NewSnowflakeGenerator(1)
+		if err != nil {
+			panic(fmt.Sprintf("idgen: default snowflake init: %v", err))
+		}
+		defaultSnowflake = gen
 	})
 	return defaultSnowflake.GenerateInt64()
 }

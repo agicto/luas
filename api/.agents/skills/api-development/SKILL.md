@@ -664,8 +664,8 @@ func (h *Handler) Delete(c *gin.Context) {
 - [`coding-standards`](../coding-standards/): For general code quality standards
 - [`testing-strategy`](../testing-strategy/): For API testing patterns
 - [`database-design`](../database-design/): For schema design behind query endpoints
-- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): For curl-testing endpoints before claiming done
-- [`pr-description-writer`](../../../.agents/skills/pr-description-writer/): For describing API changes in the PR body
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): For curl-testing endpoints before claiming done
+- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): For describing API changes in the PR body
 
 ---
 

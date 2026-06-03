@@ -44,3 +44,9 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 
 > [!IMPORTANT]
 > Always use the `env` object from `@/config/env` to access environment variables. Directly accessing `process.env` is strictly prohibited outside of the config file.
+
+## Related Skills
+
+- [`utility-tooling`](../utility-tooling/): Config helpers and utilities live alongside env handling.
+- [`api-error-handling`](../api-error-handling/): Config errors should surface as proper error UX.
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Verify env-dependent paths in dev before claiming done.

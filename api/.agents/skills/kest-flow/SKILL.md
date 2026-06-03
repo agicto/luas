@@ -108,5 +108,5 @@ See `.agents/skills/kest-flow/examples/` for complete flow examples:
 
 - [`testing-strategy`](../testing-strategy/): Where kest-flow fits in the broader testing layers.
 - [`api-development`](../api-development/): The endpoints these flows exercise.
-- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): End-to-end flows are Tier-2 verification.
-- [`systematic-debugging`](../../../.agents/skills/systematic-debugging/): When a flow fails, the 4-phase debug loop applies.
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): End-to-end flows are Tier-2 verification.
+- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a flow fails, the 4-phase debug loop applies.

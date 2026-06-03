@@ -45,3 +45,9 @@ export function formatCurrency(value: number) { ... }
 
 > [!TIP]
 > **Minimalism**: Favor native Web APIs over external libraries whenever possible.
+
+## Related Skills
+
+- [`environment-config`](../environment-config/): Config-aware utilities.
+- [`data-state-management`](../data-state-management/): State helpers often live here.
+- [`testing-standards`](../testing-standards/): Test the utilities themselves.

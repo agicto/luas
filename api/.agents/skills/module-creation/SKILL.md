@@ -998,8 +998,8 @@ See [`examples/blog-module-complete/`](./examples/blog-module-complete/) for the
 - [`coding-standards`](../coding-standards/): For seam and layering rules
 - [`database-design`](../database-design/): For lifecycle columns, indexes, and migration decisions
 - [`sql-migration-review`](../sql-migration-review/): For reviewing the module's migrations before merge
-- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): For running verify-standards.sh after creation
-- [`grill-before-build`](../../../.agents/skills/grill-before-build/): For interviewing the user before deciding the module exists
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): For running verify-standards.sh after creation
+- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): For interviewing the user before deciding the module exists
 
 ## 📖 References
 

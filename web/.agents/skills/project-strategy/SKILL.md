@@ -47,3 +47,9 @@ export default function NormalLayout({ children }) {
 
 > [!NOTE]
 > **Production Ready**: This scaffold is designed to be easily switched from mock APIs to real backend services by updating the service layer and environment variables.
+
+## Related Skills
+
+- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): Interview before any strategy-level decision lands as code.
+- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): The PR body is where a strategic decision first crystallizes.
+- [`web-design-guidelines`](../web-design-guidelines/): Strategy shapes design language.

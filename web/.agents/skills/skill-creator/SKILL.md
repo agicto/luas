@@ -353,3 +353,9 @@ After testing the skill, users may request improvements. Often this happens righ
 2. Notice struggles or inefficiencies
 3. Identify how SKILL.md or bundled resources should be updated
 4. Implement changes and test again
+
+## Related Skills
+
+- [`testing-standards`](../testing-standards/): Validate any scripts the skill ships.
+- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): When introducing a new skill, the PR body should follow the standard structure.
+- See also the top-level [skills index](../../../../.agents/skills/README.md) for conventions and the four scopes (root / repo / user / system).

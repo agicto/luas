@@ -48,3 +48,10 @@ For detailed component contracts (Named Exports, RSC First, Props Typing, CAS an
 
 > [!IMPORTANT]
 > **Zero Hardcoded Strings**: All user-facing text must use the `useT` hook for i18n.
+
+## Related Skills
+
+- [`frontend-design`](../frontend-design/): Creative direction that styling implements.
+- [`web-design-guidelines`](../web-design-guidelines/): Design tokens this guide consumes.
+- [`accessibility-audit`](../accessibility-audit/): Focus styles, contrast, and ARIA in styling decisions.
+- [`i18n-handler`](../i18n-handler/): Layout must accommodate variable translation lengths.

@@ -3,22 +3,33 @@
 # Verification Before Completion — Tier Runner
 #
 # Usage:
-#   run-tiers.sh <tier>           # 0, 1, or 2
-#   run-tiers.sh 0                # static checks only
-#   run-tiers.sh 1                # 0 + targeted tests
-#   run-tiers.sh 2                # 0 + 1 + full module suite
+#   run-tiers.sh <tier> [scope...]
+#
+# Tier:
+#   0  static checks only (build + lint)
+#   1  0 + tests
+#   2  0 + 1 + race / production build
+#
+# Scope (optional): one or more Go packages or test path patterns.
+#   Defaults to ./... — i.e. the whole tree.
+#   Web side: scope is ignored; the Node toolchain uses its own scripts.
 #
 # Detects whether you're in api/ or web/ by walking up for go.mod or
 # package.json and runs the appropriate toolchain.
 #
-# Exit code is 0 iff every chosen tier passes.
+# Exit code is 0 iff every chosen tier passes within the chosen scope.
 
 set -u
 
 TIER=${1:-0}
 if ! [[ "$TIER" =~ ^[012]$ ]]; then
-    echo "Usage: run-tiers.sh <0|1|2>" >&2
+    echo "Usage: run-tiers.sh <0|1|2> [scope...]" >&2
     exit 2
+fi
+shift || true
+SCOPE=("$@")
+if [ ${#SCOPE[@]} -eq 0 ]; then
+    SCOPE=("./...")
 fi
 
 # Walk up looking for go.mod or package.json to figure out which half we're in.
@@ -55,9 +66,9 @@ record() {
 echo ""
 echo "Tier 0 — Static"
 if [ "$KIND" = "go" ]; then
-    go build ./... > /tmp/run-tiers.log 2>&1; record $? "go build ./..."
+    go build "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go build ${SCOPE[*]}"
     if command -v golangci-lint >/dev/null 2>&1; then
-        golangci-lint run ./... --timeout=2m > /tmp/run-tiers.log 2>&1; record $? "golangci-lint"
+        golangci-lint run "${SCOPE[@]}" --timeout=2m > /tmp/run-tiers.log 2>&1; record $? "golangci-lint ${SCOPE[*]}"
     else
         echo "  ⚠️  golangci-lint not installed, skipped"
     fi
@@ -78,7 +89,7 @@ fi
 echo ""
 echo "Tier 1 — Local execution"
 if [ "$KIND" = "go" ]; then
-    go test ./... > /tmp/run-tiers.log 2>&1; record $? "go test ./..."
+    go test "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go test ${SCOPE[*]}"
 else
     pnpm test -- --run > /tmp/run-tiers.log 2>&1; record $? "pnpm test"
 fi
@@ -95,7 +106,7 @@ fi
 echo ""
 echo "Tier 2 — End-to-end"
 if [ "$KIND" = "go" ]; then
-    go test -race ./... > /tmp/run-tiers.log 2>&1; record $? "go test -race"
+    go test -race "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go test -race ${SCOPE[*]}"
 else
     pnpm build > /tmp/run-tiers.log 2>&1; record $? "pnpm build"
 fi

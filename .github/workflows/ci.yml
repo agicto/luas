@@ -28,8 +28,22 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
-      - name: Test
-        run: go test ./...
+      - name: Install golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: api
+          args: --version
+          install-mode: binary
+
+      - name: Verification — Tier 1 (build + lint + test) on starter modules and capabilities
+        # Scoped to the clean trees; other subtrees (infra/, tools/, scripts/,
+        # tests/) carry pre-existing lint debt tracked separately. Expanding
+        # the scope here is a goal but requires that cleanup first.
+        run: |
+          bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 \
+            ./internal/modules/... \
+            ./internal/capabilities/...
 
   web:
     name: Web
@@ -56,14 +70,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
-        run: pnpm type-check
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test -- --run
-
-      - name: Build
-        run: pnpm build
+      - name: Verification — Tier 2 (type-check + lint + test + build)
+        run: bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2

@@ -119,3 +119,10 @@ Each rule file contains:
 ## Full Compiled Document
 
 For the complete guide with all rules expanded: `AGENTS.md`
+
+## Related Skills
+
+- [`data-state-management`](../data-state-management/): State patterns these rules apply to.
+- [`web-perf`](../web-perf/): Measurement that validates these rules made things faster.
+- [`frontend-design`](../frontend-design/): Creative direction that perf rules constrain.
+- [`accessibility-audit`](../accessibility-audit/): A11y patterns interact with rendering optimizations (focus management, suspense).

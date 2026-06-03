@@ -164,5 +164,5 @@ Before finishing an architecture change, ask:
 - [`module-creation`](../module-creation/): Translates these principles into the DDD module template.
 - [`coding-standards`](../coding-standards/): Translates these principles into code-level layering rules.
 - [`database-design`](../database-design/): Translates these principles into schema and PO boundaries.
-- [`grill-before-build`](../../../.agents/skills/grill-before-build/): Forces principle conversations before code.
-- [`pr-description-writer`](../../../.agents/skills/pr-description-writer/): When recording an architecture decision, the PR body is its first home.
+- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): Forces principle conversations before code.
+- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): When recording an architecture decision, the PR body is its first home.

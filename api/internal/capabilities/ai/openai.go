@@ -113,14 +113,19 @@ func (p *OpenAIProvider) GenerateTextStream(ctx context.Context, req *TextReques
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "text/event-stream")
 
-	httpResp, err := p.client.Do(httpReq)
+	// bodyclose can't track the SSE streaming pattern: the body is owned by
+	// the goroutine below (line ~129) and closed there. In the early-return
+	// paths above we close explicitly.
+	httpResp, err := p.client.Do(httpReq) //nolint:bodyclose // closed in goroutine or in error paths above
 	if err != nil {
 		return nil, fmt.Errorf("openai: stream request failed: %w", err)
 	}
 
 	if httpResp.StatusCode >= 400 {
 		defer httpResp.Body.Close()
-		errBody, _ := io.ReadAll(io.LimitReader(httpResp.Body, 4096))
+		// Best-effort read of the error body; if reading fails, we still want
+		// to return the HTTP status code with whatever we got.
+		errBody, _ := io.ReadAll(io.LimitReader(httpResp.Body, 4096)) //nolint:errcheck // best-effort in error path
 		return nil, fmt.Errorf("openai: stream HTTP %d: %s", httpResp.StatusCode, strings.TrimSpace(string(errBody)))
 	}
 

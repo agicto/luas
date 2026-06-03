@@ -118,3 +118,10 @@ screen.getByTestId('submit-button');
 
 > [!IMPORTANT]
 > **Do NOT** place test files alongside source files. All tests must be in `src/test/` directory.
+
+## Related Skills
+
+- [`webapp-testing`](../webapp-testing/): Browser-driven complement to unit/component tests.
+- [`data-state-management`](../data-state-management/): Mocking state in tests.
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Where these tests sit in Tier 1.
+- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a failing test surfaces a bug needing a real root cause.

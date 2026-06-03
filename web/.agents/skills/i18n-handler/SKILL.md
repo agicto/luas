@@ -210,3 +210,10 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 
 > [!TIP]
 > For comprehensive examples and detailed API documentation, refer to `src/i18n/README.md`.
+
+## Related Skills
+
+- [`api-error-handling`](../api-error-handling/): Error messages must be localized.
+- [`accessibility-audit`](../accessibility-audit/): `lang` attribute, RTL handling, screen-reader text.
+- [`frontend-design`](../frontend-design/): Layouts must handle translation length variation.
+- [`ui-styling-guide`](../ui-styling-guide/): Typography metrics differ across scripts.

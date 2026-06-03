@@ -48,3 +48,10 @@ try {
 
 > [!IMPORTANT]
 > **Consistency**: Ensure that backend error codes align with the frontend constants to maintain a robust UX.
+
+## Related Skills
+
+- [`data-state-management`](../data-state-management/): Error states in queries / mutations.
+- [`i18n-handler`](../i18n-handler/): Error message translation.
+- [`environment-config`](../environment-config/): What error detail is safe in prod vs dev.
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Test at least one error path before claiming done.

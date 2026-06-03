@@ -787,8 +787,8 @@ See the following examples:
 - [`api-development`](../api-development/): For API best practices
 - [`logging-standards`](../logging-standards/): For logging errors
 - [`code-review-guide`](../code-review-guide/): For applying these standards in review
-- [`verification-before-completion`](../../../.agents/skills/verification-before-completion/): For running verify-standards.sh at end of turn
-- [`systematic-debugging`](../../../.agents/skills/systematic-debugging/): When standards violations surface as bugs
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): For running verify-standards.sh at end of turn
+- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When standards violations surface as bugs
 
 ## 📖 References
 

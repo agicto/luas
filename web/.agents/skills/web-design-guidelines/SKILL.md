@@ -37,3 +37,10 @@ When a user provides a file or pattern argument:
 4. Output findings using the format specified in the guidelines
 
 If no files specified, ask the user which files to review.
+
+## Related Skills
+
+- [`frontend-design`](../frontend-design/): Creative direction these tokens serve.
+- [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics that consume these tokens.
+- [`accessibility-audit`](../accessibility-audit/): Verify color / focus tokens meet WCAG AA contrast.
+- [`web-perf`](../web-perf/): CSS perf when applying tokens at scale.

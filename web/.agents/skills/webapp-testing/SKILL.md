@@ -94,3 +94,9 @@ with sync_playwright() as p:
   - `element_discovery.py` - Discovering buttons, links, and inputs on a page
   - `static_html_automation.py` - Using file:// URLs for local HTML
   - `console_logging.py` - Capturing console logs during automation
+## Related Skills
+
+- [`testing-standards`](../testing-standards/): Unit / component layer below browser-driven tests.
+- [`accessibility-audit`](../accessibility-audit/): Assert a11y in E2E flows (axe-core in Playwright).
+- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Browser-driven flows are Tier 2 verification.
+- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a flaky E2E reveals a real race.
