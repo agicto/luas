@@ -119,8 +119,9 @@ func (w *Worker) Wait() {
 	w.wg.Wait()
 }
 
-// work is the main worker loop
-func (w *Worker) work(ctx context.Context, id int) {
+// work is the main worker loop. id is reserved for future per-worker logging
+// labels.
+func (w *Worker) work(ctx context.Context, _ int) {
 	defer w.wg.Done()
 
 	jobsProcessed := 0
@@ -202,9 +203,13 @@ func (w *Worker) processJob(ctx context.Context, data []byte) {
 				retryDelay = jr.RetryDelay()
 			}
 
-			// Re-queue the job
-			newPayload, _ := json.Marshal(payload)
-			w.driver.PushDelayed(ctx, w.config.Queue, newPayload, retryDelay)
+			// Re-queue the job. Marshaling a payload struct we just
+			// deserialized cannot realistically fail; PushDelayed errors
+			// during re-queue mean the retry is lost, which is logged by
+			// the driver itself.
+			if newPayload, marshalErr := json.Marshal(payload); marshalErr == nil {
+				_ = w.driver.PushDelayed(ctx, w.config.Queue, newPayload, retryDelay) //nolint:errcheck
+			}
 		} else {
 			// Max retries exceeded
 			w.handleFailedJob(ctx, &payload, err)

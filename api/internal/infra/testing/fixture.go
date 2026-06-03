@@ -58,9 +58,11 @@ func WithDatabase(models ...interface{}) FixtureOption {
 
 		f.db = db
 		f.OnCleanup(func() {
-			sqlDB, _ := db.DB()
-			if sqlDB != nil {
-				sqlDB.Close()
+			// db.DB() is documented to error only if the driver hasn't been
+			// initialized; we just opened a sqlite connection above, so the
+			// underlying *sql.DB is always available here.
+			if sqlDB, dbErr := db.DB(); dbErr == nil && sqlDB != nil {
+				_ = sqlDB.Close()
 			}
 		})
 	}
@@ -82,9 +84,11 @@ func WithDatabaseConfig(config *gorm.Config, models ...interface{}) FixtureOptio
 
 		f.db = db
 		f.OnCleanup(func() {
-			sqlDB, _ := db.DB()
-			if sqlDB != nil {
-				sqlDB.Close()
+			// db.DB() is documented to error only if the driver hasn't been
+			// initialized; we just opened a sqlite connection above, so the
+			// underlying *sql.DB is always available here.
+			if sqlDB, dbErr := db.DB(); dbErr == nil && sqlDB != nil {
+				_ = sqlDB.Close()
 			}
 		})
 	}

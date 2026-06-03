@@ -65,11 +65,11 @@ func (s *RedisStore) Get(ctx context.Context, key string) (interface{}, error) {
 		return nil, err
 	}
 
-	// Try to unmarshal as JSON
+	// Try to unmarshal as JSON. Non-JSON payloads are returned verbatim —
+	// callers that stored a raw string get it back.
 	var result interface{}
 	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		// Return raw string if not JSON
-		return val, nil
+		return val, nil //nolint:nilerr // intentional fallback to raw string
 	}
 
 	return result, nil

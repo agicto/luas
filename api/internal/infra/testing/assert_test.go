@@ -36,7 +36,8 @@ func TestAssert_NotNil(t *testing.T) {
 func TestAssert_True(t *testing.T) {
 	a := NewAssert(t)
 	a.True(true)
-	a.True(1 == 1)
+	x := 1
+	a.True(x == 1)
 }
 
 func TestAssert_False(t *testing.T) {

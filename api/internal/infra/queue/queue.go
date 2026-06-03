@@ -168,7 +168,11 @@ func (m *Manager) createJob(typeName string) (Job, error) {
 		return nil, fmt.Errorf("unknown job type: %s", typeName)
 	}
 
-	return reflect.New(t).Interface().(Job), nil
+	job, ok := reflect.New(t).Interface().(Job)
+	if !ok {
+		return nil, fmt.Errorf("registered type %s does not implement Job", typeName)
+	}
+	return job, nil
 }
 
 // Dispatch dispatches a job to the queue
@@ -329,22 +333,27 @@ func (d *SyncDriver) Push(ctx context.Context, queue string, payload []byte) err
 	// For sync driver, we execute immediately
 	job, jobPayload, err := Global().deserializeJob(payload)
 	if err != nil {
-		// If we can't deserialize, just store it
+		// Graceful fallback: a payload we can't deserialize is queued raw
+		// for later inspection. The caller intentionally sees success here
+		// because the work is durable in d.queues.
 		d.mu.Lock()
 		d.queues[queue] = append(d.queues[queue], payload)
 		d.mu.Unlock()
-		return nil
+		return nil //nolint:nilerr // intentional graceful fallback (see above)
 	}
 
 	// Execute the job
 	if err := job.Handle(ctx); err != nil {
-		// Check retry
+		// Check retry. JSON marshal of a struct with primitive fields cannot
+		// fail in practice, so a marshal error here would indicate corruption
+		// — fall through to returning the handler error.
 		if jobPayload.Attempts < jobPayload.MaxRetries {
 			jobPayload.Attempts++
-			newPayload, _ := json.Marshal(jobPayload)
-			d.mu.Lock()
-			d.queues[queue] = append(d.queues[queue], newPayload)
-			d.mu.Unlock()
+			if newPayload, marshalErr := json.Marshal(jobPayload); marshalErr == nil {
+				d.mu.Lock()
+				d.queues[queue] = append(d.queues[queue], newPayload)
+				d.mu.Unlock()
+			}
 		}
 		return err
 	}
@@ -442,7 +451,7 @@ func (d *MemoryDriver) Push(ctx context.Context, queue string, payload []byte) e
 func (d *MemoryDriver) PushDelayed(ctx context.Context, queue string, payload []byte, delay time.Duration) error {
 	go func() {
 		time.Sleep(delay)
-		d.Push(context.Background(), queue, payload)
+		_ = d.Push(context.Background(), queue, payload) //nolint:errcheck // delayed dispatch; failure is best-effort
 	}()
 	return nil
 }

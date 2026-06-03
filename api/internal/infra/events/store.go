@@ -228,11 +228,11 @@ func (e *ReplayEvent) UnmarshalPayload(target interface{}) error {
 func StoringMiddleware(store EventStore) EventMiddleware {
 	return func(next EventHandler) EventHandler {
 		return func(ctx context.Context, event Event) error {
-			// Store the event first
-			if err := store.Store(ctx, event); err != nil {
-				// Log but don't fail - event handling should continue
-				// In production, you might want to handle this differently
-			}
+			// Best-effort store: failure here must not block the handler chain
+			// (events are still observable via handlers). Production wiring
+			// should attach a logger via slog.Default if it wants to surface
+			// these.
+			_ = store.Store(ctx, event) //nolint:errcheck // best-effort store; see comment above
 			return next(ctx, event)
 		}
 	}

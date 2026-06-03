@@ -48,8 +48,8 @@ func (g *PostgresGrammar) Compile(blueprint *Blueprint) []string {
 				statements = append(statements, g.CompileDropColumn(blueprint.table, cols))
 			}
 		case "renameColumn":
-			from, _ := cmd.params["from"].(string)
-			to, _ := cmd.params["to"].(string)
+			from, _ := cmd.params["from"].(string) //nolint:errcheck // missing/wrong type → empty, handled downstream
+			to, _ := cmd.params["to"].(string)     //nolint:errcheck
 			statements = append(statements, g.CompileRenameColumn(blueprint.table, from, to))
 		case "dropPrimary":
 			statements = append(statements, g.CompileDropPrimary(blueprint.table))

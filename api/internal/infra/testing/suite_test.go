@@ -137,7 +137,7 @@ func TestSpec(t *testing.T) {
 func TestDescribe(t *testing.T) {
 	suite := Describe(t, "Describe test")
 	if suite == nil {
-		t.Error("Describe should return a suite")
+		t.Fatal("Describe should return a suite")
 	}
 	if suite.name != "Describe test" {
 		t.Errorf("Expected name 'Describe test', got '%s'", suite.name)

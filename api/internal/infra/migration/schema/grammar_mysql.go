@@ -48,8 +48,10 @@ func (g *MySQLGrammar) Compile(blueprint *Blueprint) []string {
 				statements = append(statements, g.CompileDropColumn(blueprint.table, cols))
 			}
 		case "renameColumn":
-			from, _ := cmd.params["from"].(string)
-			to, _ := cmd.params["to"].(string)
+			// Missing or wrong-type params fall back to empty strings;
+			// CompileRenameColumn handles the empty case as a no-op.
+			from, _ := cmd.params["from"].(string) //nolint:errcheck
+			to, _ := cmd.params["to"].(string)     //nolint:errcheck
 			statements = append(statements, g.CompileRenameColumn(blueprint.table, from, to))
 		case "dropPrimary":
 			statements = append(statements, g.CompileDropPrimary(blueprint.table))

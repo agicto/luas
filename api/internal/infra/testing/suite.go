@@ -293,7 +293,6 @@ type GWT struct {
 	t      *testing.T
 	given  string
 	when   string
-	then   string
 	setup  func()
 	action func() interface{}
 }

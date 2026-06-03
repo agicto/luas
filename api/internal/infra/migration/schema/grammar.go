@@ -82,35 +82,6 @@ func NewGrammar(dialect string) Grammar {
 // baseGrammar provides common functionality for all grammar implementations
 type baseGrammar struct{}
 
-// formatColumnModifiers generates common column modifiers
-func (g *baseGrammar) formatColumnModifiers(col *ColumnDefinition, unsigned bool) string {
-	var parts []string
-
-	if unsigned && col.unsigned {
-		parts = append(parts, "UNSIGNED")
-	}
-
-	if !col.nullable {
-		parts = append(parts, "NOT NULL")
-	} else {
-		parts = append(parts, "NULL")
-	}
-
-	if col.defaultValue != nil {
-		parts = append(parts, fmt.Sprintf("DEFAULT %s", g.formatDefault(col.defaultValue)))
-	}
-
-	if col.autoIncrement {
-		parts = append(parts, "AUTO_INCREMENT")
-	}
-
-	if col.comment != "" {
-		parts = append(parts, fmt.Sprintf("COMMENT '%s'", col.comment))
-	}
-
-	return strings.Join(parts, " ")
-}
-
 // formatDefault formats a default value for SQL
 func (g *baseGrammar) formatDefault(value interface{}) string {
 	switch v := value.(type) {

@@ -27,7 +27,6 @@ func (f SimpleListenerFunc) Handle(ctx context.Context, event SimpleEvent) error
 type SimpleDispatcher struct {
 	mu        sync.RWMutex
 	listeners map[string][]SimpleListener
-	async     bool
 }
 
 // simpleDispatcher is the global dispatcher instance
@@ -90,7 +89,7 @@ func (d *SimpleDispatcher) DispatchAsync(ctx context.Context, event SimpleEvent)
 
 	for _, listener := range listeners {
 		go func(l SimpleListener) {
-			_ = l.Handle(ctx, event)
+			_ = l.Handle(ctx, event) //nolint:errcheck // async dispatch — handler errors are observable via its own logging
 		}(listener)
 	}
 }

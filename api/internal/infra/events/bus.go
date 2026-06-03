@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+
 	"github.com/zgiai/luas/api/pkg/events"
 )
 
@@ -142,7 +143,7 @@ func (b *EventBus) Publish(ctx context.Context, e events.Event) error {
 // Does not wait for handlers to complete and does not return errors.
 func (b *EventBus) PublishAsync(ctx context.Context, e events.Event) {
 	go func() {
-		_ = b.Publish(ctx, e)
+		_ = b.Publish(ctx, e) //nolint:errcheck // fire-and-forget by API contract
 	}()
 }
 

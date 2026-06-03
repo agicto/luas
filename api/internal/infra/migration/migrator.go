@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/events"
 )
 
 // Migrator coordinates all migration operations including run, rollback, and reset.
@@ -114,8 +115,8 @@ func (m *Migrator) getPendingMigrations(ran []string) []string {
 // fireEvent publishes an event to the event bus if one is configured.
 func (m *Migrator) fireEvent(event events.Event) {
 	if m.eventBus != nil {
-		// Fire event asynchronously to not block migration execution
-		_ = m.eventBus.Publish(context.Background(), event)
+		// Fire event asynchronously to not block migration execution.
+		_ = m.eventBus.Publish(context.Background(), event) //nolint:errcheck // observation channel; failure must not block migration
 	}
 }
 
@@ -268,11 +269,13 @@ func (m *Migrator) getQueries(migration Migration, method string) []string {
 		Logger: collector,
 	})
 
-	// Run the migration in dry run mode
+	// Run the migration in dry run mode. We only need the SQL statements
+	// the migration would produce; execution errors are uninteresting here
+	// since DryRun never hits the DB.
 	if method == "up" {
-		_ = migration.Up(dryRunDB)
+		_ = migration.Up(dryRunDB) //nolint:errcheck // dry-run; only statements matter
 	} else {
-		_ = migration.Down(dryRunDB)
+		_ = migration.Down(dryRunDB) //nolint:errcheck // dry-run; only statements matter
 	}
 
 	return collector.statements

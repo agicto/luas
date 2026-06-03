@@ -5,13 +5,14 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/migration/schema"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/zgiai/luas/api/internal/infra/migration/schema"
 )
 
 // Integration test for complete migration workflow:
@@ -49,8 +50,8 @@ func (c *integrationEventCollector) clear() {
 	c.events = make([]events.Event, 0)
 }
 
-// setupIntegrationTest creates a fresh database and migrator for integration testing
-func setupIntegrationTest(t *testing.T) (*Migrator, *gorm.DB, *events.EventBus, *integrationEventCollector) {
+// setupIntegrationTest creates a fresh database and migrator for integration testing.
+func setupIntegrationTest(t *testing.T) (*Migrator, *gorm.DB, *integrationEventCollector) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -63,7 +64,7 @@ func setupIntegrationTest(t *testing.T) (*Migrator, *gorm.DB, *events.EventBus, 
 	collector := newIntegrationEventCollector()
 	eventBus.Subscribe("migration.*", collector.handler)
 
-	return migrator, db, eventBus, collector
+	return migrator, db, collector
 }
 
 // createTestMigration creates a migration that creates a table using schema builder
@@ -98,7 +99,7 @@ func (m *testSchemaMigration) Down(db *gorm.DB) error {
 
 // TestIntegration_CompleteWorkflow tests the complete migration workflow
 func TestIntegration_CompleteWorkflow(t *testing.T) {
-	migrator, db, _, collector := setupIntegrationTest(t)
+	migrator, db, collector := setupIntegrationTest(t)
 
 	// Register migrations
 	migrator.Register("2024_01_01_000000_create_users_table", createTestMigration("users"))
@@ -254,7 +255,7 @@ func TestIntegration_CompleteWorkflow(t *testing.T) {
 
 // TestIntegration_PretendMode tests that pretend mode doesn't modify the database
 func TestIntegration_PretendMode(t *testing.T) {
-	migrator, db, _, _ := setupIntegrationTest(t)
+	migrator, db, _ := setupIntegrationTest(t)
 
 	// Register migrations
 	migrator.Register("2024_01_01_000000_create_users_table", createTestMigration("users"))
@@ -276,7 +277,7 @@ func TestIntegration_PretendMode(t *testing.T) {
 
 // TestIntegration_EventFiring tests that all events are fired correctly
 func TestIntegration_EventFiring(t *testing.T) {
-	migrator, _, _, collector := setupIntegrationTest(t)
+	migrator, _, collector := setupIntegrationTest(t)
 
 	// Register migrations
 	migrator.Register("2024_01_01_000000_create_users_table", createTestMigration("users"))
@@ -326,7 +327,7 @@ func TestIntegration_EventFiring(t *testing.T) {
 
 // TestIntegration_NoPendingMigrationsEvent tests that NoPendingMigrations event is fired
 func TestIntegration_NoPendingMigrationsEvent(t *testing.T) {
-	migrator, _, _, collector := setupIntegrationTest(t)
+	migrator, _, collector := setupIntegrationTest(t)
 
 	// Run with no migrations registered
 	_, err := migrator.Run(NewMigratorOptions())
@@ -343,7 +344,7 @@ func TestIntegration_NoPendingMigrationsEvent(t *testing.T) {
 
 // TestIntegration_ErrorHandling tests that errors are properly wrapped
 func TestIntegration_ErrorHandling(t *testing.T) {
-	migrator, _, _, _ := setupIntegrationTest(t)
+	migrator, _, _ := setupIntegrationTest(t)
 
 	// Register a failing migration
 	migrator.Register("2024_01_01_000000_failing_migration", &failingTestMigration{
@@ -386,7 +387,7 @@ func (m *failingTestMigration) Down(db *gorm.DB) error {
 
 // TestIntegration_TransactionSupport tests that transactions work correctly
 func TestIntegration_TransactionSupport(t *testing.T) {
-	migrator, db, _, _ := setupIntegrationTest(t)
+	migrator, db, _ := setupIntegrationTest(t)
 
 	// Register a migration with transaction support
 	migrator.Register("2024_01_01_000000_tx_migration", &transactionTestMigration{
@@ -553,7 +554,7 @@ func TestIntegration_RepositoryOperations(t *testing.T) {
 
 // TestIntegration_RollbackByBatch tests rollback by specific batch
 func TestIntegration_RollbackByBatch(t *testing.T) {
-	migrator, db, _, _ := setupIntegrationTest(t)
+	migrator, db, _ := setupIntegrationTest(t)
 
 	// Register migrations
 	migrator.Register("2024_01_01_000000_create_users_table", createTestMigration("users"))

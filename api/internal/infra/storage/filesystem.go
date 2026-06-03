@@ -95,10 +95,11 @@ type LocalFilesystem struct {
 	root string
 }
 
-// NewLocalFilesystem creates a new local filesystem
+// NewLocalFilesystem creates a new local filesystem. Failure to pre-create
+// the root directory is best-effort here; downstream calls (Put, Copy, etc.)
+// will surface a real error when they try to use the path.
 func NewLocalFilesystem(root string) *LocalFilesystem {
-	// Ensure root exists
-	os.MkdirAll(root, 0755)
+	_ = os.MkdirAll(root, 0755) //nolint:errcheck // best-effort; surfaced on first real op
 	return &LocalFilesystem{root: root}
 }
 
@@ -257,7 +258,13 @@ func (fs *LocalFilesystem) AllFiles(directory string) ([]string, error) {
 			return err
 		}
 		if !info.IsDir() {
-			relPath, _ := filepath.Rel(fs.root, path)
+			// filepath.Rel cannot fail here: we walked under fs.root, so
+			// `path` is always a descendant. Fall back to absolute path
+			// defensively if it ever does.
+			relPath, relErr := filepath.Rel(fs.root, path)
+			if relErr != nil {
+				relPath = path
+			}
 			files = append(files, relPath)
 		}
 		return nil
@@ -288,7 +295,10 @@ func (fs *LocalFilesystem) AllDirectories(directory string) ([]string, error) {
 			return err
 		}
 		if info.IsDir() && path != fs.path(directory) {
-			relPath, _ := filepath.Rel(fs.root, path)
+			relPath, relErr := filepath.Rel(fs.root, path)
+			if relErr != nil {
+				relPath = path
+			}
 			dirs = append(dirs, relPath)
 		}
 		return nil

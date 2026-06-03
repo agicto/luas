@@ -23,13 +23,13 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-// setupTestRepository creates a repository with a fresh migrations table
-func setupTestRepository(t *testing.T) (Repository, *gorm.DB) {
+// setupTestRepository creates a repository with a fresh migrations table.
+func setupTestRepository(t *testing.T) Repository {
 	db := setupTestDB(t)
 	repo := NewDatabaseRepository(db, "migrations")
 	err := repo.CreateRepository()
 	require.NoError(t, err)
-	return repo, db
+	return repo
 }
 
 // migrationNameGen generates valid migration names
@@ -350,7 +350,7 @@ func TestProperty4_MigrationLogRoundTrip(t *testing.T) {
 // Unit tests for edge cases and specific examples
 
 func TestDatabaseRepository_EmptyRepository(t *testing.T) {
-	repo, _ := setupTestRepository(t)
+	repo := setupTestRepository(t)
 
 	// GetRan should return empty slice
 	ran, err := repo.GetRan()
@@ -374,7 +374,7 @@ func TestDatabaseRepository_EmptyRepository(t *testing.T) {
 }
 
 func TestDatabaseRepository_DeleteMigration(t *testing.T) {
-	repo, _ := setupTestRepository(t)
+	repo := setupTestRepository(t)
 
 	// Log a migration
 	err := repo.Log("test_migration", 1)
@@ -396,7 +396,7 @@ func TestDatabaseRepository_DeleteMigration(t *testing.T) {
 }
 
 func TestDatabaseRepository_DeleteNonExistent(t *testing.T) {
-	repo, _ := setupTestRepository(t)
+	repo := setupTestRepository(t)
 
 	// Try to delete non-existent migration
 	err := repo.Delete("non_existent")
@@ -426,7 +426,7 @@ func TestDatabaseRepository_RepositoryLifecycle(t *testing.T) {
 }
 
 func TestDatabaseRepository_GetMigrations(t *testing.T) {
-	repo, _ := setupTestRepository(t)
+	repo := setupTestRepository(t)
 
 	// Log migrations in different batches
 	migrations := []struct {
@@ -457,7 +457,7 @@ func TestDatabaseRepository_GetMigrations(t *testing.T) {
 }
 
 func TestDatabaseRepository_GetMigrationsByBatch(t *testing.T) {
-	repo, _ := setupTestRepository(t)
+	repo := setupTestRepository(t)
 
 	// Log migrations in different batches
 	err := repo.Log("migration_a", 1)

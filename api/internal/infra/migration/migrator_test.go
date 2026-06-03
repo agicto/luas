@@ -8,7 +8,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/glebarez/sqlite"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
@@ -17,6 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/zgiai/luas/api/internal/infra/events"
 )
 
 // testMigration is a simple migration for testing
@@ -44,13 +45,6 @@ func (m *testMigration) Down(db *gorm.DB) error {
 func newTestMigration() *testMigration {
 	return &testMigration{
 		BaseMigration: BaseMigration{UseTransaction: false},
-	}
-}
-
-// newTestMigrationWithTransaction creates a test migration that runs in a transaction
-func newTestMigrationWithTransaction() *testMigration {
-	return &testMigration{
-		BaseMigration: BaseMigration{UseTransaction: true},
 	}
 }
 
@@ -105,12 +99,6 @@ func (c *eventCollector) getEvents() []events.Event {
 	result := make([]events.Event, len(c.events))
 	copy(result, c.events)
 	return result
-}
-
-func (c *eventCollector) clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.events = make([]events.Event, 0)
 }
 
 // Feature: migration-system, Property 5: Migrator Run Executes Pending

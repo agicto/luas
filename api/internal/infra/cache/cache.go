@@ -172,7 +172,7 @@ func RememberStore(ctx context.Context, store Store, key string, ttl time.Durati
 	if val, err := store.Get(ctx, key); err == nil {
 		metrics.RecordCacheHit(label)
 		return val, nil
-	} else if err != nil && !errors.Is(err, ErrCacheMiss) {
+	} else if !errors.Is(err, ErrCacheMiss) {
 		return nil, err
 	}
 
@@ -183,7 +183,7 @@ func RememberStore(ctx context.Context, store Store, key string, ttl time.Durati
 		if val, err := store.Get(ctx, key); err == nil {
 			metrics.RecordCacheHit(label)
 			return val, nil
-		} else if err != nil && !errors.Is(err, ErrCacheMiss) {
+		} else if !errors.Is(err, ErrCacheMiss) {
 			return nil, err
 		}
 
@@ -217,7 +217,7 @@ func Pull(ctx context.Context, key string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	_ = Forget(ctx, key)
+	_ = Forget(ctx, key) //nolint:errcheck // post-Get cleanup; failure is non-fatal
 	return val, nil
 }
 

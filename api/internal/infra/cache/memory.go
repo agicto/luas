@@ -102,7 +102,7 @@ func (s *MemoryStore) Get(ctx context.Context, key string) (interface{}, error) 
 	}
 
 	if item.isExpired() {
-		s.Forget(ctx, key)
+		_ = s.Forget(ctx, key) //nolint:errcheck // expired entry sweep; nothing to do on failure
 		return nil, ErrCacheMiss
 	}
 
@@ -158,7 +158,7 @@ func (s *MemoryStore) Has(ctx context.Context, key string) bool {
 	}
 
 	if item.isExpired() {
-		s.Forget(ctx, key)
+		_ = s.Forget(ctx, key) //nolint:errcheck // expired entry sweep; nothing to do on failure
 		return false
 	}
 
