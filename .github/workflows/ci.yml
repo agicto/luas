@@ -28,13 +28,12 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
+      # Install golangci-lint as a binary; run-tiers.sh invokes it.
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: latest
-          working-directory: api
-          args: --version
-          install-mode: binary
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Verification — Tier 1 (build + lint + test) on the whole api/ tree
         # The whole tree is now lint clean (golangci-lint run ./...). New
