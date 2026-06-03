@@ -4,7 +4,7 @@ Instructions for AI coding agents (Claude Code, Cursor, Windsurf, Copilot, etc.)
 
 ## What is Luas
 
-Luas (Irish for *speed*) is a two-halves AI-era scaffold:
+Luas (Irish for _speed_) is a two-halves AI-era scaffold:
 
 - **`api/`** — Go backend. Module: `github.com/zgiai/luas/api`. Gin + Wire DI + GORM, DDD-flavored modules, starter system (`user`, `apikey`, `audit`).
 - **`web/`** — Next.js 16 / React 19 / TypeScript / Tailwind 4 / shadcn. Feature-first folders under `src/features/`.
@@ -17,6 +17,36 @@ Each half has its own `AGENTS.md` with the detailed rules. Read those before edi
 
 - [api/AGENTS.md](api/AGENTS.md) — Go conventions, DDD layering, Wire DI, response patterns, testing
 - [web/AGENTS.md](web/AGENTS.md) — Next.js patterns, feature folders, i18n, shadcn primitives
+
+Workspace-level architecture docs:
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stable seams and vertical change flow
+- [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
+- [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
+- [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
+
+## AI Agent Skills
+
+The repo ships a Skills System at `.agents/skills/` (root) plus `api/.agents/skills/` and `web/.agents/skills/`. Codex CLI auto-discovers these based on cwd: the root + the matching half load when you cd into `api/` or `web/`. Each skill is a self-contained workflow loaded on demand when its description matches the task.
+
+Root skills (apply everywhere):
+
+| Skill | Use When |
+|---|---|
+| [`grill-before-build`](.agents/skills/grill-before-build/) | Request is underspecified or has wide impact (persistence, permissions, deployment, user workflows) |
+| [`systematic-debugging`](.agents/skills/systematic-debugging/) | Bug or flaky test where the cause is not obvious |
+| [`verification-before-completion`](.agents/skills/verification-before-completion/) | End-of-turn check that what you built actually runs / tests / lints |
+| [`pr-description-writer`](.agents/skills/pr-description-writer/) | Drafting a PR body or commit summary |
+
+Backend-specific skills are listed in [api/AGENTS.md](api/AGENTS.md#available-skills); frontend-specific in [web/AGENTS.md](web/AGENTS.md#ai-agent-skills). Full index at [.agents/skills/README.md](.agents/skills/README.md).
+
+Helper scripts shipped with skills:
+
+- `.agents/skills/verification-before-completion/scripts/run-tiers.sh <0|1|2> [scope...]` — auto-detects api/ vs web/ and runs the chosen tier.
+- `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
+- `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.
+
+CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml) and [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Cross-cutting rules (apply everywhere)
 
@@ -38,6 +68,9 @@ cd web && pnpm install                  # install
 cd web && pnpm dev                      # dev server with Turbopack
 cd web && pnpm type-check               # TypeScript check
 cd web && pnpm lint                     # ESLint
+
+# repo root
+make check                              # API tests + web type/lint/test/build
 ```
 
 ## When in doubt

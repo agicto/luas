@@ -1,3 +1,8 @@
+---
+name: kest-flow
+description: Kest Flow API testing framework. Markdown-based flow files chain Register → Login → Create → Query scenarios end-to-end against running APIs.
+---
+
 # Kest Flow Skill
 
 Kest Flow is a powerful API testing framework that achieves "Documentation as Code" through Markdown files.

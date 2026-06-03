@@ -70,3 +70,13 @@ jobs:
 
       - name: logging-standards self-test (${{ matrix.module }})
         run: bash .agents/skills/logging-standards/scripts/validate-logging.sh ${{ matrix.module }}
+
+  skill-metadata:
+    name: Skill Metadata
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate every SKILL.md against codex loader rules
+        run: bash .agents/skills/scripts/validate-skill.sh --all
