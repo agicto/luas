@@ -19,6 +19,11 @@ type Command interface {
 	Run(args []string) error
 }
 
+// SuccessOutputSkipper lets machine-readable commands suppress the global success footer.
+type SuccessOutputSkipper interface {
+	SuppressSuccessOutput() bool
+}
+
 // Application is the CLI application container
 type Application struct {
 	name     string
@@ -99,7 +104,9 @@ func (app *Application) Run(args []string) error {
 		return err
 	}
 
-	color.Green("  ✓ Done in %v", elapsed.Round(time.Millisecond))
+	if skipper, ok := cmd.(SuccessOutputSkipper); !ok || !skipper.SuppressSuccessOutput() {
+		color.Green("  ✓ Done in %v", elapsed.Round(time.Millisecond))
+	}
 	return nil
 }
 

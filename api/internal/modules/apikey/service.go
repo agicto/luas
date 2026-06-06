@@ -11,8 +11,8 @@ import (
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/capabilities/idgen"
+	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
 )
 
 // lastUsedAtThrottle skips the LastUsedAt write if the previous update is
@@ -74,7 +74,7 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 		return nil, fmt.Errorf("failed to create api key: %w", err)
 	}
 
-	auditstarter.RecordChange(ctx, auditstarter.Change{
+	contracts.RecordAuditChange(ctx, contracts.AuditChange{
 		Action:     "create",
 		Resource:   "api_keys",
 		TargetType: "api_key",
@@ -113,7 +113,7 @@ func (s *service) RevokeForUser(ctx context.Context, userID, id uint) error {
 		return fmt.Errorf("failed to revoke api key: %w", err)
 	}
 
-	auditstarter.RecordChange(ctx, auditstarter.Change{
+	contracts.RecordAuditChange(ctx, contracts.AuditChange{
 		Action:     "revoke",
 		Resource:   "api_keys",
 		TargetType: "api_key",

@@ -130,3 +130,18 @@ func TestRegistryModulesReturnsClone(t *testing.T) {
 	assert.Len(t, original, 1)
 	assert.Equal(t, "module-only", original[0].Name())
 }
+
+func TestRegistryAppliesTypedManifestAssets(t *testing.T) {
+	registry := NewRegistry()
+
+	manifest := contracts.NewStaticStarterManifest(
+		"typed",
+		contracts.WithStarterMigrations(contracts.StarterMigration{Name: "2026_04_06_000000_create_api_keys_table"}),
+		contracts.WithStarterSeeders(contracts.StarterSeeder{Name: "users"}),
+	)
+
+	assert.NoError(t, registry.ApplyManifest(manifest))
+	assert.Contains(t, registry.Migrations(), "2026_04_06_000000_create_api_keys_table")
+	assert.Len(t, registry.Seeders(), 1)
+	assert.Equal(t, "users", registry.Seeders()[0].Name())
+}

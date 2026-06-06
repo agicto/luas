@@ -14,10 +14,10 @@ import (
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/capabilities/idgen"
+	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
 )
 
 // AuthService defines the authentication and public account flows.
@@ -235,7 +235,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdat
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 	if len(changes) > 0 {
-		auditstarter.RecordChange(ctx, auditstarter.Change{
+		contracts.RecordAuditChange(ctx, contracts.AuditChange{
 			TargetType: "user",
 			TargetID:   strconv.FormatUint(uint64(userID), 10),
 			Result:     domain.AuditResultSuccess,
@@ -267,7 +267,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 		return err
 	}
 
-	auditstarter.RecordChange(ctx, auditstarter.Change{
+	contracts.RecordAuditChange(ctx, contracts.AuditChange{
 		TargetType: "user",
 		TargetID:   strconv.FormatUint(uint64(userID), 10),
 		Result:     domain.AuditResultSuccess,
@@ -287,7 +287,7 @@ func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
 		return err
 	}
 
-	auditstarter.RecordChange(ctx, auditstarter.Change{
+	contracts.RecordAuditChange(ctx, contracts.AuditChange{
 		TargetType: "user",
 		TargetID:   strconv.FormatUint(uint64(userID), 10),
 		Result:     domain.AuditResultSuccess,

@@ -66,6 +66,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewMakeRepositoryCommand()},
 		Registration{Command: NewMakeSeederCommand()},
 		Registration{Command: NewMakeMigrationCommand()},
+		Registration{Command: NewMakeContractCommand()},
 		Registration{Command: NewMakeModuleCommand()},
 	)
 
@@ -99,6 +100,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewServeCommand()},
 		Registration{Command: NewEnvCommand()},
 		Registration{Command: NewVersionCommand(version)},
+		Registration{Command: NewProjectMapCommand()},
 		Registration{Command: NewRouteListCommand()},
 		Registration{Command: NewPluginListCommand()},
 		Registration{Command: NewWorkflowWorkCommand()},

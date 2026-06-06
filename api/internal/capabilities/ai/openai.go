@@ -11,8 +11,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-
-	infrahttp "github.com/zgiai/luas/api/internal/infra/http"
 )
 
 // OpenAIProvider implements text generation with the OpenAI Responses API.
@@ -53,27 +51,40 @@ func (p *OpenAIProvider) Name() string {
 // GenerateText calls the OpenAI Responses API and aggregates output_text items.
 func (p *OpenAIProvider) GenerateText(ctx context.Context, req *TextRequest) (*TextResponse, error) {
 	body := p.requestBody(req, false)
+	requestPayload, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("openai: encode request: %w", err)
+	}
 
-	resp, err := infrahttp.New().
-		BaseURL(p.baseURL).
-		Timeout(p.timeout).
-		WithToken(p.apiKey).
-		AcceptJSON().
-		AsJSON().
-		PostContext(ctx, "/responses", body)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL+"/responses", bytes.NewReader(requestPayload))
+	if err != nil {
+		return nil, fmt.Errorf("openai: build request: %w", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+p.apiKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	httpClient := &http.Client{Timeout: p.timeout}
+	httpResp, err := httpClient.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("openai: request failed: %w", err)
 	}
+	defer httpResp.Body.Close()
+
+	respBody, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("openai: read response: %w", err)
+	}
 
 	var payload openAIResponse
-	if err := resp.JSON(&payload); err != nil {
+	if err := json.Unmarshal(respBody, &payload); err != nil {
 		return nil, fmt.Errorf("openai: failed to decode response: %w", err)
 	}
 
-	if resp.Failed() {
+	if httpResp.StatusCode >= 400 {
 		message := strings.TrimSpace(payload.Error.Message)
 		if message == "" {
-			message = strings.TrimSpace(resp.String())
+			message = strings.TrimSpace(string(respBody))
 		}
 		return nil, fmt.Errorf("openai: %s", message)
 	}

@@ -1,36 +1,37 @@
 package domain
 
 import (
-	"errors"
 	"time"
+
+	"github.com/zgiai/luas/api/pkg/problems"
 )
 
 // Domain-specific errors
 // These are business errors that can be returned by any layer
 var (
 	// User errors
-	ErrUserNotFound              = errors.New("user not found")
-	ErrEmailAlreadyExists        = errors.New("email already registered")
-	ErrUsernameAlreadyExists     = errors.New("username already registered")
-	ErrInvalidCredentials        = errors.New("invalid username or password")
-	ErrAccountDisabled           = errors.New("account is disabled")
-	ErrPasswordResetTokenInvalid = errors.New("password reset token is invalid")
-	ErrPasswordResetTokenExpired = errors.New("password reset token is expired")
+	ErrUserNotFound              = problems.ErrUserNotFound
+	ErrEmailAlreadyExists        = problems.ErrEmailAlreadyExists
+	ErrUsernameAlreadyExists     = problems.ErrUsernameAlreadyExists
+	ErrInvalidCredentials        = problems.ErrInvalidCredentials
+	ErrAccountDisabled           = problems.ErrAccountDisabled
+	ErrPasswordResetTokenInvalid = problems.ErrPasswordResetTokenInvalid
+	ErrPasswordResetTokenExpired = problems.ErrPasswordResetTokenExpired
 
 	// Permission errors
-	ErrPermissionDenied = errors.New("permission denied")
-	ErrRoleNotFound     = errors.New("role not found")
+	ErrPermissionDenied = problems.ErrPermissionDenied
+	ErrRoleNotFound     = problems.ErrRoleNotFound
 
 	// API key errors
-	ErrAPIKeyNotFound = errors.New("api key not found")
-	ErrAPIKeyInvalid  = errors.New("api key is invalid")
-	ErrAPIKeyExpired  = errors.New("api key is expired")
-	ErrAPIKeyRevoked  = errors.New("api key is revoked")
+	ErrAPIKeyNotFound = problems.ErrAPIKeyNotFound
+	ErrAPIKeyInvalid  = problems.ErrAPIKeyInvalid
+	ErrAPIKeyExpired  = problems.ErrAPIKeyExpired
+	ErrAPIKeyRevoked  = problems.ErrAPIKeyRevoked
 
 	// Generic errors
-	ErrNotFound     = errors.New("resource not found")
-	ErrConflict     = errors.New("resource already exists")
-	ErrInvalidInput = errors.New("invalid input")
+	ErrNotFound     = problems.ErrNotFound
+	ErrConflict     = problems.ErrConflict
+	ErrInvalidInput = problems.ErrInvalidInput
 )
 
 // Events

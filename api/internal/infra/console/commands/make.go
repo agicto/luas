@@ -281,6 +281,70 @@ func (c *MakeMigrationCommand) Run(args []string) error {
 	return nil
 }
 
+// MakeContractCommand creates a new HTTP contract document.
+type MakeContractCommand struct {
+	output *console.Output
+}
+
+func NewMakeContractCommand() *MakeContractCommand {
+	return &MakeContractCommand{output: console.NewOutput()}
+}
+
+func (c *MakeContractCommand) Name() string        { return "make:contract" }
+func (c *MakeContractCommand) Description() string { return "Create a new HTTP contract document" }
+func (c *MakeContractCommand) Usage() string {
+	return "make:contract <name> [--resource=/v1/resources]"
+}
+
+func (c *MakeContractCommand) Run(args []string) error {
+	if len(args) < 1 {
+		return fmt.Errorf("contract name is required")
+	}
+
+	var name string
+	var resourcePath string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case strings.HasPrefix(arg, "--resource="):
+			resourcePath = strings.TrimSpace(strings.TrimPrefix(arg, "--resource="))
+		case arg == "--resource" && i+1 < len(args):
+			resourcePath = strings.TrimSpace(args[i+1])
+			i++
+		case strings.HasPrefix(arg, "--"):
+			return fmt.Errorf("unknown flag: %s", arg)
+		case name == "":
+			name = arg
+		}
+	}
+	if name == "" {
+		return fmt.Errorf("contract name is required")
+	}
+
+	data := moduleScaffoldData(name)
+	if resourcePath == "" {
+		resourcePath = "/v1/" + data["RouteCollection"]
+	}
+	data["ResourcePath"] = resourcePath
+
+	dir := filepath.Join("..", "contracts")
+	if cwd, err := os.Getwd(); err == nil && filepath.Base(cwd) != "api" {
+		dir = "contracts"
+	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	path := filepath.Join(dir, data["Package"]+".md")
+	if err := generateFile(path, contractTemplate, data); err != nil {
+		return err
+	}
+
+	c.output.Success("Contract created: %s", path)
+	c.output.Info("Next: wire this contract to the API module and web feature service")
+	return nil
+}
+
 // MakeModuleCommand creates a complete module with all components
 type MakeModuleCommand struct {
 	output *console.Output
@@ -294,14 +358,19 @@ func (c *MakeModuleCommand) Name() string { return "make:module" }
 func (c *MakeModuleCommand) Description() string {
 	return "Create a complete module (model, service, handler, repository)"
 }
-func (c *MakeModuleCommand) Usage() string { return "make:module <name>" }
+func (c *MakeModuleCommand) Usage() string {
+	return "make:module <name> [--with=contract,migration,web]"
+}
 
 func (c *MakeModuleCommand) Run(args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("module name is required")
 	}
 
-	name := args[0]
+	name, requested, err := parseMakeModuleArgs(args)
+	if err != nil {
+		return err
+	}
 	snake := toSnakeCase(name)
 
 	// Target directory: internal/modules/[name]
@@ -344,6 +413,25 @@ func (c *MakeModuleCommand) Run(args []string) error {
 		c.output.Success("Created: %s", path)
 	}
 
+	if requested["contract"] {
+		contractCmd := NewMakeContractCommand()
+		if err := contractCmd.Run([]string{name}); err != nil {
+			return err
+		}
+	}
+	if requested["migration"] {
+		migrationCmd := NewMakeMigrationCommand()
+		if err := migrationCmd.Run([]string{"create_" + data["TableName"] + "_table", "--create=" + data["TableName"]}); err != nil {
+			return err
+		}
+	}
+	if requested["web"] {
+		if err := createWebFeatureScaffold(data); err != nil {
+			return err
+		}
+		c.output.Success("Web feature created: %s", webFeatureDir(data["Package"]))
+	}
+
 	c.output.Info("Module '%s' created successfully!", name)
 	c.output.Info("Next steps:")
 	c.output.Info("  1. Refine internal/domain/%s.go with real business fields", snake)
@@ -351,6 +439,79 @@ func (c *MakeModuleCommand) Run(args []string) error {
 	c.output.Info("  3. If it becomes a default starter, add its starter manifest to internal/starter/defaults.go")
 	c.output.Info("  4. Run make wire and go test ./...")
 	return nil
+}
+
+func createWebFeatureScaffold(data map[string]string) error {
+	featureDir := webFeatureDir(data["Package"])
+	dirs := []string{
+		featureDir,
+		filepath.Join(featureDir, "components"),
+		filepath.Join(featureDir, "hooks"),
+		filepath.Join(featureDir, "server"),
+		filepath.Join(featureDir, "services"),
+	}
+	for _, dir := range dirs {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
+
+	files := []struct {
+		path     string
+		template string
+	}{
+		{filepath.Join(featureDir, "types.ts"), webFeatureTypesTemplate},
+		{filepath.Join(featureDir, "services", data["Package"]+"-service.ts"), webFeatureServiceTemplate},
+		{filepath.Join(featureDir, "hooks", "use-"+data["Package"]+".ts"), webFeatureHookTemplate},
+		{filepath.Join(featureDir, "server", "mock-"+data["Package"]+"-store.ts"), webFeatureServerTemplate},
+		{filepath.Join(featureDir, "index.ts"), webFeatureIndexTemplate},
+	}
+	for _, file := range files {
+		if err := generateFile(file.path, file.template, data); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func webFeatureDir(name string) string {
+	base := filepath.Join("..", "web", "src", "features")
+	if cwd, err := os.Getwd(); err == nil && filepath.Base(cwd) != "api" {
+		base = filepath.Join("web", "src", "features")
+	}
+	return filepath.Join(base, name)
+}
+
+func parseMakeModuleArgs(args []string) (string, map[string]bool, error) {
+	requested := make(map[string]bool)
+	var name string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case strings.HasPrefix(arg, "--with="):
+			addRequestedScaffold(strings.TrimPrefix(arg, "--with="), requested)
+		case arg == "--with" && i+1 < len(args):
+			addRequestedScaffold(args[i+1], requested)
+			i++
+		case strings.HasPrefix(arg, "--"):
+			return "", nil, fmt.Errorf("unknown flag: %s", arg)
+		case name == "":
+			name = arg
+		}
+	}
+	if name == "" {
+		return "", nil, fmt.Errorf("module name is required")
+	}
+	return name, requested, nil
+}
+
+func addRequestedScaffold(value string, requested map[string]bool) {
+	for _, part := range strings.Split(value, ",") {
+		part = strings.ToLower(strings.TrimSpace(part))
+		if part != "" {
+			requested[part] = true
+		}
+	}
 }
 
 // Helper functions
@@ -889,6 +1050,209 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 		group.DELETE("/:id", h.Delete).Name("{{.Package}}.destroy").WhereNumber("id")
 	})
 }
+`
+
+const contractTemplate = `# {{.ModelName}} Contract
+
+Base path: ` + "`{{.ResourcePath}}`" + `
+
+All JSON responses use the Luas envelope:
+
+` + "```json" + `
+{
+  "code": 0,
+  "message": "success",
+  "data": {}
+}
+` + "```" + `
+
+Errors expose stable ` + "`error_code`" + ` values and may include ` + "`request_id`" + `.
+
+## {{.ModelName}} Shape
+
+` + "```json" + `
+{
+  "id": 1,
+  "name": "Example",
+  "created_at": "2026-04-01T00:00:00Z",
+  "updated_at": "2026-04-01T00:00:00Z"
+}
+` + "```" + `
+
+## List {{.ModelName}}s
+
+` + "`GET {{.ResourcePath}}?page=1&page_size=20`" + `
+
+Success: ` + "`200 OK`" + `
+
+The response is paginated with ` + "`data`" + `, ` + "`meta`" + `, and ` + "`links`" + `.
+
+## Get {{.ModelName}}
+
+` + "`GET {{.ResourcePath}}/{id}`" + `
+
+Success: ` + "`200 OK`" + `
+
+` + "`data`" + ` is a {{.ModelName}} object.
+
+## Create {{.ModelName}}
+
+` + "`POST {{.ResourcePath}}`" + `
+
+Request:
+
+` + "```json" + `
+{
+  "name": "Example"
+}
+` + "```" + `
+
+Success: ` + "`201 Created`" + `
+
+` + "`data`" + ` is the created {{.ModelName}} object.
+
+## Update {{.ModelName}}
+
+` + "`PUT {{.ResourcePath}}/{id}`" + `
+
+Request:
+
+` + "```json" + `
+{
+  "name": "Updated example"
+}
+` + "```" + `
+
+Success: ` + "`200 OK`" + `
+
+` + "`data`" + ` is the updated {{.ModelName}} object.
+
+## Delete {{.ModelName}}
+
+` + "`DELETE {{.ResourcePath}}/{id}`" + `
+
+Success: ` + "`204 No Content`" + `
+
+## Error Codes
+
+- ` + "`COMMON.VALIDATION_FAILED`" + `
+- ` + "`COMMON.NOT_FOUND`" + `
+- ` + "`COMMON.INVALID_INPUT`" + `
+`
+
+const webFeatureTypesTemplate = `export interface {{.ModelName}} {
+  id: number;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Create{{.ModelName}}Request {
+  name: string;
+}
+
+export interface Update{{.ModelName}}Request {
+  name?: string;
+}
+
+export interface Paginated{{.ModelName}}Response {
+  data: {{.ModelName}}[];
+  meta?: unknown;
+  links?: unknown;
+}
+`
+
+const webFeatureServiceTemplate = `import request from '@/http';
+import type {
+  Create{{.ModelName}}Request,
+  Paginated{{.ModelName}}Response,
+  {{.ModelName}},
+  Update{{.ModelName}}Request,
+} from '@/features/{{.Package}}/types';
+
+const basePath = '/{{.RouteCollection}}';
+
+export const {{.Package}}Service = {
+  list: (params?: { page?: number; page_size?: number }) =>
+    request.get<Paginated{{.ModelName}}Response>(basePath, { params }),
+
+  get: (id: number) => request.get<{{.ModelName}}>(` + "`${basePath}/${id}`" + `),
+
+  create: (data: Create{{.ModelName}}Request) =>
+    request.post<{{.ModelName}}, Create{{.ModelName}}Request>(basePath, data),
+
+  update: (id: number, data: Update{{.ModelName}}Request) =>
+    request.put<{{.ModelName}}, Update{{.ModelName}}Request>(` + "`${basePath}/${id}`" + `, data),
+
+  delete: (id: number) => request.delete<void>(` + "`${basePath}/${id}`" + `),
+};
+
+export type {{.ModelName}}Service = typeof {{.Package}}Service;
+`
+
+const webFeatureHookTemplate = `'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { {{.Package}}Service } from '@/features/{{.Package}}/services/{{.Package}}-service';
+import type { Create{{.ModelName}}Request, Update{{.ModelName}}Request } from '@/features/{{.Package}}/types';
+
+export const {{.Package}}QueryKeys = {
+  all: ['{{.Package}}'] as const,
+  list: (page?: number) => [...{{.Package}}QueryKeys.all, 'list', page] as const,
+  detail: (id: number) => [...{{.Package}}QueryKeys.all, 'detail', id] as const,
+};
+
+export function use{{.ModelName}}List(page = 1) {
+  return useQuery({
+    queryKey: {{.Package}}QueryKeys.list(page),
+    queryFn: () => {{.Package}}Service.list({ page }),
+  });
+}
+
+export function use{{.ModelName}}(id: number) {
+  return useQuery({
+    queryKey: {{.Package}}QueryKeys.detail(id),
+    queryFn: () => {{.Package}}Service.get(id),
+    enabled: id > 0,
+  });
+}
+
+export function useCreate{{.ModelName}}() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Create{{.ModelName}}Request) => {{.Package}}Service.create(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: {{.Package}}QueryKeys.all }),
+  });
+}
+
+export function useUpdate{{.ModelName}}(id: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Update{{.ModelName}}Request) => {{.Package}}Service.update(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: {{.Package}}QueryKeys.all });
+      void queryClient.invalidateQueries({ queryKey: {{.Package}}QueryKeys.detail(id) });
+    },
+  });
+}
+
+export function useDelete{{.ModelName}}() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => {{.Package}}Service.delete(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: {{.Package}}QueryKeys.all }),
+  });
+}
+`
+
+const webFeatureServerTemplate = `import type { {{.ModelName}} } from '@/features/{{.Package}}/types';
+
+export const mock{{.ModelName}}Items: {{.ModelName}}[] = [];
+`
+
+const webFeatureIndexTemplate = `export * from './hooks/use-{{.Package}}';
+export * from './services/{{.Package}}-service';
+export type * from './types';
 `
 
 const serviceTestTemplate = `package {{.Package}}

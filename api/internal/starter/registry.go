@@ -90,12 +90,38 @@ func (r *Registry) ApplyManifest(manifest contracts.StarterManifest) error {
 	for _, module := range manifest.Modules() {
 		r.RegisterModule(module)
 	}
+	typedMigrationNames := make(map[string]struct{})
+	for _, item := range manifest.Migrations() {
+		if item.Name == "" {
+			continue
+		}
+		typedMigrationNames[item.Name] = struct{}{}
+		if err := r.RegisterMigrationByName(item.Name); err != nil {
+			return fmt.Errorf("register starter migration for %s: %w", manifest.Name(), err)
+		}
+	}
 	for _, name := range manifest.MigrationNames() {
+		if _, exists := typedMigrationNames[name]; exists {
+			continue
+		}
 		if err := r.RegisterMigrationByName(name); err != nil {
 			return fmt.Errorf("register starter migration for %s: %w", manifest.Name(), err)
 		}
 	}
+	typedSeederNames := make(map[string]struct{})
+	for _, item := range manifest.Seeders() {
+		if item.Name == "" {
+			continue
+		}
+		typedSeederNames[item.Name] = struct{}{}
+		if err := r.RegisterSeederByName(item.Name); err != nil {
+			return fmt.Errorf("register starter seeder for %s: %w", manifest.Name(), err)
+		}
+	}
 	for _, name := range manifest.SeederNames() {
+		if _, exists := typedSeederNames[name]; exists {
+			continue
+		}
 		if err := r.RegisterSeederByName(name); err != nil {
 			return fmt.Errorf("register starter seeder for %s: %w", manifest.Name(), err)
 		}

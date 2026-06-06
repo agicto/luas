@@ -23,6 +23,12 @@ func All() map[string]migration.Migration {
 	return registry
 }
 
+// Find returns a registered migration by name.
+func Find(name string) (migration.Migration, bool) {
+	m, ok := registry[name]
+	return m, ok
+}
+
 // Default returns the legacy default scaffold migration set.
 // Deprecated: starter.DefaultMigrations() is the canonical source for default starter assembly.
 func Default() map[string]migration.Migration {

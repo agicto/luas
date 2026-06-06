@@ -33,12 +33,12 @@ func NewStarterManifest(handler *Handler) contracts.StarterManifest {
 	return contracts.NewStaticStarterManifest(
 		"user",
 		contracts.WithStarterModule(handler),
-		contracts.WithStarterMigrationNames(
-			"2025_06_18_000000_create_users_table",
-			"2026_04_27_000000_create_password_reset_tokens_table",
-			"2026_04_27_000001_add_unique_index_to_users_username",
-			"2025_06_18_000001_seed_default_users",
+		contracts.WithStarterMigrations(
+			contracts.StarterMigration{Name: "2025_06_18_000000_create_users_table"},
+			contracts.StarterMigration{Name: "2026_04_27_000000_create_password_reset_tokens_table"},
+			contracts.StarterMigration{Name: "2026_04_27_000001_add_unique_index_to_users_username"},
+			contracts.StarterMigration{Name: "2025_06_18_000001_seed_default_users"},
 		),
-		contracts.WithStarterSeederNames("users"),
+		contracts.WithStarterSeeders(contracts.StarterSeeder{Name: "users"}),
 	)
 }

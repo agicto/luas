@@ -54,6 +54,41 @@ func TestMakeModuleCommandCreatesDDDScaffold(t *testing.T) {
 	assert.Contains(t, string(routesContent), "/blog_posts")
 }
 
+func TestMakeModuleCommandWithContractAndMigration(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	tmp := t.TempDir()
+	apiDir := filepath.Join(tmp, "api")
+	require.NoError(t, os.MkdirAll(apiDir, 0755))
+	require.NoError(t, os.Chdir(apiDir))
+	defer func() {
+		_ = os.Chdir(wd)
+	}()
+
+	cmd := NewMakeModuleCommand()
+	require.NoError(t, cmd.Run([]string{"Invoice", "--with=contract,migration,web"}))
+
+	_, err = os.Stat(filepath.Join(tmp, "contracts", "invoice.md"))
+	require.NoError(t, err)
+
+	matches, err := filepath.Glob(filepath.Join(apiDir, "database", "migrations", "*_create_invoices_table.go"))
+	require.NoError(t, err)
+	require.Len(t, matches, 1)
+
+	webFeatureDir := filepath.Join(tmp, "web", "src", "features", "invoice")
+	for _, path := range []string{
+		filepath.Join(webFeatureDir, "types.ts"),
+		filepath.Join(webFeatureDir, "services", "invoice-service.ts"),
+		filepath.Join(webFeatureDir, "hooks", "use-invoice.ts"),
+		filepath.Join(webFeatureDir, "server", "mock-invoice-store.ts"),
+		filepath.Join(webFeatureDir, "index.ts"),
+	} {
+		_, err = os.Stat(path)
+		require.NoError(t, err, path)
+	}
+}
+
 func TestMakeServiceCommandUsesExistingModuleScaffold(t *testing.T) {
 	wd, err := os.Getwd()
 	require.NoError(t, err)
@@ -101,4 +136,27 @@ func TestMakeServiceCommandRequiresExistingModule(t *testing.T) {
 	err = cmd.Run([]string{"Invoice"})
 	require.Error(t, err)
 	assert.True(t, strings.Contains(err.Error(), "make:module Invoice"))
+}
+
+func TestMakeContractCommandCreatesRootContractFromAPICwd(t *testing.T) {
+	wd, err := os.Getwd()
+	require.NoError(t, err)
+
+	tmp := t.TempDir()
+	apiDir := filepath.Join(tmp, "api")
+	require.NoError(t, os.MkdirAll(apiDir, 0755))
+	require.NoError(t, os.Chdir(apiDir))
+	defer func() {
+		_ = os.Chdir(wd)
+	}()
+
+	cmd := NewMakeContractCommand()
+	require.NoError(t, cmd.Run([]string{"BillingPlan", "--resource=/v1/billing-plans"}))
+
+	contractPath := filepath.Join(tmp, "contracts", "billing_plan.md")
+	content, err := os.ReadFile(contractPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(content), "# BillingPlan Contract")
+	assert.Contains(t, string(content), "Base path: `/v1/billing-plans`")
+	assert.Contains(t, string(content), "`POST /v1/billing-plans`")
 }

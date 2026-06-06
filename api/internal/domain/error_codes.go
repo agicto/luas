@@ -1,5 +1,7 @@
 package domain
 
+import "github.com/zgiai/luas/api/pkg/problems"
+
 // Stable machine-readable error codes used by the API layer.
 //
 // Naming rules:
@@ -12,23 +14,23 @@ package domain
 // - AUTH.INVALID_CREDENTIALS
 // - API_KEY.REVOKED
 const (
-	CodeNotFound     = "COMMON.NOT_FOUND"
-	CodeConflict     = "COMMON.CONFLICT"
-	CodeInvalidInput = "COMMON.INVALID_INPUT"
+	CodeNotFound     = problems.CodeNotFound
+	CodeConflict     = problems.CodeConflict
+	CodeInvalidInput = problems.CodeInvalidInput
 
-	CodeUserNotFound              = "USER.NOT_FOUND"
-	CodeEmailAlreadyExists        = "USER.EMAIL_ALREADY_EXISTS"
-	CodeUsernameAlreadyExists     = "USER.USERNAME_ALREADY_EXISTS"
-	CodeInvalidCredentials        = "AUTH.INVALID_CREDENTIALS"
-	CodeAccountDisabled           = "AUTH.ACCOUNT_DISABLED"
-	CodePasswordResetTokenInvalid = "AUTH.PASSWORD_RESET_TOKEN_INVALID"
-	CodePasswordResetTokenExpired = "AUTH.PASSWORD_RESET_TOKEN_EXPIRED"
+	CodeUserNotFound              = problems.CodeUserNotFound
+	CodeEmailAlreadyExists        = problems.CodeEmailAlreadyExists
+	CodeUsernameAlreadyExists     = problems.CodeUsernameAlreadyExists
+	CodeInvalidCredentials        = problems.CodeInvalidCredentials
+	CodeAccountDisabled           = problems.CodeAccountDisabled
+	CodePasswordResetTokenInvalid = problems.CodePasswordResetTokenInvalid
+	CodePasswordResetTokenExpired = problems.CodePasswordResetTokenExpired
 
-	CodePermissionDenied = "PERMISSION.DENIED"
-	CodeRoleNotFound     = "ROLE.NOT_FOUND"
+	CodePermissionDenied = problems.CodePermissionDenied
+	CodeRoleNotFound     = problems.CodeRoleNotFound
 
-	CodeAPIKeyNotFound = "API_KEY.NOT_FOUND"
-	CodeAPIKeyInvalid  = "API_KEY.INVALID"
-	CodeAPIKeyExpired  = "API_KEY.EXPIRED"
-	CodeAPIKeyRevoked  = "API_KEY.REVOKED"
+	CodeAPIKeyNotFound = problems.CodeAPIKeyNotFound
+	CodeAPIKeyInvalid  = problems.CodeAPIKeyInvalid
+	CodeAPIKeyExpired  = problems.CodeAPIKeyExpired
+	CodeAPIKeyRevoked  = problems.CodeAPIKeyRevoked
 )

@@ -24,6 +24,16 @@ func All() []Seeder {
 	return registry
 }
 
+// Find returns a registered seeder by name.
+func Find(name string) (Seeder, bool) {
+	for _, seeder := range registry {
+		if seeder.Name() == name {
+			return seeder, true
+		}
+	}
+	return nil, false
+}
+
 // Default returns the legacy default scaffold seeder set.
 // Deprecated: starter.DefaultSeeders() is the canonical source for default starter assembly.
 func Default() []Seeder {

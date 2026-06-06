@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/pkg/problems"
 )
 
 const (
@@ -16,9 +16,9 @@ const (
 	ErrorCodeServiceDown      = "COMMON.SERVICE_UNAVAILABLE"
 	ErrorCodeUnauthorized     = "AUTH.UNAUTHORIZED"
 	ErrorCodeForbidden        = "AUTH.FORBIDDEN"
-	ErrorCodeNotFound         = domain.CodeNotFound
-	ErrorCodeConflict         = domain.CodeConflict
-	ErrorCodeInvalidInput     = domain.CodeInvalidInput
+	ErrorCodeNotFound         = problems.CodeNotFound
+	ErrorCodeConflict         = problems.CodeConflict
+	ErrorCodeInvalidInput     = problems.CodeInvalidInput
 )
 
 // ErrorDescriptor combines transport status with a stable machine-readable code.
@@ -82,37 +82,37 @@ func (m *ErrorMapper) GetErrorCode(err error) string {
 // DefaultErrorMapper provides default error mappings for framework and domain errors.
 var DefaultErrorMapper = &ErrorMapper{
 	mappings: map[error]ErrorDescriptor{
-		ErrNotFound:                  {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
-		ErrUnauthorized:              {StatusCode: http.StatusUnauthorized, ErrorCode: ErrorCodeUnauthorized},
-		ErrForbidden:                 {StatusCode: http.StatusForbidden, ErrorCode: ErrorCodeForbidden},
-		ErrConflict:                  {StatusCode: http.StatusConflict, ErrorCode: ErrorCodeConflict},
-		ErrValidation:                {StatusCode: http.StatusUnprocessableEntity, ErrorCode: ErrorCodeValidationFailed},
-		gorm.ErrRecordNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
-		domain.ErrNotFound:           {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeNotFound},
-		domain.ErrUserNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeUserNotFound},
-		domain.ErrRoleNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeRoleNotFound},
-		domain.ErrAPIKeyNotFound:     {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeAPIKeyNotFound},
-		domain.ErrInvalidCredentials: {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeInvalidCredentials},
-		domain.ErrAPIKeyInvalid:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyInvalid},
-		domain.ErrAPIKeyExpired:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyExpired},
-		domain.ErrAPIKeyRevoked:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyRevoked},
-		domain.ErrAccountDisabled:    {StatusCode: http.StatusForbidden, ErrorCode: domain.CodeAccountDisabled},
-		domain.ErrPermissionDenied:   {StatusCode: http.StatusForbidden, ErrorCode: domain.CodePermissionDenied},
-		domain.ErrEmailAlreadyExists: {StatusCode: http.StatusConflict, ErrorCode: domain.CodeEmailAlreadyExists},
-		domain.ErrUsernameAlreadyExists: {
+		ErrNotFound:                    {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
+		ErrUnauthorized:                {StatusCode: http.StatusUnauthorized, ErrorCode: ErrorCodeUnauthorized},
+		ErrForbidden:                   {StatusCode: http.StatusForbidden, ErrorCode: ErrorCodeForbidden},
+		ErrConflict:                    {StatusCode: http.StatusConflict, ErrorCode: ErrorCodeConflict},
+		ErrValidation:                  {StatusCode: http.StatusUnprocessableEntity, ErrorCode: ErrorCodeValidationFailed},
+		gorm.ErrRecordNotFound:         {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
+		problems.ErrNotFound:           {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeNotFound},
+		problems.ErrUserNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeUserNotFound},
+		problems.ErrRoleNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeRoleNotFound},
+		problems.ErrAPIKeyNotFound:     {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeAPIKeyNotFound},
+		problems.ErrInvalidCredentials: {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeInvalidCredentials},
+		problems.ErrAPIKeyInvalid:      {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeAPIKeyInvalid},
+		problems.ErrAPIKeyExpired:      {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeAPIKeyExpired},
+		problems.ErrAPIKeyRevoked:      {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeAPIKeyRevoked},
+		problems.ErrAccountDisabled:    {StatusCode: http.StatusForbidden, ErrorCode: problems.CodeAccountDisabled},
+		problems.ErrPermissionDenied:   {StatusCode: http.StatusForbidden, ErrorCode: problems.CodePermissionDenied},
+		problems.ErrEmailAlreadyExists: {StatusCode: http.StatusConflict, ErrorCode: problems.CodeEmailAlreadyExists},
+		problems.ErrUsernameAlreadyExists: {
 			StatusCode: http.StatusConflict,
-			ErrorCode:  domain.CodeUsernameAlreadyExists,
+			ErrorCode:  problems.CodeUsernameAlreadyExists,
 		},
-		domain.ErrPasswordResetTokenInvalid: {
+		problems.ErrPasswordResetTokenInvalid: {
 			StatusCode: http.StatusUnauthorized,
-			ErrorCode:  domain.CodePasswordResetTokenInvalid,
+			ErrorCode:  problems.CodePasswordResetTokenInvalid,
 		},
-		domain.ErrPasswordResetTokenExpired: {
+		problems.ErrPasswordResetTokenExpired: {
 			StatusCode: http.StatusUnauthorized,
-			ErrorCode:  domain.CodePasswordResetTokenExpired,
+			ErrorCode:  problems.CodePasswordResetTokenExpired,
 		},
-		domain.ErrConflict:     {StatusCode: http.StatusConflict, ErrorCode: domain.CodeConflict},
-		domain.ErrInvalidInput: {StatusCode: http.StatusUnprocessableEntity, ErrorCode: domain.CodeInvalidInput},
+		problems.ErrConflict:     {StatusCode: http.StatusConflict, ErrorCode: problems.CodeConflict},
+		problems.ErrInvalidInput: {StatusCode: http.StatusUnprocessableEntity, ErrorCode: problems.CodeInvalidInput},
 	},
 }
 

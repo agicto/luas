@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/infra/workflow"
 )
 
 // WorkflowWorkCommand runs a workflow queue worker.
