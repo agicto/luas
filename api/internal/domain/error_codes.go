@@ -33,4 +33,7 @@ const (
 	CodeAPIKeyInvalid  = problems.CodeAPIKeyInvalid
 	CodeAPIKeyExpired  = problems.CodeAPIKeyExpired
 	CodeAPIKeyRevoked  = problems.CodeAPIKeyRevoked
+
+	CodeTeamNotFound          = problems.CodeTeamNotFound
+	CodeTeamSlugAlreadyExists = problems.CodeTeamSlugAlreadyExists
 )

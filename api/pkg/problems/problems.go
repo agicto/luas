@@ -23,6 +23,9 @@ const (
 	CodeAPIKeyInvalid  = "API_KEY.INVALID"
 	CodeAPIKeyExpired  = "API_KEY.EXPIRED"
 	CodeAPIKeyRevoked  = "API_KEY.REVOKED"
+
+	CodeTeamNotFound          = "TEAM.NOT_FOUND"
+	CodeTeamSlugAlreadyExists = "TEAM.SLUG_ALREADY_EXISTS"
 )
 
 // Stable sentinel errors that can be mapped by transport packages without importing internal domain packages.
@@ -42,6 +45,9 @@ var (
 	ErrAPIKeyInvalid  = errors.New("api key is invalid")
 	ErrAPIKeyExpired  = errors.New("api key is expired")
 	ErrAPIKeyRevoked  = errors.New("api key is revoked")
+
+	ErrTeamNotFound          = errors.New("team not found")
+	ErrTeamSlugAlreadyExists = errors.New("team slug already exists")
 
 	ErrNotFound     = errors.New("resource not found")
 	ErrConflict     = errors.New("resource already exists")

@@ -54,7 +54,8 @@ contracts/
 ├── auth.md
 ├── users.md
 ├── apikey.md
-└── audit.md
+├── audit.md
+└── team.md
 ```
 
 Start with a Markdown contract. Add OpenAPI later only when the contract volume justifies generated tooling.

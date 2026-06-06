@@ -92,6 +92,7 @@ var DefaultErrorMapper = &ErrorMapper{
 		problems.ErrUserNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeUserNotFound},
 		problems.ErrRoleNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeRoleNotFound},
 		problems.ErrAPIKeyNotFound:     {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeAPIKeyNotFound},
+		problems.ErrTeamNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: problems.CodeTeamNotFound},
 		problems.ErrInvalidCredentials: {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeInvalidCredentials},
 		problems.ErrAPIKeyInvalid:      {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeAPIKeyInvalid},
 		problems.ErrAPIKeyExpired:      {StatusCode: http.StatusUnauthorized, ErrorCode: problems.CodeAPIKeyExpired},
@@ -99,6 +100,10 @@ var DefaultErrorMapper = &ErrorMapper{
 		problems.ErrAccountDisabled:    {StatusCode: http.StatusForbidden, ErrorCode: problems.CodeAccountDisabled},
 		problems.ErrPermissionDenied:   {StatusCode: http.StatusForbidden, ErrorCode: problems.CodePermissionDenied},
 		problems.ErrEmailAlreadyExists: {StatusCode: http.StatusConflict, ErrorCode: problems.CodeEmailAlreadyExists},
+		problems.ErrTeamSlugAlreadyExists: {
+			StatusCode: http.StatusConflict,
+			ErrorCode:  problems.CodeTeamSlugAlreadyExists,
+		},
 		problems.ErrUsernameAlreadyExists: {
 			StatusCode: http.StatusConflict,
 			ErrorCode:  problems.CodeUsernameAlreadyExists,

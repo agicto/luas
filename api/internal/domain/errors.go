@@ -28,6 +28,10 @@ var (
 	ErrAPIKeyExpired  = problems.ErrAPIKeyExpired
 	ErrAPIKeyRevoked  = problems.ErrAPIKeyRevoked
 
+	// Team errors
+	ErrTeamNotFound          = problems.ErrTeamNotFound
+	ErrTeamSlugAlreadyExists = problems.ErrTeamSlugAlreadyExists
+
 	// Generic errors
 	ErrNotFound     = problems.ErrNotFound
 	ErrConflict     = problems.ErrConflict

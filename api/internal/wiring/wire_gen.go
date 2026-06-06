@@ -16,6 +16,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/team"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter"
 )
@@ -48,7 +49,10 @@ func InitApplication() (*app.Application, error) {
 	userMailer := user.NewUserMailer(service)
 	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
+	teamRepository := team.NewRepository(db)
+	teamService := team.NewService(teamRepository)
+	teamHandler := team.NewHandler(teamService)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +89,10 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	userMailer := user.NewUserMailer(service)
 	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
+	teamRepository := team.NewRepository(db)
+	teamService := team.NewService(teamRepository)
+	teamHandler := team.NewHandler(teamService)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler)
 	if err != nil {
 		return nil, err
 	}
