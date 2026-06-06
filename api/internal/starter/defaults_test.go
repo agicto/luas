@@ -10,19 +10,20 @@ import (
 func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 	registry := NewRegistry()
 
-	manifests := DefaultManifests(nil, nil, nil, nil)
-	require.Len(t, manifests, 4)
+	manifests := DefaultManifests(nil, nil, nil, nil, nil)
+	require.Len(t, manifests, 5)
 	assert.Equal(t, "audit", manifests[0].Name())
 	assert.Equal(t, "apikey", manifests[1].Name())
 	assert.Equal(t, "user", manifests[2].Name())
 	assert.Equal(t, "team", manifests[3].Name())
+	assert.Equal(t, "access", manifests[4].Name())
 
 	for _, manifest := range manifests {
 		require.NoError(t, registry.ApplyManifest(manifest))
 	}
 
 	migrations := registry.Migrations()
-	assert.Len(t, migrations, 8)
+	assert.Len(t, migrations, 9)
 	assert.Contains(t, migrations, "2026_04_26_000000_create_audit_logs_table")
 	assert.Contains(t, migrations, "2026_04_27_000002_add_business_fields_to_audit_logs")
 	assert.Contains(t, migrations, "2025_06_18_000000_create_users_table")
@@ -31,6 +32,7 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 	assert.Contains(t, migrations, "2026_04_27_000001_add_unique_index_to_users_username")
 	assert.Contains(t, migrations, "2026_04_06_000000_create_api_keys_table")
 	assert.Contains(t, migrations, "2026_06_06_102847_create_teams_table")
+	assert.Contains(t, migrations, "2026_06_06_110303_create_access_roles_table")
 
 	seeders := registry.Seeders()
 	require.Len(t, seeders, 1)

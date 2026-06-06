@@ -36,4 +36,7 @@ const (
 
 	CodeTeamNotFound          = problems.CodeTeamNotFound
 	CodeTeamSlugAlreadyExists = problems.CodeTeamSlugAlreadyExists
+
+	CodeAccessRoleNotFound          = problems.CodeAccessRoleNotFound
+	CodeAccessRoleSlugAlreadyExists = problems.CodeAccessRoleSlugAlreadyExists
 )

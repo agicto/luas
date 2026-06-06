@@ -6,6 +6,7 @@ import (
 	"github.com/zgiai/luas/api/database/seeders"
 	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/access"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/team"
@@ -18,6 +19,7 @@ var ProviderSet = wire.NewSet(
 	apikey.ProviderSet,
 	user.ProviderSet,
 	team.ProviderSet,
+	access.ProviderSet,
 	NewDefaultRegistry,
 )
 
@@ -27,9 +29,10 @@ func NewDefaultRegistry(
 	apiKeyHandler *apikey.Handler,
 	userHandler *user.Handler,
 	teamHandler *team.Handler,
+	accessHandler *access.Handler,
 ) (*Registry, error) {
 	registry := NewRegistry()
-	for _, manifest := range DefaultManifests(auditHandler, apiKeyHandler, userHandler, teamHandler) {
+	for _, manifest := range DefaultManifests(auditHandler, apiKeyHandler, userHandler, teamHandler, accessHandler) {
 		if err := registry.ApplyManifest(manifest); err != nil {
 			return nil, err
 		}
@@ -44,19 +47,21 @@ func DefaultManifests(
 	apiKeyHandler *apikey.Handler,
 	userHandler *user.Handler,
 	teamHandler *team.Handler,
+	accessHandler *access.Handler,
 ) []contracts.StarterManifest {
 	return []contracts.StarterManifest{
 		audit.NewStarterManifest(auditHandler),
 		apikey.NewStarterManifest(apiKeyHandler),
 		user.NewStarterManifest(userHandler),
 		team.NewStarterManifest(teamHandler),
+		access.NewStarterManifest(accessHandler),
 	}
 }
 
 // DefaultMigrations returns the migrations enabled by the default starters.
 func DefaultMigrations() (map[string]migration.Migration, error) {
 	registry := NewRegistry()
-	for _, manifest := range DefaultManifests(nil, nil, nil, nil) {
+	for _, manifest := range DefaultManifests(nil, nil, nil, nil, nil) {
 		if err := registry.ApplyManifest(manifest); err != nil {
 			return nil, err
 		}
@@ -67,7 +72,7 @@ func DefaultMigrations() (map[string]migration.Migration, error) {
 // DefaultSeeders returns the seeders enabled by the default starters.
 func DefaultSeeders() ([]seeders.Seeder, error) {
 	registry := NewRegistry()
-	for _, manifest := range DefaultManifests(nil, nil, nil, nil) {
+	for _, manifest := range DefaultManifests(nil, nil, nil, nil, nil) {
 		if err := registry.ApplyManifest(manifest); err != nil {
 			return nil, err
 		}

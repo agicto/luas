@@ -14,6 +14,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/modules/access"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/team"
@@ -52,7 +53,10 @@ func InitApplication() (*app.Application, error) {
 	teamRepository := team.NewRepository(db)
 	teamService := team.NewService(teamRepository)
 	teamHandler := team.NewHandler(teamService)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler)
+	accessRepository := access.NewRepository(db)
+	accessService := access.NewService(accessRepository)
+	accessHandler := access.NewHandler(accessService)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler, accessHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +96,10 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	teamRepository := team.NewRepository(db)
 	teamService := team.NewService(teamRepository)
 	teamHandler := team.NewHandler(teamService)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler)
+	accessRepository := access.NewRepository(db)
+	accessService := access.NewService(accessRepository)
+	accessHandler := access.NewHandler(accessService)
+	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler, teamHandler, accessHandler)
 	if err != nil {
 		return nil, err
 	}

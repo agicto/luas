@@ -26,6 +26,9 @@ const (
 
 	CodeTeamNotFound          = "TEAM.NOT_FOUND"
 	CodeTeamSlugAlreadyExists = "TEAM.SLUG_ALREADY_EXISTS"
+
+	CodeAccessRoleNotFound          = "ACCESS_ROLE.NOT_FOUND"
+	CodeAccessRoleSlugAlreadyExists = "ACCESS_ROLE.SLUG_ALREADY_EXISTS"
 )
 
 // Stable sentinel errors that can be mapped by transport packages without importing internal domain packages.
@@ -48,6 +51,9 @@ var (
 
 	ErrTeamNotFound          = errors.New("team not found")
 	ErrTeamSlugAlreadyExists = errors.New("team slug already exists")
+
+	ErrAccessRoleNotFound          = errors.New("access role not found")
+	ErrAccessRoleSlugAlreadyExists = errors.New("access role slug already exists")
 
 	ErrNotFound     = errors.New("resource not found")
 	ErrConflict     = errors.New("resource already exists")

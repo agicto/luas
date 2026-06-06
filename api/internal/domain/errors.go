@@ -32,6 +32,10 @@ var (
 	ErrTeamNotFound          = problems.ErrTeamNotFound
 	ErrTeamSlugAlreadyExists = problems.ErrTeamSlugAlreadyExists
 
+	// Access errors
+	ErrAccessRoleNotFound          = problems.ErrAccessRoleNotFound
+	ErrAccessRoleSlugAlreadyExists = problems.ErrAccessRoleSlugAlreadyExists
+
 	// Generic errors
 	ErrNotFound     = problems.ErrNotFound
 	ErrConflict     = problems.ErrConflict
