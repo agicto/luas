@@ -12,9 +12,15 @@ package domain
 // - AUTH.INVALID_CREDENTIALS
 // - API_KEY.REVOKED
 const (
-	CodeNotFound     = "COMMON.NOT_FOUND"
-	CodeConflict     = "COMMON.CONFLICT"
-	CodeInvalidInput = "COMMON.INVALID_INPUT"
+	CodeInternal           = "COMMON.INTERNAL"
+	CodeNotFound           = "COMMON.NOT_FOUND"
+	CodeConflict           = "COMMON.CONFLICT"
+	CodeInvalidInput       = "COMMON.INVALID_INPUT"
+	CodeValidationFailed   = "COMMON.VALIDATION_FAILED"
+	CodeRateLimited        = "COMMON.RATE_LIMITED"
+	CodeRequestTooLarge    = "COMMON.REQUEST_TOO_LARGE"
+	CodeTimeout            = "COMMON.TIMEOUT"
+	CodeServiceUnavailable = "COMMON.SERVICE_UNAVAILABLE"
 
 	CodeUserNotFound              = "USER.NOT_FOUND"
 	CodeEmailAlreadyExists        = "USER.EMAIL_ALREADY_EXISTS"

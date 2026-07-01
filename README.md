@@ -41,9 +41,16 @@ pnpm dev      # start Next.js on :3000
 
 See [web/README.md](web/README.md) for the full frontend guide.
 
+## Architecture and contracts
+
+- [CONTEXT.md](CONTEXT.md) — canonical Luas vocabulary for humans and agents.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — deployable-unit boundaries and vertical change flow.
+- [contracts/README.md](contracts/README.md) — shared HTTP response, error, pagination, and request ID contracts.
+- [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
+
 ## Working with AI agents
 
-Both halves were designed for AI-assisted development. The top-level [AGENTS.md](AGENTS.md) plus the per-half [api/AGENTS.md](api/AGENTS.md) and [web/AGENTS.md](web/AGENTS.md) tell coding agents (Claude Code, Cursor, Windsurf, Copilot, etc.) how to navigate, where the boundaries are, and which conventions to follow.
+Both halves were designed for AI-assisted development. Start with the global [CONTEXT.md](CONTEXT.md) for the shared Luas vocabulary, then use the top-level [AGENTS.md](AGENTS.md) plus the per-half [api/AGENTS.md](api/AGENTS.md) and [web/AGENTS.md](web/AGENTS.md) for navigation, boundaries, and conventions.
 
 ## History
 

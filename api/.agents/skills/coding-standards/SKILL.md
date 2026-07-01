@@ -121,7 +121,7 @@ type User struct {
 
 #### 2.1 Module Shape Matches Module Type
 
-- **starter / optional starter**: route-owning business modules usually use the 8-file scaffold
+- **starter / optional starter**: route-owning modules usually use the 8-file scaffold
 - **capability**: may omit `handler.go`, `routes.go`, and DTO files entirely
 - **example**: may optimize for teaching value rather than default assembly
 

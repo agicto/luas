@@ -17,14 +17,14 @@ func (s *UserSeeder) Run(db *gorm.DB) error {
 		{
 			Username: "admin",
 			Email:    "admin@example.com",
-			Password: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // password: secret
+			Password: "$2a$10$OkAgF/Pm/v3pdzkUhKJEeOhehkbTRZar9Rk3X2nEjCcrlsluiTnay", // password: secret
 			Nickname: "Administrator",
 			Status:   1,
 		},
 		{
 			Username: "user",
 			Email:    "user@example.com",
-			Password: "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy", // password: secret
+			Password: "$2a$10$OkAgF/Pm/v3pdzkUhKJEeOhehkbTRZar9Rk3X2nEjCcrlsluiTnay", // password: secret
 			Nickname: "Regular User",
 			Status:   1,
 		},

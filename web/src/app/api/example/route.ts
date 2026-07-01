@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import {
+  apiInvalidInputResponse,
+  apiValidationErrorResponse,
+} from '@/app/api/_shared/error-response';
+import { readJsonBody } from '@/app/api/_shared/json-body';
+import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
 import { createExample, listExamples } from '@/features/example/server/mock-example-store';
-import { ErrorCode } from '@/http/codes';
 
 const listQuerySchema = z.object({
   keyword: z.string().optional(),
@@ -17,17 +22,17 @@ const createSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  const mockBffGuard = guardMockBffRoute();
+
+  if (mockBffGuard) {
+    return mockBffGuard;
+  }
+
   const url = new URL(request.url);
   const parsed = listQuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()));
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid query parameters',
-        code: ErrorCode.INVALID_PARAMS,
-      },
-      { status: 400 }
-    );
+    return apiValidationErrorResponse('Invalid query parameters', parsed.error);
   }
 
   return NextResponse.json({
@@ -36,17 +41,22 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => null);
-  const parsed = createSchema.safeParse(payload);
+  const mockBffGuard = guardMockBffRoute();
+
+  if (mockBffGuard) {
+    return mockBffGuard;
+  }
+
+  const payload = await readJsonBody(request);
+
+  if (!payload.ok) {
+    return apiInvalidInputResponse('Malformed JSON body');
+  }
+
+  const parsed = createSchema.safeParse(payload.data);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid example payload',
-        code: ErrorCode.INVALID_PARAMS,
-      },
-      { status: 400 }
-    );
+    return apiValidationErrorResponse('Invalid example payload', parsed.error);
   }
 
   return NextResponse.json({

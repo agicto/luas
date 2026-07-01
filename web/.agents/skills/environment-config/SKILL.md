@@ -39,11 +39,18 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_API_URL` | No | `/api` | Base URL for API requests. |
+| `NEXT_PUBLIC_APP_URL` | No | `http://localhost:3000` | Absolute site URL for metadata, sitemap, and robots. |
+| `NEXT_PUBLIC_DEFAULT_LOCALE` | No | `zh-Hans` | Default locale. Must be one of `src/i18n/locales.ts`. |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No | `true` | Shows or hides the language switcher. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
+| `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. |
+| `SESSION_SECRET` | Production runtime | - | Server-only secret for HMAC-signed mock auth cookies. |
 
 > [!IMPORTANT]
 > Always use the `env` object from `@/config/env` to access environment variables. Directly accessing `process.env` is strictly prohibited outside of the config file.
+
+`src/test/env-contract.test.ts` enforces this rule for production source files.
 
 ## Related Skills
 

@@ -15,6 +15,7 @@ Codex loads only **metadata** (name + description) into the system prompt at sta
 | Skill | When to Use |
 |---|---|
 | [`grill-before-build`](./grill-before-build/) | Interview the user before underspecified or wide-impact changes |
+| [`luas-framework-review`](./luas-framework-review/) | Review Luas as a global scaffold across security, performance, semantics, architecture, and AI workflows |
 | [`systematic-debugging`](./systematic-debugging/) | Bug or flaky test with unclear cause — 4-phase reproduce → isolate → identify → verify |
 | [`verification-before-completion`](./verification-before-completion/) | End-of-turn check that the change actually runs / tests pass / lint clean |
 | [`pr-description-writer`](./pr-description-writer/) | Drafting a PR body or commit summary |
@@ -53,13 +54,13 @@ Quick map:
 ## How to Verify Skills Are Loaded
 
 ```bash
-# count discoverable skills (should be 30)
+# count discoverable skills (should be 31)
 find . -maxdepth 5 -name "SKILL.md" -not -path "*/.template/*" | wc -l
 
-# count what loads in api/ context (root + api = 15)
+# count what loads in api/ context (root + api = 16)
 ( cd api && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 
-# count what loads in web/ context (root + web = 19)
+# count what loads in web/ context (root + web = 20)
 ( cd web && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 ```
 
@@ -67,6 +68,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 
 ## Conventions
 
+- `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and agent entry points for vocabulary drift from `CONTEXT.md`.
 - **`name`** is `kebab-case`, ≤ 64 chars.
 - **`description`** is the trigger condition, ≤ 150 chars in practice (codex hard limit is 1024 bytes). Lead with the *when*, not the *what*.
 - **Directory name** matches the skill name. Skills starting with `.` or `_` are intentionally hidden from the loader (used for templates).

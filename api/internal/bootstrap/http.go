@@ -21,6 +21,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/health"
 	"github.com/zgiai/luas/api/internal/infra/metrics"
 	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/infra/ratelimit"
 	"github.com/zgiai/luas/api/internal/infra/tracing"
 	"github.com/zgiai/luas/api/pkg/logger"
 	"github.com/zgiai/luas/api/pkg/support"
@@ -39,6 +40,7 @@ type HttpKernel struct {
 func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Set Mode
 	setGinMode(application.Config.Server.Mode)
+	registerDefaultDomainErrorMappings()
 
 	// Create Engine
 	r := gin.New()
@@ -79,17 +81,16 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Add Prometheus metrics middleware
 	r.Use(metrics.Middleware())
 
-	// Apply Global Middleware (CORS mainly)
+	// Apply global HTTP guardrails: security headers, request limits,
+	// cooperative timeout, CORS, and rate limit. Auth/audit middleware remains
+	// starter-owned and route-scoped.
 	applyGlobalMiddleware(r, application.Config)
 
-	// Initialize Health Checks. Skip the database checker entirely when
-	// the DB is disabled or unreachable at startup — otherwise the whole
-	// /health endpoint reports 503 and load balancers / k8s never see
-	// the service as ready.
+	// Initialize Health Checks. Always expose database state, even when the
+	// DB is disabled, so readiness never reports a full scaffold as healthy
+	// while DB-backed starter routes would fail.
 	h := health.New()
-	if application.DB != nil {
-		h.Register("database", health.DatabaseChecker(application.DB))
-	}
+	h.Register("database", health.DatabaseChecker(application.DB))
 
 	// Register health and metrics routes
 	h.RegisterRoutes(r)
@@ -210,12 +211,70 @@ func setGinMode(mode string) {
 }
 
 func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config) {
-	corsConfig := cors.Config{
-		AllowOrigins:     cfg.CORS.AllowOrigins,
-		AllowMethods:     cfg.CORS.AllowMethods,
-		AllowHeaders:     cfg.CORS.AllowHeaders,
-		ExposeHeaders:    cfg.CORS.ExposeHeaders,
-		AllowCredentials: cfg.CORS.AllowCredentials,
+	cfg = effectiveHTTPConfig(cfg)
+
+	r.Use(infraMiddleware.Helmet())
+	r.Use(infraMiddleware.BodyLimit(bodyLimitBytes(cfg)))
+	r.Use(infraMiddleware.Timeout(requestTimeout(cfg)))
+
+	r.Use(cors.New(corsMiddlewareConfig(cfg.CORS)))
+
+	if cfg.Middleware.RateLimit.Enabled {
+		r.Use(ratelimit.Middleware(ratelimit.Config{
+			Max:      cfg.Middleware.RateLimit.Max,
+			Duration: cfg.Middleware.RateLimit.Window,
+			SkipFunc: func(c *gin.Context) bool {
+				return pathInList(c.Request.URL.Path, cfg.Middleware.RateLimit.SkipPaths)
+			},
+		}))
 	}
-	r.Use(cors.New(corsConfig))
+}
+
+func effectiveHTTPConfig(cfg *config.Config) *config.Config {
+	if cfg != nil {
+		return cfg
+	}
+
+	return &config.Config{
+		CORS: config.CORSConfig{
+			AllowOrigins:     []string{"http://localhost:3000"},
+			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"},
+			ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},
+			AllowCredentials: true,
+		},
+	}
+}
+
+func corsMiddlewareConfig(cfg config.CORSConfig) cors.Config {
+	return cors.Config{
+		AllowOrigins:     cfg.AllowOrigins,
+		AllowMethods:     cfg.AllowMethods,
+		AllowHeaders:     cfg.AllowHeaders,
+		ExposeHeaders:    cfg.ExposeHeaders,
+		AllowCredentials: cfg.AllowCredentials,
+	}
+}
+
+func requestTimeout(cfg *config.Config) time.Duration {
+	if cfg != nil && cfg.Middleware.RequestTimeout > 0 {
+		return time.Duration(cfg.Middleware.RequestTimeout) * time.Second
+	}
+	return infraMiddleware.DefaultTimeoutConfig().Timeout
+}
+
+func bodyLimitBytes(cfg *config.Config) int64 {
+	if cfg != nil && cfg.Middleware.BodyLimit > 0 {
+		return cfg.Middleware.BodyLimit
+	}
+	return infraMiddleware.DefaultBodyLimitConfig().MaxSize
+}
+
+func pathInList(path string, paths []string) bool {
+	for _, candidate := range paths {
+		if path == candidate {
+			return true
+		}
+	}
+	return false
 }

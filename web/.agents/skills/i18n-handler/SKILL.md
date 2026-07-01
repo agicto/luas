@@ -192,6 +192,8 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | File | Purpose |
 |------|---------|
 | `src/i18n/config.ts` | Locale configuration and settings |
+| `src/i18n/locales.ts` | Supported locale constants, names, and Accept-Language mapping |
+| `src/i18n/locale-resolution.ts` | Cookie/header/default request locale resolution seam |
 | `src/i18n/index.ts` | Barrel exports for all i18n utilities |
 | `src/i18n/translations.ts` | `useT` and `getT` implementation with types |
 | `src/i18n/loader.ts` | Dynamic module loading and `AVAILABLE_MODULES` |
@@ -200,10 +202,14 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 
 ## Environment Variables
 
+The source of truth is `src/config/env.ts`; locale values are constrained by `src/i18n/locales.ts`.
+
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `NEXT_PUBLIC_DEFAULT_LOCALE` | Default locale | `zh-Hans` |
 | `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | Show language switcher | `true` |
+
+Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supported `locale` cookie values win, then `Accept-Language`, then the configured default.
 
 > [!IMPORTANT]
 > **Zero Hardcoded Strings**: All user-facing text MUST use i18n hooks. Never hardcode text directly in JSX.

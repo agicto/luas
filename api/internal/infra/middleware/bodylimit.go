@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // BodyLimitConfig holds body limit middleware configuration
@@ -48,23 +49,18 @@ func BodyLimit(maxSize int64) gin.HandlerFunc {
 
 // BodyLimitWithConfig returns body limit middleware with custom config
 func BodyLimitWithConfig(cfg BodyLimitConfig) gin.HandlerFunc {
+	defaults := DefaultBodyLimitConfig()
 	if cfg.MaxSize <= 0 {
-		cfg.MaxSize = 4 * 1024 * 1024
+		cfg.MaxSize = defaults.MaxSize
 	}
 	if cfg.ErrorMessage == "" {
-		cfg.ErrorMessage = "Request body too large"
+		cfg.ErrorMessage = defaults.ErrorMessage
 	}
 
 	return func(c *gin.Context) {
 		// Check Content-Length header first (fast path)
 		if c.Request.ContentLength > cfg.MaxSize {
-			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
-				"success": false,
-				"error": gin.H{
-					"code":    "BODY_TOO_LARGE",
-					"message": cfg.ErrorMessage,
-				},
-			})
+			response.AbortWithCode(c, http.StatusRequestEntityTooLarge, response.ErrorCodeRequestTooLarge, cfg.ErrorMessage)
 			return
 		}
 
@@ -76,13 +72,7 @@ func BodyLimitWithConfig(cfg BodyLimitConfig) gin.HandlerFunc {
 		// Check if we hit the limit during body read
 		var maxBytesErr *http.MaxBytesError
 		if last := c.Errors.Last(); last != nil && errors.As(last.Err, &maxBytesErr) {
-			c.AbortWithStatusJSON(http.StatusRequestEntityTooLarge, gin.H{
-				"success": false,
-				"error": gin.H{
-					"code":    "BODY_TOO_LARGE",
-					"message": cfg.ErrorMessage,
-				},
-			})
+			response.AbortWithCode(c, http.StatusRequestEntityTooLarge, response.ErrorCodeRequestTooLarge, cfg.ErrorMessage)
 		}
 	}
 }

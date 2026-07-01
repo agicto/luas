@@ -38,7 +38,7 @@ func DataSet(target any, key string, value any) bool {
 	}
 
 	v := reflect.ValueOf(target)
-	if v.Kind() != reflect.Ptr {
+	if v.Kind() != reflect.Pointer {
 		return false
 	}
 
@@ -85,7 +85,7 @@ func DataForget(target any, key string) bool {
 	}
 
 	v := reflect.ValueOf(target)
-	if v.Kind() != reflect.Ptr {
+	if v.Kind() != reflect.Pointer {
 		return false
 	}
 
@@ -126,7 +126,7 @@ func getSegment(target any, key string) any {
 	v := reflect.ValueOf(target)
 
 	// Handle pointers
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		if v.IsNil() {
 			return nil
 		}

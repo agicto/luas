@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Common domain errors that can be mapped to HTTP responses.
-// Define these in your domain package and use HandleError for automatic mapping.
+// Common response errors that can be mapped to HTTP responses.
+// Internal domain errors should be registered from an internal adapter.
 var (
 	ErrNotFound     = errors.New("not found")
 	ErrUnauthorized = errors.New("unauthorized")
@@ -69,9 +69,14 @@ func HandleErrorWithMapper(c *gin.Context, message string, err error, mapper *Er
 //	    }
 //	}
 func Abort(c *gin.Context, statusCode int, message string) {
+	AbortWithCode(c, statusCode, defaultErrorCodeForStatus(statusCode), message)
+}
+
+// AbortWithCode sends an error response with an explicit machine-readable code.
+func AbortWithCode(c *gin.Context, statusCode int, errorCode, message string) {
 	c.AbortWithStatusJSON(statusCode, ErrorResponse{
 		Code:      statusCode,
-		ErrorCode: defaultErrorCodeForStatus(statusCode),
+		ErrorCode: errorCode,
 		Message:   message,
 		RequestID: currentRequestID(c),
 	})

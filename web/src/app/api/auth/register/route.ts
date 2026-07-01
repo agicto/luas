@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import {
+  apiInvalidInputResponse,
+  apiValidationErrorResponse,
+} from '@/app/api/_shared/error-response';
+import { readJsonBody } from '@/app/api/_shared/json-body';
+import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
 import { setSessionCookie } from '@/features/auth/server/session';
-import { ErrorCode } from '@/http/codes';
 
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -10,17 +15,22 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const payload = await request.json().catch(() => null);
-  const parsed = registerSchema.safeParse(payload);
+  const mockBffGuard = guardMockBffRoute();
+
+  if (mockBffGuard) {
+    return mockBffGuard;
+  }
+
+  const payload = await readJsonBody(request);
+
+  if (!payload.ok) {
+    return apiInvalidInputResponse('Malformed JSON body');
+  }
+
+  const parsed = registerSchema.safeParse(payload.data);
 
   if (!parsed.success) {
-    return NextResponse.json(
-      {
-        error: 'Invalid registration payload',
-        code: ErrorCode.INVALID_PARAMS,
-      },
-      { status: 400 }
-    );
+    return apiValidationErrorResponse('Invalid registration payload', parsed.error);
   }
 
   const { name, email } = parsed.data;

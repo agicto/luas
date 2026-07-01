@@ -119,7 +119,7 @@ Ask:
 - Authentication identifiers must be unambiguous. If a starter accepts multiple login identifiers, each identifier must have clear uniqueness semantics.
 - Route-owning starters should expose stable machine-readable `error_code` values for non-2xx responses. Human-readable messages can evolve; error codes are part of the contract.
 - Adding a default starter should update the starter assembly seam and its contract tests.
-- Product-specific modules should not be added to default starters.
+- Product-specific features should not be added to default starters.
 
 ## Testing Rules
 

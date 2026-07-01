@@ -6,11 +6,11 @@ Accepted
 
 ## Context
 
-The repository had inconsistent terms for framework code, starter modules, optional modules, and examples. That made architecture discussions drift and made code reviews re-open the same questions.
+The repository had inconsistent terms for scaffold core, starter modules, optional starters, capabilities, and examples. That made architecture discussions drift and made code reviews re-open the same questions.
 
 ## Decision
 
-Use the vocabulary defined in `CONTEXT.md`:
+Use the vocabulary defined in the root [`CONTEXT.md`](../../../CONTEXT.md):
 
 - `core`
 - `starter`
@@ -18,6 +18,14 @@ Use the vocabulary defined in `CONTEXT.md`:
 - `optional starter`
 - `example`
 - `starter registry`
+- `feature`
+- `module`
+- `contract`
+- `mock BFF`
+- `console`
+- `devtools`
+- `error_code`
+- `request_id`
 
 These terms are the canonical names for architecture discussions, docs, and future ADRs.
 

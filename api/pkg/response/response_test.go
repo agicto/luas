@@ -8,8 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/zgiai/luas/api/internal/domain"
 )
 
 func init() {
@@ -186,7 +184,7 @@ func TestHandleErrorUsesStableErrorCode(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Set("request_id", "req-3")
 
-	HandleError(c, "Registration failed", domain.ErrUsernameAlreadyExists)
+	HandleError(c, "Conflict", ErrConflict)
 
 	assert.Equal(t, http.StatusConflict, w.Code)
 
@@ -194,8 +192,8 @@ func TestHandleErrorUsesStableErrorCode(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusConflict, resp.Code)
-	assert.Equal(t, domain.CodeUsernameAlreadyExists, resp.ErrorCode)
-	assert.Equal(t, "Registration failed", resp.Message)
+	assert.Equal(t, ErrorCodeConflict, resp.ErrorCode)
+	assert.Equal(t, "Conflict", resp.Message)
 	assert.Equal(t, "req-3", resp.RequestID)
 }
 

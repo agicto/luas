@@ -1,71 +1,68 @@
+version: "2"
 run:
-  timeout: 5m
   tests: true
-  build-tags: []
-
 linters:
   enable:
-    - errcheck
-    - gosimple
-    - govet
-    - ineffassign
-    - staticcheck
-    - unused
-    - misspell
-    - gofmt
-    - goimports
     - bodyclose
     - exhaustive
+    - misspell
     - nilerr
     - unconvert
     - unparam
     - wastedassign
-
-linters-settings:
-  errcheck:
-    check-blank: true
-    check-type-assertions: true
-    # In Go 1.24+ crypto/rand.Read is documented to never return an error;
-    # it panics internally on the rare case of OS RNG failure. Accept the
-    # idiomatic `_, _ = rand.Read(buf)` discard pattern.
-    exclude-functions:
-      - crypto/rand.Read
-  
-  govet:
-    enable-all: true
-    disable:
-      - fieldalignment
-  
-  gofmt:
-    simplify: true
-  
-  goimports:
-    local-prefixes: github.com/zgiai/luas/api
-  
-  misspell:
-    locale: US
-  
-  exhaustive:
-    default-signifies-exhaustive: true
-
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+      exclude-functions:
+        - crypto/rand.Read
+    exhaustive:
+      default-signifies-exhaustive: true
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    misspell:
+      locale: US
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - bodyclose
+          - errcheck
+        path: _test\.go
+      - linters:
+          - bodyclose
+          - errcheck
+        path: tests/
+      - linters:
+          - godox
+        source: TODO
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
 issues:
-  exclude-rules:
-    # Exclude some linters from tests
-    - path: _test\.go
-      linters:
-        - errcheck
-        - bodyclose
-    
-    # Exclude test helpers
-    - path: tests/
-      linters:
-        - errcheck
-        - bodyclose
-    
-    # Allow TODO comments
-    - source: "TODO"
-      linters:
-        - godox
-
   max-issues-per-linter: 50
   max-same-issues: 5
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - github.com/zgiai/luas/api
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

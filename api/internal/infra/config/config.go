@@ -51,8 +51,17 @@ type ServerConfig struct {
 
 // MiddlewareConfig holds middleware configuration
 type MiddlewareConfig struct {
-	RequestTimeout int   // Request timeout in seconds, default 180 (3 min)
-	BodyLimit      int64 // Max body size in bytes, default 10MB
+	RequestTimeout int             // Request timeout in seconds, default 180 (3 min)
+	BodyLimit      int64           // Max body size in bytes, default 10MB
+	RateLimit      RateLimitConfig // Production default request rate guardrail
+}
+
+// RateLimitConfig holds default HTTP rate limit configuration.
+type RateLimitConfig struct {
+	Enabled   bool
+	Max       int
+	Window    time.Duration
+	SkipPaths []string
 }
 
 type DatabaseConfig struct {
@@ -176,12 +185,14 @@ type ClickHouseConfig struct {
 func Load() (*Config, error) {
 	env.Load()
 
+	appEnv := env.Get("APP_ENV", "development")
+	isProd := strings.EqualFold(appEnv, "production")
 	expireDays := env.GetInt("JWT_EXPIRE_DAYS", 7)
 
 	cfg := &Config{
 		App: AppConfig{
 			Name:      env.Get("APP_NAME", "Luas"),
-			Env:       env.Get("APP_ENV", "development"),
+			Env:       appEnv,
 			Debug:     env.GetBool("APP_DEBUG", true),
 			URL:       env.Get("APP_URL", "http://localhost:8025"),
 			Key:       env.Get("APP_KEY", ""),
@@ -274,6 +285,18 @@ func Load() (*Config, error) {
 		Middleware: MiddlewareConfig{
 			RequestTimeout: env.GetInt("MIDDLEWARE_REQUEST_TIMEOUT", 180),                   // 3 minutes default
 			BodyLimit:      int64(env.GetInt("MIDDLEWARE_BODY_LIMIT_MB", 10)) * 1024 * 1024, // 10MB default
+			RateLimit: RateLimitConfig{
+				Enabled: env.GetBool("MIDDLEWARE_RATE_LIMIT_ENABLED", isProd),
+				Max:     env.GetInt("MIDDLEWARE_RATE_LIMIT_MAX", 600),
+				Window:  env.GetDuration("MIDDLEWARE_RATE_LIMIT_WINDOW", time.Minute),
+				SkipPaths: env.GetSlice("MIDDLEWARE_RATE_LIMIT_SKIP_PATHS", []string{
+					"/health",
+					"/health/live",
+					"/health/ready",
+					"/metrics",
+					"/v1/health",
+				}),
+			},
 		},
 		Tracing: TracingConfig{
 			Enabled:    env.GetBool("TRACING_ENABLED", false),
@@ -361,6 +384,15 @@ func validate(cfg *Config) error {
 			if strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1") {
 				return fmt.Errorf("CORS_ALLOW_ORIGINS contains a localhost origin in production: %q", origin)
 			}
+		}
+	}
+
+	if cfg.Middleware.RateLimit.Enabled {
+		if cfg.Middleware.RateLimit.Max <= 0 {
+			return fmt.Errorf("MIDDLEWARE_RATE_LIMIT_MAX must be greater than 0 when rate limit is enabled")
+		}
+		if cfg.Middleware.RateLimit.Window <= 0 {
+			return fmt.Errorf("MIDDLEWARE_RATE_LIMIT_WINDOW must be greater than 0 when rate limit is enabled")
 		}
 	}
 

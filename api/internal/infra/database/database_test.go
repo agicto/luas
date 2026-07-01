@@ -1,10 +1,12 @@
 package database
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
@@ -87,4 +89,34 @@ func TestBuildLoggerConfig_UsesDatabaseSettings(t *testing.T) {
 	assert.Equal(t, 2*time.Second, loggerCfg.SlowThreshold)
 	assert.False(t, loggerCfg.IgnoreRecordNotFoundError)
 	assert.True(t, loggerCfg.Colorful)
+}
+
+func TestNewDB_ReturnsNilWhenDisabled(t *testing.T) {
+	db, err := NewDB(&config.Config{
+		Database: config.DatabaseConfig{
+			Enabled: false,
+		},
+	})
+
+	require.NoError(t, err)
+	assert.Nil(t, db)
+}
+
+func TestNewDB_ReturnsErrorWhenEnabledDatabaseUnavailable(t *testing.T) {
+	db, err := NewDB(&config.Config{
+		App: config.AppConfig{
+			Env: "test",
+		},
+		Database: config.DatabaseConfig{
+			Enabled:              true,
+			Driver:               "sqlite",
+			Name:                 filepath.Join(t.TempDir(), "missing-parent", "luas.sqlite"),
+			SlowThreshold:        time.Second,
+			IgnoreRecordNotFound: true,
+		},
+	})
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "database is enabled but unavailable")
+	assert.Nil(t, db)
 }

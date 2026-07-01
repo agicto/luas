@@ -1,13 +1,13 @@
 # Adding an API Module
 
-Use this path for route-owning backend behavior.
+Use this path for starter-style, route-owning backend behavior.
 
 ## Steps
 
 1. Name the module after the domain concept, not the transport action.
 2. Add or update the HTTP contract in `../../contracts/` when the web app will call it.
 3. Create `internal/modules/<name>/`.
-4. Keep the starter files local to the module:
+4. Keep the starter-style files local to the module:
 
 ```text
 model.go

@@ -12,6 +12,19 @@ permissions:
   contents: read
 
 jobs:
+  vocabulary:
+    name: Vocabulary
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Luas vocabulary drift check
+        run: bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
+
+      - name: API package boundary check
+        run: bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
+
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
@@ -32,7 +45,7 @@ jobs:
       - name: Install golangci-lint
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-            | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+            | sh -s -- -b $(go env GOPATH)/bin v2.12.2
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Verification — Tier 1 (build + lint + test) on the whole api/ tree

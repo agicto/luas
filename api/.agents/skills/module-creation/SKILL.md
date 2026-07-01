@@ -12,11 +12,11 @@ updated: 2026-04-26
 
 ## 📋 Purpose
 
-This skill guides you through creating a starter-style DDD (Domain-Driven Design) module in the Luas framework. It treats the 8-file layout as the default template for route-owning business modules, while keeping the architecture aligned with the current `core / starter / capability / optional starter / example` split.
+This skill guides you through creating a starter-style DDD (Domain-Driven Design) module in the Luas API half. It treats the 8-file layout as the default template for route-owning starter modules, while keeping the architecture aligned with the current `core / starter / capability / optional starter / example` split.
 
 Use [`architecture-principles`](../architecture-principles/) first when deciding whether a new module should exist, what kind of module it is, and whether any new seam is justified.
 
-Luas uses a layered architecture where route-owning business modules are usually self-contained with clear separation of concerns:
+Luas uses a layered architecture where route-owning starter modules are usually self-contained with clear separation of concerns:
 - **Model Layer** (Database entities)
 - **DTO Layer** (Data Transfer Objects + Mappers)
 - **Repository Layer** (Data access)
@@ -31,7 +31,7 @@ Capabilities and examples may intentionally use lighter structures.
 ## 🎯 When to Use
 
 Use this skill when:
-- Creating a new route-owning business module (e.g., User, Blog, Product, Order)
+- Creating a new route-owning starter-style module (e.g., User, Blog, Product, Order)
 - Scaffolding a default or optional starter
 - Ensuring consistency with Luas's DDD architecture
 - Teaching or onboarding team members to Luas patterns

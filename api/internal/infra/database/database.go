@@ -16,7 +16,7 @@ import (
 )
 
 // NewDB creates a new database connection via Wire DI.
-// Returns nil if database is disabled in config.
+// Returns nil only when database support is explicitly disabled in config.
 func NewDB(cfg *config.Config) (*gorm.DB, error) {
 	if !cfg.Database.Enabled {
 		log.Println("Database initialization skipped (DB_ENABLED=false)")
@@ -25,9 +25,7 @@ func NewDB(cfg *config.Config) (*gorm.DB, error) {
 
 	db, err := initDB(cfg)
 	if err != nil {
-		log.Printf("⚠️  Database unavailable: %v", err)
-		log.Printf("⚠️  The application will start without database. Please configure DB_HOST/DB_PORT/DB_USERNAME/DB_PASSWORD/DB_NAME, or set DB_ENABLED=false to silence this warning.")
-		return nil, nil
+		return nil, fmt.Errorf("database is enabled but unavailable: %w", err)
 	}
 	return db, nil
 }

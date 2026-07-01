@@ -23,7 +23,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 
 ### 1. 环境准备
 
-- Go 1.24+
+- Go 1.25+
 - PostgreSQL 12+ 或 SQLite
 - Redis 6+（可选）
 
@@ -87,6 +87,32 @@ make lint
 make wire
 make air
 ```
+
+## 默认 HTTP 防护
+
+API HTTP kernel 默认启用以下 core guardrails：
+
+- `RequestID`：为响应和错误输出提供 `X-Request-ID` / `request_id`
+- `Helmet`：发送基础安全响应头
+- `BodyLimit`：默认 10MB，请求过大返回 `413` + `COMMON.REQUEST_TOO_LARGE`
+- `Timeout`：默认 180 秒 cooperative request timeout；handler 尊重 `context` 且未写响应时返回 `503` + `COMMON.TIMEOUT`
+- `RateLimit`：`APP_ENV=production` 时默认启用，每个 client IP 默认 `600/min`，超限返回 `429` + `COMMON.RATE_LIMITED`
+- `CORS`：默认只允许本地 Web shell，生产环境必须显式配置可信 origin
+
+可通过 `.env` 调整：
+
+```bash
+MIDDLEWARE_REQUEST_TIMEOUT=180
+MIDDLEWARE_BODY_LIMIT_MB=10
+MIDDLEWARE_RATE_LIMIT_ENABLED=true
+MIDDLEWARE_RATE_LIMIT_MAX=600
+MIDDLEWARE_RATE_LIMIT_WINDOW=1m
+CORS_ALLOW_ORIGINS=https://app.example.com
+```
+
+Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。Rate limit 使用进程内 memory store，适合作为 scaffold 的安全默认；多实例生产环境应在网关、WAF、Redis store 或部署层补充分布式限流。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
+
+完整 middleware 分类见 [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md)。
 
 ## 项目结构
 

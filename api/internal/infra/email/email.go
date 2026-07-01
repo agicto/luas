@@ -130,7 +130,7 @@ func (s *Service) SendEmail(to []string, subject, htmlContent string) error {
 		if resendError.Name == "validation_error" && strings.Contains(resendError.Message, "domain is not verified") {
 			return fmt.Errorf("recipient domain not verified, please contact admin to add domain verification")
 		}
-		return fmt.Errorf("Resend API error: %s", resendError.Message)
+		return fmt.Errorf("resend API error: %s", resendError.Message)
 	}
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {

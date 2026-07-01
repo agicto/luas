@@ -17,7 +17,7 @@ type Builder struct {
 func NewBuilder(db *gorm.DB) *Builder {
 	return &Builder{
 		db:      db,
-		grammar: NewGrammar(db.Dialector.Name()),
+		grammar: NewGrammar(db.Name()),
 	}
 }
 
@@ -118,7 +118,7 @@ func (b *Builder) DropAllTables() error {
 	// Get all tables
 	var tables []string
 
-	switch b.db.Dialector.Name() {
+	switch b.db.Name() {
 	case "mysql":
 		if err := b.db.Raw("SHOW TABLES").Scan(&tables).Error; err != nil {
 			return err
@@ -134,7 +134,7 @@ func (b *Builder) DropAllTables() error {
 	}
 
 	// Disable foreign key checks for MySQL
-	if b.db.Dialector.Name() == "mysql" {
+	if b.db.Name() == "mysql" {
 		b.db.Exec("SET FOREIGN_KEY_CHECKS = 0")
 		defer b.db.Exec("SET FOREIGN_KEY_CHECKS = 1")
 	}

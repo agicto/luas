@@ -1,181 +1,111 @@
 # Luas Web
 
-一个面向平台控制面的 Next.js 控制台，负责 GitHub 连接、仓库导入、服务创建、环境变量管理、部署触发与实时日志展示。
+Luas Web is the Next.js half of the Luas scaffold. It provides a feature-first React app, development mock BFF endpoints, protected console routes, i18n, typed environment config, and a small HTTP client for talking to the API half.
 
-## ✨ Frontend-First AI Features
+## Stack
 
-- 🎨 **Component-Driven**: Extensive UI component library with Radix UI and custom designs
-- 🚀 **Performance Optimized**: Next.js 16.2.1 App Router with automatic code splitting
-- 🌙 **Theme System**: Beautiful dark/light themes with CSS variables
-- 📱 **Mobile-First**: Responsive design for all screen sizes
-- 🔍 **TypeScript**: Full type safety and excellent DX (TypeScript 5.9+)
-- ⚡ **Hot Reload**: Instant development feedback with Next.js Turbopack
-- 🤖 **AI-Ready**: Clean patterns for AI code generation and "vibe coding"
-- 🔐 **Auth Integration**: Mock auth routes with httpOnly session cookies and protected demo pages
-- 📊 **State Management**: Zustand 5.0 for predictable, granular state handling
-- 🌍 **I18n**: Full internationalization support with `next-intl`
-- 🎨 **Styleguide Explorer**: Pre-built component gallery and design system playground
-- 🛠️ **Developer Tools**: Pre-configured ESLint 9, Prettier, and Vitest
+| Area | Tooling |
+|---|---|
+| Framework | Next.js 16.2.9 App Router |
+| UI | React 19.2.7, Tailwind CSS 4, Radix UI, lucide-react |
+| State | TanStack Query 5, Zustand 5 |
+| i18n | next-intl 4 |
+| Tests | Vitest 4, Testing Library, happy-dom |
+| Tooling | TypeScript 5.9, ESLint 9, Prettier |
 
-## 🤖 AI Developer Experience
+## Quick Start
 
-- **AI-Friendly Code Structure**: Clean, predictable patterns that AI tools (like Windsurf, Cursor, Bolt) understand
-- **Smart Component Design**: Components designed for AI generation and modification, utilizing Atomic Design principles
-- **Type Safety**: Comprehensive TypeScript types for better AI code completion and error prevention
-- **Documentation**: Rich JSDoc comments for AI context understanding
-- **Error Handling**: Standardized error handling patterns for AI debugging assistance
+```bash
+pnpm install
+cp .env.example .env.local
+pnpm dev
+```
 
-## 🆕 Latest Updates (v2.1.0)
+The app runs at [http://localhost:3000](http://localhost:3000).
 
-- ✅ **Next.js 16.2.1** - Current pinned framework version
-- ✅ **React 19.2.3** - Full support for React 19 features
-- ✅ **Tailwind CSS 4.1.18** - Modern utility-first CSS
-- ✅ **Next-Intl 4.6** - Comprehensive i18n solution
-- ✅ **Zustand 5.0** - Optimized state management
-- ✅ **Architecture Guide** - Comprehensive guide for building scalable AI-ready apps
+Default development env:
 
-👉 Check out the [Optimization Summary Report](docs/OPTIMIZATION_SUMMARY.md) for details.
+```env
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_DEFAULT_LOCALE=zh-Hans
+NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED=true
+MOCK_BFF_ENABLED=false
+```
 
-## 🛠️ Frontend-Optimized Tech Stack
+`/api/*` route handlers are the development mock BFF. They are available outside production by default, but production runtime returns `503 COMMON.SERVICE_UNAVAILABLE` unless `MOCK_BFF_ENABLED=true` is set explicitly. Downstream production apps should normally point `NEXT_PUBLIC_API_URL` at the real Luas API instead of enabling mock routes.
 
-- **Framework**: Next.js 16.2.1 (App Router)
-- **Library**: React 19.2.3
-- **Language**: TypeScript 5.9.3 (Strict Mode)
-- **Styling**: Tailwind CSS 4.1.18 + PostCSS
-- **UI Components**: Radix UI + Lucide Icons
-- **State Management**: Zustand 5.0.9
-- **Data Fetching**: TanStack Query v5
-- **Validation**: Zod 4.2
-- **Theming**: Next-Themes 0.4
-- **Testing**: Vitest 4.0 + Testing Library
+See [docs/MOCK_BFF.md](docs/MOCK_BFF.md) before replacing, deleting, or intentionally enabling the mock BFF.
 
-## 🚀 Quick Start
+For production runtime, set a strong `SESSION_SECRET` because the scaffold mock auth session cookie is HMAC-signed:
 
-### Prerequisites
+```bash
+openssl rand -hex 32
+```
 
-- Node.js 20.11+
-- pnpm 10+ (Recommended)
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/zgiai/luas.git
-   cd luas/web
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-3. **Set up environment variables**
-
-   ```bash
-   cp .env.example .env.local
-   # Edit .env.local with your configuration
-   ```
-
-   Platform console variables:
-
-   ```bash
-   NEXT_PUBLIC_DEPLOY_API_URL=http://localhost:8025/v1
-   NEXT_PUBLIC_PLATFORM_API_URL=http://localhost:8025/v1
-   ```
-
-4. **Run the development server**
-
-   ```bash
-   pnpm dev
-   ```
-
-5. **Open your browser**
-
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-## 📁 Project Structure
+## Project Structure
 
 ```text
 src/
 ├── app/                    # Next.js App Router
-│   ├── (auth)/            # Authentication routes
-│   ├── (protected)/       # Authenticated route group
-│   │   ├── (console)/     # Console shell and business pages
-│   │   └── (devtools)/    # Internal demo and playground pages
-│   ├── (site)/            # Marketing/Public pages
-│   └── api/               # API Route handlers
-├── components/            # Shared UI and generic components
-│   ├── ui/               # Base UI library (Shadcn-like)
-│   ├── features/         # Shared feature-facing UI blocks
-│   └── common/           # Shared layout components
-├── features/             # Feature-first modules (auth, example, ...)
-│   ├── auth/             # components, hooks, services, store, server, types
-│   └── example/          # hooks, services, server, types
-├── hooks/                # Shared generic hooks only
-├── services/             # Compatibility exports for feature services
-├── store/                # Shared global stores only
-├── i18n/                 # Translation files
-├── providers/            # React context providers
-├── utils/                # Utility functions
-└── types/                # Shared cross-feature types
+│   ├── (auth)/             # Public auth routes
+│   ├── (protected)/        # Authenticated route groups
+│   ├── (site)/             # Public site pages
+│   └── api/                # Mock BFF route handlers
+├── components/             # Shared UI and layout components
+├── features/               # Feature-first folders
+├── http/                   # Axios wrapper and error normalization
+├── i18n/                   # next-intl modules and helpers
+├── providers/              # App providers
+├── store/                  # Shared global state
+├── test/                   # Test setup
+├── themes/                 # Design tokens
+└── utils/                  # Pure utilities
 ```
 
-## 📊 Features in Depth
+## Auth
 
-### 🎨 **Styleguide**
-A built-in styleguide available at `/styleguide` lives under the protected devtools route group, keeping internal playground pages separate from business pages.
+The web scaffold includes mock BFF auth endpoints under `src/app/api/auth/`:
 
-### 🔐 **Authentication**
-Complete auth flow out-of-the-box:
-- Login/Register pages with validation
-- Mock `/api/auth/*` routes with a demo account (`admin@example.com` / `admin123`)
-- httpOnly session cookie bootstrap via `AuthProvider`
-- `middleware.ts` + `AuthGuard` for protected routes
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET /api/auth/me`
+- `POST /api/auth/logout`
 
-### 🌍 **Internationalization**
-Powered by `next-intl`, supporting:
-- Multi-language routing
-- Type-safe translation keys
-- Dynamic language switching
+Demo account:
 
-### 🚀 **Platform Console**
-控制台首页现在是平台工作台，提供：
-- GitHub Token 连接与仓库浏览
-- 从仓库导入服务
-- 选择部署目标与部署策略
-- 环境变量编辑
-- 部署记录与实时日志流
-- 发布中心低层操作页
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-Deployment is seamless on Vercel with zero configuration.
-
-### Docker
-```bash
-docker build -t luas-web .
-docker run -p 3000:3000 luas-web
+```text
+admin@example.com / admin123
 ```
 
-## 🧪 Scripts
+Protected routes are enforced by `middleware.ts` and `AuthGuard`.
+
+Before shipping a downstream app, replace these mock auth routes with the real API-backed auth flow or keep them disabled in production.
+
+## HTTP Contract
+
+The default request client is configured by `NEXT_PUBLIC_API_URL`. Error handling understands the Go API error shape:
+
+```json
+{
+  "code": 404,
+  "error_code": "COMMON.NOT_FOUND",
+  "message": "Not found",
+  "request_id": "req_123"
+}
+```
+
+See [../contracts/README.md](../contracts/README.md) for the shared contract.
+
+## Scripts
 
 ```bash
-pnpm dev          # Start development with Turbopack
-pnpm build        # Build for production
-pnpm start        # Start production server
-pnpm lint         # Run ESLint
-pnpm type-check   # Run TypeScript checks
-pnpm test         # Run unit tests
-pnpm format       # Format with Prettier
+pnpm dev
+pnpm type-check
+pnpm lint
+pnpm test -- --run
+pnpm test:coverage
+pnpm build
 ```
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
----
-
-Made with ❤️ by the Luas contributors
+Use `make check` from the repository root to run the canonical API and Web verification tiers together.

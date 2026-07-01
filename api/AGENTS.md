@@ -1,10 +1,10 @@
-# AGENTS.md
+# AGENTS.md — Luas API
 
-Instructions for AI coding agents working on the Luas framework.
+Instructions for AI coding agents working on the Luas API half.
 
 ## Project Overview
 
-Luas is a modern Go framework using Domain-Driven Design (DDD) + layered architecture.
+The API half is the Go backend of the Luas scaffold. It uses Gin + Wire DI + GORM, DDD-flavored starter modules, and layered architecture.
 
 ## 📖 AGENTS.md vs Skills - Positioning
 
@@ -38,7 +38,7 @@ Luas is a modern Go framework using Domain-Driven Design (DDD) + layered archite
 - ✅ Troubleshooting guides
 
 **Use Cases**:
-- Create new modules (complete process)
+- Create new route-owning starter-style modules (complete process)
 - Learn best practices (deep understanding)
 - Execute complex tasks (step-by-step)
 
@@ -48,7 +48,7 @@ Luas is a modern Go framework using Domain-Driven Design (DDD) + layered archite
 
 **Relationship**: Complementary, not replacement
 - 📖 **AGENTS.md**: "How to use this command?" "What's this standard?"
-- 🎯 **Skills**: "How to create a module from scratch?" "What's the complete workflow?"
+- 🎯 **Skills**: "How to create a starter-style module from scratch?" "What's the complete workflow?"
 
 ---
 
@@ -69,7 +69,7 @@ Skills are self-contained packages of instructions, scripts, and examples that g
 | Skill | Description | When to Use |
 |-------|-------------|-------------|
 | [`architecture-principles`](./.agents/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
-| [`module-creation`](./.agents/skills/module-creation/) | Create starter-style DDD modules | Creating new business modules |
+| [`module-creation`](./.agents/skills/module-creation/) | Create starter-style DDD modules | Creating route-owning starters or optional starters |
 | [`coding-standards`](./.agents/skills/coding-standards/) | Verify code follows Luas standards | Code review, PR submission |
 | [`api-development`](./.agents/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
 | [`logging-standards`](./.agents/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
@@ -102,6 +102,11 @@ cat .agents/skills/module-creation/SKILL.md
 
 See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed documentation.
 
+## Architecture References
+
+- [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
+- [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
+
 ## Directory Structure
 
 ```text
@@ -112,7 +117,7 @@ luas/
 ├── internal/
 │   ├── bootstrap/         # Application startup
 │   ├── domain/            # Domain entities (core business)
-│   ├── modules/           # Business modules
+│   ├── modules/           # Route-owning starter modules
 │   │   └── user/          # Example: 8 files
 │   │       ├── model.go       # Database entity (UserPO)
 │   │       ├── dto.go         # DTO + Mapper functions
@@ -140,7 +145,7 @@ make wire          # Generate DI
 make air           # Hot-reload dev server
 ```
 
-## Module Structure (default starter template)
+## Starter-Style Module Structure
 
 | File | Responsibility |
 |------|----------------|
@@ -204,7 +209,7 @@ internal/modules/user/
 └── service_test.go       # 8. Unit tests
 ```
 
-`capability` modules may intentionally omit HTTP-oriented files such as `handler.go` and `routes.go`.
+Capabilities may intentionally omit HTTP-oriented files such as `handler.go` and `routes.go`.
 
 **Validation**:
 ```bash

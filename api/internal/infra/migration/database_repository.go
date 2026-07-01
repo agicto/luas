@@ -143,7 +143,7 @@ func (r *databaseRepository) GetMigrationBatches() (map[string]int, error) {
 // CreateRepository creates the migrations table if it doesn't exist.
 // Supports MySQL, PostgreSQL, and SQLite dialects.
 func (r *databaseRepository) CreateRepository() error {
-	dialect := r.db.Dialector.Name()
+	dialect := r.db.Name()
 
 	var sql string
 	switch dialect {
@@ -184,7 +184,7 @@ func (r *databaseRepository) RepositoryExists() bool {
 
 // DeleteRepository drops the migrations table.
 func (r *databaseRepository) DeleteRepository() error {
-	dialect := r.db.Dialector.Name()
+	dialect := r.db.Name()
 
 	var sql string
 	switch dialect {

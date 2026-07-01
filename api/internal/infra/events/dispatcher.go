@@ -128,7 +128,7 @@ func (d *SimpleDispatcher) Flush() {
 // GetSimpleEventName extracts event name from type (helper for struct events)
 func GetSimpleEventName(event SimpleEvent) string {
 	t := reflect.TypeOf(event)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	return t.PkgPath() + "." + t.Name()

@@ -5,20 +5,20 @@ import (
 	"net/http"
 
 	"gorm.io/gorm"
-
-	"github.com/zgiai/luas/api/internal/domain"
 )
 
 const (
-	ErrorCodeInternal         = "COMMON.INTERNAL"
-	ErrorCodeValidationFailed = "COMMON.VALIDATION_FAILED"
-	ErrorCodeRateLimited      = "COMMON.RATE_LIMITED"
-	ErrorCodeServiceDown      = "COMMON.SERVICE_UNAVAILABLE"
-	ErrorCodeUnauthorized     = "AUTH.UNAUTHORIZED"
-	ErrorCodeForbidden        = "AUTH.FORBIDDEN"
-	ErrorCodeNotFound         = domain.CodeNotFound
-	ErrorCodeConflict         = domain.CodeConflict
-	ErrorCodeInvalidInput     = domain.CodeInvalidInput
+	ErrorCodeInternal           = "COMMON.INTERNAL"
+	ErrorCodeValidationFailed   = "COMMON.VALIDATION_FAILED"
+	ErrorCodeRateLimited        = "COMMON.RATE_LIMITED"
+	ErrorCodeRequestTooLarge    = "COMMON.REQUEST_TOO_LARGE"
+	ErrorCodeTimeout            = "COMMON.TIMEOUT"
+	ErrorCodeServiceUnavailable = "COMMON.SERVICE_UNAVAILABLE"
+	ErrorCodeUnauthorized       = "AUTH.UNAUTHORIZED"
+	ErrorCodeForbidden          = "AUTH.FORBIDDEN"
+	ErrorCodeNotFound           = "COMMON.NOT_FOUND"
+	ErrorCodeConflict           = "COMMON.CONFLICT"
+	ErrorCodeInvalidInput       = "COMMON.INVALID_INPUT"
 )
 
 // ErrorDescriptor combines transport status with a stable machine-readable code.
@@ -79,40 +79,15 @@ func (m *ErrorMapper) GetErrorCode(err error) string {
 	return m.Resolve(err).ErrorCode
 }
 
-// DefaultErrorMapper provides default error mappings for framework and domain errors.
+// DefaultErrorMapper provides default mappings for transport-level response errors.
 var DefaultErrorMapper = &ErrorMapper{
 	mappings: map[error]ErrorDescriptor{
-		ErrNotFound:                  {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
-		ErrUnauthorized:              {StatusCode: http.StatusUnauthorized, ErrorCode: ErrorCodeUnauthorized},
-		ErrForbidden:                 {StatusCode: http.StatusForbidden, ErrorCode: ErrorCodeForbidden},
-		ErrConflict:                  {StatusCode: http.StatusConflict, ErrorCode: ErrorCodeConflict},
-		ErrValidation:                {StatusCode: http.StatusUnprocessableEntity, ErrorCode: ErrorCodeValidationFailed},
-		gorm.ErrRecordNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
-		domain.ErrNotFound:           {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeNotFound},
-		domain.ErrUserNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeUserNotFound},
-		domain.ErrRoleNotFound:       {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeRoleNotFound},
-		domain.ErrAPIKeyNotFound:     {StatusCode: http.StatusNotFound, ErrorCode: domain.CodeAPIKeyNotFound},
-		domain.ErrInvalidCredentials: {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeInvalidCredentials},
-		domain.ErrAPIKeyInvalid:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyInvalid},
-		domain.ErrAPIKeyExpired:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyExpired},
-		domain.ErrAPIKeyRevoked:      {StatusCode: http.StatusUnauthorized, ErrorCode: domain.CodeAPIKeyRevoked},
-		domain.ErrAccountDisabled:    {StatusCode: http.StatusForbidden, ErrorCode: domain.CodeAccountDisabled},
-		domain.ErrPermissionDenied:   {StatusCode: http.StatusForbidden, ErrorCode: domain.CodePermissionDenied},
-		domain.ErrEmailAlreadyExists: {StatusCode: http.StatusConflict, ErrorCode: domain.CodeEmailAlreadyExists},
-		domain.ErrUsernameAlreadyExists: {
-			StatusCode: http.StatusConflict,
-			ErrorCode:  domain.CodeUsernameAlreadyExists,
-		},
-		domain.ErrPasswordResetTokenInvalid: {
-			StatusCode: http.StatusUnauthorized,
-			ErrorCode:  domain.CodePasswordResetTokenInvalid,
-		},
-		domain.ErrPasswordResetTokenExpired: {
-			StatusCode: http.StatusUnauthorized,
-			ErrorCode:  domain.CodePasswordResetTokenExpired,
-		},
-		domain.ErrConflict:     {StatusCode: http.StatusConflict, ErrorCode: domain.CodeConflict},
-		domain.ErrInvalidInput: {StatusCode: http.StatusUnprocessableEntity, ErrorCode: domain.CodeInvalidInput},
+		ErrNotFound:            {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
+		ErrUnauthorized:        {StatusCode: http.StatusUnauthorized, ErrorCode: ErrorCodeUnauthorized},
+		ErrForbidden:           {StatusCode: http.StatusForbidden, ErrorCode: ErrorCodeForbidden},
+		ErrConflict:            {StatusCode: http.StatusConflict, ErrorCode: ErrorCodeConflict},
+		ErrValidation:          {StatusCode: http.StatusUnprocessableEntity, ErrorCode: ErrorCodeValidationFailed},
+		gorm.ErrRecordNotFound: {StatusCode: http.StatusNotFound, ErrorCode: ErrorCodeNotFound},
 	},
 }
 
@@ -132,8 +107,10 @@ func defaultErrorCodeForStatus(statusCode int) string {
 		return ErrorCodeValidationFailed
 	case http.StatusTooManyRequests:
 		return ErrorCodeRateLimited
+	case http.StatusRequestEntityTooLarge:
+		return ErrorCodeRequestTooLarge
 	case http.StatusServiceUnavailable:
-		return ErrorCodeServiceDown
+		return ErrorCodeServiceUnavailable
 	default:
 		return ErrorCodeInternal
 	}

@@ -42,23 +42,23 @@ func GenerateMarkdown(endpoints []Endpoint, outputFile string) error {
 
 	// Header
 	sb.WriteString("# API Documentation\n\n")
-	sb.WriteString(fmt.Sprintf("> Generated: %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+	fmt.Fprintf(&sb, "> Generated: %s\n\n", time.Now().Format("2006-01-02 15:04:05"))
 
 	// Base URLs
 	sb.WriteString("## Base URLs\n\n")
 	sb.WriteString("| Environment | URL |\n")
 	sb.WriteString("|-------------|-----|\n")
 	if config.LocalURL != "" {
-		sb.WriteString(fmt.Sprintf("| 🏠 Local | `%s` |\n", config.LocalURL))
+		fmt.Fprintf(&sb, "| 🏠 Local | `%s` |\n", config.LocalURL)
 	}
 	if config.DevURL != "" {
-		sb.WriteString(fmt.Sprintf("| 🔧 Development | `%s` |\n", config.DevURL))
+		fmt.Fprintf(&sb, "| 🔧 Development | `%s` |\n", config.DevURL)
 	}
 	if config.StagingURL != "" {
-		sb.WriteString(fmt.Sprintf("| 🧪 Staging | `%s` |\n", config.StagingURL))
+		fmt.Fprintf(&sb, "| 🧪 Staging | `%s` |\n", config.StagingURL)
 	}
 	if config.ProdURL != "" {
-		sb.WriteString(fmt.Sprintf("| 🚀 Production | `%s` |\n", config.ProdURL))
+		fmt.Fprintf(&sb, "| 🚀 Production | `%s` |\n", config.ProdURL)
 	}
 	sb.WriteString("\n")
 
@@ -69,21 +69,21 @@ func GenerateMarkdown(endpoints []Endpoint, outputFile string) error {
 
 	// Overview
 	sb.WriteString("## Overview\n\n")
-	sb.WriteString(fmt.Sprintf("Total endpoints: **%d**\n\n", len(endpoints)))
+	fmt.Fprintf(&sb, "Total endpoints: **%d**\n\n", len(endpoints))
 
 	// Table of contents
 	sb.WriteString("## Table of Contents\n\n")
 	modules := groupByModule(endpoints)
 	for _, module := range sortedKeys(modules) {
 		count := len(modules[module])
-		sb.WriteString(fmt.Sprintf("- [%s](#%s) (%d endpoints)\n", capitalize(module), module, count))
+		fmt.Fprintf(&sb, "- [%s](#%s) (%d endpoints)\n", capitalize(module), module, count)
 	}
 	sb.WriteString("\n---\n\n")
 
 	// Generate docs by module
 	for _, module := range sortedKeys(modules) {
 		moduleEndpoints := modules[module]
-		sb.WriteString(fmt.Sprintf("## %s\n\n", capitalize(module)))
+		fmt.Fprintf(&sb, "## %s\n\n", capitalize(module))
 
 		// Module summary table
 		sb.WriteString("| Method | Endpoint | Description | Auth |\n")
@@ -93,8 +93,7 @@ func GenerateMarkdown(endpoints []Endpoint, outputFile string) error {
 			if !ep.Route.IsPublic {
 				auth = "🔒" // Protected
 			}
-			sb.WriteString(fmt.Sprintf("| `%s` | `%s` | %s | %s |\n",
-				ep.Route.Method, ep.Route.Path, ep.Summary, auth))
+			fmt.Fprintf(&sb, "| `%s` | `%s` | %s | %s |\n", ep.Route.Method, ep.Route.Path, ep.Summary, auth)
 		}
 		sb.WriteString("\n")
 
@@ -112,14 +111,14 @@ func writeEndpointEnhanced(sb *strings.Builder, ep Endpoint, config APIConfig) {
 	path := ep.Route.Path
 
 	// Endpoint header
-	sb.WriteString(fmt.Sprintf("### %s `%s`\n\n", ep.Route.Method, path))
+	fmt.Fprintf(sb, "### %s `%s`\n\n", ep.Route.Method, path)
 
 	// Summary and description
 	if ep.Summary != "" {
-		sb.WriteString(fmt.Sprintf("**%s**\n\n", ep.Summary))
+		fmt.Fprintf(sb, "**%s**\n\n", ep.Summary)
 	}
 	if ep.Description != "" {
-		sb.WriteString(fmt.Sprintf("%s\n\n", ep.Description))
+		fmt.Fprintf(sb, "%s\n\n", ep.Description)
 	}
 
 	// Quick info
@@ -131,7 +130,7 @@ func writeEndpointEnhanced(sb *strings.Builder, ep Endpoint, config APIConfig) {
 		sb.WriteString("| Auth | 🔒 JWT Required |\n")
 	}
 	if ep.Route.Name != "" {
-		sb.WriteString(fmt.Sprintf("| Route Name | `%s` |\n", ep.Route.Name))
+		fmt.Fprintf(sb, "| Route Name | `%s` |\n", ep.Route.Name)
 	}
 	sb.WriteString("\n")
 
@@ -156,8 +155,7 @@ func writeEndpointEnhanced(sb *strings.Builder, ep Endpoint, config APIConfig) {
 			if desc == "" {
 				desc = "-"
 			}
-			sb.WriteString(fmt.Sprintf("| `%s` | `%s` | %s | %s |\n",
-				field.JSONName, field.Type, required, desc))
+			fmt.Fprintf(sb, "| `%s` | `%s` | %s | %s |\n", field.JSONName, field.Type, required, desc)
 		}
 		sb.WriteString("\n")
 	}
@@ -169,7 +167,7 @@ func writeEndpointEnhanced(sb *strings.Builder, ep Endpoint, config APIConfig) {
 		sb.WriteString("|-----------|------|-------------|\n")
 		params := extractPathParams(ep.Route.Path)
 		for _, param := range params {
-			sb.WriteString(fmt.Sprintf("| `%s` | `integer` | Resource identifier |\n", param))
+			fmt.Fprintf(sb, "| `%s` | `integer` | Resource identifier |\n", param)
 		}
 		sb.WriteString("\n")
 	}
@@ -232,8 +230,8 @@ func GenerateModuleDocs(endpoints []Endpoint, outputDir string) error {
 	for module, moduleEndpoints := range modules {
 		var sb strings.Builder
 
-		sb.WriteString(fmt.Sprintf("# %s API\n\n", capitalize(module)))
-		sb.WriteString(fmt.Sprintf("> Generated: %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+		fmt.Fprintf(&sb, "# %s API\n\n", capitalize(module))
+		fmt.Fprintf(&sb, "> Generated: %s\n\n", time.Now().Format("2006-01-02 15:04:05"))
 
 		// Base URL reference
 		sb.WriteString("## Base URL\n\n")
@@ -249,8 +247,7 @@ func GenerateModuleDocs(endpoints []Endpoint, outputDir string) error {
 				auth = "🔒"
 			}
 			path := strings.TrimPrefix(ep.Route.Path, "/api/v1")
-			sb.WriteString(fmt.Sprintf("| `%s` | `%s` | %s | %s |\n",
-				ep.Route.Method, path, ep.Summary, auth))
+			fmt.Fprintf(&sb, "| `%s` | `%s` | %s | %s |\n", ep.Route.Method, path, ep.Summary, auth)
 		}
 		sb.WriteString("\n---\n\n")
 
@@ -273,10 +270,10 @@ func GenerateModuleDocs(endpoints []Endpoint, outputDir string) error {
 // writeEndpoint writes a single endpoint documentation
 func writeEndpoint(sb *strings.Builder, ep Endpoint) {
 	// Endpoint header
-	sb.WriteString(fmt.Sprintf("### %s %s\n\n", ep.Route.Method, ep.Route.Path))
+	fmt.Fprintf(sb, "### %s %s\n\n", ep.Route.Method, ep.Route.Path)
 
 	// Summary
-	sb.WriteString(fmt.Sprintf("**%s**\n\n", ep.Summary))
+	fmt.Fprintf(sb, "**%s**\n\n", ep.Summary)
 
 	// Auth info
 	if ep.Route.IsPublic {
@@ -287,7 +284,7 @@ func writeEndpoint(sb *strings.Builder, ep Endpoint) {
 
 	// Route name
 	if ep.Route.Name != "" {
-		sb.WriteString(fmt.Sprintf("**Route Name:** `%s`\n\n", ep.Route.Name))
+		fmt.Fprintf(sb, "**Route Name:** `%s`\n\n", ep.Route.Name)
 	}
 
 	// Request body
@@ -309,8 +306,7 @@ func writeEndpoint(sb *strings.Builder, ep Endpoint) {
 			if validation == "" {
 				validation = "-"
 			}
-			sb.WriteString(fmt.Sprintf("| `%s` | `%s` | %s | %s |\n",
-				field.JSONName, field.Type, required, validation))
+			fmt.Fprintf(sb, "| `%s` | `%s` | %s | %s |\n", field.JSONName, field.Type, required, validation)
 		}
 		sb.WriteString("\n")
 	}
@@ -330,7 +326,7 @@ func writeEndpoint(sb *strings.Builder, ep Endpoint) {
 		sb.WriteString("|-----------|------|-------------|\n")
 		params := extractPathParams(ep.Route.Path)
 		for _, param := range params {
-			sb.WriteString(fmt.Sprintf("| `%s` | `integer` | Resource ID |\n", param))
+			fmt.Fprintf(sb, "| `%s` | `integer` | Resource ID |\n", param)
 		}
 		sb.WriteString("\n")
 	}

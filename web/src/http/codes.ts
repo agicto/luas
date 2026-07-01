@@ -1,47 +1,85 @@
-/**
- * Standardized API Error Codes
- * 
- * Format: [CATEGORY]_[DESCRIPTION]
- */
+export const ApiErrorCode = {
+  COMMON_INTERNAL: 'COMMON.INTERNAL',
+  COMMON_INVALID_INPUT: 'COMMON.INVALID_INPUT',
+  COMMON_VALIDATION_FAILED: 'COMMON.VALIDATION_FAILED',
+  COMMON_RATE_LIMITED: 'COMMON.RATE_LIMITED',
+  COMMON_REQUEST_TOO_LARGE: 'COMMON.REQUEST_TOO_LARGE',
+  COMMON_TIMEOUT: 'COMMON.TIMEOUT',
+  COMMON_SERVICE_UNAVAILABLE: 'COMMON.SERVICE_UNAVAILABLE',
+  COMMON_NOT_FOUND: 'COMMON.NOT_FOUND',
+  COMMON_CONFLICT: 'COMMON.CONFLICT',
 
-export const ErrorCode = {
-  // --- System Errors (SYS) ---
-  UNKNOWN_ERROR: 'SYS_001',
-  NETWORK_ERROR: 'SYS_002',
-  TIMEOUT: 'SYS_003',
-  SERVER_ERROR: 'SYS_500',
-  MAINTENANCE: 'SYS_503',
+  AUTH_UNAUTHORIZED: 'AUTH.UNAUTHORIZED',
+  AUTH_FORBIDDEN: 'AUTH.FORBIDDEN',
+  AUTH_INVALID_CREDENTIALS: 'AUTH.INVALID_CREDENTIALS',
+  AUTH_ACCOUNT_DISABLED: 'AUTH.ACCOUNT_DISABLED',
+  AUTH_PASSWORD_RESET_TOKEN_INVALID: 'AUTH.PASSWORD_RESET_TOKEN_INVALID',
+  AUTH_PASSWORD_RESET_TOKEN_EXPIRED: 'AUTH.PASSWORD_RESET_TOKEN_EXPIRED',
 
-  // --- Auth Errors (AUTH) ---
-  UNAUTHORIZED: 'AUTH_401',
-  FORBIDDEN: 'AUTH_403',
-  TOKEN_EXPIRED: 'AUTH_001',
-  INVALID_CREDENTIALS: 'AUTH_002',
-  USER_NOT_FOUND: 'AUTH_003',
-  SESSION_EXPIRED: 'AUTH_004',
+  USER_NOT_FOUND: 'USER.NOT_FOUND',
+  USER_EMAIL_ALREADY_EXISTS: 'USER.EMAIL_ALREADY_EXISTS',
+  USER_USERNAME_ALREADY_EXISTS: 'USER.USERNAME_ALREADY_EXISTS',
 
-  // --- Validation Errors (VAL) ---
-  INVALID_PARAMS: 'VAL_400',
-  MISSING_FIELD: 'VAL_001',
-  SCHEMA_MISMATCH: 'VAL_002',
-
-  // --- Business Errors (BIZ) ---
-  RESOURCE_NOT_FOUND: 'BIZ_404',
-  ALREADY_EXISTS: 'BIZ_001',
-  OPERATION_FAILED: 'BIZ_002',
-  QUOTA_EXCEEDED: 'BIZ_003',
+  API_KEY_NOT_FOUND: 'API_KEY.NOT_FOUND',
+  API_KEY_INVALID: 'API_KEY.INVALID',
+  API_KEY_EXPIRED: 'API_KEY.EXPIRED',
+  API_KEY_REVOKED: 'API_KEY.REVOKED',
 } as const;
 
-export type ErrorCodeValue = typeof ErrorCode[keyof typeof ErrorCode];
+export type ApiErrorCodeValue = typeof ApiErrorCode[keyof typeof ApiErrorCode];
 
-/**
- * Maps HTTP Status codes to default Error Codes
- */
-export const HttpStatusMap: Record<number, ErrorCodeValue> = {
-  400: ErrorCode.INVALID_PARAMS,
-  401: ErrorCode.UNAUTHORIZED,
-  403: ErrorCode.FORBIDDEN,
-  404: ErrorCode.RESOURCE_NOT_FOUND,
-  500: ErrorCode.SERVER_ERROR,
-  503: ErrorCode.MAINTENANCE,
+export const ClientErrorCode = {
+  FETCH_ERROR: 'CLIENT.FETCH_ERROR',
+  NETWORK_ERROR: 'CLIENT.NETWORK_ERROR',
+  TIMEOUT: 'CLIENT.TIMEOUT',
+  UNKNOWN: 'CLIENT.UNKNOWN',
+} as const;
+
+export type ClientErrorCodeValue = typeof ClientErrorCode[keyof typeof ClientErrorCode];
+
+export type ErrorCodeValue = ApiErrorCodeValue | ClientErrorCodeValue | string;
+
+export const HttpStatusErrorCodeMap: Record<number, ApiErrorCodeValue> = {
+  400: ApiErrorCode.COMMON_INVALID_INPUT,
+  401: ApiErrorCode.AUTH_UNAUTHORIZED,
+  403: ApiErrorCode.AUTH_FORBIDDEN,
+  404: ApiErrorCode.COMMON_NOT_FOUND,
+  409: ApiErrorCode.COMMON_CONFLICT,
+  413: ApiErrorCode.COMMON_REQUEST_TOO_LARGE,
+  422: ApiErrorCode.COMMON_VALIDATION_FAILED,
+  429: ApiErrorCode.COMMON_RATE_LIMITED,
+  500: ApiErrorCode.COMMON_INTERNAL,
+  503: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
 };
+
+const LegacyErrorCodeMap: Record<string, ApiErrorCodeValue | ClientErrorCodeValue> = {
+  SYS_001: ClientErrorCode.UNKNOWN,
+  SYS_002: ClientErrorCode.NETWORK_ERROR,
+  SYS_003: ClientErrorCode.TIMEOUT,
+  SYS_500: ApiErrorCode.COMMON_INTERNAL,
+  SYS_503: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
+
+  AUTH_401: ApiErrorCode.AUTH_UNAUTHORIZED,
+  AUTH_403: ApiErrorCode.AUTH_FORBIDDEN,
+  AUTH_001: ApiErrorCode.AUTH_UNAUTHORIZED,
+  AUTH_002: ApiErrorCode.AUTH_INVALID_CREDENTIALS,
+  AUTH_003: ApiErrorCode.USER_NOT_FOUND,
+  AUTH_004: ApiErrorCode.AUTH_UNAUTHORIZED,
+
+  VAL_400: ApiErrorCode.COMMON_INVALID_INPUT,
+  VAL_001: ApiErrorCode.COMMON_VALIDATION_FAILED,
+  VAL_002: ApiErrorCode.COMMON_VALIDATION_FAILED,
+
+  BIZ_404: ApiErrorCode.COMMON_NOT_FOUND,
+  BIZ_001: ApiErrorCode.COMMON_CONFLICT,
+  BIZ_002: ApiErrorCode.COMMON_INTERNAL,
+  BIZ_003: ApiErrorCode.COMMON_RATE_LIMITED,
+};
+
+export function normalizeLegacyErrorCode(code: unknown): ErrorCodeValue | undefined {
+  if (typeof code !== 'string') {
+    return undefined;
+  }
+
+  return LegacyErrorCodeMap[code] ?? code;
+}

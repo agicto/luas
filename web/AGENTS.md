@@ -51,13 +51,13 @@ src/
 │   │   ├── (console)/      # Console pages
 │   │   └── (devtools)/     # Internal demo/playground pages
 │   ├── (site)/             # Public site route group
-│   ├── api/                # API Route Handlers (Mock endpoints)
-│   │   └── auth/           # Auth endpoints (Mock by default)
+│   ├── api/                # Mock BFF route handlers
+│   │   └── auth/           # Mock BFF auth endpoints
 ├── components/
 │   ├── ui/                 # shadcn/ui primitives (DO NOT MODIFY)
 │   ├── common/             # Shared layout/common components
 │   └── features/           # Shared feature-facing UI blocks
-├── features/               # Feature-first modules (preferred)
+├── features/               # Feature-first folders (preferred)
 │   ├── auth/               # components, hooks, services, store, server, types
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
@@ -67,7 +67,7 @@ src/
 ├── i18n/                   # Internationalization
 │   ├── config.ts           # Locale config + ENV variables
 │   ├── translations.ts     # Unified translation hooks (useT, getT)
-│   └── modules/            # Per-module translations (common, auth, etc.)
+│   └── modules/            # Translation namespaces (common, auth, etc.)
 ├── providers/              # React context providers
 ├── services/               # Compatibility exports for feature services
 ├── store/                  # Shared global stores only
@@ -79,12 +79,13 @@ src/
 
 ## Architecture Patterns
 
-### 1. Mock API Architecture
+### 1. Mock BFF Architecture
 
-All API calls go through Next.js Route Handlers under `/api/*`:
+Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through
+Next.js route handlers under `src/app/api/**`:
 
 ```
-Browser → /api/auth/* → Mock handlers (Next.js API routes)
+Browser -> src/http/request.ts -> /api/* -> Mock BFF route handlers
 ```
 
 **Benefits:**
@@ -92,12 +93,15 @@ Browser → /api/auth/* → Mock handlers (Next.js API routes)
 - httpOnly cookie sessions (secure)
 - Fast local development without backend
 
+For downstream production apps, point `NEXT_PUBLIC_API_URL` at the real API or a same-origin
+proxy and keep the mock BFF disabled. See `docs/MOCK_BFF.md` for replacement and deletion steps.
+
 ### 2. Authentication Flow
 
-**Auth Endpoints (Mock API):**
+**Auth Endpoints (Mock BFF):**
 
 ```
-# Mock Backend (in src/app/api/auth)
+# Mock BFF (in src/app/api/auth)
 POST /api/auth/login     → Mock login (admin@example.com / admin123)
 POST /api/auth/register  → Mock user registration
 GET  /api/auth/me        → Get current user
@@ -138,7 +142,17 @@ export default function ProtectedLayout({ children }) {
 - **UI state**: `src/store/ui-store.ts` (Zustand).
 - **Auth config**: `src/config/auth.ts` (cookie names, routes, demo account).
 
-### 4. Internationalization (i18n)
+### 4. Provider Placement
+
+Keep providers as low as the routes that need them:
+
+- Root layout owns only app-wide UI context such as i18n, theme, toasts, and analytics.
+- `(auth)` owns `QueryProvider` because login/register forms use React Query mutations.
+- `(protected)` owns `AuthenticatedProviders`, which combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
+- Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
+- If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.
+
+### 5. Internationalization (i18n)
 
 The project uses `next-intl` with a unified translation pattern that supports both dot notation and namespace-based access.
 
@@ -186,9 +200,9 @@ function SettingsPage() {
 }
 ```
 
-#### Available Modules
+#### Available Translation Namespaces
 
-| Module | Description |
+| Namespace | Description |
 |--------|-------------|
 | `common` | Common UI text (buttons, labels, messages) |
 | `auth` | Authentication-related text |
@@ -196,7 +210,7 @@ function SettingsPage() {
 | `settings` | Settings page translations |
 | `errors` | Error messages |
 | `metadata` | Page titles and SEO metadata |
-| `dashboard` | Dashboard-specific translations |
+| `dashboard` | Console/demo dashboard text |
 | `test` | Testing translations |
 
 #### Key Files
@@ -205,8 +219,8 @@ function SettingsPage() {
 |------|---------|
 | `src/i18n/config.ts` | Locale configuration and settings |
 | `src/i18n/translations.ts` | `useT` and `getT` implementation with types |
-| `src/i18n/loader.ts` | Dynamic module loading and `AVAILABLE_MODULES` |
-| `src/i18n/modules/index.ts` | Static type generation from modules |
+| `src/i18n/loader.ts` | Dynamic translation namespace loading and `AVAILABLE_MODULES` |
+| `src/i18n/modules/index.ts` | Static type generation from translation modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 
 **Type Safety:** Invalid keys will cause TypeScript errors at compile time.
@@ -220,7 +234,7 @@ function SettingsPage() {
 - **Tests**: Place in `src/test` directory
 - **Hot reload**: Do NOT restart dev server (auto-updates)
 
-### 5. Theme System (Design Tokens & OKLCH)
+### 6. Theme System (Design Tokens & OKLCH)
 
 The project uses a structured Design Token system based on OKLCH and CSS variables, layered for better governance and maintainability.
 
@@ -289,6 +303,8 @@ import { env } from '@/config/env';
 const apiUrl = env.NEXT_PUBLIC_API_URL; // Typed, validated
 ```
 
+This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside `src/config/env.ts`.
+
 ### 2. Validation (Zod)
 We use `zod` to valid environment variables at runtime. If a required variable is missing, the app will fail to start only with a clear error message.
 
@@ -298,8 +314,12 @@ We use `zod` to valid environment variables at runtime. If a required variable i
 |----------|----------|---------|-------------|
 | `NEXT_PUBLIC_API_URL` | No | `/api` | Base URL for API requests. |
 | `NEXT_PUBLIC_APP_URL` | No | `http://localhost:3000` | Absolute site URL for metadata, sitemap, and robots. |
+| `NEXT_PUBLIC_DEFAULT_LOCALE` | No | `zh-Hans` | Default locale. Must be one of `locales` from `src/i18n/locales.ts`. |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No | `true` | Shows or hides the language switcher. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
+| `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. Keep false for downstream production apps. |
+| `SESSION_SECRET` | Production runtime | - | Server-only secret used to HMAC-sign the mock auth session cookie. |
 
 To add a new variable:
 1. Add it to `.env.local`
@@ -342,20 +362,22 @@ Use these tags in JSDoc headers to aid AI discovery:
 
 1. Create file in `src/app/(site)/page-name/page.tsx`
 2. Add route to `src/constants/routes.ts`
-3. Add translations to `src/i18n/modules/[module]/zh-Hans.ts` and other locales
+3. Add translations to `src/i18n/modules/[namespace]/zh-Hans.ts` and other locales
 
-### Adding a New API Endpoint
+### Adding a New Mock BFF Route
 
 1. Create folder in `src/app/api/endpoint-name/`
 2. Add `route.ts` with HTTP method handlers
-3. Use `cookies()` from `next/headers` for auth if needed
+3. Call `guardMockBffRoute()` before reading request bodies or touching mock state
+4. Return the shared contract shape from `contracts/README.md`
+5. Use `cookies()` from `next/headers` for mock auth if needed
 
 ### Adding a New Component
 
 1. **UI primitives** → Use shadcn/ui: `npx shadcn@latest add [component]`. These always go in `src/components/ui/`.
-2. **Feature components** → Prefer `src/features/[module]/components/`.
+2. **Feature components** → Prefer `src/features/[feature]/components/`.
    - **CRITICAL**: Do NOT place reusable components in `app/` route directories.
-   - Keep each feature's hooks, services, store, server helpers, and types inside the same `src/features/[module]/` folder.
+   - Keep each feature's hooks, services, store, server helpers, and types inside the same `src/features/[feature]/` folder.
    - Use `src/components/features/` only for shared cross-feature UI blocks.
 3. **Common components** → Generic, non-business specific components should be in `src/components/common/`.
 
@@ -425,7 +447,7 @@ All components MUST include a standardized JSDoc header for discovery and AI-ass
  */
 ```
 
-### Adding a New Data Module (Service-Hook-Type Pattern)
+### Adding Feature Data Flow (Service-Hook-Type Pattern)
 
 All data handling must follow the strict **Service-Hook-Type** layered architecture to ensure separation of concerns and type safety.
 
@@ -524,23 +546,31 @@ The project uses a standardized error code system to ensure consistency between 
 All error responses from the backend (BFF or mock) MUST follow this format:
 ```json
 {
-  "error": "Human-readable error message",
-  "code": "CATEGORY_DESCRIPTION"
+  "code": 404,
+  "error_code": "COMMON.NOT_FOUND",
+  "message": "Human-readable error message",
+  "request_id": "req_123"
 }
 ```
 
-### 2. Error Code Clusters
-Error codes follow the format `[CATEGORY]_[DESCRIPTION]`.
+### 2. Error Code Namespaces
+Backend `error_code` is the canonical branching field. New backend, BFF, and mock responses MUST use uppercase dot-separated values from `ApiErrorCode`.
 
-| Category | Prefix | Description | Examples |
-|----------|--------|-------------|----------|
-| **System** | `SYS_` | Infrastructural or unexpected errors | `SYS_SERVER_ERROR`, `SYS_TIMEOUT` |
-| **Auth** | `AUTH_` | Authentication and authorization issues | `AUTH_TOKEN_EXPIRED`, `AUTH_FORBIDDEN` |
-| **Validation** | `VAL_` | Input parameter or schema validation | `VAL_MISSING_FIELD`, `VAL_INVALID_PARAMS` |
-| **Business** | `BIZ_` | Business logic constraints | `BIZ_RESOURCE_NOT_FOUND`, `BIZ_ALREADY_EXISTS` |
+| Namespace | Owner | Examples |
+|-----------|-------|----------|
+| `COMMON.*` | Shared API contract | `COMMON.NOT_FOUND`, `COMMON.VALIDATION_FAILED` |
+| `AUTH.*` | Auth API contract | `AUTH.UNAUTHORIZED`, `AUTH.INVALID_CREDENTIALS` |
+| `USER.*` | User API contract | `USER.EMAIL_ALREADY_EXISTS` |
+| `API_KEY.*` | API key API contract | `API_KEY.REVOKED` |
+| `CLIENT.*` | Frontend-only fallback | `CLIENT.NETWORK_ERROR`, `CLIENT.TIMEOUT` |
+
+Legacy frontend-only codes such as `VAL_400` may be normalized for backward compatibility, but new code MUST NOT emit them.
 
 ### 3. Usage in Code
-- **Constants**: Always use `ErrorCode` from `@/http/codes` to check for specific errors.
+- **Constants**: Use `ApiErrorCode` from `@/http/codes` for backend `error_code` values; use `ClientErrorCode` only when no backend response exists. This split is enforced by `src/test/error-code-vocabulary.test.ts`.
+- **Mock routes**: Return `{ code, error_code, message, request_id? }`; do not return legacy `{ error, code: "VAL_400" }` shapes.
+- **Mock BFF guard**: New mock route handlers must call `guardMockBffRoute()` from `@/app/api/_shared/mock-bff` before reading the request body or touching mock state. This is enforced by `src/test/mock-bff-route-contract.test.ts`.
+- **Validation**: Return `400 COMMON.INVALID_INPUT` for malformed JSON or transport-level input errors; return `422 COMMON.VALIDATION_FAILED` with `errors` for schema/field validation failures.
 - **Handling**: Errors are automatically caught by `HttpClient` and passed to `handleError`. Use `skipErrorHandler: true` in request config to handle errors manually in components or hooks.
 
 ## API Response Format
@@ -550,7 +580,7 @@ Error codes follow the format `[CATEGORY]_[DESCRIPTION]`.
 - Modify files in `src/components/ui/` (shadcn/ui managed)
 - Use `localStorage` for tokens (use httpOnly cookies)
 - Add business-specific logic to scaffold (keep generic)
-- Create test files in business modules (use `tests/`)
+- Bury shared contract tests in feature folders; use `src/test` for cross-feature or contract checks.
 - Use Chinese in code comments
 - Generate `.sh` or `.md` files unless explicitly requested
 

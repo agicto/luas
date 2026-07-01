@@ -2,6 +2,7 @@ package unit
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/infra/ratelimit"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 func init() {
@@ -146,6 +148,25 @@ func TestMiddleware_AllowsRequests(t *testing.T) {
 	}
 }
 
+func TestMiddleware_ZeroValueConfigUsesDefaults(t *testing.T) {
+	router := gin.New()
+	router.Use(ratelimit.Middleware(ratelimit.Config{}))
+	router.GET("/test", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "ok"})
+	})
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/test", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+	if w.Header().Get("X-RateLimit-Limit") != "60" {
+		t.Errorf("Expected X-RateLimit-Limit to use default 60, got %s", w.Header().Get("X-RateLimit-Limit"))
+	}
+}
+
 func TestMiddleware_BlocksExcessiveRequests(t *testing.T) {
 	router := gin.New()
 	router.Use(ratelimit.PerMinute(3))
@@ -170,6 +191,13 @@ func TestMiddleware_BlocksExcessiveRequests(t *testing.T) {
 			}
 			if w.Header().Get("Retry-After") == "" {
 				t.Error("Expected Retry-After header on 429 response")
+			}
+			var payload response.ErrorResponse
+			if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+				t.Fatalf("Request %d: unmarshal error response: %v", i+1, err)
+			}
+			if payload.ErrorCode != response.ErrorCodeRateLimited {
+				t.Fatalf("Request %d: error_code = %q, want %q", i+1, payload.ErrorCode, response.ErrorCodeRateLimited)
 			}
 		}
 	}

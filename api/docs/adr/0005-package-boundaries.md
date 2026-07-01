@@ -111,6 +111,7 @@ import.
   always place new code under `internal/modules/<name>/` unless it
   truly belongs in one of the three horizontal layers — and to point
   to this ADR when justifying the choice.
-- A boundary lint (a small `go vet`-style tool or a Make target) is a
-  reasonable follow-up; until then the rule is enforced by reviewer
-  vigilance and by this document.
+- The boundary lint lives at
+  `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
+  from the repository root. It blocks new reverse imports while the current
+  baseline exceptions are tracked in [`../PACKAGE_BOUNDARIES.md`](../PACKAGE_BOUNDARIES.md).

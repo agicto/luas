@@ -96,7 +96,7 @@ func TestLog_SetDefault(t *testing.T) {
 
 func TestLog_FileOutput(t *testing.T) {
 	// Create temp file
-	tmpFile := "test_log_" + strings.Replace(t.Name(), "/", "_", -1) + ".log"
+	tmpFile := "test_log_" + strings.ReplaceAll(t.Name(), "/", "_") + ".log"
 	// Clean up before and after
 	os.Remove(tmpFile)
 	defer os.Remove(tmpFile)

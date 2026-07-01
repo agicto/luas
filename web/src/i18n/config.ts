@@ -1,22 +1,12 @@
-// Supported locales
-export const locales = ['zh-Hans', 'en-US'] as const;
-export type Locale = (typeof locales)[number];
+import { env } from '@/config/env';
+import {
+  locales,
+  localeMapping,
+  localeNames,
+  type Locale,
+} from './locales';
 
-// Default locale
-export const defaultLocale: Locale = 'zh-Hans';
+export { locales, localeMapping, localeNames, type Locale };
 
-// Switches
-export const isLocaleSwitcherEnabled = true;
-
-export const localeNames: Record<Locale, string> = {
-  'zh-Hans': '简体中文',
-  'en-US': 'English',
-};
-
-// Mapping for Accept-Language header
-export const localeMapping: Record<string, Locale> = {
-  'zh': 'zh-Hans',
-  'zh-CN': 'zh-Hans',
-  'en': 'en-US',
-  'en-US': 'en-US',
-};
+export const defaultLocale: Locale = env.NEXT_PUBLIC_DEFAULT_LOCALE;
+export const isLocaleSwitcherEnabled = env.NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED;

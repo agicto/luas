@@ -1,0 +1,94 @@
+---
+name: luas-framework-review
+description: Review Luas as a global scaffold for security, performance, usability, semantic clarity, architecture, and AI workflows.
+---
+
+# Luas Framework Review
+
+## Purpose
+
+Run a repeatable framework-quality review for Luas. Use this skill to keep the scaffold professional, semantically clear, architecture-friendly, and safe to evolve over many small iterations.
+
+## Source Material
+
+Read these first:
+
+1. `CONTEXT.md` for canonical vocabulary.
+2. `AGENTS.md`, then the relevant half's `AGENTS.md`.
+3. `docs/ARCHITECTURE.md` and `contracts/README.md`.
+4. Relevant ADRs under `docs/adr/`, `api/docs/adr/`, or feature docs.
+5. The current diff and verification status.
+
+If a term in code or docs conflicts with `CONTEXT.md`, treat that as a semantic issue.
+
+## Review Axes
+
+Score each axis with `Strong`, `Adequate`, or `Needs work`.
+
+- **Semantic clarity**: names match `CONTEXT.md`; no overloaded terms such as framework/scaffold, feature/module, API/mock BFF, code/error_code.
+- **Architecture depth**: important behavior sits behind small, named seams; shallow pass-through modules are justified or removed.
+- **Contract integrity**: HTTP status, response envelope, `error_code`, `request_id`, pagination, and mock BFF behavior match `contracts/README.md`.
+- **Security defaults**: production defaults are safe for CORS, secrets, cookies, headers, auth, body size, timeouts, rate limits, and dependency risk.
+- **Performance baseline**: changes are backed by build output, bundle evidence, Core Web Vitals, query/runtime timing, or benchmarks when performance is the claim.
+- **Usability and AI workflows**: docs, skills, scripts, and examples help a human or agent find the right seam quickly without guessing.
+
+## Workflow
+
+1. **Inventory**
+   - List the files or modules touched by the current thread.
+   - Note any dirty worktree changes you did not make and avoid reverting them.
+   - Record the latest verification command and outcome if available.
+
+2. **Find candidates**
+   - Produce 3-7 concrete improvement candidates.
+   - For each candidate include: axis, files, problem, recommended slice, verification command, and risk.
+   - Prefer candidates that improve future iterations: vocabulary, contracts, review rails, test seams, and safety defaults.
+
+3. **Rank**
+   - Mark each candidate `P0`, `P1`, `P2`, or `P3`.
+   - `P0`: unsafe or misleading default.
+   - `P1`: global semantic, contract, or architecture drift.
+   - `P2`: local design or usability friction.
+   - `P3`: polish or documentation clarity.
+
+4. **Select one slice**
+   - Pick the highest-value candidate that can be completed and verified now.
+   - If the slice changes persistence, permissions, public contracts, deployment, or user workflow, run `grill-before-build` before implementation.
+   - Keep the slice small enough that rollback is obvious.
+
+5. **Implement**
+   - Update code, docs, skills, or contracts at the owning seam.
+   - Do not create shared source between `api/` and `web/`; share contracts and vocabulary instead.
+   - If adding a reusable process, prefer a root skill or root doc over duplicating instructions in both halves.
+
+6. **Verify**
+   - Run `verification-before-completion` for code changes.
+   - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
+   - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
+   - For pure docs or skills, run `git diff --check` and the skill validator when relevant.
+   - If verification fails, either fix it or state the exact blocker and command output.
+
+7. **Report**
+   - State the selected slice, files changed, verification run, and the next recommended slice.
+   - Keep deferred candidates in the final answer so the long task has continuity.
+
+## Anti-patterns
+
+- Do not perform broad refactors without a selected slice and rollback path.
+- Do not claim performance wins without measurements.
+- Do not let mock BFF behavior drift from API contracts.
+- Do not add new vocabulary without updating `CONTEXT.md`.
+- Do not duplicate standards across root, `api/`, and `web/` when a single root rule is enough.
+- Do not turn example or devtools code into required product behavior.
+
+## Pair With
+
+- `grill-before-build` for wide-impact design decisions.
+- `systematic-debugging` when verification fails and the cause is unclear.
+- `verification-before-completion` before reporting any implementation complete.
+- `pr-description-writer` when packaging a reviewable change.
+
+## Helper Script
+
+- `scripts/check-vocabulary.sh` scans high-signal docs and agent entry points for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
+- `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while tracking current baseline exceptions.

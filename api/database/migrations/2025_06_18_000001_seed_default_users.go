@@ -25,7 +25,7 @@ func (m *seedDefaultUsers) Up(db *gorm.DB) error {
 		adminUser := &user.UserPO{
 			Username: "admin",
 			Email:    "admin@example.com",
-			Password: "hashed_password_here",
+			Password: "$2a$10$OkAgF/Pm/v3pdzkUhKJEeOhehkbTRZar9Rk3X2nEjCcrlsluiTnay", // password: secret
 			Nickname: "Admin User",
 			Status:   1,
 		}

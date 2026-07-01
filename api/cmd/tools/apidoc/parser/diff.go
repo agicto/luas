@@ -164,8 +164,8 @@ func generateModuleFile(modules map[string][]Endpoint, outputFile string, module
 
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("# %s API\n\n", capitalize(moduleName)))
-	sb.WriteString(fmt.Sprintf("> Generated at: %s\n\n", time.Now().Format("2006-01-02 15:04:05")))
+	fmt.Fprintf(&sb, "# %s API\n\n", capitalize(moduleName))
+	fmt.Fprintf(&sb, "> Generated at: %s\n\n", time.Now().Format("2006-01-02 15:04:05"))
 
 	// Summary table
 	sb.WriteString("## Endpoints\n\n")
@@ -176,8 +176,7 @@ func generateModuleFile(modules map[string][]Endpoint, outputFile string, module
 		if !ep.Route.IsPublic {
 			auth = "🔒 Required"
 		}
-		sb.WriteString(fmt.Sprintf("| `%s` | `%s` | %s | %s |\n",
-			ep.Route.Method, ep.Route.Path, ep.Summary, auth))
+		fmt.Fprintf(&sb, "| `%s` | `%s` | %s | %s |\n", ep.Route.Method, ep.Route.Path, ep.Summary, auth)
 	}
 	sb.WriteString("\n---\n\n")
 

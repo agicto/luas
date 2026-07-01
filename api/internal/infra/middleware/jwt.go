@@ -28,7 +28,7 @@ func JWTAuth(svc *jwt.Service) gin.HandlerFunc {
 
 		// Check Bearer token format
 		parts := strings.SplitN(authHeader, " ", 2)
-		if !(len(parts) == 2 && parts[0] == "Bearer") {
+		if len(parts) != 2 || parts[0] != "Bearer" {
 			response.Error(c, http.StatusUnauthorized, "Invalid authorization format")
 			c.Abort()
 			return

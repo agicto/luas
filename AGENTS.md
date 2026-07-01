@@ -13,6 +13,8 @@ The two halves are independent deployable units that share contracts, not code.
 
 ## Where to start
 
+Read [CONTEXT.md](CONTEXT.md) first for the global Luas vocabulary. It is the source of truth for terms like `scaffold`, `starter`, `core`, `capability`, `feature`, `module`, `contract`, `mock BFF`, `console`, `error_code`, and `request_id`.
+
 Each half has its own `AGENTS.md` with the detailed rules. Read those before editing:
 
 - [api/AGENTS.md](api/AGENTS.md) — Go conventions, DDD layering, Wire DI, response patterns, testing
@@ -20,10 +22,13 @@ Each half has its own `AGENTS.md` with the detailed rules. Read those before edi
 
 Workspace-level architecture docs:
 
+- [CONTEXT.md](CONTEXT.md) — canonical global vocabulary for the whole scaffold
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stable seams and vertical change flow
+- [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap for professional, semantic, architecture-friendly iteration
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
+- [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills
 
@@ -34,6 +39,7 @@ Root skills (apply everywhere):
 | Skill | Use When |
 |---|---|
 | [`grill-before-build`](.agents/skills/grill-before-build/) | Request is underspecified or has wide impact (persistence, permissions, deployment, user workflows) |
+| [`luas-framework-review`](.agents/skills/luas-framework-review/) | Reviewing Luas as a global scaffold for security, performance, semantics, architecture, or AI workflows |
 | [`systematic-debugging`](.agents/skills/systematic-debugging/) | Bug or flaky test where the cause is not obvious |
 | [`verification-before-completion`](.agents/skills/verification-before-completion/) | End-of-turn check that what you built actually runs / tests / lints |
 | [`pr-description-writer`](.agents/skills/pr-description-writer/) | Drafting a PR body or commit summary |

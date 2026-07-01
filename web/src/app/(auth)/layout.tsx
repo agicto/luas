@@ -5,6 +5,7 @@ import { Zap, Shield, Layers, Headphones } from 'lucide-react';
 import { Logo } from '@/components/ui/icons';
 import { LanguageSwitcher } from '@/components/common';
 import { useT } from '@/i18n';
+import { QueryProvider } from '@/providers/query-provider';
 
 /**
  * Auth layout with enhanced decorative left panel
@@ -134,7 +135,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
           
           {/* Auth content */}
           <div className="w-full max-w-xs md:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {children}
+            <QueryProvider>{children}</QueryProvider>
           </div>
         </div>
         

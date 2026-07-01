@@ -446,7 +446,7 @@ func (m *Migrator) Fresh(opts MigratorOptions) ([]string, error) {
 func (m *Migrator) dropAllTables() error {
 	// Get all table names
 	var tables []string
-	dialect := m.db.Dialector.Name()
+	dialect := m.db.Name()
 
 	switch dialect {
 	case "mysql":

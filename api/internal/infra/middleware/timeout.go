@@ -2,13 +2,13 @@ package middleware
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // TimeoutConfig holds timeout middleware configuration
@@ -52,61 +52,38 @@ func Timeout(timeout time.Duration) gin.HandlerFunc {
 	})
 }
 
-// TimeoutWithConfig returns timeout middleware with custom config
+// TimeoutWithConfig returns cooperative timeout middleware with custom config.
+//
+// The middleware sets a deadline on the request context and runs the remaining
+// Gin chain synchronously. Handlers and downstream calls should observe
+// c.Request.Context().Done(). If the chain returns after the deadline without
+// writing a response, the middleware emits the standard timeout error.
 func TimeoutWithConfig(cfg TimeoutConfig) gin.HandlerFunc {
+	defaults := DefaultTimeoutConfig()
 	if cfg.Timeout <= 0 {
-		cfg.Timeout = 30 * time.Second
+		cfg.Timeout = defaults.Timeout
 	}
 	if cfg.ErrorMessage == "" {
-		cfg.ErrorMessage = "Request timeout"
+		cfg.ErrorMessage = defaults.ErrorMessage
 	}
 
 	return func(c *gin.Context) {
-		// Create a context with timeout
 		ctx, cancel := context.WithTimeout(c.Request.Context(), cfg.Timeout)
 		defer cancel()
 
-		// Replace request context
 		c.Request = c.Request.WithContext(ctx)
 
-		// Channel to signal completion
-		done := make(chan struct{})
+		c.Next()
 
-		// Run handler in goroutine. If the deadline fires before the
-		// handler returns, the timeout response is sent below but this
-		// goroutine keeps running until the handler finishes — recover
-		// any write-after-abort panics from gin so the server stays up.
-		go func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Printf("timeout middleware: handler panic after timeout (request likely already aborted): %v", r)
-				}
-				close(done)
-			}()
-			c.Next()
-		}()
-
-		// Wait for completion or timeout
-		select {
-		case <-done:
-			// Request completed normally
+		if ctx.Err() != context.DeadlineExceeded || c.Writer.Written() {
 			return
-		case <-ctx.Done():
-			// Timeout occurred
-			if ctx.Err() == context.DeadlineExceeded {
-				c.Abort()
-				if cfg.ErrorHandler != nil {
-					cfg.ErrorHandler(c)
-				} else {
-					c.JSON(http.StatusServiceUnavailable, gin.H{
-						"success": false,
-						"error": gin.H{
-							"code":    "TIMEOUT",
-							"message": cfg.ErrorMessage,
-						},
-					})
-				}
-			}
 		}
+
+		if cfg.ErrorHandler != nil {
+			cfg.ErrorHandler(c)
+			return
+		}
+
+		response.AbortWithCode(c, http.StatusServiceUnavailable, response.ErrorCodeTimeout, cfg.ErrorMessage)
 	}
 }

@@ -6,16 +6,9 @@ import { toast } from 'sonner';
 import { authConfig } from '@/config/auth';
 import { authService } from '@/features/auth/services/auth-service';
 import { useAuthStore } from '@/features/auth/store/auth-store';
+import { resolveReturnUrl } from '@/features/auth/utils/return-url';
 import type { LoginRequest, RegisterRequest } from '@/features/auth/types';
 import { useT } from '@/i18n';
-
-function resolveReturnUrl(value: string | null): string {
-  if (!value || !value.startsWith('/')) {
-    return authConfig.routes.afterLogin;
-  }
-
-  return value;
-}
 
 /**
  * @hook useLogin

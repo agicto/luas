@@ -1,6 +1,12 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
-import { handleError } from './error-handler';
 import { env } from '@/config/env';
+import {
+  ClientErrorCode,
+  HttpStatusErrorCodeMap,
+  normalizeLegacyErrorCode,
+  type ErrorCodeValue,
+} from './codes';
+import { handleError } from './error-handler';
 
 /**
  * Custom Request Configuration
@@ -11,21 +17,68 @@ export interface RequestConfig extends AxiosRequestConfig {
 
 interface ApiErrorBody {
   code?: string | number;
+  error_code?: string;
   error?: string;
+  errors?: ApiFieldErrors;
   message?: string;
+  request_id?: string;
 }
+
+export type ApiFieldErrors = Record<string, string[]>;
 
 /**
  * ApiError Class to encapsulate API-related errors
  */
 export class ApiError extends Error {
-  code: string | number;
+  errorCode: ErrorCodeValue;
+  fieldErrors?: ApiFieldErrors;
   status?: number;
-  constructor(message: string, code: string | number, status?: number) {
+  requestId?: string;
+
+  constructor(
+    message: string,
+    errorCode: ErrorCodeValue,
+    status?: number,
+    requestId?: string,
+    fieldErrors?: ApiFieldErrors
+  ) {
     super(message);
-    this.code = code;
+    this.errorCode = errorCode;
     this.status = status;
+    this.requestId = requestId;
+    this.fieldErrors = fieldErrors;
   }
+}
+
+function clientErrorCodeFor(error: AxiosError): ErrorCodeValue {
+  const axiosCode = error.code?.toUpperCase();
+
+  if (axiosCode === 'ECONNABORTED' || axiosCode === 'ETIMEDOUT') {
+    return ClientErrorCode.TIMEOUT;
+  }
+
+  if (!error.response) {
+    return ClientErrorCode.NETWORK_ERROR;
+  }
+
+  return ClientErrorCode.FETCH_ERROR;
+}
+
+export function toApiError(error: AxiosError): ApiError {
+  const body = error.response?.data as ApiErrorBody | undefined;
+  const status = error.response?.status;
+  const legacyErrorCode = normalizeLegacyErrorCode(body?.code);
+
+  return new ApiError(
+    body?.message ?? body?.error ?? error.message,
+    body?.error_code ??
+      legacyErrorCode ??
+      (status ? HttpStatusErrorCodeMap[status] : undefined) ??
+      clientErrorCodeFor(error),
+    status,
+    body?.request_id,
+    body?.errors
+  );
 }
 
 /**
@@ -50,18 +103,12 @@ class HttpClient {
     this.instance.interceptors.response.use(
       (response) => {
         const { data } = response;
-        // Standard payload extraction (assuming { code, data, message } format)
+        // Standard payload extraction for { code, data, message } responses.
         return data && typeof data === 'object' && 'data' in data ? data.data : data;
       },
       async (error: AxiosError) => {
         const originalRequest = error.config as RequestConfig;
-        const body = error.response?.data as ApiErrorBody | undefined;
-
-        const apiError = new ApiError(
-          body?.message || body?.error || error.message,
-          body?.code || 'FETCH_ERROR',
-          error.response?.status
-        );
+        const apiError = toApiError(error);
 
         if (!originalRequest?.skipErrorHandler) {
           handleError(apiError);

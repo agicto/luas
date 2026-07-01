@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Handler is an alias for gin.HandlerFunc
@@ -194,10 +196,7 @@ func (rt *Route) wrapHandler() Handler {
 			if value != "" {
 				re := regexp.MustCompile(pattern)
 				if !re.MatchString(value) {
-					c.AbortWithStatusJSON(http.StatusNotFound, gin.H{
-						"error":   "Not Found",
-						"message": fmt.Sprintf("Invalid parameter: %s", param),
-					})
+					response.AbortNotFound(c, fmt.Sprintf("Invalid parameter: %s", param))
 					return
 				}
 			}

@@ -1,7 +1,7 @@
 import { toast } from 'sonner';
-import { ApiError } from './request';
 import { env } from '@/config/env';
-import { ErrorCode } from './codes';
+import { ApiErrorCode } from './codes';
+import { ApiError } from './request';
 
 /**
  * Global Error Handler Configuration
@@ -27,10 +27,10 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
   if (mergedConfig.silent) return;
 
   let message = mergedConfig.fallbackMessage || 'Error';
-  let errorCode: string | number | undefined;
+  let errorCode: string | undefined;
 
   if (error instanceof ApiError) {
-    errorCode = error.code;
+    errorCode = error.errorCode;
     message = error.message;
     
     // Automatically map status-based messages if no specific message is provided
@@ -44,8 +44,7 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
       }
     }
 
-    // You can also add mapping based on ErrorCode here if needed
-    if (errorCode === ErrorCode.TOKEN_EXPIRED) {
+    if (errorCode === ApiErrorCode.AUTH_UNAUTHORIZED) {
       message = 'Your session has expired. Please log in again.';
     }
   } else if (error instanceof Error) {
@@ -62,7 +61,7 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
     console.error('[GlobalErrorHandler]', {
       message,
       errorCode,
-      originalError: error
+      originalError: error,
     });
   }
 }

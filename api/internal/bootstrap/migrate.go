@@ -227,7 +227,7 @@ func DropAllTables(db *gorm.DB) error {
 
 	// Get all table names
 	var tables []string
-	dialect := db.Dialector.Name()
+	dialect := db.Name()
 
 	switch dialect {
 	case "postgres":

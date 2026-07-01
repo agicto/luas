@@ -3,6 +3,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 // baseValidConfig returns a config that passes validate() — tests then
@@ -99,5 +100,51 @@ func TestValidate_RejectsLocalhostOriginInProduction(t *testing.T) {
 	err := validate(cfg)
 	if err == nil || !strings.Contains(err.Error(), "localhost") {
 		t.Fatalf("expected localhost error, got %v", err)
+	}
+}
+
+func TestValidate_RejectsInvalidRateLimitWhenEnabled(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  RateLimitConfig
+		want string
+	}{
+		{
+			name: "zero max",
+			cfg: RateLimitConfig{
+				Enabled: true,
+				Max:     0,
+				Window:  time.Minute,
+			},
+			want: "MIDDLEWARE_RATE_LIMIT_MAX",
+		},
+		{
+			name: "zero window",
+			cfg: RateLimitConfig{
+				Enabled: true,
+				Max:     100,
+				Window:  0,
+			},
+			want: "MIDDLEWARE_RATE_LIMIT_WINDOW",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			cfg.Middleware.RateLimit = tt.cfg
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %s error, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestValidate_AllowsDisabledRateLimitWithoutValues(t *testing.T) {
+	cfg := baseValidConfig("production")
+	cfg.Middleware.RateLimit = RateLimitConfig{Enabled: false}
+	if err := validate(cfg); err != nil {
+		t.Fatalf("disabled rate limit should not require max/window, got %v", err)
 	}
 }

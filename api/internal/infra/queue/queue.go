@@ -152,7 +152,7 @@ func (m *Manager) RegisterJob(job Job) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	t := reflect.TypeOf(job)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 	m.jobRegistry[t.Name()] = t
@@ -222,7 +222,7 @@ func (m *Manager) LaterTo(ctx context.Context, queue string, delay time.Duration
 // serializeJob serializes a job to JSON
 func (m *Manager) serializeJob(job Job) ([]byte, error) {
 	t := reflect.TypeOf(job)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 	}
 

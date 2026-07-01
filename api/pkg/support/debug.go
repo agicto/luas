@@ -74,7 +74,7 @@ func dumpValue(v interface{}, index int) {
 		dumpMap(val, 0)
 	case reflect.Slice, reflect.Array:
 		dumpSlice(val, 0)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		if val.IsNil() {
 			color.New(color.FgHiBlack).Println("nil")
 		} else {

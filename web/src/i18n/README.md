@@ -133,7 +133,14 @@ const localeToExport: Record<Locale, 'zhHans' | 'enUS' | 'jaJP'> = {
 
 ## Environment Variables
 
-The i18n scaffold does not require dedicated environment variables. Locale behavior is configured in `src/i18n/config.ts`.
+Locale behavior is configured through typed env values in `src/config/env.ts`, constrained by `src/i18n/locales.ts`, and consumed by `src/i18n/config.ts`.
+
+| Variable | Default | Description |
+|---|---|---|
+| `NEXT_PUBLIC_DEFAULT_LOCALE` | `zh-Hans` | Default locale. Must be one of `locales`. |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | `true` | Shows or hides the language switcher. |
+
+Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supported `locale` cookie values win, then `Accept-Language`, then `NEXT_PUBLIC_DEFAULT_LOCALE`.
 
 ## Usage
 
@@ -245,7 +252,14 @@ export function LanguageButton() {
 
 ## Environment Variables
 
-The i18n scaffold does not require dedicated environment variables. Locale behavior is configured in `src/i18n/config.ts`.
+Locale behavior is configured through typed env values in `src/config/env.ts`, constrained by `src/i18n/locales.ts`, and consumed by `src/i18n/config.ts`.
+
+| Variable | Default | Description |
+|---|---|---|
+| `NEXT_PUBLIC_DEFAULT_LOCALE` | `zh-Hans` | Default locale. Must be one of `locales`. |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | `true` | Shows or hides the language switcher. |
+
+Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supported `locale` cookie values win, then `Accept-Language`, then `NEXT_PUBLIC_DEFAULT_LOCALE`.
 
 ## Type Safety
 

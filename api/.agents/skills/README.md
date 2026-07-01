@@ -43,7 +43,7 @@ skill-name/
 | Skill | 描述 | 优先级 |
 |-------|------|--------|
 | [`architecture-principles`](./architecture-principles/) | `seam / depth / locality` 的上位架构规则 | P0 |
-| [`module-creation`](./module-creation/) | 创建 starter-style 业务模块的完整流程 | P0 |
+| [`module-creation`](./module-creation/) | 创建 starter-style route-owning 模块的完整流程 | P0 |
 | [`coding-standards`](./coding-standards/) | 当前 scaffold 的代码规范、分层约束和 seam 判断 | P0 |
 | [`api-development`](./api-development/) | route-owning 模块的 HTTP / REST 规范 | P0 |
 | [`database-design`](./database-design/) | PO、索引、迁移和表生命周期设计 | P0 |

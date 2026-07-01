@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Limiter defines the rate limiter interface
@@ -65,10 +67,7 @@ func DefaultConfig() Config {
 				retryAfter = 1
 			}
 			c.Header("Retry-After", strconv.Itoa(retryAfter))
-			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error":       "Too many requests",
-				"retry_after": retryAfter,
-			})
+			response.AbortWithCode(c, http.StatusTooManyRequests, response.ErrorCodeRateLimited, "Too many requests")
 		},
 	}
 }
@@ -215,16 +214,21 @@ func (s *MemoryStore) Reset(ctx context.Context, key string) error {
 
 // Middleware creates a rate limiting middleware with the given config
 func Middleware(cfg Config) gin.HandlerFunc {
+	defaults := DefaultConfig()
+	if cfg.Max <= 0 {
+		cfg.Max = defaults.Max
+	}
+	if cfg.Duration <= 0 {
+		cfg.Duration = defaults.Duration
+	}
 	if cfg.Store == nil {
 		cfg.Store = NewMemoryStore(cfg.Max, cfg.Duration)
 	}
 	if cfg.KeyFunc == nil {
-		cfg.KeyFunc = func(c *gin.Context) string {
-			return c.ClientIP()
-		}
+		cfg.KeyFunc = defaults.KeyFunc
 	}
 	if cfg.ErrorHandler == nil {
-		cfg.ErrorHandler = DefaultConfig().ErrorHandler
+		cfg.ErrorHandler = defaults.ErrorHandler
 	}
 
 	return func(c *gin.Context) {
