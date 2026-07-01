@@ -70,6 +70,31 @@ func TestOpenAIProviderGenerateText(t *testing.T) {
 	}
 }
 
+func TestOpenAIProviderGenerateTextReturnsProviderError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"error": map[string]any{
+				"message": "rate limited",
+			},
+		})
+	}))
+	defer server.Close()
+
+	provider := NewOpenAIProvider(ProviderConfig{
+		APIKey:  "test-key",
+		BaseURL: server.URL,
+	}, 5*time.Second)
+
+	_, err := provider.GenerateText(context.Background(), &TextRequest{
+		Model: "gpt-5",
+		Input: "ping",
+	})
+	if err == nil || !strings.Contains(err.Error(), "rate limited") {
+		t.Fatalf("GenerateText() error = %v, want provider error message", err)
+	}
+}
+
 func TestManagerUsesDefaults(t *testing.T) {
 	manager := NewManager(Config{
 		Enabled:         true,

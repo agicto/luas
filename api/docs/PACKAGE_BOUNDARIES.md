@@ -40,7 +40,6 @@ These are existing boundary debts, not new patterns to copy:
 
 | Package | Imports | Why It Is Debt | Preferred Direction |
 |---|---|---|---|
-| `internal/capabilities/ai` | `internal/infra/http` | The AI capability reuses a scaffold HTTP client, tying a capability to infra. | Move the reusable HTTP client to `pkg/`, or inject a provider-neutral client into the capability. |
 | `internal/capabilities/workflow` | `internal/infra/config`, `internal/infra/queue`, `internal/infra/retry`, `internal/infra/schedule` | The workflow capability is currently a facade over infra queue, retry, and scheduler primitives. | Either promote the primitives into the capability, or reclassify workflow as infra/runtime glue and expose a smaller capability-facing seam. |
 
 ## Review Rule

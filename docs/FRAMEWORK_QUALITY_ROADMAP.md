@@ -36,6 +36,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. Use the `luas-framework-rev
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - High-signal vocabulary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
+- API boundary debt has started moving down: `pkg/response` no longer imports `internal/domain`, and `internal/capabilities/ai` no longer imports `internal/infra/http`.
 
 ## Candidate Queue
 
