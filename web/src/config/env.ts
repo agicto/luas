@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { defaultLocaleFallback, locales } from '@/i18n/locales';
 
-const booleanEnv = z.preprocess((value) => {
+export const booleanEnv = z.preprocess((value) => {
   if (value === undefined || value === '') {
     return undefined;
   }
@@ -43,17 +43,9 @@ const envSchema = z.object({
   // Server-only
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
-  // Development-only mock route handlers. Production runtime requires
-  // explicit opt-in so the web shell does not accidentally ship demo APIs.
-  MOCK_BFF_ENABLED: booleanEnv.default(false),
-
-  // Secret used to HMAC-sign the mock session cookie. Required in
-  // production; a dev-only fallback is used otherwise (with a console
-  // warning) so `pnpm dev` works out of the box.
-  SESSION_SECRET: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(32).optional()
-  ),
+  // Keep this in the client-safe env because React devtools and logging
+  // toggles need it in browser bundles. Server-only values live in
+  // `env.server.ts`.
 });
 
 const parsed = envSchema.safeParse({
@@ -63,8 +55,6 @@ const parsed = envSchema.safeParse({
   NEXT_PUBLIC_DEFAULT_LOCALE: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
   NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED: process.env.NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED,
   NODE_ENV: process.env.NODE_ENV,
-  MOCK_BFF_ENABLED: process.env.MOCK_BFF_ENABLED,
-  SESSION_SECRET: process.env.SESSION_SECRET,
 });
 
 if (!parsed.success) {
@@ -73,12 +63,6 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
-
-const isProductionBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
-
-if (env.NODE_ENV === 'production' && !isProductionBuildPhase && !env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET must be set in production runtime');
-}
 
 // Shorthands for cleaner calls
 export const isDev = env.NODE_ENV === 'development';
