@@ -24,7 +24,7 @@ type createContentPipelineTables struct {
 
 // Up applies the migration.
 func (m *createContentPipelineTables) Up(db *gorm.DB) error {
-	if db.Dialector.Name() != "postgres" {
+	if db.Name() != "postgres" {
 		return nil
 	}
 
@@ -33,7 +33,7 @@ func (m *createContentPipelineTables) Up(db *gorm.DB) error {
 
 // Down reverts the migration.
 func (m *createContentPipelineTables) Down(db *gorm.DB) error {
-	if db.Dialector.Name() != "postgres" {
+	if db.Name() != "postgres" {
 		return nil
 	}
 

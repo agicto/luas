@@ -47,13 +47,26 @@ if [ -z "$KIND" ]; then
 fi
 
 cd "$ROOT"
+if [ "$KIND" = "node" ] && [ -z "${CI:-}" ] && [ ! -t 0 ]; then
+    export CI=true
+fi
+PNPM=(pnpm)
+if [ "$KIND" = "node" ] && command -v corepack >/dev/null 2>&1; then
+    PNPM=(corepack pnpm)
+fi
+
 echo "🔍 Verification at tier $TIER in $ROOT ($KIND)"
 echo "================================================"
 
 FAILED=0
+LOG_FILE="${TMPDIR:-/tmp}/run-tiers.log"
 record() {
     if [ "$1" -ne 0 ]; then
         echo "  ❌ $2"
+        if [ -s "$LOG_FILE" ]; then
+            echo "     Last output:"
+            tail -n 40 "$LOG_FILE" | sed 's/^/       /'
+        fi
         FAILED=1
     else
         echo "  ✅ $2"
@@ -66,15 +79,15 @@ record() {
 echo ""
 echo "Tier 0 — Static"
 if [ "$KIND" = "go" ]; then
-    go build "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go build ${SCOPE[*]}"
+    go build "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go build ${SCOPE[*]}"
     if command -v golangci-lint >/dev/null 2>&1; then
-        golangci-lint run "${SCOPE[@]}" --timeout=2m > /tmp/run-tiers.log 2>&1; record $? "golangci-lint ${SCOPE[*]}"
+        golangci-lint run "${SCOPE[@]}" --timeout=2m > "$LOG_FILE" 2>&1; record $? "golangci-lint run ${SCOPE[*]}"
     else
         echo "  ⚠️  golangci-lint not installed, skipped"
     fi
 else
-    pnpm type-check > /tmp/run-tiers.log 2>&1; record $? "pnpm type-check"
-    pnpm lint > /tmp/run-tiers.log 2>&1; record $? "pnpm lint"
+    "${PNPM[@]}" type-check > "$LOG_FILE" 2>&1; record $? "pnpm type-check"
+    "${PNPM[@]}" lint > "$LOG_FILE" 2>&1; record $? "pnpm lint"
 fi
 
 if [ "$TIER" -eq 0 ]; then
@@ -89,9 +102,9 @@ fi
 echo ""
 echo "Tier 1 — Local execution"
 if [ "$KIND" = "go" ]; then
-    go test "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go test ${SCOPE[*]}"
+    go test "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go test ${SCOPE[*]}"
 else
-    pnpm test -- --run > /tmp/run-tiers.log 2>&1; record $? "pnpm test"
+    "${PNPM[@]}" test -- --run > "$LOG_FILE" 2>&1; record $? "pnpm test"
 fi
 
 if [ "$TIER" -eq 1 ]; then
@@ -106,9 +119,9 @@ fi
 echo ""
 echo "Tier 2 — End-to-end"
 if [ "$KIND" = "go" ]; then
-    go test -race "${SCOPE[@]}" > /tmp/run-tiers.log 2>&1; record $? "go test -race ${SCOPE[*]}"
+    go test -race "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go test -race ${SCOPE[*]}"
 else
-    pnpm build > /tmp/run-tiers.log 2>&1; record $? "pnpm build"
+    "${PNPM[@]}" build > "$LOG_FILE" 2>&1; record $? "pnpm build"
 fi
 
 echo ""

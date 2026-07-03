@@ -2,6 +2,7 @@ package trend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -31,8 +32,7 @@ func (s *Service) SyncDailyDevHighlights(ctx context.Context, sourceURL string) 
 	result := &SyncResult{SourceID: sourceID}
 	items, fetchErr := s.fetcher.FetchHighlights(ctx, sourceURL)
 	if fetchErr != nil {
-		_ = s.repo.MarkSourcePolled(ctx, sourceID, fetchErr)
-		return result, fetchErr
+		return result, errors.Join(fetchErr, s.repo.MarkSourcePolled(ctx, sourceID, fetchErr))
 	}
 	result.Fetched = len(items)
 
@@ -40,15 +40,14 @@ func (s *Service) SyncDailyDevHighlights(ctx context.Context, sourceURL string) 
 		if strings.TrimSpace(item.Title) == "" {
 			continue
 		}
-		trendID, inserted, err := s.repo.UpsertFetchedTrend(ctx, sourceID, item)
-		if err != nil {
-			_ = s.repo.MarkSourcePolled(ctx, sourceID, err)
-			return result, err
+		trendID, inserted, upsertErr := s.repo.UpsertFetchedTrend(ctx, sourceID, item)
+		if upsertErr != nil {
+			return result, errors.Join(upsertErr, s.repo.MarkSourcePolled(ctx, sourceID, upsertErr))
 		}
 		result.Upserted++
 		if inserted {
 			result.Inserted++
-			if err := s.repo.EnqueueScoreJob(ctx, trendID); err == nil {
+			if enqueueErr := s.repo.EnqueueScoreJob(ctx, trendID); enqueueErr == nil {
 				result.EnqueuedScoreJob++
 			}
 		}
@@ -56,8 +55,7 @@ func (s *Service) SyncDailyDevHighlights(ctx context.Context, sourceURL string) 
 
 	evaluated, candidates, err := s.EvaluatePending(ctx, 100)
 	if err != nil {
-		_ = s.repo.MarkSourcePolled(ctx, sourceID, err)
-		return result, err
+		return result, errors.Join(err, s.repo.MarkSourcePolled(ctx, sourceID, err))
 	}
 	result.Evaluated = evaluated
 	result.Candidates = candidates
@@ -119,9 +117,10 @@ func evaluateTrend(item TrendForEvaluation) EvaluationResult {
 	text := title + " " + summary + " " + channel
 
 	hScore := 1
-	if significance == "breaking" {
+	switch significance {
+	case "breaking":
 		hScore = 5
-	} else if significance == "major" {
+	case "major":
 		hScore = 3
 	}
 	if containsAny(title, "cve", "rce", "retires", "shutdown", "raises", "launches", "ships", "open-sources") {
