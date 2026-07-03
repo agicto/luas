@@ -11,7 +11,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
-        -o /out/ ./cmd/server ./cmd/luas
+        -o /out/ ./cmd/server ./cmd/luas ./cmd/trend-sync
 
 # Run stage — distroless static for minimal image size and fast pull
 FROM gcr.io/distroless/static-debian12:nonroot
@@ -20,6 +20,7 @@ WORKDIR /app
 
 COPY --from=builder /out/server /app/luas-server
 COPY --from=builder /out/luas /app/luas
+COPY --from=builder /out/trend-sync /app/trend-sync
 COPY --from=builder /app/.env.example /app/.env
 
 ENV TZ=UTC

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 const sourceRoot = resolve(process.cwd(), 'src');
 const allowedProcessEnvFiles = new Set([
   'config/env.ts',
+  'config/env.server.ts',
   'test/setup.ts',
 ]);
 
