@@ -47,6 +47,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — deployable-unit boundaries and vertical change flow.
 - [contracts/README.md](contracts/README.md) — shared HTTP response, error, pagination, and request ID contracts.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
+- [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for skill governance and AI workflow quality.
 
 ## Working with AI agents
 

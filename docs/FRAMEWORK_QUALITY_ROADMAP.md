@@ -3,6 +3,7 @@
 This roadmap tracks long-running work to keep Luas professional, semantically clear, architecture-friendly, and AI-agent friendly.
 
 Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. Use the `luas-framework-review` skill before adding or re-ranking items.
+Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day plan that keeps agent skills aligned with Luas vocabulary, contracts, and architecture.
 
 ## Quality Axes
 
@@ -34,6 +35,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. Use the `luas-framework-rev
 - Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point.
 - Root verification exists through `make check`, but the Web tier currently needs separate failure expansion when the wrapper reports a collapsed failure.
 - The root `luas-framework-review` skill now defines the long-running review loop.
+- Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
 - High-signal vocabulary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary debt has started moving down: `pkg/response` no longer imports `internal/domain`, and `internal/capabilities/ai` no longer imports `internal/infra/http`.
@@ -147,6 +149,24 @@ Verification:
 
 - `.agents/skills/scripts/validate-skill.sh --all`
 - Skill count checks in `.agents/skills/README.md`.
+
+### P2 — Skill Governance Plan
+
+Problem: some existing skills still carry older Luas wording or implementation assumptions, and the current
+vocabulary guard does not scan every skill body.
+
+Recommended slice:
+
+1. Follow the 30-day plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
+2. Clean Web skill terminology around `mock BFF`, `(protected)`, `console`, and feature structure.
+3. Clean API skill terminology around response/domain error mapping.
+4. Expand vocabulary checks to all non-template `SKILL.md` files.
+
+Verification:
+
+- `bash .agents/skills/scripts/validate-skill.sh --all`
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `git diff --check`
 
 ## Iteration Rules
 
