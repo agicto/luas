@@ -18,7 +18,6 @@ export const ROUTES = {
   // Console (Admin) routes
   CONSOLE: {
     HOME: '/console',
-    TRENDS: '/console/trends',
     SETTINGS: '/console/settings',
   },
 

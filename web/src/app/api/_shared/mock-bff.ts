@@ -1,7 +1,6 @@
 import type { NextResponse } from 'next/server';
 
 import { env } from '@/config/env';
-import { serverEnv } from '@/config/env.server';
 import { ApiErrorCode } from '@/http/codes';
 import { apiErrorResponse } from './error-response';
 
@@ -13,7 +12,7 @@ interface MockBffEnvironment {
 function currentMockBffEnvironment(): MockBffEnvironment {
   return {
     nodeEnv: env.NODE_ENV,
-    enabled: serverEnv.MOCK_BFF_ENABLED,
+    enabled: env.MOCK_BFF_ENABLED,
   };
 }
 

@@ -5,7 +5,6 @@ import settings from './settings/en-US';
 import errors from './errors/en-US';
 import metadata from './metadata/en-US';
 import dashboard from './dashboard/en-US';
-import trends from './trends/en-US';
 import test from './test/en-US';
 
 /**
@@ -20,7 +19,6 @@ export const messages = {
   errors,
   metadata,
   dashboard,
-  trends,
   test,
 } as const;
 

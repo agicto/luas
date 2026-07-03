@@ -10,7 +10,6 @@ export const AVAILABLE_MODULES = [
   'errors',
   'metadata',
   'dashboard',
-  'trends',
   'test',
 ] as const;
 
@@ -54,10 +53,6 @@ const moduleRegistry: ModuleRegistry = {
   dashboard: {
     'zh-Hans': () => import('./modules/dashboard/zh-Hans'),
     'en-US': () => import('./modules/dashboard/en-US'),
-  },
-  trends: {
-    'zh-Hans': () => import('./modules/trends/zh-Hans'),
-    'en-US': () => import('./modules/trends/en-US'),
   },
   test: {
     'zh-Hans': () => import('./modules/test/zh-Hans'),

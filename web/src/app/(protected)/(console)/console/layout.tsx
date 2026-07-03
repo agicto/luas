@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette, Newspaper } from "lucide-react";
+import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette } from "lucide-react";
 
 import { cn } from "@/utils";
 import { ROUTES } from "@/constants/routes";
@@ -42,11 +42,6 @@ export default function ConsoleLayout({
       titleKey: "nav.dashboard",
       href: ROUTES.CONSOLE.HOME,
       icon: Home,
-    },
-    {
-      titleKey: "nav.trends",
-      href: ROUTES.CONSOLE.TRENDS,
-      icon: Newspaper,
     },
   ];
 
