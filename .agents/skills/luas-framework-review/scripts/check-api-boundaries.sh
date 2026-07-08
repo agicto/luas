@@ -9,15 +9,19 @@ cd "$API_ROOT"
 
 MODULE=$(go list -m)
 
-if [ -d "$API_ROOT/internal/contracts" ]; then
-  echo "api/internal/contracts is reserved against reuse; use internal/starter/assembly for starter registry seams and root contracts/ for HTTP contracts." >&2
-  exit 1
-fi
+assert_absent_path() {
+  local relative_path=$1
+  local message=$2
 
-if [ -f "$API_ROOT/pkg/support/paths.go" ]; then
-  echo "api/pkg/support/paths.go is reserved against reuse; app path helpers belong in runtime-owned packages, not reusable pkg/support." >&2
-  exit 1
-fi
+  if [ -e "$API_ROOT/$relative_path" ]; then
+    echo "api/$relative_path is reserved against reuse; $message" >&2
+    exit 1
+  fi
+}
+
+assert_absent_path "internal/contracts" "use internal/starter/assembly for starter registry seams and root contracts/ for HTTP contracts."
+assert_absent_path "pkg/support/paths.go" "app path helpers belong in runtime-owned packages, not reusable pkg/support."
+assert_absent_path "pkg/support/debug.go" "debug dump/timing helpers belong in local devtools or internal diagnostics, not reusable pkg/support."
 
 KNOWN_VIOLATIONS=()
 

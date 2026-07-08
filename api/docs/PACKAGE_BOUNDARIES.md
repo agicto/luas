@@ -53,6 +53,8 @@ None.
   top-level starter contract package, keeping HTTP contract vocabulary reserved for `contracts/`.
 - App-specific path helpers were removed from `pkg/support`; runtime-owned packages should compute
   their own paths from configuration or explicit inputs instead of using global scaffold path state.
+- Debug dump, timing, stack, and memory-print helpers were removed from `pkg/support`; local
+  diagnostics should live in devtools or internal runtime packages when a real caller needs them.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
