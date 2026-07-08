@@ -138,6 +138,7 @@ Every rule that prevents architectural drift should have a script, test, or CI c
 - API package direction,
 - mock BFF production guard,
 - env source-of-truth,
+- production runtime secret gate,
 - error-code namespace split,
 - mock BFF success envelope helpers,
 - skill frontmatter validity.

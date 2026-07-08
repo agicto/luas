@@ -50,7 +50,9 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 > [!IMPORTANT]
 > Always use the `env` object from `@/config/env` to access environment variables. Directly accessing `process.env` is strictly prohibited outside of the config file.
 
-`src/test/env-contract.test.ts` enforces this rule for production source files.
+`src/test/env-contract.test.ts` enforces this rule for production source files and verifies that
+production runtime requires a strong `SESSION_SECRET` while production builds can omit runtime-only
+secrets.
 
 ## Related Skills
 

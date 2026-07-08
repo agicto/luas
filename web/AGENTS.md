@@ -303,10 +303,10 @@ import { env } from '@/config/env';
 const apiUrl = env.NEXT_PUBLIC_API_URL; // Typed, validated
 ```
 
-This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside `src/config/env.ts`.
+This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside `src/config/env.ts`, and production runtime must not start mock auth without a strong `SESSION_SECRET`.
 
 ### 2. Validation (Zod)
-We use `zod` to valid environment variables at runtime. If a required variable is missing, the app will fail to start only with a clear error message.
+We use `zod` to validate environment variables at runtime. If a required runtime variable is missing, the app fails to start with a clear error message.
 
 ### 3. Supported Variables
 
@@ -319,7 +319,7 @@ We use `zod` to valid environment variables at runtime. If a required variable i
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
 | `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. Keep false for downstream production apps. |
-| `SESSION_SECRET` | Production runtime | - | Server-only secret used to HMAC-sign the mock auth session cookie. |
+| `SESSION_SECRET` | Production runtime | - | Server-only secret used to HMAC-sign the mock auth session cookie. Required outside `phase-production-build`; use at least 32 characters. |
 
 To add a new variable:
 1. Add it to `.env.local`

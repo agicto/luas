@@ -32,7 +32,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
-- Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point.
+- Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point and requiring a strong `SESSION_SECRET` for production runtime mock auth.
 - Root verification exists through `make check`; `run-tiers.sh` now prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
@@ -102,9 +102,10 @@ Recommended slice:
 
 1. Keep new mock route handlers behind `guardMockBffRoute()`.
 2. Return mock success payloads through `apiSuccessResponse()` and errors through the shared error response helpers.
-3. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
-4. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
-5. Add production configuration tests when adding new demo-only flows.
+3. Keep `SESSION_SECRET` production runtime requirements covered by `src/test/env-contract.test.ts` when changing mock auth or deployment behavior.
+4. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
+5. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
+6. Add production configuration tests when adding new demo-only flows.
 
 Verification:
 

@@ -17,6 +17,8 @@ Use this guide when turning Luas into a downstream app.
 If production uses the same `/api` path, route that path to the real API at the deployment layer.
 If production calls a cross-origin API, the API must allow credentialed browser requests from the
 web origin because the default HTTP client sends credentials.
+Production runtime fails fast when mock auth can run without a strong `SESSION_SECRET`; production
+builds may omit runtime-only secrets during `phase-production-build`.
 
 ## Replacement Checklist
 
