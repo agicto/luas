@@ -20,6 +20,8 @@ and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-
   seams, locality, leverage, and testability.
 - **Verification is part of the skill**: every implementation skill must name the command or guard
   that proves its work.
+- **One local governance entry point**: stable root guardrails should be reachable through
+  `make governance`, and `make check` should include them before API/Web verification.
 - **Scaffold-first**: skills must preserve Luas as a starter kit. They should not turn examples,
   mock BFF routes, devtools, or console pages into product behavior.
 
@@ -189,9 +191,8 @@ Performance claims should carry evidence:
 Before publishing Luas as a reusable starter kit release:
 
 - run root `make check`,
-- run skill validation,
-- run vocabulary, doc-link, error-contract, surface-catalog, and package-boundary checks,
-- run branch/release governance checks,
+- confirm `make governance` covers skill validation, vocabulary, doc-link, error-contract,
+  surface-catalog, package-boundary, and branch/release governance checks,
 - confirm downstream extraction docs still match the current file tree,
 - write a release note that separates scaffold improvements from starter behavior changes.
 

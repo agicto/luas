@@ -65,6 +65,8 @@ Helper scripts shipped with skills:
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
 - `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.
 
+`make governance` runs the root semantic, contract, docs, surface, branch, package-boundary, and skill metadata guardrails. `make check` runs `make governance` plus the API and Web verification tiers.
+
 CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml) and [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ## Cross-cutting rules (apply everywhere)
@@ -89,7 +91,8 @@ cd web && pnpm type-check               # TypeScript check
 cd web && pnpm lint                     # ESLint
 
 # repo root
-make check                              # API tests + web type/lint/test/build
+make governance                         # root semantic/contract/docs/surface/branch/package/skill guardrails
+make check                              # governance + API tests + web type/lint/test/build
 ```
 
 ## When in doubt

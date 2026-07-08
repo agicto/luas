@@ -54,6 +54,13 @@ See [web/README.md](web/README.md) for the full frontend guide.
 
 Both halves were designed for AI-assisted development. Start with the global [CONTEXT.md](CONTEXT.md) for the shared Luas vocabulary, then use the top-level [AGENTS.md](AGENTS.md) plus the per-half [api/AGENTS.md](api/AGENTS.md) and [web/AGENTS.md](web/AGENTS.md) for navigation, boundaries, and conventions.
 
+## Verification
+
+```bash
+make governance  # root semantic, contract, docs, surface, branch, package, and skill guardrails
+make check       # governance + API tier 1 + Web tier 2
+```
+
 ## History
 
 This repo merges two previous projects, with full commit history preserved:

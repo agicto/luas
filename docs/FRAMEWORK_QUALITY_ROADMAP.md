@@ -35,7 +35,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
 - Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point and requiring a strong `SESSION_SECRET` for production runtime mock auth.
-- Root verification exists through `make check`; `run-tiers.sh` now prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
+- Root verification is split into `make governance` for scaffold guardrails and `make check` for governance plus API/Web verification tiers; `run-tiers.sh` prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
 - HTTP contract changes now have a dedicated root `contract-evolution` skill that orders changes through `contracts/`, API behavior, Web services, mock BFF behavior, and verification.
@@ -217,6 +217,22 @@ Verification:
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 - `git diff --check`
+
+### P2 — Root Governance Entry Point
+
+Problem: Luas now has multiple root guardrails for vocabulary, docs, contracts, surfaces, branch discipline, package direction, and skill metadata; if they stay as separate remembered commands, agents and humans will eventually run only part of the governance set.
+
+Recommended slice:
+
+1. Keep `make governance` as the single local entry point for root guardrails.
+2. Keep `make check` running `make governance` before API and Web verification tiers.
+3. Add new root guard scripts to `make governance` when they become stable enough for CI/local use.
+4. Keep task-specific checks, such as downstream product leakage patterns, outside the default target unless they can run without product-specific input.
+
+Verification:
+
+- `make governance`
+- `make check`
 
 ### P2 — Documentation Link Integrity
 
