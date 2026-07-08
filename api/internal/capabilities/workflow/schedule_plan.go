@@ -2,14 +2,12 @@ package workflow
 
 import (
 	"time"
-
-	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 // SchedulePlan is the workflow-facing builder over scheduler events.
 type SchedulePlan struct {
 	manager *Manager
-	event   *schedule.Event
+	event   *Event
 }
 
 // EveryMinute runs the task every minute.
@@ -79,12 +77,12 @@ func (p *SchedulePlan) OnSuccess(fn func()) *SchedulePlan {
 }
 
 // Register makes the schedule active on the manager's scheduler.
-func (p *SchedulePlan) Register() *schedule.Event {
+func (p *SchedulePlan) Register() *Event {
 	p.manager.scheduler.Register(p.event)
 	return p.event
 }
 
 // Event returns the underlying scheduled event for advanced use cases.
-func (p *SchedulePlan) Event() *schedule.Event {
+func (p *SchedulePlan) Event() *Event {
 	return p.event
 }

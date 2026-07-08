@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/zgiai/luas/api/internal/infra/queue"
-	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 var (
@@ -47,7 +46,7 @@ type RetryPolicy struct {
 // Manager is the deep seam over queue, scheduler, and retry behavior.
 type Manager struct {
 	queue     *queue.Manager
-	scheduler *schedule.Scheduler
+	scheduler *Scheduler
 }
 
 var defaultManager = NewManager()
@@ -59,16 +58,16 @@ func Default() *Manager {
 
 // NewManager creates a workflow manager backed by the global queue and scheduler.
 func NewManager() *Manager {
-	return NewManagerWith(queue.Global(), schedule.Global())
+	return NewManagerWith(queue.Global(), GlobalScheduler())
 }
 
 // NewManagerWith creates a workflow manager backed by explicit infra instances.
-func NewManagerWith(queueManager *queue.Manager, scheduler *schedule.Scheduler) *Manager {
+func NewManagerWith(queueManager *queue.Manager, scheduler *Scheduler) *Manager {
 	if queueManager == nil {
 		queueManager = queue.Global()
 	}
 	if scheduler == nil {
-		scheduler = schedule.Global()
+		scheduler = GlobalScheduler()
 	}
 	return &Manager{
 		queue:     queueManager,
@@ -156,7 +155,7 @@ func (m *Manager) Run(ctx context.Context, name string, task TaskFunc, opts ...R
 func (m *Manager) Schedule(name string, task TaskFunc) *SchedulePlan {
 	return &SchedulePlan{
 		manager: m,
-		event: schedule.Call(strings.TrimSpace(name), func(ctx context.Context) error {
+		event: Call(strings.TrimSpace(name), func(ctx context.Context) error {
 			if task == nil {
 				return ErrNilTask
 			}

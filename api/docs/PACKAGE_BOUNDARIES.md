@@ -40,7 +40,7 @@ These are existing boundary debts, not new patterns to copy:
 
 | Package | Imports | Why It Is Debt | Preferred Direction |
 |---|---|---|---|
-| `internal/capabilities/workflow` | `internal/infra/queue`, `internal/infra/schedule` | The workflow capability is currently a facade over infra queue and scheduler primitives. | Either promote the primitives into the capability, or reclassify workflow as infra/runtime glue and expose a smaller capability-facing seam. |
+| `internal/capabilities/workflow` | `internal/infra/queue` | The workflow capability is currently a facade over infra queue primitives. | Either promote the queue primitives into the capability, or reclassify workflow as infra/runtime glue and expose a smaller capability-facing seam. |
 
 ## Boundary Debt Progress
 
@@ -48,6 +48,8 @@ These are existing boundary debts, not new patterns to copy:
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
   lives inside the workflow capability and is guarded by success, stop-retry, and exhaustion tests.
+- `internal/capabilities/workflow` no longer imports `internal/infra/schedule`. Scheduler behavior now lives
+  inside the workflow capability; `internal/infra/schedule` remains as a compatibility wrapper.
 
 ## Review Rule
 

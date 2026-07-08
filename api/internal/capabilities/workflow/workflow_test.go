@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/zgiai/luas/api/internal/infra/queue"
-	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
 var counterJobCalls atomic.Int32
@@ -23,7 +22,7 @@ func (j *counterJob) Handle(ctx context.Context) error {
 }
 
 func TestManagerRunRetriesAndEventuallySucceeds(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), schedule.New())
+	manager := NewManagerWith(queue.Global(), NewScheduler())
 
 	attempts := 0
 	err := manager.Run(context.Background(), "sync.retry", func(ctx context.Context) error {
@@ -44,7 +43,7 @@ func TestManagerRunRetriesAndEventuallySucceeds(t *testing.T) {
 }
 
 func TestManagerRunStopsWhenShouldRetryRejectsError(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), schedule.New())
+	manager := NewManagerWith(queue.Global(), NewScheduler())
 
 	expectedErr := errors.New("do not retry")
 	attempts := 0
@@ -64,7 +63,7 @@ func TestManagerRunStopsWhenShouldRetryRejectsError(t *testing.T) {
 }
 
 func TestManagerRunReturnsMaxAttemptsError(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), schedule.New())
+	manager := NewManagerWith(queue.Global(), NewScheduler())
 
 	expectedErr := errors.New("still failing")
 	attempts := 0
@@ -84,7 +83,7 @@ func TestManagerRunReturnsMaxAttemptsError(t *testing.T) {
 }
 
 func TestManagerDispatchAfterExecutesRegisteredJob(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), schedule.New())
+	manager := NewManagerWith(queue.Global(), NewScheduler())
 
 	counterJobCalls.Store(0)
 	job := &counterJob{}
@@ -98,7 +97,7 @@ func TestManagerDispatchAfterExecutesRegisteredJob(t *testing.T) {
 }
 
 func TestSchedulePlanRegistersAndRunsDueWork(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := NewScheduler()
 	manager := NewManagerWith(queue.Global(), scheduler)
 
 	ran := 0
