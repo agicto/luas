@@ -71,6 +71,9 @@ None.
   that owns the shape.
 - Mutating dot-notation data helpers were removed from `pkg/support`; nested data writes and shape
   mutations should stay local to the owning package instead of becoming scaffold-wide helpers.
+- `pkg/support` is now documented and guarded as a small read-only helper surface limited to
+  `Blank`, `Filled`, `DataGet`, and `DataHas`; new exported helpers should move to the starter,
+  capability, or runtime seam that owns the behavior.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

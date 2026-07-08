@@ -110,7 +110,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-doc-links.py` scans local Markdown links in docs and agent guidance so navigation does not point at deleted files, renamed skills, or stale examples.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
 - `scripts/check-surface-catalog.py` keeps `docs/SCAFFOLD_SURFACES.md` aligned with `CONTEXT.md` and the `downstream-app-extraction` surface classification table.
-- `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any.
+- `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any. It also guards the tiny allowed export surface of `api/pkg/support`.
 - `scripts/check-branch-governance.sh` keeps `docs/BRANCHING_AND_RELEASES.md` aligned with the CI-managed `dev` / `dev-c` to `deploy-dev` / `deploy-dev-c` deployment-branch mapping.
 - `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.
   Use it for multi-candidate or cross-turn recommendations where files, problem, deeper seam, before/after flow,

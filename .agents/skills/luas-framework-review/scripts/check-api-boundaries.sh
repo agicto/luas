@@ -29,6 +29,15 @@ assert_absent_path "pkg/support/str.go" "broad string formatting and random stri
 assert_absent_path "pkg/support/arr.go" "broad collection helpers should live at their owning seam, not in generic pkg/support."
 assert_absent_path "pkg/support/map.go" "broad map helpers should live at their owning seam, not in generic pkg/support."
 
+support_doc=$(go doc -all ./pkg/support)
+support_exports=$(printf '%s\n' "$support_doc" | grep -E '^(func|type|var|const) [A-Z][A-Za-z0-9_]*' || true)
+unexpected_support_exports=$(printf '%s\n' "$support_exports" | grep -E -v '^func (Blank|Filled|DataGet|DataHas)\(' || true)
+if [ -n "$unexpected_support_exports" ]; then
+  echo "api/pkg/support exports must stay limited to Blank, Filled, DataGet, and DataHas; put new helpers at their owning seam." >&2
+  printf '%s\n' "$unexpected_support_exports" >&2
+  exit 1
+fi
+
 if grep -R -E -n --include='*.go' '^(func (Tap|With|IfVal|WhenFunc|UnlessVal|Value|Transform|Rescue|RescueWith|Retry|RetryWithDelay|RetryWhen|Once|Some|None|Of|OptionalMap|ThrowIf|ThrowUnless|Must|Coalesce|Default|Flow)(\[|\()|type Optional\[|var onceCache)' "$API_ROOT/pkg/support" >/dev/null; then
   echo "api/pkg/support must not reintroduce generic control-flow, retry, panic, or Optional helpers; keep these at their owning seam." >&2
   exit 1
