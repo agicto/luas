@@ -49,7 +49,7 @@ These are reusable habits the agent can reach for automatically.
 | `api-error-handling` | Web/API error response contract and code vocabulary. | Existing |
 | `environment-config` | Web env source-of-truth and typed validation. | Existing |
 | `domain-modeling` | Challenges vocabulary and updates `CONTEXT.md` / ADRs when terms crystallize. | Existing |
-| `luas-code-review` | Reviews diffs on separate Standards and Spec axes. | Planned |
+| `luas-code-review` | Reviews diffs on separate Standards and Spec axes. | Existing |
 | `tdd-regression` | Runs red/green/refactor for bugs and contract-sensitive behavior. | Planned |
 
 ## 30-Day Plan
@@ -93,6 +93,7 @@ Goal: turn skills into cross-boundary governance, not just reminders.
    - Offer ADRs only for hard-to-reverse, surprising, trade-off-driven decisions.
 
 3. **Add `luas-code-review`**
+   - Status: implemented as a root skill.
    - Standards axis: compare the diff against `CONTEXT.md`, AGENTS, contracts, package boundaries, and skills.
    - Spec axis: compare the diff against the originating request, roadmap slice, issue, or PRD.
    - Keep the two reports separate so style compliance cannot hide a wrong implementation.
@@ -180,5 +181,5 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 60-day item "Add `luas-code-review`." It is the next high-leverage workflow because
-future reviews need separate Standards and Spec axes so compliant code cannot hide the wrong implementation.
+Continue with the 60-day item "Add `tdd-regression`." It is the next high-leverage workflow because
+bugs and contract-sensitive regressions need a repeatable red/green/refactor loop.

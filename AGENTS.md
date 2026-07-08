@@ -43,6 +43,7 @@ Root skills (apply everywhere):
 | [`contract-evolution`](.agents/skills/contract-evolution/) | Changing HTTP contracts across `contracts/`, `api/`, Web services, or mock BFF behavior |
 | [`domain-modeling`](.agents/skills/domain-modeling/) | Resolving vocabulary, naming, or `starter` / `feature` / `capability` / `module` boundaries |
 | [`grill-before-build`](.agents/skills/grill-before-build/) | Request is underspecified or has wide impact (persistence, permissions, deployment, user workflows) |
+| [`luas-code-review`](.agents/skills/luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |
 | [`luas-framework-review`](.agents/skills/luas-framework-review/) | Reviewing Luas as a global scaffold for security, performance, semantics, architecture, or AI workflows |
 | [`systematic-debugging`](.agents/skills/systematic-debugging/) | Bug or flaky test where the cause is not obvious |
 | [`verification-before-completion`](.agents/skills/verification-before-completion/) | End-of-turn check that what you built actually runs / tests / lints |

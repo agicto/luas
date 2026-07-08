@@ -17,6 +17,7 @@ Codex loads only **metadata** (name + description) into the system prompt at sta
 | [`contract-evolution`](./contract-evolution/) | Changing HTTP contracts across `contracts/`, `api/`, Web services, or mock BFF behavior |
 | [`domain-modeling`](./domain-modeling/) | Resolving vocabulary, naming, or `starter` / `feature` / `capability` / `module` boundaries |
 | [`grill-before-build`](./grill-before-build/) | Interview the user before underspecified or wide-impact changes |
+| [`luas-code-review`](./luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |
 | [`luas-framework-review`](./luas-framework-review/) | Review Luas as a global scaffold across security, performance, semantics, architecture, and AI workflows |
 | [`systematic-debugging`](./systematic-debugging/) | Bug or flaky test with unclear cause — 4-phase reproduce → isolate → identify → verify |
 | [`verification-before-completion`](./verification-before-completion/) | End-of-turn check that the change actually runs / tests pass / lint clean |
@@ -56,13 +57,13 @@ Quick map:
 ## How to Verify Skills Are Loaded
 
 ```bash
-# count discoverable skills (should be 33)
+# count discoverable skills (should be 34)
 find . -maxdepth 5 -name "SKILL.md" -not -path "*/.template/*" | wc -l
 
-# count what loads in api/ context (root + api = 18)
+# count what loads in api/ context (root + api = 19)
 ( cd api && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 
-# count what loads in web/ context (root + web = 22)
+# count what loads in web/ context (root + web = 23)
 ( cd web && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 ```
 

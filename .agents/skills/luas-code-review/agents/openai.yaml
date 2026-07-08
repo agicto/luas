@@ -1,0 +1,4 @@
+interface:
+  display_name: "Luas Code Review"
+  short_description: "Review diffs on Standards and Spec"
+  default_prompt: "Use $luas-code-review to review this Luas diff on separate Standards and Spec axes."

@@ -85,6 +85,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 
 - `contract-evolution` for HTTP contract changes that span `contracts/`, API behavior, Web services, or mock BFF behavior.
 - `domain-modeling` when a new term, naming choice, or starter/feature/capability/module boundary needs a canonical decision.
+- `luas-code-review` when a diff needs separate Standards and Spec review axes.
 - `grill-before-build` for wide-impact design decisions.
 - `systematic-debugging` when verification fails and the cause is unclear.
 - `verification-before-completion` before reporting any implementation complete.
