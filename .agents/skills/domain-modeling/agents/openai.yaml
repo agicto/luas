@@ -1,0 +1,4 @@
+interface:
+  display_name: "Domain Modeling"
+  short_description: "Resolve Luas terms and boundaries"
+  default_prompt: "Use $domain-modeling to decide whether this Luas concept belongs in CONTEXT.md, an ADR, a local doc, or nowhere."

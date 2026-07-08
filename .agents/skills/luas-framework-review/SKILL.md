@@ -84,6 +84,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 ## Pair With
 
 - `contract-evolution` for HTTP contract changes that span `contracts/`, API behavior, Web services, or mock BFF behavior.
+- `domain-modeling` when a new term, naming choice, or starter/feature/capability/module boundary needs a canonical decision.
 - `grill-before-build` for wide-impact design decisions.
 - `systematic-debugging` when verification fails and the cause is unclear.
 - `verification-before-completion` before reporting any implementation complete.

@@ -48,7 +48,7 @@ These are reusable habits the agent can reach for automatically.
 | `architecture-principles` | API-side seam, depth, starter, and locality rules. | Existing |
 | `api-error-handling` | Web/API error response contract and code vocabulary. | Existing |
 | `environment-config` | Web env source-of-truth and typed validation. | Existing |
-| `domain-modeling` | Challenges vocabulary and updates `CONTEXT.md` / ADRs when terms crystallize. | Planned |
+| `domain-modeling` | Challenges vocabulary and updates `CONTEXT.md` / ADRs when terms crystallize. | Existing |
 | `luas-code-review` | Reviews diffs on separate Standards and Spec axes. | Planned |
 | `tdd-regression` | Runs red/green/refactor for bugs and contract-sensitive behavior. | Planned |
 
@@ -87,6 +87,7 @@ Goal: turn skills into cross-boundary governance, not just reminders.
    - Include checklists for `error_code`, `request_id`, validation errors, pagination, and production mock guardrails.
 
 2. **Add `domain-modeling`**
+   - Status: implemented as a root skill.
    - Use it when terminology changes or when a feature/starter/capability boundary is unclear.
    - Update `CONTEXT.md` inline when a canonical term is resolved.
    - Offer ADRs only for hard-to-reverse, surprising, trade-off-driven decisions.
@@ -179,5 +180,5 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 60-day item "Add `domain-modeling`." It is the next high-leverage workflow because
-new starter, feature, capability, and contract terms need a repeatable path into `CONTEXT.md` or ADRs.
+Continue with the 60-day item "Add `luas-code-review`." It is the next high-leverage workflow because
+future reviews need separate Standards and Spec axes so compliant code cannot hide the wrong implementation.
