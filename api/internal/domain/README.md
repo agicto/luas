@@ -1,6 +1,6 @@
 # Domain Layer
 
-The **Domain Layer** is the heart of Luas framework, containing the core business logic that is independent of any infrastructure concerns.
+The **Domain Layer** is the heart of the Luas scaffold, containing the core business logic that is independent of any infrastructure concerns.
 
 ## 📋 Responsibilities
 
@@ -189,6 +189,6 @@ HTTP Request
 
 ## 📖 Related Documentation
 
-- [Module Development Guide](../../modules/README.md)
-- [Wire Dependency Injection](../../../docs/dependency_injection.md)
-- [Event-Driven Architecture](../events/README.md)
+- [Module Development Guide](../modules/README.md)
+- [Adding a Backend Module](../../docs/ADDING_MODULE.md)
+- [API Package Boundaries](../../docs/PACKAGE_BOUNDARIES.md)

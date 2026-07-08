@@ -240,7 +240,7 @@ Response:
 
 ## Further Reading
 
-- [Luas AGENTS.md](../../../AGENTS.md)
+- [Luas AGENTS.md](../../../../AGENTS.md)
 - [DDD Layered Architecture](https://martinfowler.com/bliki/DomainDrivenDesign.html)
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
 - [Wire Dependency Injection](https://github.com/google/wire)

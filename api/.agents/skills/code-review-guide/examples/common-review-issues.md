@@ -467,6 +467,6 @@ Before requesting re-review, verify:
 ---
 
 **See Also**:
-- [coding-standards](../coding-standards/) - Full coding standards
-- [api-development](../api-development/) - API best practices
+- [coding-standards](../../coding-standards/) - Full coding standards
+- [api-development](../../api-development/) - API best practices
 - [good-review-example](./good-review-example.md) - Example of good review

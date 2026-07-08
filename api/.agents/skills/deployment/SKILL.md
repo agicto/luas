@@ -139,7 +139,6 @@ Configurations must be injected via **Environment Variables** for 12-factor comp
 ## 🔧 Automation Scripts
 
 Available in `scripts/`:
-- [`deploy-cloudrun.sh`](./scripts/deploy-cloudrun.sh) - Helper for GCR deployments.
 - [`verify-image.sh`](./scripts/verify-image.sh) - Checks image compliance & size.
 
 ---

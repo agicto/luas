@@ -240,7 +240,6 @@ mockery --all --dir=internal/modules/user
 
 - [**Unit Test with Mocking**](./examples/service_unit_test.go)
 - [**Table-Driven Test**](./examples/mapping_test.go)
-- [**API Integration Test**](./examples/handler_integration_test.go)
 
 ---
 

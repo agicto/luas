@@ -57,6 +57,7 @@ Helper scripts shipped with skills:
 
 - `.agents/skills/verification-before-completion/scripts/run-tiers.sh <0|1|2> [scope...]` — auto-detects api/ vs web/ and runs the chosen tier.
 - `.agents/skills/luas-framework-review/scripts/scaffold-architecture-report.py` — generate an optional HTML architecture review report in `$TMPDIR`.
+- `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` — verify branch/release docs match CI-managed deployment branch mappings.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
 - `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.

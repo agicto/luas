@@ -71,6 +71,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 7. **Verify**
    - Run `verification-before-completion` for code changes.
    - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
+   - Run `scripts/check-doc-links.py` when editing Markdown docs, skill bodies, AGENTS files, or README navigation.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
    - Run `scripts/check-branch-governance.sh` when changing branch, release, deployment-branch, or CI workflow guidance.
    - For pure docs or skills, run `git diff --check` and the skill validator when relevant.
@@ -104,6 +105,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 ## Helper Script
 
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
+- `scripts/check-doc-links.py` scans local Markdown links in docs and agent guidance so navigation does not point at deleted files, renamed skills, or stale examples.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any.
 - `scripts/check-branch-governance.sh` keeps `docs/BRANCHING_AND_RELEASES.md` aligned with the CI-managed `dev` / `dev-c` to `deploy-dev` / `deploy-dev-c` deployment-branch mapping.
 - `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.

@@ -989,7 +989,7 @@ make migrate
 
 ## 📚 Examples
 
-See [`examples/blog-module-complete/`](./examples/blog-module-complete/) for the full implementation of a Blog module.
+See [`examples/blog-module-example.md`](./examples/blog-module-example.md) for the documented implementation shape of a Blog module.
 
 ## 🔗 Related Skills
 
@@ -1003,7 +1003,7 @@ See [`examples/blog-module-complete/`](./examples/blog-module-complete/) for the
 
 ## 📖 References
 
-- [Luas AGENTS.md](../../AGENTS.md) - Project development guidelines
+- [Luas AGENTS.md](../../../AGENTS.md) - Project development guidelines
 - [DDD Layered Architecture](https://martinfowler.com/bliki/DomainDrivenDesign.html)
 - [Wire User Guide](https://github.com/google/wire/blob/main/docs/guide.md)
 - [GORM Documentation](https://gorm.io/docs/)

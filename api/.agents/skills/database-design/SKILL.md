@@ -133,8 +133,6 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 ## 📚 Complete Examples
 
 - [**Module model.go Example**](./examples/module_model_example.go)
-- [**Complex Indexing Pattern**](./examples/indexing_patterns.go)
-- [**Safe Migration Script**](./examples/migration_script.go)
 
 ---
 

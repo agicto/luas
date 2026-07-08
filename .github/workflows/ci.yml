@@ -28,6 +28,9 @@ jobs:
       - name: Branch and release governance check
         run: bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh
 
+      - name: Markdown docs link check
+        run: python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
+
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}

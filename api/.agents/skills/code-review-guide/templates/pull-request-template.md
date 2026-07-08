@@ -49,7 +49,7 @@ go test -cover ./...
 ## ✅ Checklist
 
 ### Code Quality
-- [ ] Code follows [coding standards](../.agents/skills/coding-standards/)
+- [ ] Code follows [coding standards](../../coding-standards/)
 - [ ] Naming conventions followed
 - [ ] Error handling implemented
 - [ ] No security vulnerabilities

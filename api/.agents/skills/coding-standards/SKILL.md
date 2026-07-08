@@ -125,7 +125,7 @@ type User struct {
 - **capability**: may omit `handler.go`, `routes.go`, and DTO files entirely
 - **example**: may optimize for teaching value rather than default assembly
 
-> **📚 Full Guide**: See [`module-creation` skill](./.agents/skills/module-creation/)
+> **📚 Full Guide**: See [`module-creation` skill](../module-creation/)
 
 #### 2.2 Layered Architecture
 ```
@@ -776,10 +776,8 @@ func (s *service) Create(ctx context.Context, req *CreateUserRequest) (*domain.U
 
 ## 📚 Examples
 
-See the following examples:
-- [`examples/standards-checklist.md`](./examples/standards-checklist.md) - Filled checklist
+See the available example:
 - [`examples/error-handling-patterns.go`](./examples/error-handling-patterns.go) - Error handling implementations
-- [`examples/circuit-breaker-example.go`](./examples/circuit-breaker-example.go) - Circuit breaker pattern
 
 ## 🔗 Related Skills
 
@@ -792,7 +790,7 @@ See the following examples:
 
 ## 📖 References
 
-- [AGENTS.md - Coding Standards](../../AGENTS.md#coding-standards-mandatory)
+- [AGENTS.md - Coding Standards](../../../AGENTS.md#coding-standards-mandatory)
 - [Go Error Handling](https://go.dev/blog/error-handling-and-go)
 - [Effective Go](https://golang.org/doc/effective_go)
 - [Circuit Breaker Pattern](https://martinfowler.com/bliki/CircuitBreaker.html)
