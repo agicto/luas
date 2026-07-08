@@ -43,6 +43,46 @@ func TestManagerRunRetriesAndEventuallySucceeds(t *testing.T) {
 	require.Equal(t, 3, attempts)
 }
 
+func TestManagerRunStopsWhenShouldRetryRejectsError(t *testing.T) {
+	manager := NewManagerWith(queue.Global(), schedule.New())
+
+	expectedErr := errors.New("do not retry")
+	attempts := 0
+	err := manager.Run(context.Background(), "sync.retry.reject", func(ctx context.Context) error {
+		attempts++
+		return expectedErr
+	}, WithRetryPolicy(RetryPolicy{
+		MaxAttempts:  3,
+		InitialDelay: 0,
+		MaxDelay:     time.Millisecond,
+		Multiplier:   1,
+		Jitter:       0,
+		ShouldRetry:  func(err error) bool { return false },
+	}))
+	require.ErrorIs(t, err, expectedErr)
+	require.Equal(t, 1, attempts)
+}
+
+func TestManagerRunReturnsMaxAttemptsError(t *testing.T) {
+	manager := NewManagerWith(queue.Global(), schedule.New())
+
+	expectedErr := errors.New("still failing")
+	attempts := 0
+	err := manager.Run(context.Background(), "sync.retry.exhausted", func(ctx context.Context) error {
+		attempts++
+		return expectedErr
+	}, WithRetryPolicy(RetryPolicy{
+		MaxAttempts:  2,
+		InitialDelay: 0,
+		MaxDelay:     time.Millisecond,
+		Multiplier:   1,
+		Jitter:       0,
+	}))
+	require.ErrorIs(t, err, expectedErr)
+	require.ErrorIs(t, err, ErrMaxAttemptsExceeded)
+	require.Equal(t, 2, attempts)
+}
+
 func TestManagerDispatchAfterExecutesRegisteredJob(t *testing.T) {
 	manager := NewManagerWith(queue.Global(), schedule.New())
 

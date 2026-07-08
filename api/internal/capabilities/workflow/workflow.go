@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"math/rand"
 	"strings"
 	"time"
 
 	"github.com/zgiai/luas/api/internal/infra/queue"
-	"github.com/zgiai/luas/api/internal/infra/retry"
 	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
 
@@ -17,6 +18,8 @@ var (
 	ErrNilJob = errors.New("workflow: nil job")
 	// ErrNilTask is returned when attempting to execute a nil task.
 	ErrNilTask = errors.New("workflow: nil task")
+	// ErrMaxAttemptsExceeded is returned when a retried task exhausts its attempts.
+	ErrMaxAttemptsExceeded = errors.New("max retry attempts exceeded")
 )
 
 // Job is the background task contract exposed to business code.
@@ -28,6 +31,9 @@ type TaskFunc func(ctx context.Context) error
 // WorkerConfig reuses queue worker configuration for background workers.
 type WorkerConfig = queue.WorkerConfig
 
+// ShouldRetry decides whether a workflow task error should be retried.
+type ShouldRetry func(err error) bool
+
 // RetryPolicy describes retry behavior for synchronous workflow steps.
 type RetryPolicy struct {
 	MaxAttempts  int
@@ -35,10 +41,10 @@ type RetryPolicy struct {
 	MaxDelay     time.Duration
 	Multiplier   float64
 	Jitter       float64
-	ShouldRetry  retry.ShouldRetry
+	ShouldRetry  ShouldRetry
 }
 
-// Manager is the deep seam over queue, scheduler, and retry primitives.
+// Manager is the deep seam over queue, scheduler, and retry behavior.
 type Manager struct {
 	queue     *queue.Manager
 	scheduler *schedule.Scheduler
@@ -140,7 +146,7 @@ func (m *Manager) Run(ctx context.Context, name string, task TaskFunc, opts ...R
 		return nil
 	}
 
-	if err := retry.Do(ctx, run, cfg.retryPolicy.options()...); err != nil {
+	if err := runWithRetry(ctx, run, *cfg.retryPolicy); err != nil {
 		return wrapTaskError(name, err)
 	}
 	return nil
@@ -264,16 +270,50 @@ func (p RetryPolicy) normalize() RetryPolicy {
 	return p
 }
 
-func (p RetryPolicy) options() []retry.Option {
-	normalized := p.normalize()
-	return []retry.Option{
-		retry.WithMaxAttempts(normalized.MaxAttempts),
-		retry.WithInitialDelay(normalized.InitialDelay),
-		retry.WithMaxDelay(normalized.MaxDelay),
-		retry.WithMultiplier(normalized.Multiplier),
-		retry.WithJitter(normalized.Jitter),
-		retry.WithShouldRetry(normalized.ShouldRetry),
+func runWithRetry(ctx context.Context, task TaskFunc, policy RetryPolicy) error {
+	policy = policy.normalize()
+
+	var lastErr error
+	for attempt := 0; attempt < policy.MaxAttempts; attempt++ {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
+
+		err := task(ctx)
+		if err == nil {
+			return nil
+		}
+
+		lastErr = err
+		if !policy.ShouldRetry(err) {
+			return err
+		}
+
+		if attempt < policy.MaxAttempts-1 {
+			delay := calculateRetryDelay(attempt, policy)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+		}
 	}
+
+	return errors.Join(ErrMaxAttemptsExceeded, lastErr)
+}
+
+func calculateRetryDelay(attempt int, policy RetryPolicy) time.Duration {
+	delay := float64(policy.InitialDelay) * math.Pow(policy.Multiplier, float64(attempt))
+	if delay > float64(policy.MaxDelay) {
+		delay = float64(policy.MaxDelay)
+	}
+	if policy.Jitter > 0 {
+		jitter := delay * policy.Jitter * (rand.Float64()*2 - 1)
+		delay += jitter
+	}
+	return time.Duration(delay)
 }
 
 func wrapTaskError(name string, err error) error {
