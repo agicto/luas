@@ -1,0 +1,4 @@
+interface:
+  display_name: "Contract Evolution"
+  short_description: "Keep HTTP contracts aligned"
+  default_prompt: "Use $contract-evolution to update an HTTP contract across contracts, API behavior, Web services, and mock BFF behavior."

@@ -34,7 +34,7 @@ These are high-level entry points. They orchestrate, ask questions, and select l
 | `luas-framework-review` | Global scaffold review and long-running optimization router. | Existing |
 | `grill-before-build` | Clarifies wide-impact or underspecified changes before implementation. | Existing |
 | `pr-description-writer` | Packages a completed diff into reviewable context. | Existing |
-| `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Planned |
+| `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Existing |
 | `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Planned |
 
 ### Model-Invoked Discipline Skills
@@ -81,6 +81,7 @@ Goal: stop skills from reintroducing old Luas vocabulary or old architecture.
 Goal: turn skills into cross-boundary governance, not just reminders.
 
 1. **Add `contract-evolution`**
+   - Status: implemented as a root skill.
    - Required order: update `contracts/README.md`, API behavior, Web service/client behavior, mock BFF behavior,
      and contract tests.
    - Include checklists for `error_code`, `request_id`, validation errors, pagination, and production mock guardrails.
@@ -178,5 +179,5 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 60-day item "Add `contract-evolution`." It is the next high-leverage workflow because
-contract changes are where vocabulary, API behavior, Web services, mock BFF behavior, and tests most often drift together.
+Continue with the 60-day item "Add `domain-modeling`." It is the next high-leverage workflow because
+new starter, feature, capability, and contract terms need a repeatable path into `CONTEXT.md` or ADRs.
