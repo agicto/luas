@@ -55,6 +55,9 @@ None.
   their own paths from configuration or explicit inputs instead of using global scaffold path state.
 - Debug dump, timing, stack, and memory-print helpers were removed from `pkg/support`; local
   diagnostics should live in devtools or internal runtime packages when a real caller needs them.
+- Generic driver manager and pipeline pattern helpers were removed from `pkg/support`; driver
+  registries, middleware chains, and workflow pipelines should live at the owning capability or
+  runtime seam with domain-specific names.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

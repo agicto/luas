@@ -22,6 +22,8 @@ assert_absent_path() {
 assert_absent_path "internal/contracts" "use internal/starter/assembly for starter registry seams and root contracts/ for HTTP contracts."
 assert_absent_path "pkg/support/paths.go" "app path helpers belong in runtime-owned packages, not reusable pkg/support."
 assert_absent_path "pkg/support/debug.go" "debug dump/timing helpers belong in local devtools or internal diagnostics, not reusable pkg/support."
+assert_absent_path "pkg/support/manager.go" "driver registries should live at their owning capability seam, not in generic pkg/support."
+assert_absent_path "pkg/support/pipeline.go" "middleware chains should live at their owning runtime seam, not in generic pkg/support."
 
 KNOWN_VIOLATIONS=()
 
