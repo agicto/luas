@@ -39,6 +39,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Vocabulary and boundary decisions now have a dedicated root `domain-modeling` skill that routes new terms to `CONTEXT.md`, ADRs, local docs, skills, or nowhere.
 - Luas diff review now has a dedicated root `luas-code-review` skill that separates Standards findings from Spec findings.
 - Bugs and contract-sensitive regressions now have a dedicated root `tdd-regression` skill that requires a failing test before production fixes.
+- Downstream extraction now has a dedicated root `downstream-app-extraction` skill with a product-leakage scan helper for keeping product behavior out of the source scaffold.
 - Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
 - High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
@@ -189,21 +190,37 @@ Verification:
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 - `git diff --check`
 
-### P2 — Downstream Extraction Workflow
+### P2 — Downstream Extraction Guardrails
 
-Problem: Luas is a scaffold, not a product app. Downstream teams need a repeatable workflow for keeping starters, deleting examples and devtools, replacing mock BFF routes, and avoiding product content in the scaffold.
+Problem: Luas now has a downstream extraction workflow, but future scaffold changes still need to keep examples, devtools, mock BFF routes, console surfaces, and product-specific behavior clearly classified.
 
 Recommended slice:
 
-1. Add a root `downstream-app-extraction` skill that classifies surfaces as core, starter, optional starter, mock BFF, console, devtools, or example.
-2. Point it at `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, `web/docs/ADDING_FEATURE.md`, and `CONTEXT.md`.
-3. Require verification that product-specific names, routes, jobs, and remotes are not accidentally committed back into Luas.
+1. Keep `downstream-app-extraction` aligned with `CONTEXT.md`, `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, and `web/docs/ADDING_FEATURE.md`.
+2. Run the product-leakage helper with task-specific identifiers before committing scaffold-mode changes that touched downstream examples or docs.
+3. Add CI or release-candidate usage only if repeated leakage patterns appear; avoid baking product names into Luas.
 
 Verification:
 
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- targeted `rg` scans for downstream product names before committing
+- `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:zgiai/luas.git --pattern "<task-product-identifier>"`
+
+### P2 — Architecture Review Reports
+
+Problem: framework review candidates are currently prose-only. Larger architecture recommendations would be easier to compare if they produced a stable report artifact with evidence, diagrams, tests, and rollback notes.
+
+Recommended slice:
+
+1. Extend `luas-framework-review` with an optional report mode that writes to `$TMPDIR`.
+2. Include candidate axis, files, problem, proposed deeper seam, before/after diagram, test impact, risk, and recommendation strength.
+3. Keep the report optional so normal review turns stay light.
+
+Verification:
+
+- generate a sample report in `$TMPDIR`
+- `bash .agents/skills/scripts/validate-skill.sh --all`
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 
 ## Iteration Rules
 

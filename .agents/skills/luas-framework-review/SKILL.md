@@ -84,6 +84,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 ## Pair With
 
 - `contract-evolution` for HTTP contract changes that span `contracts/`, API behavior, Web services, or mock BFF behavior.
+- `downstream-app-extraction` when converting Luas into a downstream app or checking product leakage back into the scaffold.
 - `domain-modeling` when a new term, naming choice, or starter/feature/capability/module boundary needs a canonical decision.
 - `luas-code-review` when a diff needs separate Standards and Spec review axes.
 - `tdd-regression` when a candidate is a bug, flaky behavior, or contract-sensitive regression.

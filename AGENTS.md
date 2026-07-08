@@ -41,6 +41,7 @@ Root skills (apply everywhere):
 | Skill | Use When |
 |---|---|
 | [`contract-evolution`](.agents/skills/contract-evolution/) | Changing HTTP contracts across `contracts/`, `api/`, Web services, or mock BFF behavior |
+| [`downstream-app-extraction`](.agents/skills/downstream-app-extraction/) | Converting Luas into a downstream app without leaking product behavior back into the scaffold |
 | [`domain-modeling`](.agents/skills/domain-modeling/) | Resolving vocabulary, naming, or `starter` / `feature` / `capability` / `module` boundaries |
 | [`grill-before-build`](.agents/skills/grill-before-build/) | Request is underspecified or has wide impact (persistence, permissions, deployment, user workflows) |
 | [`luas-code-review`](.agents/skills/luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |

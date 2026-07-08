@@ -35,7 +35,7 @@ These are high-level entry points. They orchestrate, ask questions, and select l
 | `grill-before-build` | Clarifies wide-impact or underspecified changes before implementation. | Existing |
 | `pr-description-writer` | Packages a completed diff into reviewable context. | Existing |
 | `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Existing |
-| `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Planned |
+| `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Existing |
 
 ### Model-Invoked Discipline Skills
 
@@ -118,6 +118,7 @@ Goal: make architecture improvement visible and repeatable.
    - Prioritize the workflow capability facade over infra queue/retry/schedule/config.
 
 3. **Add downstream extraction workflow**
+   - Status: implemented as a root skill with a product-leakage scan helper.
    - Document how a downstream app keeps default starters, replaces mock BFF, deletes examples/devtools, and
      rebrands console surfaces.
    - Pair with Web and API verification commands.
@@ -187,6 +188,6 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the planned router skill `downstream-app-extraction`. It is the next high-leverage workflow
-because Luas must stay a scaffold while downstream products delete examples, replace mock BFF routes, and
-add product-specific behavior outside the starter kit.
+Continue with the 90-day item "Add architecture review reports." It is the next high-leverage workflow
+because broad architecture recommendations should become comparable artifacts with files, seams, diagrams,
+test impact, and recommendation strength.
