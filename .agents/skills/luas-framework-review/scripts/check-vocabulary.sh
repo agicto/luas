@@ -12,13 +12,20 @@ FILES=(
   docs/ARCHITECTURE.md
   docs/BRANCHING_AND_RELEASES.md
   docs/FRAMEWORK_QUALITY_ROADMAP.md
+  docs/SCAFFOLD_SURFACES.md
   docs/SKILL_GOVERNANCE_PLAN.md
   contracts/README.md
   api/AGENTS.md
   api/docs/ADDING_MODULE.md
+  api/docs/MIDDLEWARE.md
+  api/docs/PACKAGE_BOUNDARIES.md
   api/docs/adr/0001-layer-vocabulary.md
   api/docs/adr/0002-default-starters.md
+  api/docs/adr/0005-package-boundaries.md
   api/.agents/skills/README.md
+  api/internal/capabilities/README.md
+  api/internal/domain/README.md
+  api/internal/modules/README.md
   web/AGENTS.md
   web/README.md
   web/docs/ADDING_FEATURE.md

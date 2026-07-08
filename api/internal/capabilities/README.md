@@ -1,17 +1,23 @@
-# capabilities
+# Capabilities
 
-> **Capabilities Layer – 技术能力层**
+> **Capabilities Layer - 技术能力层**
 
-`capabilities` 提供**可复用、与业务无关的技术处理能力**。
+`capabilities` 提供**可复用、与业务工作流无关的技术处理能力**。它们是 Luas 的 technical
+capabilities: 可被 modules、infra 或 assembly 代码调用，但自身不拥有 HTTP 路由、产品流程或持久化工作流。
 
 ---
 
 ## 架构位置
 
 ```
-modules        →   capabilities   →   infra
-(业务模块)          (技术能力)        (基础设施)
+internal/modules ───────┐
+                        v
+internal/infra    → internal/capabilities → pkg
 ```
+
+Import direction follows [`../../docs/PACKAGE_BOUNDARIES.md`](../../docs/PACKAGE_BOUNDARIES.md):
+capabilities may depend on `pkg/` and standard libraries, but must not depend on `internal/infra/`
+or `internal/modules/`.
 
 ---
 
@@ -61,11 +67,13 @@ sig := crypto.HMACSHA256Hex("data", "key")
 - 提供**单一、明确的技术能力**
 - 接口命名用**动词 + 对象**（如 `Encrypt()`, `Generate()`）
 - 向上层隐藏实现细节
-- 只依赖 `infra` 层
+- 只依赖标准库、`pkg/` 或本 capability 自己的子包
 
 ### ❌ 不允许做的
 
 - 包含业务逻辑或业务判断
+- 拥有 HTTP 路由、产品流程或 starter 注册
+- 依赖 `infra` 层
 - 依赖 `modules` 层
 - 成为 utils/helpers/common
 

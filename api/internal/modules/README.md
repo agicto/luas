@@ -1,6 +1,6 @@
 # Modules
 
-Business domain modules directory, following Domain-Driven Design (DDD) patterns.
+Route-owning starter modules directory, following Domain-Driven Design (DDD) patterns.
 
 ## Module Overview
 
@@ -25,7 +25,7 @@ module_name/
 └── service_test.go # Unit tests (optional)
 ```
 
-This is the default shape for route-owning starters and optional starters. `capability` modules may intentionally use a lighter structure.
+This is the default shape for route-owning starters and optional starters. Capability packages may intentionally use a lighter structure.
 
 ## Module Capability Interfaces
 
@@ -107,7 +107,7 @@ llm/
 # 5. Re-generate Wire output
 ```
 
-For new business modules, prefer `./luas make:module <Name>`.
+For new route-owning starter-style modules, prefer `./luas make:module <Name>`.
 The single-file generators such as `make:service` and `make:handler` are meant to fill missing files in an existing `internal/modules/<module>/` directory, not to start a module from scratch.
 
 ## Naming Conventions
