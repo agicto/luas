@@ -1,52 +1,57 @@
 ---
 name: project-strategy
-description: High-level overview of project structure, mock API architecture, and authentication flow.
+description: High-level overview of the web shell, mock BFF architecture, and authentication flow.
 ---
 
 # project-strategy
 
 ## Overview
 
-This skill provides a high-level strategic overview of the Luas. It covers the overall directory structure, the mock API architecture, and the authentication flow, ensuring that developers understand the core foundations of the project.
+This skill provides a high-level strategic overview of the Luas web shell. It covers the route structure, mock BFF architecture, and authentication flow so developers understand the core foundations of the web half.
 
 ## Project Structure
 
 The project follows a modular structure under `src/`:
-- `app/`: Next.js App Router, routes, and API handlers.
-- `components/`: UI primitives (`ui/`), feature components (`features/`), and common components (`common/`).
-- `services/`: Stateless API wrappers.
-- `store/`: Zustand stores for global state.
-- `hooks/`: Custom React hooks for business logic and server state.
+- `app/`: Next.js App Router route groups, pages, and mock BFF route handlers.
+- `features/`: Feature-first folders with components, hooks, services, store, server helpers, and types.
+- `components/`: shadcn/ui primitives (`ui/`), shared feature-facing UI blocks (`features/`), and common components (`common/`).
+- `services/`: Compatibility exports for feature services.
+- `store/`: Shared global UI state only.
+- `hooks/`: Generic reusable React hooks.
 - `i18n/`: Internationalization configuration and modules.
 - `themes/`: Design tokens and global styles.
 
-## Mock API Architecture
-All API calls initially go through Next.js Route Handlers under `src/app/api/*`, which mock backend responses. This allows for fast development without an external backend dependency.
+## Mock BFF Architecture
+Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through Next.js route handlers under `src/app/api/**`. These mock BFF handlers emit the same HTTP contract shape as the real API and are disabled in production runtime unless explicitly opted in.
 
-**Flow**: `Browser → /api/* → Next.js API Routes (Mock)`
+**Flow**: `Browser -> src/http/request.ts -> /api/* -> mock BFF route handlers`
 
 ## Authentication Flow
-The project supports two token modes via `NEXT_PUBLIC_AUTH_TOKEN_MODE`:
-- `basic`: Single access token.
-- `refresh`: Access + refresh token pair (Default).
-
-Protected routes are managed via `AuthGuard` in layout components.
+The scaffold uses httpOnly mock session cookies for local auth. Protected routes are managed by `AuthenticatedProviders` plus `AuthGuard` in the `(protected)` layout.
 
 ```typescript
-// app/(normal)/layout.tsx
-import { AuthGuard } from '@/components/auth-guard';
-export default function NormalLayout({ children }) {
-  return <AuthGuard>{children}</AuthGuard>;
+// app/(protected)/layout.tsx
+import { AuthGuard } from '@/features/auth';
+import { AuthenticatedProviders } from '@/providers/authenticated-providers';
+
+export default function ProtectedLayout({ children }) {
+  return (
+    <AuthenticatedProviders>
+      <AuthGuard>{children}</AuthGuard>
+    </AuthenticatedProviders>
+  );
 }
 ```
 
 ## Route Groups
 - `(auth)`: Public auth pages (login, register).
-- `(normal)`: Protected dashboard and user console.
+- `(protected)`: Authenticated route group enforced by middleware and `AuthGuard`.
+- `(protected)/(console)`: Replaceable scaffold console pages.
+- `(protected)/(devtools)`: Internal playground and demo routes.
 - `(site)`: Public marketing and information pages.
 
 > [!NOTE]
-> **Production Ready**: This scaffold is designed to be easily switched from mock APIs to real backend services by updating the service layer and environment variables.
+> **Production Ready**: Downstream apps should point `NEXT_PUBLIC_API_URL` at the real API or a same-origin proxy and keep the mock BFF disabled unless running a demo-only deployment.
 
 ## Related Skills
 

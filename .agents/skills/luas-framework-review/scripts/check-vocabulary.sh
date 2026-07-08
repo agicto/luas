@@ -8,23 +8,29 @@ cd "$ROOT"
 FILES=(
   AGENTS.md
   README.md
+  .agents/skills/README.md
   docs/ARCHITECTURE.md
   docs/BRANCHING_AND_RELEASES.md
   docs/FRAMEWORK_QUALITY_ROADMAP.md
+  docs/SKILL_GOVERNANCE_PLAN.md
   contracts/README.md
   api/AGENTS.md
   api/docs/ADDING_MODULE.md
   api/docs/adr/0001-layer-vocabulary.md
   api/docs/adr/0002-default-starters.md
   api/.agents/skills/README.md
-  api/.agents/skills/architecture-principles/SKILL.md
-  api/.agents/skills/coding-standards/SKILL.md
-  api/.agents/skills/module-creation/SKILL.md
   web/AGENTS.md
   web/README.md
   web/docs/ADDING_FEATURE.md
   web/docs/MOCK_BFF.md
-  .agents/skills/luas-framework-review/SKILL.md
+)
+
+while IFS= read -r skill_file; do
+  FILES+=("$skill_file")
+done < <(
+  find .agents api/.agents web/.agents \
+    -path '*/.template/*' -prune -o \
+    -type f -name 'SKILL.md' -print | sort
 )
 
 FORBIDDEN_PATTERNS=(
@@ -47,6 +53,8 @@ FORBIDDEN_PATTERNS=(
 )
 
 FAILED=0
+TMP_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-vocabulary-grep.XXXXXX")
+trap 'rm -f "$TMP_FILE"' EXIT
 
 for file in "${FILES[@]}"; do
   if [ ! -f "$file" ]; then
@@ -54,10 +62,10 @@ for file in "${FILES[@]}"; do
   fi
 
   for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
-    if grep -nF "$pattern" "$file" >/tmp/luas-vocabulary-grep.txt; then
+    if grep -nF "$pattern" "$file" >"$TMP_FILE"; then
       while IFS= read -r match; do
         printf 'Vocabulary drift: %s:%s (%s)\n' "$file" "$match" "$pattern"
-      done </tmp/luas-vocabulary-grep.txt
+      done <"$TMP_FILE"
       FAILED=1
     fi
   done

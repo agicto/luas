@@ -65,10 +65,10 @@ Goal: stop skills from reintroducing old Luas vocabulary or old architecture.
      `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`.
 
 2. **Expand vocabulary guardrails**
-   - Make the vocabulary checker scan every non-template `SKILL.md`.
+   - Status: implemented. The vocabulary checker scans every non-template `SKILL.md`.
    - Keep intentional generic phrases, such as "framework" in third-party skill references, out of
      Luas-specific forbidden checks unless they describe Luas itself.
-   - Verification: the vocabulary check should fail before cleanup and pass after cleanup.
+   - Verification: `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`.
 
 3. **Improve verification failure feedback**
    - Update `verification-before-completion/scripts/run-tiers.sh` to print the failing command log tail.
@@ -177,5 +177,5 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Start with the 30-day item "Clean skill semantic drift." It is low-risk and high-leverage because it prevents
-future agents from regenerating older `Mock API`, `(normal)`, or `pkg/response` domain-mapping patterns.
+Continue with the 30-day item "Improve verification failure feedback." It is low-risk and high-leverage because
+shorter failure logs make agent repair loops faster without changing API, Web, or contract behavior.

@@ -32,7 +32,8 @@ The project uses a layered Design Token system. Always prefer semantic classes o
 ### 2. Component Organization
 
 - **UI Primitives**: `src/components/ui/` (shadcn/ui managed, **DO NOT MODIFY**).
-- **Feature Components**: `src/components/features/[module]/` (Organized by business module).
+- **Feature Components**: prefer `src/features/[feature]/components/` for feature-owned UI.
+- **Shared Feature UI Blocks**: use `src/components/features/` only for reusable cross-feature UI.
 - **Common Components**: `src/components/common/` (Generic, non-business specific).
 
 ### 3. Component Standards

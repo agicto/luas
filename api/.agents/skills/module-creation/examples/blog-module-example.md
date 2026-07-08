@@ -213,7 +213,7 @@ Response:
 
 ## Key Takeaways
 
-1. **starter-style scaffold** gives route-owning business modules a consistent default shape
+1. **starter-style scaffold** gives route-owning starter modules a consistent default shape
 2. **Domain layer** is the source of truth for business entities
 3. **Repository** abstracts database details
 4. **Service** contains all business logic

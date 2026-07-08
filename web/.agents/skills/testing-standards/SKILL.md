@@ -42,7 +42,7 @@ Use React Testing Library for component tests:
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect } from 'vitest';
-import { LoginForm } from '@/components/features/auth/login-form';
+import { LoginForm } from '@/features/auth';
 
 describe('LoginForm', () => {
   it('should display error on invalid email', async () => {
@@ -64,7 +64,7 @@ Test hooks with `renderHook`:
 ```tsx
 import { renderHook, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { useLogin } from '@/hooks/use-auth';
+import { useLogin } from '@/features/auth/hooks/use-auth';
 
 describe('useLogin', () => {
   it('should call login API with credentials', async () => {
@@ -87,16 +87,16 @@ describe('useLogin', () => {
 
 ```tsx
 import { vi, beforeEach } from 'vitest';
-import { useAuthStore } from '@/store/auth-store';
+import { useAuthStore } from '@/features/auth/store/auth-store';
 
 beforeEach(() => {
   // Reset store state
   useAuthStore.getState().reset();
 });
 
-// Mock API module
-vi.mock('@/services/auth', () => ({
-  authApi: {
+// Mock feature service
+vi.mock('@/features/auth/services/auth-service', () => ({
+  authService: {
     login: vi.fn().mockResolvedValue({ id: '1', name: 'Test' }),
   },
 }));

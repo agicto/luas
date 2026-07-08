@@ -68,7 +68,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 
 ## Conventions
 
-- `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and agent entry points for vocabulary drift from `CONTEXT.md`.
+- `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and every non-template `SKILL.md` for vocabulary drift from `CONTEXT.md`.
 - **`name`** is `kebab-case`, ≤ 64 chars.
 - **`description`** is the trigger condition, ≤ 150 chars in practice (codex hard limit is 1024 bytes). Lead with the *when*, not the *what*.
 - **Directory name** matches the skill name. Skills starting with `.` or `_` are intentionally hidden from the loader (used for templates).

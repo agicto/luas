@@ -90,5 +90,5 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 
 ## Helper Script
 
-- `scripts/check-vocabulary.sh` scans high-signal docs and agent entry points for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
+- `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while tracking current baseline exceptions.

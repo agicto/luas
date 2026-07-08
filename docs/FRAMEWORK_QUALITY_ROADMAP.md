@@ -36,7 +36,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Root verification exists through `make check`, but the Web tier currently needs separate failure expansion when the wrapper reports a collapsed failure.
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
-- High-signal vocabulary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
+- High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary debt has started moving down: `pkg/response` no longer imports `internal/domain`, and `internal/capabilities/ai` no longer imports `internal/infra/http`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
@@ -170,15 +170,14 @@ Verification:
 
 ### P2 — Skill Governance Plan
 
-Problem: some existing skills still carry older Luas wording or implementation assumptions, and the current
-vocabulary guard does not scan every skill body.
+Problem: skill semantic drift is now guarded across every non-template `SKILL.md`, but the skills still need steady cleanup as Luas vocabulary and architecture rules evolve.
 
 Recommended slice:
 
 1. Follow the 30-day plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
-2. Clean Web skill terminology around `mock BFF`, `(protected)`, `console`, and feature structure.
-3. Clean API skill terminology around response/domain error mapping.
-4. Expand vocabulary checks to all non-template `SKILL.md` files.
+2. Continue cleaning Web skill terminology around `mock BFF`, `(protected)`, `console`, and feature structure.
+3. Continue cleaning API skill terminology around response/domain error mapping.
+4. Keep vocabulary checks aligned with newly flagged ambiguity patterns from `CONTEXT.md`.
 
 Verification:
 
