@@ -30,6 +30,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web mock BFF route handlers are contract-tested so every `src/app/api/**/route.ts` file calls `guardMockBffRoute()`, uses shared response helpers for success envelopes, and avoids legacy underscore-style error codes.
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
+- Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, and Zustand runtime dependencies from `(site)` routes.
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
 - Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point and requiring a strong `SESSION_SECRET` for production runtime mock auth.
@@ -71,8 +72,9 @@ Problem: root-level providers can make public pages pay for auth/query client hy
 Recommended slice:
 
 1. Keep Query/Auth providers route-scoped instead of returning them to root.
-2. Split remaining root client boundaries, especially app-wide error handling and client-only analytics, where build evidence shows value.
-3. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
+2. Keep `src/test/public-route-boundary.test.ts` aligned with the public route dependency boundary.
+3. Split remaining root client boundaries, especially app-wide error handling and client-only analytics, where build evidence shows value.
+4. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
 
 Verification:
 

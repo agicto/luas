@@ -38,6 +38,7 @@ src/features/<feature>/
 - Place `QueryProvider` at the nearest route group that needs React Query.
 - Use `AuthenticatedProviders` only for protected route groups that need session initialization.
 - Keep public site pages free of auth-store subscriptions unless the feature intentionally becomes authenticated.
+- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, or Zustand runtime dependencies.
 
 ## UI
 

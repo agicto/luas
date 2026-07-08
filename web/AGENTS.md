@@ -151,6 +151,7 @@ Keep providers as low as the routes that need them:
 - `(protected)` owns `AuthenticatedProviders`, which combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
 - Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
 - If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.
+- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, or Zustand runtime dependencies.
 
 ### 5. Internationalization (i18n)
 
