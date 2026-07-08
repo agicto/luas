@@ -63,6 +63,9 @@ None.
   at the caller or owning package.
 - Generic conditional wrapper helpers were removed from `pkg/support`; conditional response,
   resource, query, or workflow behavior should live at the semantic seam that owns the decision.
+- Broad string formatting, slug, random string, and UUID helpers were removed from `pkg/support`;
+  string normalization, slugging, and ID generation should live at the caller or the owning
+  capability, such as `internal/capabilities/idgen`.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
