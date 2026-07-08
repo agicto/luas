@@ -140,6 +140,7 @@ Every rule that prevents architectural drift should have a script, test, or CI c
 - env source-of-truth,
 - production runtime secret gate,
 - public route hydration boundary,
+- branch/release workflow mapping,
 - error-code namespace split,
 - mock BFF success envelope helpers,
 - skill frontmatter validity.
@@ -184,6 +185,7 @@ Before publishing Luas as a reusable starter kit release:
 - run root `make check`,
 - run skill validation,
 - run vocabulary and package-boundary checks,
+- run branch/release governance checks,
 - confirm downstream extraction docs still match the current file tree,
 - write a release note that separates scaffold improvements from starter behavior changes.
 

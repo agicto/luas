@@ -72,6 +72,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `verification-before-completion` for code changes.
    - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
+   - Run `scripts/check-branch-governance.sh` when changing branch, release, deployment-branch, or CI workflow guidance.
    - For pure docs or skills, run `git diff --check` and the skill validator when relevant.
    - If verification fails, either fix it or state the exact blocker and command output.
 
@@ -104,6 +105,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any.
+- `scripts/check-branch-governance.sh` keeps `docs/BRANCHING_AND_RELEASES.md` aligned with the CI-managed `dev` / `dev-c` to `deploy-dev` / `deploy-dev-c` deployment-branch mapping.
 - `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.
   Use it for multi-candidate or cross-turn recommendations where files, problem, deeper seam, before/after flow,
   test impact, risk, rollback, and recommendation strength should be compared as one artifact.

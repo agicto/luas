@@ -47,6 +47,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary baseline exceptions are currently zero. `pkg/response` no longer imports `internal/domain`, `internal/capabilities/ai` no longer imports `internal/infra/http`, and `internal/capabilities/workflow` no longer imports `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
+- Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 
 ## Candidate Queue
 
@@ -129,6 +130,7 @@ Verification:
 
 - `make check`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh`
 - Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
 
 ### P2 — Architecture Vocabulary Cleanup

@@ -56,6 +56,18 @@ main
 - `deploy-dev` and `deploy-dev-c` are deployment triggers, not collaboration branches.
 - If a future production deployment branch is added, document its source of truth here before enabling CI writes.
 
+## Machine Check
+
+Run the branch governance check after changing branch names, deployment branch mappings, or release process guidance:
+
+```bash
+bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh
+```
+
+The check keeps this document aligned with `.github/workflows/sync-deploy-branches.yml`.
+It asserts that `dev` and `dev-c` are the only CI sync sources, `deploy-dev` and `deploy-dev-c`
+remain CI-owned deployment trigger branches, and `release/*` starts from `main` rather than `dev`.
+
 ## Protection Rules
 
 - Protect `main` with required PR review and green CI.
