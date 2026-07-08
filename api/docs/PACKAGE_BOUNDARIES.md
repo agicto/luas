@@ -58,6 +58,9 @@ None.
 - Generic driver manager and pipeline pattern helpers were removed from `pkg/support`; driver
   registries, middleware chains, and workflow pipelines should live at the owning capability or
   runtime seam with domain-specific names.
+- Generic control-flow, retry, panic, and Optional helpers were removed from `pkg/support`; retry
+  behavior should stay at workflow or integration seams, and nil/error handling should be explicit
+  at the caller or owning package.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

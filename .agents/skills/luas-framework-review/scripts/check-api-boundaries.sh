@@ -25,6 +25,11 @@ assert_absent_path "pkg/support/debug.go" "debug dump/timing helpers belong in l
 assert_absent_path "pkg/support/manager.go" "driver registries should live at their owning capability seam, not in generic pkg/support."
 assert_absent_path "pkg/support/pipeline.go" "middleware chains should live at their owning runtime seam, not in generic pkg/support."
 
+if grep -R -E -n --include='*.go' '^(func (Tap|With|IfVal|WhenFunc|UnlessVal|Value|Transform|Rescue|RescueWith|Retry|RetryWithDelay|RetryWhen|Once|Some|None|Of|OptionalMap|ThrowIf|ThrowUnless|Must|Coalesce|Default|Flow)(\[|\()|type Optional\[|var onceCache)' "$API_ROOT/pkg/support" >/dev/null; then
+  echo "api/pkg/support must not reintroduce generic control-flow, retry, panic, or Optional helpers; keep these at their owning seam." >&2
+  exit 1
+fi
+
 KNOWN_VIOLATIONS=()
 
 violations=()
