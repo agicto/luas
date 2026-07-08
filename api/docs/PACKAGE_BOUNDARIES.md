@@ -69,6 +69,8 @@ None.
 - Broad collection and map helper libraries were removed from `pkg/support`; collection transforms,
   map shaping, and data projection should stay local to the caller or the starter/capability seam
   that owns the shape.
+- Mutating dot-notation data helpers were removed from `pkg/support`; nested data writes and shape
+  mutations should stay local to the owning package instead of becoming scaffold-wide helpers.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

@@ -34,6 +34,11 @@ if grep -R -E -n --include='*.go' '^(func (Tap|With|IfVal|WhenFunc|UnlessVal|Val
   exit 1
 fi
 
+if grep -R -E -n --include='*.go' '^(func (DataSet|DataFill|DataForget)\(|func setNestedReflect\()' "$API_ROOT/pkg/support" >/dev/null; then
+  echo "api/pkg/support must not reintroduce mutating dot-notation data helpers; keep data shaping at the owning seam." >&2
+  exit 1
+fi
+
 KNOWN_VIOLATIONS=()
 
 violations=()
