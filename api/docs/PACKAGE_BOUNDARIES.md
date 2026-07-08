@@ -61,6 +61,8 @@ None.
 - Generic control-flow, retry, panic, and Optional helpers were removed from `pkg/support`; retry
   behavior should stay at workflow or integration seams, and nil/error handling should be explicit
   at the caller or owning package.
+- Generic conditional wrapper helpers were removed from `pkg/support`; conditional response,
+  resource, query, or workflow behavior should live at the semantic seam that owns the decision.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
