@@ -76,7 +76,9 @@ If you skipped a tier, say why explicitly (e.g., "Tier 2 skipped: no UI change i
 `scripts/run-tiers.sh <tier>` wraps tier 0/1/2 for the current subtree. It
 auto-detects whether you're in `api/` (Go: build, golangci-lint, test, -race)
 or `web/` (Node: type-check, lint, test, build). Exit code is 0 iff every
-tier passes.
+tier passes. On failure it prints the exit code, the full command log path,
+and the last output lines. Set `RUN_TIERS_LOG_TAIL_LINES` to adjust the tail
+length or `RUN_TIERS_LOG_DIR` to choose the log directory.
 
 ```bash
 bash .agents/skills/verification-before-completion/scripts/run-tiers.sh 0

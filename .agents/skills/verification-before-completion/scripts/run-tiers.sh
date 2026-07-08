@@ -59,18 +59,55 @@ echo "🔍 Verification at tier $TIER in $ROOT ($KIND)"
 echo "================================================"
 
 FAILED=0
-LOG_FILE="${TMPDIR:-/tmp}/run-tiers.log"
-record() {
-    if [ "$1" -ne 0 ]; then
-        echo "  ❌ $2"
-        if [ -s "$LOG_FILE" ]; then
-            echo "     Last output:"
-            tail -n 40 "$LOG_FILE" | sed 's/^/       /'
-        fi
-        FAILED=1
-    else
-        echo "  ✅ $2"
+COMMAND_INDEX=0
+LOG_TAIL_LINES=${RUN_TIERS_LOG_TAIL_LINES:-80}
+if ! [[ "$LOG_TAIL_LINES" =~ ^[0-9]+$ ]] || [ "$LOG_TAIL_LINES" -eq 0 ]; then
+    LOG_TAIL_LINES=80
+fi
+
+if [ -n "${RUN_TIERS_LOG_DIR:-}" ]; then
+    LOG_DIR=$RUN_TIERS_LOG_DIR
+else
+    TMP_ROOT=${TMPDIR:-/tmp}
+    TMP_ROOT=${TMP_ROOT%/}
+    LOG_DIR="$TMP_ROOT/luas-run-tiers.$(date +%Y%m%d%H%M%S).$$"
+fi
+mkdir -p "$LOG_DIR"
+
+slugify() {
+    printf '%s' "$1" | tr -cs 'A-Za-z0-9_.-' '-' | sed 's/^-//;s/-$//'
+}
+
+run_step() {
+    local label=$1
+    shift
+    local slug log_file status
+
+    COMMAND_INDEX=$((COMMAND_INDEX + 1))
+    slug=$(slugify "$label")
+    if [ -z "$slug" ]; then
+        slug="command"
     fi
+    log_file="$LOG_DIR/$(printf '%02d' "$COMMAND_INDEX")-${slug}.log"
+
+    "$@" >"$log_file" 2>&1
+    status=$?
+
+    if [ "$status" -eq 0 ]; then
+        echo "  ✅ $label"
+        return
+    fi
+
+    echo "  ❌ $label"
+    echo "     Exit code: $status"
+    echo "     Log: $log_file"
+    if [ -s "$log_file" ]; then
+        echo "     Last $LOG_TAIL_LINES lines:"
+        tail -n "$LOG_TAIL_LINES" "$log_file" | sed 's/^/       /'
+    else
+        echo "     Log is empty."
+    fi
+    FAILED=1
 }
 
 # -----------------------------------------------------------------------------
@@ -79,20 +116,21 @@ record() {
 echo ""
 echo "Tier 0 — Static"
 if [ "$KIND" = "go" ]; then
-    go build "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go build ${SCOPE[*]}"
+    run_step "go build ${SCOPE[*]}" go build "${SCOPE[@]}"
     if command -v golangci-lint >/dev/null 2>&1; then
-        golangci-lint run "${SCOPE[@]}" --timeout=2m > "$LOG_FILE" 2>&1; record $? "golangci-lint run ${SCOPE[*]}"
+        run_step "golangci-lint run ${SCOPE[*]}" golangci-lint run "${SCOPE[@]}" --timeout=2m
     else
         echo "  ⚠️  golangci-lint not installed, skipped"
     fi
 else
-    "${PNPM[@]}" type-check > "$LOG_FILE" 2>&1; record $? "pnpm type-check"
-    "${PNPM[@]}" lint > "$LOG_FILE" 2>&1; record $? "pnpm lint"
+    run_step "pnpm type-check" "${PNPM[@]}" type-check
+    run_step "pnpm lint" "${PNPM[@]}" lint
 fi
 
 if [ "$TIER" -eq 0 ]; then
     echo ""
     [ $FAILED -eq 0 ] && echo "✅ Tier 0 passed" || echo "❌ Tier 0 failed"
+    [ $FAILED -eq 0 ] || echo "Full command logs: $LOG_DIR"
     exit $FAILED
 fi
 
@@ -102,14 +140,15 @@ fi
 echo ""
 echo "Tier 1 — Local execution"
 if [ "$KIND" = "go" ]; then
-    go test "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go test ${SCOPE[*]}"
+    run_step "go test ${SCOPE[*]}" go test "${SCOPE[@]}"
 else
-    "${PNPM[@]}" test -- --run > "$LOG_FILE" 2>&1; record $? "pnpm test"
+    run_step "pnpm test" "${PNPM[@]}" test -- --run
 fi
 
 if [ "$TIER" -eq 1 ]; then
     echo ""
     [ $FAILED -eq 0 ] && echo "✅ Tier 0 + 1 passed" || echo "❌ Failures above"
+    [ $FAILED -eq 0 ] || echo "Full command logs: $LOG_DIR"
     exit $FAILED
 fi
 
@@ -119,11 +158,12 @@ fi
 echo ""
 echo "Tier 2 — End-to-end"
 if [ "$KIND" = "go" ]; then
-    go test -race "${SCOPE[@]}" > "$LOG_FILE" 2>&1; record $? "go test -race ${SCOPE[*]}"
+    run_step "go test -race ${SCOPE[*]}" go test -race "${SCOPE[@]}"
 else
-    "${PNPM[@]}" build > "$LOG_FILE" 2>&1; record $? "pnpm build"
+    run_step "pnpm build" "${PNPM[@]}" build
 fi
 
 echo ""
 [ $FAILED -eq 0 ] && echo "✅ All tiers (0+1+2) passed" || echo "❌ Failures above"
+[ $FAILED -eq 0 ] || echo "Full command logs: $LOG_DIR"
 exit $FAILED

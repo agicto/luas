@@ -71,8 +71,9 @@ Goal: stop skills from reintroducing old Luas vocabulary or old architecture.
    - Verification: `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`.
 
 3. **Improve verification failure feedback**
-   - Update `verification-before-completion/scripts/run-tiers.sh` to print the failing command log tail.
-   - This makes agent repair loops shorter and less manual.
+   - Status: implemented. `verification-before-completion/scripts/run-tiers.sh` prints the
+     failing command's exit code, full log path, and configurable log tail.
+   - Keep the output compact enough for CI while preserving a path to the full command log.
    - Verification: induce or simulate a failing command and confirm useful output.
 
 ## 60-Day Plan
@@ -177,5 +178,5 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 30-day item "Improve verification failure feedback." It is low-risk and high-leverage because
-shorter failure logs make agent repair loops faster without changing API, Web, or contract behavior.
+Continue with the 60-day item "Add `contract-evolution`." It is the next high-leverage workflow because
+contract changes are where vocabulary, API behavior, Web services, mock BFF behavior, and tests most often drift together.
