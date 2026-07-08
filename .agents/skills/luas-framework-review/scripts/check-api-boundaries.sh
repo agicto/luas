@@ -26,6 +26,8 @@ assert_absent_path "pkg/support/manager.go" "driver registries should live at th
 assert_absent_path "pkg/support/pipeline.go" "middleware chains should live at their owning runtime seam, not in generic pkg/support."
 assert_absent_path "pkg/support/conditionable.go" "generic conditional wrappers should live at a semantic response/resource/query seam, not in generic pkg/support."
 assert_absent_path "pkg/support/str.go" "broad string formatting and random string helpers should live at their owning seam, not in generic pkg/support."
+assert_absent_path "pkg/support/arr.go" "broad collection helpers should live at their owning seam, not in generic pkg/support."
+assert_absent_path "pkg/support/map.go" "broad map helpers should live at their owning seam, not in generic pkg/support."
 
 if grep -R -E -n --include='*.go' '^(func (Tap|With|IfVal|WhenFunc|UnlessVal|Value|Transform|Rescue|RescueWith|Retry|RetryWithDelay|RetryWhen|Once|Some|None|Of|OptionalMap|ThrowIf|ThrowUnless|Must|Coalesce|Default|Flow)(\[|\()|type Optional\[|var onceCache)' "$API_ROOT/pkg/support" >/dev/null; then
   echo "api/pkg/support must not reintroduce generic control-flow, retry, panic, or Optional helpers; keep these at their owning seam." >&2

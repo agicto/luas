@@ -66,6 +66,9 @@ None.
 - Broad string formatting, slug, random string, and UUID helpers were removed from `pkg/support`;
   string normalization, slugging, and ID generation should live at the caller or the owning
   capability, such as `internal/capabilities/idgen`.
+- Broad collection and map helper libraries were removed from `pkg/support`; collection transforms,
+  map shaping, and data projection should stay local to the caller or the starter/capability seam
+  that owns the shape.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
