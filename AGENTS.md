@@ -67,7 +67,7 @@ Helper scripts shipped with skills:
 
 `make governance` runs the root semantic, contract, docs, surface, branch, package-boundary, and skill metadata guardrails. `make check` runs `make governance` plus the API and Web verification tiers.
 
-CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml) and [.github/workflows/ci.yml](.github/workflows/ci.yml).
+CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml) and [.github/workflows/ci.yml](.github/workflows/ci.yml). The CI governance job calls `make governance` so local and CI guardrails share one entry point.
 
 ## Cross-cutting rules (apply everywhere)
 
