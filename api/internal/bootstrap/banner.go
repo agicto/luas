@@ -1,4 +1,4 @@
-package support
+package bootstrap
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"github.com/fatih/color"
 )
 
-// PrintBanner prints the Luas startup banner to console.
-func PrintBanner(version string) {
+// printBanner prints the Luas startup banner.
+func printBanner(version string) {
 	bannerColor := color.New(color.FgCyan, color.Bold)
 	secondaryColor := color.New(color.FgHiBlue)
 

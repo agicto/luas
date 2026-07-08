@@ -47,6 +47,8 @@ None.
 
 - `internal/domain/` is now guarded as a standard-library-only package so domain entities,
   domain errors, and repository seams do not pick up HTTP, database, runtime, or response helpers.
+- The Luas startup banner now lives in `internal/bootstrap/` instead of `pkg/support`, keeping
+  application-branded console output out of reusable `pkg/` helpers.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

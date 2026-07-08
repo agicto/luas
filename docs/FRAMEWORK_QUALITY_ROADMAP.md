@@ -48,7 +48,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - Local Markdown links across docs and agent guidance are guarded by `.agents/skills/luas-framework-review/scripts/check-doc-links.py` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
-- API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, `pkg/response` no longer imports `internal/domain`, `internal/capabilities/ai` no longer imports `internal/infra/http`, and `internal/capabilities/workflow` no longer imports `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
+- API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, `pkg/support` no longer owns the Luas startup banner, `pkg/response` no longer imports `internal/domain`, `internal/capabilities/ai` no longer imports `internal/infra/http`, and `internal/capabilities/workflow` no longer imports `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
@@ -179,6 +179,7 @@ Recommended slice:
 2. Apply the deletion test.
 3. Either document why the seam is valid, deepen/rename it, or remove one baseline exception.
 4. For `internal/capabilities/workflow`, guard the now-clean boundary by keeping queue, retry, and scheduler primitives workflow-owned; only `internal/infra/*` compatibility packages may wrap them.
+5. Continue moving application-branded or runtime-owned behavior out of `pkg/`, especially debug pages, app path helpers, and console output.
 
 Verification:
 

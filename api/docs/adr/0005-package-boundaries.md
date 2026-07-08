@@ -130,6 +130,8 @@ import.
   flagged in review as boundary violations.
 - New PRs that make `internal/domain/` depend on runtime helpers are
   flagged before domain concepts become framework-coupled.
+- Luas-branded startup output belongs in `internal/bootstrap/`, not in
+  reusable `pkg/` helpers.
 - The previous duplicate (`pkg/encryption` ↔ `internal/capabilities/crypto`)
   was resolved by keeping the capability-shaped `crypto` and treating
   `pkg/encryption` as deprecated.

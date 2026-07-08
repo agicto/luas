@@ -24,7 +24,6 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/ratelimit"
 	"github.com/zgiai/luas/api/internal/infra/tracing"
 	"github.com/zgiai/luas/api/pkg/logger"
-	"github.com/zgiai/luas/api/pkg/support"
 	"github.com/zgiai/luas/api/routes"
 )
 
@@ -106,7 +105,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	setGinMode(application.Config.Server.Mode) // Restore correct mode
 
 	// Print Professional Banner
-	support.PrintBanner("1.0.0")
+	printBanner("1.0.0")
 
 	return &HttpKernel{
 		App:            application,
