@@ -51,24 +51,31 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - `P2`: local design or usability friction.
    - `P3`: polish or documentation clarity.
 
-4. **Select one slice**
+4. **Optional report mode**
+   - Use `scripts/scaffold-architecture-report.py` when there are multiple architecture candidates,
+     a deepening proposal needs diagrams, or the recommendation should survive across turns.
+   - Include axis, files, problem, proposed deeper seam, before/after flow, test impact, risk,
+     rollback, verification, and recommendation strength.
+   - Write reports to `$TMPDIR` unless the user asks for a committed artifact.
+
+5. **Select one slice**
    - Pick the highest-value candidate that can be completed and verified now.
    - If the slice changes persistence, permissions, public contracts, deployment, or user workflow, run `grill-before-build` before implementation.
    - Keep the slice small enough that rollback is obvious.
 
-5. **Implement**
+6. **Implement**
    - Update code, docs, skills, or contracts at the owning seam.
    - Do not create shared source between `api/` and `web/`; share contracts and vocabulary instead.
    - If adding a reusable process, prefer a root skill or root doc over duplicating instructions in both halves.
 
-6. **Verify**
+7. **Verify**
    - Run `verification-before-completion` for code changes.
    - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
    - For pure docs or skills, run `git diff --check` and the skill validator when relevant.
    - If verification fails, either fix it or state the exact blocker and command output.
 
-7. **Report**
+8. **Report**
    - State the selected slice, files changed, verification run, and the next recommended slice.
    - Keep deferred candidates in the final answer so the long task has continuity.
 
@@ -97,3 +104,6 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while tracking current baseline exceptions.
+- `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.
+  Use it for multi-candidate or cross-turn recommendations where files, problem, deeper seam, before/after flow,
+  test impact, risk, rollback, and recommendation strength should be compared as one artifact.

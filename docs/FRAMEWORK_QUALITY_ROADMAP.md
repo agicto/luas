@@ -35,6 +35,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point.
 - Root verification exists through `make check`; `run-tiers.sh` now prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
 - The root `luas-framework-review` skill now defines the long-running review loop.
+- `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
 - HTTP contract changes now have a dedicated root `contract-evolution` skill that orders changes through `contracts/`, API behavior, Web services, mock BFF behavior, and verification.
 - Vocabulary and boundary decisions now have a dedicated root `domain-modeling` skill that routes new terms to `CONTEXT.md`, ADRs, local docs, skills, or nowhere.
 - Luas diff review now has a dedicated root `luas-code-review` skill that separates Standards findings from Spec findings.
@@ -208,13 +209,13 @@ Verification:
 
 ### P2 — Architecture Review Reports
 
-Problem: framework review candidates are currently prose-only. Larger architecture recommendations would be easier to compare if they produced a stable report artifact with evidence, diagrams, tests, and rollback notes.
+Problem: architecture report generation now exists, but it should stay optional and lightweight so broad reviews do not become process-heavy.
 
 Recommended slice:
 
-1. Extend `luas-framework-review` with an optional report mode that writes to `$TMPDIR`.
-2. Include candidate axis, files, problem, proposed deeper seam, before/after diagram, test impact, risk, and recommendation strength.
-3. Keep the report optional so normal review turns stay light.
+1. Use the report helper when a review compares multiple architecture candidates or needs cross-turn continuity.
+2. Keep generated reports in `$TMPDIR` unless the user explicitly wants a committed artifact.
+3. Iterate the report fields only when real review runs reveal missing evidence.
 
 Verification:
 

@@ -56,6 +56,7 @@ Backend-specific skills are listed in [api/AGENTS.md](api/AGENTS.md#available-sk
 Helper scripts shipped with skills:
 
 - `.agents/skills/verification-before-completion/scripts/run-tiers.sh <0|1|2> [scope...]` — auto-detects api/ vs web/ and runs the chosen tier.
+- `.agents/skills/luas-framework-review/scripts/scaffold-architecture-report.py` — generate an optional HTML architecture review report in `$TMPDIR`.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
 - `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.
 

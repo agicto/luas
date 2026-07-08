@@ -109,9 +109,10 @@ Goal: turn skills into cross-boundary governance, not just reminders.
 Goal: make architecture improvement visible and repeatable.
 
 1. **Add architecture review reports**
-   - Extend `luas-framework-review` with an optional HTML report written to `$TMPDIR`.
-   - Each candidate should include files, problem, proposed deepening, before/after diagram, test impact,
-     and recommendation strength.
+   - Status: implemented as an optional `luas-framework-review` helper that writes HTML to `$TMPDIR`.
+   - Use it when a review has multiple architecture candidates or needs comparable evidence across turns.
+   - Each candidate includes files, problem, proposed deepening, before/after flow, test impact,
+     rollback notes, and recommendation strength.
 
 2. **Deepen remaining API boundary exceptions**
    - Continue reducing `api/docs/PACKAGE_BOUNDARIES.md` baseline exceptions.
@@ -188,6 +189,6 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 90-day item "Add architecture review reports." It is the next high-leverage workflow
-because broad architecture recommendations should become comparable artifacts with files, seams, diagrams,
-test impact, and recommendation strength.
+Continue with the 90-day item "Deepen remaining API boundary exceptions." It is the next high-leverage
+workflow because the package-boundary guard already names the current exceptions, and the next architecture
+step is to reduce or justify those seams deliberately.
