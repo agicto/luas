@@ -14,6 +14,11 @@ if [ -d "$API_ROOT/internal/contracts" ]; then
   exit 1
 fi
 
+if [ -f "$API_ROOT/pkg/support/paths.go" ]; then
+  echo "api/pkg/support/paths.go is reserved against reuse; app path helpers belong in runtime-owned packages, not reusable pkg/support." >&2
+  exit 1
+fi
+
 KNOWN_VIOLATIONS=()
 
 violations=()

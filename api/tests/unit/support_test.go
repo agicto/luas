@@ -299,19 +299,3 @@ func TestDataHas(t *testing.T) {
 		t.Error("DataHas should return false for non-existing key")
 	}
 }
-
-func TestPaths(t *testing.T) {
-	support.SetBasePath("/test/project")
-
-	if support.BasePath() != "/test/project" {
-		t.Errorf("Expected '/test/project', got '%s'", support.BasePath())
-	}
-
-	if support.StoragePath("logs") != "/test/project/storage/logs" {
-		t.Errorf("Expected '/test/project/storage/logs', got '%s'", support.StoragePath("logs"))
-	}
-
-	if support.ConfigPath("app.yaml") != "/test/project/config/app.yaml" {
-		t.Errorf("Expected '/test/project/config/app.yaml', got '%s'", support.ConfigPath("app.yaml"))
-	}
-}

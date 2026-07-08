@@ -51,6 +51,8 @@ None.
   application-branded console output out of reusable `pkg/` helpers.
 - Starter registry interfaces now live in `internal/starter/assembly` instead of the old
   top-level starter contract package, keeping HTTP contract vocabulary reserved for `contracts/`.
+- App-specific path helpers were removed from `pkg/support`; runtime-owned packages should compute
+  their own paths from configuration or explicit inputs instead of using global scaffold path state.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
