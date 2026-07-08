@@ -18,6 +18,10 @@ Introduce a `starter registry` module as the single assembly point for:
 
 The application, route setup, migration bootstrap, and seed bootstrap should consume the registry instead of maintaining their own starter lists.
 
+Starter assembly interfaces live under `internal/starter/assembly`, not a top-level starter
+contract package. The term `contract` remains reserved for documented HTTP behavior under the
+repository-level `contracts/` directory.
+
 ## Consequences
 
 - Starter assembly moves behind one seam.

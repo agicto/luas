@@ -31,12 +31,14 @@ This is the default shape for route-owning starters and optional starters. Capab
 
 Modules expose only the capabilities they actually need:
 
-- `contracts.Module`: identity only, via `Name()`
-- `contracts.RouteModule`: add `RegisterRoutes()`
-- `contracts.MiddlewareModule`: add `RegisterMiddleware()`
-- `contracts.EventModule`: add `RegisterEvents()`
+- `assembly.Module`: identity only, via `Name()`
+- `assembly.RouteModule`: add `RegisterRoutes()`
+- `assembly.MiddlewareModule`: add `RegisterMiddleware()`
+- `assembly.EventModule`: add `RegisterEvents()`
 
-The starter registry dispatches these capabilities centrally, so route/bootstrap code does not need to know which optional hooks each module supports.
+These interfaces live in `internal/starter/assembly`. The starter registry dispatches these
+capabilities centrally, so route/bootstrap code does not need to know which optional hooks each
+module supports.
 
 ### File Responsibilities
 

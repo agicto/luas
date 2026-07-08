@@ -55,6 +55,7 @@ FORBIDDEN_PATTERNS=(
   "business modules"
   "capability module"
   "capability modules"
+  "internal/contracts"
   "product-specific modules"
   "product dashboard"
 )

@@ -3,9 +3,9 @@ package apikey
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 	"github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
 	"github.com/zgiai/luas/api/pkg/response"
@@ -17,9 +17,9 @@ type Handler struct {
 }
 
 var (
-	_ contracts.Module           = (*Handler)(nil)
-	_ contracts.RouteModule      = (*Handler)(nil)
-	_ contracts.MiddlewareModule = (*Handler)(nil)
+	_ assembly.Module           = (*Handler)(nil)
+	_ assembly.RouteModule      = (*Handler)(nil)
+	_ assembly.MiddlewareModule = (*Handler)(nil)
 )
 
 // NewHandler creates a new API key handler.

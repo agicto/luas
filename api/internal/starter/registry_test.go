@@ -5,9 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
 type counters struct {
@@ -85,13 +85,13 @@ func (m *fullModule) RegisterEvents(bus *events.EventBus) {
 }
 
 var (
-	_ contracts.Module           = (*moduleOnly)(nil)
-	_ contracts.RouteModule      = (*routeOnly)(nil)
-	_ contracts.MiddlewareModule = (*middlewareOnly)(nil)
-	_ contracts.EventModule      = (*eventOnly)(nil)
-	_ contracts.RouteModule      = (*fullModule)(nil)
-	_ contracts.MiddlewareModule = (*fullModule)(nil)
-	_ contracts.EventModule      = (*fullModule)(nil)
+	_ assembly.Module           = (*moduleOnly)(nil)
+	_ assembly.RouteModule      = (*routeOnly)(nil)
+	_ assembly.MiddlewareModule = (*middlewareOnly)(nil)
+	_ assembly.EventModule      = (*eventOnly)(nil)
+	_ assembly.RouteModule      = (*fullModule)(nil)
+	_ assembly.MiddlewareModule = (*fullModule)(nil)
+	_ assembly.EventModule      = (*fullModule)(nil)
 )
 
 func TestRegistryDispatchesOnlySupportedCapabilities(t *testing.T) {

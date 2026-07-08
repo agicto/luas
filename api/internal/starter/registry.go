@@ -6,16 +6,16 @@ import (
 
 	"github.com/zgiai/luas/api/database/migrations"
 	"github.com/zgiai/luas/api/database/seeders"
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
 // Registry is the single assembly point for the default scaffold starters.
 // It keeps module, migration, and seeder registration in one place.
 type Registry struct {
-	modules    []contracts.Module
+	modules    []assembly.Module
 	migrations map[string]migration.Migration
 	seeders    []seeders.Seeder
 }
@@ -28,7 +28,7 @@ func NewRegistry() *Registry {
 }
 
 // RegisterModule adds a starter module to the registry.
-func (r *Registry) RegisterModule(module contracts.Module) {
+func (r *Registry) RegisterModule(module assembly.Module) {
 	if module == nil {
 		return
 	}
@@ -83,7 +83,7 @@ func (r *Registry) RegisterSeederByName(name string) error {
 }
 
 // ApplyManifest lets a starter manifest register its modules and bootstrap assets.
-func (r *Registry) ApplyManifest(manifest contracts.StarterManifest) error {
+func (r *Registry) ApplyManifest(manifest assembly.StarterManifest) error {
 	if manifest == nil {
 		return nil
 	}
@@ -104,7 +104,7 @@ func (r *Registry) ApplyManifest(manifest contracts.StarterManifest) error {
 }
 
 // Modules returns the registered starter modules in registration order.
-func (r *Registry) Modules() []contracts.Module {
+func (r *Registry) Modules() []assembly.Module {
 	if r == nil {
 		return nil
 	}
@@ -117,7 +117,7 @@ func (r *Registry) RegisterRoutes(routes *router.Router) {
 		return
 	}
 	for _, module := range r.modules {
-		routeModule, ok := module.(contracts.RouteModule)
+		routeModule, ok := module.(assembly.RouteModule)
 		if !ok {
 			continue
 		}
@@ -131,7 +131,7 @@ func (r *Registry) RegisterMiddleware(routes *router.Router) {
 		return
 	}
 	for _, module := range r.modules {
-		middlewareModule, ok := module.(contracts.MiddlewareModule)
+		middlewareModule, ok := module.(assembly.MiddlewareModule)
 		if !ok {
 			continue
 		}
@@ -145,7 +145,7 @@ func (r *Registry) RegisterEvents(bus *events.EventBus) {
 		return
 	}
 	for _, module := range r.modules {
-		eventModule, ok := module.(contracts.EventModule)
+		eventModule, ok := module.(assembly.EventModule)
 		if !ok {
 			continue
 		}

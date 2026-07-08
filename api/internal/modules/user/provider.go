@@ -3,9 +3,9 @@ package user
 import (
 	"github.com/google/wire"
 
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/email"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
 // ProviderSet is the provider set for this module
@@ -29,16 +29,16 @@ func NewUserMailer(service *email.Service) UserMailer {
 }
 
 // NewStarterManifest describes how the user starter participates in the default scaffold.
-func NewStarterManifest(handler *Handler) contracts.StarterManifest {
-	return contracts.NewStaticStarterManifest(
+func NewStarterManifest(handler *Handler) assembly.StarterManifest {
+	return assembly.NewStaticStarterManifest(
 		"user",
-		contracts.WithStarterModule(handler),
-		contracts.WithStarterMigrationNames(
+		assembly.WithStarterModule(handler),
+		assembly.WithStarterMigrationNames(
 			"2025_06_18_000000_create_users_table",
 			"2026_04_27_000000_create_password_reset_tokens_table",
 			"2026_04_27_000001_add_unique_index_to_users_username",
 			"2025_06_18_000001_seed_default_users",
 		),
-		contracts.WithStarterSeederNames("users"),
+		assembly.WithStarterSeederNames("users"),
 	)
 }

@@ -45,7 +45,7 @@ func TestMakeModuleCommandCreatesDDDScaffold(t *testing.T) {
 
 	handlerContent, err := os.ReadFile(filepath.Join(moduleDir, "handler.go"))
 	require.NoError(t, err)
-	assert.Contains(t, string(handlerContent), "contracts.RouteModule")
+	assert.Contains(t, string(handlerContent), "assembly.RouteModule")
 	assert.Contains(t, string(handlerContent), "Failed to list blog_posts")
 
 	routesContent, err := os.ReadFile(filepath.Join(moduleDir, "routes.go"))

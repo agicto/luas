@@ -3,8 +3,8 @@ package apikey
 import (
 	"github.com/google/wire"
 
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
 // ProviderSet is the provider set for the API key module.
@@ -17,10 +17,10 @@ var ProviderSet = wire.NewSet(
 )
 
 // NewStarterManifest describes how the API key starter participates in the default scaffold.
-func NewStarterManifest(handler *Handler) contracts.StarterManifest {
-	return contracts.NewStaticStarterManifest(
+func NewStarterManifest(handler *Handler) assembly.StarterManifest {
+	return assembly.NewStaticStarterManifest(
 		"apikey",
-		contracts.WithStarterModule(handler),
-		contracts.WithStarterMigrationNames("2026_04_06_000000_create_api_keys_table"),
+		assembly.WithStarterModule(handler),
+		assembly.WithStarterMigrationNames("2026_04_06_000000_create_api_keys_table"),
 	)
 }

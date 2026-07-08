@@ -129,6 +129,7 @@ luas/
 │   │       └── service_test.go
 │   ├── capabilities/      # Technical capabilities (idgen, crypto)
 │   ├── infra/             # Infrastructure (33+ components)
+│   ├── starter/           # Starter registry and assembly seams
 │   └── wiring/            # Wire dependency injection
 ├── pkg/                   # Public libraries
 ├── routes/                # Global routes

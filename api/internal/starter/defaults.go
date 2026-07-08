@@ -4,11 +4,11 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/database/seeders"
-	"github.com/zgiai/luas/api/internal/contracts"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
 // ProviderSet wires the default scaffold starters and their registry.
@@ -36,8 +36,8 @@ func NewDefaultRegistry(
 }
 
 // DefaultManifests returns the starter manifests enabled in the default scaffold.
-func DefaultManifests(auditHandler *audit.Handler, apiKeyHandler *apikey.Handler, userHandler *user.Handler) []contracts.StarterManifest {
-	return []contracts.StarterManifest{
+func DefaultManifests(auditHandler *audit.Handler, apiKeyHandler *apikey.Handler, userHandler *user.Handler) []assembly.StarterManifest {
+	return []assembly.StarterManifest{
 		audit.NewStarterManifest(auditHandler),
 		apikey.NewStarterManifest(apiKeyHandler),
 		user.NewStarterManifest(userHandler),

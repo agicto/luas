@@ -9,6 +9,11 @@ cd "$API_ROOT"
 
 MODULE=$(go list -m)
 
+if [ -d "$API_ROOT/internal/contracts" ]; then
+  echo "api/internal/contracts is reserved against reuse; use internal/starter/assembly for starter registry seams and root contracts/ for HTTP contracts." >&2
+  exit 1
+fi
+
 KNOWN_VIOLATIONS=()
 
 violations=()

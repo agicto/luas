@@ -1,4 +1,4 @@
-package contracts
+package assembly
 
 // StarterManifest describes how a starter contributes modules and bootstrap assets.
 type StarterManifest interface {
