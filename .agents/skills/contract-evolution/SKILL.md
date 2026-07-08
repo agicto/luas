@@ -48,6 +48,7 @@ Read these before changing behavior:
 
 5. **Update mock BFF behavior**
    - Mock route handlers must call `guardMockBffRoute()` before reading request bodies or touching mock state.
+   - Mock success responses must use `apiSuccessResponse()` so they emit `{ code: 0, message: "success", data }`.
    - Mock responses must emit the same envelope shape as the real API, including `error_code` for non-2xx responses.
    - Production-disabled mock BFF routes must return `503 COMMON.SERVICE_UNAVAILABLE`.
    - Update `web/docs/MOCK_BFF.md` when mock route, demo credential, or deletion/replacement instructions change.

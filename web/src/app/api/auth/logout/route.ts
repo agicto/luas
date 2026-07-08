@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { clearSessionCookie } from '@/features/auth/server/session';
 
 export async function POST() {
@@ -11,9 +11,7 @@ export async function POST() {
 
   await clearSessionCookie();
 
-  return NextResponse.json({
-    data: {
-      success: true,
-    },
+  return apiSuccessResponse({
+    success: true,
   });
 }

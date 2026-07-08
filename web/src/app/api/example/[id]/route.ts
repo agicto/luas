@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   apiInvalidInputResponse,
@@ -7,6 +6,7 @@ import {
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
 import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { deleteExample, getExampleById, updateExample } from '@/features/example/server/mock-example-store';
 
 const updateSchema = z.object({
@@ -40,9 +40,7 @@ export async function GET(_request: Request, context: RouteContext) {
     return apiNotFoundResponse('Example item not found');
   }
 
-  return NextResponse.json({
-    data: exampleItem,
-  });
+  return apiSuccessResponse(exampleItem);
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
@@ -71,9 +69,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     return apiNotFoundResponse('Example item not found');
   }
 
-  return NextResponse.json({
-    data: updatedItem,
-  });
+  return apiSuccessResponse(updatedItem);
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
@@ -90,9 +86,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     return apiNotFoundResponse('Example item not found');
   }
 
-  return NextResponse.json({
-    data: {
-      id,
-    },
+  return apiSuccessResponse({
+    id,
   });
 }

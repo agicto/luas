@@ -1,10 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
 import { POST as login } from '@/app/api/auth/login/route';
+import { GET as listExamples } from '@/app/api/example/route';
 import { GET as getExample } from '@/app/api/example/[id]/route';
 import { ApiErrorCode } from '@/http/codes';
 
-describe('mock API error contract', () => {
+describe('mock API contract', () => {
+  it('returns code 0 and success message for successful mock BFF responses', async () => {
+    const response = await listExamples(new Request('http://localhost/api/example'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      code: 0,
+      message: 'success',
+      data: {
+        items: expect.any(Array),
+      },
+    });
+  });
+
   it('returns 400 COMMON.INVALID_INPUT for malformed JSON bodies', async () => {
     const response = await login(
       new Request('http://localhost/api/auth/login', {

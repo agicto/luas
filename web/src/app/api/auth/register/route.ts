@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   apiInvalidInputResponse,
@@ -6,6 +5,7 @@ import {
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
 import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { setSessionCookie } from '@/features/auth/server/session';
 
 const registerSchema = z.object({
@@ -43,9 +43,7 @@ export async function POST(request: Request) {
 
   await setSessionCookie(user);
 
-  return NextResponse.json({
-    data: {
-      user,
-    },
+  return apiSuccessResponse({
+    user,
   });
 }

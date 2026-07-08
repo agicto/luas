@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   apiErrorResponse,
@@ -7,6 +6,7 @@ import {
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
 import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { authConfig } from '@/config/auth';
 import { setSessionCookie } from '@/features/auth/server/session';
 import { ApiErrorCode } from '@/http/codes';
@@ -55,9 +55,7 @@ export async function POST(request: Request) {
 
   await setSessionCookie(user);
 
-  return NextResponse.json({
-    data: {
-      user,
-    },
+  return apiSuccessResponse({
+    user,
   });
 }

@@ -21,6 +21,7 @@ describe('mock BFF documentation contract', () => {
     expect(guide).toContain('NEXT_PUBLIC_API_URL');
     expect(guide).toContain('MOCK_BFF_ENABLED');
     expect(guide).toContain('guardMockBffRoute()');
+    expect(guide).toContain('apiSuccessResponse()');
     expect(guide).toContain('../../contracts/README.md');
     expect(guide).toContain('src/test/mock-bff-route-contract.test.ts');
     expect(guide).toContain('src/test/error-code-vocabulary.test.ts');

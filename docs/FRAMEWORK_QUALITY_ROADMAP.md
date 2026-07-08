@@ -27,7 +27,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
 - Web error-code vocabulary is contract-tested so `ApiErrorCode` remains server-scoped, `ClientErrorCode` remains frontend-only, and legacy underscore codes stay normalization input only.
 - Web mock BFF routes are disabled in production runtime by default through `guardMockBffRoute()` and require explicit `MOCK_BFF_ENABLED=true` opt-in for demo-only deployments.
-- Web mock BFF route handlers are contract-tested so every `src/app/api/**/route.ts` file calls `guardMockBffRoute()` and avoids legacy underscore-style error codes.
+- Web mock BFF route handlers are contract-tested so every `src/app/api/**/route.ts` file calls `guardMockBffRoute()`, uses shared response helpers for success envelopes, and avoids legacy underscore-style error codes.
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
@@ -101,9 +101,10 @@ Problem: mock BFF and demo credentials are excellent for scaffold usability but 
 Recommended slice:
 
 1. Keep new mock route handlers behind `guardMockBffRoute()`.
-2. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
-3. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
-4. Add production configuration tests when adding new demo-only flows.
+2. Return mock success payloads through `apiSuccessResponse()` and errors through the shared error response helpers.
+3. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
+4. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
+5. Add production configuration tests when adding new demo-only flows.
 
 Verification:
 

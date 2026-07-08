@@ -41,6 +41,7 @@ Some downstream apps keep mock routes for local or preview development. In that 
 
 - Every `src/app/api/**/route.ts` file must call `guardMockBffRoute()` before reading request bodies
   or touching mock state.
+- Mock success responses must use `apiSuccessResponse()` so they emit `{ code: 0, message: "success", data }`.
 - Mock error responses must use `{ code, error_code, message, request_id? }`.
 - Use `ApiErrorCode` for mock responses and `ClientErrorCode` only for frontend-only fallback errors.
 - Run `src/test/mock-bff-route-contract.test.ts` and `src/test/error-code-vocabulary.test.ts` after

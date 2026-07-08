@@ -1,4 +1,3 @@
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
   apiInvalidInputResponse,
@@ -6,6 +5,7 @@ import {
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
 import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { createExample, listExamples } from '@/features/example/server/mock-example-store';
 
 const listQuerySchema = z.object({
@@ -35,9 +35,7 @@ export async function GET(request: Request) {
     return apiValidationErrorResponse('Invalid query parameters', parsed.error);
   }
 
-  return NextResponse.json({
-    data: listExamples(parsed.data),
-  });
+  return apiSuccessResponse(listExamples(parsed.data));
 }
 
 export async function POST(request: Request) {
@@ -59,7 +57,5 @@ export async function POST(request: Request) {
     return apiValidationErrorResponse('Invalid example payload', parsed.error);
   }
 
-  return NextResponse.json({
-    data: createExample(parsed.data),
-  });
+  return apiSuccessResponse(createExample(parsed.data));
 }

@@ -139,6 +139,7 @@ Every rule that prevents architectural drift should have a script, test, or CI c
 - mock BFF production guard,
 - env source-of-truth,
 - error-code namespace split,
+- mock BFF success envelope helpers,
 - skill frontmatter validity.
 
 ### Phase 2: Design Feedback
@@ -194,5 +195,5 @@ Before publishing Luas as a reusable starter kit release:
 ## Next Recommended Slice
 
 Continue with the next high-leverage framework review slice: keep API package boundaries at zero
-baseline exceptions, then move to contract drift, security defaults, or Web mock BFF production
-guardrails based on the next concrete review finding.
+baseline exceptions, keep mock BFF success/error envelopes contract-tested, then move to security
+defaults or performance evidence based on the next concrete review finding.

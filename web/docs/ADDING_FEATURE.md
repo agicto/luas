@@ -26,7 +26,7 @@ src/features/<feature>/
 - Use `src/http/request.ts` for API calls.
 - Treat backend `error_code` as the stable error branch key.
 - Keep DTO fields aligned with `contracts/README.md`.
-- If you add a development mock BFF route under `src/app/api/`, call `guardMockBffRoute()` before reading the request body or touching mock state. `src/test/mock-bff-route-contract.test.ts` fails if a route misses the guard or emits legacy underscore-style error codes.
+- If you add a development mock BFF route under `src/app/api/`, call `guardMockBffRoute()` before reading the request body or touching mock state. Return successful payloads with `apiSuccessResponse()` so mock routes preserve `{ code: 0, message: "success", data }`. `src/test/mock-bff-route-contract.test.ts` fails if a route misses the guard, bypasses shared response helpers, or emits legacy underscore-style error codes.
 - Do not rely on mock BFF routes for downstream production apps; point `NEXT_PUBLIC_API_URL` at the real API or explicitly document a demo-only production opt-in. See `docs/MOCK_BFF.md` for replacement and deletion steps.
 - Read runtime configuration through `@/config/env`; `src/test/env-contract.test.ts` fails if production source reads `process.env` directly.
 

@@ -58,6 +58,14 @@ describe('mock BFF route contract', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('keeps mock route JSON envelopes behind shared response helpers', () => {
+    const offenders = routeFiles
+      .filter((path) => /\bNextResponse\.json\s*\(/.test(readRoute(path)))
+      .map(relativeRoute);
+
+    expect(offenders).toEqual([]);
+  });
+
   it('keeps mock route errors on canonical API error codes', () => {
     const offenders = routeFiles.flatMap((path) => {
       const source = readRoute(path);
