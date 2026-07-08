@@ -45,6 +45,9 @@ Page or component -> Feature hook -> Feature service -> src/http/request.ts -> H
 
 Mock BFF route handlers under `web/src/app/api/` are part of the scaffold so the web half can run without a backend during development. They are replaceable development flows, not the production API; see `web/docs/MOCK_BFF.md` for downstream replacement steps.
 
+For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
+[`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).
+
 ## Change Flow
 
 For a vertical feature:

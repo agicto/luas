@@ -23,11 +23,12 @@ If a user asks for product behavior while the worktree is still Luas scaffold mo
 Read these before extraction work:
 
 1. `CONTEXT.md` for `scaffold`, `downstream app`, `starter`, `mock BFF`, `console`, `devtools`, and `example`.
-2. `AGENTS.md`, plus `api/AGENTS.md` or `web/AGENTS.md` when touching a half.
-3. `web/docs/MOCK_BFF.md` when deleting or replacing mock route handlers.
-4. `api/docs/ADDING_MODULE.md` when keeping or adding backend starter-style behavior.
-5. `web/docs/ADDING_FEATURE.md` when keeping or adding Web feature behavior.
-6. `contracts/README.md` when real API behavior or HTTP client behavior changes.
+2. `docs/SCAFFOLD_SURFACES.md` for the current surface catalog, downstream actions, and verification matrix.
+3. `AGENTS.md`, plus `api/AGENTS.md` or `web/AGENTS.md` when touching a half.
+4. `web/docs/MOCK_BFF.md` when deleting or replacing mock route handlers.
+5. `api/docs/ADDING_MODULE.md` when keeping or adding backend starter-style behavior.
+6. `web/docs/ADDING_FEATURE.md` when keeping or adding Web feature behavior.
+7. `contracts/README.md` when real API behavior or HTTP client behavior changes.
 
 ## Surface Classification
 

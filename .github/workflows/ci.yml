@@ -34,6 +34,9 @@ jobs:
       - name: Error contract check
         run: python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py
 
+      - name: Scaffold surface catalog check
+        run: python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py
+
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}

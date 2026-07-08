@@ -143,6 +143,7 @@ Every rule that prevents architectural drift should have a script, test, or CI c
 - branch/release workflow mapping,
 - docs and skill local-link integrity,
 - scaffold error contract alignment,
+- scaffold surface classification,
 - error-code namespace split,
 - mock BFF success envelope helpers,
 - skill frontmatter validity.
@@ -169,6 +170,9 @@ Every scaffold surface should be classified as:
 - devtools,
 - example.
 
+Status: implemented in [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md) and guarded by
+`.agents/skills/luas-framework-review/scripts/check-surface-catalog.py`.
+
 For each category, maintain deletion/replacement instructions and verification commands.
 
 ### Phase 4: Measured Performance
@@ -186,7 +190,7 @@ Before publishing Luas as a reusable starter kit release:
 
 - run root `make check`,
 - run skill validation,
-- run vocabulary, doc-link, error-contract, and package-boundary checks,
+- run vocabulary, doc-link, error-contract, surface-catalog, and package-boundary checks,
 - run branch/release governance checks,
 - confirm downstream extraction docs still match the current file tree,
 - write a release note that separates scaffold improvements from starter behavior changes.

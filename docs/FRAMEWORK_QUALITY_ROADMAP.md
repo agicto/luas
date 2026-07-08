@@ -43,6 +43,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Luas diff review now has a dedicated root `luas-code-review` skill that separates Standards findings from Spec findings.
 - Bugs and contract-sensitive regressions now have a dedicated root `tdd-regression` skill that requires a failing test before production fixes.
 - Downstream extraction now has a dedicated root `downstream-app-extraction` skill with a product-leakage scan helper for keeping product behavior out of the source scaffold.
+- Scaffold surfaces are cataloged in [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md) with downstream actions and verification by surface type.
 - Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
 - High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - Local Markdown links across docs and agent guidance are guarded by `.agents/skills/luas-framework-review/scripts/check-doc-links.py` and CI.
@@ -50,6 +51,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API boundary baseline exceptions are currently zero. `pkg/response` no longer imports `internal/domain`, `internal/capabilities/ai` no longer imports `internal/infra/http`, and `internal/capabilities/workflow` no longer imports `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
+- Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
 
 ## Candidate Queue
 
@@ -238,12 +240,13 @@ Problem: Luas now has a downstream extraction workflow, but future scaffold chan
 
 Recommended slice:
 
-1. Keep `downstream-app-extraction` aligned with `CONTEXT.md`, `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, and `web/docs/ADDING_FEATURE.md`.
+1. Keep [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md), `downstream-app-extraction`, `CONTEXT.md`, `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, and `web/docs/ADDING_FEATURE.md` aligned.
 2. Run the product-leakage helper with task-specific identifiers before committing scaffold-mode changes that touched downstream examples or docs.
-3. Add CI or release-candidate usage only if repeated leakage patterns appear; avoid baking product names into Luas.
+3. Keep surface classification checks in CI; avoid baking product names into Luas.
 
 Verification:
 
+- `python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py`
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 - `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:zgiai/luas.git --pattern "<task-product-identifier>"`
