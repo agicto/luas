@@ -86,6 +86,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 ## Pair With
 
 - `luas-framework-review` for global scaffold impact and ranking.
+- `tdd-regression` when the contract change fixes or prevents a known regression.
 - `api-development` when implementing API handlers or response behavior.
 - `api-error-handling` when updating Web error parsing and user-facing surfaces.
 - `verification-before-completion` before reporting the contract change complete.

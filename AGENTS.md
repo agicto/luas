@@ -46,6 +46,7 @@ Root skills (apply everywhere):
 | [`luas-code-review`](.agents/skills/luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |
 | [`luas-framework-review`](.agents/skills/luas-framework-review/) | Reviewing Luas as a global scaffold for security, performance, semantics, architecture, or AI workflows |
 | [`systematic-debugging`](.agents/skills/systematic-debugging/) | Bug or flaky test where the cause is not obvious |
+| [`tdd-regression`](.agents/skills/tdd-regression/) | Fixing bugs, regressions, or contract drift with a failing test first |
 | [`verification-before-completion`](.agents/skills/verification-before-completion/) | End-of-turn check that what you built actually runs / tests / lints |
 | [`pr-description-writer`](.agents/skills/pr-description-writer/) | Drafting a PR body or commit summary |
 

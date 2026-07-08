@@ -20,6 +20,7 @@ Codex loads only **metadata** (name + description) into the system prompt at sta
 | [`luas-code-review`](./luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |
 | [`luas-framework-review`](./luas-framework-review/) | Review Luas as a global scaffold across security, performance, semantics, architecture, and AI workflows |
 | [`systematic-debugging`](./systematic-debugging/) | Bug or flaky test with unclear cause — 4-phase reproduce → isolate → identify → verify |
+| [`tdd-regression`](./tdd-regression/) | Fixing bugs, regressions, or contract drift with a failing test first |
 | [`verification-before-completion`](./verification-before-completion/) | End-of-turn check that the change actually runs / tests pass / lint clean |
 | [`pr-description-writer`](./pr-description-writer/) | Drafting a PR body or commit summary |
 
@@ -57,13 +58,13 @@ Quick map:
 ## How to Verify Skills Are Loaded
 
 ```bash
-# count discoverable skills (should be 34)
+# count discoverable skills (should be 35)
 find . -maxdepth 5 -name "SKILL.md" -not -path "*/.template/*" | wc -l
 
-# count what loads in api/ context (root + api = 19)
+# count what loads in api/ context (root + api = 20)
 ( cd api && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 
-# count what loads in web/ context (root + web = 23)
+# count what loads in web/ context (root + web = 24)
 ( cd web && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
 ```
 

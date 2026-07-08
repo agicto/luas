@@ -17,7 +17,7 @@ Read the smallest set that proves the review:
 2. The diff under review.
 3. `CONTEXT.md`, `AGENTS.md`, and the affected half's `AGENTS.md`.
 4. `contracts/README.md` for HTTP behavior.
-5. Relevant skills when triggered by the diff: `contract-evolution`, `domain-modeling`, `verification-before-completion`, API `code-review-guide`, Web perf/design/testing skills, or `sql-migration-review`.
+5. Relevant skills when triggered by the diff: `contract-evolution`, `domain-modeling`, `tdd-regression`, `verification-before-completion`, API `code-review-guide`, Web perf/design/testing skills, or `sql-migration-review`.
 
 ## Workflow
 
@@ -99,5 +99,6 @@ If there are no findings, say so clearly and still mention residual risk or test
 - `luas-framework-review` for broad scaffold quality ranking.
 - `contract-evolution` for HTTP contract-sensitive diffs.
 - `domain-modeling` for naming and vocabulary decisions.
+- `tdd-regression` when a bug fix should include a failing test before production changes.
 - `verification-before-completion` to validate fixes after review findings are addressed.
 - API `code-review-guide` for backend implementation details.

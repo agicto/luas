@@ -50,7 +50,7 @@ These are reusable habits the agent can reach for automatically.
 | `environment-config` | Web env source-of-truth and typed validation. | Existing |
 | `domain-modeling` | Challenges vocabulary and updates `CONTEXT.md` / ADRs when terms crystallize. | Existing |
 | `luas-code-review` | Reviews diffs on separate Standards and Spec axes. | Existing |
-| `tdd-regression` | Runs red/green/refactor for bugs and contract-sensitive behavior. | Planned |
+| `tdd-regression` | Runs red/green/refactor for bugs and contract-sensitive behavior. | Existing |
 
 ## 30-Day Plan
 
@@ -97,6 +97,12 @@ Goal: turn skills into cross-boundary governance, not just reminders.
    - Standards axis: compare the diff against `CONTEXT.md`, AGENTS, contracts, package boundaries, and skills.
    - Spec axis: compare the diff against the originating request, roadmap slice, issue, or PRD.
    - Keep the two reports separate so style compliance cannot hide a wrong implementation.
+
+4. **Add `tdd-regression`**
+   - Status: implemented as a root skill.
+   - Require a reproducible failing test before production changes for bugs, regressions, flaky behavior, and
+     contract-sensitive fixes.
+   - Pair with API/Web testing skills for style and `verification-before-completion` for the broader gate.
 
 ## 90-Day Plan
 
@@ -181,5 +187,6 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Continue with the 60-day item "Add `tdd-regression`." It is the next high-leverage workflow because
-bugs and contract-sensitive regressions need a repeatable red/green/refactor loop.
+Continue with the planned router skill `downstream-app-extraction`. It is the next high-leverage workflow
+because Luas must stay a scaffold while downstream products delete examples, replace mock BFF routes, and
+add product-specific behavior outside the starter kit.

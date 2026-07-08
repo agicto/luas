@@ -38,6 +38,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - HTTP contract changes now have a dedicated root `contract-evolution` skill that orders changes through `contracts/`, API behavior, Web services, mock BFF behavior, and verification.
 - Vocabulary and boundary decisions now have a dedicated root `domain-modeling` skill that routes new terms to `CONTEXT.md`, ADRs, local docs, skills, or nowhere.
 - Luas diff review now has a dedicated root `luas-code-review` skill that separates Standards findings from Spec findings.
+- Bugs and contract-sensitive regressions now have a dedicated root `tdd-regression` skill that requires a failing test before production fixes.
 - Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
 - High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
@@ -187,6 +188,22 @@ Verification:
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 - `git diff --check`
+
+### P2 — Downstream Extraction Workflow
+
+Problem: Luas is a scaffold, not a product app. Downstream teams need a repeatable workflow for keeping starters, deleting examples and devtools, replacing mock BFF routes, and avoiding product content in the scaffold.
+
+Recommended slice:
+
+1. Add a root `downstream-app-extraction` skill that classifies surfaces as core, starter, optional starter, mock BFF, console, devtools, or example.
+2. Point it at `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, `web/docs/ADDING_FEATURE.md`, and `CONTEXT.md`.
+3. Require verification that product-specific names, routes, jobs, and remotes are not accidentally committed back into Luas.
+
+Verification:
+
+- `bash .agents/skills/scripts/validate-skill.sh --all`
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- targeted `rg` scans for downstream product names before committing
 
 ## Iteration Rules
 

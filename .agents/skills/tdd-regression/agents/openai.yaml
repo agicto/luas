@@ -1,0 +1,4 @@
+interface:
+  display_name: "TDD Regression"
+  short_description: "Red-green regression workflow"
+  default_prompt: "Use $tdd-regression to fix this Luas bug or contract regression with a failing test first."

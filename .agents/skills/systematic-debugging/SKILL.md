@@ -101,5 +101,6 @@ When done, summarize in this shape:
 
 ## Pair With
 
+- `tdd-regression` after the failure is reproducible and the fix needs a permanent regression guard.
 - `verification-before-completion` to confirm the fix actually holds.
 - `code-review-guide` for what defensible code looks like once fixed.

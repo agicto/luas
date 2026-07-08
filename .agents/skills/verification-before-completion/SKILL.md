@@ -88,6 +88,7 @@ bash .agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 
 ## Pair With
 
+- `tdd-regression` when a bug fix, flaky behavior, or contract-sensitive change needs a red/green regression guard.
 - `code-review-guide` for what *quality* looks like once verified.
 - `systematic-debugging` if verification surfaces a regression.
 - `grill-before-build` opens the work; this closes it.
