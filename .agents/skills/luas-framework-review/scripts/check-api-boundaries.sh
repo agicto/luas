@@ -33,16 +33,25 @@ scan_imports() {
             "$MODULE/internal/"*) append_violation "$pkg" "$imported" "pkg must not import internal" ;;
           esac
           ;;
+        domain)
+          case "$imported" in
+            "$MODULE/pkg/"*|"$MODULE/internal/"*)
+              append_violation "$pkg" "$imported" "domain must not import pkg/internal"
+              ;;
+          esac
+          ;;
         capabilities)
           case "$imported" in
-            "$MODULE/internal/infra/"*|"$MODULE/internal/modules/"*)
-              append_violation "$pkg" "$imported" "capabilities must not import infra/modules"
+            "$MODULE/internal/domain"*|"$MODULE/internal/infra/"*|"$MODULE/internal/modules/"*)
+              append_violation "$pkg" "$imported" "capabilities must not import domain/infra/modules"
               ;;
           esac
           ;;
         infra)
           case "$imported" in
-            "$MODULE/internal/modules/"*) append_violation "$pkg" "$imported" "infra must not import modules" ;;
+            "$MODULE/internal/domain"*|"$MODULE/internal/modules/"*)
+              append_violation "$pkg" "$imported" "infra must not import domain/modules"
+              ;;
           esac
           ;;
         *)
@@ -69,6 +78,7 @@ is_known_violation() {
 }
 
 scan_imports ./pkg/... pkg
+scan_imports ./internal/domain domain
 scan_imports ./internal/capabilities/... capabilities
 scan_imports ./internal/infra/... infra
 

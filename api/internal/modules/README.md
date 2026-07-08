@@ -52,7 +52,9 @@ The starter registry dispatches these capabilities centrally, so route/bootstrap
 
 ## Domain Layer
 
-`internal/domain/` contains core business entities **shared by all modules**:
+`internal/domain/` contains framework-free entities, value objects, domain errors, `error_code`
+constants, and repository seams shared by starter modules. It must stay standard-library-only; see
+[`../domain/README.md`](../domain/README.md).
 
 ```go
 // internal/domain/user.go
@@ -100,7 +102,7 @@ llm/
 ./luas make:module Blog
 
 # After generation:
-# 1. Refine the generated internal/domain/<module>.go file with real business fields
+# 1. Refine the generated internal/domain/<module>.go file with real framework-free fields
 # 2. Decide whether it is a starter, optional starter, or example
 # 3. If it is a default starter, add its starter manifest to internal/starter/defaults.go
 # 4. If it needs route middleware, implement RegisterMiddleware()
@@ -124,6 +126,6 @@ The single-file generators such as `make:service` and `make:handler` are meant t
 
 1. **DTO includes Mapper** - Conversion functions in `dto.go`, no separate file
 2. **Concrete first** - Default constructors return concrete types; expose interfaces only when a real seam exists
-3. **Use Domain Layer** - Business logic uses `domain.User`, don't expose `UserPO`
+3. **Use domain seams** - Business logic uses `domain.User`; don't expose `UserPO`
 4. **Private implementations** - Implementation struct names are unexported
 5. **Wire owns binding** - Prefer `wire.Bind(...)` over constructors returning interface by default

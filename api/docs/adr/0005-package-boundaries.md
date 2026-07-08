@@ -1,4 +1,4 @@
-# ADR-0005: Package Boundaries — `pkg/`, `internal/capabilities/`, `internal/infra/`
+# ADR-0005: Package Boundaries — `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`
 
 ## Status
 
@@ -6,11 +6,14 @@ Accepted
 
 ## Context
 
-Luas has three horizontal homes that can plausibly host shared code:
+Luas has four API homes that can plausibly host shared code or shared vocabulary:
 
 - `pkg/` — currently houses `encryption`, `env`, `errors`, `events`, `handler`,
   `hash`, `logger`, `pagination`, `request`, `resource`, `response`, `support`,
   `utils`, `validation`.
+- `internal/domain/` — currently houses starter domain entities, domain errors,
+  domain events, value objects, repository interfaces, and stable API `error_code`
+  constants.
 - `internal/capabilities/` — currently houses `ai`, `crypto`, `idgen`.
 - `internal/infra/` — currently houses `config`, `console`, `events`, `exception`,
   `http`, `lang`, `logger`, `middleware`, `migration`, `plugin`, `provider`,
@@ -23,7 +26,7 @@ public-release cleanup.
 
 ## Decision
 
-We treat the three homes as **three sharply different concerns**, and we
+We treat these homes as sharply different concerns, and we
 write them down so reviewers and AI agents can apply the rule
 mechanically.
 
@@ -41,6 +44,23 @@ Examples that fit: `pkg/env`, `pkg/pagination`, `pkg/errors`.
 
 Smell test: would a Go developer outside Luas reasonably copy this file
 into their own project unchanged? If yes, `pkg/`.
+
+### `internal/domain/` — framework-free starter vocabulary
+
+A file belongs in `internal/domain/` when:
+
+1. It names a domain concept used by one or more starter modules.
+2. It can run with only the Go standard library.
+3. It defines a small seam such as a repository interface, domain error,
+   value object, event, or `error_code` constant without importing HTTP,
+   database, runtime, or response helpers.
+
+Examples that fit: `domain.User`, `domain.APIKey`, `domain.AuditLog`,
+`domain.UserRepository`, `domain.CodeInvalidCredentials`.
+
+Smell test: would importing this from `internal/infra/` make the runtime
+know about starter behavior? If yes, keep the dependency out of infra and
+let modules or assembly code adapt the domain concept instead.
 
 ### `internal/capabilities/` — opinionated, domain-shaped capabilities
 
@@ -81,6 +101,8 @@ Smell test: if we swapped Gin for Echo, would this file rewrite? If yes,
 The allowed import direction is strictly one-way:
 
 ```
+internal/domain/  <--  internal/modules/
+
 pkg/  <--  internal/capabilities/  <--  internal/infra/  <--  internal/modules/
                                                         ^
                                                         |
@@ -90,11 +112,13 @@ pkg/  <--  internal/capabilities/  <--  internal/infra/  <--  internal/modules/
 Concretely:
 
 - `pkg/` may **not** import `internal/...`.
-- `internal/capabilities/` may import `pkg/` but **not** `internal/infra/`
-  or `internal/modules/`.
-- `internal/infra/` may import `pkg/` and `internal/capabilities/`.
-- `internal/modules/` may import all three; modules are the leaf of the
-  graph.
+- `internal/domain/` may **not** import `pkg/` or `internal/...`.
+- `internal/capabilities/` may import `pkg/` but **not** `internal/domain/`,
+  `internal/infra/`, or `internal/modules/`.
+- `internal/infra/` may import `pkg/` and `internal/capabilities/`, but
+  not `internal/domain/` or `internal/modules/`.
+- `internal/modules/` may import `internal/domain/` and the lower runtime
+  layers; modules are the leaf of the graph.
 
 If a piece of code wants to import "up" the chain, that's the signal it
 lives at the wrong layer — promote/demote it instead of adding the
@@ -104,12 +128,14 @@ import.
 
 - New PRs that add code to `pkg/` that imports `internal/...` are
   flagged in review as boundary violations.
+- New PRs that make `internal/domain/` depend on runtime helpers are
+  flagged before domain concepts become framework-coupled.
 - The previous duplicate (`pkg/encryption` ↔ `internal/capabilities/crypto`)
   was resolved by keeping the capability-shaped `crypto` and treating
   `pkg/encryption` as deprecated.
 - `make:module` and the AGENTS.md template tell new contributors to
   always place new code under `internal/modules/<name>/` unless it
-  truly belongs in one of the three horizontal layers — and to point
+  truly belongs in one of these documented homes — and to point
   to this ADR when justifying the choice.
 - The boundary lint lives at
   `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`

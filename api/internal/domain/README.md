@@ -1,193 +1,76 @@
 # Domain Layer
 
-The **Domain Layer** is the heart of the Luas scaffold, containing the core business logic that is independent of any infrastructure concerns.
+`internal/domain/` is the framework-free vocabulary for Luas starter behavior. It names domain
+entities, value objects, domain errors, domain events, repository seams, and stable API
+`error_code` constants that starter modules can share.
 
-## 📋 Responsibilities
+It is not a home for HTTP handlers, GORM persistence objects, external SDK clients, runtime
+configuration, response helpers, or downstream product-specific workflows.
 
-### 1. Entity Definitions
-Core business entities that represent the fundamental concepts of your application.
+## Responsibilities
+
+| Responsibility | Belongs here | Does not belong here |
+|---|---|---|
+| Entities | `User`, `APIKey`, `AuditLog` domain structs | GORM `*PO` persistence structs |
+| Value objects | `Email`, `Username`, `Password`, status values | Request DTO validation tags |
+| Domain errors | `ErrInvalidCredentials`, `ErrAPIKeyRevoked` | HTTP response envelopes |
+| Error codes | `COMMON.NOT_FOUND`, `AUTH.INVALID_CREDENTIALS` constants | Web-only fallback or client-only codes |
+| Repository seams | Small interfaces consumed by services | SQL queries, GORM sessions, transaction wiring |
+| Domain events | Event names and payloads | Event bus infrastructure or async worker runtime |
+
+## Boundary Rules
+
+- `internal/domain/` may import only the Go standard library.
+- It must not import `pkg/`, `internal/capabilities/`, `internal/infra/`, or `internal/modules/`.
+- It must not import Gin, GORM, Redis, OpenAI SDKs, HTTP clients, or response packages.
+- Starter modules implement domain repository interfaces in `internal/modules/<starter>/repository.go`.
+- Assembly code may adapt domain errors or `error_code` values to HTTP behavior, but the domain package
+  does not write HTTP responses itself.
+
+These rules are enforced by
+[`../../docs/PACKAGE_BOUNDARIES.md`](../../docs/PACKAGE_BOUNDARIES.md) and
+`.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`.
+
+## Interface Rules
+
+Repository interfaces are useful when they name a real seam between domain behavior and a starter
+module implementation. Keep them narrow and close to the domain concept:
 
 ```go
-// user.go
-type User struct {
-    ID        uint
-    Username  string
-    Email     string
-    Password  string  // Hidden in JSON via `json:"-"`
-    Status    int
-    CreatedAt time.Time
-}
-```
-
-### 2. Repository Interfaces (Contracts)
-Define **what** data operations are needed, not **how** they are implemented.
-
-```go
-// user.go
 type UserRepository interface {
-    Create(ctx context.Context, user *User) error
     FindByID(ctx context.Context, id uint) (*User, error)
     FindByEmail(ctx context.Context, email string) (*User, error)
-    // ...
 }
 ```
 
-**Why interfaces here?**
-- Modules depend on domain interfaces, not concrete implementations
-- This enables dependency inversion and prevents circular dependencies
-- Easy to swap implementations (e.g., PostgreSQL → MongoDB)
+Avoid broad service-like interfaces that collect unrelated use cases. Most request-driven workflow
+logic belongs in `internal/modules/<starter>/service.go`, not in a generic domain service.
 
-### 3. Value Objects
-Immutable objects that represent concepts with no identity.
+## Data Flow
 
-```go
-// value_objects.go
-type Email struct {
-    value string
-}
-
-func NewEmail(s string) (Email, error) {
-    if !isValidEmail(s) {
-        return Email{}, ErrInvalidEmail
-    }
-    return Email{value: s}, nil
-}
+```text
+HTTP handler -> DTO -> starter service -> domain entity/interface -> repository -> PO/database
 ```
 
-### 4. Domain Events
-Events that represent something significant that happened in the domain.
+Typical ownership:
 
-```go
-// events.go
-type UserCreatedEvent struct {
-    BaseEvent
-    UserID   uint
-    Username string
-    Email    string
-}
+| Step | Owner |
+|---|---|
+| HTTP binding and response envelope | `internal/modules/<starter>/handler.go` |
+| Request workflow and authorization decisions | `internal/modules/<starter>/service.go` |
+| Domain entity, value object, error, or repository seam | `internal/domain/` |
+| Persistence object and query implementation | `internal/modules/<starter>/model.go` and `repository.go` |
+| Database, HTTP, logging, event bus, and middleware runtime | `internal/infra/` |
 
-type OrderCompletedEvent struct {
-    BaseEvent
-    OrderID uint
-    UserID  uint
-    Amount  float64
-}
-```
+## Adding Domain Concepts
 
-### 5. Domain Errors
-Business-specific errors that are meaningful to the domain.
+1. Start in the starter module unless the concept needs to be shared by more than one file or starter.
+2. Move only framework-free vocabulary into `internal/domain/`.
+3. Keep sensitive fields hidden with `json:"-"`.
+4. Add or update `error_code` constants only when API behavior needs a stable machine-readable branch.
+5. Run the vocabulary and package boundary checks after changing this package.
 
-```go
-// errors.go
-var (
-    ErrUserNotFound      = errors.New("user not found")
-    ErrInvalidCredentials = errors.New("invalid credentials")
-    ErrEmailAlreadyExists = errors.New("email already exists")
-)
-```
-
----
-
-## 📁 File Structure
-
-```
-domain/
-├── README.md           # This file
-├── user.go             # User entity + UserRepository interface
-├── value_objects.go    # Value objects (Email, Username, etc.)
-├── events.go           # Domain events
-├── errors.go           # Domain-specific errors
-└── aggregate.go        # Aggregate roots (if using DDD aggregates)
-```
-
----
-
-## 🔑 Key Principles
-
-### 1. No Infrastructure Dependencies
-The domain layer should **never** import:
-- Database packages (gorm, sqlx)
-- HTTP frameworks (gin, echo)
-- External services (redis, kafka)
-
-### 2. Interface Segregation
-Define small, focused interfaces:
-```go
-// ✅ Good: Small, focused interface
-type UserFinder interface {
-    FindByID(ctx context.Context, id uint) (*User, error)
-}
-
-// ❌ Avoid: Large, monolithic interface with unrelated methods
-type UserEverything interface {
-    Create, Update, Delete, FindByID, FindByEmail, SendEmail, GenerateReport...
-}
-```
-
-### 3. Dependency Inversion
-Modules implement domain interfaces, not the other way around:
-
-```
-┌─────────────────────┐
-│      Domain         │  ← Defines interfaces (UserRepository)
-└─────────────────────┘
-          ▲
-          │ implements
-          │
-┌─────────────────────┐
-│   modules/user      │  ← Implements UserRepository
-└─────────────────────┘
-```
-
-### 4. Breaking Circular Dependencies
-If Module A needs to call Module B:
-
-```go
-// ❌ Wrong: Direct import causes circular dependency
-import "modules/billing"
-
-// ✅ Correct: Depend on domain interface
-type RoleAssigner interface {
-    AssignDefaultRole(ctx context.Context, userID uint) error
-}
-```
-
----
-
-## Notes
-
-- In Luas, most request-driven business logic belongs in `internal/modules/*/service.go`.
-- Add a dedicated domain service only when logic is shared across modules or does not fit an entity/aggregate cleanly.
-
-## 🔄 Data Flow
-
-```
-HTTP Request
-     │
-     ▼
-┌─────────────┐
-│   Handler   │  ← Uses DTO (Request/Response)
-└─────────────┘
-     │
-     ▼
-┌─────────────┐
-│   Service   │  ← Uses domain.User
-└─────────────┘
-     │
-     ▼
-┌─────────────┐
-│ Repository  │  ← Implements domain.UserRepository
-└─────────────┘
-     │
-     ▼
-┌─────────────┐
-│  Database   │  ← Uses internal PO (Persistence Object)
-└─────────────┘
-```
-
----
-
-## 📖 Related Documentation
+## Related Documentation
 
 - [Module Development Guide](../modules/README.md)
 - [Adding a Backend Module](../../docs/ADDING_MODULE.md)

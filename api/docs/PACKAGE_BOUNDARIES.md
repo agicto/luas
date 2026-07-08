@@ -8,20 +8,25 @@ This document is the operational index for the API package boundary rules in
 The intended direct import direction is:
 
 ```text
+internal/domain <- internal/modules/
+
 pkg/ <- internal/capabilities/ <- internal/infra/ <- internal/modules/
 ```
 
 `cmd/`, `internal/bootstrap/`, and `internal/wiring/` are assembly layers and may wire the lower
-layers together.
+layers together. `internal/domain/` is the framework-free starter vocabulary layer; it is consumed
+by starter modules and selected assembly code, but it does not depend on Luas runtime packages.
 
 ## Rules
 
 - `pkg/` must stay reusable and must not import `internal/...`.
-- `internal/capabilities/` may import `pkg/`, but must not import `internal/infra/` or
-  `internal/modules/`.
+- `internal/domain/` must stay framework-free and must not import `pkg/` or `internal/...`.
+- `internal/capabilities/` may import `pkg/`, but must not import `internal/domain/`,
+  `internal/infra/`, or `internal/modules/`.
 - `internal/infra/` may import `pkg/` and `internal/capabilities/`, but must not import
-  `internal/modules/`.
-- `internal/modules/` are route-owning starter modules and may import all lower layers.
+  `internal/domain/` or `internal/modules/`.
+- `internal/modules/` are route-owning starter modules and may import `internal/domain/` plus
+  lower runtime layers when a real seam needs them.
 
 ## Boundary Check
 
@@ -40,6 +45,8 @@ None.
 
 ## Boundary Debt Progress
 
+- `internal/domain/` is now guarded as a standard-library-only package so domain entities,
+  domain errors, and repository seams do not pick up HTTP, database, runtime, or response helpers.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now

@@ -116,7 +116,7 @@ luas/
 │   └── server/            # HTTP server entry
 ├── internal/
 │   ├── bootstrap/         # Application startup
-│   ├── domain/            # Domain entities (core business)
+│   ├── domain/            # Framework-free domain vocabulary and seams
 │   ├── modules/           # Route-owning starter modules
 │   │   └── user/          # Example: 8 files
 │   │       ├── model.go       # Database entity (UserPO)
@@ -172,7 +172,9 @@ hash, _ := crypto.HashPassword("password")
 
 ## Domain Layer
 
-`internal/domain/` contains core business entities. Sensitive fields MUST use `json:"-"`.
+`internal/domain/` contains framework-free domain entities, value objects, errors, `error_code`
+constants, and repository seams. It must stay standard-library-only. Sensitive fields MUST use
+`json:"-"`.
 
 ---
 
