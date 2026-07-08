@@ -15,7 +15,7 @@ Read these first:
 
 1. `CONTEXT.md` for canonical vocabulary.
 2. `AGENTS.md`, then the relevant half's `AGENTS.md`.
-3. `docs/ARCHITECTURE.md` and `contracts/README.md`.
+3. `docs/ARCHITECTURE.md`, `docs/BRANCHING_AND_RELEASES.md`, and `contracts/README.md`.
 4. Relevant ADRs under `docs/adr/`, `api/docs/adr/`, or feature docs.
 5. The current diff and verification status.
 

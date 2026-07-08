@@ -24,6 +24,7 @@ Workspace-level architecture docs:
 
 - [CONTEXT.md](CONTEXT.md) — canonical global vocabulary for the whole scaffold
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stable seams and vertical change flow
+- [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) — branch roles, testing branches, release candidates, and deployment trigger rules
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap for professional, semantic, architecture-friendly iteration
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for keeping agent workflows aligned with vocabulary, contracts, and architecture
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`

@@ -9,6 +9,7 @@ FILES=(
   AGENTS.md
   README.md
   docs/ARCHITECTURE.md
+  docs/BRANCHING_AND_RELEASES.md
   docs/FRAMEWORK_QUALITY_ROADMAP.md
   contracts/README.md
   api/AGENTS.md

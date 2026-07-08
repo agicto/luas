@@ -39,6 +39,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - High-signal vocabulary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary debt has started moving down: `pkg/response` no longer imports `internal/domain`, and `internal/capabilities/ai` no longer imports `internal/infra/http`.
+- Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 
 ## Candidate Queue
 
@@ -102,6 +103,23 @@ Verification:
 
 - `cd web && pnpm vitest run`
 - `cd web && pnpm build`
+
+### P1 — Branch and Release Discipline
+
+Problem: shared testing branches are useful for many teams, but they become unsafe when unfinished work and release-ready work are mixed and then merged wholesale into `main`.
+
+Recommended slice:
+
+1. Keep [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md) aligned with `.github/workflows/ci.yml` and `.github/workflows/sync-deploy-branches.yml`.
+2. Treat `dev` and `dev-c` as mutable testing branches, not release candidates.
+3. Assemble release content from `main` using `release/*`, accepted feature PRs, or explicit cherry-picks.
+4. Keep deployment trigger branches mechanical and CI-owned.
+
+Verification:
+
+- `make check`
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
 
 ### P2 — Architecture Vocabulary Cleanup
 
