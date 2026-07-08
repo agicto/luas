@@ -1,4 +1,4 @@
-package queue
+package workflow
 
 import (
 	"context"
@@ -49,7 +49,7 @@ func DefaultWorkerConfig() WorkerConfig {
 // Worker processes jobs from a queue
 type Worker struct {
 	config  WorkerConfig
-	manager *Manager
+	manager *QueueManager
 	driver  Driver
 	stop    chan struct{}
 	wg      sync.WaitGroup
@@ -59,6 +59,11 @@ type Worker struct {
 
 // NewWorker creates a new worker
 func NewWorker(config WorkerConfig) *Worker {
+	return GlobalQueue().NewWorker(config)
+}
+
+// NewWorker creates a new worker bound to this queue manager.
+func (m *QueueManager) NewWorker(config WorkerConfig) *Worker {
 	if config.Concurrency < 1 {
 		config.Concurrency = 1
 	}
@@ -71,8 +76,8 @@ func NewWorker(config WorkerConfig) *Worker {
 
 	return &Worker{
 		config:  config,
-		manager: Global(),
-		driver:  Global().DefaultDriver(),
+		manager: m,
+		driver:  m.DefaultDriver(),
 		stop:    make(chan struct{}),
 	}
 }

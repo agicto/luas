@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 var counterJobCalls atomic.Int32
@@ -22,7 +20,7 @@ func (j *counterJob) Handle(ctx context.Context) error {
 }
 
 func TestManagerRunRetriesAndEventuallySucceeds(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), NewScheduler())
+	manager := NewManagerWith(GlobalQueue(), NewScheduler())
 
 	attempts := 0
 	err := manager.Run(context.Background(), "sync.retry", func(ctx context.Context) error {
@@ -43,7 +41,7 @@ func TestManagerRunRetriesAndEventuallySucceeds(t *testing.T) {
 }
 
 func TestManagerRunStopsWhenShouldRetryRejectsError(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), NewScheduler())
+	manager := NewManagerWith(GlobalQueue(), NewScheduler())
 
 	expectedErr := errors.New("do not retry")
 	attempts := 0
@@ -63,7 +61,7 @@ func TestManagerRunStopsWhenShouldRetryRejectsError(t *testing.T) {
 }
 
 func TestManagerRunReturnsMaxAttemptsError(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), NewScheduler())
+	manager := NewManagerWith(GlobalQueue(), NewScheduler())
 
 	expectedErr := errors.New("still failing")
 	attempts := 0
@@ -83,7 +81,7 @@ func TestManagerRunReturnsMaxAttemptsError(t *testing.T) {
 }
 
 func TestManagerDispatchAfterExecutesRegisteredJob(t *testing.T) {
-	manager := NewManagerWith(queue.Global(), NewScheduler())
+	manager := NewManagerWith(GlobalQueue(), NewScheduler())
 
 	counterJobCalls.Store(0)
 	job := &counterJob{}
@@ -96,9 +94,22 @@ func TestManagerDispatchAfterExecutesRegisteredJob(t *testing.T) {
 	}, 200*time.Millisecond, 5*time.Millisecond)
 }
 
+func TestManagerDispatchUsesInjectedQueueManagerRegistry(t *testing.T) {
+	queueManager := NewQueueManager()
+	manager := NewManagerWith(queueManager, NewScheduler())
+
+	counterJobCalls.Store(0)
+	job := &counterJob{}
+	manager.Register(job)
+
+	err := manager.Dispatch(context.Background(), job)
+	require.NoError(t, err)
+	require.Equal(t, int32(1), counterJobCalls.Load())
+}
+
 func TestSchedulePlanRegistersAndRunsDueWork(t *testing.T) {
 	scheduler := NewScheduler()
-	manager := NewManagerWith(queue.Global(), scheduler)
+	manager := NewManagerWith(GlobalQueue(), scheduler)
 
 	ran := 0
 	manager.Schedule("nightly.sync", func(ctx context.Context) error {
@@ -113,9 +124,9 @@ func TestSchedulePlanRegistersAndRunsDueWork(t *testing.T) {
 
 func TestBootstrapConfiguresMemoryQueueDriver(t *testing.T) {
 	t.Cleanup(func() {
-		queue.Global().RegisterDriver("sync", queue.NewSyncDriver())
-		require.NoError(t, queue.Global().SetDefaultDriver("sync"))
-		queue.Global().SetDefaultQueue("default")
+		GlobalQueue().RegisterDriver("sync", NewSyncDriver())
+		require.NoError(t, GlobalQueue().SetDefaultDriver("sync"))
+		GlobalQueue().SetDefaultQueue("default")
 	})
 
 	manager, err := Bootstrap(QueueRuntimeConfig{
@@ -125,5 +136,5 @@ func TestBootstrapConfiguresMemoryQueueDriver(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, manager)
-	require.Equal(t, "memory", queue.Global().DefaultDriverName())
+	require.Equal(t, "memory", GlobalQueue().DefaultDriverName())
 }

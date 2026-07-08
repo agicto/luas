@@ -31,16 +31,12 @@ Run from the repository root:
 bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
 ```
 
-The check uses `go list` direct imports. It blocks new reverse imports while allowing the current
-known baseline exceptions below.
+The check uses `go list` direct imports. It blocks new reverse imports and reports the current
+known baseline exception count.
 
 ## Known Baseline Exceptions
 
-These are existing boundary debts, not new patterns to copy:
-
-| Package | Imports | Why It Is Debt | Preferred Direction |
-|---|---|---|---|
-| `internal/capabilities/workflow` | `internal/infra/queue` | The workflow capability is currently a facade over infra queue primitives. | Either promote the queue primitives into the capability, or reclassify workflow as infra/runtime glue and expose a smaller capability-facing seam. |
+None.
 
 ## Boundary Debt Progress
 
@@ -50,6 +46,8 @@ These are existing boundary debts, not new patterns to copy:
   lives inside the workflow capability and is guarded by success, stop-retry, and exhaustion tests.
 - `internal/capabilities/workflow` no longer imports `internal/infra/schedule`. Scheduler behavior now lives
   inside the workflow capability; `internal/infra/schedule` remains as a compatibility wrapper.
+- `internal/capabilities/workflow` no longer imports `internal/infra/queue`. Background job queue behavior now
+  lives inside the workflow capability; `internal/infra/queue` remains as a compatibility wrapper.
 
 ## Review Rule
 

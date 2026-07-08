@@ -9,9 +9,7 @@ cd "$API_ROOT"
 
 MODULE=$(go list -m)
 
-KNOWN_VIOLATIONS=(
-  "github.com/zgiai/luas/api/internal/capabilities/workflow imports github.com/zgiai/luas/api/internal/infra/queue [capabilities must not import infra/modules]"
-)
+KNOWN_VIOLATIONS=()
 
 violations=()
 
@@ -59,11 +57,13 @@ scan_imports() {
 is_known_violation() {
   local candidate=$1
 
-  for known in "${KNOWN_VIOLATIONS[@]}"; do
-    if [ "$candidate" = "$known" ]; then
-      return 0
-    fi
-  done
+  if [ "${#KNOWN_VIOLATIONS[@]}" -gt 0 ]; then
+    for known in "${KNOWN_VIOLATIONS[@]}"; do
+      if [ "$candidate" = "$known" ]; then
+        return 0
+      fi
+    done
+  fi
 
   return 1
 }
@@ -74,16 +74,20 @@ scan_imports ./internal/infra/... infra
 
 new_violations=()
 known_count=0
+new_violation_count=0
 
-for violation in "${violations[@]}"; do
-  if is_known_violation "$violation"; then
-    known_count=$((known_count + 1))
-  else
-    new_violations+=("$violation")
-  fi
-done
+if [ "${#violations[@]}" -gt 0 ]; then
+  for violation in "${violations[@]}"; do
+    if is_known_violation "$violation"; then
+      known_count=$((known_count + 1))
+    else
+      new_violations+=("$violation")
+      new_violation_count=$((new_violation_count + 1))
+    fi
+  done
+fi
 
-if [ "${#new_violations[@]}" -gt 0 ]; then
+if [ "$new_violation_count" -gt 0 ]; then
   printf 'New API package boundary violation(s):\n' >&2
   for violation in "${new_violations[@]}"; do
     printf '  - %s\n' "$violation" >&2

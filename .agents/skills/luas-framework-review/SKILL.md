@@ -103,7 +103,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 ## Helper Script
 
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
-- `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while tracking current baseline exceptions.
+- `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any.
 - `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.
   Use it for multi-candidate or cross-turn recommendations where files, problem, deeper seam, before/after flow,
   test impact, risk, rollback, and recommendation strength should be compared as one artifact.

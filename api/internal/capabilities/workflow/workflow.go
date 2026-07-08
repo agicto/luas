@@ -8,8 +8,6 @@ import (
 	"math/rand"
 	"strings"
 	"time"
-
-	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 var (
@@ -21,14 +19,8 @@ var (
 	ErrMaxAttemptsExceeded = errors.New("max retry attempts exceeded")
 )
 
-// Job is the background task contract exposed to business code.
-type Job = queue.Job
-
 // TaskFunc is a small, retry-friendly unit of work.
 type TaskFunc func(ctx context.Context) error
-
-// WorkerConfig reuses queue worker configuration for background workers.
-type WorkerConfig = queue.WorkerConfig
 
 // ShouldRetry decides whether a workflow task error should be retried.
 type ShouldRetry func(err error) bool
@@ -45,7 +37,7 @@ type RetryPolicy struct {
 
 // Manager is the deep seam over queue, scheduler, and retry behavior.
 type Manager struct {
-	queue     *queue.Manager
+	queue     *QueueManager
 	scheduler *Scheduler
 }
 
@@ -58,13 +50,13 @@ func Default() *Manager {
 
 // NewManager creates a workflow manager backed by the global queue and scheduler.
 func NewManager() *Manager {
-	return NewManagerWith(queue.Global(), GlobalScheduler())
+	return NewManagerWith(GlobalQueue(), GlobalScheduler())
 }
 
 // NewManagerWith creates a workflow manager backed by explicit infra instances.
-func NewManagerWith(queueManager *queue.Manager, scheduler *Scheduler) *Manager {
+func NewManagerWith(queueManager *QueueManager, scheduler *Scheduler) *Manager {
 	if queueManager == nil {
-		queueManager = queue.Global()
+		queueManager = GlobalQueue()
 	}
 	if scheduler == nil {
 		scheduler = GlobalScheduler()
@@ -190,14 +182,12 @@ func (m *Manager) ClearSchedules() {
 }
 
 // NewWorker creates a worker bound to the manager's default driver.
-func (m *Manager) NewWorker(config WorkerConfig) *queue.Worker {
-	worker := queue.NewWorker(config)
-	worker.SetDriver(m.queue.DefaultDriver())
-	return worker
+func (m *Manager) NewWorker(config WorkerConfig) *Worker {
+	return m.queue.NewWorker(config)
 }
 
 // StartWorker creates and starts a worker.
-func (m *Manager) StartWorker(ctx context.Context, config WorkerConfig) (*queue.Worker, error) {
+func (m *Manager) StartWorker(ctx context.Context, config WorkerConfig) (*Worker, error) {
 	worker := m.NewWorker(config)
 	if err := worker.Start(ctx); err != nil {
 		return nil, err

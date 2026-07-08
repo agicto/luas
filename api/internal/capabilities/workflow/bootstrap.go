@@ -3,8 +3,6 @@ package workflow
 import (
 	"fmt"
 	"strings"
-
-	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 // QueueRuntimeConfig is the workflow-owned queue runtime configuration.
@@ -19,7 +17,7 @@ type QueueRuntimeConfig struct {
 func Bootstrap(cfg QueueRuntimeConfig) (*Manager, error) {
 	manager := Default()
 
-	queueManager := queue.Global()
+	queueManager := GlobalQueue()
 	driverName := strings.ToLower(strings.TrimSpace(cfg.Driver))
 	if driverName == "" {
 		driverName = "sync"
@@ -27,14 +25,14 @@ func Bootstrap(cfg QueueRuntimeConfig) (*Manager, error) {
 
 	switch driverName {
 	case "sync":
-		queueManager.RegisterDriver("sync", queue.NewSyncDriver())
+		queueManager.RegisterDriver("sync", NewSyncDriver())
 	case "memory":
 		if existing := queueManager.Driver("memory"); existing == nil {
 			bufferSize := cfg.BufferSize
 			if bufferSize < 1 {
 				bufferSize = 256
 			}
-			queueManager.RegisterDriver("memory", queue.NewMemoryDriver(bufferSize))
+			queueManager.RegisterDriver("memory", NewMemoryDriver(bufferSize))
 		}
 	default:
 		return nil, fmt.Errorf("unsupported queue driver %q", cfg.Driver)

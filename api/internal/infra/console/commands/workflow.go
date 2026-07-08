@@ -14,7 +14,6 @@ import (
 	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/infra/queue"
 )
 
 // WorkflowWorkCommand runs a workflow queue worker.
@@ -84,7 +83,7 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 		workerCfg.Queue = "default"
 	}
 
-	driverName := queue.Global().DefaultDriverName()
+	driverName := workflow.GlobalQueue().DefaultDriverName()
 	if driverName == "sync" {
 		c.output.Warning("QUEUE_DRIVER=sync executes jobs inline; use QUEUE_DRIVER=memory for a long-running worker")
 	}

@@ -113,5 +113,6 @@ import.
   to this ADR when justifying the choice.
 - The boundary lint lives at
   `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
-  from the repository root. It blocks new reverse imports while the current
-  baseline exceptions are tracked in [`../PACKAGE_BOUNDARIES.md`](../PACKAGE_BOUNDARIES.md).
+  from the repository root. It blocks new reverse imports while any current
+  baseline exceptions, if they exist, are tracked in
+  [`../PACKAGE_BOUNDARIES.md`](../PACKAGE_BOUNDARIES.md).
