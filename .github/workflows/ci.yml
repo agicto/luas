@@ -31,6 +31,9 @@ jobs:
       - name: Markdown docs link check
         run: python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
 
+      - name: Error contract check
+        run: python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py
+
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}

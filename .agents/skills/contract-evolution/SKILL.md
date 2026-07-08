@@ -64,6 +64,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 
 - Contract/docs only:
   - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+  - `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
   - `git diff --check`
 - API behavior:
   - `cd api && go test ./internal/modules/<module>/...`

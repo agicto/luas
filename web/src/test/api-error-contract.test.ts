@@ -5,7 +5,7 @@ import { GET as listExamples } from '@/app/api/example/route';
 import { GET as getExample } from '@/app/api/example/[id]/route';
 import { ApiErrorCode } from '@/http/codes';
 
-describe('mock API contract', () => {
+describe('mock BFF contract', () => {
   it('returns code 0 and success message for successful mock BFF responses', async () => {
     const response = await listExamples(new Request('http://localhost/api/example'));
 

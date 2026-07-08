@@ -22,6 +22,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Global vocabulary now lives in [`../CONTEXT.md`](../CONTEXT.md).
 - API and Web remain independent deployable units and share contracts, not source code.
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
+- Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures.
 - Compression is intentionally not part of the default API kernel; prefer deployment/CDN compression or explicit route/starter middleware.
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
@@ -115,6 +116,22 @@ Verification:
 
 - `cd web && pnpm vitest run`
 - `cd web && pnpm build`
+
+### P1 — Scaffold Error Contract Drift
+
+Problem: scaffold-level HTTP status and `error_code` behavior spans `contracts/README.md`, API response constants, Web fallback mapping, and mock BFF behavior; changing one without the others makes downstream apps branch on stale assumptions.
+
+Recommended slice:
+
+1. Keep `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` aligned with the scaffold-level errors documented in `contracts/README.md`.
+2. Add new scaffold-level `error_code` values to the contract first, then API response constants, then Web `ApiErrorCode` and status fallback behavior.
+3. Keep domain-specific codes out of the scaffold-level table until they become shared HTTP contract behavior.
+
+Verification:
+
+- `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
+- `cd web && pnpm vitest run src/test/error-code-vocabulary.test.ts src/test/api-error-contract.test.ts`
+- `make check`
 
 ### P1 — Branch and Release Discipline
 

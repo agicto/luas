@@ -95,3 +95,4 @@ Rate-limited responses must include `Retry-After` when the reset time is known. 
 - Include stable `error_code` values for non-2xx responses.
 - Include `request_id` when the API has one in context.
 - Add API and Web tests for contract-sensitive changes.
+- From the repo root, run `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py` after changing scaffold-level HTTP status or `error_code` behavior.
