@@ -66,7 +66,7 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 		return err
 	}
 
-	manager, err := workflow.Bootstrap(cfg)
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (c *WorkflowScheduleRunCommand) Run(args []string) error {
 		return err
 	}
 
-	manager, err := workflow.Bootstrap(cfg)
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (c *WorkflowScheduleWorkCommand) Run(args []string) error {
 		return err
 	}
 
-	manager, err := workflow.Bootstrap(cfg)
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
 	if err != nil {
 		return err
 	}
@@ -200,4 +200,16 @@ func applyWorkflowWorkerArgs(args []string, cfg *workflow.WorkerConfig) error {
 	}
 
 	return nil
+}
+
+func workflowQueueRuntimeConfig(cfg *config.Config) workflow.QueueRuntimeConfig {
+	if cfg == nil {
+		return workflow.QueueRuntimeConfig{}
+	}
+
+	return workflow.QueueRuntimeConfig{
+		Driver:       cfg.Queue.Driver,
+		DefaultQueue: cfg.Queue.DefaultQueue,
+		BufferSize:   cfg.Queue.BufferSize,
+	}
 }

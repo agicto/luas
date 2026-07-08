@@ -10,7 +10,6 @@ cd "$API_ROOT"
 MODULE=$(go list -m)
 
 KNOWN_VIOLATIONS=(
-  "github.com/zgiai/luas/api/internal/capabilities/workflow imports github.com/zgiai/luas/api/internal/infra/config [capabilities must not import infra/modules]"
   "github.com/zgiai/luas/api/internal/capabilities/workflow imports github.com/zgiai/luas/api/internal/infra/queue [capabilities must not import infra/modules]"
   "github.com/zgiai/luas/api/internal/capabilities/workflow imports github.com/zgiai/luas/api/internal/infra/retry [capabilities must not import infra/modules]"
   "github.com/zgiai/luas/api/internal/capabilities/workflow imports github.com/zgiai/luas/api/internal/infra/schedule [capabilities must not import infra/modules]"

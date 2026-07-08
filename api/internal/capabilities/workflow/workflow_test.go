@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/queue"
 	"github.com/zgiai/luas/api/internal/infra/schedule"
 )
@@ -80,12 +79,11 @@ func TestBootstrapConfiguresMemoryQueueDriver(t *testing.T) {
 		queue.Global().SetDefaultQueue("default")
 	})
 
-	cfg := &config.Config{}
-	cfg.Queue.Driver = "memory"
-	cfg.Queue.DefaultQueue = "jobs"
-	cfg.Queue.BufferSize = 32
-
-	manager, err := Bootstrap(cfg)
+	manager, err := Bootstrap(QueueRuntimeConfig{
+		Driver:       "memory",
+		DefaultQueue: "jobs",
+		BufferSize:   32,
+	})
 	require.NoError(t, err)
 	require.NotNil(t, manager)
 	require.Equal(t, "memory", queue.Global().DefaultDriverName())

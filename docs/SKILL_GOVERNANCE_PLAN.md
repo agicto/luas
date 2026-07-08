@@ -115,8 +115,10 @@ Goal: make architecture improvement visible and repeatable.
      rollback notes, and recommendation strength.
 
 2. **Deepen remaining API boundary exceptions**
+   - Status: in progress. The workflow capability no longer imports `internal/infra/config`; remaining
+     exceptions are queue, retry, and schedule primitives.
    - Continue reducing `api/docs/PACKAGE_BOUNDARIES.md` baseline exceptions.
-   - Prioritize the workflow capability facade over infra queue/retry/schedule/config.
+   - Prioritize the workflow capability facade over infra queue, retry, and schedule primitives.
 
 3. **Add downstream extraction workflow**
    - Status: implemented as a root skill with a product-leakage scan helper.
@@ -190,5 +192,5 @@ Before publishing Luas as a reusable starter kit release:
 ## Next Recommended Slice
 
 Continue with the 90-day item "Deepen remaining API boundary exceptions." It is the next high-leverage
-workflow because the package-boundary guard already names the current exceptions, and the next architecture
-step is to reduce or justify those seams deliberately.
+workflow because the package-boundary guard now names the remaining workflow queue/retry/schedule exceptions,
+and the next architecture step is to reduce or justify those seams deliberately.
