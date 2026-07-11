@@ -4,36 +4,57 @@ import type { Messages } from './modules';
 export type TranslationValues = Record<string, string | number | Date>;
 export type BaseTranslator = (key: string, values?: TranslationValues) => string;
 
-type DotNotationKeys<T, Prefix extends string = ''> = T extends object
+type StringKeyOf<T> = Extract<keyof T, string>;
+
+type TranslationLeafPaths<T> = T extends Record<string, unknown>
   ? {
-      [K in keyof T]: K extends string
-        ? T[K] extends object
-          ? `${Prefix}${K}` | DotNotationKeys<T[K], `${Prefix}${K}.`>
-          : `${Prefix}${K}`
-        : never;
-    }[keyof T]
+      [K in StringKeyOf<T>]: T[K] extends string
+        ? K
+        : T[K] extends Record<string, unknown>
+          ? `${K}.${TranslationLeafPaths<T[K]> & string}`
+          : never;
+    }[StringKeyOf<T>]
   : never;
 
+type TranslationScopePaths<T> = T extends Record<string, unknown>
+  ? {
+      [K in StringKeyOf<T>]: T[K] extends Record<string, unknown>
+        ? K | `${K}.${TranslationScopePaths<T[K]> & string}`
+        : never;
+    }[StringKeyOf<T>]
+  : never;
+
+type ValueAtPath<T, Path extends string> =
+  Path extends `${infer Head}.${infer Tail}`
+    ? Head extends keyof T
+      ? ValueAtPath<T[Head], Tail>
+      : never
+    : Path extends keyof T
+      ? T[Path]
+      : never;
+
+export type AllTranslationKeys = TranslationLeafPaths<Messages>;
+export type AllScopePaths = TranslationScopePaths<Messages>;
+export type ScopedTranslationKeys<P extends AllScopePaths> =
+  TranslationLeafPaths<ValueAtPath<Messages, P>>;
+
+export type ScopedTranslations<P extends AllScopePaths> = (
+  key: ScopedTranslationKeys<P>,
+  values?: TranslationValues
+) => string;
+
 export type Translators = {
-  [K in keyof Messages]: (
-    key: DotNotationKeys<Messages[K]>,
+  [K in ModuleName]: (
+    key: TranslationLeafPaths<Messages[K]>,
     values?: TranslationValues
   ) => string;
 };
-
-export type AllTranslationKeys = DotNotationKeys<Messages>;
-export type AllScopePaths = string;
 
 export type UnifiedTranslations = {
   (key: AllTranslationKeys, values?: TranslationValues): string;
 } & Translators;
 
-export type ScopedTranslations = (
-  key: string,
-  values?: TranslationValues
-) => string;
-
-type ScopedTranslatorMap = Record<ModuleName, ScopedTranslations>;
+type ScopedTranslatorMap = Translators;
 
 function withScope(scope: string, key: string): string {
   return `${scope}.${key}`;
@@ -49,11 +70,14 @@ function createScopedTranslatorMap(rootT: BaseTranslator): ScopedTranslatorMap {
 }
 
 export function createTranslator(rootT: BaseTranslator): UnifiedTranslations;
-export function createTranslator(rootT: BaseTranslator, scope: string): ScopedTranslations;
+export function createTranslator<P extends AllScopePaths>(
+  rootT: BaseTranslator,
+  scope: P
+): ScopedTranslations<P>;
 export function createTranslator(
   rootT: BaseTranslator,
-  scope?: string
-): UnifiedTranslations | ScopedTranslations {
+  scope?: AllScopePaths
+): UnifiedTranslations | ScopedTranslations<AllScopePaths> {
   if (scope) {
     return (key: string, values?: TranslationValues) =>
       rootT(withScope(scope, key), values);

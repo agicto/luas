@@ -10,10 +10,12 @@ import {
 } from './translation-shared';
 
 export async function getT(): Promise<UnifiedTranslations>;
-export async function getT<P extends AllScopePaths>(scope: P): Promise<ScopedTranslations>;
+export async function getT<P extends AllScopePaths>(
+  scope: P
+): Promise<ScopedTranslations<P>>;
 export async function getT(
-  scope?: string
-): Promise<UnifiedTranslations | ScopedTranslations> {
+  scope?: AllScopePaths
+): Promise<UnifiedTranslations | ScopedTranslations<AllScopePaths>> {
   const rootT = (await getTranslations()) as unknown as BaseTranslator;
   return scope ? createTranslator(rootT, scope) : createTranslator(rootT);
 }

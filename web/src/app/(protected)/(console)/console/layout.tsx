@@ -16,10 +16,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/common";
-import { useT } from "@/i18n";
+import { useT, type AllTranslationKeys } from "@/i18n";
 import { useLogout } from "@/features/auth/hooks/use-auth";
 import { useAuthStore } from "@/features/auth/store/auth-store";
-import type { AllTranslationKeys } from "@/i18n/translations";
 
 interface NavItem {
   titleKey: Extract<AllTranslationKeys, `nav.${string}`>;

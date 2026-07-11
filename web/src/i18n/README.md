@@ -6,12 +6,16 @@ Internationalization (i18n) module using `next-intl` with TypeScript message fil
 
 ### Type System
 
-The i18n system provides full TypeScript type safety through:
+The i18n system derives key and scope safety from the message tree through:
 
 - **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
 - **`Messages`**: Root type containing all module namespaces and their translations
-- **`ScopedTranslations<P>`**: Type-safe scoped translator for a specific prefix path
+- **`AllScopePaths`**: Union of valid object paths accepted by scoped translators
+- **`ScopedTranslationKeys<P>`**: Relative translatable leaf keys below scope `P`
+- **`ScopedTranslations<P>`**: Translator constrained to `ScopedTranslationKeys<P>`
 - **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
+
+Scope paths and translation keys are separate unions derived from `Messages`. Object nodes such as `test.level1` are valid scopes but cannot be translated directly; leaf paths such as `test.level1.title` are valid translation keys but cannot be used as scopes.
 
 ## Structure
 
@@ -22,7 +26,7 @@ i18n/
 ├── index.ts            # Client-safe barrel exports
 ├── translations.ts     # Client-only useT implementation
 ├── server.ts           # Server-only getT implementation
-├── translation-shared.ts # Shared translator types and pure helpers
+├── translation-shared.ts # Message-tree-derived types and pure helpers
 ├── module-names.ts     # Canonical translation module names
 ├── loader.ts           # Dynamic module loading
 ├── client-message-namespaces.ts # Client namespace ownership by route
@@ -204,7 +208,7 @@ For components with many translations from a single namespace, use the scoped pa
 import { useT } from '@/i18n';
 
 function SettingsPage() {
-  // Scoped to 'settings' namespace - only settings keys are valid
+  // Scoped to 'settings' - only relative leaf keys are valid
   const t = useT('settings');
   return (
     <div>
@@ -296,4 +300,7 @@ Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supporte
 
 - Base locale (`zh-Hans.ts`) defines the message structure
 - Other locales must implement the same structure (enforced by TypeScript)
-- Missing keys will cause compile-time errors
+- `AllTranslationKeys` contains only leaf messages, never object nodes
+- `AllScopePaths` contains only object paths, never leaf messages
+- `ScopedTranslations<P>` accepts only relative leaf keys below `P`
+- Missing or misplaced keys cause compile-time errors and are guarded by `src/test/i18n-types.test.ts`

@@ -13,11 +13,15 @@ This skill provides comprehensive instructions for implementing and maintaining 
 
 ### Type System
 
-The i18n system provides full TypeScript type safety through:
+The i18n system derives key and scope safety from the message tree through:
 
 - **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
 - **`Messages`**: Root type containing all module namespaces and their translations
-- **`ScopedTranslations<P>`**: Type-safe scoped translator for a specific prefix path
+- **`AllScopePaths`**: Union of object paths that can be passed to `useT` / `getT`
+- **`ScopedTranslationKeys<P>`**: Relative translatable leaf keys below scope `P`
+- **`ScopedTranslations<P>`**: Translator constrained to `ScopedTranslationKeys<P>`
+
+Object paths and leaf paths are intentionally distinct. `test.level1` is a valid scope but not a translatable key; `test.level1.title` is a translatable key but not a scope. All unions are derived from `Messages`, so nested message changes update the public types automatically.
 
 ## Guidelines
 
@@ -70,7 +74,7 @@ For components with many translations from a single namespace, use the scoped pa
 import { useT } from '@/i18n';
 
 function SettingsPage() {
-  // Scoped to 'settings' namespace - only settings keys are valid
+  // Scoped to 'settings' - only relative leaf keys are valid
   const t = useT('settings');
   return (
     <div>
@@ -210,7 +214,7 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/index.ts` | Client-safe barrel exports for locale config and `useT` |
 | `src/i18n/translations.ts` | Client-only `useT` implementation |
 | `src/i18n/server.ts` | Server-only `getT` implementation |
-| `src/i18n/translation-shared.ts` | Runtime-neutral translator types and facade construction |
+| `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and facade construction |
 | `src/i18n/module-names.ts` | Canonical `AVAILABLE_MODULES` declaration |
 | `src/i18n/loader.ts` | Dynamic module loading |
 | `src/i18n/client-message-namespaces.ts` | Canonical client namespace ownership |
@@ -218,6 +222,7 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/route-messages-provider.tsx` | Additive route-level client messages |
 | `src/i18n/modules/index.ts` | Static type generation from modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
+| `src/test/i18n-types.test.ts` | Compile-time scope/key contract and runtime composition |
 
 ## Environment Variables
 

@@ -172,9 +172,11 @@ The project uses `next-intl` with a unified translation pattern that supports bo
 
 #### Type System
 
-The i18n system provides full TypeScript type safety through:
-- **`AllTranslationKeys`**: Union type of all valid dot-notation keys
-- **`ScopedTranslations<P>`**: Type-safe scoped translator for a specific prefix path
+The i18n system derives key and scope safety from the message tree through:
+- **`AllTranslationKeys`**: Union of translatable leaf paths such as `auth.login`; object nodes are excluded.
+- **`AllScopePaths`**: Union of valid object paths such as `test.level1`; leaf paths are excluded.
+- **`ScopedTranslationKeys<P>`**: Relative leaf keys available below scope `P`.
+- **`ScopedTranslations<P>`**: Translator whose key parameter is derived from `ScopedTranslationKeys<P>`.
 - **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
 
 #### Client Components
@@ -236,7 +238,7 @@ function SettingsPage() {
 | `src/i18n/config.ts` | Locale configuration and settings |
 | `src/i18n/translations.ts` | Client-only `useT` implementation |
 | `src/i18n/server.ts` | Server-only `getT` implementation |
-| `src/i18n/translation-shared.ts` | Shared translator types and pure facade construction |
+| `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and pure facade construction |
 | `src/i18n/module-names.ts` | Canonical translation module names |
 | `src/i18n/loader.ts` | Dynamic translation namespace loading |
 | `src/i18n/client-message-namespaces.ts` | Global and route-owned client namespace registry |
@@ -246,6 +248,7 @@ function SettingsPage() {
 | `src/i18n/README.md` | Detailed documentation with examples |
 
 **Type Safety:** Invalid keys will cause TypeScript errors at compile time.
+`src/test/i18n-types.test.ts` guards valid scopes, leaf-only global keys, relative scoped keys, and runtime prefix composition.
 
 ## Code Conventions
 
