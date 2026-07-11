@@ -1,5 +1,3 @@
-'use client';
-
 import Script from 'next/script';
 import { env } from '@/config/env';
 

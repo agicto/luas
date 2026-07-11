@@ -147,14 +147,22 @@ export default function ProtectedLayout({ children }) {
 
 Keep providers as low as the routes that need them:
 
-- Root layout owns only app-wide UI context such as i18n, theme, toasts, and analytics.
-- `(auth)` owns `QueryProvider` because login/register forms use React Query mutations.
+- Root layout owns only app-wide client context such as i18n and theme; optional analytics stays server-rendered until `next/script` activates it.
+- `(auth)` owns `QueryProvider` and `Toaster` because login/register forms use React Query mutations and toast feedback.
 - `(auth)` keeps its visual shell server-rendered; only interactive leaves such as `LanguageSwitcher`, forms, and `QueryProvider` cross the client boundary.
-- `(protected)` owns `AuthenticatedProviders`, which combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
+- `(protected)` owns `AuthenticatedProviders` and `Toaster`; the provider combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
 - Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
 - If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.
-- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, or Zustand runtime dependencies.
+- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, toast, or Zustand runtime dependencies.
 - `src/test/i18n-runtime-boundary.test.ts` keeps the client/server translation entry points separate and prevents the auth shell from becoming a Client Component.
+- `src/test/root-runtime-boundary.test.ts` keeps toast and optional analytics out of the root client graph and requires Next.js `error.tsx` / `global-error.tsx` conventions instead of a custom catch-all wrapper.
+
+### Error Boundaries
+
+- `src/app/error.tsx` is the translated recovery UI for uncaught route-segment errors.
+- `src/app/global-error.tsx` is the dependency-light fallback for root layout failures and must define its own `html` and `body`.
+- Use nested `error.tsx` files only when a route group needs a genuinely different recovery workflow.
+- Do not wrap the root layout in a custom Client Component error boundary; it expands the shared hydration graph and duplicates App Router behavior.
 
 ### 5. Internationalization (i18n)
 

@@ -33,8 +33,9 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web mock BFF route handlers are contract-tested so every `src/app/api/**/route.ts` file calls `guardMockBffRoute()`, uses shared response helpers for success envelopes, and avoids legacy underscore-style error codes.
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
-- Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, and Zustand runtime dependencies from `(site)` routes.
+- Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, toast, and Zustand runtime dependencies from `(site)` routes.
 - The auth visual shell is now a Server Component, while `LanguageSwitcher`, forms, and `QueryProvider` remain client leaves. Moving Zod validation behind the server-only environment boundary also removed the full validator from browser chunks. On Next.js 16.2.9, the `/login` route client entry set fell from 702,002 to 409,986 raw bytes and from 195,929 to 129,095 gzip bytes (41.60% and 34.11%), and the auth layout itself left the client reference graph. This is build-manifest evidence, not a field Core Web Vitals claim.
+- Root runtime ownership now uses Next.js `error.tsx` / `global-error.tsx`, keeps optional analytics as a Server Component, and scopes Sonner to `(auth)` / `(protected)`. The root client entry fell from 179,070 to 106,547 raw bytes and from 51,479 to 29,335 gzip bytes (40.50% and 43.02%); the public site route entry fell from 271,306 to 232,813 raw bytes and from 82,784 to 71,914 gzip bytes (14.19% and 13.13%). These are build-manifest measurements, not field Core Web Vitals.
 - Web i18n exposes `useT` through the client-safe `@/i18n` entry and `getT` through `@/i18n/server`; `src/test/i18n-runtime-boundary.test.ts` prevents server imports or the full auth shell from leaking back into the client graph.
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
@@ -95,15 +96,16 @@ Verification:
 
 ### P1 — Web Hydration Boundaries
 
-Problem: public auth/query leakage and the auth-shell client boundary are now guarded, but remaining root client boundaries can still add hydration work to every route.
+Problem: public auth/query/toast leakage, the auth shell, custom root error handling, and optional analytics boundaries are now guarded; the remaining major root cost is app-wide i18n/theme hydration and serialized message breadth.
 
 Recommended slice:
 
 1. Keep Query/Auth providers route-scoped instead of returning them to root.
 2. Keep `src/test/public-route-boundary.test.ts` aligned with the public route dependency boundary.
 3. Keep the auth visual shell server-rendered and `src/test/i18n-runtime-boundary.test.ts` aligned with its client leaves.
-4. Split remaining root client boundaries, especially app-wide error handling and client-only analytics, where build evidence shows value.
-5. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
+4. Keep `src/test/root-runtime-boundary.test.ts` aligned with route-scoped toast, server-rendered optional analytics, and App Router error conventions.
+5. Measure serialized message breadth before splitting `NextIntlClientProvider` by route group.
+6. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
 
 Verification:
 

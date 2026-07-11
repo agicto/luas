@@ -3,7 +3,7 @@
  * @category UI
  * @status Stable
  * @description A toast notification component powered by Sonner, with customized themes for the scaffold.
- * @usage Include at the root of the application to enable global toast notifications.
+ * @usage Include in the nearest route layout that needs toast notifications.
  * @example
  * <Toaster />
  * // Usage in code:

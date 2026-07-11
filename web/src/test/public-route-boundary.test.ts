@@ -45,6 +45,11 @@ const forbiddenImports = [
     label: 'Zustand store runtime',
     matches: (specifier: string) => specifier === 'zustand' || specifier.startsWith('zustand/'),
   },
+  {
+    label: 'toast runtime',
+    matches: (specifier: string) =>
+      specifier === 'sonner' || specifier === '@/components/ui/sonner',
+  },
 ] as const;
 
 const staticImportSpecifierPattern =
@@ -113,7 +118,7 @@ function relativeSource(path: string): string {
 }
 
 describe('public route hydration boundary', () => {
-  it('keeps public site routes free of auth, query, HTTP, mock BFF, and mock-session runtime dependencies', () => {
+  it('keeps public site routes free of auth, query, HTTP, mock BFF, mock-session, and toast runtime dependencies', () => {
     const entryFiles = publicRouteRoots.flatMap(listSourceFiles);
     const visited = new Set<string>();
     const offenders: string[] = [];

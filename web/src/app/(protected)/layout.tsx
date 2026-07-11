@@ -1,4 +1,5 @@
 import { AuthGuard } from '@/features/auth';
+import { Toaster } from '@/components/ui/sonner';
 import { AuthenticatedProviders } from '@/providers/authenticated-providers';
 
 /**
@@ -12,6 +13,7 @@ export default function ProtectedLayout({
   return (
     <AuthenticatedProviders>
       <AuthGuard>{children}</AuthGuard>
+      <Toaster richColors position="top-right" />
     </AuthenticatedProviders>
   );
 }

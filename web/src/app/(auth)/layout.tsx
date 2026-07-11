@@ -1,6 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import { Zap, Shield, Layers, Headphones } from 'lucide-react';
 import { Logo } from '@/components/ui/icons';
+import { Toaster } from '@/components/ui/sonner';
 import { LanguageSwitcher } from '@/components/common';
 import { getT } from '@/i18n/server';
 import { QueryProvider } from '@/providers/query-provider';
@@ -133,6 +134,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
           &copy; {new Date().getFullYear()} Luas. {t('allRightsReserved')}.
         </div>
       </div>
+      <Toaster richColors position="top-right" />
     </div>
   );
 }

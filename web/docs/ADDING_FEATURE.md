@@ -38,7 +38,8 @@ src/features/<feature>/
 - Place `QueryProvider` at the nearest route group that needs React Query.
 - Use `AuthenticatedProviders` only for protected route groups that need session initialization.
 - Keep public site pages free of auth-store subscriptions unless the feature intentionally becomes authenticated.
-- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, or Zustand runtime dependencies.
+- `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, toast, or Zustand runtime dependencies.
+- Mount `Toaster` at the nearest route group that emits toast feedback; do not add it to the root layout unless every route genuinely needs that runtime.
 
 ## UI
 
