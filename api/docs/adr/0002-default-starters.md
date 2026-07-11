@@ -16,11 +16,12 @@ The default scaffold ships with three starters:
 - `apikey`
 - `audit`
 
-The `permission` module remains an `optional starter`, not part of the default scaffold.
+The `permission` starter remains planned optional starter behavior, not part of the default scaffold.
+It is not runnable until its module, migrations, contracts, Web feature, and tests exist.
 
 ## Consequences
 
 - New projects get auth, machine access, and write-side audit logging without extra setup.
 - Default starters should prefer self-service surfaces over admin/control-plane APIs.
-- RBAC stays available, but it does not increase default complexity for every app.
+- RBAC stays a planned optional starter direction, but it does not increase default complexity for every app.
 - Default routes, migrations, and seeders should be derived from these starter decisions.

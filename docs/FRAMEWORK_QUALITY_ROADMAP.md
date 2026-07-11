@@ -52,6 +52,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md), which separates the ready-to-use default starters from planned optional starters such as organization, permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace.
 
 ## Candidate Queue
 
@@ -152,6 +153,23 @@ Verification:
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
 - `bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh`
 - Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
+
+### P1 — Starter Business Readiness
+
+Problem: the current default starter set is useful for auth, API keys, and audit, but most new SaaS, internal-tool, and developer-product projects also need reusable multi-user ownership, authorization, invitations, notification preferences, files, settings, usage, and integration flows.
+
+Recommended slice:
+
+1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
+2. Build `organization` as an optional starter first, because ownership scope affects permission, notification, file, settings, usage, billing, webhook, and AI workspace semantics.
+3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
+4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
+
+Verification:
+
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py`
+- `make governance`
 
 ### P2 — Architecture Vocabulary Cleanup
 

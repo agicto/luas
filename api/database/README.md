@@ -17,11 +17,10 @@ database/
     ├── 2025_06_18_000000_create_users_table.go
     ├── 2025_06_18_000001_seed_default_users.go
     ├── 2026_04_06_000000_create_api_keys_table.go
-    ├── 2025_12_26_000000_create_roles_table.go      # Optional RBAC example
-    ├── 2025_12_26_000001_create_permissions_table.go
-    ├── 2025_12_26_000002_create_role_permissions_table.go
-    ├── 2025_12_26_000003_create_user_roles_table.go
-    └── 2025_12_26_000004_seed_default_roles.go
+    ├── 2026_04_26_000000_create_audit_logs_table.go
+    ├── 2026_04_27_000000_create_password_reset_tokens_table.go
+    ├── 2026_04_27_000001_add_unique_index_to_users_username.go
+    └── 2026_04_27_000002_add_business_fields_to_audit_logs.go
 ```
 
 ## Creating Migrations
@@ -143,10 +142,12 @@ SELECT * FROM migrations;
 
 ## Default vs Optional Migrations
 
-- `starter.DefaultMigrations()` 只注册脚手架默认启用的迁移
-- `migrations.All()` 保留全部迁移，包括像 `permission` 这样的可选示例模块
+- `starter.DefaultMigrations()` only registers migrations enabled by the default starters.
+- `migrations.All()` returns the migration catalog registered in `database/migrations`.
 
-当前默认脚手架只运行 `user` 和 `apikey` starter 相关迁移；RBAC 示例迁移仍保留在仓库中，但不会自动执行。
+The current default scaffold runs `user`, `apikey`, and `audit` starter migrations. RBAC/permission
+is a planned optional starter direction, but there is no runnable permission migration set in the
+current tree.
 
 ## Best Practices
 

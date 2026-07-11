@@ -26,6 +26,7 @@ Workspace-level architecture docs:
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stable seams and vertical change flow
 - [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) — branch roles, testing branches, release candidates, and deployment trigger rules
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap for professional, semantic, architecture-friendly iteration
+- [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — starter readiness matrix and reusable business capability roadmap
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for keeping agent workflows aligned with vocabulary, contracts, and architecture
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — surface classification, downstream actions, and verification matrix
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`

@@ -10,8 +10,7 @@ Luas provides a Laravel-style seeder system for populating your database with te
 database/
 └── seeders/
     ├── seeders.go        # Registry (auto-populated)
-    ├── user_seeder.go    # User data seeder
-    └── role_seeder.go    # Role data seeder
+    └── user_seeder.go    # Default user starter seeder
 ```
 
 ## Creating Seeders
@@ -34,14 +33,16 @@ database/
 package seeders
 
 import (
-    "github.com/zgiai/luas/api/internal/infra/database"
+    "gorm.io/gorm"
 )
 
 type ProductSeeder struct{}
 
-func (s *ProductSeeder) Run() error {
-    db := database.GetDB()
+func (s *ProductSeeder) Name() string {
+    return "products"
+}
 
+func (s *ProductSeeder) Run(db *gorm.DB) error {
     // TODO: Implement seeder logic
     // Example:
     // items := []YourModel{
@@ -66,14 +67,17 @@ package seeders
 
 import (
     "github.com/zgiai/luas/api/internal/modules/blog"
-    "github.com/zgiai/luas/api/internal/infra/database"
+
+    "gorm.io/gorm"
 )
 
 type PostSeeder struct{}
 
-func (s *PostSeeder) Run() error {
-    db := database.GetDB()
+func (s *PostSeeder) Name() string {
+    return "posts"
+}
 
+func (s *PostSeeder) Run(db *gorm.DB) error {
     posts := []blog.Post{
         {Title: "First Post", Content: "Hello World", Status: "published"},
         {Title: "Second Post", Content: "Another post", Status: "draft"},
@@ -137,7 +141,8 @@ All seeders must implement the `Seeder` interface:
 
 ```go
 type Seeder interface {
-    Run() error
+    Name() string
+    Run(db *gorm.DB) error
 }
 ```
 
@@ -153,8 +158,8 @@ type Seeder interface {
    - Keep seeders focused on a single model or related data
 
 3. **Order Matters**
-   - Seeders run in the order they're registered (file alphabetical order)
-   - Name files to control execution order if needed
+   - Default scaffold seeders run through `starter.DefaultSeeders()`
+   - Add starter seeders through `internal/starter/assembly` instead of relying on file order
 
 4. **Handle Errors**
    - Always return errors for proper error handling
@@ -174,10 +179,12 @@ type Seeder interface {
 ```go
 type UserSeeder struct{}
 
-func (s *UserSeeder) Run() error {
-    db := database.GetDB()
+func (s *UserSeeder) Name() string {
+    return "users"
+}
 
-    users := []user.User{
+func (s *UserSeeder) Run(db *gorm.DB) error {
+    users := []user.UserPO{
         {
             Username: "admin",
             Email:    "admin@example.com",
@@ -187,27 +194,38 @@ func (s *UserSeeder) Run() error {
     }
 
     for _, u := range users {
-        db.FirstOrCreate(&u, user.User{Email: u.Email})
+        db.FirstOrCreate(&u, user.UserPO{Email: u.Email})
     }
 
     return nil
 }
 ```
 
-### Role Seeder
+### Role Seeder Example
+
+Luas does not currently ship a runnable permission starter. Add role seeders only after the
+owning optional starter defines its persistence model and starter manifest.
+
 ```go
+type Role struct {
+    Name        string
+    DisplayName string
+}
+
 type RoleSeeder struct{}
 
-func (s *RoleSeeder) Run() error {
-    db := database.GetDB()
+func (s *RoleSeeder) Name() string {
+    return "roles"
+}
 
-    roles := []permission.Role{
+func (s *RoleSeeder) Run(db *gorm.DB) error {
+    roles := []Role{
         {Name: "admin", DisplayName: "Administrator"},
         {Name: "user", DisplayName: "User"},
     }
 
     for _, role := range roles {
-        db.FirstOrCreate(&role, permission.Role{Name: role.Name})
+        db.FirstOrCreate(&role, Role{Name: role.Name})
     }
 
     return nil
@@ -228,9 +246,7 @@ func (s *RoleSeeder) Run() error {
 
 ### Bulk Insert
 ```go
-func (s *ProductSeeder) Run() error {
-    db := database.GetDB()
-    
+func (s *ProductSeeder) Run(db *gorm.DB) error {
     products := []Product{
         {Name: "Product 1", Price: 100},
         {Name: "Product 2", Price: 200},
@@ -243,9 +259,7 @@ func (s *ProductSeeder) Run() error {
 
 ### Relationships
 ```go
-func (s *PostSeeder) Run() error {
-    db := database.GetDB()
-    
+func (s *PostSeeder) Run(db *gorm.DB) error {
     // Find or create user first
     var user User
     db.FirstOrCreate(&user, User{Email: "author@example.com"})
@@ -261,9 +275,7 @@ func (s *PostSeeder) Run() error {
 
 ### Conditional Seeding
 ```go
-func (s *DemoSeeder) Run() error {
-    db := database.GetDB()
-    
+func (s *DemoSeeder) Run(db *gorm.DB) error {
     // Only seed in development
     if os.Getenv("APP_ENV") != "production" {
         // Seed demo data

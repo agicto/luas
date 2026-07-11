@@ -32,6 +32,8 @@ DTO -> Domain -> PO
 ```
 
 Infrastructure capabilities live under `api/internal/infra/` and `api/internal/capabilities/`.
+For the starter readiness matrix and next reusable business starters, see
+[`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md).
 
 ## Web Shape
 

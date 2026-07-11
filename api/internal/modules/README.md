@@ -9,7 +9,7 @@ Route-owning starter modules directory, following Domain-Driven Design (DDD) pat
 | `user` | Default auth starter (register/login/JWT/profile) | Default starter |
 | `apikey` | Default API key starter (create/list/revoke + middleware) | Default starter |
 | `audit` | Default audit starter (global write-request logging + history API) | Default starter |
-| `permission` | Optional RBAC starter decision documented in [ADR-0002](../../docs/adr/0002-default-starters.md); no module directory is wired in the current scaffold. | Optional starter |
+| `permission` | Planned optional RBAC starter decision documented in [ADR-0002](../../docs/adr/0002-default-starters.md); no module directory is wired in the current scaffold. | Optional starter |
 
 ## Standard Starter Structure (8 files)
 
