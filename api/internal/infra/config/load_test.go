@@ -106,3 +106,48 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 		t.Fatalf("rate limit skip paths = %q, want /health,/metrics", got)
 	}
 }
+
+func loadConfigForMetricsDefault(t *testing.T, appEnv string) *Config {
+	t.Helper()
+
+	withoutEnv(t, "METRICS_ENABLED")
+	t.Setenv("APP_ENV", appEnv)
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	return cfg
+}
+
+func TestLoad_MetricsDefaultsByEnvironment(t *testing.T) {
+	prod := loadConfigForMetricsDefault(t, "production")
+	if prod.Metrics.Enabled {
+		t.Fatal("production should disable metrics by default")
+	}
+
+	dev := loadConfigForMetricsDefault(t, "development")
+	if !dev.Metrics.Enabled {
+		t.Fatal("development should enable metrics by default")
+	}
+}
+
+func TestLoad_MetricsExplicitEnvOverridesDefault(t *testing.T) {
+	withoutEnv(t, "METRICS_ENABLED")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+	t.Setenv("METRICS_ENABLED", "true")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if !cfg.Metrics.Enabled {
+		t.Fatal("explicit env should enable metrics")
+	}
+}

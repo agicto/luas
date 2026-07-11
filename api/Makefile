@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all clean test test-kest cover lint lint-fix generate wire docs mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all clean test test-kest cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -144,12 +144,6 @@ wire:
 	@which wire > /dev/null || (echo "Installing wire..." && go install github.com/google/wire/cmd/wire@latest)
 	cd internal/wiring && wire
 
-# Generate API documentation (Swagger)
-docs:
-	@echo "Generating API documentation..."
-	@which swag > /dev/null || (echo "Installing swag..." && go install github.com/swaggo/swag/cmd/swag@latest)
-	swag init -g cmd/server/main.go -o docs/swagger
-
 # Generate mocks
 mock:
 	@echo "Generating mocks..."
@@ -266,7 +260,6 @@ help:
 	@echo "  make lint-fix           - Fix lint issues automatically"
 	@echo "  make generate           - Run go generate"
 	@echo "  make wire               - Run Wire DI generator"
-	@echo "  make docs               - Generate Swagger documentation"
 	@echo "  make mock               - Generate mocks"
 	@echo ""
 	@echo "Database Commands:"

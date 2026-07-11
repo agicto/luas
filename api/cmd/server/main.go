@@ -7,12 +7,6 @@ import (
 	"github.com/zgiai/luas/api/internal/wiring"
 )
 
-// @title Luas API
-// @version 1.0
-// @description A modular Go API scaffold for production-ready services
-// @host localhost:8025
-// @BasePath /v1
-
 func main() {
 	// 1. Initialize Logger
 	bootstrap.InitLogger()

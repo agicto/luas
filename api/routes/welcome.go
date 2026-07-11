@@ -572,9 +572,8 @@ const welcomeHTML = `<!DOCTYPE html>
 					did the service boot correctly, what ships by default, and what should I do next.
 				</p>
 				<div class="cta-row">
-					<a href="/swagger/index.html" class="button button-primary">Open Swagger</a>
+					<a href="/v1/health" class="button button-primary">Check Health</a>
 					<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer" class="button button-secondary">Read GitHub Docs</a>
-					<a href="/v1/health" class="button button-secondary">Check Health</a>
 				</div>
 				<div class="signal-row">
 					<div class="signal">
@@ -652,8 +651,8 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="surface">
 					<div class="step-kicker">Step 02</div>
 					<h3>Explore the default API</h3>
-					<p>默认 scaffold 已经带了认证、API key 管理和全局审计。优先通过 Swagger 看清现成 surface，再决定加什么 starter。</p>
-					<div class="command-snippet">open {{APP_URL}}/swagger/index.html</div>
+					<p>默认 scaffold 已经带了认证、API key 管理和全局审计。先列出当前实际注册的路由，再决定增加什么 starter。</p>
+					<div class="command-snippet">go run ./cmd/luas route:list</div>
 				</article>
 				<article class="surface">
 					<div class="step-kicker">Step 03</div>
@@ -737,8 +736,8 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 					<h3>Fast paths for the next click</h3>
 					<p>把真正有决策价值的入口放在这里。不是所有链接都要上首页，只有最可能成为下一步动作的才应该出现。</p>
 					<ul class="bullet-list">
-						<li><a href="/swagger/index.html">Swagger explorer</a><code>/swagger/index.html</code></li>
 						<li><a href="/v1/health">Health endpoint</a><code>/v1/health</code></li>
+						<li><a href="/health/ready">Readiness probe</a><code>/health/ready</code></li>
 						<li><a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub repository</a><code>README + source</code></li>
 						<li><span>CLI route listing</span><code>go run ./cmd/luas route:list</code></li>
 					</ul>
@@ -750,7 +749,6 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 			<div>{{APP_NAME}} is a modular Go API scaffold focused on fast product starts and clean architecture seams.</div>
 			<div class="footer-links">
 				<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub</a>
-				<a href="/swagger/index.html">Swagger</a>
 				<a href="/v1/health">Health</a>
 			</div>
 		</footer>

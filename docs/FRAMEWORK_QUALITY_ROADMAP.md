@@ -24,6 +24,8 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures.
+- API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
+- Removing the unwired Swagger runtime dependencies reduced the local Go module graph from 298 to 271 modules and the stripped `cmd/server` binary from 44,835,362 to 34,395,426 bytes (23.29%) on Go 1.25.0 `darwin/arm64`. This is a dependency and binary-footprint baseline measured with `go list -m all` and `go build -trimpath -ldflags='-s -w'`; it is not a throughput claim.
 - Compression is intentionally not part of the default API kernel; prefer deployment/CDN compression or explicit route/starter middleware.
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
 - Web error-code vocabulary is contract-tested so `ApiErrorCode` remains server-scoped, `ClientErrorCode` remains frontend-only, and legacy underscore codes stay normalization input only.
@@ -70,6 +72,24 @@ Verification:
 
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
+
+### P1 — Measured Performance Baseline
+
+Problem: Luas now has one measured API dependency/binary baseline and bounded HTTP metric labels, but it does not yet guard API latency, database query behavior, Web route bundles, or Core Web Vitals with repeatable budgets.
+
+Recommended slice:
+
+1. Keep dependency and stripped binary measurements comparable when changing runtime dependencies.
+2. Add representative API benchmarks for the HTTP middleware chain with metrics enabled and disabled.
+3. Add Postgres-backed measurements for query count, allocation, and p95 latency on starter list/write flows before claiming database improvements.
+4. Record Web build route output and route-level client bundle evidence before changing provider placement, i18n routing, charts, or analytics.
+5. Promote a measurement into CI only after it is stable across runners and has an explicit regression threshold.
+
+Verification:
+
+- `cd api && go test -run '^$' -bench . -benchmem ./internal/bootstrap/... ./internal/infra/metrics/...`
+- `cd api && go build -trimpath -ldflags='-s -w' -o /tmp/luas-server ./cmd/server`
+- `cd web && pnpm build`
 
 ### P1 — Web Hydration Boundaries
 

@@ -10,6 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
+const unmatchedRouteLabel = "unmatched"
+
 // Default metrics
 var (
 	// HTTP metrics
@@ -96,56 +98,40 @@ var (
 		},
 		[]string{"cache"},
 	)
-
-	// Business metrics
-	userRegistrations = promauto.NewCounter(
-		prometheus.CounterOpts{
-			Name: "user_registrations_total",
-			Help: "Total number of user registrations",
-		},
-	)
-
-	userLogins = promauto.NewCounter(
-		prometheus.CounterOpts{
-			Name: "user_logins_total",
-			Help: "Total number of user logins",
-		},
-	)
-
-	activeUsers = promauto.NewGauge(
-		prometheus.GaugeOpts{
-			Name: "active_users",
-			Help: "Number of active users",
-		},
-	)
 )
 
 // Middleware returns a Gin middleware for HTTP metrics
 func Middleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		path := c.FullPath()
-		if path == "" {
-			path = c.Request.URL.Path
-		}
 		method := c.Request.Method
-
-		// Record request size
-		reqSize := float64(c.Request.ContentLength)
-		if reqSize > 0 {
-			httpRequestSize.WithLabelValues(method, path).Observe(reqSize)
-		}
 
 		// Process request
 		c.Next()
 
-		// Record metrics
+		// Resolve the route template after handlers run. Raw unmatched URLs are
+		// intentionally collapsed so user-controlled paths cannot create an
+		// unbounded number of Prometheus time series.
+		path := c.FullPath()
+		if path == "" {
+			path = unmatchedRouteLabel
+		}
+
+		requestSize := float64(c.Request.ContentLength)
+		if requestSize > 0 {
+			httpRequestSize.WithLabelValues(method, path).Observe(requestSize)
+		}
+
 		status := strconv.Itoa(c.Writer.Status())
 		duration := time.Since(start).Seconds()
+		responseSize := c.Writer.Size()
+		if responseSize < 0 {
+			responseSize = 0
+		}
 
 		httpRequestsTotal.WithLabelValues(method, path, status).Inc()
 		httpRequestDuration.WithLabelValues(method, path).Observe(duration)
-		httpResponseSize.WithLabelValues(method, path).Observe(float64(c.Writer.Size()))
+		httpResponseSize.WithLabelValues(method, path).Observe(float64(responseSize))
 	}
 }
 
@@ -189,23 +175,6 @@ func RecordCacheHit(cache string) {
 // RecordCacheMiss records a cache miss
 func RecordCacheMiss(cache string) {
 	cacheMissesTotal.WithLabelValues(cache).Inc()
-}
-
-// --- Business Metrics ---
-
-// RecordUserRegistration records a user registration
-func RecordUserRegistration() {
-	userRegistrations.Inc()
-}
-
-// RecordUserLogin records a user login
-func RecordUserLogin() {
-	userLogins.Inc()
-}
-
-// SetActiveUsers sets the number of active users
-func SetActiveUsers(count int) {
-	activeUsers.Set(float64(count))
 }
 
 // --- Custom Metrics ---

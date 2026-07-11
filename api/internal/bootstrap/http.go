@@ -77,8 +77,11 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	r.Use(logger.GinLogger())
 	r.Use(exception.Recovery(application.Config.App.Debug))
 
-	// Add Prometheus metrics middleware
-	r.Use(metrics.Middleware())
+	// Request metrics are opt-in in production. When disabled, the kernel avoids
+	// both the public scrape endpoint and per-request instrumentation overhead.
+	if application.Config.Metrics.Enabled {
+		r.Use(metrics.Middleware())
+	}
 
 	// Apply global HTTP guardrails: security headers, request limits,
 	// cooperative timeout, CORS, and rate limit. Auth/audit middleware remains
@@ -91,9 +94,12 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	h := health.New()
 	h.Register("database", health.DatabaseChecker(application.DB))
 
-	// Register health and metrics routes
+	// Health probes remain available for deployment orchestration. Metrics are
+	// exposed only when explicitly enabled by the resolved configuration.
 	h.RegisterRoutes(r)
-	r.GET("/metrics", metrics.Handler())
+	if application.Config.Metrics.Enabled {
+		r.GET("/metrics", metrics.Handler())
+	}
 
 	// Let event-aware starters attach subscribers without exposing that dispatch to callers.
 	application.Starters.RegisterEvents(application.EventBus)

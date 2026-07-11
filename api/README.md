@@ -66,7 +66,8 @@ go run ./cmd/server
 
 - 应用首页：`http://localhost:8025/`
 - 健康检查：`http://localhost:8025/v1/health`
-- Swagger：`http://localhost:8025/swagger/index.html`
+- Readiness：`http://localhost:8025/health/ready`
+- Prometheus metrics：开发环境默认 `http://localhost:8025/metrics`；生产环境需显式设置 `METRICS_ENABLED=true` 并通过网络策略限制访问
 
 ### 5. 使用 CLI
 

@@ -33,7 +33,6 @@ if /i "%1"=="lint" goto lint
 if /i "%1"=="lint-fix" goto lint-fix
 if /i "%1"=="generate" goto generate
 if /i "%1"=="wire" goto wire
-if /i "%1"=="docs" goto docs
 if /i "%1"=="mock" goto mock
 if /i "%1"=="dev" goto dev
 if /i "%1"=="server" goto server
@@ -122,16 +121,6 @@ wire
 cd ..\..
 goto :eof
 
-:docs
-echo Generating API documentation...
-where swag >nul 2>nul
-if %errorlevel% neq 0 (
-    echo Installing swag...
-    go install github.com/swaggo/swag/cmd/swag@latest
-)
-swag init -g cmd/server/main.go -o docs/swagger
-goto end
-
 :mock
 echo Generating mocks...
 where mockgen >nul 2>nul
@@ -177,7 +166,6 @@ echo   make.bat lint         - Run golangci-lint
 echo   make.bat lint-fix     - Fix lint issues automatically
 echo   make.bat generate     - Run go generate
 echo   make.bat wire         - Run Wire DI generator
-echo   make.bat docs         - Generate Swagger documentation
 echo   make.bat mock         - Generate mocks
 echo   make.bat dev          - Run development server
 echo   make.bat server       - Run server

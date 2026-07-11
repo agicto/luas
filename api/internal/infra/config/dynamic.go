@@ -56,8 +56,9 @@ func (r *Repository) loadFromEnv() {
 	env.Load()
 
 	// App
+	appEnv := env.Get("APP_ENV", "development")
 	r.Set("app.name", env.Get("APP_NAME", "Luas"))
-	r.Set("app.env", env.Get("APP_ENV", "development"))
+	r.Set("app.env", appEnv)
 	r.Set("app.debug", env.GetBool("APP_DEBUG", true))
 	r.Set("app.url", env.Get("APP_URL", "http://localhost:8025"))
 	r.Set("app.key", env.Get("APP_KEY", ""))
@@ -102,6 +103,9 @@ func (r *Repository) loadFromEnv() {
 	r.Set("cors.allowed_headers", env.GetSlice("CORS_ALLOW_HEADERS", env.GetSlice("CORS_ALLOWED_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization"})))
 	r.Set("cors.expose_headers", env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length"}))
 	r.Set("cors.allow_credentials", env.GetBool("CORS_ALLOW_CREDENTIALS", true))
+
+	// Metrics
+	r.Set("metrics.enabled", env.GetBool("METRICS_ENABLED", !strings.EqualFold(appEnv, "production")))
 
 	// Email
 	r.Set("mail.from", env.Get("MAIL_FROM", ""))

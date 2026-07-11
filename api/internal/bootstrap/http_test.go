@@ -10,8 +10,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/app"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
@@ -44,6 +46,54 @@ func testHTTPConfigWithRateLimit() *config.Config {
 		SkipPaths: []string{"/health"},
 	}
 	return cfg
+}
+
+func TestHTTPKernelDoesNotExposeMetricsByDefaultInProduction(t *testing.T) {
+	cfg := testHTTPConfig()
+	cfg.App = config.AppConfig{
+		Name: "Luas",
+		Env:  "production",
+	}
+	cfg.Server.Mode = gin.TestMode
+
+	kernel := NewHttpKernel(&app.Application{
+		Config:   cfg,
+		Starters: starter.NewRegistry(),
+	})
+
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	response := httptest.NewRecorder()
+	kernel.Engine.ServeHTTP(response, request)
+
+	if response.Code != http.StatusNotFound {
+		t.Fatalf("GET /metrics status = %d, want %d", response.Code, http.StatusNotFound)
+	}
+}
+
+func TestHTTPKernelExposesMetricsWhenEnabled(t *testing.T) {
+	cfg := testHTTPConfig()
+	cfg.App = config.AppConfig{
+		Name: "Luas",
+		Env:  "development",
+	}
+	cfg.Server.Mode = gin.TestMode
+	cfg.Metrics.Enabled = true
+
+	kernel := NewHttpKernel(&app.Application{
+		Config:   cfg,
+		Starters: starter.NewRegistry(),
+	})
+
+	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
+	response := httptest.NewRecorder()
+	kernel.Engine.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("GET /metrics status = %d, want %d", response.Code, http.StatusOK)
+	}
+	if got := response.Header().Get("Content-Type"); !strings.Contains(got, "text/plain") {
+		t.Fatalf("GET /metrics Content-Type = %q, want Prometheus text format", got)
+	}
 }
 
 func TestApplyGlobalMiddleware_AddsSecurityAndCORSHeaders(t *testing.T) {

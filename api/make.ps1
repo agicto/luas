@@ -129,16 +129,6 @@ function Wire {
     Pop-Location
 }
 
-# Generate API documentation
-function Docs {
-    Write-Host "Generating API documentation..." -ForegroundColor Green
-    if (-not (Test-CommandExists "swag")) {
-        Write-Host "Installing swag..." -ForegroundColor Yellow
-        go install github.com/swaggo/swag/cmd/swag@latest
-    }
-    swag init -g cmd/server/main.go -o docs/swagger
-}
-
 # Generate mocks
 function Mock {
     Write-Host "Generating mocks..." -ForegroundColor Green
@@ -217,7 +207,6 @@ Available commands:
   .\make.ps1 lint-fix     - Fix lint issues automatically
   .\make.ps1 generate     - Run go generate
   .\make.ps1 wire         - Run Wire DI generator
-  .\make.ps1 docs         - Generate Swagger documentation
   .\make.ps1 mock         - Generate mocks
   .\make.ps1 dev          - Run development server
   .\make.ps1 air          - Run with hot reload (Air)
@@ -245,7 +234,6 @@ switch ($Command.ToLower()) {
     "lint-fix"     { Lint-Fix }
     "generate"     { Generate }
     "wire"         { Wire }
-    "docs"         { Docs }
     "mock"         { Mock }
     "dev"          { Dev }
     "server"       { Server }

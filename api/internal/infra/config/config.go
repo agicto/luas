@@ -26,6 +26,7 @@ type Config struct {
 	AI         AIConfig
 	R2         R2Config
 	Middleware MiddlewareConfig
+	Metrics    MetricsConfig
 	Tracing    TracingConfig
 	ClickHouse ClickHouseConfig
 }
@@ -62,6 +63,11 @@ type RateLimitConfig struct {
 	Max       int
 	Window    time.Duration
 	SkipPaths []string
+}
+
+// MetricsConfig controls HTTP request instrumentation and the Prometheus endpoint.
+type MetricsConfig struct {
+	Enabled bool
 }
 
 type DatabaseConfig struct {
@@ -297,6 +303,9 @@ func Load() (*Config, error) {
 					"/v1/health",
 				}),
 			},
+		},
+		Metrics: MetricsConfig{
+			Enabled: env.GetBool("METRICS_ENABLED", !isProd),
 		},
 		Tracing: TracingConfig{
 			Enabled:    env.GetBool("TRACING_ENABLED", false),

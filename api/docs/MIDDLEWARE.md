@@ -8,7 +8,8 @@ Use this document when changing `api/internal/bootstrap/http.go`, adding starter
 
 | Owner | Meaning | Examples |
 |---|---|---|
-| Core default | Always part of the API HTTP kernel or enabled by safe production defaults. | request ID, recovery, metrics, security headers, body limit, timeout, CORS, production rate limit |
+| Core default | Always part of the API HTTP kernel or enabled by safe production defaults. | request ID, recovery, security headers, body limit, timeout, CORS, production rate limit |
+| Core opt-in | Core operational behavior with explicit runtime configuration. | Prometheus request instrumentation and `/metrics` |
 | Starter-owned | Registered by a default or optional starter because it needs starter dependencies or domain rules. | JWT auth, API key auth, audit logging |
 | Route/starter opt-in | Available in the scaffold, but only specific routes or starters should choose it. | compression, version middleware, custom throttles |
 | Deployment-owned | Better handled by the gateway, CDN, WAF, load balancer, or hosting platform. | global compression, distributed rate limits, TLS termination, bot protection |
@@ -20,7 +21,7 @@ Use this document when changing `api/internal/bootstrap/http.go`, adding starter
 1. `RequestID`
 2. `GinLogger`
 3. `Recovery`
-4. `metrics.Middleware`
+4. `metrics.Middleware` when `METRICS_ENABLED=true`
 5. `Helmet`
 6. `BodyLimit`
 7. `Timeout`
@@ -31,6 +32,7 @@ Order matters:
 
 - `RequestID` runs before anything that might log or emit an error response.
 - `Recovery` wraps later middleware and routes.
+- `metrics.Middleware` is absent when metrics are disabled, avoiding per-request instrumentation overhead.
 - `Helmet`, `BodyLimit`, and `Timeout` protect every request.
 - `CORS` runs before `RateLimit` so browser preflight requests do not consume rate limit quota.
 - `RateLimit` runs before routes and after CORS. Health and metrics paths are skipped by default.
@@ -44,6 +46,7 @@ Order matters:
 | `Timeout` | Adds a cooperative request context deadline from `MIDDLEWARE_REQUEST_TIMEOUT`, default 180 seconds. | `503` + `COMMON.TIMEOUT` when the handler respects context and has not written a response. |
 | `CORS` | Allows configured browser origins. Production must use explicit origins. | CORS headers and preflight handling. |
 | `RateLimit` | Enabled by default only when `APP_ENV=production`; default `600` requests per minute per client IP. | `429` + `COMMON.RATE_LIMITED`, `Retry-After`, and `X-RateLimit-*` headers. |
+| `Metrics` | Enabled by default outside production and disabled by default in production. Unmatched routes share the bounded `unmatched` path label. | Prometheus text endpoint at `/metrics` when enabled. |
 
 Environment knobs:
 
@@ -54,7 +57,15 @@ MIDDLEWARE_RATE_LIMIT_ENABLED=true
 MIDDLEWARE_RATE_LIMIT_MAX=600
 MIDDLEWARE_RATE_LIMIT_WINDOW=1m
 MIDDLEWARE_RATE_LIMIT_SKIP_PATHS=/health,/health/live,/health/ready,/metrics,/v1/health
+METRICS_ENABLED=true
 ```
+
+## Operational Routes
+
+- `/health/live` and `/health/ready` are always registered for deployment orchestration.
+- `/metrics` is registered only when `METRICS_ENABLED=true`. Production deployments must restrict it with network policy, a gateway, or a private listener.
+- The previous `/monitor` dashboard and `/swagger` route are not default surfaces. They were removed because the monitor depended on an unassembled global container and no generated Swagger contract existed.
+- A future machine-readable OpenAPI contract or dedicated management listener should be added as a separate verified slice instead of restoring placeholder routes.
 
 ## Starter-Owned Middleware
 
