@@ -147,14 +147,16 @@ export default function ProtectedLayout({ children }) {
 
 Keep providers as low as the routes that need them:
 
-- Root layout owns only app-wide client context such as i18n and theme; optional analytics stays server-rendered until `next/script` activates it.
+- Root layout owns only app-wide client context such as theme and the `common` / `errors` client message namespaces; optional analytics stays server-rendered until `next/script` activates it.
 - `(auth)` owns `QueryProvider` and `Toaster` because login/register forms use React Query mutations and toast feedback.
 - `(auth)` keeps its visual shell server-rendered; only interactive leaves such as `LanguageSwitcher`, forms, and `QueryProvider` cross the client boundary.
 - `(protected)` owns `AuthenticatedProviders` and `Toaster`; the provider combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
+- Auth, console, and devtool routes append only the client message namespaces declared in `src/i18n/client-message-namespaces.ts`; server translations still have the complete request message tree.
 - Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
 - If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.
 - `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, toast, or Zustand runtime dependencies.
 - `src/test/i18n-runtime-boundary.test.ts` keeps the client/server translation entry points separate and prevents the auth shell from becoming a Client Component.
+- `src/test/i18n-client-messages.test.tsx` guards global and route-owned client message scopes so unrelated namespaces are not serialized into every page.
 - `src/test/root-runtime-boundary.test.ts` keeps toast and optional analytics out of the root client graph and requires Next.js `error.tsx` / `global-error.tsx` conventions instead of a custom catch-all wrapper.
 
 ### Error Boundaries
@@ -192,6 +194,8 @@ function MyComponent() {
   );
 }
 ```
+
+Client Components only receive explicitly owned namespaces. When a route introduces a new client-side `useT` namespace, add it to `src/i18n/client-message-namespaces.ts` and mount the selected messages through `RouteMessagesProvider` at the nearest owning route layout. Do not restore the full `getMessages()` object to the root client provider.
 
 #### Server Components
 ```tsx
@@ -235,6 +239,9 @@ function SettingsPage() {
 | `src/i18n/translation-shared.ts` | Shared translator types and pure facade construction |
 | `src/i18n/module-names.ts` | Canonical translation module names |
 | `src/i18n/loader.ts` | Dynamic translation namespace loading |
+| `src/i18n/client-message-namespaces.ts` | Global and route-owned client namespace registry |
+| `src/i18n/message-selection.ts` | Type-safe top-level namespace selection |
+| `src/i18n/route-messages-provider.tsx` | Additive nested client message provider |
 | `src/i18n/modules/index.ts` | Static type generation from translation modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 

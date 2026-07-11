@@ -25,6 +25,9 @@ i18n/
 ├── translation-shared.ts # Shared translator types and pure helpers
 ├── module-names.ts     # Canonical translation module names
 ├── loader.ts           # Dynamic module loading
+├── client-message-namespaces.ts # Client namespace ownership by route
+├── message-selection.ts # Type-safe top-level namespace selection
+├── route-messages-provider.tsx # Additive nested client provider
 └── modules/            # Translation modules
     ├── common/         # Common translations (buttons, labels)
     ├── auth/           # Authentication translations
@@ -225,6 +228,28 @@ export default async function ErrorPage() {
 
 Keep server imports explicit. `getT` is intentionally not re-exported from the client-safe
 `@/i18n` barrel, so a Client Component cannot accidentally pull in `next-intl/server`.
+
+### Client Message Delivery
+
+`src/i18n/request.ts` loads the complete message tree for Server Components. The browser receives a smaller tree:
+
+| Scope | Added namespaces | Owner |
+|---|---|---|
+| `global` | `common`, `errors` | Root layout and route error UI |
+| `auth` | `auth` | Login/register route group |
+| `console` | `auth`, `nav` | Console route group |
+| `i18nTest` | `test` | i18n devtool route |
+
+`CLIENT_MESSAGE_NAMESPACES` is the source of truth. `selectMessageNamespaces()` picks full top-level namespaces on the server, while `RouteMessagesProvider` merges route-owned namespaces with the inherited global messages on the client.
+
+When a Client Component starts using another namespace:
+
+1. Add the namespace to the nearest route scope in `client-message-namespaces.ts`.
+2. Ensure the owning route layout selects it and renders `RouteMessagesProvider`.
+3. Update `src/test/i18n-client-messages.test.tsx`.
+4. Run a production build and confirm unrelated routes do not serialize the new namespace.
+
+Do not pass the complete `getMessages()` result to the root `NextIntlClientProvider`; that sends every feature and devtool message to every route.
 
 ### With Variables (ICU Format)
 

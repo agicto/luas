@@ -5,6 +5,8 @@ import { cn } from "@/utils";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Analytics } from "@/components/analytics";
 import { env } from "@/config/env";
+import { CLIENT_MESSAGE_NAMESPACES } from "@/i18n/client-message-namespaces";
+import { selectMessageNamespaces } from "@/i18n/message-selection";
 import "@/config/server-env";
 import "./globals.css";
 
@@ -24,11 +26,15 @@ export default async function RootLayout({
 }) {
   const locale = await getLocale();
   const messages = await getMessages();
+  const clientMessages = selectMessageNamespaces(
+    messages,
+    CLIENT_MESSAGE_NAMESPACES.global
+  );
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={cn("min-h-screen font-sans antialiased")}>
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider messages={clientMessages}>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"

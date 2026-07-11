@@ -47,6 +47,7 @@ src/features/<feature>/
 - Keep Client Components small and leaf-level.
 - Use existing shadcn-style primitives and semantic Tailwind tokens.
 - Add i18n keys for user-facing text.
+- If a Client Component calls `useT` with a namespace that its route does not already own, add that namespace to `src/i18n/client-message-namespaces.ts` and provide it from the nearest route layout with `RouteMessagesProvider`; never pass the full message tree from root.
 - When adding a locale, update `src/i18n/locales.ts`, every translation module, and the i18n config tests/docs.
 - Do not duplicate locale detection logic; update `src/i18n/locale-resolution.ts` and its tests when changing cookie/header/default behavior.
 

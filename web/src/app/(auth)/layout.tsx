@@ -1,8 +1,12 @@
 import type { PropsWithChildren } from 'react';
 import { Zap, Shield, Layers, Headphones } from 'lucide-react';
+import { getMessages } from 'next-intl/server';
 import { Logo } from '@/components/ui/icons';
 import { Toaster } from '@/components/ui/sonner';
 import { LanguageSwitcher } from '@/components/common';
+import { CLIENT_MESSAGE_NAMESPACES } from '@/i18n/client-message-namespaces';
+import { selectMessageNamespaces } from '@/i18n/message-selection';
+import { RouteMessagesProvider } from '@/i18n/route-messages-provider';
 import { getT } from '@/i18n/server';
 import { QueryProvider } from '@/providers/query-provider';
 
@@ -17,7 +21,11 @@ const features = [
  * Auth layout with enhanced decorative left panel
  */
 export default async function AuthLayout({ children }: PropsWithChildren) {
-  const t = await getT('auth');
+  const [t, messages] = await Promise.all([getT('auth'), getMessages()]);
+  const clientMessages = selectMessageNamespaces(
+    messages,
+    CLIENT_MESSAGE_NAMESPACES.auth
+  );
 
   return (
     <div className="flex min-h-svh bg-bg-canvas">
@@ -99,41 +107,43 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
       </div>
       
       {/* Right Panel - Form Area */}
-      <div className="flex-1 flex flex-col relative bg-background">
-        {/* Subtle gradient overlay for depth */}
-        <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-transparent to-muted/20 pointer-events-none" />
-        
-        {/* Language Switcher */}
-        <div className="absolute top-4 right-4 z-20">
-          <LanguageSwitcher />
-        </div>
-        
-        {/* Form Container */}
-        <div className="relative flex-1 flex flex-col items-center justify-center p-6 md:p-8">
-          {/* Mobile Logo */}
-          <div className="lg:hidden mb-6 flex flex-col items-center space-y-3">
-            <div className="flex items-center space-x-3">
-              <Logo className="h-9 w-9 text-primary" />
-              <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary-deeper bg-clip-text text-transparent">
-                Luas
-              </span>
+      <RouteMessagesProvider additionalMessages={clientMessages}>
+        <div className="flex-1 flex flex-col relative bg-background">
+          {/* Subtle gradient overlay for depth */}
+          <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-transparent to-muted/20 pointer-events-none" />
+
+          {/* Language Switcher */}
+          <div className="absolute top-4 right-4 z-20">
+            <LanguageSwitcher />
+          </div>
+
+          {/* Form Container */}
+          <div className="relative flex-1 flex flex-col items-center justify-center p-6 md:p-8">
+            {/* Mobile Logo */}
+            <div className="lg:hidden mb-6 flex flex-col items-center space-y-3">
+              <div className="flex items-center space-x-3">
+                <Logo className="h-9 w-9 text-primary" />
+                <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary-deeper bg-clip-text text-transparent">
+                  Luas
+                </span>
+              </div>
+              <p className="text-center text-sm text-muted-foreground max-w-xs">
+                {t('heroSubtitle')}
+              </p>
             </div>
-            <p className="text-center text-sm text-muted-foreground max-w-xs">
-              {t('heroSubtitle')}
-            </p>
+
+            {/* Auth content */}
+            <div className="w-full max-w-xs md:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <QueryProvider>{children}</QueryProvider>
+            </div>
           </div>
           
-          {/* Auth content */}
-          <div className="w-full max-w-xs md:max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <QueryProvider>{children}</QueryProvider>
+          {/* Footer */}
+          <div className="relative shrink-0 py-5 text-center text-xs text-muted-foreground">
+            &copy; {new Date().getFullYear()} Luas. {t('allRightsReserved')}.
           </div>
         </div>
-        
-        {/* Footer */}
-        <div className="relative shrink-0 py-5 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Luas. {t('allRightsReserved')}.
-        </div>
-      </div>
+      </RouteMessagesProvider>
       <Toaster richColors position="top-right" />
     </div>
   );

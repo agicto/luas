@@ -81,6 +81,19 @@ function SettingsPage() {
 }
 ```
 
+### Client Message Boundaries
+
+Server translations can use the complete request message tree. Client Components receive only the namespaces owned by their route:
+
+- `global`: `common`, `errors`
+- `auth`: `auth`
+- `console`: `auth`, `nav`
+- `i18nTest`: `test`
+
+The canonical registry is `src/i18n/client-message-namespaces.ts`. Route layouts call `selectMessageNamespaces()` and add those messages with `RouteMessagesProvider`. When adding a client-side `useT` namespace, update the nearest route scope and `src/test/i18n-client-messages.test.tsx`. Never pass the full `getMessages()` result back to the root `NextIntlClientProvider`.
+
+Prefer translating in a Server Component and passing the final label to an interactive leaf when that keeps the client independent of a message namespace.
+
 ### 2. Module Organization
 
 Translations are organized into functional modules located in `src/i18n/modules/[module]/`.
@@ -200,6 +213,9 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/translation-shared.ts` | Runtime-neutral translator types and facade construction |
 | `src/i18n/module-names.ts` | Canonical `AVAILABLE_MODULES` declaration |
 | `src/i18n/loader.ts` | Dynamic module loading |
+| `src/i18n/client-message-namespaces.ts` | Canonical client namespace ownership |
+| `src/i18n/message-selection.ts` | Type-safe namespace selection |
+| `src/i18n/route-messages-provider.tsx` | Additive route-level client messages |
 | `src/i18n/modules/index.ts` | Static type generation from modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 
