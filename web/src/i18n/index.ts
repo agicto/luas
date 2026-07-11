@@ -14,6 +14,5 @@ export { loadAllModules, loadModule } from './loader';
 // Translation hooks/functions
 export { 
   useT,
-  getT,
   type UnifiedTranslations,
 } from './translations';

@@ -66,7 +66,8 @@ src/
 ├── http/                   # HTTP client (axios wrapper)
 ├── i18n/                   # Internationalization
 │   ├── config.ts           # Locale config + ENV variables
-│   ├── translations.ts     # Unified translation hooks (useT, getT)
+│   ├── translations.ts     # Client translation hook (useT)
+│   ├── server.ts           # Server translation accessor (getT)
 │   └── modules/            # Translation namespaces (common, auth, etc.)
 ├── providers/              # React context providers
 ├── services/               # Compatibility exports for feature services
@@ -148,10 +149,12 @@ Keep providers as low as the routes that need them:
 
 - Root layout owns only app-wide UI context such as i18n, theme, toasts, and analytics.
 - `(auth)` owns `QueryProvider` because login/register forms use React Query mutations.
+- `(auth)` keeps its visual shell server-rendered; only interactive leaves such as `LanguageSwitcher`, forms, and `QueryProvider` cross the client boundary.
 - `(protected)` owns `AuthenticatedProviders`, which combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
 - Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
 - If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.
 - `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, or Zustand runtime dependencies.
+- `src/test/i18n-runtime-boundary.test.ts` keeps the client/server translation entry points separate and prevents the auth shell from becoming a Client Component.
 
 ### 5. Internationalization (i18n)
 
@@ -184,7 +187,7 @@ function MyComponent() {
 
 #### Server Components
 ```tsx
-import { getT } from '@/i18n';
+import { getT } from '@/i18n/server';
 
 export default async function Page() {
   const t = await getT();
@@ -219,8 +222,11 @@ function SettingsPage() {
 | File | Purpose |
 |------|---------|
 | `src/i18n/config.ts` | Locale configuration and settings |
-| `src/i18n/translations.ts` | `useT` and `getT` implementation with types |
-| `src/i18n/loader.ts` | Dynamic translation namespace loading and `AVAILABLE_MODULES` |
+| `src/i18n/translations.ts` | Client-only `useT` implementation |
+| `src/i18n/server.ts` | Server-only `getT` implementation |
+| `src/i18n/translation-shared.ts` | Shared translator types and pure facade construction |
+| `src/i18n/module-names.ts` | Canonical translation module names |
+| `src/i18n/loader.ts` | Dynamic translation namespace loading |
 | `src/i18n/modules/index.ts` | Static type generation from translation modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 
@@ -289,8 +295,11 @@ import { useAuthStore } from '@/features/auth/store/auth-store';
 
 The project uses a **Strict Environment Variable** system to ensure type safety and prevent runtime errors.
 
-### 1. Single Source of Truth
-All environment variables MUST be defined, validated, and exported from `src/config/env.ts`.
+### 1. Explicit Runtime Entries
+
+- Browser-safe values MUST be resolved without a schema-library runtime in `src/config/env.ts` and covered by the server-only schema in `src/config/env-validation.ts`.
+- Secrets and server-only runtime values MUST be defined in `src/config/server-env.ts`, which is protected by `server-only`.
+- Never re-export `server-env` from `src/config/index.ts` or another client-reachable barrel.
 
 **❌ DO NOT:**
 ```typescript
@@ -304,7 +313,15 @@ import { env } from '@/config/env';
 const apiUrl = env.NEXT_PUBLIC_API_URL; // Typed, validated
 ```
 
-This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside `src/config/env.ts`, and production runtime must not start mock auth without a strong `SESSION_SECRET`.
+Server modules use the explicit server entry:
+
+```typescript
+import { serverEnv } from '@/config/server-env';
+
+const mockEnabled = serverEnv.MOCK_BFF_ENABLED;
+```
+
+This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside the environment entries, server values cannot leak into client config, and production mock BFF opt-in requires a strong `SESSION_SECRET`.
 
 ### 2. Validation (Zod)
 We use `zod` to validate environment variables at runtime. If a required runtime variable is missing, the app fails to start with a clear error message.
@@ -320,12 +337,12 @@ We use `zod` to validate environment variables at runtime. If a required runtime
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
 | `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. Keep false for downstream production apps. |
-| `SESSION_SECRET` | Production runtime | - | Server-only secret used to HMAC-sign the mock auth session cookie. Required outside `phase-production-build`; use at least 32 characters. |
+| `SESSION_SECRET` | Production mock BFF | - | Server-only secret used to HMAC-sign the mock auth session cookie. Required when `MOCK_BFF_ENABLED=true`; use at least 32 characters. |
 
 To add a new variable:
 1. Add it to `.env.local`
-2. Add validation schema to `src/config/env.ts`
-3. Export it in `env.ts`
+2. Put browser-safe values in `src/config/env.ts` and secrets/server-only values in `src/config/server-env.ts`
+3. Add the value to the matching Zod schema and exported object
 
 
 ## Tooling & Utility Standards (ARW)

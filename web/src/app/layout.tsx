@@ -7,6 +7,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@/components/analytics";
 import { env } from "@/config/env";
+import "@/config/server-env";
 import "./globals.css";
 
 export const metadata: Metadata = {

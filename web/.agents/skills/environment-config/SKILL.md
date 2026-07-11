@@ -1,18 +1,22 @@
 ---
 name: environment-config
-description: Strict rules for environment variable management using Zod validation and src/config/env.ts.
+description: Strict rules for Zod-validated client-safe and server-only environment configuration.
 ---
 
 # environment-config
 
 ## Overview
 
-This skill provides guidelines for managing environment variables in the project. It ensures type safety and prevents runtime errors by using a single source of truth and schema validation.
+This skill provides guidelines for managing environment variables in the project. It ensures type safety without leaking server-only names, validation, or secrets into browser bundles.
 
 ## Guidelines
 
-### 1. Single Source of Truth
-All environment variables MUST be defined, validated, and exported from `src/config/env.ts`.
+### 1. Explicit Runtime Entries
+
+- Browser-safe values are resolved without a schema-library runtime in `src/config/env.ts` and imported from `@/config/env`.
+- Server-only values belong in `src/config/server-env.ts` and are imported from `@/config/server-env` only by server modules.
+- Authoritative Zod schemas and shared preprocessors belong in the server-only `src/config/env-validation.ts`; root layout loads `server-env.ts` so public and server values fail fast during build/startup.
+- Never export `server-env` from `src/config/index.ts` or another client-reachable barrel.
 
 **❌ DO NOT:**
 ```typescript
@@ -25,14 +29,22 @@ import { env } from '@/config/env';
 const apiUrl = env.NEXT_PUBLIC_API_URL; // Typed, validated
 ```
 
+```typescript
+import { serverEnv } from '@/config/server-env';
+const mockEnabled = serverEnv.MOCK_BFF_ENABLED; // Server modules only
+```
+
 ### 2. Validation (Zod)
 The project uses `zod` to validate environment variables at runtime. If a required variable is missing, the application will fail to start with a clear error message.
 
 ### 3. Adding a New Environment Variable
 1. **Add to `.env.local`**: Define the variable and its value.
-2. **Update `src/config/env.ts`**:
-   - Add the validation schema to the `envSchema` object.
-   - Ensure it's correctly mapped in the `env` export.
+2. **Choose the runtime boundary**:
+   - Add `NEXT_PUBLIC_*` and browser-safe build values to `src/config/env.ts`.
+   - Add secrets and server-only runtime values to `src/config/server-env.ts`.
+3. **Update the matching Zod schema**:
+   - Add browser-safe values to the lightweight `env` resolver and `publicEnvSchema`.
+   - Add server-only values to `serverEnvSchema` and the `serverEnv` parse input.
 
 ### 4. Supported Variables Reference
 
@@ -45,14 +57,14 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
 | `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. |
-| `SESSION_SECRET` | Production runtime | - | Server-only secret for HMAC-signed mock auth cookies. |
+| `SESSION_SECRET` | Production mock BFF | - | Server-only secret for HMAC-signed mock auth cookies; required when `MOCK_BFF_ENABLED=true`. |
 
 > [!IMPORTANT]
-> Always use the `env` object from `@/config/env` to access environment variables. Directly accessing `process.env` is strictly prohibited outside of the config file.
+> Use `env` for browser-safe values and `serverEnv` for server-only values. Direct `process.env` access is restricted to the two environment entry modules and test setup.
 
-`src/test/env-contract.test.ts` enforces this rule for production source files and verifies that
-production runtime requires a strong `SESSION_SECRET` while production builds can omit runtime-only
-secrets.
+`src/test/env-contract.test.ts` enforces this rule, keeps server values out of the client entry and
+config barrel, and verifies that production mock BFF opt-in requires a strong `SESSION_SECRET` while
+normal production runtime and production builds can omit it.
 
 ## Related Skills
 

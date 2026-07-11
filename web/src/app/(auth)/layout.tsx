@@ -1,24 +1,22 @@
-'use client';
-
-import { PropsWithChildren } from 'react';
+import type { PropsWithChildren } from 'react';
 import { Zap, Shield, Layers, Headphones } from 'lucide-react';
 import { Logo } from '@/components/ui/icons';
 import { LanguageSwitcher } from '@/components/common';
-import { useT } from '@/i18n';
+import { getT } from '@/i18n/server';
 import { QueryProvider } from '@/providers/query-provider';
+
+const features = [
+  { icon: Zap, key: 'feature1' },
+  { icon: Shield, key: 'feature2' },
+  { icon: Layers, key: 'feature3' },
+  { icon: Headphones, key: 'feature4' },
+] as const;
 
 /**
  * Auth layout with enhanced decorative left panel
  */
-export default function AuthLayout({ children }: PropsWithChildren) {
-  const t = useT();
-  
-  const features = [
-    { icon: Zap, key: 'auth.feature1' as const },
-    { icon: Shield, key: 'auth.feature2' as const },
-    { icon: Layers, key: 'auth.feature3' as const },
-    { icon: Headphones, key: 'auth.feature4' as const },
-  ];
+export default async function AuthLayout({ children }: PropsWithChildren) {
+  const t = await getT('auth');
 
   return (
     <div className="flex min-h-svh bg-bg-canvas">
@@ -68,10 +66,10 @@ export default function AuthLayout({ children }: PropsWithChildren) {
           {/* Hero Text */}
           <div className="space-y-4 mb-10">
             <h1 className="text-3xl xl:text-4xl font-bold leading-tight drop-shadow-md">
-              {t('auth.heroTitle')}
+              {t('heroTitle')}
             </h1>
             <p className="text-base xl:text-lg text-white/75 max-w-sm leading-relaxed">
-              {t('auth.heroSubtitle')}
+              {t('heroSubtitle')}
             </p>
           </div>
           
@@ -81,7 +79,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
               const IconComponent = feature.icon;
               return (
                 <div 
-                  key={index}
+                  key={feature.key}
                   className="group flex items-center gap-2.5 p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/10 transition-all duration-300 hover:bg-white/15 hover:border-white/20 hover:scale-[1.02] cursor-default"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -96,15 +94,6 @@ export default function AuthLayout({ children }: PropsWithChildren) {
             })}
           </div>
           
-          {/* Trust Badge */}
-          <div className="mt-10 flex items-center gap-3 text-white/50 text-xs">
-            <div className="flex -space-x-2">
-              <div className="w-6 h-6 rounded-full bg-white/20 border-2 border-white/10" />
-              <div className="w-6 h-6 rounded-full bg-white/20 border-2 border-white/10" />
-              <div className="w-6 h-6 rounded-full bg-white/20 border-2 border-white/10" />
-            </div>
-            <span>Trusted by 10,000+ developers</span>
-          </div>
         </div>
       </div>
       
@@ -129,7 +118,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
               </span>
             </div>
             <p className="text-center text-sm text-muted-foreground max-w-xs">
-              {t('auth.heroSubtitle')}
+              {t('heroSubtitle')}
             </p>
           </div>
           
@@ -141,7 +130,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
         
         {/* Footer */}
         <div className="relative shrink-0 py-5 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Luas. {t('auth.allRightsReserved')}.
+          &copy; {new Date().getFullYear()} Luas. {t('allRightsReserved')}.
         </div>
       </div>
     </div>

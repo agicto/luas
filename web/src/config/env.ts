@@ -1,85 +1,98 @@
-import { z } from 'zod';
-
-import { defaultLocaleFallback, locales } from '@/i18n/locales';
-
-const booleanEnv = z.preprocess((value) => {
-  if (value === undefined || value === '') {
-    return undefined;
-  }
-
-  if (typeof value === 'string') {
-    const normalized = value.toLowerCase();
-
-    if (['true', '1', 'yes', 'on'].includes(normalized)) {
-      return true;
-    }
-
-    if (['false', '0', 'no', 'off'].includes(normalized)) {
-      return false;
-    }
-  }
-
-  return value;
-}, z.boolean());
+import {
+  defaultLocaleFallback,
+  locales,
+  type Locale,
+} from '@/i18n/locales';
+import type { PublicEnv } from './env-validation';
 
 /**
- * Keep environment variables limited to values that may change between deploys.
- * Runtime code should import this module instead of reading process.env directly.
+ * Resolve browser-safe values without shipping the server-side Zod validator.
+ * RootLayout imports server-env.ts so the same values are schema-validated
+ * during builds and server startup.
  */
-const envSchema = z.object({
-  // API entry point — point this at your Luas Go backend (or any backend)
-  NEXT_PUBLIC_API_URL: z.string().min(1).default('/api'),
+function invalidPublicEnv(name: string): never {
+  throw new Error(`Invalid public environment variable: ${name}`);
+}
 
-  // Absolute app URL for metadata, sitemap, and robots generation
-  NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+function readRequiredString(
+  name: string,
+  value: string | undefined,
+  fallback: string
+): string {
+  const resolved = value ?? fallback;
+  return resolved.length > 0 ? resolved : invalidPublicEnv(name);
+}
 
-  // Optional but sometimes required
-  NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+function readAbsoluteUrl(
+  name: string,
+  value: string | undefined,
+  fallback: string
+): string {
+  const resolved = readRequiredString(name, value, fallback);
+  try {
+    new URL(resolved);
+    return resolved;
+  } catch {
+    return invalidPublicEnv(name);
+  }
+}
 
-  // i18n
-  NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(locales).default(defaultLocaleFallback),
-  NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED: booleanEnv.default(true),
+function readBoolean(
+  name: string,
+  value: string | undefined,
+  fallback: boolean
+): boolean {
+  if (value === undefined || value === '') {
+    return fallback;
+  }
 
-  // Server-only
-  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  const normalized = value.toLowerCase();
+  if (['true', '1', 'yes', 'on'].includes(normalized)) {
+    return true;
+  }
+  if (['false', '0', 'no', 'off'].includes(normalized)) {
+    return false;
+  }
+  return invalidPublicEnv(name);
+}
 
-  // Development-only mock route handlers. Production runtime requires
-  // explicit opt-in so the web shell does not accidentally ship demo APIs.
-  MOCK_BFF_ENABLED: booleanEnv.default(false),
+function readLocale(value: string | undefined): Locale {
+  const resolved = value ?? defaultLocaleFallback;
+  return locales.includes(resolved as Locale)
+    ? (resolved as Locale)
+    : invalidPublicEnv('NEXT_PUBLIC_DEFAULT_LOCALE');
+}
 
-  // Secret used to HMAC-sign the mock session cookie. Required in
-  // production; a dev-only fallback is used otherwise (with a console
-  // warning) so `pnpm dev` works out of the box.
-  SESSION_SECRET: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(32).optional()
+function readNodeEnv(value: string | undefined): PublicEnv['NODE_ENV'] {
+  const resolved = value ?? 'development';
+  return resolved === 'development' || resolved === 'production' || resolved === 'test'
+    ? resolved
+    : invalidPublicEnv('NODE_ENV');
+}
+
+export const env: PublicEnv = {
+  NEXT_PUBLIC_API_URL: readRequiredString(
+    'NEXT_PUBLIC_API_URL',
+    process.env.NEXT_PUBLIC_API_URL,
+    '/api'
   ),
-});
+  NEXT_PUBLIC_APP_URL: readAbsoluteUrl(
+    'NEXT_PUBLIC_APP_URL',
+    process.env.NEXT_PUBLIC_APP_URL,
+    'http://localhost:3000'
+  ),
+  NEXT_PUBLIC_GA_MEASUREMENT_ID:
+    process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || undefined,
+  NEXT_PUBLIC_DEFAULT_LOCALE: readLocale(
+    process.env.NEXT_PUBLIC_DEFAULT_LOCALE
+  ),
+  NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED: readBoolean(
+    'NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED',
+    process.env.NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED,
+    true
+  ),
+  NODE_ENV: readNodeEnv(process.env.NODE_ENV),
+};
 
-const parsed = envSchema.safeParse({
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-  NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
-  NEXT_PUBLIC_DEFAULT_LOCALE: process.env.NEXT_PUBLIC_DEFAULT_LOCALE,
-  NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED: process.env.NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED,
-  NODE_ENV: process.env.NODE_ENV,
-  MOCK_BFF_ENABLED: process.env.MOCK_BFF_ENABLED,
-  SESSION_SECRET: process.env.SESSION_SECRET,
-});
-
-if (!parsed.success) {
-  console.error('Invalid environment variables:', parsed.error.format());
-  throw new Error('Invalid environment variables');
-}
-
-export const env = parsed.data;
-
-const isProductionBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
-
-if (env.NODE_ENV === 'production' && !isProductionBuildPhase && !env.SESSION_SECRET) {
-  throw new Error('SESSION_SECRET must be set in production runtime');
-}
-
-// Shorthands for cleaner calls
 export const isDev = env.NODE_ENV === 'development';
 export const isProd = env.NODE_ENV === 'production';

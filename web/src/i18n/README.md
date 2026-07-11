@@ -19,8 +19,11 @@ The i18n system provides full TypeScript type safety through:
 i18n/
 ├── config.ts           # Locale configuration + ENV variables
 ├── request.ts          # next-intl server configuration
-├── index.ts            # Barrel exports
-├── translations.ts     # useT and getT implementation with types
+├── index.ts            # Client-safe barrel exports
+├── translations.ts     # Client-only useT implementation
+├── server.ts           # Server-only getT implementation
+├── translation-shared.ts # Shared translator types and pure helpers
+├── module-names.ts     # Canonical translation module names
 ├── loader.ts           # Dynamic module loading
 └── modules/            # Translation modules
     ├── common/         # Common translations (buttons, labels)
@@ -173,7 +176,7 @@ export function LoginForm() {
 
 ```tsx
 // app/page.tsx (Server Component)
-import { getT } from '@/i18n';
+import { getT } from '@/i18n/server';
 
 export default async function Page() {
   const t = await getT();
@@ -212,13 +215,16 @@ function SettingsPage() {
 Server-side scoped translations:
 
 ```tsx
-import { getT } from '@/i18n';
+import { getT } from '@/i18n/server';
 
 export default async function ErrorPage() {
   const t = await getT('errors');
   return <p>{t('networkError')}</p>;  {/* errors.networkError */}
 }
 ```
+
+Keep server imports explicit. `getT` is intentionally not re-exported from the client-safe
+`@/i18n` barrel, so a Client Component cannot accidentally pull in `next-intl/server`.
 
 ### With Variables (ICU Format)
 

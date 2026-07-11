@@ -71,6 +71,8 @@ describe('i18n config', () => {
       loadI18nConfig({
         NEXT_PUBLIC_DEFAULT_LOCALE: 'fr-FR',
       })
-    ).rejects.toThrow('Invalid environment variables');
+    ).rejects.toThrow(
+      'Invalid public environment variable: NEXT_PUBLIC_DEFAULT_LOCALE'
+    );
   });
 });

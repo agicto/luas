@@ -14,15 +14,16 @@
  * favor of an opaque session token issued by your API.
  */
 
-import { env, isProd } from '@/config/env';
+import { isProd } from '@/config/env';
+import { serverEnv } from '@/config/server-env';
 
 const FALLBACK_DEV_SECRET = 'luas-dev-only-session-secret-do-not-use-in-production';
 
 let warnedAboutFallback = false;
 
 function getSecret(): string {
-  if (env.SESSION_SECRET && env.SESSION_SECRET.length > 0) {
-    return env.SESSION_SECRET;
+  if (serverEnv.SESSION_SECRET && serverEnv.SESSION_SECRET.length > 0) {
+    return serverEnv.SESSION_SECRET;
   }
   if (isProd) {
     throw new Error('SESSION_SECRET must be set in production');

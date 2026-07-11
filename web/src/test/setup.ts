@@ -3,6 +3,8 @@ import { vi } from 'vitest'
 
 process.env.SESSION_SECRET ??= 'luas-test-session-secret-at-least-32-chars'
 
+vi.mock('server-only', () => ({}))
+
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
     useRouter: () => ({

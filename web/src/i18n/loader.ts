@@ -1,19 +1,8 @@
 import { type Locale } from './config';
+import { AVAILABLE_MODULES, type ModuleName } from './module-names';
 import type { Messages as StrictMessages } from './modules';
 
-// Define available modules
-export const AVAILABLE_MODULES = [
-  'common',
-  'auth',
-  'nav',
-  'settings',
-  'errors',
-  'metadata',
-  'dashboard',
-  'test',
-] as const;
-
-export type ModuleName = (typeof AVAILABLE_MODULES)[number];
+export { AVAILABLE_MODULES, type ModuleName } from './module-names';
 
 // Interface for loaded messages
 export type Messages = StrictMessages;

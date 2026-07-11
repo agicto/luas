@@ -37,7 +37,7 @@ MOCK_BFF_ENABLED=false
 
 See [docs/MOCK_BFF.md](docs/MOCK_BFF.md) before replacing, deleting, or intentionally enabling the mock BFF.
 
-For production runtime, set a strong `SESSION_SECRET` because the scaffold mock auth session cookie is HMAC-signed:
+When intentionally enabling the mock BFF in production, set a strong `SESSION_SECRET` because the scaffold mock auth session cookie is HMAC-signed:
 
 ```bash
 openssl rand -hex 32

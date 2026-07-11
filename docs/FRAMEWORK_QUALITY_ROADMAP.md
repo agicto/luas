@@ -34,9 +34,11 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, and Zustand runtime dependencies from `(site)` routes.
+- The auth visual shell is now a Server Component, while `LanguageSwitcher`, forms, and `QueryProvider` remain client leaves. Moving Zod validation behind the server-only environment boundary also removed the full validator from browser chunks. On Next.js 16.2.9, the `/login` route client entry set fell from 702,002 to 409,986 raw bytes and from 195,929 to 129,095 gzip bytes (41.60% and 34.11%), and the auth layout itself left the client reference graph. This is build-manifest evidence, not a field Core Web Vitals claim.
+- Web i18n exposes `useT` through the client-safe `@/i18n` entry and `getT` through `@/i18n/server`; `src/test/i18n-runtime-boundary.test.ts` prevents server imports or the full auth shell from leaking back into the client graph.
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
-- Web production source env access is guarded by `src/test/env-contract.test.ts`, keeping `src/config/env.ts` as the single runtime env entry point and requiring a strong `SESSION_SECRET` for production runtime mock auth.
+- Web environment access is guarded by `src/test/env-contract.test.ts`: `src/config/env.ts` resolves public values without a schema-library runtime, `src/config/env-validation.ts` keeps Zod validation server-only, `src/config/server-env.ts` owns secrets and mock runtime switches, and production requires `SESSION_SECRET` only when the mock BFF is explicitly enabled. Production browser chunks contain neither server-only names nor Zod.
 - Root verification is split into `make governance` for scaffold guardrails and `make check` for governance plus API/Web verification tiers. CI also calls `make governance` for the root governance job. `run-tiers.sh` prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
@@ -93,14 +95,15 @@ Verification:
 
 ### P1 — Web Hydration Boundaries
 
-Problem: root-level providers can make public pages pay for auth/query client hydration even when they do not need authenticated app state.
+Problem: public auth/query leakage and the auth-shell client boundary are now guarded, but remaining root client boundaries can still add hydration work to every route.
 
 Recommended slice:
 
 1. Keep Query/Auth providers route-scoped instead of returning them to root.
 2. Keep `src/test/public-route-boundary.test.ts` aligned with the public route dependency boundary.
-3. Split remaining root client boundaries, especially app-wide error handling and client-only analytics, where build evidence shows value.
-4. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
+3. Keep the auth visual shell server-rendered and `src/test/i18n-runtime-boundary.test.ts` aligned with its client leaves.
+4. Split remaining root client boundaries, especially app-wide error handling and client-only analytics, where build evidence shows value.
+5. Review cookie/header-driven i18n separately because it keeps routes dynamic even after provider scoping.
 
 Verification:
 
@@ -130,7 +133,7 @@ Recommended slice:
 
 1. Keep new mock route handlers behind `guardMockBffRoute()`.
 2. Return mock success payloads through `apiSuccessResponse()` and errors through the shared error response helpers.
-3. Keep `SESSION_SECRET` production runtime requirements covered by `src/test/env-contract.test.ts` when changing mock auth or deployment behavior.
+3. Keep the client/server env split and conditional `SESSION_SECRET` requirement covered by `src/test/env-contract.test.ts` when changing mock auth or deployment behavior.
 4. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
 5. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
 6. Add production configuration tests when adding new demo-only flows.

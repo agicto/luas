@@ -54,7 +54,7 @@ Use the asynchronous `getT` function for translations in server-side components.
 
 ```tsx
 // app/page.tsx (Server Component)
-import { getT } from '@/i18n';
+import { getT } from '@/i18n/server';
 
 export default async function Page() {
   const t = await getT();
@@ -163,7 +163,7 @@ When adding a new page or feature:
 3. Create `en-US.ts` implementing the type
 4. Create `index.ts` barrel export
 5. Register in `modules/index.ts`
-6. Add to `AVAILABLE_MODULES` in `src/i18n/loader.ts`
+6. Add to `AVAILABLE_MODULES` in `src/i18n/module-names.ts`
 7. Add dynamic imports to `moduleRegistry` in `loader.ts`
 
 ### 6. Using Variables (ICU Format)
@@ -183,7 +183,7 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | Task | Action |
 |------|--------|
 | New Page | Add translations to `src/i18n/modules/[module]/[locale].ts` and update `src/constants/routes.ts`. |
-| New Component | Use `useT` (Client) or `getT` (Server) for all user-facing text. |
+| New Component | Use `useT` from `@/i18n` (Client) or `getT` from `@/i18n/server` (Server) for all user-facing text. |
 | Error Messages | Use the `errors` namespace and follow the standardized error handling patterns. |
 | Scoped Component | Use `useT('namespace')` to get type-safe scoped translations. |
 
@@ -194,9 +194,12 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/config.ts` | Locale configuration and settings |
 | `src/i18n/locales.ts` | Supported locale constants, names, and Accept-Language mapping |
 | `src/i18n/locale-resolution.ts` | Cookie/header/default request locale resolution seam |
-| `src/i18n/index.ts` | Barrel exports for all i18n utilities |
-| `src/i18n/translations.ts` | `useT` and `getT` implementation with types |
-| `src/i18n/loader.ts` | Dynamic module loading and `AVAILABLE_MODULES` |
+| `src/i18n/index.ts` | Client-safe barrel exports for locale config and `useT` |
+| `src/i18n/translations.ts` | Client-only `useT` implementation |
+| `src/i18n/server.ts` | Server-only `getT` implementation |
+| `src/i18n/translation-shared.ts` | Runtime-neutral translator types and facade construction |
+| `src/i18n/module-names.ts` | Canonical `AVAILABLE_MODULES` declaration |
+| `src/i18n/loader.ts` | Dynamic module loading |
 | `src/i18n/modules/index.ts` | Static type generation from modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 
