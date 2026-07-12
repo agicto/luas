@@ -97,7 +97,7 @@ const messages: AuthMessages = {
   signUpWithGithub: 'Sign up with GitHub',
   
   // Footer
-  allRightsReserved: 'All rights reserved',
+  copyright: '© {year} Luas. All rights reserved.',
 };
 
 export default messages;

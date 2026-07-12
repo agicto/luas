@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { getT } from '@/i18n/server';
 import { 
   ArrowRight, 
   Shield, 
@@ -18,7 +19,31 @@ import {
  * Luas Homepage
  * Unified design language with Auth and Console sections
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const t = await getT('site');
+  const featuresData = [
+    {
+      title: t('features.authentication.title'),
+      description: t('features.authentication.description'),
+      icon: Shield,
+    },
+    {
+      title: t('features.console.title'),
+      description: t('features.console.description'),
+      icon: Terminal,
+    },
+    {
+      title: t('features.i18n.title'),
+      description: t('features.i18n.description'),
+      icon: Globe,
+    },
+    {
+      title: t('features.ui.title'),
+      description: t('features.ui.description'),
+      icon: Palette,
+    },
+  ];
+
   return (
     <div className="flex flex-col">
       {/* Hero Section - with glow effects like Auth */}
@@ -50,36 +75,33 @@ export default function HomePage() {
             {/* Badge */}
             <Badge variant="secondary" className="mb-6 px-4 py-1.5 text-sm font-medium">
               <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-              AI-First Frontend Scaffold
+              {t('hero.eyebrow')}
             </Badge>
 
             {/* Title */}
             <h1 className="text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">
-              Build Modern Web Apps{' '}
+              {t('hero.titlePrefix')}{' '}
               <span className="bg-linear-to-r from-primary to-primary-deeper bg-clip-text text-transparent">
-                with AI Power
+                {t('hero.titleAccent')}
               </span>
             </h1>
 
             {/* Description */}
             <p className="mt-6 text-lg text-text-muted md:text-xl max-w-2xl mx-auto">
-              A production-ready Next.js 16 scaffold with TypeScript, Tailwind CSS 4, 
-              premium UI components, and everything you need for AI-assisted development.
+              {t('hero.description')}
             </p>
 
             {/* CTA Buttons */}
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link href="/register">
-                <Button size="lg" className="h-12 px-8 gap-2 shadow-button-primary">
-                  Get Started
+              <Button asChild size="lg" className="h-12 px-8 gap-2 shadow-button-primary">
+                <Link href="/register">
+                  {t('hero.primaryAction')}
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/console">
-                <Button variant="outline" size="lg" className="h-12 px-8">
-                  View Demo
-                </Button>
-              </Link>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="h-12 px-8">
+                <Link href="/console">{t('hero.secondaryAction')}</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -90,17 +112,17 @@ export default function HomePage() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Everything You Need
+              {t('features.title')}
             </h2>
             <p className="mt-4 text-text-muted max-w-2xl mx-auto">
-              A complete scaffold with authentication, dashboard, i18n, and premium UI components.
+              {t('features.description')}
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {featuresData.map((feature, index) => (
+            {featuresData.map((feature) => (
               <Card 
-                key={index} 
+                key={feature.title}
                 className="group bg-bg-surface border-border/50 hover:shadow-premium hover:-translate-y-1 transition-all duration-300"
               >
                 <CardContent className="p-6">
@@ -123,17 +145,17 @@ export default function HomePage() {
         <div className="container">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-              Modern Tech Stack
+              {t('techStack.title')}
             </h2>
             <p className="mt-4 text-text-muted">
-              Built with the latest technologies for optimal developer experience.
+              {t('techStack.description')}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10">
-            {techStackData.map((tech, index) => (
+            {techStackData.map((tech) => (
               <div 
-                key={index}
+                key={tech.name}
                 className="flex items-center gap-3 px-5 py-3 rounded-xl bg-bg-surface border border-border/50 hover:border-primary/30 hover:shadow-md transition-all duration-300"
               >
                 {tech.icon}
@@ -154,62 +176,38 @@ export default function HomePage() {
 
         <div className="container relative text-center text-white">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl lg:text-5xl">
-            Ready to Build?
+            {t('cta.title')}
           </h2>
           <p className="mt-4 text-white/80 max-w-xl mx-auto md:text-lg">
-            Start building your next project with Luas. 
-            Authentication, dashboard, and premium components included.
+            {t('cta.description')}
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Link href="/register">
-              <Button size="lg" variant="secondary" className="h-12 px-8 gap-2">
-                Get Started Free
+            <Button asChild size="lg" variant="secondary" className="h-12 px-8 gap-2">
+              <Link href="/register">
+                {t('cta.primaryAction')}
                 <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-            <a 
-              href="https://github.com/zgiai/luas" 
-              target="_blank" 
-              rel="noopener noreferrer"
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="h-12 px-8 bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
             >
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="h-12 px-8 bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+              <a
+                href="https://github.com/zgiai/luas"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                View on GitHub
-              </Button>
-            </a>
+                {t('cta.githubAction')}
+              </a>
+            </Button>
           </div>
         </div>
       </section>
     </div>
   );
 }
-
-// Features data
-const featuresData = [
-  {
-    title: 'Authentication',
-    description: 'Complete auth flow with login, registration, and protected routes.',
-    icon: Shield,
-  },
-  {
-    title: 'Admin Console',
-    description: 'Beautiful dashboard with charts, tables, and data visualization.',
-    icon: Terminal,
-  },
-  {
-    title: 'Internationalization',
-    description: 'Built-in i18n support with type-safe translations.',
-    icon: Globe,
-  },
-  {
-    title: 'Premium UI',
-    description: 'Elegant components with glassmorphism and micro-animations.',
-    icon: Palette,
-  },
-];
 
 // Tech stack data
 const techStackData = [

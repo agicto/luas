@@ -225,10 +225,11 @@ function SettingsPage() {
 | `common` | Common UI text (buttons, labels, messages) |
 | `auth` | Authentication-related text |
 | `nav` | Navigation labels |
+| `site` | Public scaffold site copy |
+| `console` | Replaceable authenticated console copy |
 | `settings` | Settings page translations |
 | `errors` | Error messages |
 | `metadata` | Page titles and SEO metadata |
-| `dashboard` | Console/demo dashboard text |
 | `test` | Testing translations |
 
 #### Key Files
@@ -249,6 +250,15 @@ function SettingsPage() {
 
 **Type Safety:** Invalid keys will cause TypeScript errors at compile time.
 `src/test/i18n-types.test.ts` guards valid scopes, leaf-only global keys, relative scoped keys, and runtime prefix composition.
+
+#### Core Copy Boundary
+
+- Root metadata, `(site)`, `(auth)`, `(protected)/(console)`, and their shared shell components must resolve user-facing copy through `getT` or `useT`.
+- Prefer `getT` in Server Components. Add a client namespace only when an interactive leaf calls `useT`.
+- Exact brand names, technical identifiers, and text inside `<code>` may remain literals when translating them would be incorrect.
+- `devtools` and `example` are disposable scaffold surfaces and are outside the core copy guard. They must not leak into formal site, auth, or console copy.
+- `global-error.tsx` remains a dependency-light root fallback. UI primitive defaults are governed through their component APIs and should receive translated labels from formal callers.
+- `pnpm lint:i18n-copy` enforces this boundary, and `pnpm lint` runs it automatically.
 
 ## Code Conventions
 
@@ -428,7 +438,7 @@ To ensure engineering rigor and performance, all components MUST follow these ru
   - Components are **Server Components** by default.
   - If a component needs interactivity (hooks or events), extract the interactive logic into a **small, leaf-level Client Component** (marked with `'use client'`). 
   - Avoid turning large feature components into Client Components.
-- **Zero Hardcoded Strings**: All user-facing text must use the `useT` hook for i18n.
+- **Localized Core Copy**: User-facing copy in formal site, auth, and console surfaces must use `getT` or `useT`; follow the Core Copy Boundary above for narrow exceptions and disposable surfaces.
 - **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
 
 #### Performance Optimization Rules

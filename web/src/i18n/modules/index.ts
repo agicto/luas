@@ -1,10 +1,11 @@
 import common from './common/en-US';
 import auth from './auth/en-US';
 import nav from './nav/en-US';
+import site from './site/en-US';
+import console from './console/en-US';
 import settings from './settings/en-US';
 import errors from './errors/en-US';
 import metadata from './metadata/en-US';
-import dashboard from './dashboard/en-US';
 import test from './test/en-US';
 
 /**
@@ -15,10 +16,11 @@ export const messages = {
   common,
   auth,
   nav,
+  site,
+  console,
   settings,
   errors,
   metadata,
-  dashboard,
   test,
 } as const;
 

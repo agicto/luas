@@ -95,7 +95,7 @@ const messages = {
   signUpWithGithub: '使用 GitHub 注册',
   
   // Footer
-  allRightsReserved: '版权所有',
+  copyright: '© {year} Luas。保留所有权利。',
 };
 
 export default messages;

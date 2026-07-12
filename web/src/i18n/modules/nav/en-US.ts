@@ -3,7 +3,7 @@ import type { NavMessages } from './zh-Hans';
 
 const messages: NavMessages = {
   home: 'Home',
-  dashboard: 'Platform',
+  console: 'Console',
   settings: 'Settings',
   profile: 'Profile',
   analytics: 'Analytics',

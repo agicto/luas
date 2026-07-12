@@ -7,17 +7,22 @@ import { Analytics } from "@/components/analytics";
 import { env } from "@/config/env";
 import { CLIENT_MESSAGE_NAMESPACES } from "@/i18n/client-message-namespaces";
 import { selectMessageNamespaces } from "@/i18n/message-selection";
+import { getT } from "@/i18n/server";
 import "@/config/server-env";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: "Luas",
-    template: "%s | Luas",
-  },
-  description: "Modern web application scaffold built with Next.js, TypeScript, and Tailwind CSS",
-  metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT('metadata');
+
+  return {
+    title: {
+      default: t('title'),
+      template: `%s | ${t('title')}`,
+    },
+    description: t('description'),
+    metadataBase: new URL(env.NEXT_PUBLIC_APP_URL),
+  };
+}
 
 export default async function RootLayout({
   children,

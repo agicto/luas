@@ -36,10 +36,11 @@ i18n/
     ├── common/         # Common translations (buttons, labels)
     ├── auth/           # Authentication translations
     ├── nav/            # Navigation translations
+    ├── site/           # Public scaffold site copy
+    ├── console/        # Replaceable authenticated console copy
     ├── settings/       # Settings translations
     ├── errors/         # Error messages
     ├── metadata/       # Page metadata
-    ├── dashboard/      # Dashboard translations
     └── test/           # Testing translations
 ```
 
@@ -97,21 +98,18 @@ export { default as zhHans } from './zh-Hans';
 export { default as enUS } from './en-US';
 ```
 
-5. Register in `modules/index.ts`:
+5. Register the type source in `modules/index.ts`:
 ```typescript
-import * as moduleName from './module-name';
+import moduleName from './module-name/en-US';
 
-const modules = {
-  // ...existing
+export const messages = {
+  // existing modules
   moduleName,
-};
-
-// Add to getMessages return
-return {
-  // ...existing
-  moduleName: modules.moduleName[exportKey],
-};
+} as const;
 ```
+
+6. Add the name to `AVAILABLE_MODULES` in `module-names.ts`.
+7. Add both locale imports to `moduleRegistry` in `loader.ts`.
 
 ## Adding a New Locale
 
@@ -191,7 +189,7 @@ export default async function Page() {
   return (
     <nav>
       <a href="/">{t.nav('home')}</a>
-      <a href="/dashboard">{t.nav('dashboard')}</a>
+      <a href="/console">{t.nav('console')}</a>
       <span>{t.common('loading')}</span>
     </nav>
   );
@@ -207,13 +205,13 @@ For components with many translations from a single namespace, use the scoped pa
 
 import { useT } from '@/i18n';
 
-function SettingsPage() {
-  // Scoped to 'settings' - only relative leaf keys are valid
-  const t = useT('settings');
+function SettingsSystemPanel() {
+  // Scoped to 'settings.system' - only relative leaf keys are valid
+  const t = useT('settings.system');
   return (
     <div>
-      <h1>{t('title')}</h1>        {/* settings.title */}
-      <p>{t('description')}</p>    {/* settings.description */}
+      <h1>{t('title')}</h1>        {/* settings.system.title */}
+      <p>{t('description')}</p>    {/* settings.system.description */}
     </div>
   );
 }
@@ -241,7 +239,7 @@ Keep server imports explicit. `getT` is intentionally not re-exported from the c
 |---|---|---|
 | `global` | `common`, `errors` | Root layout and route error UI |
 | `auth` | `auth` | Login/register route group |
-| `console` | `auth`, `nav` | Console route group |
+| `console` | `auth`, `nav`, `console` | Console route group |
 | `i18nTest` | `test` | i18n devtool route |
 
 `CLIENT_MESSAGE_NAMESPACES` is the source of truth. `selectMessageNamespaces()` picks full top-level namespaces on the server, while `RouteMessagesProvider` merges route-owned namespaces with the inherited global messages on the client.
@@ -254,6 +252,19 @@ When a Client Component starts using another namespace:
 4. Run a production build and confirm unrelated routes do not serialize the new namespace.
 
 Do not pass the complete `getMessages()` result to the root `NextIntlClientProvider`; that sends every feature and devtool message to every route.
+
+### Core Copy Boundary
+
+The copy guard follows Luas surface ownership rather than scanning every demonstration file:
+
+- Root metadata, `(site)`, `(auth)`, `(protected)/(console)`, and shared shell components must use `getT` or `useT` for user-facing copy.
+- Prefer server translation and pass final labels to interactive leaves when that avoids another client namespace.
+- Exact brand names, technical identifiers, and text inside `<code>` are allowed literal values.
+- `devtools` and `example` are disposable surfaces and are excluded. They must not leak copy into formal scaffold surfaces.
+- `global-error.tsx` is excluded because it must remain dependency-light when the normal root runtime fails.
+- UI primitive default labels are controlled through component APIs; formal callers should pass translated accessible labels.
+
+Run `pnpm lint:i18n-copy`. The standard `pnpm lint` command includes this guard.
 
 ### With Variables (ICU Format)
 

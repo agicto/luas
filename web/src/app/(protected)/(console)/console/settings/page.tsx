@@ -1,192 +1,237 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { getT } from '@/i18n/server';
 
 /**
- * Settings page in console dashboard
+ * Replaceable settings surface for the starter console.
  */
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const t = await getT('settings');
+
   return (
     <div className="flex-1 space-y-4 p-6 pt-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('title')}</h2>
       </div>
-      
+
       <Tabs defaultValue="general" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="general">General Settings</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="api">API</TabsTrigger>
+        <TabsList className="w-full justify-start overflow-x-auto">
+          <TabsTrigger value="general">{t('tabs.general')}</TabsTrigger>
+          <TabsTrigger value="notifications">{t('tabs.notifications')}</TabsTrigger>
+          <TabsTrigger value="security">{t('tabs.security')}</TabsTrigger>
+          <TabsTrigger value="api">{t('tabs.api')}</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="general" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>System Information</CardTitle>
-              <CardDescription>
-                View and update system basic settings
-              </CardDescription>
+              <CardTitle>{t('system.title')}</CardTitle>
+              <CardDescription>{t('system.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="company-name">Company Name</Label>
-                <Input id="company-name" placeholder="Enter company name" defaultValue="Example Technology Co., Ltd." />
+                <Label htmlFor="company-name">{t('system.companyName')}</Label>
+                <Input
+                  id="company-name"
+                  placeholder={t('system.companyPlaceholder')}
+                  defaultValue={t('system.companyDefault')}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="site-url">Website URL</Label>
-                <Input id="site-url" placeholder="Enter website address" defaultValue="https://example.com" />
+                <Label htmlFor="site-url">{t('system.websiteUrl')}</Label>
+                <Input
+                  id="site-url"
+                  placeholder={t('system.websitePlaceholder')}
+                  defaultValue="https://example.com"
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="support-email">Support Email</Label>
-                <Input id="support-email" placeholder="Enter support email" defaultValue="support@example.com" />
+                <Label htmlFor="support-email">{t('system.supportEmail')}</Label>
+                <Input
+                  id="support-email"
+                  placeholder={t('system.supportEmailPlaceholder')}
+                  defaultValue="support@example.com"
+                />
               </div>
             </CardContent>
             <CardFooter>
-              <Button>Save Settings</Button>
+              <Button>{t('system.save')}</Button>
             </CardFooter>
           </Card>
-          
+
           <Card>
             <CardHeader>
-              <CardTitle>Display Settings</CardTitle>
-              <CardDescription>
-                Customize system display preferences
-              </CardDescription>
+              <CardTitle>{t('display.title')}</CardTitle>
+              <CardDescription>{t('display.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Dark Mode</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable system-wide dark mode
+                  <Label htmlFor="dark-mode" className="text-base">
+                    {t('display.darkMode')}
+                  </Label>
+                  <p id="dark-mode-description" className="text-sm text-muted-foreground">
+                    {t('display.darkModeDescription')}
                   </p>
                 </div>
-                <Switch />
+                <Switch id="dark-mode" aria-describedby="dark-mode-description" />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Auto-switch Theme</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Switch automatically based on system settings
+                  <Label htmlFor="automatic-theme" className="text-base">
+                    {t('display.autoTheme')}
+                  </Label>
+                  <p id="automatic-theme-description" className="text-sm text-muted-foreground">
+                    {t('display.autoThemeDescription')}
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  id="automatic-theme"
+                  aria-describedby="automatic-theme-description"
+                  defaultChecked
+                />
               </div>
             </CardContent>
             <CardFooter>
-              <Button>Save Preferences</Button>
+              <Button>{t('display.save')}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="notifications" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>
-                Configure how you receive notifications
-              </CardDescription>
+              <CardTitle>{t('notifications.title')}</CardTitle>
+              <CardDescription>{t('notifications.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive order and system notification emails
+                  <Label htmlFor="email-notifications" className="text-base">
+                    {t('notifications.email')}
+                  </Label>
+                  <p id="email-notifications-description" className="text-sm text-muted-foreground">
+                    {t('notifications.emailDescription')}
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  id="email-notifications"
+                  aria-describedby="email-notifications-description"
+                  defaultChecked
+                />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">SMS Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive SMS alerts for important events
+                  <Label htmlFor="sms-notifications" className="text-base">
+                    {t('notifications.sms')}
+                  </Label>
+                  <p id="sms-notifications-description" className="text-sm text-muted-foreground">
+                    {t('notifications.smsDescription')}
                   </p>
                 </div>
-                <Switch />
+                <Switch id="sms-notifications" aria-describedby="sms-notifications-description" />
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Browser Push</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow browser push notifications
+                  <Label htmlFor="browser-push" className="text-base">
+                    {t('notifications.browserPush')}
+                  </Label>
+                  <p id="browser-push-description" className="text-sm text-muted-foreground">
+                    {t('notifications.browserPushDescription')}
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch
+                  id="browser-push"
+                  aria-describedby="browser-push-description"
+                  defaultChecked
+                />
               </div>
             </CardContent>
             <CardFooter>
-              <Button>Update Notification Settings</Button>
+              <Button>{t('notifications.save')}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="security" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>
-                Manage account security and permissions
-              </CardDescription>
+              <CardTitle>{t('security.title')}</CardTitle>
+              <CardDescription>{t('security.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Use two-factor authentication to enhance security
+                  <Label htmlFor="two-factor" className="text-base">
+                    {t('security.twoFactor')}
+                  </Label>
+                  <p id="two-factor-description" className="text-sm text-muted-foreground">
+                    {t('security.twoFactorDescription')}
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch id="two-factor" aria-describedby="two-factor-description" defaultChecked />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+                <Label htmlFor="session-timeout">{t('security.sessionTimeout')}</Label>
                 <Input id="session-timeout" type="number" defaultValue="30" />
               </div>
-              <Button variant="outline">Change Password</Button>
+              <Button variant="outline">{t('security.changePassword')}</Button>
             </CardContent>
             <CardFooter>
-              <Button>Save Security Settings</Button>
+              <Button>{t('security.save')}</Button>
             </CardFooter>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="api" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>API Settings</CardTitle>
-              <CardDescription>
-                Manage API keys and access permissions
-              </CardDescription>
+              <CardTitle>{t('api.title')}</CardTitle>
+              <CardDescription>{t('api.description')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="api-key">API Key</Label>
-                <div className="flex items-center space-x-2">
-                  <Input id="api-key" value="sk_live_xxxxxxxxxxxxx" readOnly />
-                  <Button variant="outline" size="sm">Regenerate</Button>
+                <Label htmlFor="api-key">{t('api.apiKey')}</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="api-key"
+                    value="sk_demo_xxxxxxxxxxxxx"
+                    aria-describedby="api-key-warning"
+                    readOnly
+                  />
+                  <Button variant="outline" size="sm">
+                    {t('api.regenerate')}
+                  </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Keep your API key secure, it has full account access
+                <p id="api-key-warning" className="text-sm text-muted-foreground">
+                  {t('api.apiKeyWarning')}
                 </p>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Enable API Access</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Allow system data access via API
+                  <Label htmlFor="api-access" className="text-base">
+                    {t('api.enable')}
+                  </Label>
+                  <p id="api-access-description" className="text-sm text-muted-foreground">
+                    {t('api.enableDescription')}
                   </p>
                 </div>
-                <Switch defaultChecked />
+                <Switch id="api-access" aria-describedby="api-access-description" defaultChecked />
               </div>
             </CardContent>
             <CardFooter>
-              <Button>Save API Settings</Button>
+              <Button>{t('api.save')}</Button>
             </CardFooter>
           </Card>
         </TabsContent>

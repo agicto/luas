@@ -1,13 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { useT } from '@/i18n';
 
 /**
- * Small client island for the dashboard greeting + wall-clock.
+ * Small client island for the console greeting + wall-clock.
  * Keeps the parent page a pure Server Component.
  */
 export function GreetingClock({ name }: { name: string }) {
   const [now, setNow] = useState<Date | null>(null);
+  const locale = useLocale();
+  const t = useT('console.greeting');
 
   useEffect(() => {
     const update = () => setNow(new Date());
@@ -19,22 +23,32 @@ export function GreetingClock({ name }: { name: string }) {
     };
   }, []);
 
-  const greeting = pickGreeting(now);
-  const time = now?.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  const greetingKey = pickGreeting(now);
+  const time = now?.toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
     <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
-      {greeting}, {name}
-      {time ? <span className="ml-3 align-middle text-base font-normal text-text-muted">{time}</span> : null}
+      {t(greetingKey, { name })}
+      {time ? (
+        <>
+          {' '}
+          <span className="ml-3 align-middle text-base font-normal text-text-muted">{time}</span>
+        </>
+      ) : null}
     </h1>
   );
 }
 
-function pickGreeting(now: Date | null): string {
-  if (!now) return 'Hello';
+type GreetingKey = 'hello' | 'late' | 'morning' | 'afternoon' | 'evening';
+
+function pickGreeting(now: Date | null): GreetingKey {
+  if (!now) return 'hello';
   const h = now.getHours();
-  if (h < 5) return 'Up late';
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 5) return 'late';
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'evening';
 }

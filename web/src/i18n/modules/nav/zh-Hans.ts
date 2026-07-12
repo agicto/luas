@@ -1,7 +1,7 @@
 // Nav translations - Simplified Chinese
 const messages = {
   home: '首页',
-  dashboard: '平台工作台',
+  console: '控制台',
   settings: '设置',
   profile: '个人资料',
   analytics: '数据分析',

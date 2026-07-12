@@ -35,6 +35,10 @@ const messages = {
   datePlaceholder: '选择日期',
   toggleLanguage: '切换语言',
   selectLanguage: '选择语言',
+  toggleTheme: '切换主题',
+  themeLight: '浅色',
+  themeDark: '深色',
+  themeSystem: '跟随系统',
 };
 
 export default messages;

@@ -27,6 +27,14 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/nav/zh-Hans'),
     'en-US': () => import('./modules/nav/en-US'),
   },
+  site: {
+    'zh-Hans': () => import('./modules/site/zh-Hans'),
+    'en-US': () => import('./modules/site/en-US'),
+  },
+  console: {
+    'zh-Hans': () => import('./modules/console/zh-Hans'),
+    'en-US': () => import('./modules/console/en-US'),
+  },
   settings: {
     'zh-Hans': () => import('./modules/settings/zh-Hans'),
     'en-US': () => import('./modules/settings/en-US'),
@@ -38,10 +46,6 @@ const moduleRegistry: ModuleRegistry = {
   metadata: {
     'zh-Hans': () => import('./modules/metadata/zh-Hans'),
     'en-US': () => import('./modules/metadata/en-US'),
-  },
-  dashboard: {
-    'zh-Hans': () => import('./modules/dashboard/zh-Hans'),
-    'en-US': () => import('./modules/dashboard/en-US'),
   },
   test: {
     'zh-Hans': () => import('./modules/test/zh-Hans'),

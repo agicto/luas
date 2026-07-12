@@ -91,7 +91,7 @@ Server translations can use the complete request message tree. Client Components
 
 - `global`: `common`, `errors`
 - `auth`: `auth`
-- `console`: `auth`, `nav`
+- `console`: `auth`, `nav`, `console`
 - `i18nTest`: `test`
 
 The canonical registry is `src/i18n/client-message-namespaces.ts`. Route layouts call `selectMessageNamespaces()` and add those messages with `RouteMessagesProvider`. When adding a client-side `useT` namespace, update the nearest route scope and `src/test/i18n-client-messages.test.tsx`. Never pass the full `getMessages()` result back to the root `NextIntlClientProvider`.
@@ -109,10 +109,11 @@ Translations are organized into functional modules located in `src/i18n/modules/
 | `common` | Common UI text (buttons, labels, messages) |
 | `auth` | Authentication-related text |
 | `nav` | Navigation labels |
+| `site` | Public scaffold site copy |
+| `console` | Replaceable authenticated console copy |
 | `settings` | Settings page translations |
 | `errors` | Error messages |
 | `metadata` | Page titles and SEO metadata |
-| `dashboard` | Dashboard-specific translations |
 | `test` | Testing translations |
 
 #### Supported Locales
@@ -236,7 +237,7 @@ The source of truth is `src/config/env.ts`; locale values are constrained by `sr
 Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supported `locale` cookie values win, then `Accept-Language`, then the configured default.
 
 > [!IMPORTANT]
-> **Zero Hardcoded Strings**: All user-facing text MUST use i18n hooks. Never hardcode text directly in JSX.
+> **Localized Core Copy**: Root metadata, `(site)`, `(auth)`, `(protected)/(console)`, and their shared shell components must resolve user-facing copy through `getT` or `useT`. Prefer server translation when possible. Exact brand names, technical identifiers, and `<code>` content are narrow exceptions. `devtools`, `example`, and the dependency-light `global-error.tsx` fallback are outside the core guard by design. Run `pnpm lint:i18n-copy`; `pnpm lint` includes it.
 
 > [!TIP]
 > For comprehensive examples and detailed API documentation, refer to `src/i18n/README.md`.

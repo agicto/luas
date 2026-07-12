@@ -22,6 +22,16 @@ the verification that proves it is still safe to keep, delete, or replace.
 | `example` | `web/src/features/example`, `web/src/app/api/example`, example docs under `.agents/skills/**/examples` | Disposable teaching or scaffold demonstration code. | Delete or replace with product features. | `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`; doc link check |
 | `product-specific behavior` | Not allowed in the Luas source scaffold. | Belongs only in downstream app mode. | Move to the downstream repository or keep it out of the Luas commit. | `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:zgiai/luas.git --pattern "<product-identifier>"` |
 
+## Localization Ownership
+
+Formal Web copy in the public site, auth starter, replaceable console, root metadata,
+and their shared shell components is part of the governed scaffold experience. It must
+use the i18n message tree and pass `cd web && pnpm lint:i18n-copy`. Exact brand names,
+technical identifiers, and `<code>` content are narrow literal exceptions. `devtools`
+and `example` remain intentionally disposable and are excluded from this core-copy
+guard; the dependency-light `global-error.tsx` fallback is also excluded so it can
+render when the normal root runtime fails.
+
 ## Downstream Extraction Rules
 
 1. Start from repository identity: run `pwd`, `git remote -v`, and `git status --short --branch`.

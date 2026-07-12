@@ -48,7 +48,7 @@ For detailed component contracts (Named Exports, RSC First, Props Typing, CAS an
 - Hooks: `use-kebab-case.ts` (e.g., `use-mobile.ts`)
 
 > [!IMPORTANT]
-> **Zero Hardcoded Strings**: All user-facing text must use the `useT` hook for i18n.
+> **Localized Core Copy**: Formal site, auth, and console surfaces must use `getT` or `useT` for user-facing copy. Follow the i18n handler's core-copy boundary for exact brands, technical identifiers, disposable devtools/examples, and the root fallback. Run `pnpm lint:i18n-copy` before completion.
 
 ## Related Skills
 

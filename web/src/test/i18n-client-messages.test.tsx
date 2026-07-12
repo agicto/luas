@@ -26,7 +26,7 @@ describe('client i18n message boundaries', () => {
     expect(CLIENT_MESSAGE_NAMESPACES).toEqual({
       global: ['common', 'errors'],
       auth: ['auth'],
-      console: ['auth', 'nav'],
+      console: ['auth', 'nav', 'console'],
       i18nTest: ['test'],
     });
   });

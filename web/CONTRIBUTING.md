@@ -127,7 +127,7 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 3. Press Enter key instead of clicking Submit button
 4. Nothing happens
 
-**Expected behavior**: Form should submit and redirect to dashboard
+**Expected behavior**: Form should submit and redirect to the console
 
 **Actual behavior**: Form doesn't submit, no error message shown
 
@@ -156,7 +156,7 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── (auth)/            # Authentication pages
 │   ├── (site)/            # Public pages
-│   └── console/           # Admin dashboard
+│   └── console/           # Replaceable authenticated console
 ├── components/            # Reusable components
 │   └── ui/               # UI component library
 ├── hooks/                # Custom React hooks
@@ -221,4 +221,4 @@ This document was adapted from the open-source contribution guidelines for [Face
 
 ---
 
-Thank you for contributing to Luas Web! 🚀 
+Thank you for contributing to Luas Web! 🚀

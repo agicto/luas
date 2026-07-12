@@ -37,6 +37,10 @@ const messages: CommonMessages = {
   datePlaceholder: 'Select date',
   toggleLanguage: 'Toggle language',
   selectLanguage: 'Select language',
+  toggleTheme: 'Toggle theme',
+  themeLight: 'Light',
+  themeDark: 'Dark',
+  themeSystem: 'System',
 };
 
 export default messages;

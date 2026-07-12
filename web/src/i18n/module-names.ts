@@ -2,10 +2,11 @@ export const AVAILABLE_MODULES = [
   'common',
   'auth',
   'nav',
+  'site',
+  'console',
   'settings',
   'errors',
   'metadata',
-  'dashboard',
   'test',
 ] as const;
 

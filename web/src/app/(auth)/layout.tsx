@@ -140,7 +140,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
           
           {/* Footer */}
           <div className="relative shrink-0 py-5 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Luas. {t('allRightsReserved')}.
+            {t('copyright', { year: new Date().getFullYear() })}
           </div>
         </div>
       </RouteMessagesProvider>

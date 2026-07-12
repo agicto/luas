@@ -86,7 +86,7 @@ export function LoginForm() {
         </div>
         
         <Button variant="outline" className="w-full" type="button" disabled>
-          Github
+          GitHub
         </Button>
       </CardContent>
       <CardFooter className="px-0 flex flex-wrap items-center justify-center gap-1.5 text-sm text-muted-foreground mt-2">
