@@ -1,6 +1,7 @@
 import type { ConsoleMessages } from './zh-Hans';
+import type { LocaleMessageShape } from '../../locale-message-shape';
 
-const messages: ConsoleMessages = {
+const messages = {
   notifications: 'Notifications',
   profile: 'Profile',
   returnToSite: 'Return to site',
@@ -42,6 +43,6 @@ const messages: ConsoleMessages = {
       featuresAfter: '.',
     },
   },
-};
+} as const satisfies LocaleMessageShape<ConsoleMessages>;
 
 export default messages;

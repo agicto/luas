@@ -1,6 +1,7 @@
 import type { SiteMessages } from './zh-Hans';
+import type { LocaleMessageShape } from '../../locale-message-shape';
 
-const messages: SiteMessages = {
+const messages = {
   nav: {
     home: 'Home',
     console: 'Console',
@@ -53,6 +54,6 @@ const messages: SiteMessages = {
     primaryAction: 'Start for free',
     githubAction: 'View on GitHub',
   },
-};
+} as const satisfies LocaleMessageShape<SiteMessages>;
 
 export default messages;

@@ -46,7 +46,7 @@ const messages = {
     primaryAction: '免费开始',
     githubAction: '在 GitHub 查看',
   },
-};
+} as const;
 
 export default messages;
 export type SiteMessages = typeof messages;

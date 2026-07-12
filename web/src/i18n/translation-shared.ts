@@ -1,57 +1,93 @@
 import { AVAILABLE_MODULES, type ModuleName } from './module-names';
-import type { Messages } from './modules';
+import type { MessageSchema } from './modules';
+import type { ICUVariableNames } from './locale-message-shape';
 
-export type TranslationValues = Record<string, string | number | Date>;
+export type TranslationValue = string | number | Date;
+export type TranslationValues = Record<string, TranslationValue>;
 export type BaseTranslator = (key: string, values?: TranslationValues) => string;
 
 type StringKeyOf<T> = Extract<keyof T, string>;
 
-type TranslationLeafPaths<T> = T extends Record<string, unknown>
+type TranslationLeafPaths<T> = T extends object
   ? {
       [K in StringKeyOf<T>]: T[K] extends string
         ? K
-        : T[K] extends Record<string, unknown>
+        : T[K] extends object
           ? `${K}.${TranslationLeafPaths<T[K]> & string}`
           : never;
     }[StringKeyOf<T>]
   : never;
 
-type TranslationScopePaths<T> = T extends Record<string, unknown>
+type TranslationScopePaths<T> = T extends object
   ? {
-      [K in StringKeyOf<T>]: T[K] extends Record<string, unknown>
+      [K in StringKeyOf<T>]: T[K] extends object
         ? K | `${K}.${TranslationScopePaths<T[K]> & string}`
         : never;
     }[StringKeyOf<T>]
   : never;
 
-type ValueAtPath<T, Path extends string> =
-  Path extends `${infer Head}.${infer Tail}`
-    ? Head extends keyof T
-      ? ValueAtPath<T[Head], Tail>
-      : never
-    : Path extends keyof T
-      ? T[Path]
-      : never;
+type ValueAtPath<T, Path extends string> = Path extends `${infer Head}.${infer Tail}`
+  ? Head extends keyof T
+    ? ValueAtPath<T[Head], Tail>
+    : never
+  : Path extends keyof T
+    ? T[Path]
+    : never;
 
-export type AllTranslationKeys = TranslationLeafPaths<Messages>;
-export type AllScopePaths = TranslationScopePaths<Messages>;
-export type ScopedTranslationKeys<P extends AllScopePaths> =
-  TranslationLeafPaths<ValueAtPath<Messages, P>>;
+export type AllTranslationKeys = TranslationLeafPaths<MessageSchema>;
+export type AllScopePaths = TranslationScopePaths<MessageSchema>;
+export type ScopedTranslationKeys<P extends AllScopePaths> = TranslationLeafPaths<
+  ValueAtPath<MessageSchema, P>
+>;
 
-export type ScopedTranslations<P extends AllScopePaths> = (
-  key: ScopedTranslationKeys<P>,
-  values?: TranslationValues
+export type TranslationVariables<K extends AllTranslationKeys> =
+  ValueAtPath<MessageSchema, K> extends infer Message extends string
+    ? [ICUVariableNames<Message>] extends [never]
+      ? never
+      : { [Name in ICUVariableNames<Message>]: TranslationValue }
+    : never;
+
+type ExactTranslationVariables<
+  K extends AllTranslationKeys,
+  Actual extends TranslationVariables<K>,
+> = Actual & Record<Exclude<keyof Actual, keyof TranslationVariables<K>>, never>;
+
+type TranslationArguments<
+  K extends AllTranslationKeys,
+  Actual extends TranslationVariables<K> = TranslationVariables<K>,
+> = [TranslationVariables<K>] extends [never] ? [] : [values: ExactTranslationVariables<K, Actual>];
+
+type ScopedTranslationKey<P extends AllScopePaths, K extends ScopedTranslationKeys<P>> = Extract<
+  `${P}.${K}`,
+  AllTranslationKeys
+>;
+
+export type ScopedTranslations<P extends AllScopePaths> = <
+  K extends ScopedTranslationKeys<P>,
+  Actual extends TranslationVariables<ScopedTranslationKey<P, K>> = TranslationVariables<
+    ScopedTranslationKey<P, K>
+  >,
+>(
+  key: K,
+  ...args: TranslationArguments<ScopedTranslationKey<P, K>, Actual>
 ) => string;
 
 export type Translators = {
-  [K in ModuleName]: (
-    key: TranslationLeafPaths<Messages[K]>,
-    values?: TranslationValues
+  [Namespace in ModuleName]: <
+    K extends TranslationLeafPaths<MessageSchema[Namespace]>,
+    FullKey extends AllTranslationKeys = Extract<`${Namespace}.${K}`, AllTranslationKeys>,
+    Actual extends TranslationVariables<FullKey> = TranslationVariables<FullKey>,
+  >(
+    key: K,
+    ...args: TranslationArguments<FullKey, Actual>
   ) => string;
 };
 
 export type UnifiedTranslations = {
-  (key: AllTranslationKeys, values?: TranslationValues): string;
+  <K extends AllTranslationKeys, Actual extends TranslationVariables<K> = TranslationVariables<K>>(
+    key: K,
+    ...args: TranslationArguments<K, Actual>
+  ): string;
 } & Translators;
 
 type ScopedTranslatorMap = Translators;
@@ -62,7 +98,7 @@ function withScope(scope: string, key: string): string {
 
 function createScopedTranslatorMap(rootT: BaseTranslator): ScopedTranslatorMap {
   return Object.fromEntries(
-    AVAILABLE_MODULES.map((moduleName) => [
+    AVAILABLE_MODULES.map(moduleName => [
       moduleName,
       (key: string, values?: TranslationValues) => rootT(withScope(moduleName, key), values),
     ])
@@ -79,8 +115,7 @@ export function createTranslator(
   scope?: AllScopePaths
 ): UnifiedTranslations | ScopedTranslations<AllScopePaths> {
   if (scope) {
-    return (key: string, values?: TranslationValues) =>
-      rootT(withScope(scope, key), values);
+    return (key: string, values?: TranslationValues) => rootT(withScope(scope, key), values);
   }
 
   return Object.assign(

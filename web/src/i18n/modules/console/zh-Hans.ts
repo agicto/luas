@@ -39,7 +39,7 @@ const messages = {
       featuresAfter: '下的新路由公开它们。',
     },
   },
-};
+} as const;
 
 export default messages;
 export type ConsoleMessages = typeof messages;

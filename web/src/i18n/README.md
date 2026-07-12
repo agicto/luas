@@ -8,14 +8,16 @@ Internationalization (i18n) module using `next-intl` with TypeScript message fil
 
 The i18n system derives key and scope safety from the message tree through:
 
+- **`MessageSchema`**: Canonical literal schema derived from the `zh-Hans` base locale
 - **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
 - **`Messages`**: Root type containing all module namespaces and their translations
 - **`AllScopePaths`**: Union of valid object paths accepted by scoped translators
 - **`ScopedTranslationKeys<P>`**: Relative translatable leaf keys below scope `P`
 - **`ScopedTranslations<P>`**: Translator constrained to `ScopedTranslationKeys<P>`
+- **`TranslationVariables<K>`**: Exact ICU variable object derived from the base-locale message literal at `K`
 - **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
 
-Scope paths and translation keys are separate unions derived from `Messages`. Object nodes such as `test.level1` are valid scopes but cannot be translated directly; leaf paths such as `test.level1.title` are valid translation keys but cannot be used as scopes.
+Scope paths, translation keys, and interpolation variables are derived from `MessageSchema`. Object nodes such as `test.level1` are valid scopes but cannot be translated directly; leaf paths such as `test.level1.title` are valid translation keys but cannot be used as scopes.
 
 ## Structure
 
@@ -27,6 +29,7 @@ i18n/
 ├── translations.ts     # Client-only useT implementation
 ├── server.ts           # Server-only getT implementation
 ├── translation-shared.ts # Message-tree-derived types and pure helpers
+├── locale-message-shape.ts # Locale shape and ICU variable parity types
 ├── module-names.ts     # Canonical translation module names
 ├── loader.ts           # Dynamic module loading
 ├── client-message-namespaces.ts # Client namespace ownership by route
@@ -57,16 +60,18 @@ Each module contains:
 const messages = {
   loading: '加载中...',
   newKey: '新的键', // Add here
-};
+} as const;
 ```
 
 2. Add to other locale files (TypeScript will enforce this):
 ```typescript
 // modules/common/en-US.ts
-const messages: CommonMessages = {
+import type { LocaleMessageShape } from '../../locale-message-shape';
+
+const messages = {
   loading: 'Loading...',
   newKey: 'New Key', // Must add - enforced by type
-};
+} as const satisfies LocaleMessageShape<CommonMessages>;
 ```
 
 ## Adding a New Module
@@ -77,7 +82,7 @@ const messages: CommonMessages = {
 const messages = {
   key1: '键1',
   key2: '键2',
-};
+} as const;
 export default messages;
 export type ModuleNameMessages = typeof messages;
 ```
@@ -85,10 +90,12 @@ export type ModuleNameMessages = typeof messages;
 3. Create `en-US.ts`:
 ```typescript
 import type { ModuleNameMessages } from './zh-Hans';
-const messages: ModuleNameMessages = {
+import type { LocaleMessageShape } from '../../locale-message-shape';
+
+const messages = {
   key1: 'Key 1',
   key2: 'Key 2',
-};
+} as const satisfies LocaleMessageShape<ModuleNameMessages>;
 export default messages;
 ```
 
@@ -129,15 +136,9 @@ export const localeMapping: Record<string, Locale> = {
 };
 ```
 
-2. Update `modules/index.ts`:
-```typescript
-const localeToExport: Record<Locale, 'zhHans' | 'enUS' | 'jaJP'> = {
-  // ...existing
-  'ja-JP': 'jaJP',
-};
-```
-
-3. Add `ja-JP.ts` to each module implementing the base type.
+2. Add `ja-JP.ts` to every module using `as const satisfies LocaleMessageShape<BaseMessages>` and export its `typeof messages` type.
+3. Add a type-only `ja-JP` schema entry to `LocaleMessageSchemas` in `modules/index.ts`. The coverage guard fails until every configured locale is registered, and the parity guard fails if any ICU variable name differs from the base locale.
+4. Add each `ja-JP` dynamic import to `moduleRegistry` in `loader.ts`. Its `Record<Locale, ModuleLoader>` contract fails until every module covers the new locale.
 
 ## Environment Variables
 
@@ -276,6 +277,11 @@ const t = useT();
 t('common.greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
 // or
 t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+
+// Compile-time errors: missing, misspelled, or extra variables.
+t('common.greeting');
+t('common.greeting', { user: '张三' });
+t('common.greeting', { name: '张三', tenant: 'Luas' });
 ```
 
 ### Switching Locale Programmatically
@@ -309,9 +315,11 @@ Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supporte
 
 ## Type Safety
 
-- Base locale (`zh-Hans.ts`) defines the message structure
-- Other locales must implement the same structure (enforced by TypeScript)
+- Base locale (`zh-Hans.ts`) defines the literal message schema with `as const`
+- Other locales preserve literals with `as const satisfies LocaleMessageShape<BaseMessages>`
+- Configured locale coverage and ICU variable-name parity are enforced in `modules/index.ts`
 - `AllTranslationKeys` contains only leaf messages, never object nodes
 - `AllScopePaths` contains only object paths, never leaf messages
 - `ScopedTranslations<P>` accepts only relative leaf keys below `P`
-- Missing or misplaced keys cause compile-time errors and are guarded by `src/test/i18n-types.test.ts`
+- Variable-bearing messages require exactly their declared ICU arguments; messages without variables reject a values object
+- Missing or misplaced keys, locale drift, and interpolation mistakes are guarded by `src/test/i18n-types.test.ts`

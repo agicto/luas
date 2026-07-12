@@ -57,7 +57,7 @@ const messages = {
     enableDescription: '允许通过 API 访问系统数据。',
     save: '保存 API 设置',
   },
-};
+} as const;
 
 export default messages;
 export type SettingsMessages = typeof messages;

@@ -5,7 +5,7 @@ const messages = {
   networkError: '网络错误，请检查网络连接',
   unauthorized: '请登录后继续',
   forbidden: '您没有权限访问此资源',
-};
+} as const;
 
 export default messages;
 

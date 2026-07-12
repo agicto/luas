@@ -173,10 +173,12 @@ The project uses `next-intl` with a unified translation pattern that supports bo
 #### Type System
 
 The i18n system derives key and scope safety from the message tree through:
+- **`MessageSchema`**: Canonical literal schema derived from the `zh-Hans` base locale.
 - **`AllTranslationKeys`**: Union of translatable leaf paths such as `auth.login`; object nodes are excluded.
 - **`AllScopePaths`**: Union of valid object paths such as `test.level1`; leaf paths are excluded.
 - **`ScopedTranslationKeys<P>`**: Relative leaf keys available below scope `P`.
 - **`ScopedTranslations<P>`**: Translator whose key parameter is derived from `ScopedTranslationKeys<P>`.
+- **`TranslationVariables<K>`**: Exact ICU variable names derived from the base-locale literal at key `K`.
 - **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
 
 #### Client Components
@@ -240,6 +242,7 @@ function SettingsPage() {
 | `src/i18n/translations.ts` | Client-only `useT` implementation |
 | `src/i18n/server.ts` | Server-only `getT` implementation |
 | `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and pure facade construction |
+| `src/i18n/locale-message-shape.ts` | Locale structure and ICU variable-parity type guards |
 | `src/i18n/module-names.ts` | Canonical translation module names |
 | `src/i18n/loader.ts` | Dynamic translation namespace loading |
 | `src/i18n/client-message-namespaces.ts` | Global and route-owned client namespace registry |
@@ -248,8 +251,7 @@ function SettingsPage() {
 | `src/i18n/modules/index.ts` | Static type generation from translation modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
 
-**Type Safety:** Invalid keys will cause TypeScript errors at compile time.
-`src/test/i18n-types.test.ts` guards valid scopes, leaf-only global keys, relative scoped keys, and runtime prefix composition.
+**Type Safety:** Invalid keys, missing or extra ICU variables, and locale placeholder drift cause TypeScript errors. Keep base-locale messages `as const`; other locales must use `as const satisfies LocaleMessageShape<BaseMessages>` so translated values stay literal while structure remains aligned. `src/test/i18n-types.test.ts` guards locale coverage, variable parity, valid scopes, leaf-only global keys, exact interpolation arguments, and runtime prefix composition.
 
 #### Core Copy Boundary
 

@@ -16,12 +16,13 @@ This skill provides comprehensive instructions for implementing and maintaining 
 The i18n system derives key and scope safety from the message tree through:
 
 - **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
-- **`Messages`**: Root type containing all module namespaces and their translations
+- **`MessageSchema`**: Literal root schema derived from the `zh-Hans` base locale
 - **`AllScopePaths`**: Union of object paths that can be passed to `useT` / `getT`
 - **`ScopedTranslationKeys<P>`**: Relative translatable leaf keys below scope `P`
 - **`ScopedTranslations<P>`**: Translator constrained to `ScopedTranslationKeys<P>`
+- **`TranslationVariables<K>`**: Exact ICU variables derived from the message literal at `K`
 
-Object paths and leaf paths are intentionally distinct. `test.level1` is a valid scope but not a translatable key; `test.level1.title` is a translatable key but not a scope. All unions are derived from `Messages`, so nested message changes update the public types automatically.
+Object paths and leaf paths are intentionally distinct. `test.level1` is a valid scope but not a translatable key; `test.level1.title` is a translatable key but not a scope. Keys, scopes, and interpolation variables are derived from `MessageSchema`, so nested message changes update the public types automatically.
 
 ## Guidelines
 
@@ -143,7 +144,7 @@ const messages = {
   nested: {
     item: '嵌套项目',
   },
-};
+} as const;
 
 export default messages;
 export type ModuleNameMessages = typeof messages;
@@ -153,14 +154,15 @@ export type ModuleNameMessages = typeof messages;
 
 ```typescript
 import type { ModuleNameMessages } from './zh-Hans';
+import type { LocaleMessageShape } from '../../locale-message-shape';
 
-const messages: ModuleNameMessages = {
+const messages = {
   title: 'Title',
   description: 'Description',
   nested: {
     item: 'Nested Item',
   },
-};
+} as const satisfies LocaleMessageShape<ModuleNameMessages>;
 
 export default messages;
 ```
@@ -171,8 +173,8 @@ When adding a new page or feature:
 
 1. Identify the relevant module in `src/i18n/modules/`.
 2. Add the translation key and its values to `zh-Hans.ts` first (this defines the type).
-3. Add the same key to `en-US.ts` (TypeScript will enforce this).
-4. Ensure the keys are consistent across all locale files to maintain type safety.
+3. Add the same key to `en-US.ts`; `LocaleMessageShape` enforces the structure without widening translated literals.
+4. Preserve the same ICU variable names in every locale; `modules/index.ts` enforces locale coverage and placeholder parity.
 
 ### 5. Adding a New Module
 
@@ -196,6 +198,8 @@ t('common.greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
 ```
 
+The values object is key-specific. Missing, misspelled, or extra variables fail type checking, including extra properties passed through a previously declared object. Keys without ICU variables do not accept a values object.
+
 ## Usage Scenarios
 
 | Task | Action |
@@ -216,6 +220,7 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/translations.ts` | Client-only `useT` implementation |
 | `src/i18n/server.ts` | Server-only `getT` implementation |
 | `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and facade construction |
+| `src/i18n/locale-message-shape.ts` | Locale structure and ICU variable-parity type guards |
 | `src/i18n/module-names.ts` | Canonical `AVAILABLE_MODULES` declaration |
 | `src/i18n/loader.ts` | Dynamic module loading |
 | `src/i18n/client-message-namespaces.ts` | Canonical client namespace ownership |
@@ -223,7 +228,7 @@ t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来�
 | `src/i18n/route-messages-provider.tsx` | Additive route-level client messages |
 | `src/i18n/modules/index.ts` | Static type generation from modules |
 | `src/i18n/README.md` | Detailed documentation with examples |
-| `src/test/i18n-types.test.ts` | Compile-time scope/key contract and runtime composition |
+| `src/test/i18n-types.test.ts` | Compile-time locale/key/variable contract and runtime composition |
 
 ## Environment Variables
 

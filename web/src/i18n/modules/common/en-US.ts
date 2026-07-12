@@ -1,7 +1,8 @@
 // Common translations - English (US)
 import type { CommonMessages } from './zh-Hans';
+import type { LocaleMessageShape } from '../../locale-message-shape';
 
-const messages: CommonMessages = {
+const messages = {
   loading: 'Loading...',
   error: 'An error occurred',
   retry: 'Retry',
@@ -41,6 +42,6 @@ const messages: CommonMessages = {
   themeLight: 'Light',
   themeDark: 'Dark',
   themeSystem: 'System',
-};
+} as const satisfies LocaleMessageShape<CommonMessages>;
 
 export default messages;

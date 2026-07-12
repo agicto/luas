@@ -14,6 +14,8 @@ export type {
   AllTranslationKeys,
   ScopedTranslationKeys,
   ScopedTranslations,
+  TranslationValue,
+  TranslationVariables,
   Translators,
   UnifiedTranslations,
 } from './translation-shared';

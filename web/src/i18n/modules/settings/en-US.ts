@@ -1,6 +1,7 @@
 import type { SettingsMessages } from './zh-Hans';
+import type { LocaleMessageShape } from '../../locale-message-shape';
 
-const messages: SettingsMessages = {
+const messages = {
   title: 'Settings',
   tabs: {
     general: 'General settings',
@@ -59,6 +60,6 @@ const messages: SettingsMessages = {
     enableDescription: 'Allow system data to be accessed through the API.',
     save: 'Save API settings',
   },
-};
+} as const satisfies LocaleMessageShape<SettingsMessages>;
 
 export default messages;

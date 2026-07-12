@@ -39,7 +39,7 @@ const messages = {
   themeLight: '浅色',
   themeDark: '深色',
   themeSystem: '跟随系统',
-};
+} as const;
 
 export default messages;
 

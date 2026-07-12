@@ -96,7 +96,7 @@ const messages = {
   
   // Footer
   copyright: '© {year} Luas。保留所有权利。',
-};
+} as const;
 
 export default messages;
 
