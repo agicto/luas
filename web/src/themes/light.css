@@ -21,7 +21,7 @@
   --secondary-foreground: var(--neutral-800);
   
   --muted: var(--neutral-100);
-  --muted-foreground: var(--neutral-500);
+  --muted-foreground: var(--neutral-600);
   
   --accent: var(--neutral-100);
   --accent-foreground: var(--neutral-800);
@@ -46,8 +46,8 @@
 
   /* Text & Foregrounds */
   --text-main: var(--neutral-900);
-  --text-subtle: var(--neutral-600);
-  --text-muted: var(--neutral-400);
+  --text-subtle: var(--neutral-700);
+  --text-muted: var(--neutral-600);
   --text-on-brand: var(--neutral-0);
 
   /* Borders & Dividers */
@@ -61,16 +61,16 @@
   --brand-strong: var(--blue-700);
   
   /* State Colors */
-  --success: var(--green-500);
+  --success: var(--green-700);
   --success-subtle: oklch(from var(--success) l c h / 0.1);
   
-  --warning: var(--yellow-500);
+  --warning: var(--yellow-800);
   --warning-subtle: oklch(from var(--warning) l c h / 0.1);
   
   --error: var(--red-500);
   --error-subtle: oklch(from var(--error) l c h / 0.1);
   
-  --info: var(--sky-500);
+  --info: var(--sky-700);
   --info-subtle: oklch(from var(--info) l c h / 0.1);
 
   --highlight: var(--blue-500);

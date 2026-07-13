@@ -194,7 +194,7 @@ export function DatePicker({
               'flex h-9 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1 text-left text-sm font-normal shadow-xs transition-all input-depth hover:border-border-strong focus:border-primary focus:outline-hidden',
               !selectedDate && 'text-muted-foreground',
               controlA11y.isInvalid &&
-                'border-destructive text-destructive focus:border-destructive',
+                'border-destructive text-error focus:border-destructive',
               className
             )}
           >
@@ -205,7 +205,7 @@ export function DatePicker({
               aria-hidden="true"
               className={cn(
                 'ml-2 size-4 shrink-0 opacity-50',
-                controlA11y.isInvalid && 'text-destructive opacity-100'
+                controlA11y.isInvalid && 'text-error opacity-100'
               )}
             />
           </button>

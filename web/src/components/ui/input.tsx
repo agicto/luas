@@ -24,7 +24,7 @@ const inputVariants = cva(
         filled: "border border-transparent bg-muted/30 hover:bg-muted/50 focus-visible:bg-background focus-visible:border-primary focus-visible:shadow-sm",
       },
       error: {
-        true: "border-destructive focus-visible:border-destructive text-destructive placeholder:text-destructive/50",
+        true: "border-destructive focus-visible:border-destructive text-error placeholder:text-muted-foreground",
       }
     },
     defaultVariants: {

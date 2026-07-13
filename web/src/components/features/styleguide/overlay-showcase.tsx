@@ -82,7 +82,7 @@ export function OverlayShowcase() {
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                <DropdownMenuItem className="text-error focus:bg-destructive/10 focus:text-error">
                   <LogOutIcon className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                   <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

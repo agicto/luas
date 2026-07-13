@@ -89,7 +89,7 @@ export default function ConsoleLayout({
                 className="h-9 w-9 rounded-full overflow-hidden border border-border/50 hover:border-primary/50 transition-colors"
               >
                 <Avatar className="h-full w-full">
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage src="https://github.com/shadcn.png" alt="" />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {user?.name
                       ?.split(' ')
@@ -114,7 +114,7 @@ export default function ConsoleLayout({
               </DropdownMenuItem>
               <div className="h-px bg-border/50 my-1" />
               <DropdownMenuItem
-                className="rounded-lg cursor-pointer text-destructive focus:bg-destructive/10"
+                className="rounded-lg cursor-pointer text-error focus:bg-destructive/10"
                 onSelect={(event) => {
                   event.preventDefault();
                   logout();

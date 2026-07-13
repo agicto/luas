@@ -63,7 +63,7 @@ export function StatCard({
               <span
                 className={cn(
                   "flex items-center gap-0.5 text-xs font-medium",
-                  trend.isPositive ? "text-success" : "text-destructive"
+                  trend.isPositive ? "text-success" : "text-error"
                 )}
               >
                 {trend.isPositive ? (

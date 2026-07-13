@@ -1,3 +1,5 @@
+"use client"
+
 import { 
   ColorPicker,
   Input, 
@@ -50,8 +52,8 @@ export function FormShowcase() {
             </div>
 
             <div className="grid gap-2 pt-4 border-t">
-              <Label>Search Input (Pill)</Label>
-              <SearchInput placeholder="Quick search components..." />
+              <Label htmlFor="styleguide-search">Search Input (Pill)</Label>
+              <SearchInput id="styleguide-search" placeholder="Quick search components..." />
             </div>
 
             <div className="grid gap-2">
@@ -74,23 +76,23 @@ export function FormShowcase() {
           <div className="grid gap-6 p-6 border rounded-xl bg-card">
             <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label>Outline Variant (Default)</Label>
-                <Input placeholder="Standard outline input" />
+                <Label htmlFor="styleguide-outline">Outline Variant (Default)</Label>
+                <Input id="styleguide-outline" placeholder="Standard outline input" />
               </div>
               <div className="grid gap-2">
-                <Label>Filled Variant</Label>
-                <Input variant="filled" placeholder="Subtle filled background" />
+                <Label htmlFor="styleguide-filled">Filled Variant</Label>
+                <Input id="styleguide-filled" variant="filled" placeholder="Subtle filled background" />
               </div>
             </div>
 
             <div className="grid gap-4 pt-4 border-t">
               <div className="grid gap-2">
-                <Label>Textarea Outline</Label>
-                <Textarea placeholder="Multi-line input support..." />
+                <Label htmlFor="styleguide-textarea">Textarea Outline</Label>
+                <Textarea id="styleguide-textarea" placeholder="Multi-line input support..." />
               </div>
               <div className="grid gap-2">
-                <Label>Textarea Filled</Label>
-                <Textarea variant="filled" placeholder="Filled background textarea..." />
+                <Label htmlFor="styleguide-textarea-filled">Textarea Filled</Label>
+                <Textarea id="styleguide-textarea-filled" variant="filled" placeholder="Filled background textarea..." />
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -110,18 +112,18 @@ export function FormShowcase() {
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-destructive">Error State</Label>
-              <Input aria-invalid="true" placeholder="Error field..." />
-              <p className="text-xs text-destructive">Invalidated border and focus-ring colors.</p>
+              <Label htmlFor="styleguide-error" className="text-error">Error State</Label>
+              <Input id="styleguide-error" aria-invalid="true" aria-describedby="styleguide-error-description" placeholder="Error field..." />
+              <p id="styleguide-error-description" className="text-xs text-error">Invalidated border and focus-ring colors.</p>
             </div>
 
             <div className="grid gap-2">
-              <Label className="text-destructive">Textarea Error State</Label>
-              <Textarea error errorText="This field is required" placeholder="Error state with message..." />
+              <Label htmlFor="styleguide-textarea-error" className="text-error">Textarea Error State</Label>
+              <Textarea id="styleguide-textarea-error" error errorText="This field is required" placeholder="Error state with message..." />
             </div>
 
             <div className="space-y-4 pt-4 border-t">
-              <Label>Selection Toggles</Label>
+              <p className="text-sm font-medium">Selection Toggles</p>
               <div className="flex flex-wrap gap-4">
                 <Toggle aria-label="Toggle italic" className="interactive-subtle">
                   <Italic className="h-4 w-4" />

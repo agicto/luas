@@ -42,7 +42,7 @@ export function FormControlError({ className, ...props }: React.ComponentProps<'
       data-slot="form-control-error"
       aria-live="polite"
       className={cn(
-        'mt-1 text-xs font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-200',
+        'mt-1 text-xs font-medium text-error animate-in fade-in slide-in-from-top-1 duration-200',
         className
       )}
       {...props}

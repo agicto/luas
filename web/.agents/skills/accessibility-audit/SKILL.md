@@ -43,6 +43,7 @@ Skip for pure logic / data-layer changes with no rendered output.
 
 - [ ] Use the right element first: `<button>` for actions, `<a>` for navigation, `<input>` for input. Never `<div onClick>` for an action.
 - [ ] Headings form a single outline: one `<h1>` per page, no skipped levels.
+- [ ] Shared title primitives do not hardcode a heading level; `AlertTitle` is a non-heading container so the page owns its outline.
 - [ ] Lists use `<ul>` / `<ol>` / `<li>`.
 - [ ] Forms wrap controls in `<label>` or use `aria-labelledby`. Every input has an accessible name.
 - [ ] Landmarks exist: `<header>`, `<nav>`, `<main>`, `<footer>`.
@@ -65,9 +66,12 @@ Skip for pure logic / data-layer changes with no rendered output.
 
 Use Chrome DevTools color picker or the `axe` extension to check.
 
+Run `pnpm lint:theme-contrast` after changing theme primitives or semantic mappings. It checks supported light/dark text pairs at the WCAG AA 4.5:1 threshold. Use `text-error` for readable error copy and reserve `destructive` for destructive action surfaces or borders.
+
 ### 6. Images, Media, Motion
 
 - [ ] Every `<img>` has `alt`. Decorative: `alt=""`. Informative: describe purpose.
+- [ ] `AvatarImage` callers choose `alt` explicitly; use an empty value when adjacent visible text already names the person.
 - [ ] Videos have captions; audio has transcripts.
 - [ ] Respect `prefers-reduced-motion`: gate non-essential animation behind the media query.
 - [ ] No autoplaying audio.

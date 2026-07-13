@@ -63,12 +63,18 @@ export function AuthGuard({
   if (!isSystemReady || isLoading) {
     if (showLoading) {
       return (
-        <div className="flex min-h-screen items-center justify-center">
+        <main
+          aria-busy="true"
+          className="flex min-h-screen items-center justify-center"
+        >
           <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div
+              aria-hidden="true"
+              className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"
+            />
             <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
           </div>
-        </div>
+        </main>
       );
     }
     return null;

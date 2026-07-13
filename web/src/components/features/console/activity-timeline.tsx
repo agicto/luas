@@ -118,7 +118,10 @@ export function ActivityTimeline({ items, className, title = "Recent Activity", 
                   
                   {item.user && (
                     <Avatar className="h-6 w-6 shrink-0">
-                      <AvatarImage src={item.user.avatar} />
+                      <AvatarImage
+                        src={item.user.avatar}
+                        alt={item.user.name}
+                      />
                       <AvatarFallback className="text-[10px]">
                         {item.user.initials}
                       </AvatarFallback>

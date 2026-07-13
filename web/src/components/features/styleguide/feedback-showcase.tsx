@@ -58,7 +58,7 @@ export function FeedbackShowcase() {
                     description: "Server responded with a 500 error.",
                   })}
                 >
-                  <BellIcon className="mr-2 size-3 text-destructive" />
+                  <BellIcon className="mr-2 size-3 text-error" />
                   Error Toast
                 </Button>
                 <Button 

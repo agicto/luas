@@ -1,6 +1,3 @@
-"use client"
-
-import * as React from "react"
 import { Separator } from "@/components/ui/separator"
 import { ButtonShowcase } from "@/components/features/styleguide/button-showcase"
 import { FormShowcase } from "@/components/features/styleguide/form-showcase"
@@ -13,7 +10,7 @@ import { NavigationShowcase } from "@/components/features/styleguide/navigation-
 
 export default function StyleguidePage() {
   return (
-    <div className="container max-w-7xl mx-auto py-10 space-y-20 pb-40">
+    <main className="container max-w-7xl mx-auto py-10 space-y-20 pb-40">
       {/* Header */}
       <section className="space-y-4">
         <div className="space-y-2">
@@ -51,6 +48,6 @@ export default function StyleguidePage() {
           &quot;The details are not the details. They make the design.&quot; - Charles Eames
         </div>
       </footer>
-    </div>
+    </main>
   )
 }

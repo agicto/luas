@@ -284,6 +284,8 @@ The project uses a structured Design Token system based on OKLCH and CSS variabl
     - **Brand**: `brand-main`, `brand-subtle`, `brand-strong`.
     - **States**: `success`, `warning`, `error`, `info`, `highlight`.
 
+Use `text-error` for readable error/status copy. Reserve `destructive` for destructive action surfaces and borders; one token cannot simultaneously guarantee readable text on page surfaces and readable foreground text on a destructive button. `pnpm lint:theme-contrast` verifies the supported light/dark semantic text pairs at WCAG AA 4.5:1 and is part of `pnpm lint`.
+
 #### Usage in Tailwind (Strict Mode):
 Always prefer semantic classes over raw color values.
 ```tsx
@@ -442,6 +444,8 @@ To ensure engineering rigor and performance, all components MUST follow these ru
   - Avoid turning large feature components into Client Components.
 - **Localized Core Copy**: User-facing copy in formal site, auth, and console surfaces must use `getT` or `useT`; follow the Core Copy Boundary above for narrow exceptions and disposable surfaces.
 - **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
+- **Image Semantics**: `AvatarImage` requires `alt`; use `alt=""` when the adjacent name already carries the same information.
+- **Heading Ownership**: `AlertTitle` is intentionally a non-heading container. Pages and features own heading levels so shared primitives cannot skip the document hierarchy.
 
 #### Form Control Contract
 

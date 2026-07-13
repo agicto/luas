@@ -40,10 +40,9 @@ export function DataDisplayShowcase() {
             </TableHeader>
             <TableBody>
               {tableData.map((row) => (
-                <TableRow 
-                  key={row.id} 
-                  tabIndex={0}
-                  className="interactive-bg transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:ring-inset"
+                <TableRow
+                  key={row.id}
+                  className="transition-colors hover:bg-muted/50"
                 >
                   <TableCell className="font-mono text-xs">{row.id}</TableCell>
                   <TableCell className="font-medium">{row.name}</TableCell>
@@ -85,7 +84,7 @@ export function DataDisplayShowcase() {
             <div className="flex h-5 items-center space-x-4 text-sm font-medium">
               <div className="flex -space-x-2">
                 <Avatar className="border-2 border-background size-8">
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage src="https://github.com/shadcn.png" alt="shadcn collaborator" />
                   <AvatarFallback>CN</AvatarFallback>
                 </Avatar>
                 <Avatar className="border-2 border-background size-8">

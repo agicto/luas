@@ -34,15 +34,19 @@
 
   /* Success (Green) */
   --green-500: oklch(0.627 0.194 149.214);
+  --green-700: oklch(0.527 0.154 150.069);
 
   /* Warning (Yellow/Amber) */
   --yellow-500: oklch(0.769 0.188 70.08);
+  --yellow-800: oklch(0.476 0.114 61.907);
 
   /* Error (Red) */
+  --red-400: oklch(0.704 0.191 22.216);
   --red-500: oklch(0.577 0.245 27.325);
 
   /* Info (Sky/Blue) */
   --sky-500: oklch(0.6 0.118 184.704);
+  --sky-700: oklch(0.45 0.1 184.704);
 
   /* Typography */
   --font-size-xs: 0.75rem;

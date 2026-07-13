@@ -6,7 +6,7 @@
  * @usage Use for user profiles, comments, or team member lists.
  * @example
  * <Avatar>
- *   <AvatarImage src="https://github.com/shadcn.png" />
+ *   <AvatarImage src="https://github.com/shadcn.png" alt="Profile photo" />
  *   <AvatarFallback>CN</AvatarFallback>
  * </Avatar>
  */
@@ -33,10 +33,18 @@ function Avatar({
   )
 }
 
+export interface AvatarImageProps
+  extends Omit<
+    React.ComponentProps<typeof AvatarPrimitive.Image>,
+    "alt"
+  > {
+  alt: string
+}
+
 function AvatarImage({
   className,
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+}: AvatarImageProps) {
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"

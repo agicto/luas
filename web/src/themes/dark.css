@@ -47,7 +47,7 @@
   /* Text & Foregrounds */
   --text-main: var(--neutral-50);
   --text-subtle: var(--neutral-300);
-  --text-muted: var(--neutral-500);
+  --text-muted: var(--neutral-400);
   --text-on-brand: var(--neutral-0);
 
   /* Borders & Dividers */
@@ -67,7 +67,7 @@
   --warning: var(--yellow-500);
   --warning-subtle: oklch(from var(--warning) l c h / 0.15);
   
-  --error: var(--red-500);
+  --error: var(--red-400);
   --error-subtle: oklch(from var(--error) l c h / 0.15);
   
   --info: var(--sky-500);

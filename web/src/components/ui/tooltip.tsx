@@ -68,7 +68,7 @@ const tooltipVariants = cva(
         default: "bg-popover/90 text-popover-foreground backdrop-blur-md border",
         inverted: "bg-zinc-950/90 text-zinc-50 backdrop-blur-md border border-white/10 shadow-2xl",
         primary: "bg-primary/90 text-primary-foreground backdrop-blur-md border border-primary/20 shadow-lg shadow-primary/10",
-        destructive: "bg-destructive/10 text-destructive backdrop-blur-md border border-destructive/20 shadow-lg shadow-destructive/5",
+        destructive: "bg-destructive/10 text-error backdrop-blur-md border border-destructive/20 shadow-lg shadow-destructive/5",
       },
     },
     defaultVariants: {

@@ -21,6 +21,9 @@ The project uses a layered Design Token system. Always prefer semantic classes o
   - Foregrounds: `text-main`, `text-subtle`, `text-muted`
   - Borders: `border-main`, `border-subtle`, `border-strong`
   - Brand: `brand-main`, `brand-subtle`, `brand-strong`
+  - Status text: `success`, `warning`, `error`, `info`
+
+Use `text-error` for error copy. Keep `destructive` for destructive action backgrounds and borders. Run `pnpm lint:theme-contrast` after changing primitive colors or light/dark semantic mappings; every guarded normal-text pair must remain at least 4.5:1.
 
 ```tsx
 <div className="bg-bg-surface text-text-main border-border-subtle shadow-md p-4 rounded-lg">
@@ -35,6 +38,8 @@ The project uses a layered Design Token system. Always prefer semantic classes o
 - **Feature Components**: prefer `src/features/[feature]/components/` for feature-owned UI.
 - **Shared Feature UI Blocks**: use `src/components/features/` only for reusable cross-feature UI.
 - **Common Components**: `src/components/common/` (Generic, non-business specific).
+- **Accessible Images**: `AvatarImage` requires an explicit `alt`; choose `alt=""` for decorative or redundant avatars.
+- **Heading Hierarchy**: shared title primitives such as `AlertTitle` stay neutral; pages and features own `h1`-`h6` levels.
 
 ### 3. Component Standards
 
