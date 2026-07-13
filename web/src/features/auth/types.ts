@@ -20,7 +20,9 @@ export type AuthStatus =
   | 'idle'
   | 'loading'
   | 'authenticated'
-  | 'unauthenticated';
+  | 'unauthenticated'
+  | 'forbidden'
+  | 'unavailable';
 
 export interface LoginRequest {
   email: string;

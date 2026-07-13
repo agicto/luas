@@ -33,7 +33,9 @@ external APIs and production proxies use `client-session`.
 
 Protected routes resolve a serializable bootstrap on the server, then create one isolated Zustand
 store per `AuthProvider`. A definitive mock session renders without a client `/auth/me` request;
-client-owned real API sessions use one deduplicated request.
+client-owned real API sessions use one deduplicated request. Session absence (`401`), access denial
+(`403`), and temporary resolution failure are separate states so infrastructure incidents do not
+become false logout events.
 
 ```typescript
 // app/(protected)/layout.tsx

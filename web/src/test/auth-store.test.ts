@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createAuthStore } from '@/features/auth/store/auth-store';
 import type { AuthBootstrap, AuthUser } from '@/features/auth/types';
+import { ApiErrorCode, ClientErrorCode } from '@/http/codes';
+import { ApiError } from '@/http/request';
 
 const ada: AuthUser = {
   id: 'user-ada',
@@ -90,8 +92,12 @@ describe('auth store bootstrap', () => {
     });
   });
 
-  it('settles failed client session resolution as unauthenticated', async () => {
-    const loadCurrentUser = vi.fn().mockRejectedValue(new Error('unauthorized'));
+  it('treats only an unauthorized response as an absent session', async () => {
+    const loadCurrentUser = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiError('Session expired', ApiErrorCode.AUTH_UNAUTHORIZED, 401)
+      );
     const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
 
     await store.getState().initializeAuth();
@@ -99,6 +105,88 @@ describe('auth store bootstrap', () => {
     expect(store.getState()).toMatchObject({
       status: 'unauthenticated',
       user: null,
+    });
+  });
+
+  it('keeps a forbidden session distinct from an absent session', async () => {
+    const loadCurrentUser = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiError('Access denied', ApiErrorCode.AUTH_FORBIDDEN, 403)
+      );
+    const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
+
+    await store.getState().initializeAuth();
+
+    expect(store.getState()).toMatchObject({
+      status: 'forbidden',
+      user: null,
+    });
+  });
+
+  it.each([
+    new Error('unexpected failure'),
+    new ApiError('Network unavailable', ClientErrorCode.NETWORK_ERROR),
+    new ApiError(
+      'Service unavailable',
+      ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
+      503
+    ),
+  ])('preserves unknown and transient failures as unavailable', async (error) => {
+    const loadCurrentUser = vi.fn().mockRejectedValue(error);
+    const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
+
+    await store.getState().initializeAuth();
+
+    expect(store.getState()).toMatchObject({
+      status: 'unavailable',
+      user: null,
+    });
+  });
+
+  it.each([
+    {},
+    { user: null },
+    {
+      user: {
+        id: 'user-ada',
+        email: 'ada@example.com',
+        name: 'Ada Lovelace',
+        role: 'super-admin',
+      },
+    },
+  ])('rejects a malformed successful session payload', async (payload) => {
+    const loadCurrentUser = vi.fn().mockResolvedValue(payload);
+    const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
+
+    await store.getState().initializeAuth();
+
+    expect(store.getState()).toMatchObject({
+      status: 'unavailable',
+      user: null,
+    });
+  });
+
+  it('retries an unavailable session without duplicating requests', async () => {
+    const loadCurrentUser = vi
+      .fn()
+      .mockRejectedValueOnce(
+        new ApiError('Timed out', ClientErrorCode.TIMEOUT)
+      )
+      .mockResolvedValueOnce({ user: ada });
+    const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
+
+    await store.getState().initializeAuth();
+    expect(store.getState().status).toBe('unavailable');
+
+    const firstRetry = store.getState().initializeAuth();
+    const secondRetry = store.getState().initializeAuth();
+    await Promise.all([firstRetry, secondRetry]);
+
+    expect(loadCurrentUser).toHaveBeenCalledTimes(2);
+    expect(store.getState()).toMatchObject({
+      status: 'authenticated',
+      user: ada,
     });
   });
 });

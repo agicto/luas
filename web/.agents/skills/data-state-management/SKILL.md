@@ -14,6 +14,8 @@ This skill outlines the state management architecture of the project. It focuses
 ### 1. State Categories
 - **Auth State**: `src/features/auth/store/auth-store.ts` (provider-owned Zustand vanilla store).
   It mirrors the current session using one status value and is never persisted in browser storage.
+  `unauthenticated`, `forbidden`, and `unavailable` are distinct facts; never collapse transport
+  failure into logout state.
 - **UI State**: `src/store/ui-store.ts` (Zustand). Temporary/global UI states.
 - **Server State**: Managed by React Query for all API-driven data.
 
@@ -67,6 +69,10 @@ export function useUpdateExample() {
   singleton with request-specific Server Component data.
 - **Explicit Bootstrap**: Protected Server Components pass `AuthBootstrap`. Definitive mock
   sessions start ready; `client-required` performs one deduplicated `/auth/me` request.
+- **Failure Semantics**: `401` resolves as `unauthenticated`, `403` as `forbidden`, and network,
+  timeout, rate-limit, `5xx`, malformed, or unknown failures as retryable `unavailable`.
+- **Runtime Validation**: Validate external session JSON with `isAuthResponse()` before setting
+  `authenticated`; compile-time DTO types are not evidence about network payloads.
 
 > [!TIP]
 > **Stateless Services**: Always use the appropriate request instance (e.g., `request` vs `fileRequest`) from `src/http/request.ts`.

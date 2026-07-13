@@ -32,10 +32,26 @@ request -> middleware passes through -> AuthProvider creates an isolated idle st
         -> one credentialed /auth/me request -> AuthGuard renders or redirects
 ```
 
-The store uses one status value (`idle`, `loading`, `authenticated`, or `unauthenticated`) instead
-of several independently mutable booleans. Each `AuthProvider` creates its own Zustand store;
-never hydrate a module-level auth singleton from Server Component data because that can leak one
-request's user into another request.
+The store uses one status value instead of several independently mutable booleans. Each
+`AuthProvider` creates its own Zustand store; never hydrate a module-level auth singleton from
+Server Component data because that can leak one request's user into another request.
+
+## Resolution Outcomes
+
+| Store status | Evidence | Guard behavior |
+|---|---|---|
+| `idle` | Client-owned session has not been checked | Block content until resolution starts. |
+| `loading` | One `/auth/me` request is in flight | Show the protected loading state. |
+| `authenticated` | The server bootstrap or `/auth/me` returned a user | Render protected content. |
+| `unauthenticated` | HTTP `401`, `AUTH.UNAUTHORIZED`, or invalid credentials | Redirect to login with `returnUrl`. |
+| `forbidden` | HTTP `403`, `AUTH.FORBIDDEN`, or `AUTH.ACCOUNT_DISABLED` | Keep content blocked and show a non-redirecting access-denied state. |
+| `unavailable` | Network, timeout, rate limit, `5xx`, malformed, or unknown failure | Preserve the session as unknown and offer an explicit retry. |
+
+Do not branch on backend message text. A failed availability check must not mutate an unknown
+session into `unauthenticated`; doing so creates false logout events and retrying login cannot fix
+the underlying dependency failure. Retries from `forbidden` and `unavailable` reuse the same
+deduplicated initializer. Successful `/auth/me` payloads must also pass the shared runtime
+`isAuthResponse()` guard; TypeScript types alone do not validate external JSON.
 
 ## Security Boundary
 
@@ -49,6 +65,8 @@ request's user into another request.
   ownership, forwarding policy, cache behavior, and failure handling are explicitly defined.
 - Only serializable, client-safe user fields belong in `AuthBootstrap`. Never pass access tokens,
   session secrets, or raw cookies through provider props.
+- `src/features/auth/utils/auth-user.ts` is the shared runtime user predicate for mock cookies and
+  client session responses. Keep role and required-field semantics aligned there.
 
 ## Downstream Adaptation
 
@@ -59,13 +77,13 @@ request's user into another request.
    middleware permissive and rely on the API plus `AuthGuard`.
 4. Preserve the provider-owned store so request isolation and initialization deduplication remain
    intact.
-5. Verify authenticated, unauthenticated, expired-session, API-unavailable, and logout flows in a
-   real browser before deployment.
+5. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
+   and logout flows in a real browser before deployment.
 
 ## Verification
 
 ```bash
-pnpm exec vitest run src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-runtime-boundary.test.ts
+pnpm exec vitest run src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-guard-recovery.test.tsx src/test/auth-runtime-boundary.test.ts
 pnpm type-check
 pnpm lint
 pnpm build

@@ -145,9 +145,11 @@ authorization.
 ### 3. State Management
 
 - **Auth state**: `src/features/auth/store/auth-store.ts` (provider-owned Zustand store)
-  - Uses one semantic status: `idle`, `loading`, `authenticated`, or `unauthenticated`.
+  - Uses one semantic status: `idle`, `loading`, `authenticated`, `unauthenticated`, `forbidden`, or `unavailable`.
   - Starts from a serializable server bootstrap when Luas owns the mock session.
   - Falls back to one deduplicated `/auth/me` request when the real API owns the session.
+  - Only `401` / `AUTH.UNAUTHORIZED` redirects to login; `403` blocks without redirect, while network, timeout, rate-limit, `5xx`, and unknown failures remain retryable.
+  - Validates successful external JSON with `isAuthResponse()` before entering `authenticated`.
   - Never hydrate a module-level singleton with request-specific user data.
 - **Auth actions**: `src/features/auth/hooks/use-auth.ts` (React Query)
   - Handles `login`, `register`, and `logout`.

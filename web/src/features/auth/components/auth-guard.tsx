@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { useRouter, usePathname } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
 import { authConfig } from '@/config/auth';
 import { useAuthStore } from '@/features/auth/store/auth-store';
 import { useT } from '@/i18n';
@@ -43,6 +46,7 @@ export function AuthGuard({
   const pathname = usePathname();
   
   const status = useAuthStore.use.status();
+  const initializeAuth = useAuthStore.use.initializeAuth();
   const t = useT();
 
   useEffect(() => {
@@ -76,6 +80,41 @@ export function AuthGuard({
       );
     }
     return null;
+  }
+
+  if (status === 'forbidden' || status === 'unavailable') {
+    const unavailable = status === 'unavailable';
+
+    return (
+      <main className="flex min-h-screen items-center justify-center px-6">
+        <div
+          role="alert"
+          className="flex max-w-md flex-col items-center text-center"
+        >
+          <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-destructive/10 text-error">
+            <AlertTriangle aria-hidden="true" className="size-5" />
+          </div>
+          <h1 className="text-lg font-semibold text-foreground">
+            {t(unavailable ? 'errors.authUnavailable' : 'errors.forbidden')}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t(
+              unavailable
+                ? 'errors.authUnavailableDescription'
+                : 'errors.authForbiddenDescription'
+            )}
+          </p>
+          <Button
+            type="button"
+            className="mt-6"
+            icon={<RefreshCw aria-hidden="true" className="size-4" />}
+            onClick={() => void initializeAuth()}
+          >
+            {t('common.retry')}
+          </Button>
+        </div>
+      </main>
+    );
   }
 
   // If not authenticated, don't render children (will redirect)

@@ -59,6 +59,21 @@ try {
 > [!IMPORTANT]
 > **Consistency**: Backend `error_code` is the source of truth. Legacy frontend string codes may be normalized for backward compatibility, but new code must not emit them.
 
+### 4. Authentication Resolution
+
+`/auth/me` uses `skipErrorHandler: true` because `AuthGuard` owns its stable recovery UI. Classify
+the normalized `ApiError` by status and `error_code`, never by message:
+
+| Evidence | Auth state | Behavior |
+|---|---|---|
+| `401`, `AUTH.UNAUTHORIZED`, invalid credentials | `unauthenticated` | Redirect to login. |
+| `403`, `AUTH.FORBIDDEN`, `AUTH.ACCOUNT_DISABLED` | `forbidden` | Block content without a login loop. |
+| `CLIENT.*`, `429`, `5xx`, malformed, unknown | `unavailable` | Keep the session unresolved and offer retry. |
+
+Do not call `reset()` for availability failures. Retry through `initializeAuth()` so concurrent
+attempts share one in-flight request. Validate a successful response with `isAuthResponse()`;
+malformed `2xx` JSON resolves as `unavailable`, never `authenticated`.
+
 ## Related Skills
 
 - [`data-state-management`](../data-state-management/): Error states in queries / mutations.

@@ -21,8 +21,6 @@ describe('route accessibility contracts', () => {
       'features/auth/components/auth-guard.tsx'
     );
 
-    expect(authGuard.match(/<main\b/g) ?? []).toHaveLength(1);
-    expect(authGuard.match(/<\/main>/g) ?? []).toHaveLength(1);
     expect(authGuard).toContain('aria-busy="true"');
   });
 

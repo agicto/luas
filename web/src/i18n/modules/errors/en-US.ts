@@ -8,6 +8,11 @@ const messages = {
   networkError: 'Network error, please check your connection',
   unauthorized: 'Please login to continue',
   forbidden: "You don't have permission to access this resource",
+  authForbiddenDescription:
+    'This session cannot access the protected application. Contact an administrator if this is unexpected.',
+  authUnavailable: 'Unable to verify your session',
+  authUnavailableDescription:
+    'Your session was not changed. Check your connection and try again.',
 } as const satisfies LocaleMessageShape<ErrorsMessages>;
 
 export default messages;

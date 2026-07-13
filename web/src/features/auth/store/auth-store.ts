@@ -7,10 +7,11 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import { authService } from '@/features/auth/services/auth-service';
 import type {
   AuthBootstrap,
-  AuthResponse,
   AuthStatus,
   AuthUser,
 } from '@/features/auth/types';
+import { isAuthResponse } from '@/features/auth/utils/auth-user';
+import { ApiErrorCode } from '@/http/codes';
 
 export interface AuthState {
   user: AuthUser | null;
@@ -20,8 +21,36 @@ export interface AuthState {
   initializeAuth: () => Promise<void>;
 }
 
-type CurrentUserLoader = () => Promise<AuthResponse>;
+type CurrentUserLoader = () => Promise<unknown>;
 export type AuthStore = StoreApi<AuthState>;
+
+function authFailureStatus(
+  error: unknown
+): Extract<AuthStatus, 'forbidden' | 'unauthenticated' | 'unavailable'> {
+  if (typeof error !== 'object' || error === null) {
+    return 'unavailable';
+  }
+
+  const failure = error as { errorCode?: unknown; status?: unknown };
+
+  if (
+    failure.status === 401 ||
+    failure.errorCode === ApiErrorCode.AUTH_UNAUTHORIZED ||
+    failure.errorCode === ApiErrorCode.AUTH_INVALID_CREDENTIALS
+  ) {
+    return 'unauthenticated';
+  }
+
+  if (
+    failure.status === 403 ||
+    failure.errorCode === ApiErrorCode.AUTH_FORBIDDEN ||
+    failure.errorCode === ApiErrorCode.AUTH_ACCOUNT_DISABLED
+  ) {
+    return 'forbidden';
+  }
+
+  return 'unavailable';
+}
 
 function initialAuthState(
   bootstrap: AuthBootstrap
@@ -62,17 +91,28 @@ export function createAuthStore(
         return initialization;
       }
 
-      if (get().status !== 'idle') {
+      const status = get().status;
+
+      if (
+        status !== 'idle' &&
+        status !== 'forbidden' &&
+        status !== 'unavailable'
+      ) {
         return Promise.resolve();
       }
 
-      set({ status: 'loading' });
+      set({ status: 'loading', user: null });
       initialization = loadCurrentUser()
-        .then(({ user }) => {
-          set({ status: 'authenticated', user });
+        .then((response) => {
+          if (!isAuthResponse(response)) {
+            set({ status: 'unavailable', user: null });
+            return;
+          }
+
+          set({ status: 'authenticated', user: response.user });
         })
-        .catch(() => {
-          set({ status: 'unauthenticated', user: null });
+        .catch((error: unknown) => {
+          set({ status: authFailureStatus(error), user: null });
         })
         .finally(() => {
           initialization = null;

@@ -4,6 +4,7 @@ import { authConfig } from '@/config/auth';
 import { isProd } from '@/config/env';
 import { signSession, verifySession } from '@/lib/session-signing';
 import type { AuthUser } from '@/features/auth/types';
+import { isAuthUser } from '@/features/auth/utils/auth-user';
 
 /**
  * Session helpers — MOCK SCHEME.
@@ -76,10 +77,7 @@ function isSessionPayload(value: unknown): value is SessionPayload {
   if (typeof value !== 'object' || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
-    typeof v.id === 'string' &&
-    typeof v.email === 'string' &&
-    typeof v.name === 'string' &&
-    (v.role === 'admin' || v.role === 'member') &&
+    isAuthUser(value) &&
     typeof v.iat === 'number' &&
     typeof v.exp === 'number'
   );
