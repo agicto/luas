@@ -108,7 +108,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
       
       {/* Right Panel - Form Area */}
       <RouteMessagesProvider additionalMessages={clientMessages}>
-        <div className="flex-1 flex flex-col relative bg-background">
+        <main className="flex-1 flex flex-col relative bg-background">
           {/* Subtle gradient overlay for depth */}
           <div className="absolute inset-0 bg-gradient-to-br from-muted/30 via-transparent to-muted/20 pointer-events-none" />
 
@@ -142,7 +142,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
           <div className="relative shrink-0 py-5 text-center text-xs text-muted-foreground">
             {t('copyright', { year: new Date().getFullYear() })}
           </div>
-        </div>
+        </main>
       </RouteMessagesProvider>
       <Toaster richColors position="top-right" />
     </div>

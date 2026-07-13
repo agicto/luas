@@ -79,6 +79,14 @@ Use Chrome DevTools color picker or the `axe` extension to check.
 - [ ] Validation errors do not depend on color alone — include text or icon.
 - [ ] Error text is associated with the input that failed, not floating elsewhere.
 
+#### Luas Form Primitive Contract
+
+- `Input` must retain native HTML semantics; never replace it with another component based on `type`.
+- Use explicit `DatePicker`, `ColorPicker`, or `PasswordInput` APIs for specialized interactions.
+- Preserve caller descriptions when adding error descriptions; merge `aria-describedby` ids.
+- Icon-only actions must receive caller-owned accessible labels. Do not add an English fallback inside a reusable primitive.
+- `src/test/form-control-accessibility.test.tsx` is the public regression seam for native attributes, error associations, password visibility labels, and color control semantics.
+
 ### 8. Internationalization
 
 - [ ] `lang` attribute set on `<html>` for the current locale (this project's `i18n-handler` skill governs locale).
@@ -102,6 +110,7 @@ Before auditing, read:
 2. The `web-design-guidelines` skill for project tokens (colors, focus styles).
 3. The `i18n-handler` skill for locale and RTL handling.
 4. Existing accessible patterns in `src/features/` to match style.
+5. `src/components/ui/form-control.tsx` and `src/test/form-control-accessibility.test.tsx` for form error and accessible-name contracts.
 
 ## Output
 

@@ -1,4 +1,5 @@
 import { 
+  ColorPicker,
   Input, 
   SearchInput, 
   PasswordInput 
@@ -38,8 +39,8 @@ export function FormShowcase() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Color Picker</Label>
-              <Input type="color" className="h-12 p-1 cursor-pointer" />
+              <Label htmlFor="styleguide-color">Color Picker</Label>
+              <ColorPicker id="styleguide-color" />
             </div>
 
             <div className="grid gap-2">
@@ -53,8 +54,13 @@ export function FormShowcase() {
             </div>
 
             <div className="grid gap-2">
-              <Label>Password Input</Label>
-              <PasswordInput placeholder="Enter your password" />
+              <Label htmlFor="styleguide-password">Password Input</Label>
+              <PasswordInput
+                id="styleguide-password"
+                placeholder="Enter your password"
+                showPasswordLabel="Show password"
+                hidePasswordLabel="Hide password"
+              />
             </div>
           </div>
         </div>

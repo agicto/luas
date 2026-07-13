@@ -11,6 +11,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/utils"
+import { FormControlError, useFormControlA11y } from "./form-control"
 
 const textareaVariants = cva(
   "placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground flex min-h-[80px] w-full rounded-lg px-3 py-2 text-base shadow-xs transition-all disabled:cursor-not-allowed disabled:opacity-50 md:text-sm input-depth focus-border resize-none",
@@ -39,12 +40,36 @@ export interface TextareaProps
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant, error, errorText, root, ...props }, ref) => {
-    const isError = error || !!errorText
+  ({
+    className,
+    variant,
+    error,
+    errorText,
+    root,
+    id,
+    "aria-describedby": ariaDescribedBy,
+    "aria-invalid": ariaInvalid,
+    ...props
+  }, ref) => {
+    const controlA11y = useFormControlA11y({
+      id,
+      error,
+      errorText,
+      ariaDescribedBy,
+      ariaInvalid,
+    })
 
     const textareaNode = (
       <textarea
-        className={cn(textareaVariants({ variant, error: isError, className }))}
+        id={id}
+        data-slot="textarea"
+        aria-describedby={controlA11y.ariaDescribedBy}
+        aria-invalid={controlA11y.ariaInvalid}
+        className={cn(textareaVariants({
+          variant,
+          error: controlA11y.isInvalid,
+          className,
+        }))}
         ref={ref}
         {...props}
       />
@@ -55,9 +80,9 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <div className="flex flex-col gap-0.5 w-full">
           {textareaNode}
           {errorText && (
-            <p className="text-xs font-medium text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+            <FormControlError id={controlA11y.errorId}>
               {errorText}
-            </p>
+            </FormControlError>
           )}
         </div>
       )

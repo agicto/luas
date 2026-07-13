@@ -31,7 +31,7 @@ The project uses a layered Design Token system. Always prefer semantic classes o
 
 ### 2. Component Organization
 
-- **UI Primitives**: `src/components/ui/` (shadcn/ui managed, **DO NOT MODIFY**).
+- **UI Primitives**: `src/components/ui/` contains project-owned, shadcn-derived primitives. Modify them only at the shared ownership seam, preserve public APIs and accessibility behavior, and add contract tests for behavioral changes. Review any shadcn CLI overwrite as a migration, not a mechanical refresh.
 - **Feature Components**: prefer `src/features/[feature]/components/` for feature-owned UI.
 - **Shared Feature UI Blocks**: use `src/components/features/` only for reusable cross-feature UI.
 - **Common Components**: `src/components/common/` (Generic, non-business specific).
@@ -49,6 +49,13 @@ For detailed component contracts (Named Exports, RSC First, Props Typing, CAS an
 
 > [!IMPORTANT]
 > **Localized Core Copy**: Formal site, auth, and console surfaces must use `getT` or `useT` for user-facing copy. Follow the i18n handler's core-copy boundary for exact brands, technical identifiers, disposable devtools/examples, and the root fallback. Run `pnpm lint:i18n-copy` before completion.
+
+### Form Controls
+
+- Keep `Input` native. Specialized controls such as `DatePicker`, `ColorPicker`, and `PasswordInput` must be imported explicitly.
+- Use the shared form-control error seam for stable ids, `aria-invalid`, merged `aria-describedby`, and polite announcements.
+- Require caller-owned labels for icon-only actions so formal surfaces can localize them.
+- Run `pnpm exec vitest run src/test/form-control-accessibility.test.tsx` after changing shared form controls.
 
 ## Related Skills
 

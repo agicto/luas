@@ -54,7 +54,7 @@ src/
 │   ├── api/                # Mock BFF route handlers
 │   │   └── auth/           # Mock BFF auth endpoints
 ├── components/
-│   ├── ui/                 # shadcn/ui primitives (DO NOT MODIFY)
+│   ├── ui/                 # Project-owned shadcn-derived primitives
 │   ├── common/             # Shared layout/common components
 │   └── features/           # Shared feature-facing UI blocks
 ├── features/               # Feature-first folders (preferred)
@@ -422,7 +422,7 @@ Use these tags in JSDoc headers to aid AI discovery:
 
 ### Adding a New Component
 
-1. **UI primitives** → Use shadcn/ui: `npx shadcn@latest add [component]`. These always go in `src/components/ui/`.
+1. **UI primitives** → Use shadcn/ui as the source for new primitives, then align the generated code with Luas tokens, APIs, and accessibility contracts in `src/components/ui/`. Never accept an overwrite of an existing customized primitive without reviewing the complete diff.
 2. **Feature components** → Prefer `src/features/[feature]/components/`.
    - **CRITICAL**: Do NOT place reusable components in `app/` route directories.
    - Keep each feature's hooks, services, store, server helpers, and types inside the same `src/features/[feature]/` folder.
@@ -442,6 +442,14 @@ To ensure engineering rigor and performance, all components MUST follow these ru
   - Avoid turning large feature components into Client Components.
 - **Localized Core Copy**: User-facing copy in formal site, auth, and console surfaces must use `getT` or `useT`; follow the Core Copy Boundary above for narrow exceptions and disposable surfaces.
 - **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
+
+#### Form Control Contract
+
+- `Input` preserves native HTML input behavior. `type="date"`, `type="color"`, `name`, `required`, and `aria-*` must reach the underlying `<input>` unchanged.
+- Use `DatePicker`, `ColorPicker`, and `PasswordInput` explicitly when their specialized interaction is required. Do not make `Input` switch component families based on `type`.
+- `errorText` must produce a stable error id, set `aria-invalid`, merge rather than replace an existing `aria-describedby`, and use a polite live region.
+- Icon-only control labels belong to callers so formal surfaces can translate them. `PasswordInput` therefore requires `showPasswordLabel` and `hidePasswordLabel`.
+- Changes to shared form primitives require `src/test/form-control-accessibility.test.tsx` plus type-check, lint, and a production build.
 
 #### Performance Optimization Rules
 
@@ -625,7 +633,7 @@ Legacy frontend-only codes such as `VAL_400` may be normalized for backward comp
 
 ## Do NOT
 
-- Modify files in `src/components/ui/` (shadcn/ui managed)
+- Replace customized files in `src/components/ui/` wholesale or let the shadcn CLI overwrite them without reviewing Luas API, token, accessibility, and test differences
 - Use `localStorage` for tokens (use httpOnly cookies)
 - Add business-specific logic to scaffold (keep generic)
 - Bury shared contract tests in feature folders; use `src/test` for cross-feature or contract checks.
