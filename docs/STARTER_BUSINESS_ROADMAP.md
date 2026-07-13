@@ -8,7 +8,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Surface | Current state | Ready for a new project? | Notes |
 |---|---|---|---|
-| `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, seed user, Web auth flow | Yes | Strong single-account baseline. Admin user management and invitation flows are not complete starter surfaces yet. |
+| `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, seed user; separate Web mock auth flow | Partly | API consumers have a strong single-account baseline. The default Web browser contract is not yet connected to the API JWT contract by a production adapter; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
 | `apikey` default starter | User-owned API key create, list, revoke, validation middleware, scoped key model | Yes | Good for developer tools, integrations, and AI/API products. Usage metering is not included yet. |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
@@ -19,6 +19,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
+| P1 | The Web browser auth contract and Go API JWT contract do not yet have a shipped production adapter. | A downstream team cannot make full-stack auth production-ready by changing `NEXT_PUBLIC_API_URL`; endpoint paths, DTOs, user views, and credential ownership differ. | Build and verify the same-origin auth adapter defined in [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md) before calling the combined user starter ready-to-use. |
 | P1 | The default starter set covers single-user auth, API access, and audit, but not multi-user ownership. | Most SaaS, internal tools, and B2B apps need organization/workspace membership before real feature work can start. | Build an `organization` optional starter first, then decide whether it belongs in the default scaffold. |
 | P1 | Permission/RBAC is documented as an optional starter decision, but no runnable `permission` starter is currently wired. | New teams may assume roles and permissions are available when only error vocabulary and examples remain. | Treat `permission` as a planned optional starter until its module, migrations, contracts, Web feature, and tests exist. |
 | P1 | Invitation and onboarding flows are missing as starter-owned workflows. | New projects often need to invite team members before product features are useful. | Add invitations as part of `organization`, using the email capability and audit starter. |
@@ -106,4 +107,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Start with `organization`, then `permission`, then `notification`. That order gives downstream apps a real multi-user foundation, a clean authorization model, and reusable user communication flows. File/asset, settings, usage, billing, webhook, and AI workspace starters become much easier once ownership and permission scopes are settled.
+Finish the production auth adapter first, then build `organization`, `permission`, and
+`notification`. That order closes the current full-stack readiness gap before introducing
+multi-user ownership, then gives downstream apps a clean authorization model and reusable user
+communication flows. File/asset, settings, usage, billing, webhook, and AI workspace starters
+become much easier once session ownership and permission scopes are settled.

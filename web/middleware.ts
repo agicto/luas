@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { authConfig } from '@/config/auth';
+import { getMockSessionCookieName } from '@/config/mock-session';
 import { getAuthRuntimeMode } from '@/features/auth/server/auth-runtime';
 import { verifySession } from '@/lib/session-signing';
 
@@ -29,7 +30,7 @@ function isPublicOnlyPath(pathname: string): boolean {
  * AND not expired.
  */
 async function hasValidSession(request: NextRequest): Promise<boolean> {
-  const raw = request.cookies.get(authConfig.cookies.session)?.value;
+  const raw = request.cookies.get(getMockSessionCookieName())?.value;
   if (!raw) return false;
   const payload = await verifySession(raw);
   if (!payload) return false;

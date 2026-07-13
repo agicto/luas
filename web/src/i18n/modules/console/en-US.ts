@@ -35,7 +35,7 @@ const messages = {
     },
     steps: {
       apiBefore: 'Point',
-      apiAfter: 'at the Luas Go backend or your own API.',
+      apiAfter: 'at a contract-compatible production endpoint or adapter.',
       replaceBefore: 'Replace this page (',
       replaceAfter: ') with your real business workspace.',
       featuresBefore: 'Add new features to',

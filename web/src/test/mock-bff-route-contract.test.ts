@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 const appApiRoot = resolve(process.cwd(), 'src/app/api');
 const routeFileName = 'route.ts';
+const routeHandlerPattern =
+  /\bexport\s+(?:(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*\(|const\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*=)/g;
+const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 const forbiddenRoutePatterns = [
   {
@@ -41,6 +44,21 @@ function relativeRoute(path: string): string {
   return relative(appApiRoot, path);
 }
 
+interface RouteHandlerSource {
+  method: string;
+  source: string;
+}
+
+function routeHandlers(path: string): RouteHandlerSource[] {
+  const source = readRoute(path);
+  const matches = Array.from(source.matchAll(routeHandlerPattern));
+
+  return matches.map((match, index) => ({
+    method: match[1] ?? match[2],
+    source: source.slice(match.index, matches[index + 1]?.index ?? source.length),
+  }));
+}
+
 describe('mock BFF route contract', () => {
   const routeFiles = listRouteFiles(appApiRoot).sort((a, b) =>
     relativeRoute(a).localeCompare(relativeRoute(b))
@@ -50,10 +68,36 @@ describe('mock BFF route contract', () => {
     expect(routeFiles.length).toBeGreaterThan(0);
   });
 
-  it('keeps every mock BFF handler behind the production guard', () => {
+  it('discovers at least one exported HTTP handler in every route file', () => {
     const offenders = routeFiles
-      .filter((path) => !/\bguardMockBffRoute\s*\(/.test(readRoute(path)))
+      .filter((path) => routeHandlers(path).length === 0)
       .map(relativeRoute);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps every mock BFF handler behind the production guard', () => {
+    const offenders = routeFiles.flatMap((path) =>
+      routeHandlers(path)
+        .filter((handler) => !/\bguardMockBffRoute\s*\(/.test(handler.source))
+        .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps every unsafe mock BFF handler behind the same-origin guard', () => {
+    const offenders = routeFiles.flatMap((path) =>
+      routeHandlers(path)
+        .filter((handler) => unsafeMethods.has(handler.method))
+        .filter((handler) => {
+          const productionGuard = handler.source.indexOf('guardMockBffRoute(');
+          const originGuard = handler.source.indexOf('guardSameOriginMutation(');
+
+          return originGuard < 0 || productionGuard < 0 || originGuard < productionGuard;
+        })
+        .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+    );
 
     expect(offenders).toEqual([]);
   });

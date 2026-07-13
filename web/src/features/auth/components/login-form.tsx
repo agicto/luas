@@ -19,12 +19,19 @@ import { useLogin } from '@/features/auth/hooks/use-auth';
 import { hasAuthFieldError, resolveAuthErrorKey } from '@/features/auth/utils/auth-error';
 import { useT } from '@/i18n';
 
+interface LoginFormProps {
+  demoCredentials?: {
+    email: string;
+    password: string;
+  };
+}
+
 /** Login entry point with localized, contract-aware mutation feedback. */
-export function LoginForm() {
+export function LoginForm({ demoCredentials }: LoginFormProps) {
   const t = useT();
   const { mutate: login, isPending, error, reset } = useLogin();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState(demoCredentials?.email ?? '');
+  const [password, setPassword] = useState(demoCredentials?.password ?? '');
   const emailError = hasAuthFieldError(error, 'email') ? t.auth('emailInvalid') : undefined;
   const passwordError = hasAuthFieldError(error, 'password')
     ? t.auth('passwordInvalid')
@@ -78,7 +85,11 @@ export function LoginForm() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">{t.auth('password')}</Label>
-              <span className="text-sm text-text-muted">{t.auth('demoCredentialsHint')}</span>
+              {demoCredentials && (
+                <span className="text-sm text-text-muted">
+                  {t.auth('demoCredentialsHint')}
+                </span>
+              )}
             </div>
             <Input
               id="password"
@@ -101,10 +112,14 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-4 rounded-lg border border-border/60 bg-bg-surface/80 p-3 text-sm text-text-subtle">
-          <p className="font-medium text-text-main">{t.auth('demoCredentials')}</p>
-          <p>{t.auth('demoCredentialsValue')}</p>
-        </div>
+        {demoCredentials && (
+          <div className="mt-4 rounded-lg border border-border/60 bg-bg-surface/80 p-3 text-sm text-text-subtle">
+            <p className="font-medium text-text-main">{t.auth('demoCredentials')}</p>
+            <p>
+              {demoCredentials.email} / {demoCredentials.password}
+            </p>
+          </div>
+        )}
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">

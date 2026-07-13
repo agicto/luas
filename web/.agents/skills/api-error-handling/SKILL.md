@@ -44,7 +44,7 @@ successful-response failures (`CLIENT.INVALID_RESPONSE`).
 - **Constants**: Use `ApiErrorCode` for backend `error_code` values and `ClientErrorCode` for
   client-owned failures. `src/test/error-code-vocabulary.test.ts` enforces the namespace split.
 - **Mock routes**: Return `{ code, error_code, message, request_id? }`; do not return legacy `{ error, code: "VAL_400" }` shapes.
-- **Mock BFF guard**: Call `guardMockBffRoute()` from `@/app/api/_shared/mock-bff` before reading request bodies or touching mock state. `src/test/mock-bff-route-contract.test.ts` enforces this for every `src/app/api/**/route.ts` file.
+- **Mock BFF guards**: Call `guardMockBffRoute()` before reading request bodies or touching mock state. Unsafe handlers must then call `guardSameOriginMutation(request)`. `src/test/mock-bff-route-contract.test.ts` enforces both boundaries.
 - **Validation**: Return `400 COMMON.INVALID_INPUT` for malformed JSON or transport-level input errors; return `422 COMMON.VALIDATION_FAILED` with `errors` for schema/field validation failures.
 - **Normalization**: `HttpClient` converts transport failures to `ApiError` and never creates UI
   side effects. Query caches, forms, and hooks own presentation.

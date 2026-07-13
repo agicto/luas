@@ -31,7 +31,6 @@ const messages = {
   forgotPassword: '忘记密码？',
   demoCredentials: '演示账号',
   demoCredentialsHint: '使用默认账号',
-  demoCredentialsValue: 'admin@example.com / admin123',
 
   // Links
   noAccount: '没有账号？',

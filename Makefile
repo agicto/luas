@@ -6,6 +6,7 @@ governance:
 	bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py
+	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py
 	bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
 	bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh

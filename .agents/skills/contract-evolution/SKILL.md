@@ -50,14 +50,15 @@ Read these before changing behavior:
 
 5. **Update mock BFF behavior**
    - Mock route handlers must call `guardMockBffRoute()` before reading request bodies or touching mock state.
+   - Unsafe mock handlers must then call `guardSameOriginMutation(request)` before parsing or mutation.
    - Mock success responses must use `apiSuccessResponse()` so they emit `{ code: 0, message: "success", data }`.
-   - Mock responses must emit the same envelope shape as the real API, including `error_code` for non-2xx responses.
+   - Mock responses must emit the shared envelope and the browser-facing contract of the production endpoint or adapter they substitute, including `error_code` for non-2xx responses.
    - Production-disabled mock BFF routes must return `503 COMMON.SERVICE_UNAVAILABLE`.
    - Update `web/docs/MOCK_BFF.md` when mock route, demo credential, or deletion/replacement instructions change.
 
 6. **Search for drift**
    - Search old endpoint paths, field names, `error_code` values, and legacy underscore codes.
-   - Confirm docs, API behavior, Web services, mock BFF behavior, and tests describe the same contract.
+   - Confirm docs, API behavior, Web services, adapters, mock BFF behavior, and tests describe the same ownership and mappings.
    - Prefer explicit contract docs over generated shared source until Luas intentionally adopts codegen.
 
 ## Verification
@@ -67,6 +68,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 - Contract/docs only:
   - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
   - `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
+  - `python3 .agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` for authentication changes
   - `git diff --check`
 - API behavior:
   - `cd api && go test ./internal/modules/<module>/...`
@@ -81,7 +83,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 ## Anti-patterns
 
 - Changing API or Web behavior before updating the contract.
-- Letting mock BFF routes drift from the real API envelope.
+- Letting mock BFF routes drift from the shared envelope or their owning browser contract.
 - Adding a new `error_code` only in Web or only in API.
 - Branching client behavior on `message` text or numeric `code` alone.
 - Treating generated examples, devtools, or mock flows as production API behavior.

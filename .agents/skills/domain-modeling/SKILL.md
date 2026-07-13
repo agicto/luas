@@ -40,7 +40,7 @@ Read these before deciding:
    - `capability`: reusable technical integration or helper that does not own a workflow.
    - `feature`: user-facing or developer-facing vertical slice, especially downstream or product-facing work.
    - `module`: implementation unit behind a seam, not a synonym for feature.
-   - `mock BFF`: development-only Web route handlers that mimic API contracts.
+   - `mock BFF`: development-only Web route handlers that substitute for a documented browser-facing production endpoint or adapter.
    - `console`: replaceable authenticated scaffold workspace.
    - `devtools`: internal playground or demonstration routes.
    - `example`: disposable demonstration code or docs.

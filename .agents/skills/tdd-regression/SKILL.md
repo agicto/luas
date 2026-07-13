@@ -72,7 +72,7 @@ Use the highest-level test that can reproduce the bug without making the suite b
 | Persistence query or migration behavior | repository or migration test with a real lightweight database substitute |
 | Web HTTP client/service normalization | `src/test/*.test.ts` around the service or normalizer |
 | Web component interaction | React Testing Library test through accessible roles and labels |
-| Mock BFF route behavior | route contract test plus `guardMockBffRoute()` coverage |
+| Mock BFF route behavior | route contract test plus production and same-origin guard coverage |
 | Browser-only UI regression | Playwright flow from `webapp-testing` after unit coverage is not enough |
 | Skill or docs guardrail | skill validator, vocabulary check, boundary script, or a small shell test |
 
@@ -82,7 +82,7 @@ For contract-sensitive bugs:
 
 - Update `contracts/README.md` first if the expected contract changes.
 - Keep server-scoped `ApiErrorCode` and client-only `ClientErrorCode` separate.
-- Keep mock BFF routes aligned with API envelopes and disabled in production by default.
+- Keep mock BFF routes aligned with the shared envelope and their owning browser contract; disable them in production by default.
 - Assert both HTTP status and response body shape.
 - Assert stable machine fields (`code`, `error_code`, `errors`, `request_id`) separately from human `message` text when possible.
 
@@ -111,7 +111,7 @@ make check
 - Adding snapshots for behavior that needs explicit contract assertions.
 - Mocking the broken layer so the regression can no longer fail.
 - Treating `dev` or manual QA as the only regression guard.
-- Updating mock BFF behavior without proving the real API contract still matches.
+- Updating mock BFF behavior without proving the owning browser contract and any API adapter mapping still match.
 - Claiming a flaky failure is fixed without repeating the targeted test enough to build confidence.
 
 ## Pair With

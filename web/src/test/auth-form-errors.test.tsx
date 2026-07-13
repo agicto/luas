@@ -66,6 +66,31 @@ describe('auth form error feedback', () => {
     expect(mutations.login.reset).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps real-backend login blank and free of mock credentials by default', () => {
+    renderWithMessages(<LoginForm />);
+
+    expect(screen.getByLabelText('Email')).toHaveValue('');
+    expect(screen.getByLabelText('Password')).toHaveValue('');
+    expect(screen.queryByText('Demo credentials')).not.toBeInTheDocument();
+    expect(screen.queryByText('Use the preset login')).not.toBeInTheDocument();
+  });
+
+  it('shows and prefills credentials only when the server enables the mock preset', () => {
+    renderWithMessages(
+      <LoginForm
+        demoCredentials={{
+          email: 'demo@example.test',
+          password: 'demo-password',
+        }}
+      />
+    );
+
+    expect(screen.getByLabelText('Email')).toHaveValue('demo@example.test');
+    expect(screen.getByLabelText('Password')).toHaveValue('demo-password');
+    expect(screen.getByText('Demo credentials')).toBeInTheDocument();
+    expect(screen.getByText('demo@example.test / demo-password')).toBeInTheDocument();
+  });
+
   it('associates server field ownership with localized registration errors', () => {
     mutations.register.error = new ApiError(
       'backend validation detail',

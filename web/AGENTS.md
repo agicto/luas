@@ -94,9 +94,11 @@ Browser -> src/http/request.ts -> /api/* -> Mock BFF route handlers
 - httpOnly cookie sessions (secure)
 - Fast local development without backend
 
-For downstream production apps, point `NEXT_PUBLIC_API_URL` at the real API or a same-origin
-proxy and keep the mock BFF disabled. See `docs/MOCK_BFF.md` for replacement and deletion steps.
-Authentication resolution rules are documented in `docs/AUTHENTICATION.md`.
+For downstream production apps, replace mock handlers with production endpoints or an explicit
+same-origin adapter and keep the mock BFF disabled. The Go JWT endpoints are not a drop-in
+implementation of the Web browser auth contract; see `../contracts/AUTHENTICATION.md` before
+wiring auth. Replacement and resolution rules live in `docs/MOCK_BFF.md` and
+`docs/AUTHENTICATION.md`.
 
 ### 2. Authentication Flow
 
@@ -109,6 +111,11 @@ POST /api/auth/register  → Mock user registration
 GET  /api/auth/me        → Get current user
 POST /api/auth/logout    → Clear cookies
 ```
+
+Unsafe mock BFF operations reject cross-origin browser requests before reading request bodies or
+touching state. Demo credentials live in a server-only module and are only passed to the login
+form when `mock-session` mode is active; production reaches that mode only through explicit mock
+BFF opt-in.
 
 **Route Groups:**
 - `(auth)/*` - Public auth pages (login, register)
@@ -164,7 +171,9 @@ authorization.
   `QueryClient`; never export a module-level cache singleton. Write mutations do not retry by
   default because retries require endpoint-specific idempotency evidence.
 - **UI state**: `src/store/ui-store.ts` (Zustand).
-- **Auth config**: `src/config/auth.ts` (cookie names, routes, demo account).
+- **Auth config**: `src/config/auth.ts` owns browser-safe navigation; `src/config/mock-session.ts`
+  owns the server-only mock cookie policy; `src/features/auth/server/mock-identity.ts` owns the
+  development identity.
 
 ### 4. Provider Placement
 

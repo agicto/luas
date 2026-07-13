@@ -2,6 +2,11 @@
 
 This directory documents the contracts shared by `api/` and `web/`.
 
+The response envelope, validation classes, `error_code`, and `request_id` semantics are global.
+Feature endpoint paths and DTOs are shared only when their owning contract says so. In particular,
+the current browser authentication surface and Go API JWT surface require an explicit adapter;
+see [`AUTHENTICATION.md`](AUTHENTICATION.md).
+
 ## Success Responses
 
 Non-paginated API success responses use:
@@ -72,7 +77,10 @@ Malformed JSON and transport-level input failures use HTTP 400 with `COMMON.INVA
 contract. User interfaces select reviewed local copy from `error_code` and status; they may use
 the keys in `errors` to associate failures with controls without rendering backend detail directly.
 
-Development mock BFF routes must preserve the success and error envelope shapes. When the Web mock BFF is disabled in production runtime, it returns HTTP 503 with `COMMON.SERVICE_UNAVAILABLE`.
+Development mock BFF routes must preserve the success and error envelope shapes plus the
+browser-facing contract of the production endpoint or adapter they substitute. When the Web mock
+BFF is disabled in production runtime, it returns HTTP 503 with
+`COMMON.SERVICE_UNAVAILABLE`.
 
 Common scaffold-level errors:
 
@@ -99,4 +107,5 @@ Rate-limited responses must include `Retry-After` when the reset time is known. 
 - Include stable `error_code` values for non-2xx responses.
 - Include `request_id` when the API has one in context.
 - Add API and Web tests for contract-sensitive changes.
+- Document adapter-owned path or DTO mappings instead of treating unlike endpoints as interchangeable.
 - From the repo root, run `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py` after changing scaffold-level HTTP status or `error_code` behavior.

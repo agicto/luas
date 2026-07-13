@@ -5,7 +5,10 @@ import {
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
-import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import {
+  guardMockBffRoute,
+  guardSameOriginMutation,
+} from '@/app/api/_shared/mock-bff';
 import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { deleteExample, getExampleById, updateExample } from '@/features/example/server/mock-example-store';
 
@@ -50,6 +53,12 @@ export async function PATCH(request: Request, context: RouteContext) {
     return mockBffGuard;
   }
 
+  const sameOriginGuard = guardSameOriginMutation(request);
+
+  if (sameOriginGuard) {
+    return sameOriginGuard;
+  }
+
   const id = await resolveId(context);
   const payload = await readJsonBody(request);
 
@@ -72,11 +81,17 @@ export async function PATCH(request: Request, context: RouteContext) {
   return apiSuccessResponse(updatedItem);
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   const mockBffGuard = guardMockBffRoute();
 
   if (mockBffGuard) {
     return mockBffGuard;
+  }
+
+  const sameOriginGuard = guardSameOriginMutation(request);
+
+  if (sameOriginGuard) {
+    return sameOriginGuard;
   }
 
   const id = await resolveId(context);

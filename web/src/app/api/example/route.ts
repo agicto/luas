@@ -4,7 +4,10 @@ import {
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
-import { guardMockBffRoute } from '@/app/api/_shared/mock-bff';
+import {
+  guardMockBffRoute,
+  guardSameOriginMutation,
+} from '@/app/api/_shared/mock-bff';
 import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { createExample, listExamples } from '@/features/example/server/mock-example-store';
 
@@ -43,6 +46,12 @@ export async function POST(request: Request) {
 
   if (mockBffGuard) {
     return mockBffGuard;
+  }
+
+  const sameOriginGuard = guardSameOriginMutation(request);
+
+  if (sameOriginGuard) {
+    return sameOriginGuard;
   }
 
   const payload = await readJsonBody(request);

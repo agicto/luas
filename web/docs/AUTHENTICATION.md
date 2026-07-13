@@ -1,8 +1,13 @@
 # Authentication Runtime Guide
 
-Luas ships one authentication contract with two resolution modes. The mode says who can
-authoritatively resolve the current browser session; it does not change the `/auth/*` HTTP
-contract.
+The Web shell owns one browser authentication contract with two resolution modes. The mode says
+who can authoritatively resolve the current browser session; it does not change the Web
+`/auth/*` contract.
+
+The Go `user` starter owns a separate JWT contract today. Luas does not yet ship the production
+adapter between them, so pointing the Web directly at the Go API is not a complete integration.
+See [`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) for paths, DTOs, and
+the P1 adapter contract.
 
 ## Resolution Modes
 
@@ -80,6 +85,16 @@ session outcome is unknown.
 
 ## Security Boundary
 
+- Unsafe mock BFF routes call `guardSameOriginMutation()` after the production availability guard
+  and before reading bodies or mutating state. The guard rejects cross-site and same-site sibling
+  browser writes using `Sec-Fetch-Site` and exact `Origin` comparison; clients without browser
+  fetch metadata remain usable for tests and automation.
+- The signed mock session cookie is HttpOnly and `SameSite=Lax`. Production uses a Secure
+  `__Host-luas_session` cookie with `Path=/`, no Domain attribute, and an exact-scope expiry on
+  logout.
+- Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component
+  passes the preset to the Client Component only in `mock-session` mode. Normal production uses
+  `client-session`; an explicit production mock opt-in is visibly demo-only.
 - `middleware.ts` verifies only the Luas mock session. It deliberately passes through in
   `client-session` mode because Luas does not own or understand a downstream API's credentials.
 - `AuthGuard` is navigation and rendering UX, not an authorization boundary.
@@ -96,14 +111,15 @@ session outcome is unknown.
 
 ## Downstream Adaptation
 
-1. Keep `client-session` when the browser owns a cross-origin cookie or token exchange.
-2. For a same-origin BFF with a server-readable session, replace the mock resolver with a real
+1. Read `contracts/AUTHENTICATION.md`; do not assume the Go JWT endpoints implement the Web DTOs.
+2. Keep `client-session` when the browser owns a cross-origin cookie or token exchange.
+3. For a same-origin BFF with a server-readable session, replace the mock resolver with a real
    server adapter and return the existing `AuthBootstrap` union.
-3. Update middleware only if that adapter can verify the real session locally. Otherwise keep
+4. Update middleware only if that adapter can verify the real session locally. Otherwise keep
    middleware permissive and rely on the API plus `AuthGuard`.
-4. Preserve the provider-owned store so request isolation and initialization deduplication remain
+5. Preserve the provider-owned store so request isolation and initialization deduplication remain
    intact.
-5. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
+6. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
    and logout flows in a real browser before deployment.
 
 ## Verification

@@ -22,7 +22,7 @@ The project follows a modular structure under `src/`:
 - `themes/`: Design tokens and global styles.
 
 ## Mock BFF Architecture
-Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through Next.js route handlers under `src/app/api/**`. These mock BFF handlers emit the same HTTP contract shape as the real API and are disabled in production runtime unless explicitly opted in.
+Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through Next.js route handlers under `src/app/api/**`. These mock BFF handlers preserve their documented browser contracts and the shared HTTP envelope, and are disabled in production runtime unless explicitly opted in.
 
 **Flow**: `Browser -> src/http/request.ts -> /api/* -> mock BFF route handlers`
 
@@ -61,7 +61,7 @@ export default async function ProtectedLayout({ children }) {
 - `(site)`: Public marketing and information pages.
 
 > [!NOTE]
-> **Production Ready**: Downstream apps should point `NEXT_PUBLIC_API_URL` at the real API or a same-origin proxy and keep the mock BFF disabled unless running a demo-only deployment. `AuthGuard` is UX; the API, Route Handlers, and Server Actions remain the authorization boundary.
+> **Production boundary**: Downstream apps should replace mock routes with production endpoints or a same-origin adapter and keep the mock BFF disabled unless running a demo-only deployment. The Web cookie auth contract and Go JWT contract require the adapter documented in `contracts/AUTHENTICATION.md`; a base-URL change alone is insufficient. `AuthGuard` is UX; the API, Route Handlers, and Server Actions remain the authorization boundary.
 
 ## Related Skills
 

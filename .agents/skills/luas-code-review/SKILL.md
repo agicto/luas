@@ -34,7 +34,7 @@ Read the smallest set that proves the review:
 3. **Review the Standards axis**
    - Vocabulary: names match `CONTEXT.md`; no framework/scaffold, feature/module, mock BFF/API, or code/error_code drift.
    - Architecture: API and Web remain independent deployable units; contracts are shared as docs, not source.
-   - Contracts: response envelope, `error_code`, `request_id`, pagination, validation, and mock BFF guardrails match `contracts/README.md`.
+   - Contracts: response envelope, `error_code`, `request_id`, pagination, validation, adapter mappings, and mock BFF guardrails match the owning docs under `contracts/`.
    - Security: production defaults are safe for secrets, CORS, cookies, headers, auth, body size, timeouts, and rate limits.
    - Testing: changes have verification at the public seam, not only implementation-coupled tests.
    - Workflow: skills, docs, scripts, and examples remain aligned with the current scaffold vocabulary.

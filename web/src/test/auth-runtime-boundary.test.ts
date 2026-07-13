@@ -32,4 +32,29 @@ describe('protected auth runtime boundary', () => {
     expect(middleware).toContain('getAuthRuntimeMode');
     expect(middleware).toContain("!== 'mock-session'");
   });
+
+  it('keeps mock credentials in a server-only module', () => {
+    const authConfig = source('config/auth.ts');
+    const loginForm = source('features/auth/components/login-form.tsx');
+    const mockIdentity = source('features/auth/server/mock-identity.ts');
+
+    expect(authConfig).not.toContain('admin@example.com');
+    expect(authConfig).not.toContain('admin123');
+    expect(authConfig).not.toContain('demoUser');
+    expect(loginForm).not.toContain('admin@example.com');
+    expect(loginForm).not.toContain('admin123');
+    expect(mockIdentity).toContain("import 'server-only'");
+    expect(mockIdentity).toContain('admin@example.com');
+    expect(mockIdentity).toContain('admin123');
+  });
+
+  it('uses the shared mock cookie policy in middleware and exact-scope logout', () => {
+    const middleware = readFileSync(resolve(process.cwd(), 'middleware.ts'), 'utf8');
+    const session = source('features/auth/server/session.ts');
+
+    expect(middleware).toContain('getMockSessionCookieName()');
+    expect(session).toContain('createMockSessionCookie(signed)');
+    expect(session).toContain('cookieStore.set(createExpiredMockSessionCookie())');
+    expect(session).not.toContain('cookieStore.delete(');
+  });
 });

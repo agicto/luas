@@ -46,7 +46,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : Stable HTTP behavior shared across the scaffold. A contract includes request shape, response shape, status code, `error_code`, `request_id`, pagination, and compatibility expectations.
 
 **Mock BFF**
-: Development-only route handlers that let the web shell run without a real backend. A mock BFF must emit the same contract shape as the real API. It is not the production API, and production runtime must require explicit opt-in before serving mock routes.
+: Development-only route handlers that let the web shell run without a real backend. A mock BFF must preserve the browser-facing contract of the production endpoint or adapter it substitutes, including the shared envelope and error semantics. It is not automatically a mock of every backend endpoint, it is not the production API, and production runtime must require explicit opt-in before serving mock routes.
 
 **Web shell**
 : The default browser-facing application surface. It includes route groups, providers, layout, design-system integration, i18n, mock auth, and starter/example UI.
@@ -91,5 +91,6 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **starter vs feature**: Use starter for default or optional Luas-provided building blocks. Use feature for downstream or product-facing slices.
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
+- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable until a production auth adapter maps them explicitly. Do not imply that changing `NEXT_PUBLIC_API_URL` alone completes that mapping.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.

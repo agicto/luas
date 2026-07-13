@@ -31,7 +31,7 @@ const messages = {
     },
     steps: {
       apiBefore: '将',
-      apiAfter: '指向 Luas Go 后端或你自己的 API。',
+      apiAfter: '指向契约兼容的生产端点或适配器。',
       replaceBefore: '用真实业务工作区替换此页面（',
       replaceAfter: '）。',
       featuresBefore: '在',

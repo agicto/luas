@@ -33,7 +33,12 @@ NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED=true
 MOCK_BFF_ENABLED=false
 ```
 
-`/api/*` route handlers are the development mock BFF. They are available outside production by default, but production runtime returns `503 COMMON.SERVICE_UNAVAILABLE` unless `MOCK_BFF_ENABLED=true` is set explicitly. Downstream production apps should normally point `NEXT_PUBLIC_API_URL` at the real Luas API instead of enabling mock routes.
+`/api/*` route handlers are the development mock BFF. They are available outside production by default, but production runtime returns `503 COMMON.SERVICE_UNAVAILABLE` unless `MOCK_BFF_ENABLED=true` is set explicitly. Downstream production apps should replace these routes with production endpoints or an explicit adapter instead of enabling mock behavior.
+
+The Go JWT auth endpoints and Web browser auth endpoints are not currently drop-in compatible.
+Changing `NEXT_PUBLIC_API_URL` alone does not complete production auth; read
+[../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) for the exact boundary and P1
+adapter requirements.
 
 See [docs/MOCK_BFF.md](docs/MOCK_BFF.md) before replacing, deleting, or intentionally enabling the mock BFF.
 
@@ -78,9 +83,16 @@ Demo account:
 admin@example.com / admin123
 ```
 
+The login form receives this preset only while the Web owns a mock session. Normal production and
+real-API modes stay blank; an explicitly enabled demo deployment remains usable and shows the
+preset without placing it in client static chunks. Mock session cookies use the `__Host-` prefix
+and secure attributes in production, and unsafe mock BFF routes require an exact same-origin
+browser request.
+
 Protected routes are enforced by `middleware.ts` and `AuthGuard`.
 
-Before shipping a downstream app, replace these mock auth routes with the real API-backed auth flow or keep them disabled in production.
+Before shipping a downstream app, replace these mock auth routes with the production auth adapter
+described in [../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) or keep them disabled.
 
 ## HTTP Contract
 

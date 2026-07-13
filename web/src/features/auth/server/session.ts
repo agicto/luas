@@ -1,7 +1,11 @@
 import { cookies } from 'next/headers';
 
-import { authConfig } from '@/config/auth';
-import { isProd } from '@/config/env';
+import {
+  createExpiredMockSessionCookie,
+  createMockSessionCookie,
+  getMockSessionCookieName,
+  MOCK_SESSION_MAX_AGE_SECONDS,
+} from '@/config/mock-session';
 import { signSession, verifySession } from '@/lib/session-signing';
 import type { AuthUser } from '@/features/auth/types';
 import { isAuthUser } from '@/features/auth/utils/auth-user';
@@ -23,7 +27,7 @@ type SessionPayload = AuthUser & {
 
 export async function getSessionUser(): Promise<AuthUser | null> {
   const cookieStore = await cookies();
-  const raw = cookieStore.get(authConfig.cookies.session)?.value;
+  const raw = cookieStore.get(getMockSessionCookieName())?.value;
   return parseSession(await verifySession(raw));
 }
 
@@ -32,25 +36,17 @@ export async function setSessionCookie(user: AuthUser): Promise<void> {
   const payload: SessionPayload = {
     ...user,
     iat: now,
-    exp: now + authConfig.sessionMaxAge,
+    exp: now + MOCK_SESSION_MAX_AGE_SECONDS,
   };
   const signed = await signSession(JSON.stringify(payload));
 
   const cookieStore = await cookies();
-  cookieStore.set({
-    name: authConfig.cookies.session,
-    value: signed,
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: isProd,
-    path: '/',
-    maxAge: authConfig.sessionMaxAge,
-  });
+  cookieStore.set(createMockSessionCookie(signed));
 }
 
 export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete(authConfig.cookies.session);
+  cookieStore.set(createExpiredMockSessionCookie());
 }
 
 function parseSession(payload: string | null): AuthUser | null {

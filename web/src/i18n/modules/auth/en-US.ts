@@ -35,7 +35,6 @@ const messages = {
   forgotPassword: 'Forgot password?',
   demoCredentials: 'Demo credentials',
   demoCredentialsHint: 'Use the preset login',
-  demoCredentialsValue: 'admin@example.com / admin123',
 
   // Links
   noAccount: "Don't have an account?",

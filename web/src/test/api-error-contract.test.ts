@@ -38,6 +38,25 @@ describe('mock BFF contract', () => {
     expect(response.status).toBe(400);
   });
 
+  it('rejects cross-origin mutations before reading an invalid body', async () => {
+    const request = new Request('http://localhost/api/auth/login', {
+      method: 'POST',
+      body: '{',
+    });
+    request.headers.set('Content-Type', 'application/json');
+    request.headers.set('origin', 'https://attacker.example');
+    request.headers.set('sec-fetch-site', 'cross-site');
+
+    const response = await login(request);
+
+    await expect(response.json()).resolves.toEqual({
+      code: 403,
+      error_code: ApiErrorCode.AUTH_FORBIDDEN,
+      message: 'Cross-origin mutation is not allowed',
+    });
+    expect(response.status).toBe(403);
+  });
+
   it('returns 422 COMMON.VALIDATION_FAILED with field errors for schema failures', async () => {
     const response = await login(
       new Request('http://localhost/api/auth/login', {
