@@ -73,7 +73,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
    - Run `scripts/check-doc-links.py` when editing Markdown docs, skill bodies, AGENTS files, or README navigation.
    - Run `scripts/check-error-contracts.py` when changing scaffold-level HTTP status or `error_code` behavior.
-   - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, adapter status, or starter readiness.
+   - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, public failure semantics, abuse controls, proxy trust, adapter status, or starter readiness.
    - Run `scripts/check-surface-catalog.py` when changing downstream extraction guidance or scaffold surface classifications.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
    - Run `scripts/check-branch-governance.sh` when changing branch, release, deployment-branch, or CI workflow guidance.
@@ -110,7 +110,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-doc-links.py` scans local Markdown links in docs and agent guidance so navigation does not point at deleted files, renamed skills, or stale examples.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
-- `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go JWT endpoints, the production adapter status, and starter readiness explicit until the adapter is implemented.
+- `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go JWT endpoints, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-surface-catalog.py` keeps `docs/SCAFFOLD_SURFACES.md` aligned with `CONTEXT.md` and the `downstream-app-extraction` surface classification table.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any. It also guards the tiny allowed export surface of `api/pkg/support`.
 - `scripts/check-branch-governance.sh` keeps `docs/BRANCHING_AND_RELEASES.md` aligned with the CI-managed `dev` / `dev-c` to `deploy-dev` / `deploy-dev-c` deployment-branch mapping.

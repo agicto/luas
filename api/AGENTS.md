@@ -143,6 +143,7 @@ make build         # Build CLI
 make test          # Run tests
 make lint          # Code linting
 make wire          # Generate DI
+make vuln          # Reachable vulnerability scan with the pinned Go tool
 make air           # Hot-reload dev server
 ```
 
@@ -246,6 +247,9 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 - **Error Contract**: Non-2xx responses MUST expose stable `error_code`; do not make clients branch on message text.
 - **Request Correlation**: Error responses SHOULD include `request_id`, and request logs SHOULD carry the same value.
 - **Security**: Hide sensitive fields (`json:"-"`), validate inputs (`binding`), and use `crypto` capability.
+- **Authentication Enumeration**: Public login/recovery failures MUST stay generic. Unknown-login paths must still perform password-hash work; never reveal disabled/existing accounts through status or `error_code`.
+- **Authentication Abuse**: Keep public auth quotas starter-owned and use independent per-IP and per-subject buckets. Do not key a single bucket by `IP+subject`.
+- **Proxy Trust**: Client-IP security controls depend on `SERVER_TRUSTED_PROXIES`; the default must remain trust-none, and trust-all CIDRs are forbidden.
 
 ---
 

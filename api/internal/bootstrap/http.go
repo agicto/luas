@@ -43,6 +43,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 
 	// Create Engine
 	r := gin.New()
+	configureTrustedProxies(r, application.Config)
 
 	// Initialize Tracing (if enabled)
 	var tracerProvider *tracing.TracerProvider
@@ -212,6 +213,16 @@ func setGinMode(mode string) {
 		gin.SetMode(gin.TestMode)
 	default:
 		gin.SetMode(gin.DebugMode)
+	}
+}
+
+func configureTrustedProxies(r *gin.Engine, cfg *config.Config) {
+	var trustedProxies []string
+	if cfg != nil && len(cfg.Server.TrustedProxies) > 0 {
+		trustedProxies = cfg.Server.TrustedProxies
+	}
+	if err := r.SetTrustedProxies(trustedProxies); err != nil {
+		panic(fmt.Sprintf("invalid SERVER_TRUSTED_PROXIES: %v", err))
 	}
 }
 

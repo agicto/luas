@@ -167,6 +167,29 @@ func TestMiddleware_ZeroValueConfigUsesDefaults(t *testing.T) {
 	}
 }
 
+func TestMiddleware_CanSuppressQuotaHeadersForSensitiveEndpoints(t *testing.T) {
+	router := gin.New()
+	router.Use(ratelimit.Middleware(ratelimit.Config{
+		Max:             1,
+		Duration:        time.Minute,
+		SuppressHeaders: true,
+	}))
+	router.GET("/login", func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+
+	first := httptest.NewRecorder()
+	router.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/login", nil))
+	if first.Code != http.StatusNoContent {
+		t.Fatalf("first status = %d, want %d", first.Code, http.StatusNoContent)
+	}
+	for _, name := range []string{"X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"} {
+		if got := first.Header().Get(name); got != "" {
+			t.Fatalf("%s = %q, want empty", name, got)
+		}
+	}
+}
+
 func TestMiddleware_BlocksExcessiveRequests(t *testing.T) {
 	router := gin.New()
 	router.Use(ratelimit.PerMinute(3))
@@ -200,6 +223,17 @@ func TestMiddleware_BlocksExcessiveRequests(t *testing.T) {
 				t.Fatalf("Request %d: error_code = %q, want %q", i+1, payload.ErrorCode, response.ErrorCodeRateLimited)
 			}
 		}
+	}
+}
+
+func TestDefaultErrorHandlerRoundsRetryAfterUp(t *testing.T) {
+	result := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(result)
+
+	ratelimit.DefaultConfig().ErrorHandler(ctx, time.Now().Add(1500*time.Millisecond))
+
+	if got := result.Header().Get("Retry-After"); got != "2" {
+		t.Fatalf("Retry-After = %q, want 2", got)
 	}
 }
 

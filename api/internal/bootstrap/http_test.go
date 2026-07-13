@@ -281,3 +281,56 @@ func TestApplyGlobalMiddleware_CORSPreflightDoesNotConsumeRateLimit(t *testing.T
 		t.Fatalf("second GET status = %d, want %d; body = %s", w.Code, http.StatusTooManyRequests, w.Body.String())
 	}
 }
+
+func TestConfigureTrustedProxies_RejectsSpoofedForwardingHeadersByDefault(t *testing.T) {
+	router := gin.New()
+	cfg := testHTTPConfigWithRateLimit()
+	cfg.Server.TrustedProxies = nil
+	configureTrustedProxies(router, cfg)
+	applyGlobalMiddleware(router, cfg)
+	router.GET("/limited", func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+
+	first := httptest.NewRequest(http.MethodGet, "/limited", nil)
+	first.RemoteAddr = "198.51.100.10:1234"
+	first.Header.Set("X-Forwarded-For", "203.0.113.1")
+	firstResponse := httptest.NewRecorder()
+	router.ServeHTTP(firstResponse, first)
+	if firstResponse.Code != http.StatusNoContent {
+		t.Fatalf("first status = %d, want %d", firstResponse.Code, http.StatusNoContent)
+	}
+
+	second := httptest.NewRequest(http.MethodGet, "/limited", nil)
+	second.RemoteAddr = "198.51.100.10:5678"
+	second.Header.Set("X-Forwarded-For", "203.0.113.2")
+	secondResponse := httptest.NewRecorder()
+	router.ServeHTTP(secondResponse, second)
+
+	if secondResponse.Code != http.StatusTooManyRequests {
+		t.Fatalf("spoofed forwarding header changed rate-limit key: status = %d, want %d", secondResponse.Code, http.StatusTooManyRequests)
+	}
+}
+
+func TestConfigureTrustedProxies_UsesForwardedClientIPFromConfiguredProxy(t *testing.T) {
+	router := gin.New()
+	cfg := testHTTPConfigWithRateLimit()
+	cfg.Server.TrustedProxies = []string{"198.51.100.10"}
+	configureTrustedProxies(router, cfg)
+	applyGlobalMiddleware(router, cfg)
+	router.GET("/limited", func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+
+	for _, clientIP := range []string{"203.0.113.1", "203.0.113.2"} {
+		request := httptest.NewRequest(http.MethodGet, "/limited", nil)
+		request.RemoteAddr = "198.51.100.10:1234"
+		request.Header.Set("X-Forwarded-For", clientIP)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+
+		if response.Code != http.StatusNoContent {
+			t.Fatalf("client %s status = %d, want %d", clientIP, response.Code, http.StatusNoContent)
+		}
+	}
+}

@@ -141,8 +141,7 @@ generate:
 # Run Wire dependency injection
 wire:
 	@echo "Running Wire..."
-	@which wire > /dev/null || (echo "Installing wire..." && go install github.com/google/wire/cmd/wire@latest)
-	cd internal/wiring && wire
+	cd internal/wiring && go tool wire
 
 # Generate mocks
 mock:
@@ -214,8 +213,7 @@ update:
 # Check for vulnerabilities
 vuln:
 	@echo "Checking for vulnerabilities..."
-	@which govulncheck > /dev/null || (echo "Installing govulncheck..." && go install golang.org/x/vuln/cmd/govulncheck@latest)
-	govulncheck ./...
+	go tool govulncheck ./...
 
 # Setup development environment
 setup:

@@ -26,10 +26,45 @@ The Go `user` starter exposes JWT-oriented endpoints under `/v1`:
 |---|---|---|---|
 | Login | `POST /v1/login` | `{ username, password }` | `{ access_token, user }` |
 | Register | `POST /v1/register` | `{ username, password, email, nickname?, phone? }` | API user |
+| Request password reset | `POST /v1/password/reset` | `{ email }` | Generic message |
+| Confirm password reset | `POST /v1/password/reset/confirm` | `{ token, new_password }` | Generic message |
 | Profile | `GET /v1/users/profile` | Bearer token | API user |
 
 The API user uses numeric identity and backend fields such as `username`, `nickname`, and
 `status`. It does not currently emit the Web shell's `name` and `role` view.
+
+### Public Failure Semantics
+
+- Unknown identifiers, wrong passwords, and disabled accounts all return HTTP `401` with
+  `AUTH.INVALID_CREDENTIALS`. The service performs a bcrypt comparison against a fixed dummy hash
+  when no account exists, so the missing-account path does not skip the dominant password work.
+- Password-reset requests return the same success body for known and unknown email addresses.
+  Account-specific token-storage and delivery failures are logged internally and do not change the
+  public response.
+- Registration currently preserves `USER.USERNAME_ALREADY_EXISTS` and
+  `USER.EMAIL_ALREADY_EXISTS` for starter UX. This is a deliberate usability tradeoff: products
+  with a stricter identity-enumeration threat model should replace those conflicts with one generic
+  response or add an out-of-band registration flow.
+
+### Abuse Protection
+
+Production enables endpoint-specific authentication limits by default. Login and password-reset
+flows use independent per-IP and normalized/hashed per-subject buckets; registration and reset
+confirmation have their own route quotas. An auth limit always returns HTTP `429` with
+`COMMON.RATE_LIMITED`, and does not reveal which bucket fired or expose quota counters.
+
+IP identity is accepted from forwarding headers only when the direct upstream matches
+`SERVER_TRUSTED_PROXIES`. The default trusts no proxies, so a client cannot rotate a spoofed
+`X-Forwarded-For` value to evade quotas.
+
+The built-in stores are process-local. Multi-replica production deployments must provide
+equivalent distributed enforcement at the gateway/WAF or through a shared limiter store. These
+quotas are a starter baseline, not a substitute for MFA, breached-credential checks, adaptive bot
+controls, or product-specific account recovery policy.
+
+The starter email adapter is currently synchronous. Products that require strict response-time
+uniformity for password recovery should enqueue token delivery through a bounded, observable,
+durable worker and keep the HTTP response independent of delivery completion.
 
 ## Production Integration Status
 

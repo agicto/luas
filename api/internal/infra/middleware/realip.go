@@ -10,7 +10,7 @@ import (
 // RealIPConfig holds real IP middleware configuration
 type RealIPConfig struct {
 	// TrustedProxies is a list of trusted proxy IPs or CIDR ranges
-	// If empty, all proxies are trusted
+	// If empty, forwarding headers are ignored.
 	TrustedProxies []string
 
 	// Headers is a list of headers to check for real IP (in order)
@@ -56,6 +56,10 @@ func RealIPWithConfig(cfg RealIPConfig) gin.HandlerFunc {
 		if strings.Contains(proxy, "/") {
 			_, network, err := net.ParseCIDR(proxy)
 			if err == nil {
+				ones, _ := network.Mask.Size()
+				if ones == 0 {
+					continue
+				}
 				trustedNets = append(trustedNets, network)
 			}
 		} else {
@@ -74,11 +78,13 @@ func RealIPWithConfig(cfg RealIPConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		// Get client IP from remote address
-		remoteIP := c.ClientIP()
-
-		// Try to get real IP from headers
+		remoteIP := directPeerIP(c.Request.RemoteAddr)
 		realIP := remoteIP
+		if !isTrusted(remoteIP, trustedNets) {
+			c.Set(cfg.ContextKey, realIP)
+			c.Next()
+			return
+		}
 
 		for _, header := range cfg.Headers {
 			value := c.GetHeader(header)
@@ -89,25 +95,34 @@ func RealIPWithConfig(cfg RealIPConfig) gin.HandlerFunc {
 			// Handle X-Forwarded-For specially (comma-separated list)
 			if header == "X-Forwarded-For" {
 				ips := strings.Split(value, ",")
-				if cfg.RecursiveCheck && len(trustedNets) > 0 {
-					// Find first untrusted IP from right to left
+				if cfg.RecursiveCheck {
 					for i := len(ips) - 1; i >= 0; i-- {
 						ip := strings.TrimSpace(ips[i])
-						if !isTrusted(ip, trustedNets) {
+						if net.ParseIP(ip) == nil {
+							continue
+						}
+						if i == 0 || !isTrusted(ip, trustedNets) {
 							realIP = ip
 							break
 						}
 					}
 				} else {
-					// Just use the first (leftmost) IP
-					realIP = strings.TrimSpace(ips[0])
+					candidate := strings.TrimSpace(ips[0])
+					if net.ParseIP(candidate) != nil {
+						realIP = candidate
+					}
 				}
-				break
+				if realIP != remoteIP {
+					break
+				}
+				continue
 			}
 
-			// For other headers, use the value directly
-			realIP = strings.TrimSpace(value)
-			break
+			candidate := strings.TrimSpace(value)
+			if net.ParseIP(candidate) != nil {
+				realIP = candidate
+				break
+			}
 		}
 
 		// Store real IP in context
@@ -115,6 +130,14 @@ func RealIPWithConfig(cfg RealIPConfig) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+func directPeerIP(remoteAddr string) string {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err == nil {
+		return host
+	}
+	return strings.Trim(remoteAddr, "[]")
 }
 
 // isTrusted checks if an IP is in the trusted networks

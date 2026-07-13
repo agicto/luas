@@ -24,6 +24,8 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures.
+- API client-IP controls now deny forwarding-header trust by default, validate exact `SERVER_TRUSTED_PROXIES`, and reject trust-all networks. Public auth routes add production-default independent per-IP/per-subject quotas, hashed subject keys, generic `COMMON.RATE_LIMITED` responses without bucket diagnostics, one-query login lookup, fixed dummy-hash work for unknown accounts, and the same `AUTH.INVALID_CREDENTIALS` response for unknown, wrong-password, and disabled accounts.
+- The API minimum toolchain is now Go 1.25.12 and `quic-go` is at 0.59.1, closing the reachable standard-library and HTTP/3 findings reported against Go 1.25.0 / `quic-go` 0.58.0. A full `govulncheck ./...` reports zero reachable vulnerabilities; three advisories remain only in required modules with no called symbols. With both trees built by Go 1.25.12 using `-trimpath -ldflags='-s -w'`, the auth/proxy/tooling slice moves `cmd/server` from 34,412,002 to 34,445,090 bytes (+33,088 bytes, 0.10%) against baseline `fcb58b1`; `x/tools` and `x/vuln` remain absent from the server package dependency graph.
 - API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
 - Removing the unwired Swagger runtime dependencies reduced the local Go module graph from 298 to 271 modules and the stripped `cmd/server` binary from 44,835,362 to 34,395,426 bytes (23.29%) on Go 1.25.0 `darwin/arm64`. This is a dependency and binary-footprint baseline measured with `go list -m all` and `go build -trimpath -ldflags='-s -w'`; it is not a throughput claim.
 - Compression is intentionally not part of the default API kernel; prefer deployment/CDN compression or explicit route/starter middleware.
@@ -86,6 +88,23 @@ Verification:
 
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
+
+### P1 — Queue Lifecycle Concurrency
+
+Problem: `go test -race ./tests/unit` reports a send/close race between
+`workflow.MemoryDriver.PushDelayed` and `MemoryDriver.Close`. This is outside the authentication
+slice that exposed it, but a downstream app can hit the same lifecycle edge during shutdown.
+
+Recommended slice:
+
+1. Reproduce with a focused delayed-push/close test under the race detector.
+2. Give delayed jobs explicit cancellation/lifecycle ownership so no goroutine can send after close.
+3. Make `Close` idempotent and prove pending delayed work has a documented outcome.
+
+Verification:
+
+- `cd api && go test -race ./internal/capabilities/workflow ./tests/unit -run 'MemoryDriver|Queue'`
+- `cd api && go test ./...`
 
 ### P1 — Measured Performance Baseline
 

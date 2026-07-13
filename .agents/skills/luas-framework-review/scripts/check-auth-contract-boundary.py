@@ -53,6 +53,9 @@ def main() -> int:
             "## Go API User Starter Contract",
             "POST /v1/login",
             "GET /v1/users/profile",
+            "AUTH.INVALID_CREDENTIALS",
+            "per-IP and normalized/hashed per-subject buckets",
+            "SERVER_TRUSTED_PROXIES",
             "does not yet ship a production adapter",
             "not ready-to-use",
         ),
@@ -60,8 +63,40 @@ def main() -> int:
     require_all(
         failures,
         "api/internal/modules/user/routes.go",
-        ('r.POST("/login"', 'r.POST("/register"', 'auth.GET("/users/profile"'),
+        (
+            'r.POST("/login"',
+            'r.POST("/register"',
+            'auth.GET("/users/profile"',
+            "protectPublicRoute",
+        ),
     )
+    require_all(
+        failures,
+        "api/internal/modules/user/auth_abuse_guard.go",
+        (
+            "PerSubject",
+            "crypto.SHA256Hex",
+            "SuppressHeaders: true",
+            "response.ErrorCodeRateLimited",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/service.go",
+        ("dummyPasswordHash", "FindByLoginIdentifier", "domain.ErrInvalidCredentials"),
+    )
+    require_all(
+        failures,
+        "api/internal/bootstrap/http.go",
+        ("configureTrustedProxies", "SetTrustedProxies"),
+    )
+
+    env_example = read("api/.env.example")
+    for key in ("MIDDLEWARE_RATE_LIMIT_ENABLED", "AUTH_RATE_LIMIT_ENABLED"):
+        if re.search(rf"^{key}=false(?:\s|$)", env_example, re.MULTILINE):
+            failures.append(
+                f"api/.env.example must not actively disable production-default {key}"
+            )
     require_all(
         failures,
         "api/internal/modules/user/dto.go",

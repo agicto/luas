@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"strings"
 	"time"
 
@@ -48,13 +49,15 @@ type ServerConfig struct {
 	ReadTimeout    int
 	WriteTimeout   int
 	RequestTimeout int // Request timeout in seconds (for middleware)
+	TrustedProxies []string
 }
 
 // MiddlewareConfig holds middleware configuration
 type MiddlewareConfig struct {
-	RequestTimeout int             // Request timeout in seconds, default 180 (3 min)
-	BodyLimit      int64           // Max body size in bytes, default 10MB
-	RateLimit      RateLimitConfig // Production default request rate guardrail
+	RequestTimeout          int                           // Request timeout in seconds, default 180 (3 min)
+	BodyLimit               int64                         // Max body size in bytes, default 10MB
+	RateLimit               RateLimitConfig               // Production default request rate guardrail
+	AuthenticationRateLimit AuthenticationRateLimitConfig // Public authentication abuse guardrails
 }
 
 // RateLimitConfig holds default HTTP rate limit configuration.
@@ -63,6 +66,30 @@ type RateLimitConfig struct {
 	Max       int
 	Window    time.Duration
 	SkipPaths []string
+}
+
+// RateLimitRuleConfig defines one fixed-window quota.
+type RateLimitRuleConfig struct {
+	Max    int
+	Window time.Duration
+}
+
+// AuthenticationEndpointRateLimitConfig applies independent quotas to the
+// request source and the normalized, hashed subject targeted by the request.
+type AuthenticationEndpointRateLimitConfig struct {
+	PerIP      RateLimitRuleConfig
+	PerSubject RateLimitRuleConfig
+}
+
+// AuthenticationRateLimitConfig controls public authentication endpoint
+// guardrails. Per-subject rules may be left at zero when they do not add a
+// meaningful boundary for an endpoint.
+type AuthenticationRateLimitConfig struct {
+	Enabled              bool
+	Login                AuthenticationEndpointRateLimitConfig
+	Register             AuthenticationEndpointRateLimitConfig
+	PasswordReset        AuthenticationEndpointRateLimitConfig
+	PasswordResetConfirm AuthenticationEndpointRateLimitConfig
 }
 
 // MetricsConfig controls HTTP request instrumentation and the Prometheus endpoint.
@@ -206,11 +233,12 @@ func Load() (*Config, error) {
 			JWTExpire: time.Duration(expireDays) * 24 * time.Hour,
 		},
 		Server: ServerConfig{
-			Host:         env.Get("SERVER_HOST", ""),
-			Port:         env.GetInt("SERVER_PORT", 8025),
-			Mode:         env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
-			ReadTimeout:  env.GetInt("SERVER_READ_TIMEOUT", 60),
-			WriteTimeout: env.GetInt("SERVER_WRITE_TIMEOUT", 60),
+			Host:           env.Get("SERVER_HOST", ""),
+			Port:           env.GetInt("SERVER_PORT", 8025),
+			Mode:           env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
+			ReadTimeout:    env.GetInt("SERVER_READ_TIMEOUT", 60),
+			WriteTimeout:   env.GetInt("SERVER_WRITE_TIMEOUT", 60),
+			TrustedProxies: env.GetSlice("SERVER_TRUSTED_PROXIES", []string{}),
 		},
 		Database: DatabaseConfig{
 			Enabled:              env.GetBool("DB_ENABLED", true),
@@ -302,6 +330,49 @@ func Load() (*Config, error) {
 					"/metrics",
 					"/v1/health",
 				}),
+			},
+			AuthenticationRateLimit: AuthenticationRateLimitConfig{
+				Enabled: env.GetBool("AUTH_RATE_LIMIT_ENABLED", isProd),
+				Login: AuthenticationEndpointRateLimitConfig{
+					PerIP: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_LOGIN_IP_MAX", 20),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_LOGIN_IP_WINDOW", 5*time.Minute),
+					},
+					PerSubject: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX", 10),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_LOGIN_SUBJECT_WINDOW", 15*time.Minute),
+					},
+				},
+				Register: AuthenticationEndpointRateLimitConfig{
+					PerIP: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_REGISTER_IP_MAX", 10),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_REGISTER_IP_WINDOW", time.Hour),
+					},
+					PerSubject: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_REGISTER_SUBJECT_MAX", 0),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_REGISTER_SUBJECT_WINDOW", 0),
+					},
+				},
+				PasswordReset: AuthenticationEndpointRateLimitConfig{
+					PerIP: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_PASSWORD_RESET_IP_MAX", 10),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_PASSWORD_RESET_IP_WINDOW", time.Hour),
+					},
+					PerSubject: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_MAX", 3),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_WINDOW", time.Hour),
+					},
+				},
+				PasswordResetConfirm: AuthenticationEndpointRateLimitConfig{
+					PerIP: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_PASSWORD_RESET_CONFIRM_IP_MAX", 10),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_PASSWORD_RESET_CONFIRM_IP_WINDOW", 15*time.Minute),
+					},
+					PerSubject: RateLimitRuleConfig{
+						Max:    env.GetInt("AUTH_RATE_LIMIT_PASSWORD_RESET_CONFIRM_SUBJECT_MAX", 5),
+						Window: env.GetDuration("AUTH_RATE_LIMIT_PASSWORD_RESET_CONFIRM_SUBJECT_WINDOW", 15*time.Minute),
+					},
+				},
 			},
 		},
 		Metrics: MetricsConfig{
@@ -405,6 +476,69 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	if err := validateTrustedProxies(cfg.Server.TrustedProxies); err != nil {
+		return err
+	}
+
+	if cfg.Middleware.AuthenticationRateLimit.Enabled {
+		endpoints := []struct {
+			prefix string
+			config AuthenticationEndpointRateLimitConfig
+		}{
+			{prefix: "AUTH_RATE_LIMIT_LOGIN", config: cfg.Middleware.AuthenticationRateLimit.Login},
+			{prefix: "AUTH_RATE_LIMIT_REGISTER", config: cfg.Middleware.AuthenticationRateLimit.Register},
+			{prefix: "AUTH_RATE_LIMIT_PASSWORD_RESET", config: cfg.Middleware.AuthenticationRateLimit.PasswordReset},
+			{prefix: "AUTH_RATE_LIMIT_PASSWORD_RESET_CONFIRM", config: cfg.Middleware.AuthenticationRateLimit.PasswordResetConfirm},
+		}
+		for _, endpoint := range endpoints {
+			if err := validateRateLimitRule(endpoint.prefix+"_IP", endpoint.config.PerIP, true); err != nil {
+				return err
+			}
+			if err := validateRateLimitRule(endpoint.prefix+"_SUBJECT", endpoint.config.PerSubject, false); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func validateTrustedProxies(proxies []string) error {
+	for _, value := range proxies {
+		proxy := strings.TrimSpace(value)
+		if proxy == "" {
+			return fmt.Errorf("SERVER_TRUSTED_PROXIES contains an empty value")
+		}
+
+		if strings.Contains(proxy, "/") {
+			_, network, err := net.ParseCIDR(proxy)
+			if err != nil {
+				return fmt.Errorf("SERVER_TRUSTED_PROXIES contains invalid CIDR %q", proxy)
+			}
+			ones, _ := network.Mask.Size()
+			if ones == 0 {
+				return fmt.Errorf("SERVER_TRUSTED_PROXIES must not trust every address: %q", proxy)
+			}
+			continue
+		}
+
+		if net.ParseIP(proxy) == nil {
+			return fmt.Errorf("SERVER_TRUSTED_PROXIES contains invalid IP %q", proxy)
+		}
+	}
+	return nil
+}
+
+func validateRateLimitRule(prefix string, rule RateLimitRuleConfig, required bool) error {
+	if rule.Max <= 0 {
+		if !required && rule.Max == 0 {
+			return nil
+		}
+		return fmt.Errorf("%s_MAX must be greater than 0 when authentication rate limit is enabled", prefix)
+	}
+	if rule.Window <= 0 {
+		return fmt.Errorf("%s_WINDOW must be greater than 0 when authentication rate limit is enabled", prefix)
+	}
 	return nil
 }
 

@@ -10,7 +10,7 @@ Use this document when changing `api/internal/bootstrap/http.go`, adding starter
 |---|---|---|
 | Core default | Always part of the API HTTP kernel or enabled by safe production defaults. | request ID, recovery, security headers, body limit, timeout, CORS, production rate limit |
 | Core opt-in | Core operational behavior with explicit runtime configuration. | Prometheus request instrumentation and `/metrics` |
-| Starter-owned | Registered by a default or optional starter because it needs starter dependencies or domain rules. | JWT auth, API key auth, audit logging |
+| Starter-owned | Registered by a default or optional starter because it needs starter dependencies or domain rules. | JWT auth, authentication abuse guard, API key auth, audit logging |
 | Route/starter opt-in | Available in the scaffold, but only specific routes or starters should choose it. | compression, version middleware, custom throttles |
 | Deployment-owned | Better handled by the gateway, CDN, WAF, load balancer, or hosting platform. | global compression, distributed rate limits, TLS termination, bot protection |
 
@@ -60,6 +60,23 @@ MIDDLEWARE_RATE_LIMIT_SKIP_PATHS=/health,/health/live,/health/ready,/metrics,/v1
 METRICS_ENABLED=true
 ```
 
+## Proxy Trust Boundary
+
+The kernel calls Gin's `SetTrustedProxies` before installing middleware. With the default empty
+`SERVER_TRUSTED_PROXIES`, `ClientIP()` uses the direct network peer and ignores
+`X-Forwarded-For`/`X-Real-IP`. This makes IP-based logging and rate limits resistant to spoofed
+forwarding headers.
+
+Set `SERVER_TRUSTED_PROXIES` only to the exact load balancer, ingress, or private proxy IPs/CIDRs
+that append or sanitize forwarding headers:
+
+```bash
+SERVER_TRUSTED_PROXIES=10.20.0.0/16,192.0.2.10
+```
+
+Invalid values and trust-all networks (`0.0.0.0/0`, `::/0`) fail configuration validation. The
+optional `RealIP` middleware follows the same deny-by-default rule when used by downstream apps.
+
 ## Operational Routes
 
 - `/health/live` and `/health/ready` are always registered for deployment orchestration.
@@ -74,10 +91,35 @@ Starter-owned middleware is registered through the starter registry, not the cor
 | Middleware | Owner | Why |
 |---|---|---|
 | JWT auth | `user` starter | Needs the JWT service and auth domain errors. |
+| Authentication abuse guard | `user` starter | Public login, registration, and reset operations need endpoint-specific per-IP and per-subject quotas. |
 | API key auth | `apikey` starter | Needs API key hashing, lookup, expiry, and revocation rules. |
 | Audit logging | `audit` starter | Needs audit persistence and starter-specific write-side behavior. |
 
 Keep starter-owned middleware route-scoped or starter-scoped. Do not move it into the core kernel just because many routes use it.
+
+The authentication guard is enabled by default in production and disabled by default elsewhere.
+It uses separate buckets per endpoint, then independent source-IP and normalized/hashed subject
+buckets where configured. A single `IP+subject` combined key is intentionally avoided because it
+does not stop one source from sweeping accounts or many sources from targeting one account.
+Sensitive auth responses return the canonical `429` + `COMMON.RATE_LIMITED` envelope without
+quota diagnostics or a bucket-specific reason.
+
+```bash
+AUTH_RATE_LIMIT_ENABLED=true
+AUTH_RATE_LIMIT_LOGIN_IP_MAX=20
+AUTH_RATE_LIMIT_LOGIN_IP_WINDOW=5m
+AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX=10
+AUTH_RATE_LIMIT_LOGIN_SUBJECT_WINDOW=15m
+AUTH_RATE_LIMIT_PASSWORD_RESET_IP_MAX=10
+AUTH_RATE_LIMIT_PASSWORD_RESET_IP_WINDOW=1h
+AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_MAX=3
+AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_WINDOW=1h
+```
+
+These starter limits use process-local memory. Multi-replica deployments must enforce equivalent
+distributed buckets in a WAF/gateway or replace the store with Redis. Per-IP limiting is a baseline,
+not a complete credential-stuffing defense; downstream products should add MFA, risk signals, and
+graduated challenges according to their threat model.
 
 ## Opt-In Middleware
 

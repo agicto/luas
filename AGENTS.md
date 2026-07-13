@@ -63,7 +63,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/scaffold-architecture-report.py` — generate an optional HTML architecture review report in `$TMPDIR`.
 - `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
-- `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep the current Web session and Go JWT ownership/readiness boundary explicit until a production adapter replaces it.
+- `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
 - `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` — verify scaffold surface classifications stay aligned across context, docs, and downstream extraction guidance.
 - `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` — verify branch/release docs match CI-managed deployment branch mappings.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
@@ -87,6 +87,7 @@ CI enforces the canonical references via [.github/workflows/skill-self-test.yml]
 cd api && make wire && make run         # generate DI + start server
 cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
+cd api && make vuln                     # pinned reachable-vulnerability scan
 
 # web/
 cd web && pnpm install                  # install

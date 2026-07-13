@@ -1,11 +1,11 @@
 ---
 name: api-development
 description: Luas API development standards including pagination, error handling, and RESTful design
-version: 1.0.0
+version: 1.1.0
 category: development
 tags: [api, rest, pagination, errors, standards]
 author: Luas Team
-updated: 2026-04-26
+updated: 2026-07-13
 ---
 
 # API Development Standards
@@ -507,6 +507,31 @@ func (h *Handler) Create(c *gin.Context) {
 
 ---
 
+### 7. Public Authentication Boundaries (MANDATORY)
+
+For login, registration, password recovery, token confirmation, and similar public identity flows:
+
+- Return the same login error status and `error_code` for unknown identifiers, wrong passwords,
+  and disabled accounts. In the default user starter this is `401` + `AUTH.INVALID_CREDENTIALS`.
+- Perform password-hash work even when the account lookup misses. A quick missing-account return is
+  a timing enumeration signal.
+- Apply two independent limits where an account or subject is targeted: one per source IP and one
+  per normalized, hashed subject. Never use only a combined `IP+subject` key.
+- Keep auth limits route/starter-owned. The global request limiter is a separate coarse guardrail.
+- Do not expose which auth bucket fired, raw subject keys, or quota counters on sensitive responses.
+- Treat `ClientIP()` as security-sensitive. The HTTP kernel must configure exact
+  `SERVER_TRUSTED_PROXIES`; direct clients cannot be allowed to choose forwarding headers.
+- Keep generic recovery responses for known and unknown accounts. Move delivery work to a bounded,
+  observable async boundary when downstream production requirements demand uniform response timing.
+
+Canonical implementation and contract:
+
+- `internal/modules/user/auth_abuse_guard.go`
+- `../../../../contracts/AUTHENTICATION.md`
+- `../../../docs/MIDDLEWARE.md`
+
+---
+
 ## 🚀 Complete CRUD Example
 
 See [`examples/complete-crud-handler.go`](./examples/complete-crud-handler.go) for a full implementation.
@@ -557,6 +582,13 @@ Use this checklist before submitting API code:
 - [ ] Using `handler.BindJSON()` for auto-validation
 - [ ] Update DTOs use pointers for optional fields
 - [ ] Validation errors return 422 with field details
+
+### Public Authentication
+- [ ] Unknown, wrong-password, and disabled login failures share one public error
+- [ ] Missing-account login still performs password-hash work
+- [ ] Per-IP and per-subject quotas are independent
+- [ ] Subject limiter keys are normalized and hashed
+- [ ] Forwarded client IP is trusted only from configured proxies
 
 ---
 

@@ -62,13 +62,21 @@ type passwordResetStore interface {
 	ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error
 }
 
+type userRepository interface {
+	domain.UserRepository
+	FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error)
+}
+
+const dummyPasswordHash = "$2a$10$BoIQPcmnuQfwI8s38RMnmeXm5V8xwU2lJVIF4EueN3y5x6KYUXelq"
+
 // service implements the user service interfaces.
 type service struct {
-	repo           domain.UserRepository
+	repo           userRepository
 	passwordResets passwordResetStore
 	jwtService     *jwt.Service
 	eventBus       *events.EventBus
 	mailer         UserMailer
+	verifyPassword func(hashedPassword, password []byte) error
 }
 
 var (
@@ -80,7 +88,7 @@ var (
 
 // NewService creates a new service instance
 func NewService(
-	repo domain.UserRepository,
+	repo userRepository,
 	passwordResets passwordResetStore,
 	jwtService *jwt.Service,
 	eventBus *events.EventBus,
@@ -92,6 +100,7 @@ func NewService(
 		jwtService:     jwtService,
 		eventBus:       eventBus,
 		mailer:         mailer,
+		verifyPassword: bcrypt.CompareHashAndPassword,
 	}
 }
 
@@ -145,27 +154,20 @@ func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*doma
 
 // Login handles user login
 func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginResponse, error) {
-	// Try username first, then email
-	user, err := s.repo.FindByUsername(ctx, req.Username)
+	user, err := s.repo.FindByLoginIdentifier(ctx, req.Username)
 	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("failed to lookup username: %w", err)
-		}
-
-		user, err = s.repo.FindByEmail(ctx, req.Username)
-		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return nil, domain.ErrInvalidCredentials
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			if compareErr := s.verifyPassword([]byte(dummyPasswordHash), []byte(req.Password)); compareErr != nil &&
+				!errors.Is(compareErr, bcrypt.ErrMismatchedHashAndPassword) {
+				slog.ErrorContext(ctx, "user.login_dummy_hash_invalid", "err", compareErr)
 			}
-			return nil, fmt.Errorf("failed to lookup email: %w", err)
+			return nil, domain.ErrInvalidCredentials
 		}
+		return nil, fmt.Errorf("failed to lookup login identifier: %w", err)
 	}
 
-	if !user.IsActive() {
-		return nil, domain.ErrAccountDisabled
-	}
-
-	if cmpErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); cmpErr != nil {
+	passwordErr := s.verifyPassword([]byte(user.Password), []byte(req.Password))
+	if passwordErr != nil || !user.IsActive() {
 		return nil, domain.ErrInvalidCredentials
 	}
 
@@ -314,17 +316,24 @@ func (s *service) RequestPasswordReset(ctx context.Context, req *UserPasswordRes
 
 	secret, err := crypto.GenerateKeyHex(24)
 	if err != nil {
-		return fmt.Errorf("failed to generate password reset token: %w", err)
+		slog.ErrorContext(ctx, "user.password_reset_token_generation_failed", "user_id", user.ID, "err", err)
+		return nil
 	}
 	resetToken := "zrp_" + strings.ToLower(idgen.ShortID()) + "." + secret
 	expiresAt := time.Now().Add(30 * time.Minute)
 
 	if err := s.passwordResets.StorePasswordResetToken(ctx, user.ID, crypto.SHA256Hex(resetToken), expiresAt); err != nil {
-		return fmt.Errorf("failed to store password reset token: %w", err)
+		slog.ErrorContext(ctx, "user.password_reset_token_store_failed", "user_id", user.ID, "err", err)
+		return nil
 	}
 
+	if s.mailer == nil {
+		slog.ErrorContext(ctx, "user.password_reset_mailer_missing", "user_id", user.ID)
+		return nil
+	}
 	if err := s.mailer.SendPasswordResetEmail(user.Email, resetToken); err != nil {
-		return fmt.Errorf("failed to send password reset email: %w", err)
+		slog.ErrorContext(ctx, "user.password_reset_delivery_failed", "user_id", user.ID, "err", err)
+		return nil
 	}
 
 	return nil

@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"strconv"
 	"sync"
@@ -51,6 +52,10 @@ type Config struct {
 
 	// Store is the underlying storage (default: memory)
 	Store Limiter
+
+	// SuppressHeaders omits quota diagnostics from successful responses.
+	// Sensitive endpoints can use this to avoid advertising bucket state.
+	SuppressHeaders bool
 }
 
 // DefaultConfig returns default rate limiter configuration
@@ -62,7 +67,7 @@ func DefaultConfig() Config {
 			return c.ClientIP()
 		},
 		ErrorHandler: func(c *gin.Context, resetAt time.Time) {
-			retryAfter := int(time.Until(resetAt).Seconds())
+			retryAfter := int(math.Ceil(time.Until(resetAt).Seconds()))
 			if retryAfter < 1 {
 				retryAfter = 1
 			}
@@ -250,10 +255,11 @@ func Middleware(cfg Config) gin.HandlerFunc {
 			return
 		}
 
-		// Set rate limit headers
-		c.Header("X-RateLimit-Limit", strconv.Itoa(cfg.Max))
-		c.Header("X-RateLimit-Remaining", strconv.Itoa(remaining))
-		c.Header("X-RateLimit-Reset", strconv.FormatInt(resetAt.Unix(), 10))
+		if !cfg.SuppressHeaders {
+			c.Header("X-RateLimit-Limit", strconv.Itoa(cfg.Max))
+			c.Header("X-RateLimit-Remaining", strconv.Itoa(remaining))
+			c.Header("X-RateLimit-Reset", strconv.FormatInt(resetAt.Unix(), 10))
+		}
 
 		c.Next()
 	}

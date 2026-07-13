@@ -47,7 +47,8 @@ func InitApplication() (*app.Application, error) {
 	jwtService := jwt.NewService(configConfig)
 	userMailer := user.NewUserMailer(service)
 	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
-	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
+	authAbuseGuard := user.NewAuthAbuseGuard(configConfig)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
 	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
 	if err != nil {
 		return nil, err
@@ -84,7 +85,8 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	jwtService := jwt.NewService(cfg)
 	userMailer := user.NewUserMailer(service)
 	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
-	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer)
+	authAbuseGuard := user.NewAuthAbuseGuard(cfg)
+	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
 	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
 	if err != nil {
 		return nil, err

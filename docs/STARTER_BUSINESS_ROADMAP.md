@@ -8,7 +8,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Surface | Current state | Ready for a new project? | Notes |
 |---|---|---|---|
-| `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, seed user; separate Web mock auth flow | Partly | API consumers have a strong single-account baseline. The default Web browser contract is not yet connected to the API JWT contract by a production adapter; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
+| `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, auth abuse guard, seed user; separate Web mock auth flow | Partly | API consumers have a stronger single-account baseline with generic login failures and production-default per-IP/per-subject quotas. The default Web browser contract is not yet connected to the API JWT contract by a production adapter; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
 | `apikey` default starter | User-owned API key create, list, revoke, validation middleware, scoped key model | Yes | Good for developer tools, integrations, and AI/API products. Usage metering is not included yet. |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |

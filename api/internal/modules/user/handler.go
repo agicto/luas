@@ -19,6 +19,7 @@ type Handler struct {
 	query      UserQueryService
 	jwtService *jwt.Service
 	mailer     UserMailer
+	authGuard  *AuthAbuseGuard
 }
 
 var (
@@ -29,13 +30,21 @@ var (
 )
 
 // NewHandler creates a new Handler instance.
-func NewHandler(auth AuthService, profile ProfileService, query UserQueryService, jwtService *jwt.Service, mailer UserMailer) *Handler {
+func NewHandler(
+	auth AuthService,
+	profile ProfileService,
+	query UserQueryService,
+	jwtService *jwt.Service,
+	mailer UserMailer,
+	authGuard *AuthAbuseGuard,
+) *Handler {
 	return &Handler{
 		auth:       auth,
 		profile:    profile,
 		query:      query,
 		jwtService: jwtService,
 		mailer:     mailer,
+		authGuard:  authGuard,
 	}
 }
 
@@ -59,6 +68,9 @@ func (h *Handler) Register(c *gin.Context) {
 	if !handler.BindJSON(c, &req) {
 		return
 	}
+	if !h.authGuard.allowSubject(c, authEndpointRegister, req.Username+"\x00"+req.Email) {
+		return
+	}
 
 	user, err := h.auth.Register(c.Request.Context(), &req)
 	if err != nil {
@@ -74,6 +86,9 @@ func (h *Handler) Register(c *gin.Context) {
 func (h *Handler) Login(c *gin.Context) {
 	var req UserLoginRequest
 	if !handler.BindJSON(c, &req) {
+		return
+	}
+	if !h.authGuard.allowSubject(c, authEndpointLogin, req.Username) {
 		return
 	}
 
@@ -175,6 +190,9 @@ func (h *Handler) RequestPasswordReset(c *gin.Context) {
 	if !handler.BindJSON(c, &req) {
 		return
 	}
+	if !h.authGuard.allowSubject(c, authEndpointPasswordReset, req.Email) {
+		return
+	}
 
 	if err := h.auth.RequestPasswordReset(c.Request.Context(), &req); err != nil {
 		response.HandleError(c, "Failed to reset password", err)
@@ -188,6 +206,9 @@ func (h *Handler) RequestPasswordReset(c *gin.Context) {
 func (h *Handler) ConfirmPasswordReset(c *gin.Context) {
 	var req UserPasswordResetConfirmRequest
 	if !handler.BindJSON(c, &req) {
+		return
+	}
+	if !h.authGuard.allowSubject(c, authEndpointPasswordResetConfirm, req.Token) {
 		return
 	}
 

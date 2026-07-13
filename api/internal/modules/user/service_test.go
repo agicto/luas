@@ -24,9 +24,22 @@ type fakeRepo struct {
 	findByIDFn       func(context.Context, uint) (*domain.User, error)
 	findByEmailFn    func(context.Context, string) (*domain.User, error)
 	findByUsernameFn func(context.Context, string) (*domain.User, error)
+	findByLoginFn    func(context.Context, string) (*domain.User, error)
 	findAllFn        func(context.Context, int, int) ([]*domain.User, int64, error)
 	storeResetFn     func(context.Context, uint, string, time.Time) error
 	resetByTokenFn   func(context.Context, string, string, time.Time) error
+}
+
+type fakeUserMailer struct {
+	passwordResetErr error
+}
+
+func (m *fakeUserMailer) SendPasswordResetEmail(string, string) error {
+	return m.passwordResetErr
+}
+
+func (m *fakeUserMailer) SendWelcomeEmail(string, string) error {
+	return nil
 }
 
 func (r *fakeRepo) Create(ctx context.Context, user *domain.User) error {
@@ -71,6 +84,13 @@ func (r *fakeRepo) FindByUsername(ctx context.Context, username string) (*domain
 	return nil, gorm.ErrRecordNotFound
 }
 
+func (r *fakeRepo) FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
+	if r.findByLoginFn != nil {
+		return r.findByLoginFn(ctx, identifier)
+	}
+	return nil, gorm.ErrRecordNotFound
+}
+
 func (r *fakeRepo) FindAll(ctx context.Context, page, pageSize int) ([]*domain.User, int64, error) {
 	if r.findAllFn != nil {
 		return r.findAllFn(ctx, page, pageSize)
@@ -92,14 +112,14 @@ func (r *fakeRepo) ResetPasswordWithToken(ctx context.Context, tokenHash string,
 	return nil
 }
 
-func newTestService(repo domain.UserRepository) *service {
+func newTestService(repo userRepository) *service {
 	cfg := &config.Config{}
 	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), email.NewService(cfg))
 }
 
-func mustHashPassword(t *testing.T, password string) string {
+func mustHashTestPassword(t *testing.T) string {
 	t.Helper()
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 	if err != nil {
 		t.Fatalf("failed to hash password: %v", err)
 	}
@@ -194,15 +214,12 @@ func TestServiceRegisterFailsFastOnLookupError(t *testing.T) {
 	assert.EqualError(t, err, "failed to check existing email: db unavailable")
 }
 
-func TestServiceLoginFallsBackToEmailAndUpdatesLastLogin(t *testing.T) {
+func TestServiceLoginFindsEmailIdentifierAndUpdatesLastLogin(t *testing.T) {
 	var updated *domain.User
-	hashedPassword := mustHashPassword(t, "password123")
+	hashedPassword := mustHashTestPassword(t)
 
 	svc := newTestService(&fakeRepo{
-		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
-			return nil, gorm.ErrRecordNotFound
-		},
-		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
 			return &domain.User{
 				ID:       42,
 				Username: "alice",
@@ -232,12 +249,12 @@ func TestServiceLoginFallsBackToEmailAndUpdatesLastLogin(t *testing.T) {
 
 func TestServiceLoginReturnsInvalidCredentialsOnWrongPassword(t *testing.T) {
 	svc := newTestService(&fakeRepo{
-		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
 			return &domain.User{
 				ID:       1,
 				Username: "alice",
 				Email:    "alice@example.com",
-				Password: mustHashPassword(t, "password123"),
+				Password: mustHashTestPassword(t),
 				Status:   1,
 			}, nil
 		},
@@ -252,9 +269,9 @@ func TestServiceLoginReturnsInvalidCredentialsOnWrongPassword(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
 }
 
-func TestServiceLoginFailsFastOnUsernameLookupError(t *testing.T) {
+func TestServiceLoginFailsFastOnIdentifierLookupError(t *testing.T) {
 	svc := newTestService(&fakeRepo{
-		findByUsernameFn: func(context.Context, string) (*domain.User, error) {
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
 			return nil, errors.New("db unavailable")
 		},
 	})
@@ -265,7 +282,52 @@ func TestServiceLoginFailsFastOnUsernameLookupError(t *testing.T) {
 	})
 
 	assert.Nil(t, resp)
-	assert.EqualError(t, err, "failed to lookup username: db unavailable")
+	assert.EqualError(t, err, "failed to lookup login identifier: db unavailable")
+}
+
+func TestServiceLoginUsesDummyHashForUnknownIdentifier(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
+			return nil, gorm.ErrRecordNotFound
+		},
+	})
+
+	var comparedHash string
+	svc.verifyPassword = func(hash, _ []byte) error {
+		comparedHash = string(hash)
+		return bcrypt.ErrMismatchedHashAndPassword
+	}
+
+	resp, err := svc.Login(context.Background(), &UserLoginRequest{
+		Username: "missing@example.com",
+		Password: "password123",
+	})
+
+	assert.Nil(t, resp)
+	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
+	assert.Equal(t, dummyPasswordHash, comparedHash)
+}
+
+func TestServiceLoginDoesNotRevealDisabledAccount(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{
+				ID:       1,
+				Username: "disabled-user",
+				Password: mustHashTestPassword(t),
+				Status:   0,
+			}, nil
+		},
+	})
+
+	resp, err := svc.Login(context.Background(), &UserLoginRequest{
+		Username: "disabled-user",
+		Password: "password123",
+	})
+
+	assert.Nil(t, resp)
+	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
+	assert.NotErrorIs(t, err, domain.ErrAccountDisabled)
 }
 
 func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *testing.T) {
@@ -273,7 +335,7 @@ func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *tes
 		findByIDFn: func(context.Context, uint) (*domain.User, error) {
 			return &domain.User{
 				ID:       7,
-				Password: mustHashPassword(t, "password123"),
+				Password: mustHashTestPassword(t),
 				Status:   1,
 			}, nil
 		},
@@ -326,6 +388,43 @@ func TestServiceRequestPasswordResetStoresHashedToken(t *testing.T) {
 	assert.Equal(t, uint(42), storedUserID)
 	assert.Len(t, storedTokenHash, 64)
 	assert.WithinDuration(t, time.Now().Add(30*time.Minute), storedExpiresAt, 5*time.Second)
+}
+
+func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailure(t *testing.T) {
+	tests := []struct {
+		name     string
+		storeErr error
+		mailErr  error
+	}{
+		{name: "token store failure", storeErr: errors.New("store unavailable")},
+		{name: "mail delivery failure", mailErr: errors.New("mail unavailable")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &fakeRepo{
+				findByEmailFn: func(context.Context, string) (*domain.User, error) {
+					return &domain.User{ID: 42, Email: "alice@example.com"}, nil
+				},
+				storeResetFn: func(context.Context, uint, string, time.Time) error {
+					return tt.storeErr
+				},
+			}
+			svc := NewService(
+				repo,
+				repo,
+				jwt.NewTestService(),
+				events.NewEventBus(),
+				&fakeUserMailer{passwordResetErr: tt.mailErr},
+			)
+
+			err := svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{
+				Email: "alice@example.com",
+			})
+
+			assert.NoError(t, err)
+		})
+	}
 }
 
 func TestServiceConfirmPasswordResetHashesNewPassword(t *testing.T) {

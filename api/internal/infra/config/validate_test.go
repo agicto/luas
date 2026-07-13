@@ -148,3 +148,101 @@ func TestValidate_AllowsDisabledRateLimitWithoutValues(t *testing.T) {
 		t.Fatalf("disabled rate limit should not require max/window, got %v", err)
 	}
 }
+
+func TestValidate_RejectsUnsafeOrInvalidTrustedProxies(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+	}{
+		{name: "invalid", value: "not-an-ip"},
+		{name: "all IPv4", value: "0.0.0.0/0"},
+		{name: "all IPv6", value: "::/0"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			cfg.Server.TrustedProxies = []string{tt.value}
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), "SERVER_TRUSTED_PROXIES") {
+				t.Fatalf("expected trusted proxy validation error for %q, got %v", tt.value, err)
+			}
+		})
+	}
+}
+
+func TestValidate_AcceptsSpecificTrustedProxyRanges(t *testing.T) {
+	cfg := baseValidConfig("production")
+	cfg.Server.TrustedProxies = []string{"10.0.0.0/8", "192.0.2.10", "2001:db8::/32"}
+	if err := validate(cfg); err != nil {
+		t.Fatalf("specific trusted proxy ranges should be valid, got %v", err)
+	}
+}
+
+func TestValidate_RejectsInvalidAuthenticationRateLimitWhenEnabled(t *testing.T) {
+	validRule := RateLimitRuleConfig{Max: 10, Window: time.Minute}
+	tests := []struct {
+		name string
+		edit func(*AuthenticationRateLimitConfig)
+		want string
+	}{
+		{
+			name: "zero login IP max",
+			edit: func(cfg *AuthenticationRateLimitConfig) {
+				cfg.Login.PerIP.Max = 0
+			},
+			want: "AUTH_RATE_LIMIT_LOGIN_IP_MAX",
+		},
+		{
+			name: "zero login IP window",
+			edit: func(cfg *AuthenticationRateLimitConfig) {
+				cfg.Login.PerIP.Window = 0
+			},
+			want: "AUTH_RATE_LIMIT_LOGIN_IP_WINDOW",
+		},
+		{
+			name: "subject max without window",
+			edit: func(cfg *AuthenticationRateLimitConfig) {
+				cfg.PasswordReset.PerSubject = RateLimitRuleConfig{Max: 3}
+			},
+			want: "AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_WINDOW",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			auth := AuthenticationRateLimitConfig{
+				Enabled: true,
+				Login: AuthenticationEndpointRateLimitConfig{
+					PerIP:      validRule,
+					PerSubject: validRule,
+				},
+				Register: AuthenticationEndpointRateLimitConfig{PerIP: validRule},
+				PasswordReset: AuthenticationEndpointRateLimitConfig{
+					PerIP:      validRule,
+					PerSubject: validRule,
+				},
+				PasswordResetConfirm: AuthenticationEndpointRateLimitConfig{
+					PerIP:      validRule,
+					PerSubject: validRule,
+				},
+			}
+			tt.edit(&auth)
+
+			cfg := baseValidConfig("production")
+			cfg.Middleware.AuthenticationRateLimit = auth
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %s error, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestValidate_AllowsDisabledAuthenticationRateLimitWithoutRules(t *testing.T) {
+	cfg := baseValidConfig("production")
+	cfg.Middleware.AuthenticationRateLimit = AuthenticationRateLimitConfig{Enabled: false}
+	if err := validate(cfg); err != nil {
+		t.Fatalf("disabled authentication rate limit should not require rules, got %v", err)
+	}
+}

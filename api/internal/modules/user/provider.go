@@ -13,6 +13,7 @@ import (
 var ProviderSet = wire.NewSet(
 	NewRepository,
 	wire.Bind(new(domain.UserRepository), new(*repository)),
+	wire.Bind(new(userRepository), new(*repository)),
 	wire.Bind(new(passwordResetStore), new(*repository)),
 	NewUserMailer,
 	NewService,
@@ -20,6 +21,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(ProfileService), new(*service)),
 	wire.Bind(new(UserQueryService), new(*service)),
 	wire.Bind(new(Service), new(*service)),
+	NewAuthAbuseGuard,
 	NewHandler,
 )
 

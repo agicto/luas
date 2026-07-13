@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/zgiai/luas/api/internal/domain"
 )
@@ -81,6 +82,24 @@ func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain
 func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
 	var po UserPO
 	if err := r.db.WithContext(ctx).Where("username = ?", username).First(&po).Error; err != nil {
+		return nil, err
+	}
+	return po.toDomain(), nil
+}
+
+// FindByLoginIdentifier resolves username or email in one query. Username
+// keeps precedence to preserve the starter's historical login behavior when
+// identifiers collide across fields.
+func (r *repository) FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
+	var po UserPO
+	err := r.db.WithContext(ctx).
+		Where("username = ? OR email = ?", identifier, identifier).
+		Order(clause.Expr{
+			SQL:  "CASE WHEN username = ? THEN 0 ELSE 1 END",
+			Vars: []any{identifier},
+		}).
+		First(&po).Error
+	if err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil
