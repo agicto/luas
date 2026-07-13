@@ -42,7 +42,9 @@ Read these before changing behavior:
 
 4. **Update Web client behavior**
    - Update feature service types, request/response DTOs, hooks, and UI error handling at the feature seam.
-   - Use backend `ApiErrorCode` for server contract values and `ClientErrorCode` only when no backend response exists.
+   - Use backend `ApiErrorCode` for server contract values and `ClientErrorCode` only for client-owned failures such as network, timeout, or invalid successful-response data.
+   - Validate security- or state-sensitive success payloads at the network boundary; TypeScript DTOs do not validate external JSON.
+   - Select user-facing copy from stable local mappings. Use backend field-error keys for control association, not backend messages as display copy.
    - Keep Web code talking to API behavior over HTTP only.
    - Add or update Web tests for contract-sensitive parsing, error handling, or route behavior.
 

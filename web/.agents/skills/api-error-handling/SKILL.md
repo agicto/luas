@@ -36,19 +36,28 @@ Backend `error_code` values use uppercase dot-separated scopes. Use `ApiErrorCod
 | `USER.*` | User-domain constraints | `USER.EMAIL_ALREADY_EXISTS` |
 | `API_KEY.*` | API key lifecycle errors | `API_KEY.REVOKED` |
 
-Frontend-only fallback values use `ClientErrorCode` and are scoped under `CLIENT.*`. They are only for failures that do not come with a backend response, such as network and timeout failures.
+Client-owned fallback values use `ClientErrorCode` and are scoped under `CLIENT.*`. They describe
+failures that are not backend `error_code` values, such as network, timeout, and malformed
+successful-response failures (`CLIENT.INVALID_RESPONSE`).
 
 ### 3. Usage in Code
-- **Constants**: Use `ApiErrorCode` for backend `error_code` values and `ClientErrorCode` for frontend-only fallback values. `src/test/error-code-vocabulary.test.ts` enforces the namespace split.
+- **Constants**: Use `ApiErrorCode` for backend `error_code` values and `ClientErrorCode` for
+  client-owned failures. `src/test/error-code-vocabulary.test.ts` enforces the namespace split.
 - **Mock routes**: Return `{ code, error_code, message, request_id? }`; do not return legacy `{ error, code: "VAL_400" }` shapes.
 - **Mock BFF guard**: Call `guardMockBffRoute()` from `@/app/api/_shared/mock-bff` before reading request bodies or touching mock state. `src/test/mock-bff-route-contract.test.ts` enforces this for every `src/app/api/**/route.ts` file.
 - **Validation**: Return `400 COMMON.INVALID_INPUT` for malformed JSON or transport-level input errors; return `422 COMMON.VALIDATION_FAILED` with `errors` for schema/field validation failures.
-- **Auto-handling**: Errors are automatically caught by `HttpClient` and passed to `handleError` (toast notification, etc.).
-- **Manual Handling**: Use `skipErrorHandler: true` in the request configuration to handle errors manually within components or hooks.
+- **Normalization**: `HttpClient` converts transport failures to `ApiError` and never creates UI
+  side effects. Query caches, forms, and hooks own presentation.
+- **React Query Ownership**: A locally presented query or mutation must also set
+  `meta: LOCAL_ERROR_HANDLING_META` so QueryCache or MutationCache does not add a second surface.
+- **User Copy**: Choose reviewed local copy from normalized `error_code` and HTTP status. Never
+  display `ApiError.message` directly on authentication, authorization, or other sensitive forms.
+- **Field Errors**: Use `ApiError.fieldErrors` to identify which controls failed. Render local
+  translations for those fields rather than backend-owned strings.
 
 ```typescript
 try {
-  await request.post('/resource', data, { skipErrorHandler: true });
+  await request.post('/resource', data);
 } catch (error) {
   if (error instanceof ApiError && error.errorCode === ApiErrorCode.COMMON_CONFLICT) {
     // Custom logic
@@ -61,8 +70,8 @@ try {
 
 ### 4. Authentication Resolution
 
-`/auth/me` uses `skipErrorHandler: true` because `AuthGuard` owns its stable recovery UI. Classify
-the normalized `ApiError` by status and `error_code`, never by message:
+`/auth/me` bypasses React Query because the auth store and `AuthGuard` own its stable recovery UI.
+Classify the normalized `ApiError` by status and `error_code`, never by message:
 
 | Evidence | Auth state | Behavior |
 |---|---|---|
@@ -73,6 +82,20 @@ the normalized `ApiError` by status and `error_code`, never by message:
 Do not call `reset()` for availability failures. Retry through `initializeAuth()` so concurrent
 attempts share one in-flight request. Validate a successful response with `isAuthResponse()`;
 malformed `2xx` JSON resolves as `unavailable`, never `authenticated`.
+
+### 5. Authentication Mutations
+
+- `login`, `register`, `me`, and `logout` must request `unknown` payloads and validate successful
+  JSON with endpoint guards before resolving the mutation.
+- A malformed `2xx` payload becomes `CLIENT.INVALID_RESPONSE`; login and registration must not
+  redirect, and logout must not clear local state.
+- Login and registration forms own their manual error surface, including an alert, localized field
+  feedback, and clearing stale mutation state after edits.
+- Authentication mutations disable retries. Do not retry writes without explicit idempotency
+  evidence from the endpoint contract.
+- Logout is user-idempotent: `401` / `AUTH.UNAUTHORIZED` means the session is already absent, so
+  clear local state and navigate to the logged-out route. Preserve local state for availability
+  failures because the remote outcome is unknown.
 
 ## Related Skills
 

@@ -1,4 +1,4 @@
-import type { AuthResponse, AuthUser } from '@/features/auth/types';
+import type { AuthUser } from '@/features/auth/types';
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
@@ -16,13 +16,5 @@ export function isAuthUser(value: unknown): value is AuthUser {
     isNonEmptyString(user.email) &&
     isNonEmptyString(user.name) &&
     (user.role === 'admin' || user.role === 'member')
-  );
-}
-
-export function isAuthResponse(value: unknown): value is AuthResponse {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    isAuthUser((value as Record<string, unknown>).user)
   );
 }

@@ -53,6 +53,31 @@ the underlying dependency failure. Retries from `forbidden` and `unavailable` re
 deduplicated initializer. Successful `/auth/me` payloads must also pass the shared runtime
 `isAuthResponse()` guard; TypeScript types alone do not validate external JSON.
 
+## Authentication Mutations
+
+`login`, `register`, `me`, and `logout` services receive external JSON as `unknown` and validate
+their successful payloads through `src/features/auth/utils/auth-response.ts`. A malformed `2xx`
+response becomes `CLIENT.INVALID_RESPONSE`; it must not authenticate, redirect, or report a
+successful logout.
+
+Login and registration use manual error presentation because their forms own the recovery
+workflow:
+
+- Mark the React Query mutation with `errorHandling: 'local'` and disable retries. The HTTP client
+  only normalizes errors; it never owns user-facing presentation.
+- Select copy from normalized `error_code` and HTTP status through `resolveAuthErrorKey()`; never
+  display a backend `message` directly.
+- Treat backend `errors` only as field ownership. Render the local, reviewed translation for each
+  matching field so backend implementation detail cannot become user-facing copy.
+- Announce the form-level error with an alert, associate field feedback through
+  `aria-describedby`, and clear stale mutation errors when the user edits the form.
+- Do not redirect on network, timeout, malformed success, validation, or authentication failures.
+
+Logout is idempotent from the user's perspective. Success and `401` / `AUTH.UNAUTHORIZED` both
+clear local auth state and navigate to the logged-out route. Availability failures and malformed
+success payloads preserve local state and show localized failure feedback because the server-side
+session outcome is unknown.
+
 ## Security Boundary
 
 - `middleware.ts` verifies only the Luas mock session. It deliberately passes through in
@@ -65,8 +90,9 @@ deduplicated initializer. Successful `/auth/me` payloads must also pass the shar
   ownership, forwarding policy, cache behavior, and failure handling are explicitly defined.
 - Only serializable, client-safe user fields belong in `AuthBootstrap`. Never pass access tokens,
   session secrets, or raw cookies through provider props.
-- `src/features/auth/utils/auth-user.ts` is the shared runtime user predicate for mock cookies and
-  client session responses. Keep role and required-field semantics aligned there.
+- `src/features/auth/utils/auth-user.ts` owns the shared runtime user predicate for mock cookies
+  and client session responses. `src/features/auth/utils/auth-response.ts` composes that predicate
+  into endpoint success contracts. Keep role and required-field semantics aligned there.
 
 ## Downstream Adaptation
 
@@ -83,7 +109,7 @@ deduplicated initializer. Successful `/auth/me` payloads must also pass the shar
 ## Verification
 
 ```bash
-pnpm exec vitest run src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-guard-recovery.test.tsx src/test/auth-runtime-boundary.test.ts
+pnpm exec vitest run src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-guard-recovery.test.tsx src/test/auth-service-contract.test.ts src/test/auth-form-errors.test.tsx src/test/auth-logout.test.tsx src/test/query-client.test.ts src/test/http-error-handling.test.ts src/test/error-handler.test.ts
 pnpm type-check
 pnpm lint
 pnpm build

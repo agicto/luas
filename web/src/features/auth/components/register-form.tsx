@@ -2,27 +2,43 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useRegister } from '@/features/auth/hooks/use-auth';
+import { hasAuthFieldError, resolveAuthErrorKey } from '@/features/auth/utils/auth-error';
 import { useT } from '@/i18n';
 
-/**
- * RegisterForm - Pure UI Component
- * 
- * A high-quality sign-up form UI without business logic.
- * Use this as a starting point to implement your registration flow.
- */
+/** Registration entry point with localized, contract-aware mutation feedback. */
 export function RegisterForm() {
   const t = useT();
-  const { mutate: register, isPending } = useRegister();
+  const { mutate: register, isPending, error, reset } = useRegister();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const nameError = hasAuthFieldError(error, 'name') ? t.auth('nameInvalid') : undefined;
+  const emailError = hasAuthFieldError(error, 'email') ? t.auth('emailInvalid') : undefined;
+  const passwordError = hasAuthFieldError(error, 'password')
+    ? t.auth('passwordInvalid')
+    : undefined;
+
+  const clearMutationError = () => {
+    if (error) {
+      reset();
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,52 +55,83 @@ export function RegisterForm() {
         <CardTitle className="text-2xl font-bold tracking-tight">
           {t.auth('createAccount')}
         </CardTitle>
-        <CardDescription>
-          {t.auth('getStarted')}
-        </CardDescription>
+        <CardDescription>{t.auth('getStarted')}</CardDescription>
       </CardHeader>
       <CardContent className="px-0 pt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-busy={isPending}>
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle aria-hidden="true" className="size-4" />
+              <AlertDescription>{t(resolveAuthErrorKey(error, 'register'))}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="name">{t.auth('fullName')}</Label>
-            <Input 
-              id="name" 
+            <Input
+              id="name"
+              name="name"
+              autoComplete="name"
               placeholder={t.auth('enterFullName')}
-              required 
+              required
+              disabled={isPending}
               className="bg-bg-canvas"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              errorText={nameError}
+              onChange={event => {
+                setName(event.target.value);
+                clearMutationError();
+              }}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">{t.auth('email')}</Label>
-            <Input 
-              id="email" 
-              type="email" 
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
               placeholder={t.auth('enterEmail')}
-              required 
+              required
+              disabled={isPending}
               className="bg-bg-canvas"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              errorText={emailError}
+              onChange={event => {
+                setEmail(event.target.value);
+                clearMutationError();
+              }}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{t.auth('password')}</Label>
-            <Input 
-              id="password" 
-              type="password" 
-              required 
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              disabled={isPending}
               className="bg-bg-canvas"
               value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              errorText={passwordError}
+              onChange={event => {
+                setPassword(event.target.value);
+                clearMutationError();
+              }}
             />
           </div>
-          
+
           <div className="flex items-start space-x-2 pt-2">
             <Checkbox
               id="terms"
+              name="terms"
               checked={acceptedTerms}
-              onCheckedChange={(checked) => setAcceptedTerms(Boolean(checked))}
+              disabled={isPending}
+              onCheckedChange={checked => {
+                setAcceptedTerms(Boolean(checked));
+                clearMutationError();
+              }}
               required
             />
             <div className="grid gap-1.5 leading-none">
@@ -92,12 +139,18 @@ export function RegisterForm() {
                 htmlFor="terms"
                 className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                {t.auth('agreeToTerms')} {t.auth('termsOfService')} {t.auth('and')} {t.auth('privacyPolicy')}
+                {t.auth('agreeToTerms')} {t.auth('termsOfService')} {t.auth('and')}{' '}
+                {t.auth('privacyPolicy')}
               </label>
             </div>
           </div>
 
-          <Button type="submit" className="w-full font-semibold" disabled={isPending || !acceptedTerms}>
+          <Button
+            type="submit"
+            className="w-full font-semibold"
+            disabled={!acceptedTerms}
+            loading={isPending}
+          >
             {t.auth('signUp')}
           </Button>
         </form>

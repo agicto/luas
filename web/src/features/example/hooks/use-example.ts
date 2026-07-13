@@ -7,6 +7,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { LOCAL_ERROR_HANDLING_META } from '@/config/query-meta';
 import { exampleService } from '@/features/example/services/example-service';
 import type {
   CreateExampleRequest,
@@ -60,10 +61,6 @@ function updateListResponse(
   };
 }
 
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error ? error.message : fallback;
-}
-
 // ============================================================================
 // Hooks
 // ============================================================================
@@ -99,6 +96,7 @@ export function useCreateExample() {
 
   return useMutation({
     mutationFn: (data: CreateExampleRequest) => exampleService.create(data),
+    meta: LOCAL_ERROR_HANDLING_META,
 
     onMutate: async (newItem) => {
       await queryClient.cancelQueries({ queryKey: exampleKeys.lists() });
@@ -109,9 +107,9 @@ export function useCreateExample() {
       });
     },
 
-    onError: (error) => {
+    onError: () => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.lists() });
-      toast.error(getErrorMessage(error, 'Failed to create'));
+      toast.error(t.errors('serverError'));
     },
 
     onSettled: (data, error) => {
@@ -135,6 +133,7 @@ export function useUpdateExample() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateExampleRequest }) =>
       exampleService.update(id, data),
+    meta: LOCAL_ERROR_HANDLING_META,
 
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: exampleKeys.detail(id) });
@@ -156,9 +155,9 @@ export function useUpdateExample() {
       return { previousItem };
     },
 
-    onError: (error, { id }) => {
+    onError: (_error, { id }) => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
-      toast.error(getErrorMessage(error, 'Failed to update'));
+      toast.error(t.errors('serverError'));
     },
 
     onSettled: (data, error, { id }) => {
@@ -182,6 +181,7 @@ export function useDeleteExample() {
 
   return useMutation({
     mutationFn: (id: string) => exampleService.delete(id),
+    meta: LOCAL_ERROR_HANDLING_META,
 
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: exampleKeys.lists() });
@@ -194,10 +194,10 @@ export function useDeleteExample() {
       return { id };
     },
 
-    onError: (error, id) => {
+    onError: (_error, id) => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
-      toast.error(getErrorMessage(error, 'Failed to delete'));
+      toast.error(t.errors('serverError'));
     },
 
     onSettled: (data, error, id) => {

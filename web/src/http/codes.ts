@@ -30,6 +30,7 @@ export type ApiErrorCodeValue = typeof ApiErrorCode[keyof typeof ApiErrorCode];
 
 export const ClientErrorCode = {
   FETCH_ERROR: 'CLIENT.FETCH_ERROR',
+  INVALID_RESPONSE: 'CLIENT.INVALID_RESPONSE',
   NETWORK_ERROR: 'CLIENT.NETWORK_ERROR',
   TIMEOUT: 'CLIENT.TIMEOUT',
   UNKNOWN: 'CLIENT.UNKNOWN',

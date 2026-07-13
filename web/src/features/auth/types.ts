@@ -38,3 +38,7 @@ export interface RegisterRequest {
 export interface AuthResponse {
   user: AuthUser;
 }
+
+export interface LogoutResponse {
+  success: true;
+}

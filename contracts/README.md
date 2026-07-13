@@ -68,6 +68,10 @@ Malformed JSON and transport-level input failures use HTTP 400 with `COMMON.INVA
 
 `error_code` is canonical for client behavior. `code` is transport status and must not be used as the only branching signal. The web HTTP client may normalize legacy mock responses that only expose a string `code`, but new API and mock responses must emit `error_code`.
 
+`message`, `error`, and field-message entries inside `errors` are not a stable localized-copy
+contract. User interfaces select reviewed local copy from `error_code` and status; they may use
+the keys in `errors` to associate failures with controls without rendering backend detail directly.
+
 Development mock BFF routes must preserve the success and error envelope shapes. When the Web mock BFF is disabled in production runtime, it returns HTTP 503 with `COMMON.SERVICE_UNAVAILABLE`.
 
 Common scaffold-level errors:

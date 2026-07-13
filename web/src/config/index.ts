@@ -4,4 +4,5 @@
  */
 
 export * from './query-client';
+export * from './query-meta';
 export * from './error-tracking';

@@ -10,8 +10,8 @@ import type {
   AuthStatus,
   AuthUser,
 } from '@/features/auth/types';
-import { isAuthResponse } from '@/features/auth/utils/auth-user';
-import { ApiErrorCode } from '@/http/codes';
+import { classifyAuthSessionFailure } from '@/features/auth/utils/auth-failure';
+import { isAuthResponse } from '@/features/auth/utils/auth-response';
 
 export interface AuthState {
   user: AuthUser | null;
@@ -23,34 +23,6 @@ export interface AuthState {
 
 type CurrentUserLoader = () => Promise<unknown>;
 export type AuthStore = StoreApi<AuthState>;
-
-function authFailureStatus(
-  error: unknown
-): Extract<AuthStatus, 'forbidden' | 'unauthenticated' | 'unavailable'> {
-  if (typeof error !== 'object' || error === null) {
-    return 'unavailable';
-  }
-
-  const failure = error as { errorCode?: unknown; status?: unknown };
-
-  if (
-    failure.status === 401 ||
-    failure.errorCode === ApiErrorCode.AUTH_UNAUTHORIZED ||
-    failure.errorCode === ApiErrorCode.AUTH_INVALID_CREDENTIALS
-  ) {
-    return 'unauthenticated';
-  }
-
-  if (
-    failure.status === 403 ||
-    failure.errorCode === ApiErrorCode.AUTH_FORBIDDEN ||
-    failure.errorCode === ApiErrorCode.AUTH_ACCOUNT_DISABLED
-  ) {
-    return 'forbidden';
-  }
-
-  return 'unavailable';
-}
 
 function initialAuthState(
   bootstrap: AuthBootstrap
@@ -112,7 +84,7 @@ export function createAuthStore(
           set({ status: 'authenticated', user: response.user });
         })
         .catch((error: unknown) => {
-          set({ status: authFailureStatus(error), user: null });
+          set({ status: classifyAuthSessionFailure(error), user: null });
         })
         .finally(() => {
           initialization = null;

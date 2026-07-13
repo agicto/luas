@@ -23,7 +23,7 @@ const DEFAULT_CONFIG: ErrorHandlerConfig = {
  */
 export function handleError(error: unknown, config: ErrorHandlerConfig = {}): void {
   const mergedConfig = { ...DEFAULT_CONFIG, ...config };
-  
+
   if (mergedConfig.silent) return;
 
   let message = mergedConfig.fallbackMessage || 'Error';
@@ -31,24 +31,25 @@ export function handleError(error: unknown, config: ErrorHandlerConfig = {}): vo
 
   if (error instanceof ApiError) {
     errorCode = error.errorCode;
-    message = error.message;
-    
-    // Automatically map status-based messages if no specific message is provided
-    // or if the message is too generic
-    if (error.status && !error.message) {
-      switch (error.status) {
-        case 401: message = 'Session expired, please login again'; break;
-        case 403: message = 'You do not have permission to perform this action'; break;
-        case 404: message = 'The requested resource was not found'; break;
-        case 500: message = 'Something went wrong on our server. Please try again later'; break;
-      }
+
+    switch (error.status) {
+      case 401:
+        message = 'Session expired, please login again';
+        break;
+      case 403:
+        message = 'You do not have permission to perform this action';
+        break;
+      case 404:
+        message = 'The requested resource was not found';
+        break;
+      case 500:
+        message = 'Something went wrong on our server. Please try again later';
+        break;
     }
 
     if (errorCode === ApiErrorCode.AUTH_UNAUTHORIZED) {
       message = 'Your session has expired. Please log in again.';
     }
-  } else if (error instanceof Error) {
-    message = error.message;
   }
 
   if (mergedConfig.notify) {

@@ -153,9 +153,16 @@ authorization.
   - Never hydrate a module-level singleton with request-specific user data.
 - **Auth actions**: `src/features/auth/hooks/use-auth.ts` (React Query)
   - Handles `login`, `register`, and `logout`.
-  - Includes built-in toast notifications and redirection.
+  - Treats external success payloads as `unknown` until the endpoint guard validates them.
+  - Maps normalized `error_code` / status evidence to reviewed local copy; never renders a backend
+    `message` directly. Backend field errors identify field ownership, not display text.
+  - Treats logout `401` as an idempotent success, while availability or malformed-response failures
+    preserve local auth state.
+  - Includes built-in success notifications, localized failure feedback, and redirection.
   - Usage: `const { mutate: login } = useLogin();`
-- **Server state**: React Query for all API data.
+- **Server state**: React Query for all API data. Each `QueryProvider` creates an isolated
+  `QueryClient`; never export a module-level cache singleton. Write mutations do not retry by
+  default because retries require endpoint-specific idempotency evidence.
 - **UI state**: `src/store/ui-store.ts` (Zustand).
 - **Auth config**: `src/config/auth.ts` (cookie names, routes, demo account).
 
@@ -164,7 +171,7 @@ authorization.
 Keep providers as low as the routes that need them:
 
 - Root layout owns only app-wide client context such as theme and the `common` / `errors` client message namespaces; optional analytics stays server-rendered until `next/script` activates it.
-- `(auth)` owns `QueryProvider` and `Toaster` because login/register forms use React Query mutations and toast feedback.
+- `(auth)` owns `QueryProvider` and `Toaster` because login/register forms use React Query mutations and toast feedback. Each provider owns its QueryClient instance.
 - `(auth)` keeps its visual shell server-rendered; only interactive leaves such as `LanguageSwitcher`, forms, and `QueryProvider` cross the client boundary.
 - `(protected)` resolves `AuthBootstrap`, then owns `AuthenticatedProviders` and `Toaster`; the provider combines `QueryProvider` and an isolated `AuthProvider` store before `AuthGuard`.
 - Auth, console, and devtool routes append only the client message namespaces declared in `src/i18n/client-message-namespaces.ts`; server translations still have the complete request message tree.
@@ -640,16 +647,23 @@ Backend `error_code` is the canonical branching field. New backend, BFF, and moc
 | `AUTH.*` | Auth API contract | `AUTH.UNAUTHORIZED`, `AUTH.INVALID_CREDENTIALS` |
 | `USER.*` | User API contract | `USER.EMAIL_ALREADY_EXISTS` |
 | `API_KEY.*` | API key API contract | `API_KEY.REVOKED` |
-| `CLIENT.*` | Frontend-only fallback | `CLIENT.NETWORK_ERROR`, `CLIENT.TIMEOUT` |
+| `CLIENT.*` | Client-owned failure | `CLIENT.NETWORK_ERROR`, `CLIENT.TIMEOUT`, `CLIENT.INVALID_RESPONSE` |
 
 Legacy frontend-only codes such as `VAL_400` may be normalized for backward compatibility, but new code MUST NOT emit them.
 
 ### 3. Usage in Code
-- **Constants**: Use `ApiErrorCode` from `@/http/codes` for backend `error_code` values; use `ClientErrorCode` only when no backend response exists. This split is enforced by `src/test/error-code-vocabulary.test.ts`.
+- **Constants**: Use `ApiErrorCode` from `@/http/codes` for backend `error_code` values; use
+  `ClientErrorCode` for client-owned failures such as network, timeout, or an invalid successful
+  response. This split is enforced by `src/test/error-code-vocabulary.test.ts`.
 - **Mock routes**: Return `{ code, error_code, message, request_id? }`; do not return legacy `{ error, code: "VAL_400" }` shapes.
 - **Mock BFF guard**: New mock route handlers must call `guardMockBffRoute()` from `@/app/api/_shared/mock-bff` before reading the request body or touching mock state. This is enforced by `src/test/mock-bff-route-contract.test.ts`.
 - **Validation**: Return `400 COMMON.INVALID_INPUT` for malformed JSON or transport-level input errors; return `422 COMMON.VALIDATION_FAILED` with `errors` for schema/field validation failures.
-- **Handling**: Errors are automatically caught by `HttpClient` and passed to `handleError`. Use `skipErrorHandler: true` in request config to handle errors manually in components or hooks.
+- **Handling**: `HttpClient` normalizes transport failures into `ApiError` and has no UI side
+  effects. React Query cache callbacks, forms, or hooks own presentation. Select user copy from
+  stable local mappings; backend `message` and field details are not localized display contracts.
+- **React Query ownership**: Locally presented operations also set
+  `meta: LOCAL_ERROR_HANDLING_META`; otherwise the global cache fallback will present the same
+  failure again. Write retries require explicit endpoint idempotency evidence.
 
 ## API Response Format
 

@@ -124,6 +124,26 @@ describe('auth store bootstrap', () => {
     });
   });
 
+  it('prefers canonical auth evidence over a conflicting status fallback', async () => {
+    const loadCurrentUser = vi
+      .fn()
+      .mockRejectedValue(
+        new ApiError(
+          'Account disabled',
+          ApiErrorCode.AUTH_ACCOUNT_DISABLED,
+          401
+        )
+      );
+    const { store } = createStore({ status: 'client-required' }, loadCurrentUser);
+
+    await store.getState().initializeAuth();
+
+    expect(store.getState()).toMatchObject({
+      status: 'forbidden',
+      user: null,
+    });
+  });
+
   it.each([
     new Error('unexpected failure'),
     new ApiError('Network unavailable', ClientErrorCode.NETWORK_ERROR),

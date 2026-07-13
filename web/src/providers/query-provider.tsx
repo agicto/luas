@@ -2,17 +2,16 @@
 
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { queryClient } from '@/config';
 import { PropsWithChildren, useState } from 'react';
 import { isDev } from '@/config/env';
+import { createQueryClient } from '@/config/query-client';
 
 /**
  * React Query provider.
- * Provides a QueryClient instance for the entire client application.
+ * Provides an isolated QueryClient for the nearest route group.
  */
 export function QueryProvider({ children }: PropsWithChildren) {
-  // Ensure a stable QueryClient instance on the client.
-  const [client] = useState(() => queryClient);
+  const [client] = useState(createQueryClient);
 
   return (
     <QueryClientProvider client={client}>

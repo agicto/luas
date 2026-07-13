@@ -44,6 +44,7 @@ export function useUpdateExample() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }) => exampleService.update(id, data),
+    meta: LOCAL_ERROR_HANDLING_META,
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: exampleKeys.detail(id) });
       const prev = queryClient.getQueryData(exampleKeys.detail(id));
@@ -52,7 +53,7 @@ export function useUpdateExample() {
     },
     onError: (err, { id }, context) => {
       queryClient.setQueryData(exampleKeys.detail(id), context.prev);
-      toast.error(err.message);
+      toast.error(t.errors('serverError'));
     },
     onSettled: (data, err, { id }) => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
@@ -67,12 +68,22 @@ export function useUpdateExample() {
 - **Key Factories**: Use constant key objects for all query keys.
 - **Request Isolation**: Create auth stores inside `AuthProvider`; never hydrate a module-level
   singleton with request-specific Server Component data.
+- **Query Cache Isolation**: Create one QueryClient inside each `QueryProvider`; never export a
+  module-level cache singleton across request-owned provider trees.
+- **Error Ownership**: Set `meta: LOCAL_ERROR_HANDLING_META` whenever a hook or form presents its
+  own failure. This prevents the global cache fallback from creating duplicate toasts.
+- **Write Retry Safety**: Mutations do not retry by default. Opt in only when the endpoint contract
+  provides idempotency evidence and the user workflow tolerates replay.
 - **Explicit Bootstrap**: Protected Server Components pass `AuthBootstrap`. Definitive mock
   sessions start ready; `client-required` performs one deduplicated `/auth/me` request.
 - **Failure Semantics**: `401` resolves as `unauthenticated`, `403` as `forbidden`, and network,
   timeout, rate-limit, `5xx`, malformed, or unknown failures as retryable `unavailable`.
-- **Runtime Validation**: Validate external session JSON with `isAuthResponse()` before setting
-  `authenticated`; compile-time DTO types are not evidence about network payloads.
+- **Runtime Validation**: Receive auth service responses as `unknown`, then validate session and
+  mutation JSON with the endpoint guards in `auth-response.ts`; compile-time DTO types are not
+  evidence about network payloads.
+- **Mutation Recovery**: Keep login/register failures in the form that can recover from them. Treat
+  logout `401` as an idempotent completion, but preserve local auth state when availability or
+  successful-response validity is unknown.
 
 > [!TIP]
 > **Stateless Services**: Always use the appropriate request instance (e.g., `request` vs `fileRequest`) from `src/http/request.ts`.

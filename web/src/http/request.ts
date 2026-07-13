@@ -6,14 +6,9 @@ import {
   normalizeLegacyErrorCode,
   type ErrorCodeValue,
 } from './codes';
-import { handleError } from './error-handler';
 
-/**
- * Custom Request Configuration
- */
-export interface RequestConfig extends AxiosRequestConfig {
-  skipErrorHandler?: boolean;
-}
+/** Axios request options accepted by HttpClient. */
+export type RequestConfig = AxiosRequestConfig;
 
 interface ApiErrorBody {
   code?: string | number;
@@ -43,6 +38,7 @@ export class ApiError extends Error {
     fieldErrors?: ApiFieldErrors
   ) {
     super(message);
+    this.name = 'ApiError';
     this.errorCode = errorCode;
     this.status = status;
     this.requestId = requestId;
@@ -99,23 +95,14 @@ class HttpClient {
   }
 
   private setupInterceptors() {
-    // Response Interceptor: Data Extraction & Error Handling
+    // Response interceptor: envelope extraction and error normalization.
     this.instance.interceptors.response.use(
       (response) => {
         const { data } = response;
         // Standard payload extraction for { code, data, message } responses.
         return data && typeof data === 'object' && 'data' in data ? data.data : data;
       },
-      async (error: AxiosError) => {
-        const originalRequest = error.config as RequestConfig;
-        const apiError = toApiError(error);
-
-        if (!originalRequest?.skipErrorHandler) {
-          handleError(apiError);
-        }
-
-        return Promise.reject(apiError);
-      }
+      (error: AxiosError) => Promise.reject(toApiError(error))
     );
   }
 
