@@ -1,28 +1,16 @@
 import type { NextResponse } from 'next/server';
 
-import { env } from '@/config/env';
-import { serverEnv } from '@/config/server-env';
+import {
+  isMockBffEnabled,
+  type MockBffEnvironment,
+} from '@/config/mock-bff';
 import { ApiErrorCode } from '@/http/codes';
 import { apiErrorResponse } from './error-response';
 
-interface MockBffEnvironment {
-  nodeEnv: typeof env.NODE_ENV;
-  enabled: boolean;
-}
-
-function currentMockBffEnvironment(): MockBffEnvironment {
-  return {
-    nodeEnv: env.NODE_ENV,
-    enabled: serverEnv.MOCK_BFF_ENABLED,
-  };
-}
-
-export function isMockBffEnabled(environment: MockBffEnvironment = currentMockBffEnvironment()): boolean {
-  return environment.nodeEnv !== 'production' || environment.enabled;
-}
+export { isMockBffEnabled } from '@/config/mock-bff';
 
 export function guardMockBffRoute(
-  environment: MockBffEnvironment = currentMockBffEnvironment()
+  environment?: MockBffEnvironment
 ): NextResponse | null {
   if (isMockBffEnabled(environment)) {
     return null;

@@ -42,25 +42,23 @@ export function AuthGuard({
   const router = useRouter();
   const pathname = usePathname();
   
-  const isAuthenticated = useAuthStore.use.isAuthenticated();
-  const isLoading = useAuthStore.use.isLoading();
-  const isSystemReady = useAuthStore.use.isSystemReady();
+  const status = useAuthStore.use.status();
   const t = useT();
 
   useEffect(() => {
     // Wait for system to be ready before checking auth
-    if (!isSystemReady) return;
+    if (status === 'idle' || status === 'loading') return;
     
     // If not loading and not authenticated, redirect to login
-    if (!isLoading && !isAuthenticated) {
+    if (status === 'unauthenticated') {
       // Encode current path for redirect after login
       const returnUrl = encodeURIComponent(pathname);
       router.replace(`${redirectTo}?returnUrl=${returnUrl}`);
     }
-  }, [isAuthenticated, isLoading, isSystemReady, pathname, redirectTo, router]);
+  }, [pathname, redirectTo, router, status]);
 
   // Show loading while system is initializing or checking auth
-  if (!isSystemReady || isLoading) {
+  if (status === 'idle' || status === 'loading') {
     if (showLoading) {
       return (
         <main
@@ -81,7 +79,7 @@ export function AuthGuard({
   }
 
   // If not authenticated, don't render children (will redirect)
-  if (!isAuthenticated) {
+  if (status === 'unauthenticated') {
     return null;
   }
 

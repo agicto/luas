@@ -33,10 +33,12 @@ src/features/<feature>/
 ## State
 
 - Use React Query for server state.
-- Use Zustand only for shared UI/session state.
+- Use Zustand only for shared UI/session state. Auth state is provider-owned and request-isolated;
+  do not create a module-level store containing server-bootstrapped users.
 - Keep services stateless; hooks own query and mutation behavior.
 - Place `QueryProvider` at the nearest route group that needs React Query.
-- Use `AuthenticatedProviders` only for protected route groups that need session initialization.
+- Use `AuthenticatedProviders` only for protected route groups and pass the result of
+  `resolveAuthBootstrap()` from their Server Component boundary.
 - Keep public site pages free of auth-store subscriptions unless the feature intentionally becomes authenticated.
 - `src/test/public-route-boundary.test.ts` fails if public `(site)` routes pull in auth, query, HTTP, mock BFF, mock session, toast, or Zustand runtime dependencies.
 - Mount `Toaster` at the nearest route group that emits toast feedback; do not add it to the root layout unless every route genuinely needs that runtime.

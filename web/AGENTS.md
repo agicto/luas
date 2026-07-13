@@ -96,6 +96,7 @@ Browser -> src/http/request.ts -> /api/* -> Mock BFF route handlers
 
 For downstream production apps, point `NEXT_PUBLIC_API_URL` at the real API or a same-origin
 proxy and keep the mock BFF disabled. See `docs/MOCK_BFF.md` for replacement and deletion steps.
+Authentication resolution rules are documented in `docs/AUTHENTICATION.md`.
 
 ### 2. Authentication Flow
 
@@ -111,7 +112,7 @@ POST /api/auth/logout    → Clear cookies
 
 **Route Groups:**
 - `(auth)/*` - Public auth pages (login, register)
-- `(protected)/*` - Protected routes (enforced by `middleware.ts` and `AuthGuard`)
+- `(protected)/*` - Protected routes (mock sessions are verified by `middleware.ts`; every mode uses `AuthGuard` for navigation UX)
 - `(protected)/(console)/*` - Business console pages
 - `(protected)/(devtools)/*` - Internal playground/demo pages
 - `(site)/*` - Public pages
@@ -120,21 +121,34 @@ POST /api/auth/logout    → Clear cookies
 
 ```typescript
 // middleware.ts
-// Redirects unauthenticated traffic away from /console, /styleguide, and /i18n-test
+// Verifies and redirects only for the Luas mock-session mode.
 
 // app/(protected)/layout.tsx
 import { AuthGuard } from '@/features/auth';
+import { resolveAuthBootstrap } from '@/features/auth/server/bootstrap';
+import { AuthenticatedProviders } from '@/providers/authenticated-providers';
 
-export default function ProtectedLayout({ children }) {
-  return <AuthGuard>{children}</AuthGuard>;
+export default async function ProtectedLayout({ children }) {
+  const bootstrap = await resolveAuthBootstrap();
+  return (
+    <AuthenticatedProviders bootstrap={bootstrap}>
+      <AuthGuard>{children}</AuthGuard>
+    </AuthenticatedProviders>
+  );
 }
 ```
 
+`middleware.ts` and `AuthGuard` are not authorization boundaries for real business operations.
+Every API endpoint, Route Handler, and Server Action must enforce its own authentication and
+authorization.
+
 ### 3. State Management
 
-- **Auth state**: `src/features/auth/store/auth-store.ts` (Zustand)
-  - Mirrors the current server session in memory.
-  - Initializes via `/api/auth/me` on app startup.
+- **Auth state**: `src/features/auth/store/auth-store.ts` (provider-owned Zustand store)
+  - Uses one semantic status: `idle`, `loading`, `authenticated`, or `unauthenticated`.
+  - Starts from a serializable server bootstrap when Luas owns the mock session.
+  - Falls back to one deduplicated `/auth/me` request when the real API owns the session.
+  - Never hydrate a module-level singleton with request-specific user data.
 - **Auth actions**: `src/features/auth/hooks/use-auth.ts` (React Query)
   - Handles `login`, `register`, and `logout`.
   - Includes built-in toast notifications and redirection.
@@ -150,7 +164,7 @@ Keep providers as low as the routes that need them:
 - Root layout owns only app-wide client context such as theme and the `common` / `errors` client message namespaces; optional analytics stays server-rendered until `next/script` activates it.
 - `(auth)` owns `QueryProvider` and `Toaster` because login/register forms use React Query mutations and toast feedback.
 - `(auth)` keeps its visual shell server-rendered; only interactive leaves such as `LanguageSwitcher`, forms, and `QueryProvider` cross the client boundary.
-- `(protected)` owns `AuthenticatedProviders` and `Toaster`; the provider combines `QueryProvider` and `AuthProvider` before `AuthGuard`.
+- `(protected)` resolves `AuthBootstrap`, then owns `AuthenticatedProviders` and `Toaster`; the provider combines `QueryProvider` and an isolated `AuthProvider` store before `AuthGuard`.
 - Auth, console, and devtool routes append only the client message namespaces declared in `src/i18n/client-message-namespaces.ts`; server translations still have the complete request message tree.
 - Public `(site)` routes must not subscribe to `auth-store` or initialize mock auth on first load.
 - If a new feature needs React Query, add `QueryProvider` at the nearest route group instead of moving it back to root.

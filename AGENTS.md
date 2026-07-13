@@ -32,6 +32,7 @@ Workspace-level architecture docs:
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
+- [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills

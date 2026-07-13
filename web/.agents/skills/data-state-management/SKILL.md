@@ -12,7 +12,8 @@ This skill outlines the state management architecture of the project. It focuses
 ## Guidelines
 
 ### 1. State Categories
-- **Auth State**: `src/store/auth-store.ts` (Zustand + persist). Stores user data and system features.
+- **Auth State**: `src/features/auth/store/auth-store.ts` (provider-owned Zustand vanilla store).
+  It mirrors the current session using one status value and is never persisted in browser storage.
 - **UI State**: `src/store/ui-store.ts` (Zustand). Temporary/global UI states.
 - **Server State**: Managed by React Query for all API-driven data.
 
@@ -62,6 +63,10 @@ export function useUpdateExample() {
 - **Optimistic Updates**: Provide immediate feedback.
 - **Refetch-on-Failure**: Roll back state and refetch to ensure alignment.
 - **Key Factories**: Use constant key objects for all query keys.
+- **Request Isolation**: Create auth stores inside `AuthProvider`; never hydrate a module-level
+  singleton with request-specific Server Component data.
+- **Explicit Bootstrap**: Protected Server Components pass `AuthBootstrap`. Definitive mock
+  sessions start ready; `client-required` performs one deduplicated `/auth/me` request.
 
 > [!TIP]
 > **Stateless Services**: Always use the appropriate request instance (e.g., `request` vs `fileRequest`) from `src/http/request.ts`.

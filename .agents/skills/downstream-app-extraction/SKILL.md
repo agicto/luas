@@ -62,6 +62,8 @@ Classify each touched surface before changing it.
    - Keep default starters when they remain useful as business-ready building blocks.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with the real API path or same-origin proxy for production.
+   - Preserve the provider-owned auth store. Keep `client-session` unless the downstream Next.js
+     server can authoritatively resolve the real session, then replace only the bootstrap adapter.
    - Rename console surfaces only in downstream mode.
 
 4. **Preserve contracts**

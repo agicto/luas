@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import { authConfig } from '@/config/auth';
+import { getAuthRuntimeMode } from '@/features/auth/server/auth-runtime';
 import { verifySession } from '@/lib/session-signing';
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
@@ -41,6 +42,10 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
 }
 
 export async function middleware(request: NextRequest) {
+  if (getAuthRuntimeMode() !== 'mock-session') {
+    return NextResponse.next();
+  }
+
   const { pathname, search } = request.nextUrl;
   const valid = await hasValidSession(request);
 

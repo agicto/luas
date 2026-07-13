@@ -1,27 +1,34 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useAuthStore } from '@/features/auth/store/auth-store';
+import { useEffect, useState } from 'react';
+
+import {
+  AuthStoreContext,
+  createAuthStore,
+  type AuthStore,
+} from '@/features/auth/store/auth-store';
+import type { AuthBootstrap } from '@/features/auth/types';
 
 interface AuthProviderProps {
+  bootstrap: AuthBootstrap;
   children: React.ReactNode;
 }
 
 /**
- * Authentication provider that initializes auth state on app startup.
- * 
- * This provider initializes auth in the background without blocking page rendering.
- * Protected routes should use AuthGuard to enforce authentication.
- * Public routes (site, auth) will render immediately while auth state is being determined.
+ * Owns an isolated auth store for one protected route tree.
+ * Definitive server bootstraps render immediately; client-owned sessions resolve
+ * in the background and are blocked by AuthGuard until ready.
  */
-export function AuthProvider({ children }: AuthProviderProps) {
-  const initializeAuth = useAuthStore.use.initializeAuth();
+export function AuthProvider({ bootstrap, children }: AuthProviderProps) {
+  const [store] = useState<AuthStore>(() => createAuthStore(bootstrap));
 
   useEffect(() => {
-    void initializeAuth();
-  }, [initializeAuth]);
+    void store.getState().initializeAuth();
+  }, [store]);
 
-  // Render children immediately without waiting for auth initialization
-  // Protected routes will use AuthGuard for blocking behavior
-  return <>{children}</>;
+  return (
+    <AuthStoreContext.Provider value={store}>
+      {children}
+    </AuthStoreContext.Provider>
+  );
 }

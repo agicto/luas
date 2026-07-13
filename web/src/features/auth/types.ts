@@ -7,6 +7,21 @@ export interface AuthUser {
   role: AuthRole;
 }
 
+/**
+ * Serializable result passed from a protected Server Component to its
+ * request-scoped client auth store.
+ */
+export type AuthBootstrap =
+  | { status: 'authenticated'; user: AuthUser }
+  | { status: 'unauthenticated' }
+  | { status: 'client-required' };
+
+export type AuthStatus =
+  | 'idle'
+  | 'loading'
+  | 'authenticated'
+  | 'unauthenticated';
+
 export interface LoginRequest {
   email: string;
   password: string;

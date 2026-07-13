@@ -83,16 +83,16 @@ describe('useLogin', () => {
 
 - **Next.js Router**: Already mocked in `setup.ts`
 - **API Calls**: Use `vi.mock()` or MSW for HTTP mocking
-- **Zustand Stores**: Reset state between tests
+- **Zustand Stores**: Create a fresh store per test; auth stores are provider-owned
 
 ```tsx
-import { vi, beforeEach } from 'vitest';
-import { useAuthStore } from '@/features/auth/store/auth-store';
+import { vi } from 'vitest';
+import { createAuthStore } from '@/features/auth/store/auth-store';
 
-beforeEach(() => {
-  // Reset store state
-  useAuthStore.getState().reset();
-});
+const store = createAuthStore(
+  { status: 'client-required' },
+  vi.fn().mockResolvedValue({ user: testUser })
+);
 
 // Mock feature service
 vi.mock('@/features/auth/services/auth-service', () => ({

@@ -27,16 +27,24 @@ Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go
 **Flow**: `Browser -> src/http/request.ts -> /api/* -> mock BFF route handlers`
 
 ## Authentication Flow
-The scaffold uses httpOnly mock session cookies for local auth. Protected routes are managed by `AuthenticatedProviders` plus `AuthGuard` in the `(protected)` layout.
+The scaffold uses httpOnly mock session cookies for local auth. `resolveAuthRuntimeMode()` selects
+`mock-session` only when the mock BFF is available and the API target is same-origin `/api`;
+external APIs and production proxies use `client-session`.
+
+Protected routes resolve a serializable bootstrap on the server, then create one isolated Zustand
+store per `AuthProvider`. A definitive mock session renders without a client `/auth/me` request;
+client-owned real API sessions use one deduplicated request.
 
 ```typescript
 // app/(protected)/layout.tsx
 import { AuthGuard } from '@/features/auth';
+import { resolveAuthBootstrap } from '@/features/auth/server/bootstrap';
 import { AuthenticatedProviders } from '@/providers/authenticated-providers';
 
-export default function ProtectedLayout({ children }) {
+export default async function ProtectedLayout({ children }) {
+  const bootstrap = await resolveAuthBootstrap();
   return (
-    <AuthenticatedProviders>
+    <AuthenticatedProviders bootstrap={bootstrap}>
       <AuthGuard>{children}</AuthGuard>
     </AuthenticatedProviders>
   );
@@ -51,7 +59,7 @@ export default function ProtectedLayout({ children }) {
 - `(site)`: Public marketing and information pages.
 
 > [!NOTE]
-> **Production Ready**: Downstream apps should point `NEXT_PUBLIC_API_URL` at the real API or a same-origin proxy and keep the mock BFF disabled unless running a demo-only deployment.
+> **Production Ready**: Downstream apps should point `NEXT_PUBLIC_API_URL` at the real API or a same-origin proxy and keep the mock BFF disabled unless running a demo-only deployment. `AuthGuard` is UX; the API, Route Handlers, and Server Actions remain the authorization boundary.
 
 ## Related Skills
 

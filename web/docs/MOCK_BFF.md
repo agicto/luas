@@ -20,6 +20,12 @@ web origin because the default HTTP client sends credentials.
 Production runtime fails fast when `MOCK_BFF_ENABLED=true` without a strong `SESSION_SECRET`;
 normal downstream production runtime and production builds can omit this mock-only secret.
 
+Authentication mode is derived from both mock availability and the API target. Local development
+or an explicit demo using same-origin `/api` selects `mock-session`, so the protected Server
+Component can verify the Luas cookie without a client `/auth/me` waterfall. External APIs and
+production same-origin proxies select `client-session`; middleware must not interpret their
+credentials as a Luas mock cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
+
 ## Replacement Checklist
 
 1. Confirm the real API follows [`../../contracts/README.md`](../../contracts/README.md), especially
@@ -33,6 +39,8 @@ normal downstream production runtime and production builds can omit this mock-on
    - `src/features/auth/server/session.ts`
    - `src/features/example/server/mock-example-store.ts`
    - `authConfig.demoUser` in `src/config/auth.ts`
+   Keep `AuthBootstrap` and the provider-owned store. Replace `resolveAuthBootstrap()` only if the
+   downstream server can safely and authoritatively resolve the real session.
 5. Leave `MOCK_BFF_ENABLED=false` for production unless the deployment is explicitly demo-only.
 6. When all mock route handlers are removed, remove or adapt `src/test/mock-bff-route-contract.test.ts`
    because that test is a scaffold guardrail for existing mock routes.

@@ -17,13 +17,11 @@ import { useT } from '@/i18n';
 export function useLogin() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setUser = useAuthStore.use.setUser();
   const t = useT();
 
   return useMutation({
     mutationFn: (data: LoginRequest) => authService.login(data),
-    onSuccess: ({ user }) => {
-      setUser(user);
+    onSuccess: () => {
       toast.success(t('auth.loginSuccess'));
       router.replace(resolveReturnUrl(searchParams.get('returnUrl')));
     },
@@ -36,13 +34,11 @@ export function useLogin() {
  */
 export function useRegister() {
   const router = useRouter();
-  const setUser = useAuthStore.use.setUser();
   const t = useT();
 
   return useMutation({
     mutationFn: (data: RegisterRequest) => authService.register(data),
-    onSuccess: ({ user }) => {
-      setUser(user);
+    onSuccess: () => {
       toast.success(t('auth.accountCreated'));
       router.replace(authConfig.routes.afterLogin);
     },

@@ -79,7 +79,7 @@ function isSessionPayload(value: unknown): value is SessionPayload {
     typeof v.id === 'string' &&
     typeof v.email === 'string' &&
     typeof v.name === 'string' &&
-    typeof v.role === 'string' &&
+    (v.role === 'admin' || v.role === 'member') &&
     typeof v.iat === 'number' &&
     typeof v.exp === 'number'
   );
