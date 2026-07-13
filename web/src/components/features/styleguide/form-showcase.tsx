@@ -16,6 +16,7 @@ import * as React from "react"
 
 export function FormShowcase() {
   const [date, setDate] = React.useState<Date | undefined>(new Date())
+  const [dateTime, setDateTime] = React.useState<Date | undefined>(new Date())
 
   return (
     <section className="space-y-8">
@@ -29,12 +30,12 @@ export function FormShowcase() {
           <div className="grid gap-6 p-6 border rounded-xl bg-card">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label>Premium Date Picker (with Year)</Label>
-                <DatePicker date={date} setDate={setDate} />
+                <Label htmlFor="styleguide-date">Premium Date Picker (with Year)</Label>
+                <DatePicker id="styleguide-date" date={date} setDate={setDate} />
               </div>
               <div className="grid gap-2">
-                <Label>DateTime Picker (HMS)</Label>
-                <DatePicker showTime date={date} setDate={setDate} />
+                <Label htmlFor="styleguide-datetime">DateTime Picker (HMS)</Label>
+                <DatePicker id="styleguide-datetime" showTime date={dateTime} setDate={setDateTime} />
               </div>
             </div>
 
@@ -44,8 +45,8 @@ export function FormShowcase() {
             </div>
 
             <div className="grid gap-2">
-              <Label>File Upload</Label>
-              <Input type="file" className="cursor-pointer py-1.5 h-auto text-xs" />
+              <Label htmlFor="styleguide-file">File Upload</Label>
+              <Input id="styleguide-file" type="file" className="cursor-pointer py-1.5 h-auto text-xs" />
             </div>
 
             <div className="grid gap-2 pt-4 border-t">

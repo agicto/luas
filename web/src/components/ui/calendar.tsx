@@ -2,245 +2,205 @@
  * @component Calendar
  * @category UI
  * @status Stable
- * @description A date selection component with support for month/year navigation and today shortcut.
- * @usage Use for choosing specific dates in forms or filters. Internal logic uses native Date objects.
+ * @description Locale-aware single-date calendar backed by React DayPicker.
+ * @usage Use for date selection inside forms and filters. Date grid semantics, focus, and keyboard navigation are owned by React DayPicker.
  * @example
  * <Calendar selected={date} onSelect={setDate} />
  */
-"use client"
+'use client';
 
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { cn } from "@/utils"
+import * as React from 'react';
+import { useLocale } from 'next-intl';
+import {
+  DayFlag,
+  DayPicker,
+  SelectionState,
+  UI,
+  type ChevronProps,
+  type DayPickerProps,
+} from 'react-day-picker';
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from 'lucide-react';
 
-import { useT } from "@/i18n"
+import { useT } from '@/i18n';
+import type { Locale } from '@/i18n/locales';
+import { cn } from '@/utils';
+import { getCalendarLocale } from './calendar-locale';
 
-// Simple date-fns like helpers using native Date
-const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate()
-const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay()
+type DayPickerBaseProps = Omit<
+  DayPickerProps,
+  'footer' | 'locale' | 'mode' | 'onSelect' | 'required' | 'selected'
+>;
 
-interface CalendarProps {
-  selected?: Date
-  onSelect?: (date: Date) => void
-  onToday?: () => void
-  className?: string
-  showFooter?: boolean
+export interface CalendarProps extends DayPickerBaseProps {
+  locale?: Locale;
+  onSelect?: (date: Date) => void;
+  onToday?: () => void;
+  selected?: Date;
+  showFooter?: boolean;
 }
 
-export function Calendar({ selected, onSelect, onToday, className, showFooter = true }: CalendarProps) {
-  const t = useT()
-  const [viewDate, setViewDate] = React.useState(selected || new Date())
-  const [mode, setMode] = React.useState<"days" | "months" | "years">("days")
-  const [yearInput, setYearInput] = React.useState(viewDate.getFullYear().toString())
-  
-  const year = viewDate.getFullYear()
-  const month = viewDate.getMonth()
-
-  // Sync view when selected date changes (e.g. "Now" clicked from outside)
-  React.useEffect(() => {
-    if (selected) {
-      setViewDate(selected)
-      setYearInput(selected.getFullYear().toString())
-    }
-  }, [selected])
-
-  // Sync input when viewDate changes (e.g. from nav buttons)
-  React.useEffect(() => {
-    setYearInput(year.toString())
-  }, [year])
-  
-  const daysInMonth = getDaysInMonth(year, month)
-  const firstDay = getFirstDayOfMonth(year, month)
-  
-  const handlePrevMonth = () => setViewDate(new Date(year, month - 1, 1))
-  const handleNextMonth = () => setViewDate(new Date(year, month + 1, 1))
-  
-  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  const emptyDays = Array.from({ length: firstDay === 0 ? 6 : firstDay - 1 }, (_, i) => i)
-  
-  const isSelected = (day: number) => 
-    selected?.getDate() === day && 
-    selected?.getMonth() === month && 
-    selected?.getFullYear() === year
-
-  const isToday = (day: number) => {
-    const today = new Date()
-    return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year
-  }
-
-  const weekDays = ["一", "二", "三", "四", "五", "六", "日"]
-  const months = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"].map(m => `${m}${t.common('month')}`)
-
-  // Year Selection Logic
-  const startYear = Math.floor(year / 12) * 12
-  const years = Array.from({ length: 12 }, (_, i) => startYear + i)
-
-  const handleYearSelect = (y: number) => {
-    setViewDate(new Date(y, month, 1))
-    setMode("days")
-  }
-
-  const handleMonthSelect = (m: number) => {
-    setViewDate(new Date(year, m, 1))
-    setMode("days")
-  }
-
-  const handleYearInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    setYearInput(val)
-    
-    const num = parseInt(val)
-    if (!isNaN(num) && num > 0 && num < 9999 && val.length === 4) {
-      setViewDate(new Date(num, month, 1))
-    }
-  }
+function CalendarChevron({
+  className,
+  orientation = 'left',
+  size = 16,
+  style,
+}: ChevronProps) {
+  const Icon = {
+    down: ChevronDown,
+    left: ChevronLeft,
+    right: ChevronRight,
+    up: ChevronUp,
+  }[orientation];
 
   return (
-    <div className={cn("p-3 w-[260px]", className)}>
-      <div className="flex items-center justify-between mb-1">
-        <button
-          onClick={() => {
-            if (mode === "days") handlePrevMonth()
-            else if (mode === "years") setViewDate(new Date(year - 12, month, 1))
-            else setViewDate(new Date(year - 1, month, 1))
-          }}
-          className="size-8 flex items-center justify-center hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground active:scale-90 cursor-pointer"
-        >
-          <ChevronLeft className="size-4" />
-        </button>
-        <div 
-          className="flex items-center gap-1 font-semibold text-sm tracking-tight px-2 py-1 rounded-md transition-colors"
-        >
-          {mode === "days" ? (
-            <div className="flex items-center hover:bg-muted p-1 rounded-md transition-colors">
-              <input
-                type="text"
-                value={yearInput}
-                onChange={handleYearInput}
-                onBlur={() => setYearInput(year.toString())}
-                className="w-10 bg-transparent text-center focus:outline-hidden focus:bg-background rounded px-0.5 border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-              <span 
-                className="cursor-pointer select-none active:scale-95 px-1 rounded-sm hover:text-primary transition-colors"
-                onClick={() => setMode("years")}
-              >
-                {t.common('year')}
-              </span>
-              <span 
-                className="cursor-pointer select-none active:scale-95 ml-1 px-1 rounded-sm hover:text-primary transition-colors"
-                onClick={() => setMode("months")}
-              >
-                {month + 1}{t.common('month')}
-              </span>
-            </div>
-          ) : mode === "years" ? (
-            <span 
-              className="cursor-pointer select-none active:scale-95 px-3 py-1 rounded-md hover:bg-muted transition-colors"
-              onClick={() => setMode("days")}
-            >
-              {years[0]} - {years[years.length - 1]}
-            </span>
-          ) : (
-            <span 
-              className="cursor-pointer select-none active:scale-95 px-3 py-1 rounded-md hover:bg-muted transition-colors"
-              onClick={() => setMode("days")}
-            >
-              {year}{t.common('year')}
-            </span>
-          )}
-        </div>
-        <button
-          onClick={() => {
-            if (mode === "days") handleNextMonth()
-            else if (mode === "years") setViewDate(new Date(year + 12, month, 1))
-            else setViewDate(new Date(year + 1, month, 1))
-          }}
-          className="size-8 flex items-center justify-center hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground active:scale-90 cursor-pointer"
-        >
-          <ChevronRight className="size-4" />
-        </button>
-      </div>
-      
-      {mode === "days" ? (
-        <>
-          <div className="grid grid-cols-7 gap-1 text-center text-[10px] uppercase font-medium text-muted-foreground/90 mb-2 tracking-widest">
-            {weekDays.map(d => (
-              <div key={d} className="py-1">
-                {d}
-              </div>
-            ))}
-          </div>
-          
-          <div className="min-h-[212px]">
-            <div className="grid grid-cols-7 gap-1">
-              {emptyDays.map(i => <div key={`empty-${i}`} />)}
-              {days.map(day => (
-                <button
-                  key={day}
-                  onClick={() => onSelect?.(new Date(year, month, day))}
-                  className={cn(
-                    "size-8 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 relative cursor-pointer",
-                    isSelected(day) 
-                      ? "bg-primary text-primary-foreground font-bold shadow-button-primary scale-110 z-10" 
-                      : "hover:bg-muted active:scale-95",
-                    isToday(day) && !isSelected(day) && "after:absolute after:bottom-1 after:size-1 after:bg-primary after:rounded-full after:animate-pulse",
-                    !isSelected(day) && !isToday(day) && "text-foreground/90"
-                  )}
-                >
-                  {day}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : mode === "years" ? (
-        <div className="grid grid-cols-3 gap-2 min-h-[212px]">
-          {years.map(y => (
-            <button
-              key={y}
-              onClick={() => handleYearSelect(y)}
-              className={cn(
-                "h-12 flex items-center justify-center rounded-xl text-sm font-medium transition-colors cursor-pointer",
-                y === year ? "bg-primary text-primary-foreground font-bold" : "hover:bg-muted text-foreground/80 active:bg-muted/80"
-              )}
-            >
-              {y}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-2 min-h-[212px]">
-          {months.map((m, i) => (
-            <button
-              key={m}
-              onClick={() => handleMonthSelect(i)}
-              className={cn(
-                "h-12 flex items-center justify-center rounded-xl text-sm font-medium transition-colors cursor-pointer",
-                i === month ? "bg-primary text-primary-foreground font-bold" : "hover:bg-muted text-foreground/80 active:bg-muted/80"
-              )}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      )}
-      
+    <Icon
+      aria-hidden="true"
+      className={cn('size-4', className)}
+      size={size}
+      style={style}
+    />
+  );
+}
+
+export function Calendar({
+  className,
+  classNames,
+  components,
+  defaultMonth,
+  locale: localeOverride,
+  month: controlledMonth,
+  onMonthChange,
+  onSelect,
+  onToday,
+  selected,
+  showFooter = true,
+  startMonth,
+  endMonth,
+  today: todayOverride,
+  ...props
+}: CalendarProps) {
+  const t = useT('common');
+  const requestLocale = useLocale() as Locale;
+  const locale = localeOverride ?? requestLocale;
+  const today = React.useMemo(
+    () => todayOverride ?? new Date(),
+    [todayOverride]
+  );
+  const [internalMonth, setInternalMonth] = React.useState(
+    controlledMonth ?? selected ?? defaultMonth ?? today
+  );
+  const visibleMonth = controlledMonth ?? internalMonth;
+  const dateFormatter = React.useMemo(
+    () => new Intl.DateTimeFormat(locale, { dateStyle: 'full' }),
+    [locale]
+  );
+
+  React.useEffect(() => {
+    if (selected && !controlledMonth) {
+      setInternalMonth((currentMonth) =>
+        currentMonth.getFullYear() === selected.getFullYear() &&
+        currentMonth.getMonth() === selected.getMonth()
+          ? currentMonth
+          : selected
+      );
+    }
+  }, [controlledMonth, selected]);
+
+  const handleMonthChange = (nextMonth: Date) => {
+    if (!controlledMonth) {
+      setInternalMonth(nextMonth);
+    }
+    onMonthChange?.(nextMonth);
+  };
+
+  const handleToday = () => {
+    const currentDate = new Date(today);
+    handleMonthChange(currentDate);
+    onSelect?.(currentDate);
+    onToday?.();
+  };
+
+  return (
+    <div className={cn('w-fit', className)} data-slot="calendar">
+      <DayPicker
+        {...props}
+        mode="single"
+        required
+        selected={selected}
+        onSelect={onSelect}
+        month={visibleMonth}
+        onMonthChange={handleMonthChange}
+        startMonth={startMonth ?? new Date(today.getFullYear() - 100, 0, 1)}
+        endMonth={endMonth ?? new Date(today.getFullYear() + 10, 11, 1)}
+        locale={getCalendarLocale(locale)}
+        lang={locale}
+        today={today}
+        captionLayout="dropdown"
+        navLayout="after"
+        fixedWeeks
+        showOutsideDays
+        footer={
+          selected
+            ? t('selectedDate', { date: dateFormatter.format(selected) })
+            : undefined
+        }
+        components={{ Chevron: CalendarChevron, ...components }}
+        classNames={{
+          [UI.Root]: 'relative p-3',
+          [UI.Months]: 'relative flex flex-col gap-4',
+          [UI.Month]: 'flex w-full flex-col gap-3',
+          [UI.MonthCaption]: 'flex h-8 items-center justify-center px-16',
+          [UI.Dropdowns]: 'flex items-center justify-center gap-1',
+          [UI.DropdownRoot]:
+            'relative inline-flex h-8 items-center rounded-md border border-border bg-background shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20',
+          [UI.Dropdown]:
+            'absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0',
+          [UI.CaptionLabel]:
+            'inline-flex items-center gap-1 px-2 text-sm font-semibold',
+          [UI.Nav]:
+            'pointer-events-none absolute inset-x-3 top-3 z-10 flex items-center justify-between',
+          [UI.PreviousMonthButton]:
+            'pointer-events-auto inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-ring disabled:pointer-events-none disabled:opacity-50',
+          [UI.NextMonthButton]:
+            'pointer-events-auto inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-ring disabled:pointer-events-none disabled:opacity-50',
+          [UI.Chevron]: 'fill-current text-current',
+          [UI.MonthGrid]: 'w-full border-collapse',
+          [UI.Weekdays]: 'flex',
+          [UI.Weekday]:
+            'w-8 text-center text-[0.7rem] font-medium text-muted-foreground',
+          [UI.Weeks]: 'block',
+          [UI.Week]: 'mt-1 flex w-full',
+          [UI.Day]: 'relative size-8 p-0 text-center text-sm',
+          [UI.DayButton]:
+            'inline-flex size-8 items-center justify-center rounded-md font-medium transition-colors hover:bg-muted focus-ring disabled:pointer-events-none',
+          [SelectionState.selected]:
+            'rounded-md bg-primary text-primary-foreground shadow-button-primary [&>button]:font-semibold [&>button]:hover:bg-primary',
+          [DayFlag.today]:
+            'rounded-md bg-accent text-accent-foreground after:absolute after:bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-primary',
+          [DayFlag.outside]: 'text-muted-foreground opacity-45',
+          [DayFlag.disabled]: 'text-muted-foreground opacity-40',
+          [DayFlag.hidden]: 'invisible',
+          [UI.Footer]: 'sr-only',
+          ...classNames,
+        }}
+      />
+
       {showFooter && (
-        <div className="mt-4 pt-3 border-t border-border flex items-center justify-start text-xs text-muted-foreground/80">
-          <button 
-            onClick={() => {
-              const now = new Date()
-              onSelect?.(now)
-              setViewDate(now)
-              setMode("days")
-              onToday?.()
-            }}
-            className="hover:text-primary transition-colors font-bold px-2 py-1 rounded-md hover:bg-primary/5 cursor-pointer"
+        <div className="border-t border-border px-3 py-2 text-xs">
+          <button
+            type="button"
+            className="rounded-md px-2 py-1 font-semibold text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-ring"
+            onClick={handleToday}
           >
-            {t.common('now')}
+            {t('today')}
           </button>
         </div>
       )}
     </div>
-  )
+  );
 }

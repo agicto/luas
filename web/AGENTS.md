@@ -447,9 +447,11 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 
 - `Input` preserves native HTML input behavior. `type="date"`, `type="color"`, `name`, `required`, and `aria-*` must reach the underlying `<input>` unchanged.
 - Use `DatePicker`, `ColorPicker`, and `PasswordInput` explicitly when their specialized interaction is required. Do not make `Input` switch component families based on `type`.
+- `Calendar` and `DatePicker` delegate calendar-grid semantics, locale week rules, and keyboard focus to React DayPicker. Keep `src/components/ui/calendar-locale.ts` exhaustive when adding a configured locale.
+- `DatePicker` hidden form values use browser-local `date` or `datetime-local` strings. They do not provide native constraint validation or an absolute-time/time-zone contract; use native `Input` controls for native validation and define an application contract before submitting cross-time-zone instants.
 - `errorText` must produce a stable error id, set `aria-invalid`, merge rather than replace an existing `aria-describedby`, and use a polite live region.
 - Icon-only control labels belong to callers so formal surfaces can translate them. `PasswordInput` therefore requires `showPasswordLabel` and `hidePasswordLabel`.
-- Changes to shared form primitives require `src/test/form-control-accessibility.test.tsx` plus type-check, lint, and a production build.
+- Changes to shared form primitives require the relevant `src/test/form-control-accessibility.test.tsx` or `src/test/calendar-date-picker.test.tsx` contract suite plus type-check, lint, and a production build.
 
 #### Performance Optimization Rules
 

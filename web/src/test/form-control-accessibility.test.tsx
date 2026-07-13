@@ -86,6 +86,7 @@ describe('form control accessibility contracts', () => {
 
     expect(input).toHaveAttribute('type', 'password');
     expect(toggle).toHaveAttribute('aria-controls', 'password');
+    expect(toggle).toHaveClass('size-6');
     expect(toggle).not.toHaveAttribute('aria-pressed');
 
     fireEvent.click(toggle);

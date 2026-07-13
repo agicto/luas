@@ -83,9 +83,10 @@ Use Chrome DevTools color picker or the `axe` extension to check.
 
 - `Input` must retain native HTML semantics; never replace it with another component based on `type`.
 - Use explicit `DatePicker`, `ColorPicker`, or `PasswordInput` APIs for specialized interactions.
+- Keep `Calendar` grid semantics and keyboard focus on React DayPicker; custom DayPicker components must forward the supplied accessibility, event, and focus props.
 - Preserve caller descriptions when adding error descriptions; merge `aria-describedby` ids.
 - Icon-only actions must receive caller-owned accessible labels. Do not add an English fallback inside a reusable primitive.
-- `src/test/form-control-accessibility.test.tsx` is the public regression seam for native attributes, error associations, password visibility labels, and color control semantics.
+- `src/test/form-control-accessibility.test.tsx` is the public regression seam for native attributes, error associations, password visibility labels, and color control semantics. `src/test/calendar-date-picker.test.tsx` owns calendar locale, keyboard, dialog, and local form-value contracts.
 
 ### 8. Internationalization
 

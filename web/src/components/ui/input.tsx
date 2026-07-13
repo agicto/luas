@@ -151,7 +151,7 @@ function PasswordInput({
           aria-controls={inputId}
           disabled={disabled}
           onClick={() => setShow(!show)}
-          className="hover:text-foreground cursor-pointer transition-colors outline-hidden focus-visible:ring-1 focus-visible:ring-ring rounded-sm pointer-events-auto disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex size-6 items-center justify-center rounded-sm transition-colors outline-hidden pointer-events-auto cursor-pointer hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         >
           {show ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
         </button>

@@ -124,6 +124,8 @@ Translations are organized into functional modules located in `src/i18n/modules/
 
 Configuration in `src/i18n/config.ts`.
 
+When adding a configured locale, also add its React DayPicker locale to `src/components/ui/calendar-locale.ts`; the exhaustive `Record<Locale, DayPickerLocale>` makes missing calendar coverage a type error.
+
 ### 3. Module Structure
 
 Each module contains three files:

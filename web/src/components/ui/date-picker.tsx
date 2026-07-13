@@ -2,192 +2,299 @@
  * @component DatePicker
  * @category UI
  * @status Stable
- * @description A combined date and time picker component using a popover and calendar.
- * @usage Use for selecting specific points in time. Supports both date-only and date-time modes.
+ * @description Locale-aware date and time picker with explicit form semantics.
+ * @usage Use for enhanced date selection. Use native Input type="date" when browser-native constraint validation is preferred.
  * @example
- * <DatePicker date={date} setDate={setDate} showTime placeholder="Select meeting time" />
+ * <DatePicker id="meeting-at" name="meetingAt" value={date} onChange={setDate} showTime />
  */
-"use client"
+'use client';
 
-import * as React from "react"
-import { CalendarIcon } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "./popover"
-import { Calendar } from "./calendar"
-import { cn } from "@/utils"
+import * as React from 'react';
+import { useLocale } from 'next-intl';
+import dynamic from 'next/dynamic';
+import { CalendarIcon } from 'lucide-react';
 
-import { useT } from "@/i18n"
+import { useT } from '@/i18n';
+import type { Locale } from '@/i18n/locales';
+import { cn } from '@/utils';
+import {
+  parseDatePickerValue,
+  serializeDatePickerValue,
+} from './date-picker-value';
+import { FormControlError, useFormControlA11y } from './form-control';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
-interface DatePickerProps {
-  date?: Date
-  setDate?: (date: Date) => void
-  value?: Date | string
-  onChange?: (date: Date) => void
-  placeholder?: string
-  className?: string
-  showTime?: boolean
-  error?: boolean
-  errorText?: string
+const Calendar = dynamic(
+  () => import('./calendar').then((module) => module.Calendar),
+  {
+    loading: () => (
+      <div aria-hidden="true" className="h-[300px] w-[260px]" />
+    ),
+  }
+);
+
+type DatePickerTriggerProps = Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'children' | 'defaultValue' | 'onChange' | 'type' | 'value'
+>;
+
+export interface DatePickerProps extends DatePickerTriggerProps {
+  date?: Date;
+  defaultValue?: Date | string;
+  error?: boolean;
+  errorText?: React.ReactNode;
+  locale?: Locale;
+  name?: string;
+  onChange?: (date: Date) => void;
+  placeholder?: string;
+  required?: boolean;
+  setDate?: (date: Date) => void;
+  showTime?: boolean;
+  value?: Date | string;
 }
 
-const TimeColumn = ({ 
-  max, 
-  value, 
-  onChange, 
-  label 
-}: { 
-  max: number, 
-  value: number, 
-  onChange: (v: number) => void,
-  label: string
-}) => {
-  const scrollRef = React.useRef<HTMLDivElement>(null)
-  
-  React.useEffect(() => {
-    if (scrollRef.current) {
-      // index + 1 to skip the Spacer div
-      const item = scrollRef.current.children[value + 1] as HTMLElement
-      if (item) {
-        // Center in new compact height: 260 / 2 - 32 / 2 = 114
-        scrollRef.current.scrollTop = item.offsetTop - 114
-      }
+interface TimeSelectProps {
+  disabled: boolean;
+  label: string;
+  max: number;
+  onChange: (value: number) => void;
+  value: number;
+}
+
+function TimeSelect({
+  disabled,
+  label,
+  max,
+  onChange,
+  value,
+}: TimeSelectProps) {
+  return (
+    <label className="grid gap-1 text-xs font-medium text-muted-foreground">
+      <span>{label}</span>
+      <select
+        aria-label={label}
+        className="h-8 rounded-md border border-border bg-background px-2 font-mono text-sm text-foreground outline-none focus:border-primary focus-ring disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+      >
+        {Array.from({ length: max + 1 }, (_, option) => (
+          <option key={option} value={option}>
+            {String(option).padStart(2, '0')}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+export function DatePicker({
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
+  className,
+  date: legacyDate,
+  defaultValue,
+  disabled = false,
+  error,
+  errorText,
+  form,
+  id,
+  locale: localeOverride,
+  name,
+  onChange,
+  placeholder,
+  required = false,
+  setDate: legacySetDate,
+  showTime = false,
+  value,
+  ...triggerProps
+}: DatePickerProps) {
+  const t = useT('common');
+  const requestLocale = useLocale() as Locale;
+  const locale = localeOverride ?? requestLocale;
+  const generatedId = React.useId();
+  const triggerId = id ?? `date-picker-${generatedId}`;
+  const dialogId = `${triggerId}-dialog`;
+  const isControlled = legacyDate !== undefined || value !== undefined;
+  const controlledDate = parseDatePickerValue(legacyDate ?? value);
+  const [internalDate, setInternalDate] = React.useState(() =>
+    parseDatePickerValue(defaultValue)
+  );
+  const [open, setOpen] = React.useState(false);
+  const selectedDate = isControlled ? controlledDate : internalDate;
+  const controlA11y = useFormControlA11y({
+    id: triggerId,
+    error,
+    errorText,
+    ariaDescribedBy,
+    ariaInvalid,
+  });
+  const formatter = React.useMemo(
+    () =>
+      new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        ...(showTime ? { timeStyle: 'medium' as const } : {}),
+      }),
+    [locale, showTime]
+  );
+
+  const commitDate = (nextDate: Date) => {
+    if (!isControlled) {
+      setInternalDate(nextDate);
     }
-  }, [value])
+    legacySetDate?.(nextDate);
+    onChange?.(nextDate);
+  };
+
+  const handleDateSelect = (nextDate: Date) => {
+    const committedDate = new Date(nextDate);
+    if (showTime && selectedDate) {
+      committedDate.setHours(
+        selectedDate.getHours(),
+        selectedDate.getMinutes(),
+        selectedDate.getSeconds(),
+        selectedDate.getMilliseconds()
+      );
+    }
+    commitDate(committedDate);
+  };
+
+  const handleTimeChange = (
+    unit: 'hours' | 'minutes' | 'seconds',
+    nextValue: number
+  ) => {
+    if (!selectedDate) {
+      return;
+    }
+    const nextDate = new Date(selectedDate);
+    if (unit === 'hours') nextDate.setHours(nextValue);
+    if (unit === 'minutes') nextDate.setMinutes(nextValue);
+    if (unit === 'seconds') nextDate.setSeconds(nextValue);
+    commitDate(nextDate);
+  };
 
   return (
-    <div className="flex flex-col items-center bg-muted/20 last:border-0 border-r border-border/10 w-14 shrink-0 overflow-hidden">
-      <div className="text-xs font-bold text-muted-foreground/60 py-3 uppercase tracking-widest">{label}</div>
-      <div 
-        ref={scrollRef}
-        className="h-[260px] w-full overflow-y-auto no-scrollbar flex flex-col items-center relative overscroll-contain"
-        style={{ scrollBehavior: 'smooth' }}
-      >
-        <div className="h-[114px] shrink-0" /> {/* Top Spacer */}
-        {Array.from({ length: max + 1 }, (_, i) => (
+    <div className="grid w-full gap-1" data-slot="date-picker">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
           <button
-            key={i}
-            onClick={() => onChange(i)}
+            {...triggerProps}
+            id={triggerId}
+            type="button"
+            role="combobox"
+            aria-haspopup="dialog"
+            aria-controls={dialogId}
+            aria-expanded={open}
+            form={form}
+            disabled={disabled}
+            aria-describedby={controlA11y.ariaDescribedBy}
+            aria-invalid={controlA11y.ariaInvalid}
+            aria-required={required || undefined}
             className={cn(
-              "size-8 shrink-0 flex items-center justify-center text-sm font-medium transition-all rounded-lg mb-2 last:mb-0 cursor-pointer",
-              value === i 
-                ? "bg-primary text-primary-foreground font-bold shadow-md scale-110 z-10" 
-                : "text-foreground/80 hover:bg-primary/10 hover:text-foreground"
+              'flex h-9 w-full items-center justify-between rounded-lg border border-border bg-background px-3 py-1 text-left text-sm font-normal shadow-xs transition-all input-depth hover:border-border-strong focus:border-primary focus:outline-hidden',
+              !selectedDate && 'text-muted-foreground',
+              controlA11y.isInvalid &&
+                'border-destructive text-destructive focus:border-destructive',
+              className
             )}
           >
-            {String(i).padStart(2, '0')}
+            <span className="truncate">
+              {selectedDate ? formatter.format(selectedDate) : placeholder ?? t('datePlaceholder')}
+            </span>
+            <CalendarIcon
+              aria-hidden="true"
+              className={cn(
+                'ml-2 size-4 shrink-0 opacity-50',
+                controlA11y.isInvalid && 'text-destructive opacity-100'
+              )}
+            />
           </button>
-        ))}
-        <div className="h-[114px] shrink-0" /> {/* Bottom Spacer */}
-      </div>
-    </div>
-  )
-}
+        </PopoverTrigger>
 
-export function DatePicker({ 
-  date: propsDate, 
-  setDate: propsSetDate, 
-  value: propsValue,
-  onChange: propsOnChange,
-  placeholder, 
-  className, 
-  showTime = false,
-  error,
-  errorText
-}: DatePickerProps) {
-  const t = useT()
-  const [internalDate, setInternalDate] = React.useState<Date | undefined>(undefined)
-  const [open, setOpen] = React.useState(false)
-
-  // Standardize the source of truth for the date
-  const date = propsDate || (propsValue instanceof Date ? propsValue : (typeof propsValue === 'string' ? new Date(propsValue) : internalDate))
-  const setDate = (d: Date) => {
-    propsSetDate?.(d)
-    propsOnChange?.(d)
-    setInternalDate(d)
-  }
-
-  const isError = error || !!errorText
-
-  const formatDisplayDate = (d?: Date) => {
-    if (!d) return ""
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    if (!showTime) return dateStr
-    const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`
-    return `${dateStr} ${timeStr}`
-  }
-
-  const handleTimeChange = (type: 'h' | 'm' | 's', value: number) => {
-    if (!date) return
-    const newDate = new Date(date)
-    if (type === 'h') newDate.setHours(value)
-    if (type === 'm') newDate.setMinutes(value)
-    if (type === 's') newDate.setSeconds(value)
-    setDate?.(newDate)
-  }
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          className={cn(
-            "flex h-9 w-full rounded-lg border border-border bg-background px-3 py-1 text-sm shadow-xs transition-all hover:border-border-strong focus:outline-hidden focus:border-primary items-center justify-between text-left font-normal input-depth cursor-pointer",
-            !date && "text-muted-foreground",
-            isError && "border-destructive focus:border-destructive text-destructive",
-            className
-          )}
+        <PopoverContent
+          id={dialogId}
+          role="dialog"
+          aria-label={t('chooseDate')}
+          className="w-auto overflow-hidden p-0"
+          align="start"
         >
-          <span className="truncate">{date && !isNaN(date.getTime()) ? formatDisplayDate(date) : (placeholder || t.common('datePlaceholder'))}</span>
-          <CalendarIcon className={cn("size-4 opacity-50 shrink-0 ml-2", isError && "text-destructive opacity-100")} />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0 overflow-hidden" align="start">
-        <div className="flex bg-popover/30 backdrop-blur-2xl">
-          <Calendar 
-            selected={date} 
-            showFooter={false}
-            onSelect={(d) => {
-              if (showTime && date) {
-                const newDate = new Date(d)
-                newDate.setHours(date.getHours(), date.getMinutes(), date.getSeconds())
-                setDate?.(newDate)
-              } else {
-                setDate?.(d)
-              }
-              // Removed auto-close for consistency when footer is present
-            }} 
-          />
-          {showTime && (
-            <div className="flex border-l border-border/40 animate-in slide-in-from-right-4">
-              <TimeColumn label={t.common('hour').charAt(0)} max={23} value={date?.getHours() || 0} onChange={(v) => handleTimeChange('h', v)} />
-              <TimeColumn label={t.common('minute').charAt(0)} max={59} value={date?.getMinutes() || 0} onChange={(v) => handleTimeChange('m', v)} />
-              <TimeColumn label={t.common('second').charAt(0)} max={59} value={date?.getSeconds() || 0} onChange={(v) => handleTimeChange('s', v)} />
-            </div>
-          )}
-        </div>
-        <div className="p-2 border-t border-border flex items-center justify-between bg-muted/10">
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                const now = new Date()
-                setDate?.(now)
-              }}
-              className="hover:text-primary transition-colors text-xs font-bold px-3 py-1.5 rounded-md hover:bg-primary/5 cursor-pointer text-foreground/90 active:scale-95"
+          <div className="flex flex-col bg-popover/30 backdrop-blur-2xl sm:flex-row">
+            <Calendar
+              autoFocus
+              locale={locale}
+              selected={selectedDate}
+              showFooter={false}
+              onSelect={handleDateSelect}
+            />
+
+            {showTime && (
+              <fieldset className="grid content-start gap-3 border-t border-border/40 p-3 sm:border-l sm:border-t-0">
+                <legend className="sr-only">{t('time')}</legend>
+                <TimeSelect
+                  disabled={disabled || !selectedDate}
+                  label={t('hour')}
+                  max={23}
+                  value={selectedDate?.getHours() ?? 0}
+                  onChange={(nextValue) =>
+                    handleTimeChange('hours', nextValue)
+                  }
+                />
+                <TimeSelect
+                  disabled={disabled || !selectedDate}
+                  label={t('minute')}
+                  max={59}
+                  value={selectedDate?.getMinutes() ?? 0}
+                  onChange={(nextValue) =>
+                    handleTimeChange('minutes', nextValue)
+                  }
+                />
+                <TimeSelect
+                  disabled={disabled || !selectedDate}
+                  label={t('second')}
+                  max={59}
+                  value={selectedDate?.getSeconds() ?? 0}
+                  onChange={(nextValue) =>
+                    handleTimeChange('seconds', nextValue)
+                  }
+                />
+              </fieldset>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-border bg-muted/10 p-2">
+            <button
+              type="button"
+              className="rounded-md px-3 py-1.5 text-xs font-bold text-foreground/90 transition-colors hover:bg-primary/5 hover:text-primary focus-ring"
+              onClick={() => commitDate(new Date())}
             >
-              {t.common('now')}
+              {t('now')}
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-primary px-6 py-1.5 text-xs font-bold text-primary-foreground shadow-button-primary transition-all hover:brightness-110 focus-ring"
+              onClick={() => setOpen(false)}
+            >
+              {t('confirm')}
             </button>
           </div>
-          <button 
-            onClick={() => setOpen(false)}
-            className="px-6 py-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-lg shadow-button-primary hover:brightness-110 active:scale-95 transition-all cursor-pointer"
-          >
-            {t.common('confirm')}
-          </button>
-        </div>
-      </PopoverContent>
-      {errorText && (
-        <p className="text-xs font-medium text-destructive mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
-          {errorText}
-        </p>
+        </PopoverContent>
+      </Popover>
+
+      {name && (
+        <input
+          type="hidden"
+          name={name}
+          form={form}
+          disabled={disabled}
+          value={serializeDatePickerValue(selectedDate, showTime)}
+        />
       )}
-    </Popover>
-  )
+
+      {errorText && (
+        <FormControlError id={controlA11y.errorId} className="mt-0">
+          {errorText}
+        </FormControlError>
+      )}
+    </div>
+  );
 }

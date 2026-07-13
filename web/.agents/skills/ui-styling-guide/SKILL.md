@@ -53,9 +53,10 @@ For detailed component contracts (Named Exports, RSC First, Props Typing, CAS an
 ### Form Controls
 
 - Keep `Input` native. Specialized controls such as `DatePicker`, `ColorPicker`, and `PasswordInput` must be imported explicitly.
+- Style `Calendar` through React DayPicker's class-name slots without replacing its day-button focus behavior or calendar-grid semantics.
 - Use the shared form-control error seam for stable ids, `aria-invalid`, merged `aria-describedby`, and polite announcements.
 - Require caller-owned labels for icon-only actions so formal surfaces can localize them.
-- Run `pnpm exec vitest run src/test/form-control-accessibility.test.tsx` after changing shared form controls.
+- Run `pnpm exec vitest run src/test/form-control-accessibility.test.tsx src/test/calendar-date-picker.test.tsx` after changing shared form controls.
 
 ## Related Skills
 
