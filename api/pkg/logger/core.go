@@ -45,13 +45,13 @@ func (l *Logger) inputHandlers(cfg *Config) {
 	// Keep a lightweight recent-log buffer available for local debugging.
 	l.AddHandler(DefaultMemoryHandler())
 
-	// Add File Handler
-	fileHandler := NewFileHandler(cfg)
-	l.AddHandler(fileHandler)
+	if cfg.FileEnabled {
+		l.AddHandler(NewFileHandler(cfg))
+	}
 
 	// Add Console Handler if enabled
 	if cfg.StdoutPrint {
-		consoleHandler := NewConsoleHandler(cfg.Level, cfg.ColorEnabled)
+		consoleHandler := newConsoleHandler(cfg.Level, cfg.ColorEnabled, cfg.JSON, cfg.TimeFormat)
 		l.AddHandler(consoleHandler)
 	}
 }

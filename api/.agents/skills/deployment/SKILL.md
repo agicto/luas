@@ -1,166 +1,94 @@
 ---
 name: deployment
-description: Deployment workflows, containerization, and cloud-native practices
-version: 1.0.0
-category: DevOps
-tags: [deployment, docker, k8s, cloud-run, ci-cd]
-author: Luas Team
-updated: 2026-01-24
+description: Deploy and verify the Luas API image, local Compose stack, health probes, logs, migrations, and runtime configuration.
 ---
 
-# Deployment Skill
+# Luas API Deployment
 
-## 📋 Purpose
+## Purpose
 
-This skill defines the deployment workflows and infrastructure standards for the Luas project. it ensures that applications are delivered consistently, securely, and with high availability across environments.
+Use the repository's actual container contract when changing the Dockerfile, Compose stack, runtime
+environment, probes, migrations, container logging, or deployment CI. Luas supplies a scaffold image;
+downstream apps own their cloud, registry, secret store, rollout, and rollback.
 
-## 🎯 When to Use
+## Read First
 
-- Building and containerizing an application
-- Setting up CI/CD pipelines
-- Deploying to Google Cloud Run or Kubernetes
-- Managing environment-specific configurations
-- performing blue-green or canary deployments
+1. `../../../../CONTEXT.md` for scaffold and downstream-app vocabulary.
+2. `../../../docs/DEPLOYMENT.md` for the canonical container/deployment contract.
+3. `../../../Dockerfile`, `../../../docker-compose.yml`, and
+   `../../../scripts/verify-container.sh` for executable behavior.
+4. `../../../docs/MIDDLEWARE.md` when proxy trust, metrics exposure, or HTTP transport changes.
 
-## ⚙️ Prerequisites
+## Surface Rules
 
-- [ ] Docker installed locally
-- [ ] Access to cloud provider (Google Cloud recommended)
-- [ ] Understands image registry (GCR/AR)
-- [ ] Knowledge of multi-stage Docker builds
+### Production Image
 
----
+- Keep the final stage distroless and non-root.
+- Never copy `.env`, `.env.example`, credentials, private keys, or local configuration into the image.
+- Keep production/release mode, wildcard container bind, JSON stdout logs, and disabled file logging
+  explicit in the image.
+- Use `/health/live` for the image liveness check. Do not use readiness as a restart signal.
+- Keep the health command shell-free so it runs in the distroless image.
 
-## 🏗️ Containerization
+### Local Compose
 
-We use **Multi-Stage Docker Builds** to ensure small, secure production images.
+- Treat `docker-compose.yml` as a local development stack only.
+- Bind published API and database ports to loopback by default.
+- Mark bundled credentials as local-only and allow environment overrides.
+- Do not describe Compose as a production manifest or silently add production rollout policy.
 
-### 1. Multi-Stage Dockerfile (Standard)
+### Production Deployment
 
-```dockerfile
-# Build Stage
-FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./cmd/server
+- Inject `JWT_SECRET`, production CORS origins, database credentials, and trusted proxy ranges through
+  the deployment platform.
+- Keep liveness and readiness separate: liveness detects a stuck process; readiness controls traffic.
+- Run migrations as one explicit pre-deploy job. Do not let every replica race to migrate on startup.
+- Keep TLS, distributed rate limits, network policy, replica count, autoscaling, and secret rotation
+  deployment-owned.
 
-# Production Stage
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates tzdata
-WORKDIR /root/
-COPY --from=builder /app/main .
-COPY --from=builder /app/config ./config
-EXPOSE 8080
-CMD ["./main"]
-```
+## Workflow
 
-### 2. Best Practices
-- ✅ Use `.dockerignore` to keep image small
-- ✅ Use `distroless` or `alpine` for production to reduce attack surface
-- ✅ Set `CGO_ENABLED=0` for static binary
-- ✅ Include non-root user in the final image
+1. Classify the change as image, local Compose, probe, log, migration, CI, or downstream deployment.
+2. Update the owning runtime seam before documentation.
+3. Add focused Go or shell regression coverage for new behavior.
+4. Run the container verifier locally when Docker is available.
+5. Update `docs/DEPLOYMENT.md`, README, environment examples, and this skill when semantics change.
+6. Run normal API verification and inspect the remote Container workflow after pushing.
 
----
+## Commands
 
-## 🛰️ Cloud Run Deployment (Recommended)
-
-Google Cloud Run is the preferred platform for Luas's serverless microservices.
-
-### 1. Manual Deployment
 ```bash
-# Build and push to registry
-docker build -t gcr.io/[PROJECT_ID]/luas-app:v1 .
-docker push gcr.io/[PROJECT_ID]/luas-app:v1
-
-# Deploy to Cloud Run
-gcloud run deploy luas-app \
-  --image gcr.io/[PROJECT_ID]/luas-app:v1 \
-  --region us-central1 \
-  --allow-unauthenticated
+cd api
+make container-check
+make compose-check
+docker compose config --quiet
+docker compose up --build --wait
+docker compose down
+go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config
 ```
 
-### 2. AI-Assisted Deployment (MCP)
-If the `cloudrun` MCP server is enabled, use it to deploy directly from the context.
+`make container-check` must prove all of the following:
 
----
+- the image runs as non-root;
+- Docker has an executable health check;
+- liveness returns 200 and DB-disabled readiness returns 503;
+- request logs reach container stdout as JSON;
+- `/app/.env` is absent;
+- SIGTERM produces a zero exit code.
 
-## 🔄 CI/CD Workflow
+## Review Checklist
 
-We follow a **GitOps** approach using GitHub Actions.
+- Does the image fail safely when required production configuration is missing?
+- Can a local Compose run start without pretending to be production?
+- Can the runtime probe execute without a shell or curl in the image?
+- Are request logs visible through `docker logs` when the filesystem is read-only or unwritable?
+- Are build artifacts, environment files, logs, test binaries, and coverage files excluded from context?
+- Is a migration change paired with the SQL migration review skill and a deployment serialization plan?
+- Are measured image/context claims reported as local evidence rather than universal budgets?
 
-### Pipeline Stages
-1. **Lint**: Run golangci-lint
-2. **Test**: Execute unit and integration tests
-3. **Build**: Create Docker image
-4. **Scan**: Vulnerability scanning (Trivy/Snyk)
-5. **Deploy**: Auto-deploy to Staging; Manual trigger to Production
+## Pair With
 
----
-
-## ⚙️ Environment Management
-
-Configurations must be injected via **Environment Variables** for 12-factor compliance.
-
-| Key | Example (Dev) | Example (Prod) | Description |
-|-----|---------------|----------------|-------------|
-| `APP_ENV` | `development` | `production` | Environment toggle |
-| `DB_DSN` | `localhost:5432` | `db.production.local` | Database connection |
-| `LOG_LEVEL` | `debug` | `info` | Log verbosity |
-| `SECRET_KEY` | `dev-secret` | `KMS-stored-secret` | Security token |
-
----
-
-## 🩺 Health Checks & Monitoring
-
-### 1. Standard Endpoints
-- `/healthz`: Liveness check (checks process status)
-- `/readyz`: Readiness check (checks DB/Redis connectivity)
-
-### 2. Observability
-- **Metrics**: Exported via Prometheus (default port: 9090)
-- **Traces**: Exported to Cloud Trace / Jaeger
-- **Logs**: Structured JSON logs sent to stdout
-
----
-
-## ✅ Verification Checklist
-
-- [ ] Dockerfile uses multi-stage builds.
-- [ ] No secrets are hardcoded in the Dockerfile.
-- [ ] `.dockerignore` excludes large/sensitive files (`vendor`, `.env`, `tmp`).
-- [ ] Liveness/Readiness probes are implemented.
-- [ ] Image size is under 100MB (target: ~30-50MB).
-- [ ] CI/CD pipeline passes all stages.
-
----
-
-## 🔧 Automation Scripts
-
-Available in `scripts/`:
-- [`verify-image.sh`](./scripts/verify-image.sh) - Checks image compliance & size.
-
----
-
-## 📚 Complete Examples
-
-- [**GitHub Actions Workflow YAML**](./examples/ci-cd-gh-actions.yaml)
-- [**Full Production Dockerfile**](./examples/Dockerfile.production)
-- [**Health Check Implementation**](./examples/health-check.go)
-
----
-
-## 🔗 Related Skills
-
-- [`coding-standards`](../coding-standards/): For log and config standards.
-- [`api-development`](../api-development/): For health check endpoint standards.
-- [`sql-migration-review`](../sql-migration-review/): For migration safety review before any deploy that ships schema changes.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): For Tier-3 wide-impact checks before a deploy.
-- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): For risk / rollback sections in the PR body.
-
----
-
-**Version**: 1.0.0  
-**Last Updated**: 2026-01-24  
-**Maintainer**: Luas Team
+- `sql-migration-review` for schema rollout safety.
+- `logging-standards` for log schema or handler changes.
+- `verification-before-completion` before reporting the slice complete.
+- Root `luas-framework-review` when deployment ownership or scaffold semantics change.

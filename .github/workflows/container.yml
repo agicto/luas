@@ -1,0 +1,41 @@
+name: Container
+
+on:
+  pull_request:
+    paths:
+      - "api/**"
+      - ".github/workflows/container.yml"
+  push:
+    branches:
+      - main
+      - dev
+      - dev-c
+    paths:
+      - "api/**"
+      - ".github/workflows/container.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build and smoke test
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify production image contract
+        run: bash scripts/verify-container.sh luas-api:ci
+
+      - name: Verify local Compose lifecycle
+        run: bash scripts/verify-compose.sh luas-api:ci

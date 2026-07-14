@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all clean test test-kest test-race test-race-critical benchmark-http benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-http benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -43,6 +43,14 @@ build-server: $(OUTPUT_DIR)
 # Build both binaries
 build-all: build build-server
 	@echo "Build completed for current platform"
+
+# Build and exercise the production container contract.
+container-check:
+	@bash scripts/verify-container.sh
+
+# Exercise the local Compose database, migration, readiness, and starter flow.
+compose-check:
+	@bash scripts/verify-compose.sh
 
 # Build Windows binaries
 build-windows: $(OUTPUT_DIR)

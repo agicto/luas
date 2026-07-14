@@ -35,16 +35,25 @@ type ConsoleHandler struct {
 	writer       io.Writer
 	level        Level
 	colorEnabled bool
+	json         bool
 	timeFormat   string
 }
 
 // NewConsoleHandler creates a new console handler
 func NewConsoleHandler(level Level, colorEnabled bool) *ConsoleHandler {
+	return newConsoleHandler(level, colorEnabled, false, time.RFC3339)
+}
+
+func newConsoleHandler(level Level, colorEnabled bool, jsonOutput bool, timeFormat string) *ConsoleHandler {
+	if timeFormat == "" {
+		timeFormat = time.RFC3339
+	}
 	return &ConsoleHandler{
 		writer:       os.Stdout,
 		level:        level,
 		colorEnabled: colorEnabled,
-		timeFormat:   "2006-01-02 15:04:05",
+		json:         jsonOutput,
+		timeFormat:   timeFormat,
 	}
 }
 
@@ -55,6 +64,14 @@ func (h *ConsoleHandler) Handle(ctx context.Context, entry *Entry) error {
 
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.json {
+		data, err := marshalJSONEntry(entry, h.timeFormat)
+		if err != nil {
+			return err
+		}
+		_, err = h.writer.Write(data)
+		return err
+	}
 
 	var sb strings.Builder
 
@@ -168,8 +185,15 @@ func (h *FileHandler) Handle(ctx context.Context, entry *Entry) error {
 }
 
 func (h *FileHandler) formatJSON(entry *Entry) ([]byte, error) {
+	return marshalJSONEntry(entry, h.timeFormat)
+}
+
+func marshalJSONEntry(entry *Entry, timeFormat string) ([]byte, error) {
+	if timeFormat == "" {
+		timeFormat = time.RFC3339
+	}
 	record := map[string]any{
-		"time":    entry.Time.Format(h.timeFormat),
+		"time":    entry.Time.Format(timeFormat),
 		"level":   entry.Level.String(),
 		"message": entry.Message,
 	}
@@ -178,6 +202,9 @@ func (h *FileHandler) formatJSON(entry *Entry) ([]byte, error) {
 	}
 	if entry.RequestID != "" {
 		record["request_id"] = entry.RequestID
+	}
+	if entry.TraceID != "" {
+		record["trace_id"] = entry.TraceID
 	}
 	if len(entry.Context) > 0 {
 		record["context"] = entry.Context

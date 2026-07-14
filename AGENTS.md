@@ -33,6 +33,7 @@ Workspace-level architecture docs:
 - [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
+- [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
 - [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
@@ -72,7 +73,7 @@ Helper scripts shipped with skills:
 
 `make governance` runs the root semantic, contract, docs, surface, branch, package-boundary, and skill metadata guardrails. `make check` runs `make governance` plus the API and Web verification tiers.
 
-CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml) and [.github/workflows/ci.yml](.github/workflows/ci.yml). The CI governance job calls `make governance` so local and CI guardrails share one entry point.
+CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml), [.github/workflows/ci.yml](.github/workflows/ci.yml), and the production image contract via [.github/workflows/container.yml](.github/workflows/container.yml). The CI governance job calls `make governance` so local and CI guardrails share one entry point.
 
 ## Cross-cutting rules (apply everywhere)
 
@@ -90,6 +91,8 @@ cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
 cd api && make test-race-critical       # queue/worker lifecycle race gate
 cd api && make benchmark-http           # compare core HTTP middleware with metrics off/on
+cd api && make container-check          # build and exercise the production image contract
+cd api && make compose-check            # verify local DB, migration, readiness, and starter flow
 cd api && make vuln                     # pinned reachable-vulnerability scan
 
 # web/

@@ -351,3 +351,23 @@ func TestLoad_ServerTransportExplicitEnvOverridesDefaults(t *testing.T) {
 		t.Fatalf("max header bytes = %d, want 32768", cfg.Server.MaxHeaderBytes)
 	}
 }
+
+func TestLoad_LogOutputEnvironment(t *testing.T) {
+	withoutEnv(t, "LOG_STDOUT", "LOG_FILE_ENABLED", "LOG_JSON")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("APP_DEBUG", "false")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+	t.Setenv("LOG_STDOUT", "true")
+	t.Setenv("LOG_FILE_ENABLED", "false")
+	t.Setenv("LOG_JSON", "true")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if !cfg.Log.Stdout || cfg.Log.FileEnabled || !cfg.Log.JSON {
+		t.Fatalf("log outputs = stdout:%v file:%v json:%v, want true/false/true", cfg.Log.Stdout, cfg.Log.FileEnabled, cfg.Log.JSON)
+	}
+}

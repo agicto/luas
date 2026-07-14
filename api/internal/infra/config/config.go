@@ -15,8 +15,9 @@ var GlobalConfig *Config
 const (
 	// DefaultServerHost keeps local runs off external interfaces unless explicitly configured.
 	DefaultServerHost = "127.0.0.1"
+	// DefaultServerPort is shared by the HTTP server and local health probe.
+	DefaultServerPort = 8025
 
-	defaultServerPort                     = 8025
 	defaultServerReadTimeoutSeconds       = 60
 	defaultServerReadHeaderTimeoutSeconds = 10
 	defaultServerWriteTimeoutSeconds      = 190
@@ -170,8 +171,11 @@ func (j JWTConfig) ExpireDuration() time.Duration {
 }
 
 type LogConfig struct {
-	Level string
-	File  string
+	Level       string
+	File        string
+	Stdout      bool
+	FileEnabled bool
+	JSON        bool
 }
 
 type CORSConfig struct {
@@ -237,13 +241,14 @@ func Load() (*Config, error) {
 
 	appEnv := env.Get("APP_ENV", "development")
 	isProd := strings.EqualFold(appEnv, "production")
+	appDebug := env.GetBool("APP_DEBUG", true)
 	expireDays := env.GetInt("JWT_EXPIRE_DAYS", 7)
 
 	cfg := &Config{
 		App: AppConfig{
 			Name:      env.Get("APP_NAME", "Luas"),
 			Env:       appEnv,
-			Debug:     env.GetBool("APP_DEBUG", true),
+			Debug:     appDebug,
 			URL:       env.Get("APP_URL", "http://localhost:8025"),
 			Key:       env.Get("APP_KEY", ""),
 			JWTSecret: env.Get("JWT_SECRET", ""),
@@ -251,7 +256,7 @@ func Load() (*Config, error) {
 		},
 		Server: ServerConfig{
 			Host:              env.Get("SERVER_HOST", DefaultServerHost),
-			Port:              env.GetInt("SERVER_PORT", defaultServerPort),
+			Port:              env.GetInt("SERVER_PORT", DefaultServerPort),
 			Mode:              env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
 			ReadTimeout:       env.GetInt("SERVER_READ_TIMEOUT", defaultServerReadTimeoutSeconds),
 			ReadHeaderTimeout: env.GetInt("SERVER_READ_HEADER_TIMEOUT", defaultServerReadHeaderTimeoutSeconds),
@@ -300,8 +305,11 @@ func Load() (*Config, error) {
 			Expire:     time.Duration(expireDays) * 24 * time.Hour,
 		},
 		Log: LogConfig{
-			Level: env.Get("LOG_LEVEL", "debug"),
-			File:  env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")),
+			Level:       env.Get("LOG_LEVEL", "debug"),
+			File:        env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")),
+			Stdout:      env.GetBool("LOG_STDOUT", !isProd || appDebug),
+			FileEnabled: env.GetBool("LOG_FILE_ENABLED", true),
+			JSON:        env.GetBool("LOG_JSON", isProd),
 		},
 		CORS: CORSConfig{
 			// Default to localhost-only. Production should set CORS_ALLOW_ORIGINS

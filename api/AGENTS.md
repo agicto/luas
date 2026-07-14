@@ -106,6 +106,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
 - [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
 
 ## Directory Structure
@@ -144,6 +145,7 @@ make build         # Build CLI
 make test          # Run tests
 make test-race-critical # Run queue/worker lifecycle race tests required by CI
 make benchmark-http # Measure the core HTTP middleware chain with metrics off/on
+make container-check # Build and exercise the production image contract
 make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
 make wire          # Generate DI
@@ -257,6 +259,9 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 - **HTTP Transport**: `SERVER_HOST` must control the real socket bind address. Keep read-header,
   read, write, idle, and header-size defaults wired through `config.ServerConfig`; a positive server
   write timeout must outlive the cooperative middleware request timeout.
+- **Container Runtime**: Production images must not embed environment files. Keep local Compose
+  development-only, liveness separate from readiness, request logs on container stdout, and
+  `make container-check` aligned with Dockerfile behavior.
 - **Disabled Database**: Repositories that receive nil GORM because `DB_ENABLED=false` MUST return
   `domain.ErrServiceUnavailable`; they must never dereference nil or silently turn dependency failure
   into not-found/invalid-credential behavior. Audit persistence remains best-effort.

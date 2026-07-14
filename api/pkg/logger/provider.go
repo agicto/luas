@@ -20,22 +20,22 @@ func Boot() *Logger {
 	} else {
 		cfg = DefaultConfig()
 	}
+	if isDebug {
+		cfg.StdoutPrint = true
+		cfg.ColorEnabled = true
+	}
 
 	// Override from environment
 	cfg.Level = ParseLevel(env.Get("LOG_LEVEL", "debug"))
 	cfg.Path = env.Get("LOG_PATH", "storage/logs")
 	cfg.File = env.Get("LOG_FILE", env.Get("LOG_FILENAME", "{Y}-{m}-{d}.log"))
+	cfg.FileEnabled = env.GetBool("LOG_FILE_ENABLED", cfg.FileEnabled)
 	cfg.MaxSize = env.GetInt("LOG_MAX_SIZE", 100)
 	cfg.MaxAge = env.GetInt("LOG_MAX_AGE", 14)
 	cfg.MaxBackups = env.GetInt("LOG_MAX_BACKUPS", 7)
 	cfg.Compress = env.GetBool("LOG_COMPRESS", true)
 	cfg.JSON = env.GetBool("LOG_JSON", appEnv == "production")
-
-	// In debug mode, always output to stdout with colors
-	if isDebug {
-		cfg.StdoutPrint = true
-		cfg.ColorEnabled = true
-	}
+	cfg.StdoutPrint = env.GetBool("LOG_STDOUT", cfg.StdoutPrint)
 
 	l := New(cfg)
 

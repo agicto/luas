@@ -28,6 +28,10 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   container surfaces explicitly bind `0.0.0.0`, and read-header/read/write/idle/header-size budgets
   are wired into `http.Server`. Configuration validation rejects negative values and a positive write
   deadline that cannot outlive the cooperative request timeout.
+- The API production image no longer embeds development environment files. It runs non-root with
+  production/release defaults, JSON request logs on stdout, file logging disabled, and an executable
+  loopback liveness check. Local Compose is explicitly development-only, and CI builds and exercises
+  the same image contract through `make container-check`.
 - API client-IP controls now deny forwarding-header trust by default, validate exact `SERVER_TRUSTED_PROXIES`, and reject trust-all networks. Public auth routes add production-default independent per-IP/per-subject quotas, hashed subject keys, generic `COMMON.RATE_LIMITED` responses without bucket diagnostics, one-query login lookup, fixed dummy-hash work for unknown accounts, and the same `AUTH.INVALID_CREDENTIALS` response for unknown, wrong-password, and disabled accounts.
 - The API minimum toolchain is now Go 1.25.12 and `quic-go` is at 0.59.1, closing the reachable standard-library and HTTP/3 findings reported against Go 1.25.0 / `quic-go` 0.58.0. A full `govulncheck ./...` reports zero reachable vulnerabilities; three advisories remain only in required modules with no called symbols. With both trees built by Go 1.25.12 using `-trimpath -ldflags='-s -w'`, the auth/proxy/tooling slice moves `cmd/server` from 34,412,002 to 34,445,090 bytes (+33,088 bytes, 0.10%) against baseline `fcb58b1`; `x/tools` and `x/vuln` remain absent from the server package dependency graph.
 - API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
@@ -92,6 +96,28 @@ Verification:
 
 - `cd api && go test ./internal/bootstrap ./internal/infra/config`
 - Real server socket inspection for loopback and wildcard binds, plus an oversized-header request.
+
+### Completed P0 — Production Container Runtime Contract
+
+The previous image copied `.env.example` to `/app/.env`, allowing development CORS, debug server
+mode, and example infrastructure values to override production-safe code defaults. It also had no
+health check, production request logs were directed to an unwritable file instead of container
+stdout, and a local `bootstrap.test` expanded the Docker context to 40.99 MB. The image now embeds no
+environment file, emits JSON request logs to stdout without a file handler, runs an executable
+non-root liveness probe, and has a shared local/CI smoke verifier. Compose now declares itself as a
+loopback-only development stack with local-only credentials.
+
+Measured on Docker Desktop, the first full post-change context transfer was 87.65 kB, a 99.79%
+reduction from 40.99 MB. Image size moved from 24,942,104 to 24,944,318 bytes (+2,214 bytes, about
+0.009%) while adding the health command and runtime contract. These are local image/build-context
+measurements, not a registry transfer or multi-platform budget.
+
+Verification:
+
+- `cd api && make container-check`
+- `cd api && make compose-check`
+- `cd api && docker compose config --quiet`
+- `cd api && go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config`
 
 ### P1 — Security Defaults
 

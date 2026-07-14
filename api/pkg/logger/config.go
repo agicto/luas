@@ -16,6 +16,9 @@ type Config struct {
 	// File is the log file name pattern (supports date: {Y}-{m}-{d}.log)
 	File string
 
+	// FileEnabled controls whether the rotating file handler is registered.
+	FileEnabled bool
+
 	// MaxSize is the maximum size in MB before rotation
 	MaxSize int
 
@@ -51,6 +54,7 @@ func DefaultConfig() *Config {
 		Level:        LevelDebug,
 		Path:         "storage/logs",
 		File:         "{Y}-{m}-{d}.log",
+		FileEnabled:  true,
 		MaxSize:      100,
 		MaxAge:       14,
 		MaxBackups:   7,

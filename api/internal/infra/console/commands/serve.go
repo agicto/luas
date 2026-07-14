@@ -2,6 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -23,9 +25,14 @@ func NewServeCommand() *ServeCommand {
 
 func (c *ServeCommand) Name() string        { return "serve" }
 func (c *ServeCommand) Description() string { return "Start the HTTP server" }
-func (c *ServeCommand) Usage() string       { return "serve [--port=8080]" }
+func (c *ServeCommand) Usage() string       { return "serve [--port=8080] [--migrate]" }
 
 func (c *ServeCommand) Run(args []string) error {
+	options, err := parseServeOptions(args)
+	if err != nil {
+		return err
+	}
+
 	// Initialize logger
 	bootstrap.InitLogger()
 
@@ -36,17 +43,68 @@ func (c *ServeCommand) Run(args []string) error {
 	}
 
 	cfg := application.Config
-
-	// Parse port override from args
-	for i, arg := range args {
-		if arg == "--port" && i+1 < len(args) {
-			// Parse failure leaves cfg.Server.Port at its configured default.
-			_, _ = fmt.Sscanf(args[i+1], "%d", &cfg.Server.Port) //nolint:errcheck
+	if options.port != 0 {
+		cfg.Server.Port = options.port
+	}
+	if options.migrate {
+		if err := bootstrap.RunMigrationsWithEvents(application.DB, application.EventBus); err != nil {
+			return fmt.Errorf("run startup migrations: %w", err)
 		}
 	}
+
 	kernel := bootstrap.NewHttpKernel(application)
 	kernel.Handle()
 	return nil
+}
+
+type serveOptions struct {
+	port    int
+	migrate bool
+}
+
+func parseServeOptions(args []string) (serveOptions, error) {
+	var options serveOptions
+	for i := 0; i < len(args); i++ {
+		argument := args[i]
+		switch {
+		case argument == "--migrate":
+			options.migrate = true
+		case argument == "--port":
+			i++
+			if i >= len(args) {
+				return serveOptions{}, fmt.Errorf("--port requires a value")
+			}
+			port, err := parseServePort(args[i])
+			if err != nil {
+				return serveOptions{}, err
+			}
+			options.port = port
+		case strings.HasPrefix(argument, "--port="):
+			port, err := parseServePort(strings.TrimPrefix(argument, "--port="))
+			if err != nil {
+				return serveOptions{}, err
+			}
+			options.port = port
+		case argument == "--env" || argument == "--env-file":
+			i++
+			if i >= len(args) {
+				return serveOptions{}, fmt.Errorf("%s requires a value", argument)
+			}
+		case strings.HasPrefix(argument, "--env=") || strings.HasPrefix(argument, "--env-file="):
+			// Global options are applied by cmd/luas before command dispatch.
+		default:
+			return serveOptions{}, fmt.Errorf("unknown serve option %q", argument)
+		}
+	}
+	return options, nil
+}
+
+func parseServePort(value string) (int, error) {
+	port, err := strconv.Atoi(strings.TrimSpace(value))
+	if err != nil || port < 1 || port > 65535 {
+		return 0, fmt.Errorf("--port must be an integer between 1 and 65535")
+	}
+	return port, nil
 }
 
 // EnvCommand shows environment information

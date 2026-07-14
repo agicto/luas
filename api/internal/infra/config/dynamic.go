@@ -57,14 +57,15 @@ func (r *Repository) loadFromEnv() {
 
 	// App
 	appEnv := env.Get("APP_ENV", "development")
+	appDebug := env.GetBool("APP_DEBUG", true)
 	r.Set("app.name", env.Get("APP_NAME", "Luas"))
 	r.Set("app.env", appEnv)
-	r.Set("app.debug", env.GetBool("APP_DEBUG", true))
+	r.Set("app.debug", appDebug)
 	r.Set("app.url", env.Get("APP_URL", "http://localhost:8025"))
 	r.Set("app.key", env.Get("APP_KEY", ""))
 
 	// Server
-	r.Set("server.port", env.GetInt("SERVER_PORT", defaultServerPort))
+	r.Set("server.port", env.GetInt("SERVER_PORT", DefaultServerPort))
 	r.Set("server.host", env.Get("SERVER_HOST", DefaultServerHost))
 	r.Set("server.mode", env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")))
 	r.Set("server.read_timeout", env.GetInt("SERVER_READ_TIMEOUT", defaultServerReadTimeoutSeconds))
@@ -99,6 +100,9 @@ func (r *Repository) loadFromEnv() {
 	// Log
 	r.Set("log.level", env.Get("LOG_LEVEL", "debug"))
 	r.Set("log.file", env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")))
+	r.Set("log.stdout", env.GetBool("LOG_STDOUT", !strings.EqualFold(appEnv, "production") || appDebug))
+	r.Set("log.file_enabled", env.GetBool("LOG_FILE_ENABLED", true))
+	r.Set("log.json", env.GetBool("LOG_JSON", strings.EqualFold(appEnv, "production")))
 
 	// CORS
 	r.Set("cors.allowed_origins", env.GetSlice("CORS_ALLOW_ORIGINS", env.GetSlice("CORS_ALLOWED_ORIGINS", []string{"http://localhost:3000"})))

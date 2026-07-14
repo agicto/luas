@@ -1,54 +1,58 @@
+# Local development stack only. Production deployments should inject their
+# own secrets, origins, persistence, and rollout policy into the built image.
+x-api-environment: &api-environment
+  APP_ENV: development
+  APP_DEBUG: "true"
+  APP_URL: http://localhost:${LUAS_API_PORT:-8025}
+  SERVER_MODE: release
+  SERVER_HOST: 0.0.0.0
+  SERVER_PORT: 8025
+  DB_ENABLED: "true"
+  DB_DRIVER: postgres
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_NAME: luas
+  DB_USERNAME: luas
+  DB_PASSWORD: ${LUAS_DB_PASSWORD:-luas-local-only}
+  JWT_SECRET: ${JWT_SECRET:-luas-local-only-jwt-secret-0123456789abcdef}
+  CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:3001}
+  AI_ENABLED: "false"
+  METRICS_ENABLED: "true"
+  LOG_LEVEL: debug
+  LOG_JSON: "true"
+  TZ: UTC
+
 services:
-  luas-app:
+  api:
+    image: ${LUAS_API_IMAGE:-luas-api:local}
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: luas-api
-    restart: always
+    entrypoint: ["/app/luas", "serve", "--migrate"]
     ports:
-      - "8025:8025"
-    environment:
-      - APP_ENV=production
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8025
-      - DB_DRIVER=postgres
-      - DB_HOST=luas-db
-      - DB_PORT=5432
-      - DB_NAME=luas
-      - DB_USERNAME=luas_user
-      - DB_PASSWORD=luas_pass
-      - JWT_SECRET=${JWT_SECRET:-change_me_in_production}
-      - TZ=Asia/Shanghai
+      - "${LUAS_API_BIND_ADDRESS:-127.0.0.1}:${LUAS_API_PORT:-8025}:8025"
+    environment: *api-environment
     depends_on:
-      luas-db:
+      postgres:
         condition: service_healthy
-    networks:
-      - luas-network
+    stop_grace_period: 15s
 
-  luas-db:
+  postgres:
     image: postgres:14-alpine
-    container_name: luas-postgres
-    restart: always
     environment:
-      - POSTGRES_DB=luas
-      - POSTGRES_USER=luas_user
-      - POSTGRES_PASSWORD=luas_pass
-      - TZ=Asia/Shanghai
+      POSTGRES_DB: luas
+      POSTGRES_USER: luas
+      POSTGRES_PASSWORD: ${LUAS_DB_PASSWORD:-luas-local-only}
+      TZ: UTC
     ports:
-      - "5432:5432"
+      - "${LUAS_DB_BIND_ADDRESS:-127.0.0.1}:${LUAS_DB_PORT:-5432}:5432"
     volumes:
-      - luas_db_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U luas_user -d luas" ]
+      test: ["CMD-SHELL", "pg_isready -U luas -d luas"]
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - luas-network
-
-networks:
-  luas-network:
-    driver: bridge
 
 volumes:
-  luas_db_data:
+  postgres-data:
