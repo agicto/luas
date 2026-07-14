@@ -67,6 +67,10 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
 - Web environment access is guarded by `src/test/env-contract.test.ts`: `src/config/env.ts` resolves public values without a schema-library runtime, `src/config/env-validation.ts` keeps Zod validation server-only, `src/config/server-env.ts` owns secrets and mock runtime switches, and production requires `SESSION_SECRET` only when the mock BFF is explicitly enabled. Production browser chunks contain neither server-only names nor Zod.
 - Root verification is split into `make governance` for scaffold guardrails and `make check` for governance plus API/Web verification tiers. CI also calls `make governance` for the root governance job. `run-tiers.sh` prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
+- External GitHub Actions are pinned to reviewed full commit SHAs, use Node 24-compatible releases,
+  and run with explicit token permissions. The runner and update contract lives in [`CI.md`](CI.md),
+  while `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` prevents movable refs,
+  unreviewed action repositories, unsafe triggers, runtime drift, and duplicated pnpm version authority.
 - The root `luas-framework-review` skill now defines the long-running review loop.
 - `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
 - HTTP contract changes now have a dedicated root `contract-evolution` skill that orders changes through `contracts/`, API behavior, Web services, mock BFF behavior, and verification.
@@ -138,6 +142,28 @@ Verification:
 
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
+
+### Completed P1 — CI Action Runtime And Supply Chain
+
+All external action references across the four root workflows now use reviewed full commit SHAs with
+exact release annotations. Checkout remains on v5.0.1 to preserve compatibility with self-hosted
+GitHub Actions Runner v2.327.1, while setup-go, setup-node, pnpm/action-setup, and the existing
+golangci-lint action use Node 24-compatible releases. Read-only validation workflows keep explicit
+`contents: read`; only deployment-branch synchronization retains `contents: write`; and
+`pull_request_target` is forbidden for repository-code verification.
+
+The pnpm version now has one authority in `web/package.json` instead of a duplicate workflow value.
+The executable `check-ci-actions.py` guard validates every workflow, reviewed repository/SHA/version
+triples, action runtime metadata, token-permission declarations, trigger safety, pnpm ownership, and
+the runner contract in [`CI.md`](CI.md). Remote acceptance includes annotation inspection because a
+green workflow with a runtime-deprecation warning is not considered clean.
+
+Verification:
+
+- `python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py`
+- `make governance`
+- `make check`
+- GitHub CI, Container Contract, and Skill Self-Test runs, including annotation inspection.
 
 ### Completed P1 — Typed Configuration Authority
 

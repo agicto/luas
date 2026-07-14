@@ -25,6 +25,7 @@ Workspace-level architecture docs:
 - [CONTEXT.md](CONTEXT.md) — canonical global vocabulary for the whole scaffold
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stable seams and vertical change flow
 - [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) — branch roles, testing branches, release candidates, and deployment trigger rules
+- [docs/CI.md](docs/CI.md) — workflow roles, runner contract, immutable action pins, permissions, and update procedure
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap for professional, semantic, architecture-friendly iteration
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — starter readiness matrix and reusable business capability roadmap
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for keeping agent workflows aligned with vocabulary, contracts, and architecture
@@ -68,12 +69,13 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.
+- `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` — enforce reviewed full-SHA action pins, Node 24-compatible releases, explicit permissions, and safe workflow triggers.
 - `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` — verify scaffold surface classifications stay aligned across context, docs, and downstream extraction guidance.
 - `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` — verify branch/release docs match CI-managed deployment branch mappings.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
 - `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.
 
-`make governance` runs the root semantic, contract, docs, surface, branch, package-boundary, and skill metadata guardrails. `make check` runs `make governance` plus the API and Web verification tiers.
+`make governance` runs the root semantic, contract, docs, CI-action, surface, branch, package-boundary, and skill metadata guardrails. `make check` runs `make governance` plus the API and Web verification tiers.
 
 CI enforces the canonical references via [.github/workflows/skill-self-test.yml](.github/workflows/skill-self-test.yml), [.github/workflows/ci.yml](.github/workflows/ci.yml), and the production image contract via [.github/workflows/container.yml](.github/workflows/container.yml). The CI governance job calls `make governance` so local and CI guardrails share one entry point.
 
@@ -104,7 +106,7 @@ cd web && pnpm type-check               # TypeScript check
 cd web && pnpm lint                     # ESLint
 
 # repo root
-make governance                         # root semantic/contract/docs/surface/branch/package/skill guardrails
+make governance                         # root semantic/contract/docs/CI/surface/branch/package/skill guardrails
 make check                              # governance + API tests + web type/lint/test/build
 ```
 

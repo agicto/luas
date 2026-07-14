@@ -45,6 +45,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 
 - [CONTEXT.md](CONTEXT.md) — canonical Luas vocabulary for humans and agents.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — deployable-unit boundaries and vertical change flow.
+- [docs/CI.md](docs/CI.md) — workflow roles, runner compatibility, immutable action pins, and update procedure.
 - [contracts/README.md](contracts/README.md) — shared HTTP response, error, pagination, and request ID contracts.
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — what to keep, delete, or replace when turning Luas into a downstream app.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
@@ -58,7 +59,7 @@ Both halves were designed for AI-assisted development. Start with the global [CO
 ## Verification
 
 ```bash
-make governance  # root semantic, contract, docs, surface, branch, package, and skill guardrails
+make governance  # root semantic, contract, docs, CI, surface, branch, package, and skill guardrails
 make check       # governance + API tier 1 + Web tier 2
 ```
 
