@@ -11,8 +11,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
 )
@@ -32,13 +30,19 @@ type fakeRepo struct {
 
 type fakeUserMailer struct {
 	passwordResetErr error
+	passwordResetCtx context.Context
 }
 
-func (m *fakeUserMailer) SendPasswordResetEmail(string, string) error {
+func (m *fakeUserMailer) IsConfigured() bool {
+	return true
+}
+
+func (m *fakeUserMailer) SendPasswordResetEmail(ctx context.Context, _ string, _ string) error {
+	m.passwordResetCtx = ctx
 	return m.passwordResetErr
 }
 
-func (m *fakeUserMailer) SendWelcomeEmail(string, string) error {
+func (m *fakeUserMailer) SendWelcomeEmail(context.Context, string, string) error {
 	return nil
 }
 
@@ -113,8 +117,7 @@ func (r *fakeRepo) ResetPasswordWithToken(ctx context.Context, tokenHash string,
 }
 
 func newTestService(repo userRepository) *service {
-	cfg := &config.Config{}
-	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), email.NewService(cfg), NewAccountDeletionPolicy())
+	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
 }
 
 func mustHashTestPassword(t *testing.T) string {
@@ -408,12 +411,77 @@ func TestServiceRequestPasswordResetStoresHashedToken(t *testing.T) {
 	assert.WithinDuration(t, time.Now().Add(30*time.Minute), storedExpiresAt, 5*time.Second)
 }
 
+func TestServiceRequestPasswordResetPropagatesContextToMailer(t *testing.T) {
+	type contextKey string
+	const key contextKey = "request"
+	ctx := context.WithValue(context.Background(), key, "req_123")
+	mailer := &fakeUserMailer{}
+	repo := &fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 42, Email: "alice@example.com"}, nil
+		},
+	}
+	svc := NewService(
+		repo,
+		repo,
+		jwt.NewTestService(),
+		events.NewEventBus(),
+		mailer,
+		NewAccountDeletionPolicy(),
+	)
+
+	err := svc.RequestPasswordReset(ctx, &UserPasswordResetRequest{Email: "alice@example.com"})
+	if err != nil {
+		t.Fatalf("RequestPasswordReset() error = %v", err)
+	}
+	if mailer.passwordResetCtx == nil || mailer.passwordResetCtx.Value(key) != "req_123" {
+		t.Fatalf("mailer context = %v, want request value", mailer.passwordResetCtx)
+	}
+}
+
+func TestServiceRegisterDetachesFireAndForgetEventFromCanceledRequest(t *testing.T) {
+	eventBus := events.NewEventBus()
+	delivered := make(chan struct{}, 1)
+	eventBus.Subscribe(domain.EventUserCreated, func(context.Context, events.Event) error {
+		delivered <- struct{}{}
+		return nil
+	})
+	repo := &fakeRepo{}
+	svc := NewService(
+		repo,
+		repo,
+		jwt.NewTestService(),
+		eventBus,
+		&fakeUserMailer{},
+		NewAccountDeletionPolicy(),
+	)
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := svc.Register(ctx, &UserRegisterRequest{
+		Username: "alice",
+		Email:    "alice@example.com",
+		Password: "password123",
+	})
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	select {
+	case <-delivered:
+	case <-time.After(time.Second):
+		t.Fatal("user.created handler did not run after request cancellation")
+	}
+}
+
 func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailure(t *testing.T) {
 	tests := []struct {
-		name     string
-		storeErr error
-		mailErr  error
+		name      string
+		lookupErr error
+		storeErr  error
+		mailErr   error
 	}{
+		{name: "account lookup failure", lookupErr: errors.New("lookup unavailable")},
 		{name: "token store failure", storeErr: errors.New("store unavailable")},
 		{name: "mail delivery failure", mailErr: errors.New("mail unavailable")},
 	}
@@ -422,6 +490,9 @@ func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailur
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &fakeRepo{
 				findByEmailFn: func(context.Context, string) (*domain.User, error) {
+					if tt.lookupErr != nil {
+						return nil, tt.lookupErr
+					}
 					return &domain.User{ID: 42, Email: "alice@example.com"}, nil
 				},
 				storeResetFn: func(context.Context, uint, string, time.Time) error {

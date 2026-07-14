@@ -305,7 +305,7 @@ r.Group("/v1", func(api *router.Router) {
 - `Redis`
 - `Sentry`
 - `OpenTelemetry`
-- `Resend` 邮件服务
+- `Resend` 邮件 capability：10 秒默认 provider timeout、64 KiB 响应上限和 context 取消；边界见 [docs/EMAIL.md](docs/EMAIL.md)
 - `R2` 对象存储
 
 如果你的项目不需要这些能力，可以只保留核心 HTTP、配置、数据库、路由和模块层。

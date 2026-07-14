@@ -260,6 +260,65 @@ func TestValidate_AllowsDisabledAuthenticationRateLimitWithoutRules(t *testing.T
 	}
 }
 
+func TestValidate_EmailConfigurationIsCompleteAndBounded(t *testing.T) {
+	tests := []struct {
+		name    string
+		config  EmailConfig
+		wantErr string
+	}{
+		{name: "disabled"},
+		{
+			name: "configured",
+			config: EmailConfig{
+				From:           "Luas <noreply@example.com>",
+				ResendAPIKey:   "resend-key",
+				RequestTimeout: 10 * time.Second,
+			},
+		},
+		{
+			name:    "missing sender",
+			config:  EmailConfig{ResendAPIKey: "resend-key", RequestTimeout: 10 * time.Second},
+			wantErr: "MAIL_FROM and RESEND_API_KEY",
+		},
+		{
+			name:    "missing API key",
+			config:  EmailConfig{From: "noreply@example.com", RequestTimeout: 10 * time.Second},
+			wantErr: "MAIL_FROM and RESEND_API_KEY",
+		},
+		{
+			name: "invalid sender",
+			config: EmailConfig{
+				From:           "not-an-email",
+				ResendAPIKey:   "resend-key",
+				RequestTimeout: 10 * time.Second,
+			},
+			wantErr: "MAIL_FROM",
+		},
+		{
+			name: "zero timeout",
+			config: EmailConfig{
+				From:         "noreply@example.com",
+				ResendAPIKey: "resend-key",
+			},
+			wantErr: "MAIL_REQUEST_TIMEOUT",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			cfg.Email = tt.config
+			err := validate(cfg)
+			if tt.wantErr == "" && err != nil {
+				t.Fatalf("validate() error = %v", err)
+			}
+			if tt.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tt.wantErr)) {
+				t.Fatalf("validate() error = %v, want %q", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsInvalidServerTransportBudgets(t *testing.T) {
 	tests := []struct {
 		name string

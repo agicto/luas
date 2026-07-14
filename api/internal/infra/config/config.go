@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -26,6 +27,8 @@ const (
 
 	// DefaultMiddlewareRequestTimeoutSeconds is shared by config loading and timeout middleware.
 	DefaultMiddlewareRequestTimeoutSeconds = 180
+	// DefaultEmailRequestTimeout caps one outbound provider call.
+	DefaultEmailRequestTimeout = 10 * time.Second
 )
 
 // Config holds all application configuration
@@ -200,8 +203,9 @@ type CORSConfig struct {
 }
 
 type EmailConfig struct {
-	From         string
-	ResendAPIKey string
+	From           string
+	ResendAPIKey   string
+	RequestTimeout time.Duration
 }
 
 type AIProviderConfig struct {
@@ -329,8 +333,9 @@ func Load() (*Config, error) {
 			AllowCredentials: env.GetBool("CORS_ALLOW_CREDENTIALS", true),
 		},
 		Email: EmailConfig{
-			From:         env.Get("MAIL_FROM", ""),
-			ResendAPIKey: env.Get("RESEND_API_KEY", ""),
+			From:           env.Get("MAIL_FROM", ""),
+			ResendAPIKey:   env.Get("RESEND_API_KEY", ""),
+			RequestTimeout: env.GetDuration("MAIL_REQUEST_TIMEOUT", DefaultEmailRequestTimeout),
 		},
 		AI: loadAIConfig(),
 		R2: R2Config{
@@ -500,6 +505,10 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	if err := validateEmailConfig(cfg.Email); err != nil {
+		return err
+	}
+
 	// CORS: wildcard origin + credentials is rejected by browsers anyway.
 	// Catch the misconfiguration early at startup.
 	if cfg.CORS.AllowCredentials {
@@ -557,6 +566,27 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateEmailConfig(emailConfig EmailConfig) error {
+	fromConfigured := strings.TrimSpace(emailConfig.From) != ""
+	apiKeyConfigured := strings.TrimSpace(emailConfig.ResendAPIKey) != ""
+	if fromConfigured != apiKeyConfigured {
+		return fmt.Errorf("MAIL_FROM and RESEND_API_KEY must be configured together")
+	}
+	if emailConfig.RequestTimeout < 0 {
+		return fmt.Errorf("MAIL_REQUEST_TIMEOUT must not be negative")
+	}
+	if !fromConfigured {
+		return nil
+	}
+	if emailConfig.RequestTimeout == 0 {
+		return fmt.Errorf("MAIL_REQUEST_TIMEOUT must be greater than 0 when email is configured")
+	}
+	if _, err := mail.ParseAddress(strings.TrimSpace(emailConfig.From)); err != nil {
+		return fmt.Errorf("MAIL_FROM must be a valid email address: %w", err)
+	}
 	return nil
 }
 

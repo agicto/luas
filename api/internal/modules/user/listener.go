@@ -2,10 +2,10 @@ package user
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/pkg/logger"
 )
 
 // handleUserCreated sends a welcome email when a user is created.
@@ -28,15 +28,15 @@ func (h *Handler) handleUserCreated(ctx context.Context, e events.Event) error {
 		return nil
 	}
 
-	if h.mailer == nil {
+	if h.mailer == nil || !h.mailer.IsConfigured() {
 		return nil
 	}
 
-	if err := h.mailer.SendWelcomeEmail(user.Email, user.Username); err != nil {
-		logger.Error("failed to send welcome email", map[string]any{
-			"error": err,
-			"user":  user.Username,
-		})
+	if err := h.mailer.SendWelcomeEmail(ctx, user.Email, user.Username); err != nil {
+		slog.ErrorContext(ctx, "user.welcome_email_delivery_failed",
+			"user_id", user.ID,
+			"err", err,
+		)
 		return err
 	}
 

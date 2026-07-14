@@ -75,6 +75,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-error-contracts.py` when changing scaffold-level HTTP status or `error_code` behavior.
    - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, public failure semantics, abuse controls, proxy trust, adapter status, or starter readiness.
    - Run `scripts/check-config-authority.py` when changing environment loading, typed configuration, logger startup, runtime reload behavior, or configuration cache semantics.
+   - Run `scripts/check-email-boundary.py` when changing outbound email config, provider HTTP behavior, templates, or starter-owned mailer calls.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
    - Run `scripts/check-surface-catalog.py` when changing downstream extraction guidance or scaffold surface classifications.
    - Run `scripts/check-starter-catalog.py` when changing default/optional starter assembly, manifests, migrations, contracts, activation config, or starter guidance.
@@ -115,6 +116,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
 - `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go JWT endpoints, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-config-authority.py` keeps runtime environment access behind `config.Config`, requires one startup snapshot for logging and Wire, and blocks removed dynamic reload/cache surfaces.
+- `scripts/check-email-boundary.py` keeps email configuration, caller cancellation, provider timeout, bounded response reads, privacy rules, and user-starter mailer calls aligned.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.
 - `scripts/check-surface-catalog.py` keeps `docs/SCAFFOLD_SURFACES.md` aligned with `CONTEXT.md` and the `downstream-app-extraction` surface classification table.
 - `scripts/check-starter-catalog.py` keeps additive optional starter config, manifests, migrations, contracts, roadmaps, and module-creation guidance aligned.

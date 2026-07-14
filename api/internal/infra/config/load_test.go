@@ -98,6 +98,33 @@ func TestLoad_OptionalStartersAreAdditiveAndEmptyByDefault(t *testing.T) {
 	}
 }
 
+func TestLoad_EmailRequestTimeout(t *testing.T) {
+	withoutEnv(t, "MAIL_FROM", "RESEND_API_KEY", "MAIL_REQUEST_TIMEOUT")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Email.RequestTimeout != DefaultEmailRequestTimeout {
+		t.Fatalf("default email timeout = %s, want %s", cfg.Email.RequestTimeout, DefaultEmailRequestTimeout)
+	}
+
+	t.Setenv("MAIL_FROM", "Luas <noreply@example.com>")
+	t.Setenv("RESEND_API_KEY", "resend-key")
+	t.Setenv("MAIL_REQUEST_TIMEOUT", "3s")
+	cfg, err = LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() with email config error = %v", err)
+	}
+	if cfg.Email.RequestTimeout != 3*time.Second {
+		t.Fatalf("email timeout = %s, want 3s", cfg.Email.RequestTimeout)
+	}
+}
+
 func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	withoutEnv(
 		t,

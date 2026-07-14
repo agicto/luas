@@ -33,6 +33,15 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   test/diagnostic reloads, and misleading dynamic-key, hot-reload, and no-op cache surfaces have been
   removed. The lifecycle and secret ownership contract lives in
   [`../api/docs/CONFIGURATION.md`](../api/docs/CONFIGURATION.md).
+- Outbound email now uses one reusable HTTP client, caller context plus a 10-second provider budget,
+  a 50-recipient request cap, 64 KiB response cap, all-or-none typed configuration, address
+  validation, HTML-escaped template values, and status-only provider errors. Recipient, subject,
+  body, credential, and provider-body
+  data stay out of logs and returned errors; direct delivery remains explicitly best-effort rather
+  than pretending to be a notification workflow. Against `e6ff2a1`, a Go 1.25.12 `darwin/arm64`
+  stripped `cmd/server` moved from 34,544,338 to 34,527,826 bytes (-16,512, -0.048%), while the
+  `go list -deps` package count stayed at 632. These are binary/dependency measurements, not an email
+  provider latency claim. See [`../api/docs/EMAIL.md`](../api/docs/EMAIL.md).
 - The API production image no longer embeds development environment files. It runs non-root with
   production/release defaults, JSON request logs on stdout, file logging disabled, and an executable
   loopback liveness check. Local Compose is explicitly development-only, and CI builds and exercises

@@ -1,172 +1,202 @@
+// Package email provides the Resend-backed outbound email capability.
 package email
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"html"
 	"io"
 	"net/http"
+	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/pkg/logger"
+)
+
+const (
+	defaultResendEndpoint    = "https://api.resend.com/emails"
+	maxResendRecipients      = 50
+	maxProviderResponseBytes = 64 * 1024
 )
 
 var (
-	// defaultService is kept for backward compatibility with middleware.
-	// New code should use Wire DI instead.
-	defaultService *Service
+	// ErrNotConfigured means the optional email capability has no complete provider configuration.
+	ErrNotConfigured = errors.New("email capability is not configured")
+	// ErrInvalidMessage means the caller supplied an incomplete or invalid outbound message.
+	ErrInvalidMessage = errors.New("email message is invalid")
+	// ErrProviderResponseTooLarge prevents unbounded reads from an external provider.
+	ErrProviderResponseTooLarge = errors.New("email provider response exceeds limit")
+	// ErrInvalidProviderResponse means a successful provider response did not contain its message ID.
+	ErrInvalidProviderResponse = errors.New("email provider returned an invalid response")
 )
 
-// Service encapsulates email sending logic with bound configuration.
-// Injected via Wire DI - no global state in new code.
+// ProviderError reports a failed provider status without exposing its response body.
+type ProviderError struct {
+	StatusCode int
+}
+
+func (e *ProviderError) Error() string {
+	if e == nil {
+		return "email provider request failed"
+	}
+	return fmt.Sprintf("email provider returned HTTP status %d", e.StatusCode)
+}
+
+type httpDoer interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+// Service owns one reusable HTTP client and the provider delivery policy.
 type Service struct {
-	from   string
-	apiKey string
+	from           string
+	apiKey         string
+	endpoint       string
+	requestTimeout time.Duration
+	client         httpDoer
 }
 
-// NewService constructs an email service for the provided configuration.
-// This is the Wire provider function.
-func NewService(cfg *config.Config) *Service {
-	svc := &Service{
-		from:   cfg.Email.From,
-		apiKey: cfg.Email.ResendAPIKey,
-	}
-	// Set as default for backward compatibility
-	defaultService = svc
-	return svc
-}
-
-// NewTestService creates an email service for testing (no-op).
-func NewTestService() *Service {
-	return &Service{
-		from:   "test@example.com",
-		apiKey: "test-api-key",
-	}
-}
-
-type EmailRequest struct {
+type resendSendRequest struct {
 	From    string   `json:"from"`
 	To      []string `json:"to"`
 	Subject string   `json:"subject"`
-	Html    string   `json:"html"`
+	HTML    string   `json:"html"`
 }
 
-type EmailResponse struct {
-	ID      string `json:"id"`
-	From    string `json:"from"`
-	To      string `json:"to"`
-	Created string `json:"created"`
-	Error   string `json:"error"`
+type resendSendResponse struct {
+	ID string `json:"id"`
 }
 
-// SendEmail sends an email
-func (s *Service) SendEmail(to []string, subject, htmlContent string) error {
-	if s.apiKey == "" {
-		logger.Warn("Email service not configured, skipping email", map[string]any{
-			"to":      to,
-			"subject": subject,
-		})
-		return nil
+// NewService constructs the process-wide email adapter from typed configuration.
+func NewService(cfg *config.Config) *Service {
+	emailConfig := config.EmailConfig{RequestTimeout: config.DefaultEmailRequestTimeout}
+	if cfg != nil {
+		emailConfig = cfg.Email
+	}
+	timeout := normalizedTimeout(emailConfig.RequestTimeout)
+	return newService(
+		emailConfig,
+		&http.Client{Timeout: timeout},
+		defaultResendEndpoint,
+	)
+}
+
+func newService(cfg config.EmailConfig, client httpDoer, endpoint string) *Service {
+	timeout := normalizedTimeout(cfg.RequestTimeout)
+	if client == nil {
+		client = &http.Client{Timeout: timeout}
+	}
+	endpoint = strings.TrimSpace(endpoint)
+	if endpoint == "" {
+		endpoint = defaultResendEndpoint
+	}
+	return &Service{
+		from:           strings.TrimSpace(cfg.From),
+		apiKey:         strings.TrimSpace(cfg.ResendAPIKey),
+		endpoint:       endpoint,
+		requestTimeout: timeout,
+		client:         client,
+	}
+}
+
+func normalizedTimeout(timeout time.Duration) time.Duration {
+	if timeout <= 0 {
+		return config.DefaultEmailRequestTimeout
+	}
+	return timeout
+}
+
+// IsConfigured reports whether this adapter can attempt provider delivery.
+func (s *Service) IsConfigured() bool {
+	return s != nil && s.from != "" && s.apiKey != "" && s.endpoint != "" && s.client != nil
+}
+
+// SendEmail sends one bounded, context-aware provider request.
+func (s *Service) SendEmail(ctx context.Context, to []string, subject, htmlContent string) error {
+	if !s.IsConfigured() {
+		return ErrNotConfigured
+	}
+	if ctx == nil {
+		return fmt.Errorf("%w: context is required", ErrInvalidMessage)
+	}
+	if err := validateMessage(to, subject, htmlContent); err != nil {
+		return err
 	}
 
-	logger.Info("Preparing to send email", map[string]any{
-		"from":    s.from,
-		"to":      to,
-		"subject": subject,
-	})
-
-	reqBody := EmailRequest{
+	payload, err := json.Marshal(resendSendRequest{
 		From:    s.from,
 		To:      to,
 		Subject: subject,
-		Html:    htmlContent,
-	}
-
-	jsonData, err := json.Marshal(reqBody)
+		HTML:    htmlContent,
+	})
 	if err != nil {
-		logger.Error("Failed to serialize request", map[string]any{"error": err})
-		return fmt.Errorf("failed to marshal email request: %w", err)
+		return fmt.Errorf("encode email request: %w", err)
 	}
 
-	req, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonData))
+	requestContext, cancel := context.WithTimeout(ctx, s.requestTimeout)
+	defer cancel()
+	request, err := http.NewRequestWithContext(
+		requestContext,
+		http.MethodPost,
+		s.endpoint,
+		bytes.NewReader(payload),
+	)
 	if err != nil {
-		logger.Error("Failed to create request", map[string]any{"error": err})
-		return fmt.Errorf("failed to create request: %w", err)
+		return fmt.Errorf("build email request: %w", err)
 	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+s.apiKey)
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.apiKey)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	response, err := s.client.Do(request)
 	if err != nil {
-		logger.Error("Failed to send request", map[string]any{"error": err})
-		return fmt.Errorf("failed to send email: %w", err)
+		return fmt.Errorf("send email request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(response.Body, maxProviderResponseBytes+1))
 	if err != nil {
-		logger.Error("Failed to read response", map[string]any{"error": err})
-		return fmt.Errorf("failed to read response body: %w", err)
+		return fmt.Errorf("read email provider response: %w", err)
+	}
+	if len(body) > maxProviderResponseBytes {
+		return ErrProviderResponseTooLarge
+	}
+	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		return &ProviderError{StatusCode: response.StatusCode}
 	}
 
-	if resp.StatusCode == http.StatusForbidden {
-		var resendError struct {
-			Name       string `json:"name"`
-			Message    string `json:"message"`
-			StatusCode int    `json:"statusCode"`
-		}
-		if err := json.Unmarshal(body, &resendError); err != nil {
-			logger.Error("Failed to parse error response", map[string]any{"error": err})
-			return fmt.Errorf("failed to unmarshal error response: %w", err)
-		}
-		logger.Error("Resend API error", map[string]any{
-			"name":       resendError.Name,
-			"message":    resendError.Message,
-			"statusCode": resendError.StatusCode,
-		})
-		if resendError.Name == "validation_error" && strings.Contains(resendError.Message, "domain is not verified") {
-			return fmt.Errorf("recipient domain not verified, please contact admin to add domain verification")
-		}
-		return fmt.Errorf("resend API error: %s", resendError.Message)
+	var providerResponse resendSendResponse
+	if err := json.Unmarshal(body, &providerResponse); err != nil || strings.TrimSpace(providerResponse.ID) == "" {
+		return ErrInvalidProviderResponse
 	}
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		logger.Error("Email sending failed", map[string]any{
-			"status":   resp.StatusCode,
-			"response": string(body),
-		})
-		return fmt.Errorf("failed to send email: status code %d, response: %s", resp.StatusCode, string(body))
-	}
-
-	var emailResp EmailResponse
-	if err := json.Unmarshal(body, &emailResp); err != nil {
-		logger.Error("Failed to parse response", map[string]any{"error": err})
-		return fmt.Errorf("failed to unmarshal response: %w", err)
-	}
-
-	if emailResp.Error != "" {
-		logger.Error("Email service error", map[string]any{"error": emailResp.Error})
-		return fmt.Errorf("email service error: %s", emailResp.Error)
-	}
-
-	logger.Info("Email sent successfully", map[string]any{"id": emailResp.ID})
 	return nil
 }
 
-// SendEmail sends an email using the global service instance.
-// Deprecated: Use Wire DI to inject *Service instead.
-func SendEmail(to []string, subject, htmlContent string) error {
-	if defaultService == nil {
-		return fmt.Errorf("email service not initialized")
+func validateMessage(to []string, subject, htmlContent string) error {
+	if len(to) == 0 {
+		return fmt.Errorf("%w: at least one recipient is required", ErrInvalidMessage)
 	}
-	return defaultService.SendEmail(to, subject, htmlContent)
+	if len(to) > maxResendRecipients {
+		return fmt.Errorf("%w: at most %d recipients are allowed", ErrInvalidMessage, maxResendRecipients)
+	}
+	for index, recipient := range to {
+		if _, err := mail.ParseAddress(strings.TrimSpace(recipient)); err != nil {
+			return fmt.Errorf("%w: recipient %d is invalid", ErrInvalidMessage, index)
+		}
+	}
+	if strings.TrimSpace(subject) == "" {
+		return fmt.Errorf("%w: subject is required", ErrInvalidMessage)
+	}
+	if strings.TrimSpace(htmlContent) == "" {
+		return fmt.Errorf("%w: HTML content is required", ErrInvalidMessage)
+	}
+	return nil
 }
 
 // SendPasswordResetEmail sends a password reset token email.
-func (s *Service) SendPasswordResetEmail(to string, resetToken string) error {
+func (s *Service) SendPasswordResetEmail(ctx context.Context, to, resetToken string) error {
 	subject := "Password Reset Request"
 	htmlContent := fmt.Sprintf(`
 		<h2>Password Reset Request</h2>
@@ -175,38 +205,20 @@ func (s *Service) SendPasswordResetEmail(to string, resetToken string) error {
 		<p style="font-size: 18px; font-weight: bold; color: #333;">%s</p>
 		<p>This token expires in 30 minutes and can only be used once.</p>
 		<p>If you did not request this, you can ignore this email.</p>
-	`, resetToken)
+	`, html.EscapeString(resetToken))
 
-	return s.SendEmail([]string{to}, subject, htmlContent)
+	return s.SendEmail(ctx, []string{to}, subject, htmlContent)
 }
 
 // SendWelcomeEmail sends a welcome email.
-func (s *Service) SendWelcomeEmail(to string, username string) error {
+func (s *Service) SendWelcomeEmail(ctx context.Context, to, username string) error {
 	subject := "Welcome to Luas"
 	htmlContent := fmt.Sprintf(`
 		<h2>Welcome to Luas</h2>
 		<p>Dear %s,</p>
 		<p>Thank you for registering as our user!</p>
 		<p>If you have any questions, please feel free to contact our support team.</p>
-	`, username)
+	`, html.EscapeString(username))
 
-	return s.SendEmail([]string{to}, subject, htmlContent)
-}
-
-// SendPasswordResetEmail sends a password reset notification email.
-// Deprecated: inject *Service and call the instance method instead.
-func SendPasswordResetEmail(to string, resetToken string) error {
-	if defaultService == nil {
-		return fmt.Errorf("email service not initialized")
-	}
-	return defaultService.SendPasswordResetEmail(to, resetToken)
-}
-
-// SendWelcomeEmail sends a welcome email.
-// Deprecated: inject *Service and call the instance method instead.
-func SendWelcomeEmail(to string, username string) error {
-	if defaultService == nil {
-		return fmt.Errorf("email service not initialized")
-	}
-	return defaultService.SendWelcomeEmail(to, username)
+	return s.SendEmail(ctx, []string{to}, subject, htmlContent)
 }

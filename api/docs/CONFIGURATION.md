@@ -76,6 +76,17 @@ All API replicas, migration jobs, and seeder jobs for one environment must recei
 Changing it requires a deployment and, when enabling a persistence-owning starter, its pre-deploy
 migration. It is not a per-request flag and must not be toggled independently across replicas.
 
+## Email Provider Configuration
+
+The optional email capability reads `MAIL_FROM`, `RESEND_API_KEY`, and `MAIL_REQUEST_TIMEOUT` from
+the same typed snapshot. Sender and API key are an all-or-none pair; partial configuration fails
+startup instead of silently skipping delivery. When configured, the sender must be a valid mailbox
+and the timeout must be positive. The default provider request timeout is 10 seconds.
+
+The timeout is a duration value such as `3s` or `500ms`, not a bare millisecond count. It bounds each
+provider call independently and composes with caller cancellation. See [`EMAIL.md`](EMAIL.md) for the
+64 KiB response cap, privacy rules, best-effort semantics, and downstream adapter boundary.
+
 ## Secrets And Deployment
 
 Luas does not serialize a configuration cache. A cache would duplicate `JWT_SECRET`, database
@@ -120,6 +131,6 @@ settings.
 
 ```bash
 go test ./tests/unit -run '^TestEnv_'
-go test ./internal/infra/config ./internal/infra/console/commands
-go test -race ./tests/unit ./internal/infra/config ./internal/infra/console/commands
+go test ./internal/infra/config ./internal/infra/email ./internal/infra/console/commands
+go test -race ./tests/unit ./internal/infra/config ./internal/infra/email ./internal/infra/console/commands
 ```

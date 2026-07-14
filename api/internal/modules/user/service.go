@@ -53,8 +53,9 @@ type Service interface {
 // UserMailer captures the email seam used by the user starter.
 // Email is a true external dependency, so this seam is worth naming explicitly.
 type UserMailer interface {
-	SendPasswordResetEmail(to string, resetToken string) error
-	SendWelcomeEmail(to string, username string) error
+	IsConfigured() bool
+	SendPasswordResetEmail(ctx context.Context, to string, resetToken string) error
+	SendWelcomeEmail(ctx context.Context, to string, username string) error
 }
 
 type passwordResetStore interface {
@@ -150,7 +151,9 @@ func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*doma
 	}
 
 	// Publish UserCreated event (fully decoupled side effects)
-	s.eventBus.PublishAsync(ctx, domain.NewUserCreatedEvent(user))
+	// Welcome delivery is fire-and-forget after the account transaction. Keep
+	// request values for correlation, but let the email adapter own its deadline.
+	s.eventBus.PublishAsync(context.WithoutCancel(ctx), domain.NewUserCreatedEvent(user))
 
 	return user, nil
 }
@@ -326,7 +329,8 @@ func (s *service) RequestPasswordReset(ctx context.Context, req *UserPasswordRes
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil
 		}
-		return fmt.Errorf("failed to lookup reset user: %w", err)
+		slog.ErrorContext(ctx, "user.password_reset_lookup_failed", "error_type", fmt.Sprintf("%T", err))
+		return nil
 	}
 
 	secret, err := crypto.GenerateKeyHex(24)
@@ -342,11 +346,11 @@ func (s *service) RequestPasswordReset(ctx context.Context, req *UserPasswordRes
 		return nil
 	}
 
-	if s.mailer == nil {
+	if s.mailer == nil || !s.mailer.IsConfigured() {
 		slog.ErrorContext(ctx, "user.password_reset_mailer_missing", "user_id", user.ID)
 		return nil
 	}
-	if err := s.mailer.SendPasswordResetEmail(user.Email, resetToken); err != nil {
+	if err := s.mailer.SendPasswordResetEmail(ctx, user.Email, resetToken); err != nil {
 		slog.ErrorContext(ctx, "user.password_reset_delivery_failed", "user_id", user.ID, "err", err)
 		return nil
 	}
