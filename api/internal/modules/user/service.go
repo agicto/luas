@@ -201,6 +201,9 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 func (s *service) GetProfile(ctx context.Context, userID uint) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) {
+			return nil, err
+		}
 		return nil, domain.ErrUserNotFound
 	}
 	return user, nil
@@ -210,6 +213,9 @@ func (s *service) GetProfile(ctx context.Context, userID uint) (*domain.User, er
 func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdateRequest) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) {
+			return nil, err
+		}
 		return nil, domain.ErrUserNotFound
 	}
 
@@ -252,6 +258,9 @@ func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdat
 func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChangePasswordRequest) error {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) {
+			return err
+		}
 		return domain.ErrUserNotFound
 	}
 

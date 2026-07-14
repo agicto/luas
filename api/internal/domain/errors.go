@@ -28,9 +28,10 @@ var (
 	ErrAPIKeyRevoked  = errors.New("api key is revoked")
 
 	// Generic errors
-	ErrNotFound     = errors.New("resource not found")
-	ErrConflict     = errors.New("resource already exists")
-	ErrInvalidInput = errors.New("invalid input")
+	ErrNotFound           = errors.New("resource not found")
+	ErrConflict           = errors.New("resource already exists")
+	ErrInvalidInput       = errors.New("invalid input")
+	ErrServiceUnavailable = errors.New("required service unavailable")
 )
 
 // Events

@@ -36,4 +36,5 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrConflict, http.StatusConflict, domain.CodeConflict)
 
 	mapper.Register(domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput)
+	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

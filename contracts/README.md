@@ -98,6 +98,11 @@ Common scaffold-level errors:
 | 503 | `COMMON.TIMEOUT` | Request exceeded the configured processing timeout |
 | 503 | `COMMON.SERVICE_UNAVAILABLE` | A required service or dependency is unavailable |
 
+When the Go API is intentionally started with `DB_ENABLED=false`, default starter routes remain
+registered. Requests that reach persistence return `503` with `COMMON.SERVICE_UNAVAILABLE`;
+authentication, route constraints, or input validation may still reject a request first. Health
+liveness remains available while readiness reports the disabled database as down.
+
 Rate-limited responses must include `Retry-After` when the reset time is known. Successful responses that pass through a rate limiter may include `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset`.
 
 ## Contract Checklist

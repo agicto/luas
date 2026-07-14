@@ -126,6 +126,18 @@ Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context de
 
 完整 middleware 分类见 [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md)。
 
+## 数据库禁用模式
+
+`DB_ENABLED=false` 允许 API 在不创建数据库连接时启动，便于检查 root、health、metrics、
+路由装配和下游抽取结果。默认 starter 路由仍然注册；认证、参数约束和输入校验可以先返回
+各自的错误，但任何真正触达持久化的操作都会返回 `503` +
+`COMMON.SERVICE_UNAVAILABLE`，不会因为 nil GORM 连接 panic。audit 写入保持 best-effort，
+失败只记录告警，不得覆盖已经生成的主响应。
+
+该模式表示依赖降级，不表示默认 starter 可用。`/health/live` 继续存活，
+`/health/ready` 会因 database 状态为 down 而返回 `503`。保留默认 starter 的生产部署应启用
+并连接数据库；只有已经删除所有 DB-backed starter 的下游应用才应把无数据库运行视为完整模式。
+
 Workflow 的 `sync` / `memory` 驱动定位、payload 所有权、关闭语义和生产替换边界见
 [docs/WORKFLOW.md](docs/WORKFLOW.md)。`memory` 驱动是有界、进程内、非持久队列，不支持多副本之间的任务传递。
 

@@ -24,10 +24,21 @@ func NewRepository(db *gorm.DB) *repository {
 	}
 }
 
+func (r *repository) withContext(ctx context.Context) (*gorm.DB, error) {
+	if r == nil || r.db == nil {
+		return nil, domain.ErrServiceUnavailable
+	}
+	return r.db.WithContext(ctx), nil
+}
+
 // Create adds a new user
 func (r *repository) Create(ctx context.Context, user *domain.User) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
 	po := newUserPO(user)
-	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+	if err := db.Create(po).Error; err != nil {
 		return err
 	}
 	// Update the domain user with generated ID
@@ -39,8 +50,12 @@ func (r *repository) Create(ctx context.Context, user *domain.User) error {
 
 // Update modifies an existing user
 func (r *repository) Update(ctx context.Context, user *domain.User) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
 	po := newUserPO(user)
-	if err := r.db.WithContext(ctx).Save(po).Error; err != nil {
+	if err := db.Save(po).Error; err != nil {
 		return err
 	}
 	user.UpdatedAt = po.UpdatedAt
@@ -49,13 +64,21 @@ func (r *repository) Update(ctx context.Context, user *domain.User) error {
 
 // Delete removes a user by ID
 func (r *repository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&UserPO{}, id).Error
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	return db.Delete(&UserPO{}, id).Error
 }
 
 // FindByID retrieves a user by ID
 func (r *repository) FindByID(ctx context.Context, id uint) (*domain.User, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po UserPO
-	if err := r.db.WithContext(ctx).First(&po, id).Error; err != nil {
+	if err := db.First(&po, id).Error; err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil
@@ -63,15 +86,19 @@ func (r *repository) FindByID(ctx context.Context, id uint) (*domain.User, error
 
 // FindAll retrieves users with pagination
 func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain.User, int64, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 	var poList []*UserPO
 	var total int64
 
 	offset := (page - 1) * pageSize
-	if err := r.db.WithContext(ctx).Model(&UserPO{}).Count(&total).Error; err != nil {
+	if err := db.Model(&UserPO{}).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&poList).Error; err != nil {
+	if err := db.Offset(offset).Limit(pageSize).Find(&poList).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -80,8 +107,12 @@ func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain
 
 // FindByUsername retrieves a user by username
 func (r *repository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po UserPO
-	if err := r.db.WithContext(ctx).Where("username = ?", username).First(&po).Error; err != nil {
+	if err := db.Where("username = ?", username).First(&po).Error; err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil
@@ -91,8 +122,12 @@ func (r *repository) FindByUsername(ctx context.Context, username string) (*doma
 // keeps precedence to preserve the starter's historical login behavior when
 // identifiers collide across fields.
 func (r *repository) FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po UserPO
-	err := r.db.WithContext(ctx).
+	err = db.
 		Where("username = ? OR email = ?", identifier, identifier).
 		Order(clause.Expr{
 			SQL:  "CASE WHEN username = ? THEN 0 ELSE 1 END",
@@ -107,8 +142,12 @@ func (r *repository) FindByLoginIdentifier(ctx context.Context, identifier strin
 
 // FindByEmail retrieves a user by email
 func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po UserPO
-	if err := r.db.WithContext(ctx).Where("email = ?", email).First(&po).Error; err != nil {
+	if err := db.Where("email = ?", email).First(&po).Error; err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil
@@ -116,7 +155,11 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*domain.Use
 
 // StorePasswordResetToken stores a one-time password reset token hash.
 func (r *repository) StorePasswordResetToken(ctx context.Context, userID uint, tokenHash string, expiresAt time.Time) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("user_id = ? AND used_at IS NULL", userID).Delete(&PasswordResetTokenPO{}).Error; err != nil {
 			return err
 		}
@@ -132,7 +175,11 @@ func (r *repository) StorePasswordResetToken(ctx context.Context, userID uint, t
 
 // ResetPasswordWithToken validates a reset token, updates the password, and consumes the token atomically.
 func (r *repository) ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
 		var token PasswordResetTokenPO
 		if err := tx.Where("token_hash = ?", tokenHash).First(&token).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {

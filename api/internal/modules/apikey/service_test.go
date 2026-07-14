@@ -2,14 +2,17 @@ package apikey
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type fakeRepository struct {
-	nextID uint
-	keys   map[uint]*domain.APIKey
+	nextID        uint
+	keys          map[uint]*domain.APIKey
+	findByIDErr   error
+	findByHashErr error
 }
 
 func newFakeRepository() *fakeRepository {
@@ -32,6 +35,9 @@ func (r *fakeRepository) Update(ctx context.Context, key *domain.APIKey) error {
 }
 
 func (r *fakeRepository) FindByID(ctx context.Context, id uint) (*domain.APIKey, error) {
+	if r.findByIDErr != nil {
+		return nil, r.findByIDErr
+	}
 	key, ok := r.keys[id]
 	if !ok {
 		return nil, domain.ErrAPIKeyNotFound
@@ -50,6 +56,9 @@ func (r *fakeRepository) FindByUserID(ctx context.Context, userID uint, page, pa
 }
 
 func (r *fakeRepository) FindByHash(ctx context.Context, hash string) (*domain.APIKey, error) {
+	if r.findByHashErr != nil {
+		return nil, r.findByHashErr
+	}
 	for _, key := range r.keys {
 		if key.KeyHash == hash {
 			return cloneAPIKey(key), nil
@@ -114,4 +123,28 @@ func TestServiceValidateScopeDenied(t *testing.T) {
 	if err != domain.ErrPermissionDenied {
 		t.Fatalf("Validate() error = %v, want %v", err, domain.ErrPermissionDenied)
 	}
+}
+
+func TestServicePreservesServiceUnavailable(t *testing.T) {
+	t.Run("revoke", func(t *testing.T) {
+		repo := newFakeRepository()
+		repo.findByIDErr = domain.ErrServiceUnavailable
+
+		err := NewService(repo).RevokeForUser(context.Background(), 7, 1)
+
+		if !errors.Is(err, domain.ErrServiceUnavailable) {
+			t.Fatalf("RevokeForUser() error = %v, want service unavailable", err)
+		}
+	})
+
+	t.Run("validate", func(t *testing.T) {
+		repo := newFakeRepository()
+		repo.findByHashErr = domain.ErrServiceUnavailable
+
+		_, err := NewService(repo).Validate(context.Background(), "luas_test.secret")
+
+		if !errors.Is(err, domain.ErrServiceUnavailable) {
+			t.Fatalf("Validate() error = %v, want service unavailable", err)
+		}
+	})
 }

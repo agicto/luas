@@ -349,6 +349,24 @@ func TestServiceChangePasswordReturnsInvalidCredentialsOnWrongOldPassword(t *tes
 	assert.ErrorIs(t, err, domain.ErrInvalidCredentials)
 }
 
+func TestServiceProfileOperationsPreserveServiceUnavailable(t *testing.T) {
+	svc := newTestService(&fakeRepo{
+		findByIDFn: func(context.Context, uint) (*domain.User, error) {
+			return nil, domain.ErrServiceUnavailable
+		},
+	})
+
+	if _, err := svc.GetProfile(context.Background(), 7); !errors.Is(err, domain.ErrServiceUnavailable) {
+		t.Fatalf("GetProfile() error = %v, want service unavailable", err)
+	}
+	if _, err := svc.UpdateProfile(context.Background(), 7, &UserUpdateRequest{}); !errors.Is(err, domain.ErrServiceUnavailable) {
+		t.Fatalf("UpdateProfile() error = %v, want service unavailable", err)
+	}
+	if err := svc.ChangePassword(context.Background(), 7, &UserChangePasswordRequest{}); !errors.Is(err, domain.ErrServiceUnavailable) {
+		t.Fatalf("ChangePassword() error = %v, want service unavailable", err)
+	}
+}
+
 func TestServiceRequestPasswordResetDoesNotEnumerateUnknownEmail(t *testing.T) {
 	svc := newTestService(&fakeRepo{
 		findByEmailFn: func(context.Context, string) (*domain.User, error) {

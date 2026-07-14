@@ -2,6 +2,7 @@ package apikey
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"slices"
@@ -102,7 +103,13 @@ func (s *service) ListForUser(ctx context.Context, userID uint, page, pageSize i
 
 func (s *service) RevokeForUser(ctx context.Context, userID, id uint) error {
 	key, err := s.repo.FindByID(ctx, id)
-	if err != nil || key.UserID != userID {
+	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) {
+			return err
+		}
+		return domain.ErrAPIKeyNotFound
+	}
+	if key.UserID != userID {
 		return domain.ErrAPIKeyNotFound
 	}
 
@@ -134,6 +141,9 @@ func (s *service) Validate(ctx context.Context, plaintext string, requiredScopes
 
 	key, err := s.repo.FindByHash(ctx, crypto.SHA256Hex(plaintext))
 	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) {
+			return nil, err
+		}
 		return nil, domain.ErrAPIKeyInvalid
 	}
 

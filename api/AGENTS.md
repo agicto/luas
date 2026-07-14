@@ -254,6 +254,9 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 - **Errors**: Use `response.HandleError`, wrap with `fmt.Errorf("%w")`, and define package-level `Err...`.
 - **Error Contract**: Non-2xx responses MUST expose stable `error_code`; do not make clients branch on message text.
 - **Request Correlation**: Error responses SHOULD include `request_id`, and request logs SHOULD carry the same value.
+- **Disabled Database**: Repositories that receive nil GORM because `DB_ENABLED=false` MUST return
+  `domain.ErrServiceUnavailable`; they must never dereference nil or silently turn dependency failure
+  into not-found/invalid-credential behavior. Audit persistence remains best-effort.
 - **Security**: Hide sensitive fields (`json:"-"`), validate inputs (`binding`), and use `crypto` capability.
 - **Authentication Enumeration**: Public login/recovery failures MUST stay generic. Unknown-login paths must still perform password-hash work; never reveal disabled/existing accounts through status or `error_code`.
 - **Authentication Abuse**: Keep public auth quotas starter-owned and use independent per-IP and per-subject buckets. Do not key a single bucket by `IP+subject`.

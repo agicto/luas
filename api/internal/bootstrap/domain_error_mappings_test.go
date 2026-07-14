@@ -49,6 +49,12 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			statusCode: http.StatusUnprocessableEntity,
 			errorCode:  domain.CodeInvalidInput,
 		},
+		{
+			name:       "wrapped service unavailable",
+			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
+			statusCode: http.StatusServiceUnavailable,
+			errorCode:  domain.CodeServiceUnavailable,
+		},
 	}
 
 	for _, tt := range tests {

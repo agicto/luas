@@ -20,9 +20,20 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db: db}
 }
 
+func (r *repository) withContext(ctx context.Context) (*gorm.DB, error) {
+	if r == nil || r.db == nil {
+		return nil, domain.ErrServiceUnavailable
+	}
+	return r.db.WithContext(ctx), nil
+}
+
 func (r *repository) Create(ctx context.Context, entry *domain.AuditLog) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
 	po := newAuditLogPO(entry)
-	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+	if err := db.Create(po).Error; err != nil {
 		return err
 	}
 
@@ -33,6 +44,10 @@ func (r *repository) Create(ctx context.Context, entry *domain.AuditLog) error {
 }
 
 func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 	if page < 1 {
 		page = 1
 	}
@@ -45,7 +60,7 @@ func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domai
 		total int64
 	)
 
-	query := r.db.WithContext(ctx).Model(&AuditLogPO{}).Where("user_id = ?", userID)
+	query := db.Model(&AuditLogPO{}).Where("user_id = ?", userID)
 
 	if action := strings.TrimSpace(filter.Action); action != "" {
 		query = query.Where("action = ?", action)

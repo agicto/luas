@@ -89,6 +89,22 @@ Verification:
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
 
+### Completed P1 — Database-Disabled Runtime Degradation
+
+The explicit `DB_ENABLED=false` mode no longer leaves default starter repositories holding an
+unsafe nil GORM pointer. User, API key, and audit repositories now return the shared
+`domain.ErrServiceUnavailable` sentinel; the HTTP boundary maps it to `503` +
+`COMMON.SERVICE_UNAVAILABLE`. Lookup services preserve dependency failure instead of misclassifying
+it as not found or invalid credentials, while audit persistence remains best-effort and cannot append
+a panic response after an existing 401/4xx envelope. The full-kernel regression covers unauthenticated
+mutations plus authenticated user, API key, and audit routes with the database disabled.
+
+Verification:
+
+- `cd api && go test ./internal/bootstrap -run '^TestHTTPKernelDatabaseDisabledDoesNotPanic$'`
+- `cd api && go test ./internal/modules/user ./internal/modules/apikey ./internal/modules/audit`
+- Real server with `DB_ENABLED=false`, including 401 and 503 JSON envelopes plus readiness.
+
 ### Completed P1 — Queue Lifecycle Concurrency
 
 The queue lifecycle race exposed by `go test -race ./tests/unit` is fixed. The memory driver now owns

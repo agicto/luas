@@ -1,8 +1,11 @@
 package apikey
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
@@ -53,6 +56,13 @@ func (h *Handler) RegisterMiddleware(r *router.Router) {
 					"userID":       apiKey.UserID,
 				},
 			}, nil
+		},
+		ValidationErrorHandler: func(c *gin.Context, err error) {
+			if errors.Is(err, domain.ErrServiceUnavailable) {
+				response.HandleError(c, "API key validation unavailable", err)
+				return
+			}
+			response.AbortUnauthorized(c, "Invalid or missing API key")
 		},
 	})
 

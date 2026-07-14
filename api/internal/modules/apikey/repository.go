@@ -17,9 +17,20 @@ func NewRepository(db *gorm.DB) *repository {
 	return &repository{db: db}
 }
 
+func (r *repository) withContext(ctx context.Context) (*gorm.DB, error) {
+	if r == nil || r.db == nil {
+		return nil, domain.ErrServiceUnavailable
+	}
+	return r.db.WithContext(ctx), nil
+}
+
 func (r *repository) Create(ctx context.Context, key *domain.APIKey) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
 	po := newAPIKeyPO(key)
-	if err := r.db.WithContext(ctx).Create(po).Error; err != nil {
+	if err := db.Create(po).Error; err != nil {
 		return err
 	}
 
@@ -30,8 +41,12 @@ func (r *repository) Create(ctx context.Context, key *domain.APIKey) error {
 }
 
 func (r *repository) Update(ctx context.Context, key *domain.APIKey) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
 	po := newAPIKeyPO(key)
-	if err := r.db.WithContext(ctx).Save(po).Error; err != nil {
+	if err := db.Save(po).Error; err != nil {
 		return err
 	}
 
@@ -40,21 +55,29 @@ func (r *repository) Update(ctx context.Context, key *domain.APIKey) error {
 }
 
 func (r *repository) FindByID(ctx context.Context, id uint) (*domain.APIKey, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po APIKeyPO
-	if err := r.db.WithContext(ctx).First(&po, id).Error; err != nil {
+	if err := db.First(&po, id).Error; err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil
 }
 
 func (r *repository) FindByUserID(ctx context.Context, userID uint, page, pageSize int) ([]*domain.APIKey, int64, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
 	var (
 		items []*APIKeyPO
 		total int64
 	)
 
 	offset := (page - 1) * pageSize
-	query := r.db.WithContext(ctx).Model(&APIKeyPO{}).Where("user_id = ?", userID)
+	query := db.Model(&APIKeyPO{}).Where("user_id = ?", userID)
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -68,8 +91,12 @@ func (r *repository) FindByUserID(ctx context.Context, userID uint, page, pageSi
 }
 
 func (r *repository) FindByHash(ctx context.Context, hash string) (*domain.APIKey, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, err
+	}
 	var po APIKeyPO
-	if err := r.db.WithContext(ctx).Where("key_hash = ?", hash).First(&po).Error; err != nil {
+	if err := db.Where("key_hash = ?", hash).First(&po).Error; err != nil {
 		return nil, err
 	}
 	return po.toDomain(), nil

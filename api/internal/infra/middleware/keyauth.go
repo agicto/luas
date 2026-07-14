@@ -29,6 +29,10 @@ type KeyAuthConfig struct {
 	// and can populate extra values into gin.Context on success.
 	ValidatorWithContext func(c *gin.Context, key string) (*KeyAuthResult, error)
 
+	// ValidationErrorHandler optionally maps validator failures that need a
+	// response other than the default generic 401.
+	ValidationErrorHandler func(c *gin.Context, err error)
+
 	// ContextKey is the key used to store the API key in context
 	// Default: "api_key"
 	ContextKey string
@@ -124,6 +128,11 @@ func KeyAuthWithConfig(cfg KeyAuthConfig) gin.HandlerFunc {
 		}
 
 		if !valid {
+			if err != nil && cfg.ValidationErrorHandler != nil {
+				cfg.ValidationErrorHandler(c, err)
+				c.Abort()
+				return
+			}
 			response.Abort(c, http.StatusUnauthorized, cfg.ErrorMessage)
 			return
 		}
