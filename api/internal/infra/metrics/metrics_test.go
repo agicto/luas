@@ -38,6 +38,24 @@ func TestMiddlewareBoundsUnmatchedRouteLabels(t *testing.T) {
 	}
 }
 
+func TestHTTPStatusLabel(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		status int
+		want   string
+	}{
+		{name: "common", status: http.StatusNoContent, want: "204"},
+		{name: "error", status: http.StatusUnprocessableEntity, want: "422"},
+		{name: "custom", status: 700, want: "700"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if got := httpStatusLabel(test.status); got != test.want {
+				t.Fatalf("httpStatusLabel(%d) = %q, want %q", test.status, got, test.want)
+			}
+		})
+	}
+}
+
 func metricPathLabels(t *testing.T, metricName string) map[string]bool {
 	t.Helper()
 

@@ -86,6 +86,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 make build
 make test
 make test-race-critical
+make benchmark-http
 make benchmark-workflow
 make lint
 make wire

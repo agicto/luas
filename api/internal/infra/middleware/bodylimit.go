@@ -64,6 +64,13 @@ func BodyLimitWithConfig(cfg BodyLimitConfig) gin.HandlerFunc {
 			return
 		}
 
+		// net/http uses http.NoBody for requests without a payload. Avoid
+		// allocating a reader wrapper when there is nothing to constrain.
+		if c.Request.Body == nil || c.Request.Body == http.NoBody {
+			c.Next()
+			return
+		}
+
 		// Wrap the body with a size limiter
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, cfg.MaxSize)
 

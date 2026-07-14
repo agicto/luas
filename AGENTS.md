@@ -89,6 +89,7 @@ cd api && make wire && make run         # generate DI + start server
 cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
 cd api && make test-race-critical       # queue/worker lifecycle race gate
+cd api && make benchmark-http           # compare core HTTP middleware with metrics off/on
 cd api && make vuln                     # pinned reachable-vulnerability scan
 
 # web/

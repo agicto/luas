@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -46,10 +48,11 @@ func RequestIDWithConfig(cfg RequestIDConfig) gin.HandlerFunc {
 	if cfg.ContextKey == "" {
 		cfg.ContextKey = "request_id"
 	}
+	header := http.CanonicalHeaderKey(cfg.Header)
 
 	return func(c *gin.Context) {
 		// Check if request already has a request ID
-		requestID := c.GetHeader(cfg.Header)
+		requestID := c.GetHeader(header)
 
 		// Generate new ID if not present
 		if requestID == "" {
@@ -60,7 +63,7 @@ func RequestIDWithConfig(cfg RequestIDConfig) gin.HandlerFunc {
 		c.Set(cfg.ContextKey, requestID)
 
 		// Set request ID in response header
-		c.Header(cfg.Header, requestID)
+		c.Header(header, requestID)
 
 		c.Next()
 	}

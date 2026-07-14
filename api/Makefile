@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all clean test test-kest test-race test-race-critical benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all clean test test-kest test-race test-race-critical benchmark-http benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -124,6 +124,11 @@ test-race-critical:
 benchmark-workflow:
 	@echo "Benchmarking workflow memory queue..."
 	go test ./tests/unit -run '^$$' -bench '^BenchmarkMemoryDriver_RoundTrip$$' -benchmem
+
+# Measure the steady-state core HTTP middleware chain with metrics off and on
+benchmark-http:
+	@echo "Benchmarking core HTTP middleware..."
+	go test ./internal/bootstrap -run '^$$' -bench '^BenchmarkHTTPMiddlewareChain$$' -benchmem -count=5
 
 # Run tests with coverage
 cover:
@@ -262,6 +267,7 @@ help:
 	@echo "  make test-kest          - Run Kest flow tests"
 	@echo "  make test-race          - Run tests with race detection"
 	@echo "  make test-race-critical - Run CI queue lifecycle race tests"
+	@echo "  make benchmark-http     - Benchmark core HTTP middleware with metrics off/on"
 	@echo "  make benchmark-workflow - Benchmark memory queue round trips"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

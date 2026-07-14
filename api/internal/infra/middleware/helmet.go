@@ -1,8 +1,16 @@
 package middleware
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
+
+type helmetHeader struct {
+	name  string
+	value string
+}
 
 // HelmetConfig holds security headers configuration
 type HelmetConfig struct {
@@ -78,88 +86,40 @@ func Helmet() gin.HandlerFunc {
 
 // HelmetWithConfig returns security headers middleware with custom config
 func HelmetWithConfig(cfg HelmetConfig) gin.HandlerFunc {
+	headers := make([]helmetHeader, 0, 10)
+	add := func(name, value string) {
+		if value != "" {
+			headers = append(headers, helmetHeader{name: http.CanonicalHeaderKey(name), value: value})
+		}
+	}
+
+	add("X-XSS-Protection", cfg.XSSProtection)
+	add("X-Content-Type-Options", cfg.ContentTypeNosniff)
+	add("X-Frame-Options", cfg.XFrameOptions)
+
+	if cfg.HSTSMaxAge > 0 {
+		hsts := "max-age=" + strconv.Itoa(cfg.HSTSMaxAge)
+		if cfg.HSTSIncludeSubdomains {
+			hsts += "; includeSubDomains"
+		}
+		if cfg.HSTSPreload {
+			hsts += "; preload"
+		}
+		add("Strict-Transport-Security", hsts)
+	}
+
+	add("Content-Security-Policy", cfg.ContentSecurityPolicy)
+	add("Referrer-Policy", cfg.ReferrerPolicy)
+	add("Permissions-Policy", cfg.PermissionsPolicy)
+	add("Cross-Origin-Embedder-Policy", cfg.CrossOriginEmbedderPolicy)
+	add("Cross-Origin-Opener-Policy", cfg.CrossOriginOpenerPolicy)
+	add("Cross-Origin-Resource-Policy", cfg.CrossOriginResourcePolicy)
+
 	return func(c *gin.Context) {
-		// X-XSS-Protection
-		if cfg.XSSProtection != "" {
-			c.Header("X-XSS-Protection", cfg.XSSProtection)
-		}
-
-		// X-Content-Type-Options
-		if cfg.ContentTypeNosniff != "" {
-			c.Header("X-Content-Type-Options", cfg.ContentTypeNosniff)
-		}
-
-		// X-Frame-Options
-		if cfg.XFrameOptions != "" {
-			c.Header("X-Frame-Options", cfg.XFrameOptions)
-		}
-
-		// Strict-Transport-Security (HSTS)
-		if cfg.HSTSMaxAge > 0 {
-			hsts := "max-age=" + itoa(cfg.HSTSMaxAge)
-			if cfg.HSTSIncludeSubdomains {
-				hsts += "; includeSubDomains"
-			}
-			if cfg.HSTSPreload {
-				hsts += "; preload"
-			}
-			c.Header("Strict-Transport-Security", hsts)
-		}
-
-		// Content-Security-Policy
-		if cfg.ContentSecurityPolicy != "" {
-			c.Header("Content-Security-Policy", cfg.ContentSecurityPolicy)
-		}
-
-		// Referrer-Policy
-		if cfg.ReferrerPolicy != "" {
-			c.Header("Referrer-Policy", cfg.ReferrerPolicy)
-		}
-
-		// Permissions-Policy
-		if cfg.PermissionsPolicy != "" {
-			c.Header("Permissions-Policy", cfg.PermissionsPolicy)
-		}
-
-		// Cross-Origin-Embedder-Policy
-		if cfg.CrossOriginEmbedderPolicy != "" {
-			c.Header("Cross-Origin-Embedder-Policy", cfg.CrossOriginEmbedderPolicy)
-		}
-
-		// Cross-Origin-Opener-Policy
-		if cfg.CrossOriginOpenerPolicy != "" {
-			c.Header("Cross-Origin-Opener-Policy", cfg.CrossOriginOpenerPolicy)
-		}
-
-		// Cross-Origin-Resource-Policy
-		if cfg.CrossOriginResourcePolicy != "" {
-			c.Header("Cross-Origin-Resource-Policy", cfg.CrossOriginResourcePolicy)
+		for _, header := range headers {
+			c.Header(header.name, header.value)
 		}
 
 		c.Next()
 	}
-}
-
-// itoa converts int to string (simple implementation)
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-
-	var digits []byte
-	negative := n < 0
-	if negative {
-		n = -n
-	}
-
-	for n > 0 {
-		digits = append([]byte{byte('0' + n%10)}, digits...)
-		n /= 10
-	}
-
-	if negative {
-		digits = append([]byte{'-'}, digits...)
-	}
-
-	return string(digits)
 }

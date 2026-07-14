@@ -129,6 +129,25 @@ graduated challenges according to their threat model.
 | `VersionMiddleware` | Route group | API versioning is a contract boundary, not a global transport default. |
 | Custom throttles | Route/starter | Some routes need stricter limits than the default production guardrail. |
 
+## Performance Baseline
+
+Run the representative steady-state middleware benchmark before and after changing the core chain:
+
+```bash
+make benchmark-http
+```
+
+The benchmark sends a `GET` to a parameterized route through request ID, Helmet, body limit,
+cooperative timeout, and CORS middleware. It runs the same path with Prometheus instrumentation
+disabled and enabled. Logging, tracing, rate limiting, network I/O, and handler serialization are
+excluded, and request/response shells are reused between iterations, so the comparison stays focused
+on steady-state middleware work owned by the kernel.
+
+The API test suite also guards a steady-state allocation budget of at most `21 allocs/request` for
+both variants. The budget deliberately leaves headroom above the current `18 allocs/request` and is
+stable across repeated runs on the pinned Go toolchain. Nanosecond timings are measurement evidence,
+not a CI service-level objective; compare them on the same host and toolchain.
+
 ## Change Checklist
 
 Before moving middleware between categories:
@@ -141,3 +160,5 @@ Before moving middleware between categories:
    - middleware contract behavior: middleware or `api/tests/unit`
    - configuration defaults: `api/internal/infra/config`
 5. Run targeted tests and `golangci-lint run ./...`.
+6. Run `make benchmark-http` when the core chain or request metrics change, and report before/after
+   timing, bytes, and allocations from the same machine.

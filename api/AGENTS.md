@@ -143,6 +143,7 @@ luas/
 make build         # Build CLI
 make test          # Run tests
 make test-race-critical # Run queue/worker lifecycle race tests required by CI
+make benchmark-http # Measure the core HTTP middleware chain with metrics off/on
 make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
 make wire          # Generate DI

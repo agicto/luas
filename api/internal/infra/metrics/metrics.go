@@ -12,6 +12,14 @@ import (
 
 const unmatchedRouteLabel = "unmatched"
 
+var httpStatusLabels = func() [600]string {
+	var labels [600]string
+	for status := 100; status < len(labels); status++ {
+		labels[status] = strconv.Itoa(status)
+	}
+	return labels
+}()
+
 // Default metrics
 var (
 	// HTTP metrics
@@ -122,7 +130,7 @@ func Middleware() gin.HandlerFunc {
 			httpRequestSize.WithLabelValues(method, path).Observe(requestSize)
 		}
 
-		status := strconv.Itoa(c.Writer.Status())
+		status := httpStatusLabel(c.Writer.Status())
 		duration := time.Since(start).Seconds()
 		responseSize := c.Writer.Size()
 		if responseSize < 0 {
@@ -133,6 +141,13 @@ func Middleware() gin.HandlerFunc {
 		httpRequestDuration.WithLabelValues(method, path).Observe(duration)
 		httpResponseSize.WithLabelValues(method, path).Observe(float64(responseSize))
 	}
+}
+
+func httpStatusLabel(status int) string {
+	if status >= 100 && status < len(httpStatusLabels) {
+		return httpStatusLabels[status]
+	}
+	return strconv.Itoa(status)
 }
 
 // Handler returns the Prometheus metrics handler

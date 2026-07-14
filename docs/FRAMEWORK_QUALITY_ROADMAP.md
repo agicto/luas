@@ -113,10 +113,17 @@ Verification:
 
 Problem: Luas now has one measured API dependency/binary baseline and bounded HTTP metric labels, but it does not yet guard API latency, database query behavior, Web route bundles, or Core Web Vitals with repeatable budgets.
 
+The core HTTP middleware portion now has a repeatable metrics-off/metrics-on benchmark and a
+steady-state allocation gate. On an Apple M3 Max with Go 1.25.12, the metrics-disabled median moved
+from about `1.77 us`, `1,446 B`, and `41 allocs/request` to `1.25 us`, `1,138 B`, and
+`18 allocs/request`; the metrics-enabled median moved from about `2.08 us` and `42 allocs/request`
+to `1.47 us` and `18 allocs/request`. CI guards only the stable allocation signal with a
+`21 allocs/request` ceiling. Host-sensitive timing remains comparison evidence, not an SLO.
+
 Recommended slice:
 
 1. Keep dependency and stripped binary measurements comparable when changing runtime dependencies.
-2. Add representative API benchmarks for the HTTP middleware chain with metrics enabled and disabled.
+2. Keep the representative API middleware benchmark and allocation budget aligned when the kernel or request metrics change.
 3. Add Postgres-backed measurements for query count, allocation, and p95 latency on starter list/write flows before claiming database improvements.
 4. Record Web build route output and route-level client bundle evidence before changing provider placement, i18n routing, charts, or analytics.
 5. Promote a measurement into CI only after it is stable across runners and has an explicit regression threshold.
