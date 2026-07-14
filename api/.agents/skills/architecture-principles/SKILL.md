@@ -1,11 +1,11 @@
 ---
 name: architecture-principles
 description: Core Luas architecture vocabulary and decision rules for seams, starter boundaries, depth, and locality
-version: 1.0.0
+version: 1.1.0
 category: development
-tags: [architecture, seams, starter, locality, depth]
+tags: [architecture, seams, starter, capability, lifecycle, locality, depth]
 author: Luas Team
-updated: 2026-04-27
+updated: 2026-07-13
 ---
 
 # Architecture Principles
@@ -127,6 +127,21 @@ Ask:
 - Prefer black-box tests through real seams.
 - Use mocks at real seams, especially external HTTP, queues, cloud SDKs, or email providers.
 - Do not widen public interfaces just to satisfy mocking tools.
+
+## Capability Lifecycle Rules
+
+Stateful capabilities must make ownership and shutdown observable at their public seam:
+
+- context-aware operations must unblock on cancellation;
+- `Close` must be safe under concurrent use and repeated calls;
+- background goroutines must belong to a context or an explicit close barrier;
+- blocked producers and consumers must have a documented shutdown result;
+- in-memory adapters must state their durability and multi-process limitations;
+- payload ownership must be explicit when avoiding copies for performance.
+
+For workflow queues, [`docs/WORKFLOW.md`](../../../docs/WORKFLOW.md) is the canonical contract. Run
+the focused race suite and round-trip benchmark whenever changing queue storage, delayed dispatch,
+workers, `Clear`, or `Close`.
 
 ## Required Follow-Through
 

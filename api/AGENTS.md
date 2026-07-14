@@ -106,6 +106,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
+- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
 
 ## Directory Structure
 
@@ -141,6 +142,8 @@ luas/
 ```bash
 make build         # Build CLI
 make test          # Run tests
+make test-race-critical # Run queue/worker lifecycle race tests required by CI
+make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
 make wire          # Generate DI
 make vuln          # Reachable vulnerability scan with the pinned Go tool
@@ -162,6 +165,10 @@ make air           # Hot-reload dev server
 ## Capabilities Layer
 
 `internal/capabilities/` provides technical helpers (e.g., `idgen`, `crypto`).
+
+Workflow queue changes must preserve the lifecycle contract in [`docs/WORKFLOW.md`](docs/WORKFLOW.md):
+memory delivery is process-local and volatile, payload ownership transfers on successful dispatch,
+delayed work follows its context, and `Close` must remain idempotent and race-free.
 
 > **📚 Full Guide**: See [`testing-strategy` skill - Mocks](./.agents/skills/testing-strategy/) for dependency patterns.
 

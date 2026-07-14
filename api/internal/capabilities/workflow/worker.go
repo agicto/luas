@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -48,13 +49,15 @@ func DefaultWorkerConfig() WorkerConfig {
 
 // Worker processes jobs from a queue
 type Worker struct {
-	config  WorkerConfig
-	manager *QueueManager
-	driver  Driver
-	stop    chan struct{}
-	wg      sync.WaitGroup
-	running bool
-	mu      sync.Mutex
+	config   WorkerConfig
+	manager  *QueueManager
+	driver   Driver
+	stop     chan struct{}
+	wg       sync.WaitGroup
+	running  bool
+	stopping bool
+	cancel   context.CancelFunc
+	mu       sync.Mutex
 }
 
 // NewWorker creates a new worker
@@ -84,7 +87,18 @@ func (m *QueueManager) NewWorker(config WorkerConfig) *Worker {
 
 // SetDriver sets the driver for the worker
 func (w *Worker) SetDriver(driver Driver) {
+	if driver == nil {
+		return
+	}
+	w.mu.Lock()
 	w.driver = driver
+	w.mu.Unlock()
+}
+
+func (w *Worker) currentDriver() Driver {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.driver
 }
 
 // Start starts the worker
@@ -94,13 +108,18 @@ func (w *Worker) Start(ctx context.Context) error {
 		w.mu.Unlock()
 		return nil
 	}
+	runCtx, cancel := context.WithCancel(ctx)
+	stop := make(chan struct{})
+	w.stop = stop
+	w.cancel = cancel
 	w.running = true
-	w.mu.Unlock()
+	w.stopping = false
 
 	for i := 0; i < w.config.Concurrency; i++ {
 		w.wg.Add(1)
-		go w.work(ctx, i)
+		go w.work(runCtx, stop, i)
 	}
+	w.mu.Unlock()
 
 	return nil
 }
@@ -112,11 +131,27 @@ func (w *Worker) Stop() {
 		w.mu.Unlock()
 		return
 	}
-	w.running = false
+	if w.stopping {
+		w.mu.Unlock()
+		w.wg.Wait()
+		return
+	}
+	w.stopping = true
+	cancel := w.cancel
+	stop := w.stop
 	w.mu.Unlock()
 
-	close(w.stop)
+	if cancel != nil {
+		cancel()
+	}
+	close(stop)
 	w.wg.Wait()
+
+	w.mu.Lock()
+	w.running = false
+	w.stopping = false
+	w.cancel = nil
+	w.mu.Unlock()
 }
 
 // Wait blocks until all worker goroutines exit.
@@ -126,7 +161,7 @@ func (w *Worker) Wait() {
 
 // work is the main worker loop. id is reserved for future per-worker logging
 // labels.
-func (w *Worker) work(ctx context.Context, _ int) {
+func (w *Worker) work(ctx context.Context, stop <-chan struct{}, _ int) {
 	defer w.wg.Done()
 
 	jobsProcessed := 0
@@ -135,7 +170,7 @@ func (w *Worker) work(ctx context.Context, _ int) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-w.stop:
+		case <-stop:
 			return
 		default:
 			// Check max jobs
@@ -144,10 +179,14 @@ func (w *Worker) work(ctx context.Context, _ int) {
 			}
 
 			// Try to get a job
-			payload, err := w.driver.Pop(ctx, w.config.Queue)
+			payload, err := w.currentDriver().Pop(ctx, w.config.Queue)
 			if err != nil {
-				// Queue empty or error, sleep and retry
-				time.Sleep(w.config.Sleep)
+				if ctx.Err() != nil || errors.Is(err, ErrDriverClosed) {
+					return
+				}
+				if !waitForWorker(ctx, stop, w.config.Sleep) {
+					return
+				}
 				continue
 			}
 
@@ -155,6 +194,20 @@ func (w *Worker) work(ctx context.Context, _ int) {
 			w.processJob(ctx, payload)
 			jobsProcessed++
 		}
+	}
+}
+
+func waitForWorker(ctx context.Context, stop <-chan struct{}, delay time.Duration) bool {
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		return true
+	case <-ctx.Done():
+		return false
+	case <-stop:
+		return false
 	}
 }
 
@@ -213,7 +266,7 @@ func (w *Worker) processJob(ctx context.Context, data []byte) {
 			// during re-queue mean the retry is lost, which is logged by
 			// the driver itself.
 			if newPayload, marshalErr := json.Marshal(payload); marshalErr == nil {
-				_ = w.driver.PushDelayed(ctx, w.config.Queue, newPayload, retryDelay) //nolint:errcheck
+				_ = w.currentDriver().PushDelayed(ctx, w.config.Queue, newPayload, retryDelay) //nolint:errcheck
 			}
 		} else {
 			// Max retries exceeded

@@ -14,6 +14,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 - GORM 数据访问与迁移体系
 - 内置 starter：`user`, `apikey`, `audit`
 - Provider-neutral AI capability 与内置 CLI `ai:chat`
+- 可取消、可安全关闭的 workflow queue capability 与 worker CLI
 - 统一 API 响应与错误处理
 - 分页、验证、日志、JWT、中间件
 - 测试辅助工具与集成测试基线
@@ -84,6 +85,8 @@ go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```bash
 make build
 make test
+make test-race-critical
+make benchmark-workflow
 make lint
 make wire
 make vuln
@@ -121,6 +124,9 @@ CORS_ALLOW_ORIGINS=https://app.example.com
 Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。全局与认证限流都使用进程内 memory store，适合作为 scaffold 的单实例安全默认；多实例生产环境应在网关、WAF、Redis store 或部署层补充分布式限流。认证限流不会返回桶类型或剩余额度，且不能替代 MFA、风险识别和渐进式挑战。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
 
 完整 middleware 分类见 [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md)。
+
+Workflow 的 `sync` / `memory` 驱动定位、payload 所有权、关闭语义和生产替换边界见
+[docs/WORKFLOW.md](docs/WORKFLOW.md)。`memory` 驱动是有界、进程内、非持久队列，不支持多副本之间的任务传递。
 
 ## 项目结构
 

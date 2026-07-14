@@ -32,6 +32,7 @@ Workspace-level architecture docs:
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
 - [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
+- [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
 - [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
@@ -87,6 +88,7 @@ CI enforces the canonical references via [.github/workflows/skill-self-test.yml]
 cd api && make wire && make run         # generate DI + start server
 cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
+cd api && make test-race-critical       # queue/worker lifecycle race gate
 cd api && make vuln                     # pinned reachable-vulnerability scan
 
 # web/

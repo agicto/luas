@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -55,6 +56,13 @@ type Driver interface {
 	// Close closes the driver connection
 	Close() error
 }
+
+var (
+	// ErrQueueEmpty indicates that a non-blocking queue has no jobs available.
+	ErrQueueEmpty = errors.New("queue is empty")
+	// ErrDriverClosed indicates that the queue driver no longer accepts work.
+	ErrDriverClosed = errors.New("queue driver is closed")
+)
 
 // JobPayload represents the serialized job data
 type JobPayload struct {
@@ -374,10 +382,20 @@ func (d *SyncDriver) Push(ctx context.Context, queue string, payload []byte) err
 	return nil
 }
 
-// PushDelayed adds a job with delay (for sync, we just delay then execute)
+// PushDelayed waits for the delay and then executes the job synchronously.
 func (d *SyncDriver) PushDelayed(ctx context.Context, queue string, payload []byte, delay time.Duration) error {
-	time.Sleep(delay)
-	return d.Push(ctx, queue, payload)
+	if delay <= 0 {
+		return d.Push(ctx, queue, payload)
+	}
+
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+	select {
+	case <-timer.C:
+		return d.Push(ctx, queue, payload)
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Pop retrieves the next job
@@ -387,7 +405,7 @@ func (d *SyncDriver) Pop(ctx context.Context, queue string) ([]byte, error) {
 
 	jobs := d.queues[queue]
 	if len(jobs) == 0 {
-		return nil, errors.New("queue is empty")
+		return nil, ErrQueueEmpty
 	}
 
 	payload := jobs[0]
@@ -417,93 +435,316 @@ func (d *SyncDriver) Close() error {
 
 // --- Memory Driver (stores jobs for worker processing) ---
 
-// MemoryDriver stores jobs in memory for async processing
+// MemoryDriver stores jobs in bounded, process-local memory for async
+// processing. Close cancels pending delayed jobs and waits for in-flight
+// operations to observe shutdown before returning.
 type MemoryDriver struct {
-	mu      sync.Mutex
-	queues  map[string]chan []byte
-	bufSize int
-	closed  bool
+	mu           sync.Mutex
+	queues       map[string]*memoryQueue
+	bufSize      int
+	closed       atomic.Bool
+	done         chan struct{}
+	delayedSlots chan struct{}
+	operations   sync.WaitGroup
+	closeOnce    sync.Once
+}
+
+type memoryQueue struct {
+	mu       sync.Mutex
+	items    [][]byte
+	head     int
+	size     int
+	notEmpty chan struct{}
+	notFull  chan struct{}
 }
 
 // NewMemoryDriver creates a new memory driver
 func NewMemoryDriver(bufferSize int) *MemoryDriver {
+	if bufferSize < 1 {
+		bufferSize = 1
+	}
 	return &MemoryDriver{
-		queues:  make(map[string]chan []byte),
-		bufSize: bufferSize,
+		queues:       make(map[string]*memoryQueue),
+		bufSize:      bufferSize,
+		done:         make(chan struct{}),
+		delayedSlots: make(chan struct{}, bufferSize),
 	}
 }
 
-func (d *MemoryDriver) getQueue(name string) chan []byte {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func newMemoryQueue(capacity int) *memoryQueue {
+	queue := &memoryQueue{
+		items:    make([][]byte, capacity),
+		notEmpty: make(chan struct{}, 1),
+		notFull:  make(chan struct{}, 1),
+	}
+	queue.syncSignals()
+	return queue
+}
 
-	if ch, ok := d.queues[name]; ok {
-		return ch
+func (q *memoryQueue) syncSignals() {
+	setQueueSignal(q.notEmpty, q.size > 0)
+	setQueueSignal(q.notFull, q.size < len(q.items))
+}
+
+func setQueueSignal(signal chan struct{}, ready bool) {
+	if ready {
+		select {
+		case signal <- struct{}{}:
+		default:
+		}
+		return
 	}
 
-	ch := make(chan []byte, d.bufSize)
-	d.queues[name] = ch
-	return ch
+	select {
+	case <-signal:
+	default:
+	}
+}
+
+func (q *memoryQueue) enqueue(payload []byte) {
+	index := (q.head + q.size) % len(q.items)
+	q.items[index] = payload
+	q.size++
+	q.syncSignals()
+}
+
+func (q *memoryQueue) dequeue() []byte {
+	payload := q.items[q.head]
+	q.items[q.head] = nil
+	q.head = (q.head + 1) % len(q.items)
+	q.size--
+	q.syncSignals()
+	return payload
+}
+
+func (q *memoryQueue) clear() {
+	for index := range q.items {
+		q.items[index] = nil
+	}
+	q.head = 0
+	q.size = 0
+	q.syncSignals()
+}
+
+func (d *MemoryDriver) beginOperation(ctx context.Context) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.closed.Load() {
+		return ErrDriverClosed
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	d.operations.Add(1)
+	return nil
+}
+
+func (d *MemoryDriver) getQueue(name string, create bool) (*memoryQueue, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.closed.Load() {
+		return nil, ErrDriverClosed
+	}
+
+	queue, ok := d.queues[name]
+	if ok || !create {
+		return queue, nil
+	}
+
+	queue = newMemoryQueue(d.bufSize)
+	d.queues[name] = queue
+	return queue, nil
 }
 
 // Push adds a job to the queue
 func (d *MemoryDriver) Push(ctx context.Context, queue string, payload []byte) error {
-	if d.closed {
-		return errors.New("driver is closed")
+	if err := d.beginOperation(ctx); err != nil {
+		return err
+	}
+	defer d.operations.Done()
+	return d.push(ctx, queue, payload)
+}
+
+func (d *MemoryDriver) push(ctx context.Context, queueName string, payload []byte) error {
+	queue, err := d.getQueue(queueName, true)
+	if err != nil {
+		return err
 	}
 
-	select {
-	case d.getQueue(queue) <- payload:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	for {
+		queue.mu.Lock()
+		if d.closed.Load() {
+			queue.mu.Unlock()
+			return ErrDriverClosed
+		}
+		if err := ctx.Err(); err != nil {
+			queue.mu.Unlock()
+			return err
+		}
+		if queue.size < len(queue.items) {
+			queue.enqueue(payload)
+			queue.mu.Unlock()
+			return nil
+		}
+		queue.mu.Unlock()
+
+		select {
+		case <-queue.notFull:
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-d.done:
+			return ErrDriverClosed
+		}
 	}
 }
 
-// PushDelayed adds a job with delay
+// PushDelayed schedules a job for in-process delivery. The pending delivery is
+// canceled when its context is canceled or the driver is closed.
 func (d *MemoryDriver) PushDelayed(ctx context.Context, queue string, payload []byte, delay time.Duration) error {
+	if delay <= 0 {
+		return d.Push(ctx, queue, payload)
+	}
+	if err := d.beginOperation(ctx); err != nil {
+		return err
+	}
+	select {
+	case d.delayedSlots <- struct{}{}:
+	case <-ctx.Done():
+		d.operations.Done()
+		return ctx.Err()
+	case <-d.done:
+		d.operations.Done()
+		return ErrDriverClosed
+	}
+	if d.closed.Load() {
+		<-d.delayedSlots
+		d.operations.Done()
+		return ErrDriverClosed
+	}
+	if err := ctx.Err(); err != nil {
+		<-d.delayedSlots
+		d.operations.Done()
+		return err
+	}
+
+	timer := time.NewTimer(delay)
 	go func() {
-		time.Sleep(delay)
-		_ = d.Push(context.Background(), queue, payload) //nolint:errcheck // delayed dispatch; failure is best-effort
+		defer func() {
+			<-d.delayedSlots
+			d.operations.Done()
+		}()
+		defer timer.Stop()
+
+		select {
+		case <-timer.C:
+			_ = d.push(ctx, queue, payload) //nolint:errcheck // scheduling succeeded; later cancellation is expected
+		case <-ctx.Done():
+		case <-d.done:
+		}
 	}()
 	return nil
 }
 
 // Pop retrieves the next job
 func (d *MemoryDriver) Pop(ctx context.Context, queue string) ([]byte, error) {
-	select {
-	case payload := <-d.getQueue(queue):
-		return payload, nil
-	case <-ctx.Done():
-		return nil, ctx.Err()
+	if err := d.beginOperation(ctx); err != nil {
+		return nil, err
+	}
+	defer d.operations.Done()
+
+	memoryQueue, err := d.getQueue(queue, true)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		memoryQueue.mu.Lock()
+		if d.closed.Load() {
+			memoryQueue.mu.Unlock()
+			return nil, ErrDriverClosed
+		}
+		if err := ctx.Err(); err != nil {
+			memoryQueue.mu.Unlock()
+			return nil, err
+		}
+		if memoryQueue.size > 0 {
+			payload := memoryQueue.dequeue()
+			memoryQueue.mu.Unlock()
+			return payload, nil
+		}
+		memoryQueue.mu.Unlock()
+
+		select {
+		case <-memoryQueue.notEmpty:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-d.done:
+			return nil, ErrDriverClosed
+		}
 	}
 }
 
-// Size returns approximate queue size
+// Size returns the current queue size.
 func (d *MemoryDriver) Size(ctx context.Context, queue string) (int64, error) {
-	return int64(len(d.getQueue(queue))), nil
+	if err := d.beginOperation(ctx); err != nil {
+		return 0, err
+	}
+	defer d.operations.Done()
+
+	memoryQueue, err := d.getQueue(queue, false)
+	if err != nil {
+		return 0, err
+	}
+	if memoryQueue == nil {
+		return 0, nil
+	}
+
+	memoryQueue.mu.Lock()
+	defer memoryQueue.mu.Unlock()
+	if d.closed.Load() {
+		return 0, ErrDriverClosed
+	}
+	return int64(memoryQueue.size), nil
 }
 
 // Clear clears the queue
 func (d *MemoryDriver) Clear(ctx context.Context, queue string) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	if ch, ok := d.queues[queue]; ok {
-		close(ch)
-		d.queues[queue] = make(chan []byte, d.bufSize)
+	if err := d.beginOperation(ctx); err != nil {
+		return err
 	}
+	defer d.operations.Done()
+
+	memoryQueue, err := d.getQueue(queue, false)
+	if err != nil {
+		return err
+	}
+	if memoryQueue == nil {
+		return nil
+	}
+
+	memoryQueue.mu.Lock()
+	defer memoryQueue.mu.Unlock()
+	if d.closed.Load() {
+		return ErrDriverClosed
+	}
+	memoryQueue.clear()
 	return nil
 }
 
-// Close closes all queues
+// Close cancels delayed jobs, unblocks waiting operations, and releases queued
+// payloads. It is safe to call concurrently or more than once.
 func (d *MemoryDriver) Close() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+	d.closeOnce.Do(func() {
+		d.mu.Lock()
+		d.closed.Store(true)
+		close(d.done)
+		d.mu.Unlock()
 
-	d.closed = true
-	for _, ch := range d.queues {
-		close(ch)
-	}
+		d.operations.Wait()
+
+		d.mu.Lock()
+		d.queues = nil
+		d.mu.Unlock()
+	})
 	return nil
 }

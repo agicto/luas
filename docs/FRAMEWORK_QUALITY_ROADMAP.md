@@ -89,22 +89,25 @@ Verification:
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
 
-### P1 — Queue Lifecycle Concurrency
+### Completed P1 — Queue Lifecycle Concurrency
 
-Problem: `go test -race ./tests/unit` reports a send/close race between
-`workflow.MemoryDriver.PushDelayed` and `MemoryDriver.Close`. This is outside the authentication
-slice that exposed it, but a downstream app can hit the same lifecycle edge during shutdown.
+The queue lifecycle race exposed by `go test -race ./tests/unit` is fixed. The memory driver now owns
+an explicit close barrier, bounded FIFO state, delayed-task cancellation, and in-flight operation
+tracking. Pending delayed deliveries also use a bounded, context-aware backpressure budget instead
+of allowing unbounded timer goroutines. `Close` is concurrent-safe and idempotent; blocked producers,
+consumers, and workers exit without a send/close race or a closed-channel panic. The contract and
+durable replacement boundary are documented in [`../api/docs/WORKFLOW.md`](../api/docs/WORKFLOW.md).
 
-Recommended slice:
-
-1. Reproduce with a focused delayed-push/close test under the race detector.
-2. Give delayed jobs explicit cancellation/lifecycle ownership so no goroutine can send after close.
-3. Make `Close` idempotent and prove pending delayed work has a documented outcome.
+Measured locally on an Apple M3 Max with Go 1.25.12, a 256-byte push/pop round trip changed from
+approximately `56 ns/op`, `0 B/op`, `0 allocs/op` to `80 ns/op`, `0 B/op`, `0 allocs/op`. The roughly
+42% synchronization cost is retained because it buys deterministic shutdown while still sustaining
+about 12.5 million in-process round trips per second. This is evidence, not a CI performance budget.
 
 Verification:
 
-- `cd api && go test -race ./internal/capabilities/workflow ./tests/unit -run 'MemoryDriver|Queue'`
+- `cd api && make test-race-critical`
 - `cd api && go test ./...`
+- `cd api && make benchmark-workflow`
 
 ### P1 — Measured Performance Baseline
 

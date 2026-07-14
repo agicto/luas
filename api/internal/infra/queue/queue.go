@@ -22,6 +22,13 @@ type JobWithRetry = workflow.JobWithRetry
 // Driver defines the queue driver interface.
 type Driver = workflow.Driver
 
+var (
+	// ErrQueueEmpty indicates that a non-blocking queue has no jobs available.
+	ErrQueueEmpty = workflow.ErrQueueEmpty
+	// ErrDriverClosed indicates that the queue driver no longer accepts work.
+	ErrDriverClosed = workflow.ErrDriverClosed
+)
+
 // JobPayload represents serialized job data.
 type JobPayload = workflow.JobPayload
 
