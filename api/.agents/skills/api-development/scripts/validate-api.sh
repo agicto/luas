@@ -3,9 +3,9 @@
 # API Standards Validation Script
 # Usage: ./validate-api.sh <module_name>
 
-set -e
+set -euo pipefail
 
-MODULE=$1
+MODULE=${1:-}
 MODULE_DIR="internal/modules/${MODULE}"
 
 if [ -z "$MODULE" ]; then
@@ -148,8 +148,13 @@ if [ -f "${ROUTES_FILE}" ]; then
         echo "✅ RESTful HTTP methods detected"
     fi
     
-    # Look for verb-based routes (anti-pattern)
-    VERB_ROUTES=$(grep -i 'create\|update\|delete\|get' "${ROUTES_FILE}" | grep -v 'func\|//' | grep '\"/' || true)
+    # Inspect registered path literals only so comments, handlers, and route names cannot trigger this check.
+    VERB_PATH_PATTERN='\.(GET|POST|PUT|PATCH|DELETE)\([[:space:]]*"[^"]*/(create|update|delete|get)(/[^"]*)?"'
+    VERB_ROUTES=$(
+        grep -Ein "$VERB_PATH_PATTERN" "${ROUTES_FILE}" |
+            grep -Ev '^[0-9]+:[[:space:]]*//' ||
+            true
+    )
     if [ -n "$VERB_ROUTES" ]; then
         echo "⚠️  Possible verb-based routes detected (should use HTTP methods):"
         echo "$VERB_ROUTES"
@@ -170,7 +175,7 @@ if grep -q "c.AbortWithStatusJSON" "${HANDLER_FILE}"; then
 fi
 
 # Check for gin.H usage (prefer struct or response package)
-GIN_H_COUNT=$(grep -c 'gin.H{' "${HANDLER_FILE}" 2>/dev/null || echo "0")
+GIN_H_COUNT=$(awk '/gin\.H\{/{count++} END{print count + 0}' "${HANDLER_FILE}")
 if [ "$GIN_H_COUNT" -gt 0 ]; then
     echo "⚠️  Found $GIN_H_COUNT gin.H{} usage - prefer typed structures"
 fi

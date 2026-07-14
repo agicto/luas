@@ -195,6 +195,11 @@ def main() -> int:
         "api/.agents/skills/module-creation/SKILL.md",
         ("OptionalManifests", "OPTIONAL_STARTERS=blog"),
     )
+    require_all(
+        failures,
+        ".github/workflows/skill-self-test.yml",
+        ("module: [user, apikey, audit, organization]",),
+    )
 
     if failures:
         print("Starter catalog check failed:", file=sys.stderr)

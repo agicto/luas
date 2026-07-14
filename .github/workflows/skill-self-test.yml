@@ -1,7 +1,7 @@
 name: Skill Self-Test
 
-# Runs each skill's own validation script against the canonical starter
-# modules (user, apikey, audit). This catches drift between what a skill
+# Runs each skill's own validation script against every maintained starter
+# module, including opt-in starters. This catches drift between what a skill
 # prescribes and what the codebase actually does.
 #
 # A PR that breaks any starter module — or a skill change whose validator
@@ -38,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [user, apikey, audit]
+        module: [user, apikey, audit, organization]
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1

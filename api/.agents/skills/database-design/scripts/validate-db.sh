@@ -7,9 +7,9 @@
 # or an explicit file path, so this validator can be used in the same CI
 # loop as the other skill validators.
 
-set -e
+set -euo pipefail
 
-ARG=$1
+ARG=${1:-}
 
 if [ -z "$ARG" ]; then
     echo "Usage: ./validate-db.sh <module_name | path_to_model_file>"
@@ -28,7 +28,7 @@ if [ ! -f "$MODEL_FILE" ]; then
     exit 1
 fi
 
-echo "🔍 Validating Database standards for '$(basename $MODEL_FILE)'..."
+echo "🔍 Validating Database standards for '$(basename "$MODEL_FILE")'..."
 echo "=============================================="
 
 ERRORS=0
@@ -68,10 +68,21 @@ else
     echo "ℹ️  Soft delete field not detected. Confirm the table does not require soft delete."
 fi
 
-# 4. Check for snake_case in gorm labels
-if grep "gorm:\"" "$MODEL_FILE" | grep -v "primaryKey" | grep -q "[A-Z]"; then
-    # This is a very simple check that might have false positives, but it targets mixedCase in tags
-    echo "⚠️  Detected possible non-snake_case naming in GORM tags. Check column names."
+# 4. Check only explicit column names. GORM directives such as CASCADE are case-sensitive.
+EXPLICIT_COLUMNS=$(
+    grep -oE 'gorm:"[^"]*"' "$MODEL_FILE" |
+        grep -oE 'column:[^;"]+' |
+        cut -d: -f2- ||
+        true
+)
+NON_SNAKE_COLUMNS=""
+if [ -n "$EXPLICIT_COLUMNS" ]; then
+    NON_SNAKE_COLUMNS=$(printf '%s\n' "$EXPLICIT_COLUMNS" | grep -Ev '^[a-z][a-z0-9_]*$' || true)
+fi
+
+if [ -n "$NON_SNAKE_COLUMNS" ]; then
+    echo "⚠️  Explicit GORM column names must use snake_case:"
+    printf '   %s\n' "$NON_SNAKE_COLUMNS"
     WARNINGS=$((WARNINGS + 1))
 fi
 
