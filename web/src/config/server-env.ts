@@ -11,6 +11,10 @@ if (!parsedPublicEnv.success) {
 }
 
 const parsed = serverEnvSchema.safeParse({
+  AUTH_ADAPTER_ENABLED: process.env.AUTH_ADAPTER_ENABLED,
+  AUTH_API_TIMEOUT_MS: process.env.AUTH_API_TIMEOUT_MS,
+  AUTH_API_URL: process.env.AUTH_API_URL,
+  AUTH_CLIENT_IP_HEADER: process.env.AUTH_CLIENT_IP_HEADER,
   MOCK_BFF_ENABLED: process.env.MOCK_BFF_ENABLED,
   SESSION_SECRET: process.env.SESSION_SECRET,
 });
@@ -23,6 +27,62 @@ if (!parsed.success) {
 export const serverEnv = parsed.data;
 
 const isProductionBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
+function targetsSameOriginApiRoute(apiUrl: string, appUrl: string): boolean {
+  try {
+    const app = new URL(appUrl);
+    const api = new URL(apiUrl, app);
+    const path = api.pathname.replace(/\/+$/, '') || '/';
+
+    return (
+      api.origin === app.origin &&
+      path === '/api' &&
+      api.search.length === 0 &&
+      api.hash.length === 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isValidAuthApiUrl(value: string): boolean {
+  const url = new URL(value);
+
+  return (
+    (url.protocol === 'http:' || url.protocol === 'https:') &&
+    url.username.length === 0 &&
+    url.password.length === 0 &&
+    url.search.length === 0 &&
+    url.hash.length === 0
+  );
+}
+
+if (serverEnv.AUTH_ADAPTER_ENABLED && !isProductionBuildPhase) {
+  if (!serverEnv.AUTH_API_URL) {
+    throw new Error('AUTH_API_URL must be set when AUTH_ADAPTER_ENABLED=true');
+  }
+
+  if (!isValidAuthApiUrl(serverEnv.AUTH_API_URL)) {
+    throw new Error('AUTH_API_URL must be an HTTP(S) URL without credentials, query, or fragment');
+  }
+
+  if (
+    !targetsSameOriginApiRoute(
+      env.NEXT_PUBLIC_API_URL,
+      env.NEXT_PUBLIC_APP_URL
+    )
+  ) {
+    throw new Error(
+      'NEXT_PUBLIC_API_URL must target the same-origin /api route when AUTH_ADAPTER_ENABLED=true'
+    );
+  }
+
+  if (env.NODE_ENV === 'production' && !serverEnv.AUTH_CLIENT_IP_HEADER) {
+    throw new Error(
+      'AUTH_CLIENT_IP_HEADER must be set when AUTH_ADAPTER_ENABLED=true in production runtime'
+    );
+  }
+}
 
 if (
   env.NODE_ENV === 'production' &&

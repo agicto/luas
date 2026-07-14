@@ -4,6 +4,7 @@ import {
   isMockBffEnabled,
   type MockBffEnvironment,
 } from '@/config/mock-bff';
+import { env } from '@/config/env';
 import { ApiErrorCode } from '@/http/codes';
 import { apiErrorResponse } from './error-response';
 
@@ -32,7 +33,10 @@ function crossOriginMutationResponse(): NextResponse {
 }
 
 /** Reject browser writes that did not originate from this exact origin. */
-export function guardSameOriginMutation(request: Request): NextResponse | null {
+export function guardSameOriginMutation(
+  request: Request,
+  appUrl: string = env.NEXT_PUBLIC_APP_URL
+): NextResponse | null {
   const fetchSite = request.headers.get('sec-fetch-site');
 
   if (fetchSite && fetchSite !== 'same-origin' && fetchSite !== 'none') {
@@ -47,9 +51,9 @@ export function guardSameOriginMutation(request: Request): NextResponse | null {
 
   try {
     const parsedOrigin = new URL(origin);
-    const requestOrigin = new URL(request.url).origin;
+    const allowedOrigin = new URL(appUrl).origin;
 
-    if (parsedOrigin.origin !== origin || parsedOrigin.origin !== requestOrigin) {
+    if (parsedOrigin.origin !== origin || parsedOrigin.origin !== allowedOrigin) {
       return crossOriginMutationResponse();
     }
   } catch {

@@ -56,6 +56,10 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 | `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No | `true` | Shows or hides the language switcher. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
+| `AUTH_ADAPTER_ENABLED` | No | `false` | Enables the same-origin server adapter for the Luas Go user starter. |
+| `AUTH_API_URL` | Auth adapter runtime | - | Server-only Go API base URL including its `/v1` prefix. |
+| `AUTH_API_TIMEOUT_MS` | No | `5000` | Server-to-server auth timeout, from 100 to 30000 milliseconds. |
+| `AUTH_CLIENT_IP_HEADER` | Production auth adapter | - | Ingress-overwritten source header containing one client IP, such as `X-Real-IP`; appended chains are rejected. |
 | `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. |
 | `SESSION_SECRET` | Production mock BFF | - | Server-only secret for HMAC-signed mock auth cookies; required when `MOCK_BFF_ENABLED=true`. |
 
@@ -63,8 +67,8 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 > Use `env` for browser-safe values and `serverEnv` for server-only values. Direct `process.env` access is restricted to the two environment entry modules and test setup.
 
 `src/test/env-contract.test.ts` enforces this rule, keeps server values out of the client entry and
-config barrel, and verifies that production mock BFF opt-in requires a strong `SESSION_SECRET` while
-normal production runtime and production builds can omit it.
+config barrel, verifies the production adapter's same-origin/upstream/client-IP combination, and
+requires a strong `SESSION_SECRET` only for production mock BFF opt-in.
 
 ## Related Skills
 

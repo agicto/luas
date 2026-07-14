@@ -8,7 +8,7 @@ describe('session-signing', () => {
   });
 
   it('round-trips a payload', async () => {
-    const payload = JSON.stringify({ id: 'u1', role: 'admin' });
+    const payload = JSON.stringify({ id: 'u1', email: 'ada@example.com' });
     const signed = await signSession(payload);
     const got = await verifySession(signed);
     expect(got).toBe(payload);
@@ -25,10 +25,14 @@ describe('session-signing', () => {
   });
 
   it('rejects a tampered payload', async () => {
-    const signed = await signSession(JSON.stringify({ id: 'u1', role: 'user' }));
+    const signed = await signSession(
+      JSON.stringify({ id: 'u1', email: 'grace@example.com' })
+    );
     const [, sig] = signed.split('.');
     // base64url-encode a different payload, glue on the real signature
-    const tamperedPayload = Buffer.from(JSON.stringify({ id: 'u1', role: 'admin' }))
+    const tamperedPayload = Buffer.from(
+      JSON.stringify({ id: 'u1', email: 'ada@example.com' })
+    )
       .toString('base64')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')

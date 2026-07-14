@@ -7,6 +7,7 @@ interface ApiErrorResponseOptions {
   errorCode: ApiErrorCodeValue;
   message: string;
   errors?: Record<string, string[]>;
+  headers?: HeadersInit;
   requestId?: string;
 }
 
@@ -15,6 +16,7 @@ export function apiErrorResponse({
   errorCode,
   message,
   errors,
+  headers,
   requestId,
 }: ApiErrorResponseOptions): NextResponse {
   return NextResponse.json(
@@ -25,7 +27,7 @@ export function apiErrorResponse({
       ...(errors ? { errors } : {}),
       ...(requestId ? { request_id: requestId } : {}),
     },
-    { status }
+    { status, headers }
   );
 }
 

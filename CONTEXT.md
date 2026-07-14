@@ -48,6 +48,9 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Mock BFF**
 : Development-only route handlers that let the web shell run without a real backend. A mock BFF must preserve the browser-facing contract of the production endpoint or adapter it substitutes, including the shared envelope and error semantics. It is not automatically a mock of every backend endpoint, it is not the production API, and production runtime must require explicit opt-in before serving mock routes.
 
+**Production auth adapter**
+: The server-only Web seam that maps the browser auth contract to the Go `user` starter over HTTP. It owns the same-origin HttpOnly access-token cookie, fixed upstream paths and DTO mappings, timeout/error translation, and trusted client-IP forwarding. It is not a generic reverse proxy and never exposes the API bearer token to browser JavaScript.
+
 **Web shell**
 : The default browser-facing application surface. It includes route groups, providers, layout, design-system integration, i18n, mock auth, and starter/example UI.
 
@@ -83,6 +86,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - A feature is product-facing behavior; a module is the internal implementation shape behind a seam.
 - Core and capabilities are reusable; starters and features express application behavior.
 - Contracts connect deployable units. Source code is not shared across deployable units.
+- The production auth adapter connects the browser auth contract to the Go API contract without making either contract pretend to be the other.
 - Examples and devtools are disposable. Starters are default building blocks. Core is long-lived infrastructure.
 
 ## Flagged Ambiguities
@@ -91,6 +95,6 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **starter vs feature**: Use starter for default or optional Luas-provided building blocks. Use feature for downstream or product-facing slices.
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
-- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable until a production auth adapter maps them explicitly. Do not imply that changing `NEXT_PUBLIC_API_URL` alone completes that mapping.
+- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.

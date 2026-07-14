@@ -1,10 +1,7 @@
-export type AuthRole = 'admin' | 'member';
-
 export interface AuthUser {
   id: string;
   email: string;
   name: string;
-  role: AuthRole;
 }
 
 /**
@@ -14,6 +11,8 @@ export interface AuthUser {
 export type AuthBootstrap =
   | { status: 'authenticated'; user: AuthUser }
   | { status: 'unauthenticated' }
+  | { status: 'forbidden' }
+  | { status: 'unavailable' }
   | { status: 'client-required' };
 
 export type AuthStatus =

@@ -51,7 +51,7 @@ src/
 │   │   ├── (console)/      # Console pages
 │   │   └── (devtools)/     # Internal demo/playground pages
 │   ├── (site)/             # Public site route group
-│   ├── api/                # Mock BFF route handlers
+│   ├── api/                # Browser HTTP routes: mock behavior + auth adapter
 │   │   └── auth/           # Mock BFF auth endpoints
 ├── components/
 │   ├── ui/                 # Project-owned shadcn-derived primitives
@@ -82,11 +82,12 @@ src/
 
 ### 1. Mock BFF Architecture
 
-Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through
-Next.js route handlers under `src/app/api/**`:
+Default development calls use `NEXT_PUBLIC_API_URL=/api`, so feature services go through Next.js
+route handlers under `src/app/api/**`. Most use mock behavior locally; auth routes can select the
+production Go adapter:
 
 ```
-Browser -> src/http/request.ts -> /api/* -> Mock BFF route handlers
+Browser -> src/http/request.ts -> /api/* -> route backend (mock or production auth adapter)
 ```
 
 **Benefits:**
@@ -94,18 +95,17 @@ Browser -> src/http/request.ts -> /api/* -> Mock BFF route handlers
 - httpOnly cookie sessions (secure)
 - Fast local development without backend
 
-For downstream production apps, replace mock handlers with production endpoints or an explicit
-same-origin adapter and keep the mock BFF disabled. The Go JWT endpoints are not a drop-in
-implementation of the Web browser auth contract; see `../contracts/AUTHENTICATION.md` before
-wiring auth. Replacement and resolution rules live in `docs/MOCK_BFF.md` and
-`docs/AUTHENTICATION.md`.
+For downstream production apps, replace mock handlers with production endpoints and keep mock
+behavior disabled. The Go JWT endpoints are not a drop-in implementation of the Web browser auth
+contract; use the shipped same-origin adapter defined in `../contracts/AUTHENTICATION.md`.
+Replacement and resolution rules live in `docs/MOCK_BFF.md` and `docs/AUTHENTICATION.md`.
 
 ### 2. Authentication Flow
 
 **Auth Endpoints (Mock BFF):**
 
 ```
-# Mock BFF (in src/app/api/auth)
+# Browser auth contract (mock locally, production adapter when enabled)
 POST /api/auth/login     → Mock login (admin@example.com / admin123)
 POST /api/auth/register  → Mock user registration
 GET  /api/auth/me        → Get current user

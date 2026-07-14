@@ -17,7 +17,6 @@ const user: AuthUser = {
   id: 'user-ada',
   email: 'ada@example.com',
   name: 'Ada Lovelace',
-  role: 'admin',
 };
 
 function renderGuard(

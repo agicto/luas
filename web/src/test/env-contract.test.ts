@@ -10,8 +10,14 @@ const allowedProcessEnvFiles = new Set([
 ]);
 const originalEnv = { ...process.env };
 const managedEnvKeys = [
+  'AUTH_ADAPTER_ENABLED',
+  'AUTH_API_TIMEOUT_MS',
+  'AUTH_API_URL',
+  'AUTH_CLIENT_IP_HEADER',
   'MOCK_BFF_ENABLED',
   'NEXT_PHASE',
+  'NEXT_PUBLIC_API_URL',
+  'NEXT_PUBLIC_APP_URL',
   'SESSION_SECRET',
 ] as const;
 
@@ -70,6 +76,10 @@ describe('environment config contract', () => {
     vi.resetModules();
     vi.stubEnv('NODE_ENV', 'production');
     delete process.env.NEXT_PHASE;
+    delete process.env.AUTH_ADAPTER_ENABLED;
+    delete process.env.AUTH_API_TIMEOUT_MS;
+    delete process.env.AUTH_API_URL;
+    delete process.env.AUTH_CLIENT_IP_HEADER;
     delete process.env.MOCK_BFF_ENABLED;
     delete process.env.SESSION_SECRET;
 
@@ -78,6 +88,73 @@ describe('environment config contract', () => {
     expect(config.env.NODE_ENV).toBe('production');
     expect(config.env).not.toHaveProperty('SESSION_SECRET');
     expect(config.env).not.toHaveProperty('MOCK_BFF_ENABLED');
+    expect(config.env).not.toHaveProperty('AUTH_API_URL');
+    expect(config.env).not.toHaveProperty('AUTH_CLIENT_IP_HEADER');
+  });
+
+  it('requires a private upstream when the production adapter is enabled', async () => {
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_API_URL', '/api');
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.example.com');
+    delete process.env.NEXT_PHASE;
+    process.env.AUTH_ADAPTER_ENABLED = 'true';
+    delete process.env.AUTH_API_URL;
+
+    await expect(import('@/config/server-env')).rejects.toThrow(
+      'AUTH_API_URL must be set when AUTH_ADAPTER_ENABLED=true'
+    );
+  });
+
+  it('requires an explicit ingress-owned client IP header in production', async () => {
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_API_URL', '/api');
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.example.com');
+    delete process.env.NEXT_PHASE;
+    process.env.AUTH_ADAPTER_ENABLED = 'true';
+    process.env.AUTH_API_URL = 'http://api:8025/v1';
+    delete process.env.AUTH_CLIENT_IP_HEADER;
+
+    await expect(import('@/config/server-env')).rejects.toThrow(
+      'AUTH_CLIENT_IP_HEADER must be set when AUTH_ADAPTER_ENABLED=true in production runtime'
+    );
+  });
+
+  it('accepts a complete production auth adapter configuration', async () => {
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_API_URL', '/api');
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.example.com');
+    delete process.env.NEXT_PHASE;
+    process.env.AUTH_ADAPTER_ENABLED = 'true';
+    process.env.AUTH_API_URL = 'http://api:8025/v1';
+    process.env.AUTH_API_TIMEOUT_MS = '7500';
+    process.env.AUTH_CLIENT_IP_HEADER = 'X-Forwarded-For';
+
+    const config = await import('@/config/server-env');
+
+    expect(config.serverEnv).toMatchObject({
+      AUTH_ADAPTER_ENABLED: true,
+      AUTH_API_URL: 'http://api:8025/v1',
+      AUTH_API_TIMEOUT_MS: 7500,
+      AUTH_CLIENT_IP_HEADER: 'x-forwarded-for',
+    });
+  });
+
+  it('rejects adapter mode when browser auth bypasses the same-origin route', async () => {
+    vi.resetModules();
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('NEXT_PUBLIC_API_URL', 'https://api.example.com/v1');
+    vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://app.example.com');
+    delete process.env.NEXT_PHASE;
+    process.env.AUTH_ADAPTER_ENABLED = 'true';
+    process.env.AUTH_API_URL = 'http://api:8025/v1';
+    process.env.AUTH_CLIENT_IP_HEADER = 'x-forwarded-for';
+
+    await expect(import('@/config/server-env')).rejects.toThrow(
+      'NEXT_PUBLIC_API_URL must target the same-origin /api route when AUTH_ADAPTER_ENABLED=true'
+    );
   });
 
   it('requires SESSION_SECRET when production explicitly enables the mock BFF', async () => {
@@ -97,6 +174,7 @@ describe('environment config contract', () => {
     vi.stubEnv('NODE_ENV', 'production');
     delete process.env.NEXT_PHASE;
     process.env.MOCK_BFF_ENABLED = 'false';
+    process.env.AUTH_ADAPTER_ENABLED = 'false';
     delete process.env.SESSION_SECRET;
 
     const config = await import('@/config/server-env');
@@ -110,11 +188,16 @@ describe('environment config contract', () => {
     vi.stubEnv('NODE_ENV', 'production');
     process.env.NEXT_PHASE = 'phase-production-build';
     process.env.MOCK_BFF_ENABLED = 'true';
+    process.env.AUTH_ADAPTER_ENABLED = 'true';
+    delete process.env.AUTH_API_URL;
+    delete process.env.AUTH_CLIENT_IP_HEADER;
     delete process.env.SESSION_SECRET;
 
     const config = await import('@/config/server-env');
 
     expect(config.serverEnv.MOCK_BFF_ENABLED).toBe(true);
+    expect(config.serverEnv.AUTH_ADAPTER_ENABLED).toBe(true);
+    expect(config.serverEnv.AUTH_API_URL).toBeUndefined();
     expect(config.serverEnv.SESSION_SECRET).toBeUndefined();
   });
 
@@ -138,6 +221,9 @@ describe('environment config contract', () => {
 
     expect(clientEnv).not.toContain('SESSION_SECRET');
     expect(clientEnv).not.toContain('MOCK_BFF_ENABLED');
+    expect(clientEnv).not.toContain('AUTH_ADAPTER_ENABLED');
+    expect(clientEnv).not.toContain('AUTH_API_URL');
+    expect(clientEnv).not.toContain('AUTH_CLIENT_IP_HEADER');
     expect(clientEnv).not.toMatch(/from ['"]zod['"]/);
     expect(configBarrel).not.toContain('server-env');
     expect(serverEnv).toContain("import 'server-only'");

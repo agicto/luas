@@ -32,6 +32,10 @@ function initialAuthState(
       return { status: 'authenticated', user: bootstrap.user };
     case 'unauthenticated':
       return { status: 'unauthenticated', user: null };
+    case 'forbidden':
+      return { status: 'forbidden', user: null };
+    case 'unavailable':
+      return { status: 'unavailable', user: null };
     case 'client-required':
       return { status: 'idle', user: null };
   }

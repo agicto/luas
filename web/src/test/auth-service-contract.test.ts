@@ -15,7 +15,6 @@ const user: AuthUser = {
   id: 'user-ada',
   email: 'ada@example.com',
   name: 'Ada Lovelace',
-  role: 'admin',
 };
 
 describe('auth service response contracts', () => {
@@ -44,7 +43,7 @@ describe('auth service response contracts', () => {
   });
 
   it('rejects a malformed current-session success payload', async () => {
-    request.get.mockResolvedValueOnce({ user: { ...user, role: 'owner' } });
+    request.get.mockResolvedValueOnce({ user: { ...user, name: '' } });
 
     await expect(authService.me()).rejects.toMatchObject({
       errorCode: ClientErrorCode.INVALID_RESPONSE,

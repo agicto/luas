@@ -30,15 +30,20 @@ NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_DEFAULT_LOCALE=zh-Hans
 NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED=true
+AUTH_ADAPTER_ENABLED=false
 MOCK_BFF_ENABLED=false
 ```
 
-`/api/*` route handlers are the development mock BFF. They are available outside production by default, but production runtime returns `503 COMMON.SERVICE_UNAVAILABLE` unless `MOCK_BFF_ENABLED=true` is set explicitly. Downstream production apps should replace these routes with production endpoints or an explicit adapter instead of enabling mock behavior.
+Most `/api/*` route behavior is the development mock BFF. Auth routes are hybrid and can select the
+shipped production adapter. Mock behavior is available outside production by default, while
+production returns `503 COMMON.SERVICE_UNAVAILABLE` unless a production backend or explicit
+demo-only `MOCK_BFF_ENABLED=true` is configured.
 
-The Go JWT auth endpoints and Web browser auth endpoints are not currently drop-in compatible.
-Changing `NEXT_PUBLIC_API_URL` alone does not complete production auth; read
-[../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) for the exact boundary and P1
-adapter requirements.
+The Go JWT auth endpoints and Web browser auth endpoints are not drop-in compatible. Luas ships a
+same-origin server adapter that performs the mapping without exposing bearer tokens to browser
+JavaScript. Changing `NEXT_PUBLIC_API_URL` alone still does not enable it; read
+[../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) for its server-only configuration,
+cookie, timeout, trusted-proxy, and stateless logout contract.
 
 See [docs/MOCK_BFF.md](docs/MOCK_BFF.md) before replacing, deleting, or intentionally enabling the mock BFF.
 
@@ -56,7 +61,7 @@ src/
 │   ├── (auth)/             # Public auth routes
 │   ├── (protected)/        # Authenticated route groups
 │   ├── (site)/             # Public site pages
-│   └── api/                # Mock BFF route handlers
+│   └── api/                # Browser HTTP routes: mock behavior + auth adapter
 ├── components/             # Shared UI and layout components
 ├── features/               # Feature-first folders
 ├── http/                   # Axios wrapper and error normalization
@@ -70,14 +75,14 @@ src/
 
 ## Auth
 
-The web scaffold includes mock BFF auth endpoints under `src/app/api/auth/`:
+The Web browser auth contract is implemented under `src/app/api/auth/`:
 
 - `POST /api/auth/login`
 - `POST /api/auth/register`
 - `GET /api/auth/me`
 - `POST /api/auth/logout`
 
-Demo account:
+Local development uses the mock BFF by default. Demo account:
 
 ```text
 admin@example.com / admin123
@@ -89,10 +94,21 @@ preset without placing it in client static chunks. Mock session cookies use the 
 and secure attributes in production, and unsafe mock BFF routes require an exact same-origin
 browser request.
 
-Protected routes are enforced by `middleware.ts` and `AuthGuard`.
+`middleware.ts` and `AuthGuard` provide protected-route navigation UX. Go endpoints remain the
+authorization boundary for production operations.
 
-Before shipping a downstream app, replace these mock auth routes with the production auth adapter
-described in [../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) or keep them disabled.
+For the Luas Go API, enable the shipped production adapter while keeping browser requests on `/api`:
+
+```env
+AUTH_ADAPTER_ENABLED=true
+AUTH_API_URL=http://api:8025/v1
+AUTH_API_TIMEOUT_MS=5000
+AUTH_CLIENT_IP_HEADER=x-real-ip
+```
+
+The adapter takes precedence over mock auth, stores the API JWT in an HttpOnly host cookie, resolves
+protected sessions on the server, and leaves unrelated mock routes disabled. Downstream apps using
+another identity provider can keep `client-session` mode and replace this adapter seam.
 
 ## HTTP Contract
 

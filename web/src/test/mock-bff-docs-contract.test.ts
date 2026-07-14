@@ -20,7 +20,10 @@ describe('mock BFF documentation contract', () => {
     expect(guide).toContain('# Mock BFF Replacement Guide');
     expect(guide).toContain('NEXT_PUBLIC_API_URL');
     expect(guide).toContain('MOCK_BFF_ENABLED');
+    expect(guide).toContain('AUTH_ADAPTER_ENABLED');
+    expect(guide).toContain('api-session');
     expect(guide).toContain('guardMockBffRoute()');
+    expect(guide).toContain('resolveAuthRoute()');
     expect(guide).toContain('guardSameOriginMutation(request)');
     expect(guide).toContain('apiSuccessResponse()');
     expect(guide).toContain('../../contracts/README.md');

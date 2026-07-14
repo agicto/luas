@@ -8,6 +8,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'http://localhost:3000',
+        authAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'development',
       })
@@ -19,6 +20,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://demo.example.com/api/',
         appUrl: 'https://demo.example.com',
+        authAdapterEnabled: false,
         mockBffEnabled: true,
         nodeEnv: 'production',
       })
@@ -30,6 +32,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://api.example.com',
         appUrl: 'https://app.example.com',
+        authAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'production',
       })
@@ -41,6 +44,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'https://app.example.com',
+        authAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'production',
       })
@@ -52,9 +56,34 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://api.example.com',
         appUrl: 'http://localhost:3000',
+        authAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'development',
       })
     ).toBe('client-session');
+  });
+
+  it('uses the server-resolved API session when the production adapter owns /api', () => {
+    expect(
+      resolveAuthRuntimeMode({
+        apiUrl: '/api',
+        appUrl: 'https://app.example.com',
+        authAdapterEnabled: true,
+        mockBffEnabled: false,
+        nodeEnv: 'production',
+      })
+    ).toBe('api-session');
+  });
+
+  it('gives the production adapter precedence over an explicit mock opt-in', () => {
+    expect(
+      resolveAuthRuntimeMode({
+        apiUrl: '/api',
+        appUrl: 'https://app.example.com',
+        authAdapterEnabled: true,
+        mockBffEnabled: true,
+        nodeEnv: 'production',
+      })
+    ).toBe('api-session');
   });
 });

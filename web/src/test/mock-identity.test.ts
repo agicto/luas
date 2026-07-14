@@ -21,6 +21,12 @@ describe('mock identity boundary', () => {
         authMode: 'client-session',
       })
     ).toBeUndefined();
+
+    expect(
+      resolveMockLoginCredentials({
+        authMode: 'api-session',
+      })
+    ).toBeUndefined();
   });
 
   it('returns a browser-safe user only for the exact mock credentials', () => {
@@ -28,7 +34,6 @@ describe('mock identity boundary', () => {
       id: 'demo-admin',
       email: 'admin@example.com',
       name: 'Admin User',
-      role: 'admin',
     });
     expect(authenticateMockIdentity('admin@example.com', 'wrong')).toBeNull();
   });

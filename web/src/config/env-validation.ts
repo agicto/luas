@@ -24,6 +24,24 @@ const booleanEnv = z.preprocess((value) => {
   return value;
 }, z.boolean());
 
+const integerEnv = z.preprocess((value) => {
+  if (value === undefined || value === '') {
+    return undefined;
+  }
+
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    return Number(value);
+  }
+
+  return value;
+}, z.number().int());
+
+const optionalString = <Schema extends z.ZodType>(schema: Schema) =>
+  z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    schema.optional()
+  );
+
 export const publicEnvSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().min(1),
   NEXT_PUBLIC_APP_URL: z.string().url(),
@@ -36,9 +54,12 @@ export const publicEnvSchema = z.object({
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 
 export const serverEnvSchema = z.object({
-  MOCK_BFF_ENABLED: booleanEnv.default(false),
-  SESSION_SECRET: z.preprocess(
-    (value) => (value === '' ? undefined : value),
-    z.string().min(32).optional()
+  AUTH_ADAPTER_ENABLED: booleanEnv.default(false),
+  AUTH_API_TIMEOUT_MS: integerEnv.pipe(z.number().min(100).max(30_000)).default(5_000),
+  AUTH_API_URL: optionalString(z.string().url()),
+  AUTH_CLIENT_IP_HEADER: optionalString(
+    z.string().regex(/^[a-z0-9!#$%&'*+.^_`|~-]+$/i).transform((value) => value.toLowerCase())
   ),
+  MOCK_BFF_ENABLED: booleanEnv.default(false),
+  SESSION_SECRET: optionalString(z.string().min(32)),
 });

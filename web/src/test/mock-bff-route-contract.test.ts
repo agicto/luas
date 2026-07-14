@@ -44,6 +44,12 @@ function relativeRoute(path: string): string {
   return relative(appApiRoot, path);
 }
 
+function productionGuard(path: string): string {
+  return relativeRoute(path).startsWith('auth/')
+    ? 'resolveAuthRoute('
+    : 'guardMockBffRoute(';
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -76,10 +82,10 @@ describe('mock BFF route contract', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('keeps every mock BFF handler behind the production guard', () => {
+  it('keeps every route handler behind its production availability guard', () => {
     const offenders = routeFiles.flatMap((path) =>
       routeHandlers(path)
-        .filter((handler) => !/\bguardMockBffRoute\s*\(/.test(handler.source))
+        .filter((handler) => !handler.source.includes(productionGuard(path)))
         .map((handler) => `${relativeRoute(path)}:${handler.method}`)
     );
 
@@ -91,10 +97,14 @@ describe('mock BFF route contract', () => {
       routeHandlers(path)
         .filter((handler) => unsafeMethods.has(handler.method))
         .filter((handler) => {
-          const productionGuard = handler.source.indexOf('guardMockBffRoute(');
+          const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
 
-          return originGuard < 0 || productionGuard < 0 || originGuard < productionGuard;
+          return (
+            originGuard < 0 ||
+            availabilityGuard < 0 ||
+            originGuard < availabilityGuard
+          );
         })
         .map((handler) => `${relativeRoute(path)}:${handler.method}`)
     );

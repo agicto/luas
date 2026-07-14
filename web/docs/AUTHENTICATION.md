@@ -1,25 +1,25 @@
 # Authentication Runtime Guide
 
-The Web shell owns one browser authentication contract with two resolution modes. The mode says
-who can authoritatively resolve the current browser session; it does not change the Web
-`/auth/*` contract.
+The Web shell owns one browser authentication contract with three resolution modes. The mode says
+who can authoritatively resolve the current browser session; it does not change the Web `/auth/*`
+contract.
 
-The Go `user` starter owns a separate JWT contract today. Luas does not yet ship the production
-adapter between them, so pointing the Web directly at the Go API is not a complete integration.
-See [`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) for paths, DTOs, and
-the P1 adapter contract.
+The Go `user` starter owns a separate JWT contract. Luas ships an explicit same-origin production
+adapter between them; pointing the browser directly at Go remains incorrect because paths, DTOs,
+user views, and credential ownership still differ. See
+[`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) for the canonical mapping.
 
 ## Resolution Modes
 
 | Mode | Selected when | Initial protected render |
 |---|---|---|
 | `mock-session` | The mock BFF is available and `NEXT_PUBLIC_API_URL` targets the same-origin `/api` route | The protected Server Component verifies the signed Luas cookie and passes a definitive user or unauthenticated result to the client store. |
+| `api-session` | `AUTH_ADAPTER_ENABLED=true` and `NEXT_PUBLIC_API_URL` targets same-origin `/api` | The protected Server Component reads the HttpOnly API cookie, resolves `/v1/users/profile` through the fixed adapter, and passes authenticated, unauthenticated, forbidden, or unavailable state to the client store. |
 | `client-session` | A real API, a production same-origin proxy, or any non-mock target owns authentication | The client store resolves `/auth/me` once with browser credentials. |
 
-`src/config/mock-bff.ts` owns mock BFF availability, while
-`src/features/auth/server/auth-runtime.ts` combines that fact with the API target to select the
-authentication mode. Do not infer either decision separately in middleware, layouts, or feature
-code.
+`src/config/mock-bff.ts` owns mock BFF availability, `src/config/server-env.ts` owns production
+adapter availability, and `src/features/auth/server/auth-runtime.ts` combines those facts with the
+browser API target. Do not infer the mode separately in middleware, layouts, or feature code.
 
 ## Protected Route Flow
 
@@ -35,6 +35,13 @@ In `client-session` mode:
 ```text
 request -> middleware passes through -> AuthProvider creates an isolated idle store
         -> one credentialed /auth/me request -> AuthGuard renders or redirects
+```
+
+In `api-session` mode:
+
+```text
+request -> protected Server Component reads API cookie -> fixed Go profile request
+        -> AuthProvider creates an isolated ready/retryable store -> AuthGuard renders outcome
 ```
 
 The store uses one status value instead of several independently mutable booleans. Each
@@ -92,11 +99,20 @@ session outcome is unknown.
 - The signed mock session cookie is HttpOnly and `SameSite=Lax`. Production uses a Secure
   `__Host-luas_session` cookie with `Path=/`, no Domain attribute, and an exact-scope expiry on
   logout.
+- The production adapter uses a separate Secure `__Host-luas_auth` cookie. It stores the Go bearer
+  token HttpOnly, caps persistence at 30 days, and expires no later than the JWT `exp`. Web does not
+  trust token claims for authorization; Go validates the token on profile resolution.
+- Adapter routes call only fixed Go auth paths, reject redirects, never forward incoming cookies or
+  authorization headers, and replace backend messages with generic local text. Configured
+  `AUTH_CLIENT_IP_HEADER` input is parsed as one IP before becoming `X-Forwarded-For`.
+- The API must set `SERVER_TRUSTED_PROXIES` to the Web adapter network, never a trust-all range, so
+  Go's public-auth source and subject quotas remain meaningful behind the adapter.
 - Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component
-  passes the preset to the Client Component only in `mock-session` mode. Normal production uses
-  `client-session`; an explicit production mock opt-in is visibly demo-only.
+  passes the preset to the Client Component only in `mock-session` mode. Production adapter and
+  client-owned modes stay blank; an explicit production mock opt-in is visibly demo-only.
 - `middleware.ts` verifies only the Luas mock session. It deliberately passes through in
-  `client-session` mode because Luas does not own or understand a downstream API's credentials.
+  `api-session` and `client-session` modes because only the protected Server Component or downstream
+  identity provider can authoritatively resolve those credentials.
 - `AuthGuard` is navigation and rendering UX, not an authorization boundary.
 - Every real API endpoint, Route Handler, and Server Action must authenticate and authorize the
   operation independently.
@@ -105,27 +121,31 @@ session outcome is unknown.
   ownership, forwarding policy, cache behavior, and failure handling are explicitly defined.
 - Only serializable, client-safe user fields belong in `AuthBootstrap`. Never pass access tokens,
   session secrets, or raw cookies through provider props.
+- `AuthUser` contains only `id`, `email`, and `name`. Do not add a mock `role`; authorization fields
+  belong to a real permission contract when that starter exists.
 - `src/features/auth/utils/auth-user.ts` owns the shared runtime user predicate for mock cookies
   and client session responses. `src/features/auth/utils/auth-response.ts` composes that predicate
-  into endpoint success contracts. Keep role and required-field semantics aligned there.
+  into endpoint success contracts. Keep required-field semantics aligned there.
 
 ## Downstream Adaptation
 
 1. Read `contracts/AUTHENTICATION.md`; do not assume the Go JWT endpoints implement the Web DTOs.
-2. Keep `client-session` when the browser owns a cross-origin cookie or token exchange.
-3. For a same-origin BFF with a server-readable session, replace the mock resolver with a real
-   server adapter and return the existing `AuthBootstrap` union.
-4. Update middleware only if that adapter can verify the real session locally. Otherwise keep
+2. Use the shipped `api-session` adapter for the Luas Go starter; configure the private API URL,
+   timeout, ingress client-IP header, and API trusted proxies together.
+3. Keep `client-session` when another identity provider owns a cross-origin cookie or token exchange.
+4. Replace `auth-adapter-route.ts` only when the downstream server owns a different authoritative
+   session contract and can return the existing `AuthBootstrap` union.
+5. Update middleware only if that adapter can verify the real session locally. Otherwise keep
    middleware permissive and rely on the API plus `AuthGuard`.
-5. Preserve the provider-owned store so request isolation and initialization deduplication remain
+6. Preserve the provider-owned store so request isolation and initialization deduplication remain
    intact.
-6. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
+7. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
    and logout flows in a real browser before deployment.
 
 ## Verification
 
 ```bash
-pnpm exec vitest run src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-guard-recovery.test.tsx src/test/auth-service-contract.test.ts src/test/auth-form-errors.test.tsx src/test/auth-logout.test.tsx src/test/query-client.test.ts src/test/http-error-handling.test.ts src/test/error-handler.test.ts
+pnpm exec vitest run src/test/auth-adapter-route.test.ts src/test/auth-session-cookie.test.ts src/test/go-api-auth-adapter.test.ts src/test/auth-route-backend.test.ts src/test/auth-runtime-mode.test.ts src/test/auth-store.test.ts src/test/auth-guard-recovery.test.tsx src/test/auth-service-contract.test.ts src/test/auth-form-errors.test.tsx src/test/auth-logout.test.tsx
 pnpm type-check
 pnpm lint
 pnpm build

@@ -45,7 +45,9 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
 - Web error-code vocabulary is contract-tested so `ApiErrorCode` remains server-scoped, `ClientErrorCode` remains frontend-only, and legacy underscore codes stay normalization input only.
 - Web mock BFF routes are disabled in production runtime by default through `guardMockBffRoute()` and require explicit `MOCK_BFF_ENABLED=true` opt-in for demo-only deployments.
-- Web mock BFF route handlers are contract-tested so every `src/app/api/**/route.ts` file calls `guardMockBffRoute()`, uses shared response helpers for success envelopes, and avoids legacy underscore-style error codes.
+- Web route handlers are contract-tested so mock-only routes call `guardMockBffRoute()`, hybrid auth
+  routes call `resolveAuthRoute()`, unsafe mutations apply the same-origin guard after availability,
+  success envelopes use shared helpers, and legacy underscore-style error codes stay absent.
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, toast, and Zustand runtime dependencies from `(site)` routes.
@@ -164,6 +166,44 @@ Verification:
 - `make governance`
 - `make check`
 - GitHub CI, Container Contract, and Skill Self-Test runs, including annotation inspection.
+
+### Completed P1 — Same-Origin Production Auth Adapter
+
+The Web browser session contract now connects to the Go `user` starter through an explicit
+server-only adapter instead of pretending the two HTTP contracts are interchangeable. Browser
+routes remain on same-origin `/api/auth/*`; the adapter maps fixed Go paths and DTOs, stores the JWT
+in an HttpOnly host cookie, resolves protected sessions on the server, preserves canonical status,
+`error_code`, `request_id`, and rate-limit evidence, and never exposes bearer credentials to browser
+JavaScript. Login and registration reject cross-origin mutations, upstream requests reject redirects
+and arbitrary paths, response messages are locally owned, and only a single ingress-validated IP can
+reach Go's trusted-proxy boundary. The same-origin guard uses validated `NEXT_PUBLIC_APP_URL` as its
+authority, so a public application origin remains valid when Next.js sees an internal reverse-proxy
+URL.
+
+The fictitious Web-only `admin` / `member` role was removed because the scaffold does not yet ship a
+permission starter. Auth bootstrap now distinguishes authenticated, unauthenticated, forbidden, and
+dependency-unavailable states without converting an API outage into a false logout. Stateless logout
+is documented honestly: deleting the browser cookie does not revoke an already issued Go JWT.
+
+Against baseline commit `f12e9ca`, `/login` and `/register` remain at 11 client chunks and move from
+404,909 to 404,980 raw bytes (+71 bytes, 0.018%), while gzip moves from 127,145 to 127,142 bytes
+(-3 bytes). `/styleguide` remains at 13 chunks and moves from 523,031 to 523,102 raw bytes (+71 bytes,
+0.014%), while gzip moves from 159,141 to 159,138 bytes (-3 bytes). The server-only adapter therefore
+keeps the browser payload effectively flat. These are local production-build measurements, not field
+Core Web Vitals.
+
+A real Docker Postgres + Go API + Next.js run proved registration, current-session resolution, and
+the protected page at HTTP `200`; invalid credentials at `401`; cross-origin mutation rejection at
+`403` without reaching Go; logout followed by `401`; and API outage as `503` while the protected page
+remained on its URL in a retryable unavailable state. The browser response exposed neither JWT nor
+invented role fields.
+
+Verification:
+
+- `cd web && pnpm exec vitest run src/test/go-api-auth-adapter.test.ts src/test/auth-adapter-route.test.ts src/test/auth-session-cookie.test.ts src/test/auth-route-backend.test.ts`
+- `cd web && pnpm type-check && pnpm lint && pnpm build`
+- `make governance` and `make check`
+- Real Web-to-Go registration, server-resolved session, invalid login, logout, and API-outage flows.
 
 ### Completed P1 — Typed Configuration Authority
 

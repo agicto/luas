@@ -1,17 +1,17 @@
 /**
  * HMAC-SHA256-signed session payloads.
  *
- * Used by the MOCK auth seam. The format is `<base64url(payload)>.<base64url(sig)>`
+ * Used by the mock BFF auth seam. The format is `<base64url(payload)>.<base64url(sig)>`
  * where `sig = HMAC-SHA256(payload, secret)`. Compatible with both the
  * Node runtime (server actions, route handlers, RSC) and the Edge runtime
  * (Next.js middleware) — both expose `globalThis.crypto.subtle`.
  *
- * IMPORTANT: This is still a MOCK session. It is signed (so the client
+ * IMPORTANT: This is still a mock BFF session. It is signed (so the client
  * can't forge a payload), but it's not a real backend session — the
  * server has no record of having issued it, so it can't be revoked, and
  * it carries the full user record rather than just an opaque ID. When
- * you replace the mock backend with a real one, drop these helpers in
- * favor of an opaque session token issued by your API.
+ * you remove mock-session mode, drop these helpers in favor of the
+ * production adapter or the downstream identity provider's session.
  */
 
 import { isProd } from '@/config/env';

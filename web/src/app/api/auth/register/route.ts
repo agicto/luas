@@ -3,25 +3,27 @@ import {
   apiInvalidInputResponse,
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
+import { resolveAuthRoute } from '@/app/api/_shared/auth-route';
 import { readJsonBody } from '@/app/api/_shared/json-body';
-import {
-  guardMockBffRoute,
-  guardSameOriginMutation,
-} from '@/app/api/_shared/mock-bff';
+import { guardSameOriginMutation } from '@/app/api/_shared/mock-bff';
 import { apiSuccessResponse } from '@/app/api/_shared/success-response';
+import { registerWithGoApi } from '@/features/auth/server/auth-adapter-route';
+import { clearApiSessionCookie } from '@/features/auth/server/api-session';
 import { setSessionCookie } from '@/features/auth/server/session';
 
 const registerSchema = z.object({
-  name: z.string().trim().min(2).max(80),
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
+  name: z.string().trim().min(2).max(50),
+  email: z.string().email().max(100),
+  password: z.string().min(8).max(50),
 });
 
-export async function POST(request: Request) {
-  const mockBffGuard = guardMockBffRoute();
+export const runtime = 'nodejs';
 
-  if (mockBffGuard) {
-    return mockBffGuard;
+export async function POST(request: Request) {
+  const resolution = resolveAuthRoute();
+
+  if (!resolution.available) {
+    return resolution.response;
   }
 
   const sameOriginGuard = guardSameOriginMutation(request);
@@ -42,14 +44,18 @@ export async function POST(request: Request) {
     return apiValidationErrorResponse('Invalid registration payload', parsed.error);
   }
 
+  if (resolution.backend === 'go-api') {
+    return registerWithGoApi(request, parsed.data);
+  }
+
   const { name, email } = parsed.data;
   const user = {
     id: crypto.randomUUID(),
     email,
     name,
-    role: 'member' as const,
   };
 
+  await clearApiSessionCookie();
   await setSessionCookie(user);
 
   return apiSuccessResponse({

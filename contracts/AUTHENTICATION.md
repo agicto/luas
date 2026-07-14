@@ -10,13 +10,18 @@ The Web feature service and development mock BFF use a browser-oriented, same-or
 
 | Operation | Browser endpoint | Request | Successful `data` |
 |---|---|---|---|
-| Login | `POST /api/auth/login` | `{ email, password }` | `{ user: { id, email, name, role } }` |
-| Register | `POST /api/auth/register` | `{ name, email, password }` | `{ user: { id, email, name, role } }` |
-| Current session | `GET /api/auth/me` | none | `{ user: { id, email, name, role } }` |
+| Login | `POST /api/auth/login` | `{ email, password }` | `{ user: { id, email, name } }` |
+| Register | `POST /api/auth/register` | `{ name, email, password }` | `{ user: { id, email, name } }` |
+| Current session | `GET /api/auth/me` | none | `{ user: { id, email, name } }` |
 | Logout | `POST /api/auth/logout` | none | `{ success: true }` |
 
-The development implementation owns an HttpOnly signed mock cookie. Unsafe mock BFF operations
-must reject cross-origin browser requests before reading a body or mutating state.
+The browser user view deliberately has no `role` or permission field. The default scaffold does
+not yet ship a permission starter, so assigning `admin` or `member` here would invent authorization
+meaning that the Go API cannot prove.
+
+The development implementation owns an HttpOnly signed mock cookie. The production adapter owns a
+separate HttpOnly API-token cookie. Unsafe operations must reject cross-origin browser requests
+before reading a body or mutating state.
 
 ## Go API User Starter Contract
 
@@ -31,7 +36,7 @@ The Go `user` starter exposes JWT-oriented endpoints under `/v1`:
 | Profile | `GET /v1/users/profile` | Bearer token | API user |
 
 The API user uses numeric identity and backend fields such as `username`, `nickname`, and
-`status`. It does not currently emit the Web shell's `name` and `role` view.
+`status`. It does not directly emit the Web shell's `name` view.
 
 ### Public Failure Semantics
 
@@ -66,21 +71,70 @@ The starter email adapter is currently synchronous. Products that require strict
 uniformity for password recovery should enqueue token delivery through a bounded, observable,
 durable worker and keep the HTTP response independent of delivery completion.
 
-## Production Integration Status
+## Production Auth Adapter
 
-Luas does not yet ship a production adapter between these contracts. Pointing
-`NEXT_PUBLIC_API_URL` directly at the Go API does not make the default Web auth flow work because
-the endpoint paths, request DTOs, response DTOs, and credential ownership differ.
+Luas ships a same-origin Web adapter for the Go `user` starter. Set browser requests to the
+same-origin `/api` route, enable the adapter on the Web server, and configure its private Go API
+base URL:
 
-The required P1 integration is a same-origin production auth adapter that:
+```dotenv
+NEXT_PUBLIC_API_URL=/api
+AUTH_ADAPTER_ENABLED=true
+AUTH_API_URL=http://api:8025/v1
+AUTH_API_TIMEOUT_MS=5000
+AUTH_CLIENT_IP_HEADER=x-real-ip
+```
 
-1. maps browser login, registration, current-session, and logout operations to the Go API;
-2. keeps API access tokens out of browser-readable storage;
-3. defines token expiry, cookie attributes, logout, and revocation behavior;
-4. maps the API user to one documented browser-safe user view without inventing permissions;
-5. preserves canonical errors while suppressing backend detail from UI copy;
-6. enforces same-origin mutation protection and endpoint-specific abuse limits; and
-7. proves the flow with API, Web, and browser tests.
+`AUTH_API_URL` and `AUTH_CLIENT_IP_HEADER` are server-only. The adapter calls only its fixed auth
+paths; it is not an arbitrary proxy. Production startup rejects an enabled adapter without a
+same-origin browser target, private upstream configuration, or an explicit ingress-owned client-IP
+header.
 
-Until that adapter exists, the Go auth starter is ready for API consumers and the Web mock flow is
-ready for local scaffold development, but the combined production auth flow is not ready-to-use.
+### Operation Mapping
+
+| Browser operation | Adapter behavior |
+|---|---|
+| Login | Sends `{ username: email, password }` to `POST /v1/login`, validates the envelope/JWT/user, then sets the API session cookie. |
+| Register | Sends a non-identifying generated username plus `{ email, nickname: name, password }` to `POST /v1/register`, then logs in by email and sets the cookie. |
+| Current session | Reads the server-only cookie, sends `Authorization: Bearer ...` to `GET /v1/users/profile`, and maps the API user to `{ id, email, name }`. |
+| Logout | Expires the exact-scope cookie and returns `{ success: true }`; the current stateless Go JWT remains valid until its own expiry. |
+
+The generated username has the form `user_<random-id>` and exists only to satisfy the API starter's
+current account model. Browser identity remains email-based. Registration accepts a 2-50 character
+name, an email up to 100 characters, and an 8-50 character password so the adapter cannot accept a
+payload that the Go DTO rejects.
+
+Registration and automatic login are two upstream calls, not one transaction. If registration
+succeeds and login then times out or becomes unavailable, the account remains created; the user can
+recover through the normal login flow. Products requiring atomic account creation plus session
+issuance should add that capability to the API contract instead of hiding compensation in Web.
+
+### Session And Security Semantics
+
+- Production stores the bearer token in `__Host-luas_auth`; non-production uses `luas_auth`.
+  The cookie is HttpOnly, `Secure` in production, `SameSite=Lax`, `Path=/`, has no `Domain`, and
+  expires no later than the JWT `exp` claim.
+- Token claims are not treated as authorization evidence by Web. The adapter only reads unverified
+  `exp` to bound cookie lifetime; the Go API validates the signature and account status.
+- Login, registration, and logout require exact same-origin browser mutations. The adapter forwards
+  no incoming cookies, authorization headers, or arbitrary paths to Go. The allowed browser origin
+  comes from validated `NEXT_PUBLIC_APP_URL`, not a proxy-normalized internal request URL.
+- `AUTH_CLIENT_IP_HEADER` names the ingress-owned header from which one validated IP is forwarded as
+  `X-Forwarded-For`; missing, malformed, or comma-separated values are not forwarded. The Go API
+  must trust only the Web adapter network through
+  `SERVER_TRUSTED_PROXIES`; this preserves endpoint-specific source-IP and subject quotas without
+  trusting a browser-supplied forwarding chain. Configure the ingress to overwrite a single-value
+  header such as `X-Real-IP`; do not pass an appended forwarding chain into this setting.
+- Canonical upstream status, `error_code`, field ownership, `request_id`, and rate-limit headers are
+  preserved. Backend messages and field messages are replaced with adapter-owned generic text;
+  `nickname` validation ownership maps to the browser `name` field and generated `username` errors
+  are not exposed as user input.
+- Timeout, network, malformed-envelope, malformed-user, and malformed-token failures become
+  `503 COMMON.TIMEOUT` or `503 COMMON.SERVICE_UNAVAILABLE`, never a false unauthenticated session.
+- A missing or rejected token becomes `401 AUTH.UNAUTHORIZED`. A disabled API user becomes
+  `403 AUTH.ACCOUNT_DISABLED`. Availability failures remain retryable and do not redirect to login.
+
+The first production adapter intentionally has no refresh token, token denylist, or remote logout
+endpoint. Logout removes the browser's only copy of the bearer token, but immediate server-side
+revocation requires a future API session/refresh-token contract. Downstream apps with that
+requirement must replace this stateless boundary rather than claiming cookie deletion revokes JWTs.

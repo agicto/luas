@@ -17,7 +17,6 @@ const mockUser: AuthUser = {
   id: 'demo-admin',
   email: mockLoginCredentials.email,
   name: 'Admin User',
-  role: 'admin',
 };
 
 interface MockLoginPresentationContext {

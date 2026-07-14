@@ -42,13 +42,31 @@ describe('mock BFF same-origin mutation guard', () => {
       'sec-fetch-site': 'same-origin',
     });
 
-    expect(guardSameOriginMutation(request)).toBeNull();
+    expect(
+      guardSameOriginMutation(request, 'https://app.example.com')
+    ).toBeNull();
+  });
+
+  it('uses the configured public origin behind an internal reverse proxy', () => {
+    const request = mutationRequest(
+      {
+        origin: 'https://app.example.com',
+        'sec-fetch-site': 'same-origin',
+      },
+      'http://next-internal:3000/api/auth/login'
+    );
+
+    expect(
+      guardSameOriginMutation(request, 'https://app.example.com/app')
+    ).toBeNull();
   });
 
   it('allows clients without browser fetch metadata', () => {
     const request = mutationRequest();
 
-    expect(guardSameOriginMutation(request)).toBeNull();
+    expect(
+      guardSameOriginMutation(request, 'https://app.example.com')
+    ).toBeNull();
   });
 
   it.each([
@@ -73,7 +91,10 @@ describe('mock BFF same-origin mutation guard', () => {
     },
   ])('rejects $label with the canonical forbidden response', async ({ headers }) => {
     const request = mutationRequest(headers);
-    const response = guardSameOriginMutation(request);
+    const response = guardSameOriginMutation(
+      request,
+      'https://app.example.com'
+    );
 
     expect(response).not.toBeNull();
     if (!response) {
@@ -89,8 +110,11 @@ describe('mock BFF same-origin mutation guard', () => {
   });
 });
 
-function mutationRequest(headers: Record<string, string | undefined> = {}): Request {
-  const request = new Request('https://app.example.com/api/auth/login', {
+function mutationRequest(
+  headers: Record<string, string | undefined> = {},
+  url = 'https://app.example.com/api/auth/login'
+): Request {
+  const request = new Request(url, {
     method: 'POST',
   });
 

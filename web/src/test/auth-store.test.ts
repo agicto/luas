@@ -9,14 +9,12 @@ const ada: AuthUser = {
   id: 'user-ada',
   email: 'ada@example.com',
   name: 'Ada Lovelace',
-  role: 'admin',
 };
 
 const grace: AuthUser = {
   id: 'user-grace',
   email: 'grace@example.com',
   name: 'Grace Hopper',
-  role: 'member',
 };
 
 function createStore(
@@ -66,6 +64,23 @@ describe('auth store bootstrap', () => {
 
     expect(loadCurrentUser).not.toHaveBeenCalled();
   });
+
+  it.each(['forbidden', 'unavailable'] as const)(
+    'preserves a server-resolved %s state and retries through the browser seam',
+    async (status) => {
+      const loadCurrentUser = vi.fn().mockResolvedValue({ user: ada });
+      const store = createAuthStore({ status }, loadCurrentUser);
+
+      expect(store.getState()).toMatchObject({ status, user: null });
+      await store.getState().initializeAuth();
+
+      expect(loadCurrentUser).toHaveBeenCalledTimes(1);
+      expect(store.getState()).toMatchObject({
+        status: 'authenticated',
+        user: ada,
+      });
+    }
+  );
 
   it('deduplicates concurrent client session resolution', async () => {
     let resolveRequest: ((value: { user: AuthUser }) => void) | undefined;
@@ -171,8 +186,7 @@ describe('auth store bootstrap', () => {
       user: {
         id: 'user-ada',
         email: 'ada@example.com',
-        name: 'Ada Lovelace',
-        role: 'super-admin',
+        name: '',
       },
     },
   ])('rejects a malformed successful session payload', async (payload) => {

@@ -14,7 +14,6 @@ export function isAuthUser(value: unknown): value is AuthUser {
   return (
     isNonEmptyString(user.id) &&
     isNonEmptyString(user.email) &&
-    isNonEmptyString(user.name) &&
-    (user.role === 'admin' || user.role === 'member')
+    isNonEmptyString(user.name)
   );
 }
