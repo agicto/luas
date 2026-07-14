@@ -32,6 +32,7 @@ Workspace-level architecture docs:
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
 - [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
+- [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
@@ -66,6 +67,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
+- `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.
 - `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` — verify scaffold surface classifications stay aligned across context, docs, and downstream extraction guidance.
 - `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` — verify branch/release docs match CI-managed deployment branch mappings.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.

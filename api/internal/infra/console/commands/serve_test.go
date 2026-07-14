@@ -1,6 +1,10 @@
 package commands
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
+)
 
 func TestParseServeOptions(t *testing.T) {
 	options, err := parseServeOptions([]string{
@@ -31,5 +35,17 @@ func TestParseServeOptionsValidatesPort(t *testing.T) {
 		if _, err := parseServeOptions(args); err == nil {
 			t.Fatalf("parseServeOptions(%q) error = nil, want validation error", args)
 		}
+	}
+}
+
+func TestValidateServeRuntimeRejectsProductionStartupMigrations(t *testing.T) {
+	production := &config.Config{App: config.AppConfig{Env: "release"}}
+	if err := validateServeRuntime(serveOptions{migrate: true}, production); err == nil {
+		t.Fatal("production startup migration error = nil, want rejection")
+	}
+
+	development := &config.Config{App: config.AppConfig{Env: "development"}}
+	if err := validateServeRuntime(serveOptions{migrate: true}, development); err != nil {
+		t.Fatalf("development startup migration error = %v", err)
 	}
 }

@@ -46,26 +46,28 @@ func TestLoggerSupportsStructuredStdoutWithoutFileHandler(t *testing.T) {
 	}
 }
 
-func TestBootReadsContainerOutputEnvironment(t *testing.T) {
-	t.Setenv("APP_ENV", "production")
-	t.Setenv("APP_DEBUG", "false")
-	t.Setenv("LOG_LEVEL", "info")
-	t.Setenv("LOG_STDOUT", "true")
-	t.Setenv("LOG_FILE_ENABLED", "false")
-	t.Setenv("LOG_JSON", "true")
+func TestDefaultLoggerUsesExplicitOutputConfig(t *testing.T) {
+	cfg := ProductionConfig()
+	cfg.Level = LevelInfo
+	cfg.StdoutPrint = true
+	cfg.FileEnabled = false
+	cfg.JSON = true
 
-	logger := Boot()
+	runtimeLogger := BootWithConfig(cfg)
 	t.Cleanup(func() {
 		SetDefault(New(DefaultConfig()))
 	})
 
-	if !logger.config.StdoutPrint {
-		t.Fatal("LOG_STDOUT=true did not enable stdout")
+	if Default() != runtimeLogger {
+		t.Fatal("explicit logger was not installed as the process default")
 	}
-	if logger.config.FileEnabled {
-		t.Fatal("LOG_FILE_ENABLED=false did not disable file logging")
+	if !runtimeLogger.config.StdoutPrint {
+		t.Fatal("explicit config did not enable stdout")
 	}
-	if !logger.config.JSON {
-		t.Fatal("LOG_JSON=true did not enable structured output")
+	if runtimeLogger.config.FileEnabled {
+		t.Fatal("explicit config did not disable file logging")
+	}
+	if !runtimeLogger.config.JSON {
+		t.Fatal("explicit config did not enable structured output")
 	}
 }

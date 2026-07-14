@@ -2,7 +2,7 @@
 package commands
 
 import (
-	"os"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -55,10 +55,11 @@ func createMigrator(cfg *config.Config) (*migration.Migrator, error) {
 	return migrator, nil
 }
 
-// isProduction checks if the application is running in production.
-func isProduction() bool {
-	env := os.Getenv("APP_ENV")
-	return env == "production" || env == "prod"
+func requireProductionForce(cfg *config.Config, force bool, operation string) error {
+	if cfg != nil && cfg.IsProduction() && !force {
+		return fmt.Errorf("cannot %s in production without --force", operation)
+	}
+	return nil
 }
 
 // MigrateCommand runs database migrations using the new Migrator.
@@ -83,17 +84,14 @@ func (c *MigrateCommand) Run(args []string) error {
 	step := slices.Contains(args, "--step")
 	force := slices.Contains(args, "--force")
 
-	// Check production environment
-	if isProduction() && !force {
-		c.output.Error("Cannot run migrations in production without --force flag")
-		return nil
-	}
-
 	// Load config
 	cfg, err := config.Load()
 	if err != nil {
 		c.output.Error("Failed to load config: %v", err)
 		return err
+	}
+	if guardErr := requireProductionForce(cfg, force, "run migrations"); guardErr != nil {
+		return guardErr
 	}
 
 	// Create migrator
@@ -155,12 +153,13 @@ func NewRollbackCommand() *RollbackCommand {
 func (c *RollbackCommand) Name() string        { return "db:rollback" }
 func (c *RollbackCommand) Description() string { return "Rollback database migrations" }
 func (c *RollbackCommand) Usage() string {
-	return "db:rollback [--step=N] [--batch=N] [--pretend]"
+	return "db:rollback [--step=N] [--batch=N] [--pretend] [--force]"
 }
 
 func (c *RollbackCommand) Run(args []string) error {
 	// Parse flags
 	pretend := slices.Contains(args, "--pretend")
+	force := slices.Contains(args, "--force")
 	steps := 0
 	batch := 0
 
@@ -193,6 +192,9 @@ func (c *RollbackCommand) Run(args []string) error {
 	if err != nil {
 		c.output.Error("Failed to load config: %v", err)
 		return err
+	}
+	if guardErr := requireProductionForce(cfg, force, "rollback migrations"); guardErr != nil {
+		return guardErr
 	}
 
 	// Create migrator
@@ -262,17 +264,14 @@ func (c *ResetCommand) Run(args []string) error {
 	force := slices.Contains(args, "--force")
 	pretend := slices.Contains(args, "--pretend")
 
-	// Check production environment
-	if isProduction() && !force {
-		c.output.Error("Cannot reset migrations in production without --force flag")
-		return nil
-	}
-
 	// Load config first to show database info
 	cfg, err := config.Load()
 	if err != nil {
 		c.output.Error("Failed to load config: %v", err)
 		return err
+	}
+	if guardErr := requireProductionForce(cfg, force, "reset migrations"); guardErr != nil {
+		return guardErr
 	}
 
 	// Show warning with database info (unless pretend mode)
@@ -359,17 +358,14 @@ func (c *FreshCommand) Run(args []string) error {
 	force := slices.Contains(args, "--force")
 	seed := slices.Contains(args, "--seed")
 
-	// Check production environment - always require --force in production
-	if isProduction() && !force {
-		c.output.Error("Cannot run db:fresh in production without --force flag")
-		return nil
-	}
-
 	// Load config first to show database info
 	cfg, err := config.Load()
 	if err != nil {
 		c.output.Error("Failed to load config: %v", err)
 		return err
+	}
+	if guardErr := requireProductionForce(cfg, force, "run db:fresh"); guardErr != nil {
+		return guardErr
 	}
 
 	// Show warning with database info

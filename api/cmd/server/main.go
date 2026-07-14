@@ -4,15 +4,22 @@ import (
 	"log"
 
 	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/wiring"
 )
 
 func main() {
-	// 1. Initialize Logger
-	bootstrap.InitLogger()
+	// 1. Load and validate the process configuration snapshot.
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Failed to load configuration: %v", err)
+	}
+	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
+		log.Fatalf("Failed to initialize logger: %v", loggerErr)
+	}
 
-	// 2. Initialize Application via Wire DI
-	application, err := wiring.InitApplication()
+	// 2. Initialize the application with that same snapshot.
+	application, err := wiring.InitApplicationWithConfig(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}

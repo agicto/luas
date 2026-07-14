@@ -64,8 +64,9 @@ func InitApplication() (*app.Application, error) {
 	return application, nil
 }
 
-// InitApplicationWithConfig initializes the application using an explicitly supplied config.
-// This is primarily used by tests so they can reuse the production DI graph and startup chain.
+// InitApplicationWithConfig initializes the application from an already validated startup snapshot.
+// Production bootstraps use it to share that snapshot with pre-Wire services; tests use it to reuse
+// the same dependency graph without reading process configuration.
 func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	db, err := database.NewDB(cfg)
 	if err != nil {

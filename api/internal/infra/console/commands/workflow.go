@@ -58,11 +58,12 @@ func (c *WorkflowScheduleWorkCommand) Description() string { return "Run the wor
 func (c *WorkflowScheduleWorkCommand) Usage() string       { return "workflow:schedule:work" }
 
 func (c *WorkflowWorkCommand) Run(args []string) error {
-	bootstrap.InitLogger()
-
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
+		return loggerErr
 	}
 
 	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
@@ -103,11 +104,12 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 }
 
 func (c *WorkflowScheduleRunCommand) Run(args []string) error {
-	bootstrap.InitLogger()
-
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
+		return loggerErr
 	}
 
 	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
@@ -128,11 +130,12 @@ func (c *WorkflowScheduleRunCommand) Run(args []string) error {
 }
 
 func (c *WorkflowScheduleWorkCommand) Run(args []string) error {
-	bootstrap.InitLogger()
-
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
+		return loggerErr
 	}
 
 	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))

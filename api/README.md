@@ -18,7 +18,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 - 统一 API 响应与错误处理
 - 分页、验证、日志、JWT、中间件
 - 测试辅助工具与集成测试基线
-- 可选集成：Redis、邮件、OpenTelemetry、ClickHouse 日志通道、Sentry
+- 可选集成：Redis、邮件、OpenTelemetry、R2、Sentry
 
 ## 快速开始
 
@@ -220,6 +220,15 @@ DTO -> Domain -> PO
 - API 统一走 `pkg/response`
 - 列表接口统一使用分页
 
+## 配置生命周期
+
+`internal/infra/config.Config` 是 API 唯一的强类型配置权威。进程启动时按“系统环境变量、
+`LUAS_ENV_FILE`、环境本地文件、本地文件、环境文件、基础 `.env`、代码默认值”的顺序
+生成并校验一次配置快照；配置变化需要重启进程，开发时 `make air` 会完成重建和重启。
+
+Luas 不提供会泄露密钥的配置缓存，也不提供无法原子重建依赖图的 `.env` 运行时热更新。
+完整优先级、扩展规范和 `doctor` 诊断方式见 [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)。
+
 ## 测试
 
 ```bash
@@ -251,7 +260,7 @@ make test-kest
 ```bash
 AI_ENABLED=true
 AI_DEFAULT_PROVIDER=openai
-AI_DEFAULT_MODEL=gpt-5.4
+AI_DEFAULT_MODEL=gpt-5
 OPENAI_API_KEY=replace-me
 ```
 
@@ -259,7 +268,7 @@ OPENAI_API_KEY=replace-me
 
 ```bash
 go run ./cmd/luas ai:chat "Write a short project summary"
-go run ./cmd/luas ai:chat --system="Answer in JSON" --model=gpt-5.4 "List 3 scaffold priorities"
+go run ./cmd/luas ai:chat --system="Answer in JSON" --model=gpt-5 "List 3 scaffold priorities"
 ```
 
 ## API Key Starter
@@ -285,7 +294,6 @@ r.Group("/v1", func(api *router.Router) {
 
 - `Redis`
 - `Sentry`
-- `ClickHouse` 日志输出
 - `OpenTelemetry`
 - `Resend` 邮件服务
 - `R2` 对象存储

@@ -763,7 +763,7 @@ func RegisterWelcome(r *gin.Engine) {
 		appEnv := "development"
 		appURL := "http://localhost:8025"
 		aiProvider := "openai"
-		aiModel := "gpt-5.4"
+		aiModel := "gpt-5"
 
 		if config.GlobalConfig != nil {
 			appName = config.GlobalConfig.App.Name

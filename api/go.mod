@@ -5,7 +5,6 @@ go 1.25.12
 require (
 	github.com/aws/aws-sdk-go v1.55.6
 	github.com/fatih/color v1.18.0
-	github.com/fsnotify/fsnotify v1.9.0
 	github.com/getsentry/sentry-go v0.40.0
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.11.0

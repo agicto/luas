@@ -2,25 +2,43 @@ package commands
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"io"
 	"os"
+	"regexp"
 	"strings"
 
+	"github.com/zgiai/luas/api/internal/capabilities/ai"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/pkg/env"
 )
 
-// DoctorCommand audits the local environment against `.env.example` and
-// flags common mistakes that bite new users on the way to a clean run:
-// missing required keys, placeholder secrets still in place, JWT_SECRET
-// too short for the configured APP_ENV, etc.
-//
-// It is intentionally read-only — never mutates the environment, never
-// touches the database.
+// DoctorCommand validates the local configuration schema and the same typed
+// configuration snapshot used by the runtime. It is intentionally read-only.
 type DoctorCommand struct {
 	output *console.Output
 }
+
+type doctorCheckLevel string
+
+const (
+	checkOK      doctorCheckLevel = "ok"
+	checkWarning doctorCheckLevel = "warning"
+	checkFailure doctorCheckLevel = "failure"
+)
+
+type doctorCheck struct {
+	level  doctorCheckLevel
+	label  string
+	detail string
+}
+
+type doctorReport struct {
+	checks []doctorCheck
+}
+
+type doctorConfigLoader func() (*config.Config, error)
 
 func NewDoctorCommand() *DoctorCommand {
 	return &DoctorCommand{output: console.NewOutput()}
@@ -28,112 +46,30 @@ func NewDoctorCommand() *DoctorCommand {
 
 func (c *DoctorCommand) Name() string { return "doctor" }
 func (c *DoctorCommand) Description() string {
-	return "Audit .env vs .env.example and flag misconfigurations"
+	return "Validate the environment schema and runtime configuration"
 }
-func (c *DoctorCommand) Usage() string { return "doctor" }
+func (c *DoctorCommand) Usage() string { return "doctor [--env-example=path]" }
 
 func (c *DoctorCommand) Run(args []string) error {
+	envExample, err := parseDoctorArgs(args)
+	if err != nil {
+		return err
+	}
+
 	c.output.Title("luas doctor")
-
-	pass := 0
-	warn := 0
-	fail := 0
-
-	check := func(level string, label string, detail string) {
-		switch level {
-		case "ok":
-			pass++
-			c.output.Line("  ✓ %s", label)
-		case "warn":
-			warn++
-			c.output.Warning("  ! %s — %s", label, detail)
-		case "fail":
-			fail++
-			c.output.Error("  ✗ %s — %s", label, detail)
+	report := auditDoctor(envExample, config.Load)
+	for _, check := range report.checks {
+		switch check.level {
+		case checkOK:
+			c.output.Line("  ✓ %s", check.label)
+		case checkWarning:
+			c.output.Warning("  ! %s — %s", check.label, check.detail)
+		case checkFailure:
+			c.output.Error("  ✗ %s — %s", check.label, check.detail)
 		}
 	}
 
-	// 1) .env.example exists and is parsable
-	expectedKeys, err := readEnvKeys(".env.example")
-	if err != nil {
-		check("fail", ".env.example readable", err.Error())
-		return c.summary(pass, warn, fail)
-	}
-	check("ok", ".env.example readable", "")
-
-	// 2) Every key in .env.example is set in the live env, OR has a
-	//    default in config.Load — we only warn for keys that are
-	//    *completely* unset both in env and .env files.
-	missing := []string{}
-	for _, key := range expectedKeys {
-		if _, ok := os.LookupEnv(key); ok {
-			continue
-		}
-		if env.Get(key, "") != "" {
-			continue
-		}
-		missing = append(missing, key)
-	}
-	if len(missing) == 0 {
-		check("ok", "all .env.example keys are present", "")
-	} else {
-		check("warn", "some .env.example keys are unset", strings.Join(missing, ", "))
-	}
-
-	// 3) Try loading config — this runs the full validator.
-	cfg, err := config.Load()
-	if err != nil {
-		check("fail", "config.Load()", err.Error())
-		return c.summary(pass, warn, fail)
-	}
-	check("ok", "config.Load() succeeds", "")
-
-	// 4) Spot-check the production-critical knobs.
-	if cfg.App.Env == "production" {
-		check("ok", "APP_ENV=production", "")
-	} else {
-		check("ok", fmt.Sprintf("APP_ENV=%s (dev defaults active)", cfg.App.Env), "")
-	}
-
-	if len(cfg.JWT.Secret) >= 32 {
-		check("ok", "JWT_SECRET length >= 32", "")
-	} else {
-		level := "warn"
-		if cfg.App.Env == "production" {
-			level = "fail"
-		}
-		check(level, "JWT_SECRET length < 32", fmt.Sprintf("got %d chars", len(cfg.JWT.Secret)))
-	}
-
-	if hasWildcardOrigin(cfg.CORS.AllowOrigins) && cfg.CORS.AllowCredentials {
-		check("fail", "CORS '*' + credentials combo", "browsers reject this; set explicit origins")
-	} else {
-		check("ok", "CORS origins look sane", "")
-	}
-
-	// 5) AI capability sanity.
-	if cfg.AI.Enabled {
-		if strings.TrimSpace(cfg.AI.DefaultModel) == "" {
-			check("warn", "AI enabled but AI_DEFAULT_MODEL is empty", "set a real model name (e.g. gpt-5)")
-		} else if strings.Contains(cfg.AI.DefaultModel, "gpt-5.4") {
-			check("warn", "AI_DEFAULT_MODEL=gpt-5.4 is not a real OpenAI model", "use gpt-5 or another valid id")
-		} else {
-			check("ok", fmt.Sprintf("AI_DEFAULT_MODEL=%s", cfg.AI.DefaultModel), "")
-		}
-
-		if cfg.AI.OpenAI.APIKey == "" {
-			check("warn", "AI enabled but OPENAI_API_KEY is empty", "ai:chat will fail")
-		} else {
-			check("ok", "OPENAI_API_KEY is set", "")
-		}
-	} else {
-		check("ok", "AI capability is disabled", "")
-	}
-
-	return c.summary(pass, warn, fail)
-}
-
-func (c *DoctorCommand) summary(pass, warn, fail int) error {
+	pass, warn, fail := report.counts()
 	c.output.NewLine()
 	c.output.Line("Result: %d ok, %d warning, %d fail", pass, warn, fail)
 	if fail > 0 {
@@ -142,9 +78,140 @@ func (c *DoctorCommand) summary(pass, warn, fail int) error {
 	return nil
 }
 
-// readEnvKeys returns the env-var names that .env.example declares,
-// ignoring blank lines and comments. Values are not returned —
-// .env.example is treated as a contract of which keys should exist.
+func parseDoctorArgs(args []string) (string, error) {
+	flags := flag.NewFlagSet("doctor", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	envExample := flags.String("env-example", "", "path to the environment example schema")
+	if err := flags.Parse(args); err != nil {
+		return "", err
+	}
+	if flags.NArg() != 0 {
+		return "", fmt.Errorf("doctor does not accept positional arguments")
+	}
+	if strings.TrimSpace(*envExample) != "" {
+		return *envExample, nil
+	}
+
+	for _, candidate := range []string{".env.example", "api/.env.example"} {
+		info, err := os.Stat(candidate)
+		if err == nil && info.Mode().IsRegular() {
+			return candidate, nil
+		}
+	}
+	return ".env.example", nil
+}
+
+func auditDoctor(envExamplePath string, loadConfig doctorConfigLoader) doctorReport {
+	report := doctorReport{}
+
+	keys, err := readEnvKeys(envExamplePath)
+	if err != nil {
+		report.add(checkFailure, ".env.example schema", err.Error())
+	} else {
+		report.add(checkOK, fmt.Sprintf(".env.example schema (%d keys)", len(keys)), "")
+	}
+
+	cfg, err := loadConfig()
+	if err != nil {
+		report.add(checkFailure, "config.Load()", err.Error())
+		return report
+	}
+	report.add(checkOK, "config.Load() succeeds", "")
+	report.addConfigChecks(cfg)
+	return report
+}
+
+func (r *doctorReport) addConfigChecks(cfg *config.Config) {
+	if cfg.IsProduction() {
+		r.add(checkOK, fmt.Sprintf("APP_ENV=%s (production defaults active)", cfg.App.Env), "")
+	} else {
+		r.add(checkOK, fmt.Sprintf("APP_ENV=%s (development defaults active)", cfg.App.Env), "")
+	}
+
+	if len(cfg.JWT.Secret) >= 32 {
+		r.add(checkOK, "JWT_SECRET length >= 32", "")
+	} else {
+		level := checkWarning
+		if cfg.IsProduction() {
+			level = checkFailure
+		}
+		r.add(level, "JWT_SECRET length < 32", fmt.Sprintf("got %d chars", len(cfg.JWT.Secret)))
+	}
+
+	if hasWildcardOrigin(cfg.CORS.AllowOrigins) && cfg.CORS.AllowCredentials {
+		r.add(checkFailure, "CORS '*' + credentials combination", "browsers reject this; set explicit origins")
+	} else {
+		r.add(checkOK, "CORS origins look sane", "")
+	}
+
+	if !cfg.AI.Enabled {
+		r.add(checkOK, "AI capability is disabled", "")
+		return
+	}
+
+	model := strings.TrimSpace(cfg.AI.DefaultModel)
+	if model == "" {
+		r.add(checkWarning, "AI enabled but AI_DEFAULT_MODEL is empty", "set a model id supported by the selected provider")
+	} else {
+		r.add(checkOK, fmt.Sprintf("AI_DEFAULT_MODEL=%s", model), "")
+	}
+
+	provider := strings.ToLower(strings.TrimSpace(cfg.AI.DefaultProvider))
+	switch provider {
+	case "":
+		r.add(checkWarning, "AI enabled but AI_DEFAULT_PROVIDER is empty", "select a registered provider")
+	case ai.ProviderOpenAI:
+		if strings.TrimSpace(cfg.AI.OpenAI.APIKey) == "" {
+			r.add(checkWarning, "AI enabled but OPENAI_API_KEY is empty", "ai:chat will fail for the built-in OpenAI provider")
+		} else {
+			r.add(checkOK, "OPENAI_API_KEY is set", "")
+		}
+	default:
+		r.add(
+			checkWarning,
+			fmt.Sprintf("AI_DEFAULT_PROVIDER=%s requires a downstream adapter", provider),
+			"implement the provider contract and register it in ai.NewManager",
+		)
+	}
+}
+
+func (r *doctorReport) add(level doctorCheckLevel, label, detail string) {
+	r.checks = append(r.checks, doctorCheck{level: level, label: label, detail: detail})
+}
+
+func (r doctorReport) counts() (pass, warn, fail int) {
+	for _, check := range r.checks {
+		switch check.level {
+		case checkOK:
+			pass++
+		case checkWarning:
+			warn++
+		case checkFailure:
+			fail++
+		}
+	}
+	return pass, warn, fail
+}
+
+func (r doctorReport) failures() int {
+	_, _, fail := r.counts()
+	return fail
+}
+
+func (r doctorReport) has(level doctorCheckLevel, text string) bool {
+	for _, check := range r.checks {
+		if check.level == level && strings.Contains(check.label+" "+check.detail, text) {
+			return true
+		}
+	}
+	return false
+}
+
+var envKeyPattern = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
+
+// readEnvKeys validates and returns the names declared by an environment
+// example. The file is a schema of available keys, not a list of values every
+// deployment must set.
 func readEnvKeys(path string) ([]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -152,23 +219,29 @@ func readEnvKeys(path string) ([]string, error) {
 	}
 	defer f.Close()
 
-	keys := []string{}
-	seen := make(map[string]struct{})
+	keys := make([]string, 0)
+	seen := make(map[string]int)
 	scanner := bufio.NewScanner(f)
+	lineNumber := 0
 	for scanner.Scan() {
+		lineNumber++
 		line := strings.TrimSpace(scanner.Text())
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		eq := strings.Index(line, "=")
+
+		eq := strings.IndexByte(line, '=')
 		if eq <= 0 {
-			continue
+			return nil, fmt.Errorf("%s: line %d: expected KEY=VALUE", path, lineNumber)
 		}
 		key := strings.TrimSpace(line[:eq])
-		if _, dup := seen[key]; dup {
-			continue
+		if !envKeyPattern.MatchString(key) {
+			return nil, fmt.Errorf("%s: line %d: invalid environment key %q", path, lineNumber, key)
 		}
-		seen[key] = struct{}{}
+		if firstLine, duplicate := seen[key]; duplicate {
+			return nil, fmt.Errorf("%s: line %d: duplicate key %s (first declared at line %d)", path, lineNumber, key, firstLine)
+		}
+		seen[key] = lineNumber
 		keys = append(keys, key)
 	}
 	if err := scanner.Err(); err != nil {
@@ -178,8 +251,8 @@ func readEnvKeys(path string) ([]string, error) {
 }
 
 func hasWildcardOrigin(origins []string) bool {
-	for _, o := range origins {
-		if strings.TrimSpace(o) == "*" {
+	for _, origin := range origins {
+		if strings.TrimSpace(origin) == "*" {
 			return true
 		}
 	}

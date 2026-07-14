@@ -28,6 +28,11 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   container surfaces explicitly bind `0.0.0.0`, and read-header/read/write/idle/header-size budgets
   are wired into `http.Server`. Configuration validation rejects negative values and a positive write
   deadline that cannot outlive the cooperative request timeout.
+- API configuration now has one typed startup authority with deterministic environment-file
+  precedence. Runtime-only process values remain highest priority, stale file values are removed by
+  test/diagnostic reloads, and misleading dynamic-key, hot-reload, and no-op cache surfaces have been
+  removed. The lifecycle and secret ownership contract lives in
+  [`../api/docs/CONFIGURATION.md`](../api/docs/CONFIGURATION.md).
 - The API production image no longer embeds development environment files. It runs non-root with
   production/release defaults, JSON request logs on stdout, file logging disabled, and an executable
   loopback liveness check. Local Compose is explicitly development-only, and CI builds and exercises
@@ -133,6 +138,39 @@ Verification:
 
 - `cd api && go test ./internal/bootstrap/... ./internal/infra/middleware/... ./internal/infra/ratelimit/...`
 - `cd api && golangci-lint run ./...`
+
+### Completed P1 — Typed Configuration Authority
+
+Environment resolution now implements its documented precedence explicitly: process values,
+`LUAS_ENV_FILE`, environment-local, local, environment, base file, then typed defaults. Test and
+diagnostic reloads remove stale file-owned values, malformed files fail configuration loading, and a
+missing explicitly selected file is no longer ignored. The server gives one validated `*Config`
+snapshot to both logging and Wire; capability utilities use typed subset loaders rather than reading
+environment variables from runtime packages.
+
+The duplicate dot-notation repository, misleading file watcher, no-op config cache commands,
+`fsnotify` dependency, fake ClickHouse sink, and no-op log rotation settings have been removed.
+Doctor validates `.env.example` structure without treating every optional key as required and treats
+provider model IDs as provider-owned values. `make governance` now enforces the authority boundary
+through `check-config-authority.py`. Production aliases (`production`, `prod`, `release`) now share
+the same validation/defaults, including debug-off Gin release mode and JSON stdout without local
+file logging; all migration commands require `--force`, while production
+`serve --migrate` is rejected in favor of a serialized pre-deploy job.
+
+Against commit `8aebae8` on Go 1.25.12 with `-trimpath -ldflags='-s -w'`, the server remains exactly
+`34,445,106` bytes while its package dependency count falls from 633 to 631. The CLI dependency count
+falls from 638 to 636; the richer Doctor diagnostics move the CLI from `34,776,002` to `34,792,546`
+bytes (+16,544 bytes, about 0.048%). `go mod why` confirms `fsnotify` is no longer needed. These are
+dependency and binary-footprint measurements, not latency claims. The verified production image
+moves from `24,944,318` to `24,951,977` bytes (+7,659 bytes, about 0.031%) while preserving its
+non-root, health, environment-file exclusion, and graceful-shutdown contracts.
+
+Verification:
+
+- `cd api && go test ./pkg/env ./pkg/logger ./pkg/errors ./internal/infra/config ./internal/bootstrap ./internal/infra/console/commands ./tests/unit`
+- `cd api && go test -race ./tests/unit ./internal/infra/config ./internal/infra/console/commands ./internal/bootstrap ./pkg/env ./pkg/logger ./pkg/errors`
+- `cd api && env DB_ENABLED=false JWT_SECRET=... AI_ENABLED=false go run ./cmd/luas doctor`
+- `make governance`, `make check`, `cd api && make container-check`, and `cd api && make compose-check`
 
 ### Completed P1 — Database-Disabled Runtime Degradation
 

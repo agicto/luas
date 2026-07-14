@@ -35,7 +35,7 @@ func SetupApp() *gin.Engine {
 	cfg.CORS.ExposeHeaders = []string{"Content-Length", "X-Request-ID"}
 	cfg.CORS.AllowCredentials = true
 	cfg.AI.DefaultProvider = "openai"
-	cfg.AI.DefaultModel = "gpt-5.4"
+	cfg.AI.DefaultModel = "gpt-5"
 
 	if _, err := config.Use(cfg); err != nil {
 		panic("failed to register test config: " + err.Error())

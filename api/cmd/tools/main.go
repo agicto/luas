@@ -19,13 +19,9 @@ func main() {
 		GeneratePresignedURL()
 	case "check-file":
 		CheckR2File()
-	case "config-cache":
-		CacheConfig()
-	case "config-clear":
-		ClearConfigCache()
 	default:
 		fmt.Printf("Unknown tool: %s\n", *toolName)
-		fmt.Println("Available tools: generate-url, check-file, config-cache, config-clear")
+		fmt.Println("Available tools: generate-url, check-file")
 		os.Exit(1)
 	}
 }
@@ -60,27 +56,4 @@ func CheckR2File() {
 	}
 
 	fmt.Printf("File exists: %v\n", exists)
-}
-
-// CacheConfig caches the current configuration to disk.
-func CacheConfig() {
-	cfg, err := config.LoadFresh()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	if err := config.CacheConfig(cfg); err != nil {
-		log.Fatalf("Failed to cache config: %v", err)
-	}
-
-	fmt.Printf("Configuration cached at %s\n", config.CacheFilePath())
-}
-
-// ClearConfigCache removes the cached configuration file.
-func ClearConfigCache() {
-	if err := config.ClearCache(); err != nil {
-		log.Fatalf("Failed to clear config cache: %v", err)
-	}
-
-	fmt.Printf("Configuration cache cleared (%s)\n", config.CacheFilePath())
 }

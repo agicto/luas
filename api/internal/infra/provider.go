@@ -20,7 +20,7 @@ var ProviderSet = wire.NewSet(
 )
 
 // ConfiguredProviderSet aggregates infrastructure providers that depend on an already-resolved config.
-// Tests and alternate bootstraps can reuse the same graph by supplying config via config.Use.
+// Bootstraps and tests reuse this graph through wiring.InitApplicationWithConfig.
 var ConfiguredProviderSet = wire.NewSet(
 	// Database - depends on Config
 	database.NewDB,

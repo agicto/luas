@@ -80,14 +80,21 @@ traffic-readiness signal. The Docker image health check intentionally uses liven
 database outage does not create a restart loop; an orchestrator should remove unready replicas from
 traffic based on readiness.
 
+Production logs belong on structured stdout. Collection, retention, rotation, compression, and
+external storage are deployment responsibilities; the local file handler is not a production log
+shipping system. See [`CONFIGURATION.md`](CONFIGURATION.md) for the typed configuration lifecycle.
+
 Run schema migration as an explicit pre-deploy job using the same image and production environment:
 
 ```bash
-docker run --rm --entrypoint /app/luas <runtime-env-arguments> <image> migrate
+docker run --rm --entrypoint /app/luas <runtime-env-arguments> <image> migrate --force
 ```
 
 Do not run migrations independently in every application replica. The downstream deployment owns
-serialization, failure handling, and rollback policy.
+serialization, failure handling, and rollback policy. Database mutation commands derive production
+mode from the validated configuration snapshot; `db:migrate`, `db:rollback`, `db:reset`, and
+`db:fresh` require an explicit `--force` in production. `serve --migrate` is rejected in production
+because startup replicas are not a migration serialization mechanism.
 
 ## Change Checklist
 

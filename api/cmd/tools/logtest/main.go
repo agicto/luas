@@ -6,7 +6,7 @@ import (
 
 func main() {
 	// Initialize logs
-	logger.Boot()
+	logger.SetDefault(logger.New(logger.DefaultConfig()))
 	defer logger.Close()
 
 	// Test different log levels

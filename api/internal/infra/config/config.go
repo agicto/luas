@@ -38,6 +38,7 @@ type Config struct {
 	Scheduler  SchedulerConfig
 	JWT        JWTConfig
 	Log        LogConfig
+	Sentry     SentryConfig
 	CORS       CORSConfig
 	Email      EmailConfig
 	AI         AIConfig
@@ -45,17 +46,19 @@ type Config struct {
 	Middleware MiddlewareConfig
 	Metrics    MetricsConfig
 	Tracing    TracingConfig
-	ClickHouse ClickHouseConfig
+}
+
+// IsProduction reports whether this snapshot uses a production environment
+// alias. Keep production-sensitive defaults and validation on this method.
+func (c *Config) IsProduction() bool {
+	return c != nil && isProductionEnvironment(c.App.Env)
 }
 
 type AppConfig struct {
-	Name      string
-	Env       string
-	Debug     bool
-	URL       string
-	Key       string
-	JWTSecret string
-	JWTExpire time.Duration
+	Name  string
+	Env   string
+	Debug bool
+	URL   string
 }
 
 type ServerConfig struct {
@@ -178,6 +181,10 @@ type LogConfig struct {
 	JSON        bool
 }
 
+type SentryConfig struct {
+	DSN string
+}
+
 type CORSConfig struct {
 	AllowOrigins     []string
 	AllowMethods     []string
@@ -224,40 +231,28 @@ type TracingConfig struct {
 	SampleRate float64 // Sampling rate (0.0 to 1.0)
 }
 
-// ClickHouseConfig holds ClickHouse configuration
-type ClickHouseConfig struct {
-	Enabled   bool
-	Endpoint  string
-	Database  string
-	Username  string
-	Password  string
-	BatchSize int
-	Interval  time.Duration
-}
-
 // Load loads configuration from environment variables
 func Load() (*Config, error) {
-	env.Load()
+	if err := env.Load(); err != nil {
+		return nil, fmt.Errorf("load environment: %w", err)
+	}
 
-	appEnv := env.Get("APP_ENV", "development")
-	isProd := strings.EqualFold(appEnv, "production")
-	appDebug := env.GetBool("APP_DEBUG", true)
+	appEnv := env.AppEnv()
+	isProd := isProductionEnvironment(appEnv)
+	appDebug := env.GetBool("APP_DEBUG", !isProd)
 	expireDays := env.GetInt("JWT_EXPIRE_DAYS", 7)
 
 	cfg := &Config{
 		App: AppConfig{
-			Name:      env.Get("APP_NAME", "Luas"),
-			Env:       appEnv,
-			Debug:     appDebug,
-			URL:       env.Get("APP_URL", "http://localhost:8025"),
-			Key:       env.Get("APP_KEY", ""),
-			JWTSecret: env.Get("JWT_SECRET", ""),
-			JWTExpire: time.Duration(expireDays) * 24 * time.Hour,
+			Name:  env.Get("APP_NAME", "Luas"),
+			Env:   appEnv,
+			Debug: appDebug,
+			URL:   env.Get("APP_URL", "http://localhost:8025"),
 		},
 		Server: ServerConfig{
 			Host:              env.Get("SERVER_HOST", DefaultServerHost),
 			Port:              env.GetInt("SERVER_PORT", DefaultServerPort),
-			Mode:              env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
+			Mode:              env.Get("SERVER_MODE", env.Get("GIN_MODE", defaultServerMode(isProd))),
 			ReadTimeout:       env.GetInt("SERVER_READ_TIMEOUT", defaultServerReadTimeoutSeconds),
 			ReadHeaderTimeout: env.GetInt("SERVER_READ_HEADER_TIMEOUT", defaultServerReadHeaderTimeoutSeconds),
 			WriteTimeout:      env.GetInt("SERVER_WRITE_TIMEOUT", defaultServerWriteTimeoutSeconds),
@@ -305,11 +300,14 @@ func Load() (*Config, error) {
 			Expire:     time.Duration(expireDays) * 24 * time.Hour,
 		},
 		Log: LogConfig{
-			Level:       env.Get("LOG_LEVEL", "debug"),
+			Level:       env.Get("LOG_LEVEL", defaultLogLevel(isProd)),
 			File:        env.Get("LOG_FILE", env.Get("LOG_FILENAME", "storage/logs/app.log")),
-			Stdout:      env.GetBool("LOG_STDOUT", !isProd || appDebug),
-			FileEnabled: env.GetBool("LOG_FILE_ENABLED", true),
+			Stdout:      env.GetBool("LOG_STDOUT", true),
+			FileEnabled: env.GetBool("LOG_FILE_ENABLED", !isProd),
 			JSON:        env.GetBool("LOG_JSON", isProd),
+		},
+		Sentry: SentryConfig{
+			DSN: env.Get("SENTRY_DSN", ""),
 		},
 		CORS: CORSConfig{
 			// Default to localhost-only. Production should set CORS_ALLOW_ORIGINS
@@ -325,16 +323,7 @@ func Load() (*Config, error) {
 			From:         env.Get("MAIL_FROM", ""),
 			ResendAPIKey: env.Get("RESEND_API_KEY", ""),
 		},
-		AI: AIConfig{
-			Enabled:         env.GetBool("AI_ENABLED", true),
-			DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
-			DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5"),
-			RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
-			OpenAI: AIProviderConfig{
-				APIKey:  env.Get("OPENAI_API_KEY", ""),
-				BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-			},
-		},
+		AI: loadAIConfig(),
 		R2: R2Config{
 			AccessKeyID:     env.Get("R2_ACCESS_KEY_ID", ""),
 			SecretAccessKey: env.Get("R2_SECRET_ACCESS_KEY", ""),
@@ -412,15 +401,6 @@ func Load() (*Config, error) {
 			Insecure:   env.GetBool("TRACING_INSECURE", true),
 			SampleRate: env.GetFloat("TRACING_SAMPLE_RATE", 1.0),
 		},
-		ClickHouse: ClickHouseConfig{
-			Enabled:   env.GetBool("LOG_CH_ENABLED", false),
-			Endpoint:  env.Get("LOG_CH_ENDPOINT", "localhost:9000"),
-			Database:  env.Get("LOG_CH_DATABASE", "luas_logs"),
-			Username:  env.Get("LOG_CH_USERNAME", "luas_user"),
-			Password:  env.Get("LOG_CH_PASSWORD", "luas_pass"),
-			BatchSize: env.GetInt("LOG_CH_BATCH_SIZE", 100),
-			Interval:  env.GetDuration("LOG_CH_INTERVAL", 5*time.Second),
-		},
 	}
 
 	// Validate required fields
@@ -430,6 +410,42 @@ func Load() (*Config, error) {
 
 	GlobalConfig = cfg
 	return cfg, nil
+}
+
+// LoadAIConfig loads only the typed AI capability settings. It is used by
+// provider utilities that do not assemble the HTTP/database runtime.
+func LoadAIConfig() (AIConfig, error) {
+	if err := env.Load(); err != nil {
+		return AIConfig{}, fmt.Errorf("load environment: %w", err)
+	}
+	return loadAIConfig(), nil
+}
+
+func loadAIConfig() AIConfig {
+	return AIConfig{
+		Enabled:         env.GetBool("AI_ENABLED", true),
+		DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
+		DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5"),
+		RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
+		OpenAI: AIProviderConfig{
+			APIKey:  env.Get("OPENAI_API_KEY", ""),
+			BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+		},
+	}
+}
+
+func defaultLogLevel(production bool) string {
+	if production {
+		return "info"
+	}
+	return "debug"
+}
+
+func defaultServerMode(production bool) string {
+	if production {
+		return "release"
+	}
+	return "debug"
 }
 
 // MustLoad loads configuration or panics
@@ -460,7 +476,7 @@ func validate(cfg *Config) error {
 		return fmt.Errorf("JWT_SECRET is required")
 	}
 
-	isProd := strings.EqualFold(cfg.App.Env, "production")
+	isProd := cfg.IsProduction()
 
 	// JWT_SECRET strength: in production, reject known placeholders and
 	// secrets shorter than 32 chars. In other envs, log a clear warning by
@@ -613,7 +629,7 @@ func validateRateLimitRule(prefix string, rule RateLimitRuleConfig, required boo
 
 // IsProduction returns true if running in production
 func IsProduction() bool {
-	return GlobalConfig != nil && GlobalConfig.App.Env == "production"
+	return GlobalConfig != nil && GlobalConfig.IsProduction()
 }
 
 // IsDevelopment returns true if running in development
@@ -621,9 +637,20 @@ func IsDevelopment() bool {
 	return GlobalConfig == nil || GlobalConfig.App.Env == "development"
 }
 
+func isProductionEnvironment(value string) bool {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "production", "prod", "release":
+		return true
+	default:
+		return false
+	}
+}
+
 // LoadFresh forces reload of configuration
 func LoadFresh() (*Config, error) {
-	env.LoadFresh()
+	if err := env.LoadFresh(); err != nil {
+		return nil, fmt.Errorf("load environment: %w", err)
+	}
 	return Load()
 }
 
@@ -639,19 +666,4 @@ func Use(cfg *Config) (*Config, error) {
 	}
 	GlobalConfig = cfg
 	return cfg, nil
-}
-
-// CacheConfig caches config (no-op for simplified version)
-func CacheConfig(cfg *Config) error {
-	return nil
-}
-
-// ClearCache clears config cache (no-op for simplified version)
-func ClearCache() error {
-	return nil
-}
-
-// CacheFilePath returns cache file path
-func CacheFilePath() string {
-	return "storage/framework/cache/config.json"
 }

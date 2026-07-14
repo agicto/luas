@@ -75,6 +75,19 @@ func TestValidate_RejectsShortJWTSecretInProduction(t *testing.T) {
 	}
 }
 
+func TestValidate_ProductionAliasesUseProductionRules(t *testing.T) {
+	for _, environment := range []string{"production", "prod", "release", " RELEASE "} {
+		t.Run(environment, func(t *testing.T) {
+			cfg := baseValidConfig(environment)
+			cfg.JWT.Secret = "short"
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), "32 characters") {
+				t.Fatalf("validate() with APP_ENV=%q error = %v, want production secret error", environment, err)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsWildcardWithCredentials(t *testing.T) {
 	cfg := baseValidConfig("development")
 	cfg.CORS.AllowOrigins = []string{"*"}

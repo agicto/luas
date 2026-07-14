@@ -33,18 +33,24 @@ func (c *ServeCommand) Run(args []string) error {
 		return err
 	}
 
-	// Initialize logger
-	bootstrap.InitLogger()
-
-	// Initialize application via Wire DI
-	application, err := wiring.InitApplication()
+	cfg, err := config.Load()
 	if err != nil {
-		return fmt.Errorf("failed to initialize application: %w", err)
+		return fmt.Errorf("load configuration: %w", err)
 	}
-
-	cfg := application.Config
 	if options.port != 0 {
 		cfg.Server.Port = options.port
+	}
+	if runtimeErr := validateServeRuntime(options, cfg); runtimeErr != nil {
+		return runtimeErr
+	}
+	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
+		return fmt.Errorf("initialize logger: %w", loggerErr)
+	}
+
+	// Initialize application via Wire DI with the same typed snapshot.
+	application, err := wiring.InitApplicationWithConfig(cfg)
+	if err != nil {
+		return fmt.Errorf("failed to initialize application: %w", err)
 	}
 	if options.migrate {
 		if err := bootstrap.RunMigrationsWithEvents(application.DB, application.EventBus); err != nil {
@@ -60,6 +66,16 @@ func (c *ServeCommand) Run(args []string) error {
 type serveOptions struct {
 	port    int
 	migrate bool
+}
+
+func validateServeRuntime(options serveOptions, cfg *config.Config) error {
+	if cfg == nil {
+		return fmt.Errorf("config is required")
+	}
+	if options.migrate && cfg.IsProduction() {
+		return fmt.Errorf("startup migrations are disabled in production; run `luas migrate --force` as a pre-deploy job")
+	}
+	return nil
 }
 
 func parseServeOptions(args []string) (serveOptions, error) {

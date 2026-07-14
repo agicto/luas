@@ -19,18 +19,6 @@ type Config struct {
 	// FileEnabled controls whether the rotating file handler is registered.
 	FileEnabled bool
 
-	// MaxSize is the maximum size in MB before rotation
-	MaxSize int
-
-	// MaxAge is the maximum days to retain old logs
-	MaxAge int
-
-	// MaxBackups is the maximum number of old log files to retain
-	MaxBackups int
-
-	// Compress determines if rotated files should be compressed
-	Compress bool
-
 	// StdoutPrint outputs to stdout (default: true in debug mode)
 	StdoutPrint bool
 
@@ -55,10 +43,6 @@ func DefaultConfig() *Config {
 		Path:         "storage/logs",
 		File:         "{Y}-{m}-{d}.log",
 		FileEnabled:  true,
-		MaxSize:      100,
-		MaxAge:       14,
-		MaxBackups:   7,
-		Compress:     true,
 		StdoutPrint:  true,
 		ColorEnabled: true,
 		TimeFormat:   time.RFC3339,

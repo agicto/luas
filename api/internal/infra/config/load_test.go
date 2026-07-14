@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	pkgenv "github.com/zgiai/luas/api/pkg/env"
 )
 
 func withoutEnv(t *testing.T, keys ...string) {
@@ -68,6 +70,56 @@ func TestLoad_RateLimitDefaultsByEnvironment(t *testing.T) {
 	dev := loadConfigForRateLimitDefault(t, "development")
 	if dev.Middleware.RateLimit.Enabled {
 		t.Fatal("development should disable rate limit by default")
+	}
+}
+
+func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
+	withoutEnv(
+		t,
+		"APP_ENV",
+		"APP_DEBUG",
+		"GO_ENV",
+		"GIN_MODE",
+		"SERVER_MODE",
+		"LOG_LEVEL",
+		"LOG_STDOUT",
+		"LOG_FILE_ENABLED",
+		"LOG_JSON",
+		"METRICS_ENABLED",
+		"MIDDLEWARE_RATE_LIMIT_ENABLED",
+		"AUTH_RATE_LIMIT_ENABLED",
+	)
+	t.Setenv("GO_ENV", " release ")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.App.Env != "release" || !cfg.IsProduction() {
+		t.Fatalf("environment = %q, production = %v", cfg.App.Env, cfg.IsProduction())
+	}
+	if cfg.App.Debug || cfg.Server.Mode != "release" {
+		t.Fatalf("production runtime = debug:%v server-mode:%q", cfg.App.Debug, cfg.Server.Mode)
+	}
+	if !cfg.Middleware.RateLimit.Enabled || !cfg.Middleware.AuthenticationRateLimit.Enabled {
+		t.Fatal("production alias did not enable default abuse controls")
+	}
+	if cfg.Metrics.Enabled {
+		t.Fatal("production alias did not disable metrics by default")
+	}
+	if cfg.Log.Level != "info" {
+		t.Fatalf("production alias log level = %q, want info", cfg.Log.Level)
+	}
+	if !cfg.Log.Stdout || cfg.Log.FileEnabled || !cfg.Log.JSON {
+		t.Fatalf(
+			"production alias log outputs = stdout:%v file:%v json:%v",
+			cfg.Log.Stdout,
+			cfg.Log.FileEnabled,
+			cfg.Log.JSON,
+		)
 	}
 }
 
@@ -353,7 +405,7 @@ func TestLoad_ServerTransportExplicitEnvOverridesDefaults(t *testing.T) {
 }
 
 func TestLoad_LogOutputEnvironment(t *testing.T) {
-	withoutEnv(t, "LOG_STDOUT", "LOG_FILE_ENABLED", "LOG_JSON")
+	withoutEnv(t, "LOG_LEVEL", "LOG_FILE", "LOG_STDOUT", "LOG_FILE_ENABLED", "LOG_JSON", "SENTRY_DSN")
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("APP_DEBUG", "false")
 	t.Setenv("DB_ENABLED", "false")
@@ -362,6 +414,9 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 	t.Setenv("LOG_STDOUT", "true")
 	t.Setenv("LOG_FILE_ENABLED", "false")
 	t.Setenv("LOG_JSON", "true")
+	t.Setenv("LOG_LEVEL", "warning")
+	t.Setenv("LOG_FILE", "var/log/luas/app.log")
+	t.Setenv("SENTRY_DSN", "https://public@example.invalid/1")
 
 	cfg, err := LoadFresh()
 	if err != nil {
@@ -369,5 +424,35 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 	}
 	if !cfg.Log.Stdout || cfg.Log.FileEnabled || !cfg.Log.JSON {
 		t.Fatalf("log outputs = stdout:%v file:%v json:%v, want true/false/true", cfg.Log.Stdout, cfg.Log.FileEnabled, cfg.Log.JSON)
+	}
+	if cfg.Log.Level != "warning" || cfg.Log.File != "var/log/luas/app.log" {
+		t.Fatalf("log target = level:%q file:%q", cfg.Log.Level, cfg.Log.File)
+	}
+	if cfg.Sentry.DSN != "https://public@example.invalid/1" {
+		t.Fatalf("Sentry DSN = %q", cfg.Sentry.DSN)
+	}
+}
+
+func TestLoadAIConfigDoesNotRequireServerRuntimeSecrets(t *testing.T) {
+	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "OPENAI_API_KEY", "OPENAI_BASE_URL", "DB_PASSWORD", "JWT_SECRET")
+	t.Setenv("AI_ENABLED", "true")
+	t.Setenv("AI_DEFAULT_PROVIDER", "openai")
+	t.Setenv("AI_DEFAULT_MODEL", "provider-model")
+	t.Setenv("AI_REQUEST_TIMEOUT", "45s")
+	t.Setenv("OPENAI_API_KEY", "test-key")
+	t.Setenv("OPENAI_BASE_URL", "https://provider.example/v1")
+	if err := pkgenv.LoadFresh(); err != nil {
+		t.Fatalf("env.LoadFresh() error = %v", err)
+	}
+
+	cfg, err := LoadAIConfig()
+	if err != nil {
+		t.Fatalf("LoadAIConfig() error = %v", err)
+	}
+	if cfg.DefaultModel != "provider-model" || cfg.RequestTimeout != 45*time.Second {
+		t.Fatalf("AI config = model:%q timeout:%s", cfg.DefaultModel, cfg.RequestTimeout)
+	}
+	if cfg.OpenAI.APIKey != "test-key" || cfg.OpenAI.BaseURL != "https://provider.example/v1" {
+		t.Fatalf("OpenAI config = key:%q base:%q", cfg.OpenAI.APIKey, cfg.OpenAI.BaseURL)
 	}
 }

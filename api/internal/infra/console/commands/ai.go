@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/zgiai/luas/api/internal/capabilities/ai"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/pkg/env"
 )
 
 // AIChatCommand sends a prompt to the configured AI provider.
@@ -37,7 +36,11 @@ func (c *AIChatCommand) Run(args []string) error {
 		return err
 	}
 
-	manager := ai.NewManager(loadAIConfig())
+	cfg, err := config.LoadAIConfig()
+	if err != nil {
+		return err
+	}
+	manager := ai.NewManager(aiRuntimeConfig(cfg))
 	ctx := context.Background()
 
 	if noStream {
@@ -86,15 +89,15 @@ func (c *AIChatCommand) runStream(ctx context.Context, m *ai.Manager, req *ai.Te
 	return nil
 }
 
-func loadAIConfig() ai.Config {
+func aiRuntimeConfig(cfg config.AIConfig) ai.Config {
 	return ai.Config{
-		Enabled:         env.GetBool("AI_ENABLED", true),
-		DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
-		DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5"),
-		RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
+		Enabled:         cfg.Enabled,
+		DefaultProvider: cfg.DefaultProvider,
+		DefaultModel:    cfg.DefaultModel,
+		RequestTimeout:  cfg.RequestTimeout,
 		OpenAI: ai.ProviderConfig{
-			APIKey:  env.Get("OPENAI_API_KEY", ""),
-			BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+			APIKey:  cfg.OpenAI.APIKey,
+			BaseURL: cfg.OpenAI.BaseURL,
 		},
 	}
 }

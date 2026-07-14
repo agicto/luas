@@ -97,7 +97,6 @@ COMMON_ENV=(
   JWT_SECRET=kest-test-secret
   AI_ENABLED=false
   TRACING_ENABLED=false
-  LOG_CH_ENABLED=false
 )
 
 cd "${ROOT_DIR}"

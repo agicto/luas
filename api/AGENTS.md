@@ -105,6 +105,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 ## Architecture References
 
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
+- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
 - [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
@@ -150,7 +151,7 @@ make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
 make wire          # Generate DI
 make vuln          # Reachable vulnerability scan with the pinned Go tool
-make air           # Hot-reload dev server
+make air           # Rebuild and restart the development server
 ```
 
 ## Starter-Style Module Structure

@@ -120,21 +120,17 @@ func (h *ConsoleHandler) Close() error {
 	return nil
 }
 
-// FileHandler outputs logs to files with rotation support
+// FileHandler appends logs to a local file. Retention and rotation are owned
+// by the deployment platform rather than simulated inside the process.
 type FileHandler struct {
 	mu         sync.Mutex
 	path       string
 	file       string
 	level      Level
-	maxSize    int64
-	maxAge     int
-	maxBackups int
-	compress   bool
 	timeFormat string
 	json       bool
 
 	currentFile *os.File
-	currentSize int64
 	currentDate string
 }
 
@@ -144,10 +140,6 @@ func NewFileHandler(cfg *Config) *FileHandler {
 		path:       cfg.Path,
 		file:       cfg.File,
 		level:      cfg.Level,
-		maxSize:    int64(cfg.MaxSize) * 1024 * 1024,
-		maxAge:     cfg.MaxAge,
-		maxBackups: cfg.MaxBackups,
-		compress:   cfg.Compress,
 		timeFormat: cfg.TimeFormat,
 		json:       cfg.JSON,
 	}
@@ -178,9 +170,7 @@ func (h *FileHandler) Handle(ctx context.Context, entry *Entry) error {
 		return err
 	}
 
-	n, err := h.currentFile.Write(data)
-	h.currentSize += int64(n)
-
+	_, err = h.currentFile.Write(data)
 	return err
 }
 
@@ -252,9 +242,7 @@ func (h *FileHandler) ensureFile(t time.Time) error {
 	date := t.Format("2006-01-02")
 
 	// Check if we need to rotate
-	needRotate := h.currentFile == nil ||
-		h.currentDate != date ||
-		(h.maxSize > 0 && h.currentSize >= h.maxSize)
+	needRotate := h.currentFile == nil || h.currentDate != date
 
 	if !needRotate {
 		return nil
@@ -280,15 +268,7 @@ func (h *FileHandler) ensureFile(t time.Time) error {
 		return err
 	}
 
-	// Get current size
-	info, err := f.Stat()
-	if err != nil {
-		f.Close()
-		return err
-	}
-
 	h.currentFile = f
-	h.currentSize = info.Size()
 	h.currentDate = date
 
 	return nil
@@ -311,17 +291,4 @@ func (h *FileHandler) Close() error {
 		return h.currentFile.Close()
 	}
 	return nil
-}
-
-// DailyHandler is a convenience handler for daily log rotation
-func NewDailyHandler(path string, level Level, days int) *FileHandler {
-	return &FileHandler{
-		path:       path,
-		file:       "{Y}-{m}-{d}.log",
-		level:      level,
-		maxAge:     days,
-		maxBackups: days,
-		timeFormat: time.RFC3339,
-		json:       false,
-	}
 }

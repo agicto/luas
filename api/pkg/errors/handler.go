@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"runtime"
 	"strings"
 	"time"
@@ -35,13 +34,9 @@ type Config struct {
 
 // DefaultConfig returns default error handler config
 func DefaultConfig() Config {
-	mode := os.Getenv("SERVER_MODE")
-	if mode == "" {
-		mode = os.Getenv("GIN_MODE")
-	}
 	return Config{
-		Debug:     mode != "release",
-		ShowStack: mode != "release",
+		Debug:     false,
+		ShowStack: false,
 		LogErrors: true,
 	}
 }
