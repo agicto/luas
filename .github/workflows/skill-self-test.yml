@@ -49,17 +49,15 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
-      # Install golangci-lint as a binary without running it — the skill
-      # validator scripts invoke it themselves. Pinning the version keeps
-      # the gate stable across releases.
+      # Install only; the skill validator scripts own the lint invocation.
       - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
-            | sh -s -- -b $(go env GOPATH)/bin v2.12.2
-          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.12.2
+          install-only: true
 
       - name: Install goimports
-        run: go install golang.org/x/tools/cmd/goimports@latest
+        run: go install golang.org/x/tools/cmd/goimports@v0.48.0
 
       - name: coding-standards self-test (${{ matrix.module }})
         run: bash .agents/skills/coding-standards/scripts/verify-standards.sh ${{ matrix.module }}
