@@ -29,7 +29,7 @@ type TimeoutConfig struct {
 // DefaultTimeoutConfig returns default timeout configuration
 func DefaultTimeoutConfig() TimeoutConfig {
 	return TimeoutConfig{
-		Timeout:      3 * time.Minute, // 3 minutes for AI/LLM calls
+		Timeout:      time.Duration(config.DefaultMiddlewareRequestTimeoutSeconds) * time.Second,
 		ErrorMessage: "Request timeout",
 	}
 }
@@ -37,7 +37,7 @@ func DefaultTimeoutConfig() TimeoutConfig {
 // TimeoutFromConfig returns timeout middleware using global config
 // Uses MIDDLEWARE_REQUEST_TIMEOUT env var (in seconds)
 func TimeoutFromConfig() gin.HandlerFunc {
-	timeout := 3 * time.Minute // default 3 minutes
+	timeout := time.Duration(config.DefaultMiddlewareRequestTimeoutSeconds) * time.Second
 	if config.GlobalConfig != nil && config.GlobalConfig.Middleware.RequestTimeout > 0 {
 		timeout = time.Duration(config.GlobalConfig.Middleware.RequestTimeout) * time.Second
 	}

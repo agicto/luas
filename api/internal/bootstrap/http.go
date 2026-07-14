@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -125,14 +127,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 // Handle starts the HTTP server with graceful shutdown
 func (k *HttpKernel) Handle() {
 	cfg := k.App.Config
-	addr := fmt.Sprintf(":%d", cfg.Server.Port)
-
-	srv := &http.Server{
-		Addr:         addr,
-		Handler:      k.Engine,
-		ReadTimeout:  time.Duration(cfg.Server.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cfg.Server.WriteTimeout) * time.Second,
-	}
+	srv := newHTTPServer(cfg, k.Engine)
 
 	serverErr := make(chan error, 1)
 
@@ -140,15 +135,11 @@ func (k *HttpKernel) Handle() {
 	// goroutine so they go through the same shutdown path as SIGTERM
 	// (log.Fatal here would os.Exit and skip resource cleanup).
 	go func() {
-		host := cfg.Server.Host
-		if host == "" {
-			host = "localhost"
-		}
-		url := fmt.Sprintf("http://%s:%d", host, cfg.Server.Port)
+		url := "http://" + srv.Addr
 
 		log.Printf("\n")
 		log.Printf("  🚀 Luas Server Started!")
-		log.Printf("  ➜ Local:   \033[36m%s\033[0m", url)
+		log.Printf("  ➜ Listen:  \033[36m%s\033[0m", url)
 		log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
 		log.Printf("\n")
 
@@ -159,6 +150,28 @@ func (k *HttpKernel) Handle() {
 
 	// Graceful Shutdown
 	k.gracefulShutdown(srv, serverErr)
+}
+
+func newHTTPServer(cfg *config.Config, handler http.Handler) *http.Server {
+	serverCfg := config.ServerConfig{}
+	if cfg != nil {
+		serverCfg = cfg.Server
+	}
+
+	host := strings.TrimSpace(serverCfg.Host)
+	if host == "" {
+		host = config.DefaultServerHost
+	}
+
+	return &http.Server{
+		Addr:              net.JoinHostPort(host, strconv.Itoa(serverCfg.Port)),
+		Handler:           handler,
+		ReadTimeout:       time.Duration(serverCfg.ReadTimeout) * time.Second,
+		ReadHeaderTimeout: time.Duration(serverCfg.ReadHeaderTimeout) * time.Second,
+		WriteTimeout:      time.Duration(serverCfg.WriteTimeout) * time.Second,
+		IdleTimeout:       time.Duration(serverCfg.IdleTimeout) * time.Second,
+		MaxHeaderBytes:    serverCfg.MaxHeaderBytes,
+	}
 }
 
 // gracefulShutdown handles graceful shutdown of the server and resources

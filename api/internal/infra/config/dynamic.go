@@ -64,11 +64,14 @@ func (r *Repository) loadFromEnv() {
 	r.Set("app.key", env.Get("APP_KEY", ""))
 
 	// Server
-	r.Set("server.port", env.GetInt("SERVER_PORT", 8025))
-	r.Set("server.host", env.Get("SERVER_HOST", ""))
+	r.Set("server.port", env.GetInt("SERVER_PORT", defaultServerPort))
+	r.Set("server.host", env.Get("SERVER_HOST", DefaultServerHost))
 	r.Set("server.mode", env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")))
-	r.Set("server.read_timeout", env.GetInt("SERVER_READ_TIMEOUT", 60))
-	r.Set("server.write_timeout", env.GetInt("SERVER_WRITE_TIMEOUT", 60))
+	r.Set("server.read_timeout", env.GetInt("SERVER_READ_TIMEOUT", defaultServerReadTimeoutSeconds))
+	r.Set("server.read_header_timeout", env.GetInt("SERVER_READ_HEADER_TIMEOUT", defaultServerReadHeaderTimeoutSeconds))
+	r.Set("server.write_timeout", env.GetInt("SERVER_WRITE_TIMEOUT", defaultServerWriteTimeoutSeconds))
+	r.Set("server.idle_timeout", env.GetInt("SERVER_IDLE_TIMEOUT", defaultServerIdleTimeoutSeconds))
+	r.Set("server.max_header_bytes", env.GetInt("SERVER_MAX_HEADER_BYTES", defaultServerMaxHeaderBytes))
 
 	// Database
 	r.Set("database.enabled", env.GetBool("DB_ENABLED", true))

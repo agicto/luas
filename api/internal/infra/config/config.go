@@ -12,6 +12,21 @@ import (
 // GlobalConfig stores the global configuration
 var GlobalConfig *Config
 
+const (
+	// DefaultServerHost keeps local runs off external interfaces unless explicitly configured.
+	DefaultServerHost = "127.0.0.1"
+
+	defaultServerPort                     = 8025
+	defaultServerReadTimeoutSeconds       = 60
+	defaultServerReadHeaderTimeoutSeconds = 10
+	defaultServerWriteTimeoutSeconds      = 190
+	defaultServerIdleTimeoutSeconds       = 120
+	defaultServerMaxHeaderBytes           = 64 * 1024
+
+	// DefaultMiddlewareRequestTimeoutSeconds is shared by config loading and timeout middleware.
+	DefaultMiddlewareRequestTimeoutSeconds = 180
+)
+
 // Config holds all application configuration
 type Config struct {
 	App        AppConfig
@@ -43,13 +58,15 @@ type AppConfig struct {
 }
 
 type ServerConfig struct {
-	Host           string
-	Port           int
-	Mode           string
-	ReadTimeout    int
-	WriteTimeout   int
-	RequestTimeout int // Request timeout in seconds (for middleware)
-	TrustedProxies []string
+	Host              string
+	Port              int
+	Mode              string
+	ReadTimeout       int
+	ReadHeaderTimeout int
+	WriteTimeout      int
+	IdleTimeout       int
+	MaxHeaderBytes    int
+	TrustedProxies    []string
 }
 
 // MiddlewareConfig holds middleware configuration
@@ -233,12 +250,15 @@ func Load() (*Config, error) {
 			JWTExpire: time.Duration(expireDays) * 24 * time.Hour,
 		},
 		Server: ServerConfig{
-			Host:           env.Get("SERVER_HOST", ""),
-			Port:           env.GetInt("SERVER_PORT", 8025),
-			Mode:           env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
-			ReadTimeout:    env.GetInt("SERVER_READ_TIMEOUT", 60),
-			WriteTimeout:   env.GetInt("SERVER_WRITE_TIMEOUT", 60),
-			TrustedProxies: env.GetSlice("SERVER_TRUSTED_PROXIES", []string{}),
+			Host:              env.Get("SERVER_HOST", DefaultServerHost),
+			Port:              env.GetInt("SERVER_PORT", defaultServerPort),
+			Mode:              env.Get("SERVER_MODE", env.Get("GIN_MODE", "debug")),
+			ReadTimeout:       env.GetInt("SERVER_READ_TIMEOUT", defaultServerReadTimeoutSeconds),
+			ReadHeaderTimeout: env.GetInt("SERVER_READ_HEADER_TIMEOUT", defaultServerReadHeaderTimeoutSeconds),
+			WriteTimeout:      env.GetInt("SERVER_WRITE_TIMEOUT", defaultServerWriteTimeoutSeconds),
+			IdleTimeout:       env.GetInt("SERVER_IDLE_TIMEOUT", defaultServerIdleTimeoutSeconds),
+			MaxHeaderBytes:    env.GetInt("SERVER_MAX_HEADER_BYTES", defaultServerMaxHeaderBytes),
+			TrustedProxies:    env.GetSlice("SERVER_TRUSTED_PROXIES", []string{}),
 		},
 		Database: DatabaseConfig{
 			Enabled:              env.GetBool("DB_ENABLED", true),
@@ -317,8 +337,8 @@ func Load() (*Config, error) {
 			PublicDomain:    env.Get("R2_PUBLIC_DOMAIN", ""),
 		},
 		Middleware: MiddlewareConfig{
-			RequestTimeout: env.GetInt("MIDDLEWARE_REQUEST_TIMEOUT", 180),                   // 3 minutes default
-			BodyLimit:      int64(env.GetInt("MIDDLEWARE_BODY_LIMIT_MB", 10)) * 1024 * 1024, // 10MB default
+			RequestTimeout: env.GetInt("MIDDLEWARE_REQUEST_TIMEOUT", DefaultMiddlewareRequestTimeoutSeconds),
+			BodyLimit:      int64(env.GetInt("MIDDLEWARE_BODY_LIMIT_MB", 10)) * 1024 * 1024,
 			RateLimit: RateLimitConfig{
 				Enabled: env.GetBool("MIDDLEWARE_RATE_LIMIT_ENABLED", isProd),
 				Max:     env.GetInt("MIDDLEWARE_RATE_LIMIT_MAX", 600),
@@ -476,6 +496,10 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	if err := validateServerTransport(cfg.Server, cfg.Middleware); err != nil {
+		return err
+	}
+
 	if err := validateTrustedProxies(cfg.Server.TrustedProxies); err != nil {
 		return err
 	}
@@ -498,6 +522,43 @@ func validate(cfg *Config) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func validateServerTransport(server ServerConfig, middleware MiddlewareConfig) error {
+	values := []struct {
+		name  string
+		value int
+	}{
+		{name: "SERVER_READ_TIMEOUT", value: server.ReadTimeout},
+		{name: "SERVER_READ_HEADER_TIMEOUT", value: server.ReadHeaderTimeout},
+		{name: "SERVER_WRITE_TIMEOUT", value: server.WriteTimeout},
+		{name: "SERVER_IDLE_TIMEOUT", value: server.IdleTimeout},
+		{name: "SERVER_MAX_HEADER_BYTES", value: server.MaxHeaderBytes},
+		{name: "MIDDLEWARE_REQUEST_TIMEOUT", value: middleware.RequestTimeout},
+	}
+	for _, item := range values {
+		if item.value < 0 {
+			return fmt.Errorf("%s must not be negative", item.name)
+		}
+	}
+
+	if server.ReadTimeout > 0 && server.ReadHeaderTimeout > server.ReadTimeout {
+		return fmt.Errorf("SERVER_READ_HEADER_TIMEOUT must not exceed SERVER_READ_TIMEOUT")
+	}
+
+	requestTimeout := middleware.RequestTimeout
+	if requestTimeout == 0 {
+		requestTimeout = DefaultMiddlewareRequestTimeoutSeconds
+	}
+	if server.WriteTimeout > 0 && server.WriteTimeout <= requestTimeout {
+		return fmt.Errorf(
+			"SERVER_WRITE_TIMEOUT must exceed MIDDLEWARE_REQUEST_TIMEOUT (%d <= %d); set SERVER_WRITE_TIMEOUT=0 only when intentionally disabling the transport write deadline",
+			server.WriteTimeout,
+			requestTimeout,
+		)
 	}
 
 	return nil

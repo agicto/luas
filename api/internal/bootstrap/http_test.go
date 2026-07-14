@@ -37,6 +37,67 @@ func testHTTPConfig() *config.Config {
 	}
 }
 
+func TestNewHTTPServerHonorsTransportConfig(t *testing.T) {
+	cfg := testHTTPConfig()
+	cfg.Server = config.ServerConfig{
+		Host:              "127.0.0.1",
+		Port:              18025,
+		ReadTimeout:       61,
+		ReadHeaderTimeout: 11,
+		WriteTimeout:      191,
+		IdleTimeout:       121,
+		MaxHeaderBytes:    64 * 1024,
+	}
+	handler := http.NewServeMux()
+
+	server := newHTTPServer(cfg, handler)
+
+	if server.Addr != "127.0.0.1:18025" {
+		t.Fatalf("server address = %q, want %q", server.Addr, "127.0.0.1:18025")
+	}
+	if server.Handler != handler {
+		t.Fatal("server handler does not match")
+	}
+	if server.ReadTimeout != 61*time.Second {
+		t.Fatalf("read timeout = %s, want 61s", server.ReadTimeout)
+	}
+	if server.ReadHeaderTimeout != 11*time.Second {
+		t.Fatalf("read header timeout = %s, want 11s", server.ReadHeaderTimeout)
+	}
+	if server.WriteTimeout != 191*time.Second {
+		t.Fatalf("write timeout = %s, want 191s", server.WriteTimeout)
+	}
+	if server.IdleTimeout != 121*time.Second {
+		t.Fatalf("idle timeout = %s, want 121s", server.IdleTimeout)
+	}
+	if server.MaxHeaderBytes != 64*1024 {
+		t.Fatalf("max header bytes = %d, want %d", server.MaxHeaderBytes, 64*1024)
+	}
+}
+
+func TestNewHTTPServerDefaultsEmptyHostToLoopback(t *testing.T) {
+	cfg := testHTTPConfig()
+	cfg.Server.Port = 18025
+
+	server := newHTTPServer(cfg, http.NotFoundHandler())
+
+	if server.Addr != "127.0.0.1:18025" {
+		t.Fatalf("server address = %q, want loopback", server.Addr)
+	}
+}
+
+func TestNewHTTPServerFormatsIPv6ListenAddress(t *testing.T) {
+	cfg := testHTTPConfig()
+	cfg.Server.Host = "::1"
+	cfg.Server.Port = 18025
+
+	server := newHTTPServer(cfg, http.NotFoundHandler())
+
+	if server.Addr != "[::1]:18025" {
+		t.Fatalf("server address = %q, want bracketed IPv6", server.Addr)
+	}
+}
+
 func testHTTPConfigWithRateLimit() *config.Config {
 	cfg := testHTTPConfig()
 	cfg.Middleware.RateLimit = config.RateLimitConfig{

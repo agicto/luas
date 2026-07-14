@@ -265,3 +265,89 @@ func TestLoad_MetricsExplicitEnvOverridesDefault(t *testing.T) {
 		t.Fatal("explicit env should enable metrics")
 	}
 }
+
+func serverTransportEnvKeys() []string {
+	return []string{
+		"SERVER_HOST",
+		"SERVER_PORT",
+		"SERVER_READ_TIMEOUT",
+		"SERVER_READ_HEADER_TIMEOUT",
+		"SERVER_WRITE_TIMEOUT",
+		"SERVER_IDLE_TIMEOUT",
+		"SERVER_MAX_HEADER_BYTES",
+		"MIDDLEWARE_REQUEST_TIMEOUT",
+	}
+}
+
+func TestLoad_ServerTransportDefaultsAreSafeAndCoherent(t *testing.T) {
+	withoutEnv(t, serverTransportEnvKeys()...)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+
+	if cfg.Server.Host != "127.0.0.1" {
+		t.Fatalf("server host = %q, want loopback", cfg.Server.Host)
+	}
+	if cfg.Server.ReadTimeout != 60 {
+		t.Fatalf("read timeout = %d, want 60", cfg.Server.ReadTimeout)
+	}
+	if cfg.Server.ReadHeaderTimeout != 10 {
+		t.Fatalf("read header timeout = %d, want 10", cfg.Server.ReadHeaderTimeout)
+	}
+	if cfg.Server.WriteTimeout != 190 {
+		t.Fatalf("write timeout = %d, want 190", cfg.Server.WriteTimeout)
+	}
+	if cfg.Server.IdleTimeout != 120 {
+		t.Fatalf("idle timeout = %d, want 120", cfg.Server.IdleTimeout)
+	}
+	if cfg.Server.MaxHeaderBytes != 64*1024 {
+		t.Fatalf("max header bytes = %d, want %d", cfg.Server.MaxHeaderBytes, 64*1024)
+	}
+	if cfg.Server.WriteTimeout <= cfg.Middleware.RequestTimeout {
+		t.Fatalf(
+			"write timeout = %d must exceed request timeout = %d",
+			cfg.Server.WriteTimeout,
+			cfg.Middleware.RequestTimeout,
+		)
+	}
+}
+
+func TestLoad_ServerTransportExplicitEnvOverridesDefaults(t *testing.T) {
+	withoutEnv(t, serverTransportEnvKeys()...)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+	t.Setenv("SERVER_HOST", "::1")
+	t.Setenv("SERVER_PORT", "9025")
+	t.Setenv("SERVER_READ_TIMEOUT", "31")
+	t.Setenv("SERVER_READ_HEADER_TIMEOUT", "7")
+	t.Setenv("SERVER_WRITE_TIMEOUT", "91")
+	t.Setenv("SERVER_IDLE_TIMEOUT", "47")
+	t.Setenv("SERVER_MAX_HEADER_BYTES", "32768")
+	t.Setenv("MIDDLEWARE_REQUEST_TIMEOUT", "90")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+
+	if cfg.Server.Host != "::1" || cfg.Server.Port != 9025 {
+		t.Fatalf("server endpoint = %s:%d, want [::1]:9025", cfg.Server.Host, cfg.Server.Port)
+	}
+	if cfg.Server.ReadTimeout != 31 || cfg.Server.ReadHeaderTimeout != 7 {
+		t.Fatalf("read budgets = %d/%d, want 31/7", cfg.Server.ReadTimeout, cfg.Server.ReadHeaderTimeout)
+	}
+	if cfg.Server.WriteTimeout != 91 || cfg.Server.IdleTimeout != 47 {
+		t.Fatalf("write/idle budgets = %d/%d, want 91/47", cfg.Server.WriteTimeout, cfg.Server.IdleTimeout)
+	}
+	if cfg.Server.MaxHeaderBytes != 32768 {
+		t.Fatalf("max header bytes = %d, want 32768", cfg.Server.MaxHeaderBytes)
+	}
+}

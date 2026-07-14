@@ -24,6 +24,10 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures.
+- API transport configuration now owns the real socket boundary: local defaults bind to `127.0.0.1`,
+  container surfaces explicitly bind `0.0.0.0`, and read-header/read/write/idle/header-size budgets
+  are wired into `http.Server`. Configuration validation rejects negative values and a positive write
+  deadline that cannot outlive the cooperative request timeout.
 - API client-IP controls now deny forwarding-header trust by default, validate exact `SERVER_TRUSTED_PROXIES`, and reject trust-all networks. Public auth routes add production-default independent per-IP/per-subject quotas, hashed subject keys, generic `COMMON.RATE_LIMITED` responses without bucket diagnostics, one-query login lookup, fixed dummy-hash work for unknown accounts, and the same `AUTH.INVALID_CREDENTIALS` response for unknown, wrong-password, and disabled accounts.
 - The API minimum toolchain is now Go 1.25.12 and `quic-go` is at 0.59.1, closing the reachable standard-library and HTTP/3 findings reported against Go 1.25.0 / `quic-go` 0.58.0. A full `govulncheck ./...` reports zero reachable vulnerabilities; three advisories remain only in required modules with no called symbols. With both trees built by Go 1.25.12 using `-trimpath -ldflags='-s -w'`, the auth/proxy/tooling slice moves `cmd/server` from 34,412,002 to 34,445,090 bytes (+33,088 bytes, 0.10%) against baseline `fcb58b1`; `x/tools` and `x/vuln` remain absent from the server package dependency graph.
 - API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
@@ -73,6 +77,21 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md), which separates the ready-to-use default starters from planned optional starters such as organization, permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace.
 
 ## Candidate Queue
+
+### Completed P0 — HTTP Listen and Transport Configuration
+
+`SERVER_HOST` previously changed only the startup banner while `http.Server` always listened on
+`:port`, exposing a supposedly loopback-only process on every interface. The server now constructs
+its socket address from the resolved host and port, defaults local execution to `127.0.0.1`, and
+makes Docker's wildcard bind explicit. The previously inert `SERVER_MAX_HEADER_BYTES` setting plus
+read-header and idle deadlines are now applied to `http.Server`. The default 190-second write budget
+outlives the 180-second cooperative middleware timeout, and invalid relationships fail before the
+server starts.
+
+Verification:
+
+- `cd api && go test ./internal/bootstrap ./internal/infra/config`
+- Real server socket inspection for loopback and wildcard binds, plus an oversized-header request.
 
 ### P1 — Security Defaults
 

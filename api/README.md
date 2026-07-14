@@ -39,6 +39,7 @@ cp .env.example .env
 ```bash
 APP_NAME=Luas
 APP_ENV=development
+SERVER_HOST=127.0.0.1
 SERVER_PORT=8025
 
 DB_DRIVER=postgres
@@ -63,12 +64,12 @@ make wire
 go run ./cmd/server
 ```
 
-默认地址：
+默认监听地址是仅本机可访问的 `127.0.0.1:8025`：
 
-- 应用首页：`http://localhost:8025/`
-- 健康检查：`http://localhost:8025/v1/health`
-- Readiness：`http://localhost:8025/health/ready`
-- Prometheus metrics：开发环境默认 `http://localhost:8025/metrics`；生产环境需显式设置 `METRICS_ENABLED=true` 并通过网络策略限制访问
+- 应用首页：`http://127.0.0.1:8025/`
+- 健康检查：`http://127.0.0.1:8025/v1/health`
+- Readiness：`http://127.0.0.1:8025/health/ready`
+- Prometheus metrics：开发环境默认 `http://127.0.0.1:8025/metrics`；生产环境需显式设置 `METRICS_ENABLED=true` 并通过网络策略限制访问
 
 ### 5. 使用 CLI
 
@@ -98,6 +99,10 @@ make air
 
 API HTTP kernel 默认启用以下 core guardrails：
 
+- `ListenAddress`：默认只绑定 `127.0.0.1`；容器镜像显式设置 `SERVER_HOST=0.0.0.0`
+- `TransportTimeouts`：header 读取 10 秒、完整请求读取 60 秒、响应写入 190 秒、keep-alive idle 120 秒
+- `HeaderLimit`：默认最多读取 64 KiB request headers
+
 - `RequestID`：为响应和错误输出提供 `X-Request-ID` / `request_id`
 - `Helmet`：发送基础安全响应头
 - `BodyLimit`：默认 10MB，请求过大返回 `413` + `COMMON.REQUEST_TOO_LARGE`
@@ -110,6 +115,12 @@ API HTTP kernel 默认启用以下 core guardrails：
 可通过 `.env` 调整：
 
 ```bash
+SERVER_HOST=127.0.0.1
+SERVER_READ_TIMEOUT=60
+SERVER_READ_HEADER_TIMEOUT=10
+SERVER_WRITE_TIMEOUT=190
+SERVER_IDLE_TIMEOUT=120
+SERVER_MAX_HEADER_BYTES=65536
 MIDDLEWARE_REQUEST_TIMEOUT=180
 MIDDLEWARE_BODY_LIMIT_MB=10
 MIDDLEWARE_RATE_LIMIT_ENABLED=true
@@ -121,6 +132,10 @@ AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX=10
 SERVER_TRUSTED_PROXIES=10.20.0.0/16
 CORS_ALLOW_ORIGINS=https://app.example.com
 ```
+
+`SERVER_HOST` 是真实 socket bind 地址，不只是 banner 文本。`SERVER_WRITE_TIMEOUT` 必须大于
+`MIDDLEWARE_REQUEST_TIMEOUT`，确保 cooperative timeout 有机会写出标准错误响应；只有明确由网关或
+流式端点拥有写入期限时才应设为 `0`。负数 transport 预算和矛盾的超时关系会在启动时失败。
 
 Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。全局与认证限流都使用进程内 memory store，适合作为 scaffold 的单实例安全默认；多实例生产环境应在网关、WAF、Redis store 或部署层补充分布式限流。认证限流不会返回桶类型或剩余额度，且不能替代 MFA、风险识别和渐进式挑战。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
 

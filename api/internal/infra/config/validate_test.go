@@ -246,3 +246,75 @@ func TestValidate_AllowsDisabledAuthenticationRateLimitWithoutRules(t *testing.T
 		t.Fatalf("disabled authentication rate limit should not require rules, got %v", err)
 	}
 }
+
+func TestValidate_RejectsInvalidServerTransportBudgets(t *testing.T) {
+	tests := []struct {
+		name string
+		edit func(*Config)
+		want string
+	}{
+		{
+			name: "negative read timeout",
+			edit: func(cfg *Config) { cfg.Server.ReadTimeout = -1 },
+			want: "SERVER_READ_TIMEOUT",
+		},
+		{
+			name: "negative read header timeout",
+			edit: func(cfg *Config) { cfg.Server.ReadHeaderTimeout = -1 },
+			want: "SERVER_READ_HEADER_TIMEOUT",
+		},
+		{
+			name: "negative write timeout",
+			edit: func(cfg *Config) { cfg.Server.WriteTimeout = -1 },
+			want: "SERVER_WRITE_TIMEOUT",
+		},
+		{
+			name: "negative idle timeout",
+			edit: func(cfg *Config) { cfg.Server.IdleTimeout = -1 },
+			want: "SERVER_IDLE_TIMEOUT",
+		},
+		{
+			name: "negative max header bytes",
+			edit: func(cfg *Config) { cfg.Server.MaxHeaderBytes = -1 },
+			want: "SERVER_MAX_HEADER_BYTES",
+		},
+		{
+			name: "read header exceeds read timeout",
+			edit: func(cfg *Config) {
+				cfg.Server.ReadTimeout = 5
+				cfg.Server.ReadHeaderTimeout = 6
+			},
+			want: "SERVER_READ_HEADER_TIMEOUT",
+		},
+		{
+			name: "write does not outlive request",
+			edit: func(cfg *Config) {
+				cfg.Server.WriteTimeout = 180
+				cfg.Middleware.RequestTimeout = 180
+			},
+			want: "SERVER_WRITE_TIMEOUT",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			tt.edit(cfg)
+
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %s error, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestValidate_AllowsDisabledServerWriteTimeout(t *testing.T) {
+	cfg := baseValidConfig("production")
+	cfg.Server.WriteTimeout = 0
+	cfg.Middleware.RequestTimeout = 180
+
+	if err := validate(cfg); err != nil {
+		t.Fatalf("disabled server write timeout should be explicit and valid, got %v", err)
+	}
+}

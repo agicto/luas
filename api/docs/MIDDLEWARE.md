@@ -37,6 +37,25 @@ Order matters:
 - `CORS` runs before `RateLimit` so browser preflight requests do not consume rate limit quota.
 - `RateLimit` runs before routes and after CORS. Health and metrics paths are skipped by default.
 
+## HTTP Transport Guardrails
+
+Transport limits belong to the core HTTP server, before the Gin middleware chain. The default
+process binds only to `127.0.0.1`; Docker surfaces explicitly opt into `0.0.0.0`. `SERVER_HOST`
+therefore controls the real socket bind address and must not be treated as display-only metadata.
+
+| Setting | Default | Purpose |
+|---|---:|---|
+| `SERVER_READ_HEADER_TIMEOUT` | 10 seconds | Bounds slow request-header delivery. |
+| `SERVER_READ_TIMEOUT` | 60 seconds | Bounds reading the complete request, including its body. |
+| `SERVER_WRITE_TIMEOUT` | 190 seconds | Outlives the 180-second cooperative request deadline so its error can be written. |
+| `SERVER_IDLE_TIMEOUT` | 120 seconds | Bounds idle keep-alive connections. |
+| `SERVER_MAX_HEADER_BYTES` | 65536 bytes | Bounds request-header memory. |
+
+Negative transport values fail configuration validation. A positive `SERVER_WRITE_TIMEOUT` must
+exceed `MIDDLEWARE_REQUEST_TIMEOUT`; `0` explicitly disables the Go server write deadline and should
+only be used when a streaming endpoint or deployment proxy owns that limit. Oversized or incomplete
+requests can be rejected by the Go transport before Gin, so they do not use the JSON error envelope.
+
 ## Default Guardrails
 
 | Middleware | Default behavior | Contract |
@@ -51,6 +70,12 @@ Order matters:
 Environment knobs:
 
 ```bash
+SERVER_HOST=127.0.0.1
+SERVER_READ_TIMEOUT=60
+SERVER_READ_HEADER_TIMEOUT=10
+SERVER_WRITE_TIMEOUT=190
+SERVER_IDLE_TIMEOUT=120
+SERVER_MAX_HEADER_BYTES=65536
 MIDDLEWARE_REQUEST_TIMEOUT=180
 MIDDLEWARE_BODY_LIMIT_MB=10
 MIDDLEWARE_RATE_LIMIT_ENABLED=true

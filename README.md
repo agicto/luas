@@ -26,7 +26,7 @@ luas/
 cd api
 cp .env.example .env
 make wire     # generate DI
-make run      # start server on :8025
+make run      # start server on 127.0.0.1:8025
 ```
 
 See [api/README.md](api/README.md) for the full Go backend guide.

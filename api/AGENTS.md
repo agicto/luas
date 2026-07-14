@@ -254,6 +254,9 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
 - **Errors**: Use `response.HandleError`, wrap with `fmt.Errorf("%w")`, and define package-level `Err...`.
 - **Error Contract**: Non-2xx responses MUST expose stable `error_code`; do not make clients branch on message text.
 - **Request Correlation**: Error responses SHOULD include `request_id`, and request logs SHOULD carry the same value.
+- **HTTP Transport**: `SERVER_HOST` must control the real socket bind address. Keep read-header,
+  read, write, idle, and header-size defaults wired through `config.ServerConfig`; a positive server
+  write timeout must outlive the cooperative middleware request timeout.
 - **Disabled Database**: Repositories that receive nil GORM because `DB_ENABLED=false` MUST return
   `domain.ErrServiceUnavailable`; they must never dereference nil or silently turn dependency failure
   into not-found/invalid-credential behavior. Audit persistence remains best-effort.
