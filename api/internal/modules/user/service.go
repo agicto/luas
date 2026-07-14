@@ -76,6 +76,7 @@ type service struct {
 	jwtService     *jwt.Service
 	eventBus       *events.EventBus
 	mailer         UserMailer
+	deletionPolicy *AccountDeletionPolicy
 	verifyPassword func(hashedPassword, password []byte) error
 }
 
@@ -93,6 +94,7 @@ func NewService(
 	jwtService *jwt.Service,
 	eventBus *events.EventBus,
 	mailer UserMailer,
+	deletionPolicy *AccountDeletionPolicy,
 ) *service {
 	return &service{
 		repo:           repo,
@@ -100,6 +102,7 @@ func NewService(
 		jwtService:     jwtService,
 		eventBus:       eventBus,
 		mailer:         mailer,
+		deletionPolicy: deletionPolicy,
 		verifyPassword: bcrypt.CompareHashAndPassword,
 	}
 }
@@ -294,6 +297,9 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 
 // DeleteAccount deletes user account
 func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
+	if err := s.deletionPolicy.Check(ctx, userID); err != nil {
+		return err
+	}
 	if err := s.repo.Delete(ctx, userID); err != nil {
 		return err
 	}

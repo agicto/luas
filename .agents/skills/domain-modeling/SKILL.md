@@ -36,7 +36,7 @@ Read these before deciding:
 3. **Choose the owning category**
    - `core`: reusable runtime or infrastructure every Luas app depends on.
    - `starter`: business-ready building block shipped with the default scaffold.
-   - `optional starter`: starter-quality building block not wired into the default scaffold.
+   - `optional starter`: starter-quality building block disabled by default and activated additively through the canonical starter catalog.
    - `capability`: reusable technical integration or helper that does not own a workflow.
    - `feature`: user-facing or developer-facing vertical slice, especially downstream or product-facing work.
    - `module`: implementation unit behind a seam, not a synonym for feature.

@@ -5,6 +5,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // DBSeedCommand runs database seeders
@@ -29,6 +30,10 @@ func (c *DBSeedCommand) Run(args []string) error {
 		c.output.Error("Failed to load config: %v", err)
 		return err
 	}
+	if validationErr := starter.ValidateConfig(cfg); validationErr != nil {
+		c.output.Error("Failed to resolve starter configuration: %v", validationErr)
+		return validationErr
+	}
 
 	// Connect to DB
 	db, err := database.NewDB(cfg)
@@ -42,7 +47,7 @@ func (c *DBSeedCommand) Run(args []string) error {
 	}
 
 	// Execute seeders
-	if err := bootstrap.RunSeeders(db); err != nil {
+	if err := bootstrap.RunConfiguredSeeders(db, cfg); err != nil {
 		c.output.Error("Seeding failed: %v", err)
 		return err
 	}

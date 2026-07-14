@@ -4,6 +4,7 @@ x-api-environment: &api-environment
   APP_ENV: development
   APP_DEBUG: "true"
   APP_URL: http://localhost:${LUAS_API_PORT:-8025}
+  OPTIONAL_STARTERS: ${OPTIONAL_STARTERS:-}
   SERVER_MODE: release
   SERVER_HOST: 0.0.0.0
   SERVER_PORT: 8025

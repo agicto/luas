@@ -37,4 +37,8 @@ const (
 	CodeAPIKeyInvalid  = "API_KEY.INVALID"
 	CodeAPIKeyExpired  = "API_KEY.EXPIRED"
 	CodeAPIKeyRevoked  = "API_KEY.REVOKED"
+
+	CodeOrganizationNotFound                  = "ORGANIZATION.NOT_FOUND"
+	CodeOrganizationSlugAlreadyExists         = "ORGANIZATION.SLUG_ALREADY_EXISTS"
+	CodeOrganizationOwnershipTransferRequired = "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED"
 )

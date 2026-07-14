@@ -32,6 +32,7 @@ Workspace-level architecture docs:
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — surface classification, downstream actions, and verification matrix
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
 - [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
+- [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — optional organization activation, ownership scope, API, and deliberate deferrals
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
@@ -71,6 +72,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.
 - `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` — enforce reviewed full-SHA action pins, Node 24-compatible releases, explicit permissions, and safe workflow triggers.
 - `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` — verify scaffold surface classifications stay aligned across context, docs, and downstream extraction guidance.
+- `.agents/skills/luas-framework-review/scripts/check-starter-catalog.py` — verify optional starter selection, manifests, migrations, contracts, config, and AI guidance stay aligned.
 - `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` — verify branch/release docs match CI-managed deployment branch mappings.
 - `.agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh [base]` — generate a PR body draft from `git log` + `git diff`.
 - `api/.agents/skills/sql-migration-review/scripts/check-migration.sh <file>` — static checks for migration files.

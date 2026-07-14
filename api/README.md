@@ -52,6 +52,16 @@ DB_NAME=luas
 JWT_SECRET=replace-me
 ```
 
+`user`、`apikey`、`audit` 默认启用。组织所有权后端基础是可选 Starter；需要时给 HTTP
+进程、迁移任务和 seeder 任务统一设置：
+
+```bash
+OPTIONAL_STARTERS=organization
+```
+
+具体契约与尚未交付的邀请、成员、所有权转移和 Web 边界见
+[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)。
+
 ### 3. 生成依赖注入代码
 
 ```bash

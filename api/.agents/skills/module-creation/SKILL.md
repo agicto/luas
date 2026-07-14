@@ -38,9 +38,9 @@ Use this skill when:
 
 ## ⚙️ Prerequisites
 
-- [ ] Go 1.21+ installed
+- [ ] The repository-pinned Go toolchain is available
 - [ ] Luas project cloned and set up
-- [ ] Wire tool installed: `go install github.com/google/wire/cmd/wire@latest`
+- [ ] Wire resolves through the pinned module tool (`make wire` / `go tool wire`)
 - [ ] Basic understanding of DDD concepts
 - [ ] Database connection configured
 
@@ -51,7 +51,7 @@ Before scaffolding, decide what you are building:
 | Type | Typical Location | Default Shape |
 |------|------------------|---------------|
 | `starter` | `internal/modules/<name>` | 8-file route-owning module + starter manifest |
-| `optional starter` | `internal/modules/<name>` | same as starter, but not added to default registry |
+| `optional starter` | `internal/modules/<name>` | same as starter, added to `OptionalManifests`, disabled unless selected by `OPTIONAL_STARTERS` |
 | `capability` | `internal/capabilities/<name>` | no HTTP files unless the capability truly owns routes |
 | `example` | `examples/...` or docs | optimized for teaching, not default assembly |
 
@@ -74,11 +74,11 @@ Module: Blog
 Domain Entity: BlogPost
 Database Table: blog_posts
 API Endpoints:
-  - GET    /api/blogs          → List all posts (paginated)
-  - POST   /api/blogs          → Create new post
-  - GET    /api/blogs/:id      → Get post by ID
-  - PATCH  /api/blogs/:id      → Update post
-  - DELETE /api/blogs/:id      → Delete post
+  - GET    /v1/blogs          → List all posts (paginated)
+  - POST   /v1/blogs          → Create new post
+  - GET    /v1/blogs/:id      → Get post by ID
+  - PATCH  /v1/blogs/:id      → Update post
+  - DELETE /v1/blogs/:id      → Delete post
   
 Fields:
   - id (uint, primary key)
@@ -463,7 +463,7 @@ func NewHandler(service Service) *Handler {
 // @Produce json
 // @Param body body CreateBlogPostRequest true "Blog post data"
 // @Success 201 {object} BlogPostResponse
-// @Router /api/blogs [post]
+// @Router /v1/blogs [post]
 func (h *Handler) Create(c *gin.Context) {
     // Get authenticated user
     userID, ok := handler.GetUserID(c)
@@ -494,7 +494,7 @@ func (h *Handler) Create(c *gin.Context) {
 // @Produce json
 // @Param id path int true "Blog post ID"
 // @Success 200 {object} BlogPostResponse
-// @Router /api/blogs/{id} [get]
+// @Router /v1/blogs/{id} [get]
 func (h *Handler) Get(c *gin.Context) {
     id, ok := handler.ParseID(c, "id")
     if !ok {
@@ -518,7 +518,7 @@ func (h *Handler) Get(c *gin.Context) {
 // @Param id path int true "Blog post ID"
 // @Param body body UpdateBlogPostRequest true "Updated data"
 // @Success 200 {object} BlogPostResponse
-// @Router /api/blogs/{id} [patch]
+// @Router /v1/blogs/{id} [patch]
 func (h *Handler) Update(c *gin.Context) {
     id, ok := handler.ParseID(c, "id")
     if !ok {
@@ -544,7 +544,7 @@ func (h *Handler) Update(c *gin.Context) {
 // @Tags blogs
 // @Param id path int true "Blog post ID"
 // @Success 204
-// @Router /api/blogs/{id} [delete]
+// @Router /v1/blogs/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
     id, ok := handler.ParseID(c, "id")
     if !ok {
@@ -566,7 +566,7 @@ func (h *Handler) Delete(c *gin.Context) {
 // @Param page query int false "Page number" default(1)
 // @Param per_page query int false "Items per page" default(20)
 // @Success 200 {object} response.PaginatedResponse
-// @Router /api/blogs [get]
+// @Router /v1/blogs [get]
 func (h *Handler) List(c *gin.Context) {
     page := handler.QueryInt(c, "page", 1)
     perPage := handler.QueryInt(c, "per_page", 20)
@@ -600,7 +600,7 @@ func (h *Handler) List(c *gin.Context) {
 **Handler best practices**:
 - Use `pkg/handler` utilities
 - Use `pkg/response` for consistent responses
-- Add Swagger annotations
+- Use `pkg/pagination` for every list endpoint
 - Keep handlers thin (delegate to service)
 
 ### Step 8: Register Routes (routes.go)
@@ -612,30 +612,26 @@ func (h *Handler) List(c *gin.Context) {
 ```go
 package blog
 
-import (
-    "github.com/gin-gonic/gin"
-)
+import "github.com/zgiai/luas/api/internal/infra/router"
 
-// RegisterRoutes registers blog post routes
-func RegisterRoutes(router *gin.RouterGroup, handler *Handler, authMiddleware gin.HandlerFunc) {
-    blogs := router.Group("/blogs")
-    {
-        // Public routes
-        blogs.GET("", handler.List)
-        blogs.GET("/:id", handler.Get)
-        
-        // Protected routes (require authentication)
-        blogs.POST("", authMiddleware, handler.Create)
-        blogs.PATCH("/:id", authMiddleware, handler.Update)
-        blogs.DELETE("/:id", authMiddleware, handler.Delete)
-    }
+// RegisterRoutes contributes routes only when the owning starter is active.
+func (h *Handler) RegisterRoutes(r *router.Router) {
+    r.Group("", func(auth *router.Router) {
+        auth.WithMiddleware("auth")
+        auth.GET("/blogs", h.List).Name("blogs.index")
+        auth.POST("/blogs", h.Create).Name("blogs.store")
+        auth.GET("/blogs/:id", h.Get).Name("blogs.show").WhereNumber("id")
+        auth.PATCH("/blogs/:id", h.Update).Name("blogs.update").WhereNumber("id")
+        auth.DELETE("/blogs/:id", h.Delete).Name("blogs.destroy").WhereNumber("id")
+    })
 }
 ```
 
 **Route patterns**:
-- Group related endpoints
-- Apply middleware selectively
-- Follow RESTful conventions
+- Implement `assembly.RouteModule` on the Handler
+- Use named routes and parameter constraints
+- Resolve middleware aliases through `internal/infra/router`
+- Never edit `routes/api.go` for one starter
 
 ### Step 9: Wire Dependency Injection (provider.go)
 
@@ -742,35 +738,31 @@ func TestCreate(t *testing.T) {
 - Test business logic, not infrastructure
 - Use table-driven tests for multiple cases
 
-### Step 11: Integrate with Wire DI System
+### Step 11: Add One Starter Manifest And Catalog Entry
 
-**Add module to main wire config**:
-
-Edit `internal/wiring/wire.go`:
+The manifest is the locality boundary for runtime modules and bootstrap assets:
 
 ```go
-// Add blog import
-import (
-    // ... existing imports ...
-    "github.com/zgiai/luas/api/internal/modules/blog"
-)
-
-// Add to initializeApplication function
-func initializeApplication(cfg *config.Config, db *gorm.DB, ...) (*bootstrap.Application, func(), error) {
-    wire.Build(
-        // ... existing providers ...
-        blog.ProviderSet,  // Add this line
-        // ... rest of the providers ...
+func NewStarterManifest(handler *Handler) assembly.StarterManifest {
+    return assembly.NewStaticStarterManifest(
+        "blog",
+        assembly.WithStarterModule(handler),
+        assembly.WithStarterMigrationNames("2026_07_14_000001_create_blog_posts_table"),
     )
-    return nil, nil, nil
 }
 ```
+
+- Add a default starter manifest to `DefaultManifests`.
+- Add an optional starter provider to `starter.ProviderSet` and its manifest to
+  `OptionalManifests`. Do not add it to `DefaultManifests`.
+- Do not create parallel route, migration, or seeder lists.
+- If the starter installs an account/resource lifecycle hook, implement
+  `assembly.ActivationModule`; the hook must run only when its manifest is selected.
 
 **Generate Wire code**:
 
 ```bash
-cd internal/wiring
-wire
+make wire
 ```
 
 Expected output:
@@ -778,69 +770,60 @@ Expected output:
 wire: blog: wrote /path/to/luas/api/internal/wiring/wire_gen.go
 ```
 
-### Step 12: Register Routes in Application
+### Step 12: Prove Disabled And Enabled Assembly
 
-Edit `routes/api.go` (or wherever routes are registered):
+For an optional starter, compare the same CLI with and without selection:
 
-```go
-import (
-    // ... existing imports ...
-    "github.com/zgiai/luas/api/internal/modules/blog"
-)
+```bash
+DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+  go run ./cmd/luas route:list
 
-func RegisterAPIRoutes(app *bootstrap.Application) {
-    api := app.Router.Group("/api")
-    
-    // ... existing routes ...
-    
-    // Blog routes
-    blog.RegisterRoutes(api, app.BlogHandler, app.AuthMiddleware)
-}
+DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+  OPTIONAL_STARTERS=blog go run ./cmd/luas route:list
 ```
+
+The first output must contain no blog routes. The second must contain the module's exact route set.
+Add catalog tests proving that `ConfiguredMigrations` changes by the matching migration and that an
+unknown, duplicate, default, or non-canonical selection fails.
 
 ### Step 13: Create Database Migration
 
-Create migration file:
+Create a timestamped migration under `database/migrations/` using the current migration interface:
 
-```bash
-# Create migration file (manual for now, or use migration tool)
-cat > database/migrations/013_create_blog_posts_table.go << 'EOF'
+```go
 package migrations
 
 import (
-    "github.com/go-gormigrate/gormigrate/v2"
     "gorm.io/gorm"
+
+    "github.com/zgiai/luas/api/internal/infra/migration"
+    "github.com/zgiai/luas/api/internal/modules/blog"
 )
 
 func init() {
-    Migrations = append(Migrations, &gormigrate.Migration{
-        ID: "013_create_blog_posts_table",
-        Migrate: func(tx *gorm.DB) error {
-            type BlogPost struct {
-                ID        uint   `gorm:"primaryKey"`
-                Title     string `gorm:"size:255;not null;index"`
-                Content   string `gorm:"type:text"`
-                AuthorID  uint   `gorm:"index;not null"`
-                Status    string `gorm:"size:20;default:'draft';index"`
-                CreatedAt int64  `gorm:"autoCreateTime"`
-                UpdatedAt int64  `gorm:"autoUpdateTime"`
-                DeletedAt *int64 `gorm:"index"`
-            }
-            return tx.AutoMigrate(&BlogPost{})
-        },
-        Rollback: func(tx *gorm.DB) error {
-            return tx.Migrator().DropTable("blog_posts")
-        },
+    register("2026_07_14_000001_create_blog_posts_table", &createBlogPostsTable{
+        BaseMigration: migration.BaseMigration{UseTransaction: true},
     })
 }
-EOF
+
+type createBlogPostsTable struct {
+    migration.BaseMigration
+}
+
+func (m *createBlogPostsTable) Up(db *gorm.DB) error {
+    return db.AutoMigrate(&blog.BlogPostPO{})
+}
+
+func (m *createBlogPostsTable) Down(db *gorm.DB) error {
+    return db.Migrator().DropTable(&blog.BlogPostPO{})
+}
 ```
 
-**Run migration**:
+Register the exact migration name in the starter manifest, review indexes and lock behavior with
+`sql-migration-review`, then run it through the selected catalog:
 
 ```bash
-make migrate
-# Or: ./luas migrate
+OPTIONAL_STARTERS=blog go run ./cmd/luas db:migrate
 ```
 
 ### Step 14: Create Domain Entity
@@ -877,12 +860,14 @@ Run the validation script (see `scripts/` folder):
 **Manual checklist**:
 
 - [ ] All 8 files created and properly structured
-- [ ] Wire generation successful (`cd internal/wiring && wire`)
-- [ ] Routes registered in `routes/api.go`
-- [ ] Migration created and applied
+- [ ] Wire generation successful (`make wire`)
+- [ ] Handler implements `assembly.Module` and `assembly.RouteModule`
+- [ ] Manifest is present in exactly one of `DefaultManifests` or `OptionalManifests`
+- [ ] Disabled/enabled route comparison matches the selected manifest
+- [ ] Migration is transactional where the target database supports it, reviewed, and applied
 - [ ] Unit tests passing (`go test ./internal/modules/blog/...`)
 - [ ] Domain entity created in `internal/domain/`
-- [ ] Swagger annotations added
+- [ ] HTTP contract added under `../contracts/`
 - [ ] Handler utilities used (`pkg/handler`, `pkg/response`)
 
 **Test the API**:
@@ -893,25 +878,27 @@ make air
 
 # Test endpoints (in another terminal)
 # Create
-curl -X POST http://localhost:8080/api/blogs \
+curl -X POST http://localhost:8025/v1/blogs \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title": "Test Post", "content": "Hello world"}'
 
 # List
-curl http://localhost:8080/api/blogs
+curl http://localhost:8025/v1/blogs \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # Get by ID
-curl http://localhost:8080/api/blogs/1
+curl http://localhost:8025/v1/blogs/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 # Update
-curl -X PATCH http://localhost:8080/api/blogs/1 \
+curl -X PATCH http://localhost:8025/v1/blogs/1 \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status": "published"}'
 
 # Delete
-curl -X DELETE http://localhost:8080/api/blogs/1 \
+curl -X DELETE http://localhost:8025/v1/blogs/1 \
   -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
@@ -938,37 +925,33 @@ wire: blog: wire_gen.go:XX:YY: no provider found for ...
    )
    ```
 2. Verify interface and implementation match
-3. Ensure `ProviderSet` is added to `wiring/wire.go`
+3. Ensure the optional provider is present in `starter.ProviderSet`, or the default provider is
+   included through the same starter assembly seam
 
 ### Common Error 2: Routes Not Working
 
-**Symptom**: 404 Not Found for `/api/blogs`
+**Symptom**: 404 Not Found for `/v1/blogs`
 
 **Cause**: Routes not registered
 
 **Solution**:
-1. Verify `RegisterRoutes` is called in `routes/api.go`
-2. Check middleware order (auth middleware might block)
-3. Print registered routes:
-   ```go
-   for _, route := range app.Router.Routes() {
-       fmt.Printf("%s %s\n", route.Method, route.Path)
-   }
-   ```
+1. Verify the Handler is contributed by `NewStarterManifest` and implements
+   `assembly.RouteModule`.
+2. For an optional starter, set `OPTIONAL_STARTERS=blog`; a disabled optional route should return
+   404 by design.
+3. Check middleware aliases and authentication before changing route ownership.
+4. Inspect the actual assembly with
+   `OPTIONAL_STARTERS=blog go run ./cmd/luas route:list`.
 
 ### Common Error 3: Database Table Not Found
 
-**Symptom**: `Error 1146: Table 'luas.blog_posts' doesn't exist`
+**Symptom**: the database reports that `blog_posts` does not exist
 
 **Cause**: Migration not run
 
 **Solution**:
 ```bash
-# Run migrations
-make migrate
-
-# Or manually
-./luas migrate
+OPTIONAL_STARTERS=blog go run ./cmd/luas db:migrate
 ```
 
 ### Common Error 4: JSON Binding Fails

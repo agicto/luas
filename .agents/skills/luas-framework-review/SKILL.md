@@ -77,6 +77,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-config-authority.py` when changing environment loading, typed configuration, logger startup, runtime reload behavior, or configuration cache semantics.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
    - Run `scripts/check-surface-catalog.py` when changing downstream extraction guidance or scaffold surface classifications.
+   - Run `scripts/check-starter-catalog.py` when changing default/optional starter assembly, manifests, migrations, contracts, activation config, or starter guidance.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
    - Run `scripts/check-branch-governance.sh` when changing branch, release, deployment-branch, or CI workflow guidance.
    - For pure docs or skills, run `git diff --check` and the skill validator when relevant.
@@ -116,6 +117,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-config-authority.py` keeps runtime environment access behind `config.Config`, requires one startup snapshot for logging and Wire, and blocks removed dynamic reload/cache surfaces.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.
 - `scripts/check-surface-catalog.py` keeps `docs/SCAFFOLD_SURFACES.md` aligned with `CONTEXT.md` and the `downstream-app-extraction` surface classification table.
+- `scripts/check-starter-catalog.py` keeps additive optional starter config, manifests, migrations, contracts, roadmaps, and module-creation guidance aligned.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any. It also guards the tiny allowed export surface of `api/pkg/support`.
 - `scripts/check-branch-governance.sh` keeps `docs/BRANCHING_AND_RELEASES.md` aligned with the CI-managed `dev` / `dev-c` to `deploy-dev` / `deploy-dev-c` deployment-branch mapping.
 - `scripts/scaffold-architecture-report.py` creates an optional HTML architecture review report in `$TMPDIR`.

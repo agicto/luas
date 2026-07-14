@@ -38,7 +38,7 @@ Classify each touched surface before changing it.
 |---|---|---|
 | `core` | yes | keep unless the downstream app intentionally swaps infrastructure |
 | default starter | yes | keep, remove, or rename by product need |
-| optional starter | yes | wire in only when the product needs it |
+| optional starter | yes | select it with `OPTIONAL_STARTERS` only when the product needs it; keep API replicas and database jobs aligned |
 | capability | yes | keep if reusable; configure behind product-owned settings |
 | mock BFF | yes, development-only | replace with real API, delete, or keep local-only with guards |
 | console | yes, replaceable | rename or redesign for product workspace needs |
@@ -60,6 +60,8 @@ Classify each touched surface before changing it.
 3. **Choose keep/delete/replace**
    - Keep core and capabilities unless there is a clear product reason.
    - Keep default starters when they remain useful as business-ready building blocks.
+   - Select retained API optional starters through the canonical catalog; do not hand-register their routes or migrations.
+   - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.
    - For auth, read `contracts/AUTHENTICATION.md`; the Web cookie contract and Go JWT contract are

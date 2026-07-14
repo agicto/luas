@@ -73,6 +73,31 @@ func TestLoad_RateLimitDefaultsByEnvironment(t *testing.T) {
 	}
 }
 
+func TestLoad_OptionalStartersAreAdditiveAndEmptyByDefault(t *testing.T) {
+	withoutEnv(t, "OPTIONAL_STARTERS")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if len(cfg.Starters.Optional) != 0 {
+		t.Fatalf("default optional starters = %v, want none", cfg.Starters.Optional)
+	}
+
+	t.Setenv("OPTIONAL_STARTERS", "organization,notification")
+	cfg, err = LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() with optional starters error = %v", err)
+	}
+	if got := strings.Join(cfg.Starters.Optional, ","); got != "organization,notification" {
+		t.Fatalf("optional starters = %q, want organization,notification", got)
+	}
+}
+
 func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	withoutEnv(
 		t,

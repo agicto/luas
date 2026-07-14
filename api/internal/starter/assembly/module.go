@@ -12,6 +12,12 @@ type Module interface {
 	Name() string
 }
 
+// ActivationModule installs runtime hooks only when its owning starter is selected.
+type ActivationModule interface {
+	Module
+	Activate() error
+}
+
 // RouteModule registers HTTP routes for a module.
 type RouteModule interface {
 	Module

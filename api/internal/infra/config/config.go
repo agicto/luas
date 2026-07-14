@@ -31,6 +31,7 @@ const (
 // Config holds all application configuration
 type Config struct {
 	App        AppConfig
+	Starters   StarterConfig
 	Server     ServerConfig
 	Database   DatabaseConfig
 	Redis      RedisConfig
@@ -46,6 +47,11 @@ type Config struct {
 	Middleware MiddlewareConfig
 	Metrics    MetricsConfig
 	Tracing    TracingConfig
+}
+
+// StarterConfig controls additive activation of starters that are not part of the defaults.
+type StarterConfig struct {
+	Optional []string
 }
 
 // IsProduction reports whether this snapshot uses a production environment
@@ -248,6 +254,9 @@ func Load() (*Config, error) {
 			Env:   appEnv,
 			Debug: appDebug,
 			URL:   env.Get("APP_URL", "http://localhost:8025"),
+		},
+		Starters: StarterConfig{
+			Optional: env.GetSlice("OPTIONAL_STARTERS", []string{}),
 		},
 		Server: ServerConfig{
 			Host:              env.Get("SERVER_HOST", DefaultServerHost),

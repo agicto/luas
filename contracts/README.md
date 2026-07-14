@@ -7,6 +7,10 @@ Feature endpoint paths and DTOs are shared only when their owning contract says 
 the current browser authentication surface and Go API JWT surface require an explicit adapter;
 see [`AUTHENTICATION.md`](AUTHENTICATION.md).
 
+Optional backend starter contracts are documented independently. The first ownership foundation is
+[`ORGANIZATIONS.md`](ORGANIZATIONS.md); it is disabled by default and does not imply Web feature
+parity.
+
 ## Success Responses
 
 Non-paginated API success responses use:

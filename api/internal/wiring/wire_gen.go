@@ -16,6 +16,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter"
 )
@@ -46,10 +47,14 @@ func InitApplication() (*app.Application, error) {
 	userRepository := user.NewRepository(db)
 	jwtService := jwt.NewService(configConfig)
 	userMailer := user.NewUserMailer(service)
-	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
+	accountDeletionPolicy := user.NewAccountDeletionPolicy()
+	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer, accountDeletionPolicy)
 	authAbuseGuard := user.NewAuthAbuseGuard(configConfig)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
+	organizationRepository := organization.NewRepository(db)
+	organizationService := organization.NewService(organizationRepository)
+	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +90,14 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	userRepository := user.NewRepository(db)
 	jwtService := jwt.NewService(cfg)
 	userMailer := user.NewUserMailer(service)
-	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer)
+	accountDeletionPolicy := user.NewAccountDeletionPolicy()
+	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer, accountDeletionPolicy)
 	authAbuseGuard := user.NewAuthAbuseGuard(cfg)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
-	registry, err := starter.NewDefaultRegistry(handler, apikeyHandler, userHandler)
+	organizationRepository := organization.NewRepository(db)
+	organizationService := organization.NewService(organizationRepository)
+	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {
 		return nil, err
 	}

@@ -28,7 +28,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : A starter wired into the out-of-the-box scaffold. Current default starters are `user`, `apikey`, and `audit`.
 
 **Optional starter**
-: A starter-quality building block that exists in the repository but is not wired into the default scaffold.
+: A starter-quality building block that exists in the repository but is disabled in the default scaffold. API optional starters are activated additively through the canonical starter catalog; they never replace or subtract the default starter set.
 
 **Capability**
 : A reusable technical integration or helper that does not own an application workflow. Examples include AI clients, crypto helpers, ID generation, tracing, storage, queueing, and workflow primitives.
@@ -64,7 +64,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : Code or docs whose main purpose is demonstration. Examples must stay isolated and easy for a downstream app to delete.
 
 **Starter registry**
-: The assembly point that decides which starters, migrations, seeders, routes, middleware, events, and supporting surfaces are active in the default scaffold.
+: The assembly point that decides which default and selected optional starters, migrations, seeders, routes, middleware, events, and runtime hooks are active from one configuration snapshot.
 
 **Command manifest**
 : The assembly seam that groups CLI commands so registration does not drift across command packages.
@@ -87,7 +87,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - Core and capabilities are reusable; starters and features express application behavior.
 - Contracts connect deployable units. Source code is not shared across deployable units.
 - The production auth adapter connects the browser auth contract to the Go API contract without making either contract pretend to be the other.
-- Examples and devtools are disposable. Starters are default building blocks. Core is long-lived infrastructure.
+- Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
 ## Flagged Ambiguities
 

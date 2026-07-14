@@ -27,6 +27,11 @@ var (
 	ErrAPIKeyExpired  = errors.New("api key is expired")
 	ErrAPIKeyRevoked  = errors.New("api key is revoked")
 
+	// Organization errors
+	ErrOrganizationNotFound                  = errors.New("organization not found")
+	ErrOrganizationSlugAlreadyExists         = errors.New("organization slug already exists")
+	ErrOrganizationOwnershipTransferRequired = errors.New("organization ownership must be transferred before account deletion")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

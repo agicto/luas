@@ -5,6 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 )
 
 func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
@@ -33,4 +35,31 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 	seeders := registry.Seeders()
 	require.Len(t, seeders, 1)
 	assert.Equal(t, "users", seeders[0].Name())
+}
+
+func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"organization"}}}
+
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, manifests, 4)
+	assert.Equal(t, "audit", manifests[0].Name())
+	assert.Equal(t, "apikey", manifests[1].Name())
+	assert.Equal(t, "user", manifests[2].Name())
+	assert.Equal(t, "organization", manifests[3].Name())
+
+	migrations, err := ConfiguredMigrations(cfg)
+	require.NoError(t, err)
+	assert.Len(t, migrations, 8)
+	organizationMigration, exists := migrations["2026_07_14_000000_create_organizations_tables"]
+	require.True(t, exists)
+	assert.True(t, organizationMigration.WithinTransaction())
+}
+
+func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"billing"}}}
+
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown optional starter")
 }

@@ -1,0 +1,158 @@
+package organization
+
+import (
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/zgiai/luas/api/internal/capabilities/crypto"
+	"github.com/zgiai/luas/api/internal/domain"
+	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/user"
+)
+
+// Service defines the organization ownership kernel.
+type Service interface {
+	Create(ctx context.Context, userID uint, req *CreateOrganizationRequest) (*domain.OrganizationMembership, error)
+	List(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
+	Get(ctx context.Context, userID, organizationID uint) (*domain.OrganizationMembership, error)
+	Update(ctx context.Context, userID, organizationID uint, req *UpdateOrganizationRequest) (*domain.OrganizationMembership, error)
+}
+
+type service struct {
+	repo domain.OrganizationRepository
+}
+
+var (
+	_ Service                   = (*service)(nil)
+	_ user.AccountDeletionGuard = (*service)(nil)
+)
+
+// NewService creates the organization service.
+func NewService(repo domain.OrganizationRepository) *service {
+	return &service{repo: repo}
+}
+
+func (s *service) Create(ctx context.Context, userID uint, req *CreateOrganizationRequest) (*domain.OrganizationMembership, error) {
+	if userID == 0 || req == nil {
+		return nil, domain.ErrInvalidInput
+	}
+	name := strings.TrimSpace(req.Name)
+	if !validOrganizationName(name) {
+		return nil, domain.ErrInvalidInput
+	}
+
+	slug := req.Slug
+	if slug == "" {
+		generated, err := crypto.GenerateKeyHex(8)
+		if err != nil {
+			return nil, fmt.Errorf("generate organization slug: %w", err)
+		}
+		slug = "org-" + generated
+	}
+	if !validOrganizationSlug(slug) {
+		return nil, domain.ErrInvalidInput
+	}
+
+	organization := &domain.Organization{
+		Name:      name,
+		Slug:      slug,
+		CreatedBy: userID,
+	}
+	owner := &domain.OrganizationMembership{
+		UserID: userID,
+		Role:   domain.OrganizationRoleOwner,
+	}
+	if err := s.repo.CreateWithOwner(ctx, organization, owner); err != nil {
+		return nil, fmt.Errorf("create organization with owner: %w", err)
+	}
+
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		Action:     "create",
+		Resource:   "organizations",
+		TargetType: "organization",
+		TargetID:   strconv.FormatUint(uint64(organization.ID), 10),
+		Result:     domain.AuditResultSuccess,
+		Metadata: map[string]any{
+			"role": domain.OrganizationRoleOwner,
+		},
+	})
+	return owner, nil
+}
+
+func (s *service) List(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error) {
+	if userID == 0 || page < 1 || pageSize < 1 {
+		return nil, 0, domain.ErrInvalidInput
+	}
+	return s.repo.ListForUser(ctx, userID, page, pageSize)
+}
+
+func (s *service) Get(ctx context.Context, userID, organizationID uint) (*domain.OrganizationMembership, error) {
+	if userID == 0 || organizationID == 0 {
+		return nil, domain.ErrInvalidInput
+	}
+	return s.repo.FindForUser(ctx, organizationID, userID)
+}
+
+func (s *service) Update(ctx context.Context, userID, organizationID uint, req *UpdateOrganizationRequest) (*domain.OrganizationMembership, error) {
+	if userID == 0 || organizationID == 0 || req == nil {
+		return nil, domain.ErrInvalidInput
+	}
+	name := strings.TrimSpace(req.Name)
+	if !validOrganizationName(name) {
+		return nil, domain.ErrInvalidInput
+	}
+
+	membership, err := s.repo.FindForUser(ctx, organizationID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if membership.Organization == nil {
+		return nil, domain.ErrOrganizationNotFound
+	}
+	if !membership.Role.CanManageOrganization() {
+		return nil, domain.ErrPermissionDenied
+	}
+	if membership.Organization.Name == name {
+		return membership, nil
+	}
+
+	before := membership.Organization.Name
+	membership.Organization.Name = name
+	if err := s.repo.Update(ctx, membership.Organization); err != nil {
+		return nil, fmt.Errorf("update organization: %w", err)
+	}
+
+	auditstarter.RecordChange(ctx, auditstarter.Change{
+		Action:     "update",
+		Resource:   "organizations",
+		TargetType: "organization",
+		TargetID:   strconv.FormatUint(uint64(organizationID), 10),
+		Result:     domain.AuditResultSuccess,
+		Changes: map[string]domain.AuditValueChange{
+			"name": {Before: before, After: name},
+		},
+	})
+	return membership, nil
+}
+
+// AccountDeletionGuardName identifies the optional starter guard.
+func (s *service) AccountDeletionGuardName() string {
+	return "organization"
+}
+
+// CheckAccountDeletion prevents a soft-deleted account from orphaning owned organizations.
+func (s *service) CheckAccountDeletion(ctx context.Context, userID uint) error {
+	if userID == 0 {
+		return domain.ErrInvalidInput
+	}
+	count, err := s.repo.CountOwnedByUser(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("count owned organizations: %w", err)
+	}
+	if count > 0 {
+		return domain.ErrOrganizationOwnershipTransferRequired
+	}
+	return nil
+}

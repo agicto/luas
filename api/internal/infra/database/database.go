@@ -101,6 +101,8 @@ func NewTestDB() (*gorm.DB, error) {
 		Database: config.DatabaseConfig{
 			Driver:               "sqlite",
 			Memory:               true,
+			MaxIdleConns:         1,
+			MaxOpenConns:         1,
 			SlowThreshold:        time.Second,
 			IgnoreRecordNotFound: true,
 		},

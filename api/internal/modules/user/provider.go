@@ -16,6 +16,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(userRepository), new(*repository)),
 	wire.Bind(new(passwordResetStore), new(*repository)),
 	NewUserMailer,
+	NewAccountDeletionPolicy,
 	NewService,
 	wire.Bind(new(AuthService), new(*service)),
 	wire.Bind(new(ProfileService), new(*service)),

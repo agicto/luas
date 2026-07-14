@@ -15,11 +15,17 @@ import (
 // SetupApp initializes the feature-test application by reusing the production DI graph
 // and HTTP startup chain with a test-specific config.
 func SetupApp() *gin.Engine {
+	return SetupAppWithOptionalStarters()
+}
+
+// SetupAppWithOptionalStarters reuses production assembly with an explicit additive selection.
+func SetupAppWithOptionalStarters(optionalStarters ...string) *gin.Engine {
 	cfg := &config.Config{}
 	cfg.App.Name = "Luas Test"
 	cfg.App.Env = "test"
 	cfg.App.Debug = false
 	cfg.App.URL = "http://localhost:0"
+	cfg.Starters.Optional = append([]string(nil), optionalStarters...)
 	cfg.Server.Mode = "test"
 	cfg.Database.Enabled = true
 	cfg.Database.Driver = "sqlite"
@@ -46,7 +52,7 @@ func SetupApp() *gin.Engine {
 		panic("failed to init test application: " + err.Error())
 	}
 
-	if err := bootstrap.RunMigrationsWithEvents(application.DB, application.EventBus); err != nil {
+	if err := bootstrap.RunRegisteredMigrations(application.Migrator); err != nil {
 		panic("failed to run migrations for test db: " + err.Error())
 	}
 
@@ -57,5 +63,11 @@ func SetupApp() *gin.Engine {
 // NewTestCase is a shortcut to create a test case with the setup app
 func NewTestCase(t *testing.T) *test_platform.TestCase {
 	engine := SetupApp()
+	return test_platform.NewTestCase(t, engine)
+}
+
+// NewTestCaseWithOptionalStarters creates a feature test with additive starters enabled.
+func NewTestCaseWithOptionalStarters(t *testing.T, optionalStarters ...string) *test_platform.TestCase {
+	engine := SetupAppWithOptionalStarters(optionalStarters...)
 	return test_platform.NewTestCase(t, engine)
 }

@@ -5,6 +5,7 @@ import (
 
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/internal/wiring"
 )
 
@@ -13,6 +14,9 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
+	}
+	if validationErr := starter.ValidateConfig(cfg); validationErr != nil {
+		log.Fatalf("Failed to resolve starter configuration: %v", validationErr)
 	}
 	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {
 		log.Fatalf("Failed to initialize logger: %v", loggerErr)

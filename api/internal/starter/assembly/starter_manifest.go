@@ -1,5 +1,7 @@
 package assembly
 
+import "reflect"
+
 // StarterManifest describes how a starter contributes modules and bootstrap assets.
 type StarterManifest interface {
 	Name() string
@@ -53,10 +55,23 @@ func (m *StaticStarterManifest) SeederNames() []string {
 // WithStarterModule adds a module to a static starter manifest.
 func WithStarterModule(module Module) StarterManifestOption {
 	return func(manifest *StaticStarterManifest) {
-		if module == nil {
+		if isNilModule(module) {
 			return
 		}
 		manifest.modules = append(manifest.modules, module)
+	}
+}
+
+func isNilModule(module Module) bool {
+	if module == nil {
+		return true
+	}
+	value := reflect.ValueOf(module)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
 	}
 }
 

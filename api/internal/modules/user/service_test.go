@@ -114,7 +114,7 @@ func (r *fakeRepo) ResetPasswordWithToken(ctx context.Context, tokenHash string,
 
 func newTestService(repo userRepository) *service {
 	cfg := &config.Config{}
-	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), email.NewService(cfg))
+	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), email.NewService(cfg), NewAccountDeletionPolicy())
 }
 
 func mustHashTestPassword(t *testing.T) string {
@@ -434,6 +434,7 @@ func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailur
 				jwt.NewTestService(),
 				events.NewEventBus(),
 				&fakeUserMailer{passwordResetErr: tt.mailErr},
+				NewAccountDeletionPolicy(),
 			)
 
 			err := svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{

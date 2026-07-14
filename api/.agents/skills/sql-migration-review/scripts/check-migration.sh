@@ -36,7 +36,8 @@ report_ok() { echo "✅ $1"; }
 # -----------------------------------------------------------------------------
 BASE=$(basename "$FILE")
 if [[ "$BASE" =~ ^[0-9]{14}_[a-z0-9_]+\.(sql|go)$ ]] || \
-   [[ "$BASE" =~ ^[0-9]{10}_[a-z0-9_]+\.(sql|go)$ ]]; then
+   [[ "$BASE" =~ ^[0-9]{10}_[a-z0-9_]+\.(sql|go)$ ]] || \
+   [[ "$BASE" =~ ^[0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{6}_[a-z0-9_]+\.(sql|go)$ ]]; then
     report_ok "Filename follows timestamp_snake_case pattern"
 else
     report_warn "Filename '$BASE' does not match the standard timestamp_<name>.{sql,go} pattern"

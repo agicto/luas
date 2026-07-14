@@ -89,7 +89,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md), which separates the ready-to-use default starters from planned optional starters such as organization, permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` ownership kernel is runnable but explicitly foundation-only; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -385,6 +385,39 @@ Verification:
 - `bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh`
 - Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
 
+### Completed P1 — Additive Optional Starter Assembly
+
+Optional starters previously required manual edits across Wire, routes, migration commands, and
+seeder commands, so a downstream app could easily activate only half a business capability. The
+typed `OPTIONAL_STARTERS` catalog now keeps `user`, `apikey`, and `audit` as immutable defaults while
+adding selected manifests, routes, runtime hooks, migrations, and seeders from one snapshot. Unknown,
+duplicate, default, and non-canonical names fail startup. Offline asset resolution now safely omits
+typed-nil runtime modules, and the application migrator is populated by the same registry used by
+HTTP.
+
+The first optional entry is an `organization` ownership kernel: atomic organization/owner creation,
+membership-scoped list/get, owner/admin rename, stable organization errors, audit changes, and an
+active-only account-deletion guard that prevents orphaned tenants. `organization` means the tenant
+boundary; it is not interchangeable with a future workspace concept. The starter remains
+foundation-only until invitation, member lifecycle, ownership transfer, active organization, Web,
+mock, and extraction surfaces are complete.
+
+Against baseline commit `98865a7`, default assembly stays at 14 routes and seven migrations while
+`OPTIONAL_STARTERS=organization` exposes exactly four additional routes and one migration. The
+Darwin/arm64 stripped server moves from 34,445,106 to 34,544,338 bytes (+99,232 bytes, 0.29%); the
+module graph remains at 276 and `go.mod` / `go.sum` are unchanged. Five-run HTTP middleware medians
+remain effectively flat at 1,207 versus 1,186 ns/request with metrics disabled and 1,432 versus
+1,410 ns/request with metrics enabled; all runs retain 18 allocations/request. These host-local
+timings are regression evidence, not an SLO. A real PostgreSQL run exercised the full ownership
+flow and an 8 -> 7 -> 8 migration rollback/reapply cycle.
+
+Verification:
+
+- `cd api && go test ./internal/starter/... ./internal/modules/organization ./tests/feature -run 'TestOrganization'`
+- Disabled/enabled `go run ./cmd/luas route:list` comparison
+- Real PostgreSQL migration and ownership HTTP flow
+- `make governance` and `make check`
+
 ### P1 — Starter Business Readiness
 
 Problem: the current default starter set is useful for auth, API keys, and audit, but most new SaaS, internal-tool, and developer-product projects also need reusable multi-user ownership, authorization, invitations, notification preferences, files, settings, usage, and integration flows.
@@ -392,7 +425,7 @@ Problem: the current default starter set is useful for auth, API keys, and audit
 Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
-2. Build `organization` as an optional starter first, because ownership scope affects permission, notification, file, settings, usage, billing, webhook, and AI workspace semantics.
+2. Finish invitations, membership lifecycle, ownership transfer, active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
 3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
 4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 

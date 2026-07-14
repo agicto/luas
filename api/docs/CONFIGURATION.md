@@ -57,6 +57,25 @@ would leave database pools, HTTP servers, clients, middleware, and workers on di
 Luas therefore does not expose runtime configuration watching. `make air` rebuilds and restarts the
 development process, which creates a complete new dependency graph.
 
+## Optional Starter Activation
+
+`OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
+empty; `audit`, `apikey`, and `user` remain active without being named. The current available value
+is `organization`:
+
+```dotenv
+OPTIONAL_STARTERS=organization
+```
+
+Selection is resolved through `internal/starter` from the same typed configuration snapshot used by
+Wire. Unknown names, duplicates, non-lowercase names, and default starter names fail before server
+startup or CLI database work. HTTP routes, runtime hooks, migrations, and seeders consume the same
+selection; do not maintain a second starter list in a command or deployment script.
+
+All API replicas, migration jobs, and seeder jobs for one environment must receive the same value.
+Changing it requires a deployment and, when enabling a persistence-owning starter, its pre-deploy
+migration. It is not a per-request flag and must not be toggled independently across replicas.
+
 ## Secrets And Deployment
 
 Luas does not serialize a configuration cache. A cache would duplicate `JWT_SECRET`, database

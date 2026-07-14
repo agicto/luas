@@ -14,7 +14,7 @@ the verification that proves it is still safe to keep, delete, or replace.
 |---|---|---|---|---|
 | `core` | `api/internal/bootstrap`, `api/internal/infra`, `api/pkg`, `web/src/components/ui`, `web/src/config`, `web/src/http`, `web/src/i18n`, `web/src/themes` | Long-lived runtime and infrastructure. | Keep unless the downstream app intentionally swaps infrastructure. | `make check`; `bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh` |
 | `default starter` | `api/internal/domain`, `api/internal/modules/user`, `api/internal/modules/apikey`, `api/internal/modules/audit`, `web/src/features/auth` | Business-ready starter behavior wired into the default scaffold. | Keep, remove, or rename by product need while preserving contracts. | `cd api && make test`; `cd web && pnpm test -- --run`; `make check` |
-| `optional starter` | Documented by `api/docs/adr/0002-default-starters.md`, `docs/STARTER_BUSINESS_ROADMAP.md`, and starter-style module guidance; not wired into the default scaffold unless explicitly added. | Starter-quality behavior that should remain out of default assembly until chosen. | Wire in only when the product needs it, then document the contract and registration seam. | `cd api && make test`; `bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh` |
+| `optional starter` | `api/internal/modules/organization` is the first backend foundation; available starters are cataloged by `api/internal/starter`, disabled by default, and selected with `OPTIONAL_STARTERS`. | Starter-quality behavior kept outside default runtime assembly until explicitly chosen. | Select only what the product needs, keep migration jobs and all replicas on the same selection, and remove both the catalog entry and owned surfaces when deleting it. | `cd api && make test`; `go run ./cmd/luas route:list`; `make governance` |
 | `capability` | `api/internal/capabilities`, reusable helpers under `api/pkg`, technical Web helpers without product workflow ownership | Reusable technical integration or helper. | Keep when reusable; configure behind product-owned settings. | Targeted package tests; `make check` |
 | `mock BFF` | `web/src/app/api`, `web/src/app/api/_shared`, `web/src/features/*/server` mock state | Development-only browser-contract substitute. | Replace with production endpoints or an explicit adapter, delete, or keep local-only with production and same-origin mutation guards. | `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`; `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py` |
 | `console` | `web/src/app/(protected)/(console)` and shared console UI under `web/src/components/features/console` | Replaceable authenticated scaffold workspace. | Rename or redesign in downstream mode; do not turn it into a fixed downstream workspace in Luas. | `cd web && pnpm type-check && pnpm lint && pnpm test -- --run` |
@@ -39,8 +39,9 @@ render when the normal root runtime fails.
 3. Update [`../contracts/README.md`](../contracts/README.md) first when a replacement changes HTTP behavior.
 4. Use [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md) when deleting, replacing, or keeping mock BFF routes.
 5. Use [`../api/docs/ADDING_MODULE.md`](../api/docs/ADDING_MODULE.md) for starter-style backend behavior.
-6. Use [`../web/docs/ADDING_FEATURE.md`](../web/docs/ADDING_FEATURE.md) for product-facing Web features.
-7. Run the contamination scan before committing scaffold-mode work that touched examples, devtools, console surfaces, mock BFF behavior, product copy, deployment names, or downstream docs.
+6. Select retained optional API starters with one `OPTIONAL_STARTERS` value shared by replicas and database jobs; do not hand-register their routes or migrations.
+7. Use [`../web/docs/ADDING_FEATURE.md`](../web/docs/ADDING_FEATURE.md) for product-facing Web features.
+8. Run the contamination scan before committing scaffold-mode work that touched examples, devtools, console surfaces, mock BFF behavior, product copy, deployment names, or downstream docs.
 
 ## Verification Matrix
 
@@ -48,6 +49,6 @@ render when the normal root runtime fails.
 |---|---|
 | Surface classification or this catalog | `python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py`; vocabulary check; doc link check |
 | Mock BFF kept, replaced, or deleted | `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`; update or remove the guard when no mock routes remain |
-| API starter kept, removed, or added | `cd api && make test`; package boundary check |
+| API starter kept, removed, or added | `cd api && make test`; `python3 .agents/skills/luas-framework-review/scripts/check-starter-catalog.py`; package boundary check |
 | Web feature, console, devtools, or example changed | `cd web && pnpm type-check && pnpm lint && pnpm test -- --run` |
 | Cross-boundary downstream extraction | `make check`; error contract check; contamination scan |

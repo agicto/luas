@@ -43,6 +43,7 @@ REQUIRED_REFERENCES = [
     "../web/docs/ADDING_FEATURE.md",
     "check-downstream-contamination.sh",
     "check-surface-catalog.py",
+    "check-starter-catalog.py",
 ]
 TABLE_ROW_RE = re.compile(r"^\|(.+)\|$")
 

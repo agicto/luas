@@ -10,6 +10,7 @@ import (
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/internal/wiring"
 	"github.com/zgiai/luas/api/routes"
 )
@@ -40,6 +41,9 @@ func (c *ServeCommand) Run(args []string) error {
 	if options.port != 0 {
 		cfg.Server.Port = options.port
 	}
+	if validationErr := starter.ValidateConfig(cfg); validationErr != nil {
+		return fmt.Errorf("resolve starter configuration: %w", validationErr)
+	}
 	if runtimeErr := validateServeRuntime(options, cfg); runtimeErr != nil {
 		return runtimeErr
 	}
@@ -53,7 +57,7 @@ func (c *ServeCommand) Run(args []string) error {
 		return fmt.Errorf("failed to initialize application: %w", err)
 	}
 	if options.migrate {
-		if err := bootstrap.RunMigrationsWithEvents(application.DB, application.EventBus); err != nil {
+		if err := bootstrap.RunRegisteredMigrations(application.Migrator); err != nil {
 			return fmt.Errorf("run startup migrations: %w", err)
 		}
 	}
@@ -145,6 +149,11 @@ func (c *EnvCommand) Run(args []string) error {
 	c.output.Title("Environment Information")
 
 	c.output.TwoColumn("Environment", cfg.Server.Mode)
+	optionalStarters := strings.Join(cfg.Starters.Optional, ", ")
+	if optionalStarters == "" {
+		optionalStarters = "(none)"
+	}
+	c.output.TwoColumn("Optional Starters", optionalStarters)
 	c.output.TwoColumn("Server Port", fmt.Sprintf("%d", cfg.Server.Port))
 	c.output.TwoColumn("Database Enabled", fmt.Sprintf("%v", cfg.Database.Enabled))
 	if cfg.Database.Enabled {

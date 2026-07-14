@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"
@@ -68,6 +69,21 @@ type fullModule struct {
 	counters *counters
 }
 
+type activationOnly struct {
+	name     string
+	counters *counters
+	err      error
+}
+
+func (m *activationOnly) Name() string {
+	return m.name
+}
+
+func (m *activationOnly) Activate() error {
+	m.counters.events++
+	return m.err
+}
+
 func (m *fullModule) Name() string {
 	return m.name
 }
@@ -92,6 +108,7 @@ var (
 	_ assembly.RouteModule      = (*fullModule)(nil)
 	_ assembly.MiddlewareModule = (*fullModule)(nil)
 	_ assembly.EventModule      = (*fullModule)(nil)
+	_ assembly.ActivationModule = (*activationOnly)(nil)
 )
 
 func TestRegistryDispatchesOnlySupportedCapabilities(t *testing.T) {
@@ -129,4 +146,63 @@ func TestRegistryModulesReturnsClone(t *testing.T) {
 	original := registry.Modules()
 	assert.Len(t, original, 1)
 	assert.Equal(t, "module-only", original[0].Name())
+}
+
+func TestRegistryActivatesOnlyAppliedManifestModules(t *testing.T) {
+	registry := NewRegistry()
+	activationCounters := &counters{}
+	manifest := assembly.NewStaticStarterManifest(
+		"organization",
+		assembly.WithStarterModule(&activationOnly{name: "organization", counters: activationCounters}),
+	)
+
+	assert.NoError(t, registry.ApplyManifest(manifest))
+	assert.Equal(t, 1, activationCounters.events)
+	assert.Equal(t, []string{"organization"}, registry.StarterNames())
+
+	err := registry.ApplyManifest(manifest)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "already applied")
+	assert.Equal(t, 1, activationCounters.events)
+}
+
+func TestRegistryDoesNotActivateOrMutateWhenManifestAssetsAreInvalid(t *testing.T) {
+	registry := NewRegistry()
+	activationCounters := &counters{}
+	manifest := assembly.NewStaticStarterManifest(
+		"invalid-assets",
+		assembly.WithStarterModule(&activationOnly{name: "invalid-assets", counters: activationCounters}),
+		assembly.WithStarterMigrationNames("2099_01_01_000000_missing"),
+	)
+
+	err := registry.ApplyManifest(manifest)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "not registered")
+	assert.Zero(t, activationCounters.events)
+	assert.Empty(t, registry.Modules())
+	assert.Empty(t, registry.StarterNames())
+}
+
+func TestRegistryRejectsMigrationOwnershipCollisionsBeforeActivation(t *testing.T) {
+	registry := NewRegistry()
+	const migrationName = "2025_06_18_000000_create_users_table"
+	first := assembly.NewStaticStarterManifest(
+		"first",
+		assembly.WithStarterMigrationNames(migrationName),
+	)
+	assert.NoError(t, registry.ApplyManifest(first))
+
+	activationCounters := &counters{}
+	second := assembly.NewStaticStarterManifest(
+		"second",
+		assembly.WithStarterModule(&activationOnly{name: "second", counters: activationCounters}),
+		assembly.WithStarterMigrationNames(migrationName),
+	)
+
+	err := registry.ApplyManifest(second)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "already owned")
+	assert.Zero(t, activationCounters.events)
+	assert.Equal(t, []string{"first"}, registry.StarterNames())
+	assert.Empty(t, registry.Modules())
 }

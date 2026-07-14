@@ -50,6 +50,18 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeInvalidInput,
 		},
 		{
+			name:       "organization is not visible",
+			err:        fmt.Errorf("find membership: %w", domain.ErrOrganizationNotFound),
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeOrganizationNotFound,
+		},
+		{
+			name:       "organization ownership blocks account deletion",
+			err:        domain.ErrOrganizationOwnershipTransferRequired,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeOrganizationOwnershipTransferRequired,
+		},
+		{
 			name:       "wrapped service unavailable",
 			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
 			statusCode: http.StatusServiceUnavailable,

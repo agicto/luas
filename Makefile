@@ -10,6 +10,7 @@ governance:
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-config-authority.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py
+	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-starter-catalog.py
 	bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
 	bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh
 	bash .agents/skills/scripts/validate-skill.sh --all

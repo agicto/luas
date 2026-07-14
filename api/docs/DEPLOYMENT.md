@@ -61,7 +61,9 @@ docker compose down
 ```
 
 Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
-`JWT_SECRET` and `LUAS_DB_PASSWORD`. `docker compose down --volumes` also deletes local database data.
+`JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
+ownership kernel; the API process and its local startup migration receive the same value.
+`docker compose down --volumes` also deletes local database data.
 
 ## Production Inputs
 
@@ -73,6 +75,8 @@ A downstream production deployment must inject at least:
   database-backed starters remain installed.
 - `SERVER_TRUSTED_PROXIES`: only exact ingress/load-balancer IPs or CIDRs when forwarding headers are
   trusted.
+- `OPTIONAL_STARTERS`: one identical additive selection for every API replica, migration job, and
+  seeder job. Omit or set empty when no optional starter is enabled.
 
 Keep secrets in the deployment platform's secret store, not in the image, Compose file, repository,
 or command history. Keep `/health/live` as the process liveness signal and `/health/ready` as the
@@ -94,7 +98,9 @@ Do not run migrations independently in every application replica. The downstream
 serialization, failure handling, and rollback policy. Database mutation commands derive production
 mode from the validated configuration snapshot; `db:migrate`, `db:rollback`, `db:reset`, and
 `db:fresh` require an explicit `--force` in production. `serve --migrate` is rejected in production
-because startup replicas are not a migration serialization mechanism.
+because startup replicas are not a migration serialization mechanism. A mismatch in
+`OPTIONAL_STARTERS` between the pre-deploy job and serving replicas is a deployment contract
+violation: it can produce routes without tables or tables without owning runtime behavior.
 
 ## Change Checklist
 

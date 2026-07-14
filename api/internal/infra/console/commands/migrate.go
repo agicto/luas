@@ -31,6 +31,11 @@ func (w *consoleOutputWriter) Write(migrationName string, statements []string) {
 
 // createMigrator creates a new Migrator instance with registered migrations.
 func createMigrator(cfg *config.Config) (*migration.Migrator, error) {
+	configuredMigrations, err := starter.ConfiguredMigrations(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// Connect to DB
 	db, err := database.NewDB(cfg)
 	if err != nil {
@@ -46,11 +51,7 @@ func createMigrator(cfg *config.Config) (*migration.Migrator, error) {
 	// Create migrator
 	migrator := migration.NewMigrator(repo, db, nil)
 
-	defaultMigrations, err := starter.DefaultMigrations()
-	if err != nil {
-		return nil, err
-	}
-	migrator.RegisterMany(defaultMigrations)
+	migrator.RegisterMany(configuredMigrations)
 
 	return migrator, nil
 }
@@ -438,7 +439,7 @@ func (c *FreshCommand) Run(args []string) error {
 		c.output.Info("Running seeders...")
 		// Import bootstrap for seeder execution
 		db := migrator.DB()
-		if err := runSeeders(db); err != nil {
+		if err := runSeeders(db, cfg); err != nil {
 			c.output.Error("Seeding failed: %v", err)
 			return err
 		}
@@ -449,8 +450,8 @@ func (c *FreshCommand) Run(args []string) error {
 }
 
 // runSeeders runs database seeders.
-func runSeeders(db *gorm.DB) error {
-	return bootstrap.RunSeeders(db)
+func runSeeders(db *gorm.DB, cfg *config.Config) error {
+	return bootstrap.RunConfiguredSeeders(db, cfg)
 }
 
 // StatusCommand shows migration status.

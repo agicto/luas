@@ -2,6 +2,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -45,18 +46,25 @@ func RunMigrations(db *gorm.DB) error {
 
 // RunMigrationsWithEvents runs all pending migrations with event bus integration.
 func RunMigrationsWithEvents(db *gorm.DB, eventBus *events.EventBus) error {
-	log.Println("Starting database migrations")
-	startTime := time.Now()
-
 	migrator, err := getMigrator(db, eventBus)
 	if err != nil {
 		log.Printf("Failed to load starter migrations: %v", err)
 		return err
 	}
+	return RunRegisteredMigrations(migrator)
+}
+
+// RunRegisteredMigrations runs migrations already resolved by application starter assembly.
+func RunRegisteredMigrations(migrator *migration.Migrator) error {
+	if migrator == nil {
+		return fmt.Errorf("configured migrator is required")
+	}
+
+	log.Println("Starting database migrations")
+	startTime := time.Now()
 
 	// Execute migrations
-	opts := migration.NewMigratorOptions()
-	executed, err := migrator.Run(opts)
+	executed, err := migrator.Run(migration.NewMigratorOptions())
 	if err != nil {
 		log.Printf("Migration failed: %v", err)
 		return err
