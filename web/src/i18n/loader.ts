@@ -35,6 +35,10 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/console/zh-Hans'),
     'en-US': () => import('./modules/console/en-US'),
   },
+  organization: {
+    'zh-Hans': () => import('./modules/organization/zh-Hans'),
+    'en-US': () => import('./modules/organization/en-US'),
+  },
   settings: {
     'zh-Hans': () => import('./modules/settings/zh-Hans'),
     'en-US': () => import('./modules/settings/en-US'),

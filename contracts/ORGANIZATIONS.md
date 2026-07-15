@@ -101,6 +101,44 @@ The optional starter exposes one verification endpoint:
 - Cross-origin browser deployments must include `Organization-Id` in `CORS_ALLOW_HEADERS` when
   exposing context-protected API routes directly.
 
+## Web Browser Integration
+
+The Web organization feature is independently optional. Enable it only when the API organization
+starter is active:
+
+```dotenv
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization
+```
+
+Browser calls remain same-origin under `/api`. In production, the fixed Web API adapter maps those
+paths to the corresponding `/v1` operations and supplies the bearer token from its server-only
+HttpOnly cookie. The adapter is an allowlist of route handlers, not an arbitrary proxy: browser
+cookies, browser authorization headers, and caller-selected upstream paths are never forwarded.
+
+The first browser workflow owns these paths:
+
+| Browser operation | Browser endpoint | Upstream operation |
+|---|---|---|
+| List organizations | `GET /api/organizations` | `GET /v1/organizations` |
+| Create organization | `POST /api/organizations` | `POST /v1/organizations` |
+| Get organization | `GET /api/organizations/:id` | `GET /v1/organizations/:id` |
+| Rename organization | `PATCH /api/organizations/:id` | `PATCH /v1/organizations/:id` |
+| Verify active context | `GET /api/organization-context` plus `Organization-Id` | `GET /v1/organization-context` plus `Organization-Id` |
+
+- The selected organization is represented by `/console/organizations/:id`. It is derived from the
+  current URL and is not written to a global cookie, `localStorage`, or a module-level store.
+- The browser service validates successful organization payloads before caching them. Invalid
+  successful JSON is a client-owned `CLIENT.INVALID_RESPONSE`, not an authenticated or empty state.
+- Paginated calls explicitly preserve and validate the global `meta` and `links` envelope fields;
+  the default Web response interceptor continues to extract `data` for non-paginated callers.
+- Unsafe same-origin routes reject cross-origin requests before reading the body. Both incoming
+  JSON and upstream JSON have bounded byte budgets. Adapter errors preserve stable status,
+  `error_code`, field ownership, `request_id`, rate-limit headers, and `Vary`, while replacing
+  upstream display text with adapter-owned generic text.
+- Development mock routes implement the same browser envelope and authorization shape only when
+  the mock BFF and organization Web feature are enabled. They are replaceable development state,
+  not production persistence.
+
 ## Member Lifecycle
 
 Member endpoints require the standard Go API bearer token. The public `member` resource represents

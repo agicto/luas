@@ -30,12 +30,13 @@ NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_DEFAULT_LOCALE=zh-Hans
 NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED=true
-AUTH_ADAPTER_ENABLED=false
+API_ADAPTER_ENABLED=false
+NEXT_PUBLIC_OPTIONAL_FEATURES=
 MOCK_BFF_ENABLED=false
 ```
 
-Most `/api/*` route behavior is the development mock BFF. Auth routes are hybrid and can select the
-shipped production adapter. Mock behavior is available outside production by default, while
+Most `/api/*` route behavior is the development mock BFF. Auth and enabled optional feature routes
+can select the shipped production adapter. Mock behavior is available outside production by default, while
 production returns `503 COMMON.SERVICE_UNAVAILABLE` unless a production backend or explicit
 demo-only `MOCK_BFF_ENABLED=true` is configured.
 
@@ -61,7 +62,7 @@ src/
 │   ├── (auth)/             # Public auth routes
 │   ├── (protected)/        # Authenticated route groups
 │   ├── (site)/             # Public site pages
-│   └── api/                # Browser HTTP routes: mock behavior + auth adapter
+│   └── api/                # Browser HTTP routes: mock behavior + fixed production adapters
 ├── components/             # Shared UI and layout components
 ├── features/               # Feature-first folders
 ├── http/                   # Axios wrapper and error normalization
@@ -100,15 +101,31 @@ authorization boundary for production operations.
 For the Luas Go API, enable the shipped production adapter while keeping browser requests on `/api`:
 
 ```env
-AUTH_ADAPTER_ENABLED=true
-AUTH_API_URL=http://api:8025/v1
-AUTH_API_TIMEOUT_MS=5000
-AUTH_CLIENT_IP_HEADER=x-real-ip
+API_ADAPTER_ENABLED=true
+API_UPSTREAM_URL=http://api:8025/v1
+API_UPSTREAM_TIMEOUT_MS=5000
+API_UPSTREAM_MAX_RESPONSE_BYTES=1048576
+API_CLIENT_IP_HEADER=x-real-ip
 ```
 
 The adapter takes precedence over mock auth, stores the API JWT in an HttpOnly host cookie, resolves
 protected sessions on the server, and leaves unrelated mock routes disabled. Downstream apps using
 another identity provider can keep `client-session` mode and replace this adapter seam.
+
+## Organization Feature
+
+Enable the browser feature only when the API process also enables the optional organization starter:
+
+```env
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization
+```
+
+The first browser workflow provides the organization directory, creation, URL-scoped switching,
+active-context verification, and basic rename settings. Development uses a replaceable in-memory
+mock; production uses fixed same-origin adapter routes and the HttpOnly API session. Selection is
+derived from `/console/organizations/:id` and is never persisted globally. See
+[docs/ORGANIZATIONS.md](docs/ORGANIZATIONS.md) and
+[../contracts/ORGANIZATIONS.md](../contracts/ORGANIZATIONS.md).
 
 ## HTTP Contract
 

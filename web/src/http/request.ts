@@ -7,8 +7,20 @@ import {
   type ErrorCodeValue,
 } from './codes';
 
+type ResponseMode = 'data' | 'envelope';
+
 /** Axios request options accepted by HttpClient. */
-export type RequestConfig = AxiosRequestConfig;
+export type RequestConfig = AxiosRequestConfig & {
+  luasResponseMode?: ResponseMode;
+};
+
+export interface ApiSuccessEnvelope<T = unknown> {
+  code: 0;
+  message: string;
+  data: T;
+  meta?: unknown;
+  links?: unknown;
+}
 
 interface ApiErrorBody {
   code?: string | number;
@@ -99,6 +111,10 @@ class HttpClient {
     this.instance.interceptors.response.use(
       (response) => {
         const { data } = response;
+        const config = response.config as RequestConfig;
+        if (config.luasResponseMode === 'envelope') {
+          return data;
+        }
         // Standard payload extraction for { code, data, message } responses.
         return data && typeof data === 'object' && 'data' in data ? data.data : data;
       },
@@ -109,6 +125,20 @@ class HttpClient {
   // Pure promise-based methods
   public get<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
     return this.instance.get<T, T>(url, config);
+  }
+
+  public getEnvelope<T = unknown>(
+    url: string,
+    config: RequestConfig = {}
+  ): Promise<ApiSuccessEnvelope<T>> {
+    const requestConfig: RequestConfig = {
+      ...config,
+      luasResponseMode: 'envelope',
+    };
+    return this.instance.get<ApiSuccessEnvelope<T>, ApiSuccessEnvelope<T>>(
+      url,
+      requestConfig
+    );
   }
 
   public post<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {

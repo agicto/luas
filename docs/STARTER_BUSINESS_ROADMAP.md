@@ -11,7 +11,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, auth abuse guard, seed user; Web mock auth plus same-origin production adapter | Yes | The adapter maps the browser contract to Go, keeps JWTs HttpOnly, preserves auth errors and rate-limit identity, and server-resolves protected sessions. Stateless logout cannot revoke an already issued JWT; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
 | `apikey` default starter | User-owned API key create, list, revoke, validation middleware, scoped key model | Yes | Good for developer tools, integrations, and AI/API products. Usage metering is not included yet. |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
-| `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, request-scoped active context, owner/admin rename, invitation lifecycle, PII-minimized member directory, owner-only role changes, removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards | Foundation only | The backend ownership, invitation, member-lifecycle, and active-context kernels are runnable and contract-tested. Browser UI and a complete downstream product integration are still required before this is marked ready. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
+| `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, request-scoped active context, owner/admin rename, invitation lifecycle, PII-minimized member directory, owner-only role changes, removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards; optional Web directory/create/URL switcher/context/profile workflow | Foundation only | The backend kernels and first browser ownership workflow are runnable and contract-tested through fixed production and mock adapters. Browser member, invitation, ownership-transfer, and acceptance workflows plus a complete downstream integration are still required before this is marked ready. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email now has typed all-or-none config, caller cancellation, a 10-second provider budget, bounded responses, and PII-safe errors, but delivery remains direct and best-effort. The memory workflow queue is bounded and race-free but process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -20,7 +20,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P1 | The organization backend now establishes tenant ownership, invitation onboarding, member administration, safe ownership transfer, and one authoritative request-scoped context, but browser workflows are not complete. | Product resources can consume a verified current membership; browser users still need switcher, member, invitation, and settings workflows plus a production adapter. | Complete the Web and downstream integration surfaces without promoting the starter to defaults yet. |
+| P1 | The organization backend and first Web workflow now establish tenant ownership, URL-scoped switching, verified context, creation, and rename through a bounded production adapter, but lifecycle screens are incomplete. | Browser users can establish and select the tenant boundary; they still need member, invitation, ownership-transfer, and acceptance workflows. | Complete those Web lifecycle surfaces and downstream integration without promoting the starter to defaults yet. |
 | P1 | Permission/RBAC is documented as an optional starter decision, but no runnable `permission` starter is currently wired. | New teams may assume roles and permissions are available when only error vocabulary and examples remain. | Treat `permission` as a planned optional starter until its module, migrations, contracts, Web feature, and tests exist. |
 | P1 | Notification capability exists, but no user-facing notification starter owns preferences, in-app records, or delivery status. | Apps repeatedly rebuild notification preferences and delivery history. | Build a `notification` optional starter backed by events, email, and optional in-app persistence. |
 | P2 | Storage/R2 capability exists, but there is no file or asset starter with ownership, metadata, validation, signed URL, and deletion rules. | Upload features become ad hoc and security-sensitive. | Build a `file` or `asset` optional starter with storage abstraction and audit events. |
@@ -37,7 +37,8 @@ not add permission, billing, or workspace settings before deciding which organiz
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
    - The delivered foundation owns organizations, membership-scoped reads, request-scoped active context, settings authorization, invitation onboarding, a privacy-minimized member directory, role/removal/leave flows, atomic ownership transfer, membership audit events, and account-deletion integrity guards.
-   - Next owns the browser-facing workflows and the downstream production adapter.
+   - The first Web slice owns directory, create, URL-scoped switcher, context verification, and rename through fixed production/mock adapters.
+   - Next owns member administration, invitation management/acceptance, ownership transfer, and downstream production verification.
    - Depends on `user`, `audit`, and email.
    - Web owns the organization switcher, member list, invitation flow, and organization settings.
 
@@ -111,7 +112,7 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Finish the Web and downstream integration surfaces of `organization`, then build `permission` and
+Finish the remaining Web lifecycle and downstream integration surfaces of `organization`, then build `permission` and
 `notification`. The ownership, active-context, and member-lifecycle kernels now give those
 starters a stable tenant term and persistence boundary, but Luas must not advertise a complete
 multi-user workflow until the remaining readiness rows are satisfied. File/asset, settings, usage,

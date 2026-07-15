@@ -12,7 +12,7 @@ export type AuthRuntimeMode =
 interface AuthRuntimeEnvironment {
   apiUrl: string;
   appUrl: string;
-  authAdapterEnabled: boolean;
+  apiAdapterEnabled: boolean;
   mockBffEnabled: boolean;
   nodeEnv: typeof env.NODE_ENV;
 }
@@ -45,7 +45,7 @@ export function resolveAuthRuntimeMode(
   environment: AuthRuntimeEnvironment
 ): AuthRuntimeMode {
   if (
-    environment.authAdapterEnabled &&
+    environment.apiAdapterEnabled &&
     targetsSameOriginApiRoute(environment.apiUrl, environment.appUrl)
   ) {
     return 'api-session';
@@ -66,7 +66,7 @@ export function getAuthRuntimeMode(): AuthRuntimeMode {
   return resolveAuthRuntimeMode({
     apiUrl: env.NEXT_PUBLIC_API_URL,
     appUrl: env.NEXT_PUBLIC_APP_URL,
-    authAdapterEnabled: serverEnv.AUTH_ADAPTER_ENABLED,
+    apiAdapterEnabled: serverEnv.API_ADAPTER_ENABLED,
     mockBffEnabled: serverEnv.MOCK_BFF_ENABLED,
     nodeEnv: env.NODE_ENV,
   });

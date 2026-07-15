@@ -8,8 +8,9 @@ the current browser authentication surface and Go API JWT surface require an exp
 see [`AUTHENTICATION.md`](AUTHENTICATION.md).
 
 Optional backend starter contracts are documented independently. The first ownership foundation is
-[`ORGANIZATIONS.md`](ORGANIZATIONS.md); it is disabled by default and does not imply Web feature
-parity.
+[`ORGANIZATIONS.md`](ORGANIZATIONS.md); API and Web activation are disabled independently by
+default, and each delivered browser operation is listed explicitly rather than implied by the
+backend starter.
 
 ## Success Responses
 

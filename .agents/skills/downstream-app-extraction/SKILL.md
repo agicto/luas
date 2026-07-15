@@ -38,7 +38,7 @@ Classify each touched surface before changing it.
 |---|---|---|
 | `core` | yes | keep unless the downstream app intentionally swaps infrastructure |
 | default starter | yes | keep, remove, or rename by product need |
-| optional starter | yes | select it with `OPTIONAL_STARTERS` only when the product needs it; keep API replicas and database jobs aligned |
+| optional starter | yes | select it with `OPTIONAL_STARTERS` and any matching `NEXT_PUBLIC_OPTIONAL_FEATURES` only when needed; keep API replicas, database jobs, and the Web build aligned |
 | capability | yes | keep if reusable; configure behind product-owned settings |
 | mock BFF | yes, development-only | replace with real API, delete, or keep local-only with guards |
 | console | yes, replaceable | rename or redesign for product workspace needs |
@@ -66,9 +66,13 @@ Classify each touched surface before changing it.
      keep email out of the member-directory response, and run the same `OPTIONAL_STARTERS` value in
      API replicas and migration jobs before attaching product resources or permission scopes.
      Keep active organization selection request-scoped: forward exactly one `Organization-Id` from
-     the current browser tab or URL, apply the API's `organization_context` middleware after auth,
+     the current browser tab or URL, select the retained Web feature with
+     `NEXT_PUBLIC_OPTIONAL_FEATURES=organization`, apply the API's `organization_context` middleware after auth,
      and authorize product data only from the typed resolved context, never the raw header. Add
      `Organization-Id` to the production CORS allow-list when the browser calls the API cross-origin.
+     When retaining the same-origin adapter, keep organization selection in the URL and extend only
+     explicit Route Handlers; never replace `src/server/api-adapter/` with a browser-controlled
+     catch-all proxy.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

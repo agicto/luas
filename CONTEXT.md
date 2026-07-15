@@ -70,7 +70,15 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : The organization membership explicitly selected and revalidated for one API request. It is
   request-scoped, not a global user preference or a long-lived JWT claim. Context-protected routes
   use the canonical organization header and consume the resolved organization ID, membership ID,
-  user ID, and role from typed request context rather than trusting raw transport input.
+  user ID, and role from typed request context rather than trusting raw transport input. The Web
+  feature derives browser selection from the current organization URL and forwards it per request;
+  it does not persist a global current organization.
+
+**Production API adapter**
+: The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
+  operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
+  forwarding, response validation, and safe header propagation. It is an allowlist, not an arbitrary
+  reverse proxy.
 
 **Command manifest**
 : The assembly seam that groups CLI commands so registration does not drift across command packages.
@@ -93,7 +101,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - Core and capabilities are reusable; starters and features express application behavior.
 - Contracts connect deployable units. Source code is not shared across deployable units.
 - Active organization context is selected per request and verified against current membership.
-- The production auth adapter connects the browser auth contract to the Go API contract without making either contract pretend to be the other.
+- The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
 ## Flagged Ambiguities
@@ -102,6 +110,6 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **starter vs feature**: Use starter for default or optional Luas-provided building blocks. Use feature for downstream or product-facing slices.
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
-- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
+- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable. Use the explicit production API adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.

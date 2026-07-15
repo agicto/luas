@@ -1,0 +1,41 @@
+const messages = {
+  title: '组织',
+  description: '管理你所属的组织及其基础设置。',
+  list: '组织列表',
+  create: '创建组织',
+  createDescription: '创建一个新的组织边界。名称可以修改，标识创建后保持不变。',
+  createSuccess: '组织已创建',
+  updateSuccess: '组织设置已更新',
+  name: '组织名称',
+  namePlaceholder: '例如：Acme 欧洲',
+  nameInvalid: '请输入 2 到 100 个字符的组织名称',
+  slug: '组织标识',
+  slugPlaceholder: '可选，例如 acme-europe',
+  slugHint: '仅支持小写字母、数字和连字符；留空时自动生成。',
+  slugInvalid: '请输入 3 到 50 个字符的规范组织标识',
+  role: '角色',
+  open: '打开',
+  retry: '重试',
+  emptyTitle: '还没有组织',
+  emptyDescription: '创建第一个组织后，即可开始管理成员和组织级资源。',
+  back: '返回组织列表',
+  contextVerified: '上下文已验证',
+  profile: '组织资料',
+  profileDescription: '组织标识不可修改；所有者和管理员可以更新显示名称。',
+  roles: {
+    owner: '所有者',
+    admin: '管理员',
+    member: '成员',
+  },
+  errors: {
+    unavailable: '组织服务暂时不可用，请稍后重试。',
+    forbidden: '你没有执行此操作的权限。',
+    notFound: '组织不存在，或你已不再属于该组织。',
+    slugConflict: '该组织标识已被使用。',
+    invalidResponse: '组织服务返回了无法识别的数据。',
+    generic: '组织操作失败，请重试。',
+  },
+} as const;
+
+export default messages;
+export type OrganizationMessages = typeof messages;

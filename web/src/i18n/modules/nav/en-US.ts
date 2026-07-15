@@ -5,6 +5,7 @@ import type { LocaleMessageShape } from '../../locale-message-shape';
 const messages = {
   home: 'Home',
   console: 'Console',
+  organizations: 'Organizations',
   settings: 'Settings',
   profile: 'Profile',
   analytics: 'Analytics',

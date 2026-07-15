@@ -51,7 +51,7 @@ def main() -> int:
         failures,
         "CONTEXT.md",
         (
-            "Production auth adapter",
+            "Production API adapter",
             "browser auth contract vs API auth contract",
             "not interchangeable",
             "changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping",
@@ -75,10 +75,11 @@ def main() -> int:
             "AUTH.INVALID_CREDENTIALS",
             "per-IP and normalized/hashed per-subject buckets",
             "SERVER_TRUSTED_PROXIES",
-            "## Production Auth Adapter",
-            "AUTH_ADAPTER_ENABLED=true",
-            "AUTH_API_URL=http://api:8025/v1",
-            "AUTH_CLIENT_IP_HEADER=x-real-ip",
+            "## Production API Adapter",
+            "API_ADAPTER_ENABLED=true",
+            "API_UPSTREAM_URL=http://api:8025/v1",
+            "API_UPSTREAM_MAX_RESPONSE_BYTES=1048576",
+            "API_CLIENT_IP_HEADER=x-real-ip",
             "__Host-luas_auth",
             "no refresh token, token denylist, or remote logout",
         ),
@@ -153,10 +154,14 @@ def main() -> int:
         failures,
         "web/src/config/server-env.ts",
         (
+            "API_ADAPTER_ENABLED",
+            "API_UPSTREAM_TIMEOUT_MS",
+            "API_UPSTREAM_MAX_RESPONSE_BYTES",
+            "API_UPSTREAM_URL",
+            "API_CLIENT_IP_HEADER",
+            "environmentAlias(",
             "AUTH_ADAPTER_ENABLED",
-            "AUTH_API_TIMEOUT_MS",
             "AUTH_API_URL",
-            "AUTH_CLIENT_IP_HEADER",
             "NEXT_PUBLIC_API_URL must target the same-origin /api route",
         ),
     )
@@ -180,12 +185,21 @@ def main() -> int:
         "web/src/features/auth/server/go-api-auth-adapter.ts",
         (
             "'users/profile'",
+            "new GoApiClient(",
+            "generatedUsername",
+            "mapGoApiUser",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/server/api-adapter/go-api-client.ts",
+        (
             "cache: 'no-store'",
             "redirect: 'error'",
             "headers.set('authorization'",
             "candidate.includes(',')",
-            "generatedUsername",
-            "mapGoApiUser",
+            "readBoundedBody(",
+            "maxResponseBytes",
         ),
     )
     require_all(
@@ -251,7 +265,7 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print("Auth contract boundary check passed (production adapter and auth ownership are explicit).")
+    print("Auth contract boundary check passed (production API adapter and auth ownership are explicit).")
     return 0
 
 

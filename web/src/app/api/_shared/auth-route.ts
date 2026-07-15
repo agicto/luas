@@ -21,7 +21,7 @@ type AuthRouteResolution =
 
 function currentEnvironment(): AuthRouteEnvironment {
   return {
-    adapterEnabled: serverEnv.AUTH_ADAPTER_ENABLED,
+    adapterEnabled: serverEnv.API_ADAPTER_ENABLED,
     enabled: serverEnv.MOCK_BFF_ENABLED,
     nodeEnv: env.NODE_ENV,
   };

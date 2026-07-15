@@ -14,7 +14,7 @@ user views, and credential ownership still differ. See
 | Mode | Selected when | Initial protected render |
 |---|---|---|
 | `mock-session` | The mock BFF is available and `NEXT_PUBLIC_API_URL` targets the same-origin `/api` route | The protected Server Component verifies the signed Luas cookie and passes a definitive user or unauthenticated result to the client store. |
-| `api-session` | `AUTH_ADAPTER_ENABLED=true` and `NEXT_PUBLIC_API_URL` targets same-origin `/api` | The protected Server Component reads the HttpOnly API cookie, resolves `/v1/users/profile` through the fixed adapter, and passes authenticated, unauthenticated, forbidden, or unavailable state to the client store. |
+| `api-session` | `API_ADAPTER_ENABLED=true` and `NEXT_PUBLIC_API_URL` targets same-origin `/api` | The protected Server Component reads the HttpOnly API cookie, resolves `/v1/users/profile` through the fixed adapter, and passes authenticated, unauthenticated, forbidden, or unavailable state to the client store. |
 | `client-session` | A real API, a production same-origin proxy, or any non-mock target owns authentication | The client store resolves `/auth/me` once with browser credentials. |
 
 `src/config/mock-bff.ts` owns mock BFF availability, `src/config/server-env.ts` owns production
@@ -104,7 +104,7 @@ session outcome is unknown.
   trust token claims for authorization; Go validates the token on profile resolution.
 - Adapter routes call only fixed Go auth paths, reject redirects, never forward incoming cookies or
   authorization headers, and replace backend messages with generic local text. Configured
-  `AUTH_CLIENT_IP_HEADER` input is parsed as one IP before becoming `X-Forwarded-For`.
+  `API_CLIENT_IP_HEADER` input is parsed as one IP before becoming `X-Forwarded-For`.
 - The API must set `SERVER_TRUSTED_PROXIES` to the Web adapter network, never a trust-all range, so
   Go's public-auth source and subject quotas remain meaningful behind the adapter.
 - Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component

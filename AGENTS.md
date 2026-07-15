@@ -40,6 +40,7 @@ Workspace-level architecture docs:
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
 - [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
+- [web/docs/ORGANIZATIONS.md](web/docs/ORGANIZATIONS.md) — optional browser activation, URL-scoped organization selection, adapter ownership, and replacement
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills

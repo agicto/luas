@@ -13,6 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 CONTRACTS_README = ROOT / "contracts" / "README.md"
 API_RESPONSE_CODES = ROOT / "api" / "pkg" / "response" / "error_codes.go"
+API_DOMAIN_CODES = ROOT / "api" / "internal" / "domain" / "error_codes.go"
 WEB_CODES = ROOT / "web" / "src" / "http" / "codes.ts"
 
 
@@ -22,9 +23,13 @@ class ContractError:
     error_code: str
 
 
-CONTRACT_ROW_RE = re.compile(r"^\|\s*(\d{3})\s*\|\s*`([A-Z][A-Z0-9_]*\.[A-Z][A-Z0-9_]*)`\s*\|")
-GO_CONST_RE = re.compile(r"^\s*(ErrorCode[A-Za-z0-9_]+)\s*=\s*\"([A-Z][A-Z0-9_]*\.[A-Z][A-Z0-9_]*)\"")
-TS_API_CODE_RE = re.compile(r"^\s*([A-Z][A-Z0-9_]+):\s*'([A-Z][A-Z0-9_]*\.[A-Z][A-Z0-9_]*)',")
+CODE_VALUE = r"[A-Z][A-Z0-9_]*(?:\.[A-Z][A-Z0-9_]*)+"
+CONTRACT_ROW_RE = re.compile(rf"^\|\s*(\d{{3}})\s*\|\s*`({CODE_VALUE})`\s*\|")
+GO_CONST_RE = re.compile(rf"^\s*([A-Za-z][A-Za-z0-9_]+)\s*=\s*\"({CODE_VALUE})\"")
+TS_API_CODE_RE = re.compile(
+    rf"^\s*([A-Z][A-Z0-9_]+):\s*'({CODE_VALUE})',",
+    re.MULTILINE,
+)
 TS_STATUS_MAP_RE = re.compile(r"^\s*(\d{3}):\s*ApiErrorCode\.([A-Z][A-Z0-9_]+),")
 
 
@@ -43,10 +48,10 @@ def parse_contract_errors() -> list[ContractError]:
     return errors
 
 
-def parse_go_response_codes() -> dict[str, str]:
+def parse_go_codes(path: Path) -> dict[str, str]:
     codes: dict[str, str] = {}
 
-    for line in read(API_RESPONSE_CODES).splitlines():
+    for line in read(path).splitlines():
         match = GO_CONST_RE.match(line)
         if match:
             codes[match.group(1)] = match.group(2)
@@ -56,20 +61,14 @@ def parse_go_response_codes() -> dict[str, str]:
 
 def parse_web_api_codes() -> dict[str, str]:
     codes: dict[str, str] = {}
-    in_api_error_code = False
+    source = read(WEB_CODES)
+    try:
+        block = source.split("export const ApiErrorCode = {", 1)[1].split("} as const;", 1)[0]
+    except IndexError:
+        return codes
 
-    for line in read(WEB_CODES).splitlines():
-        if line.startswith("export const ApiErrorCode = {"):
-            in_api_error_code = True
-            continue
-
-        if in_api_error_code and line.startswith("} as const;"):
-            break
-
-        if in_api_error_code:
-            match = TS_API_CODE_RE.match(line)
-            if match:
-                codes[match.group(1)] = match.group(2)
+    for match in TS_API_CODE_RE.finditer(block):
+        codes[match.group(1)] = match.group(2)
 
     return codes
 
@@ -113,7 +112,8 @@ def main() -> int:
     failures: list[str] = []
     contract_errors = parse_contract_errors()
     contract_codes = {error.error_code for error in contract_errors}
-    api_response_codes = set(parse_go_response_codes().values())
+    api_response_codes = set(parse_go_codes(API_RESPONSE_CODES).values())
+    api_domain_codes = set(parse_go_codes(API_DOMAIN_CODES).values())
     web_api_codes = set(parse_web_api_codes().values())
     web_status_map = parse_web_status_map()
     documented_by_status: dict[int, set[str]] = {}
@@ -135,6 +135,13 @@ def main() -> int:
     missing_web = sorted(contract_codes - web_api_codes)
     if missing_web:
         failures.append(f"web/src/http/codes.ts ApiErrorCode is missing contract error_code values: {', '.join(missing_web)}")
+
+    missing_domain_web = sorted(api_domain_codes - web_api_codes)
+    if missing_domain_web:
+        failures.append(
+            "web/src/http/codes.ts ApiErrorCode is missing API domain error_code values: "
+            + ", ".join(missing_domain_web)
+        )
 
     for status, documented_codes in sorted(documented_by_status.items()):
         mapped_code = web_status_map.get(status)
@@ -163,7 +170,8 @@ def main() -> int:
 
     print(
         "Error contract check passed "
-        f"({len(contract_codes)} contract error_code values, {len(web_status_map)} Web status fallbacks)."
+        f"({len(contract_codes)} contract error_code values, {len(api_domain_codes)} API domain values, "
+        f"{len(web_status_map)} Web status fallbacks)."
     )
     return 0
 

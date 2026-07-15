@@ -83,6 +83,20 @@ Page or component -> Feature hook -> Feature service -> src/http/request.ts -> H
 
 Mock BFF route handlers under `web/src/app/api/` are part of the scaffold so the web half can run without a backend during development. They are replaceable development flows, not the production API; see `web/docs/MOCK_BFF.md` for downstream replacement steps.
 
+Production browser calls that use the Luas HttpOnly API session follow a fixed same-origin adapter
+flow:
+
+```text
+Browser feature -> /api allowlist Route Handler -> bounded server-only API client -> Go /v1 route
+```
+
+`web/src/server/api-adapter/` owns credentials, trusted client-IP parsing, timeout, bounded upstream
+JSON, safe response headers, and generic display copy. It accepts code-owned relative paths only;
+do not replace the allowlist with a catch-all proxy. The optional organization feature is selected
+with `NEXT_PUBLIC_OPTIONAL_FEATURES=organization`, derives the active organization from
+`/console/organizations/:id`, and forwards `Organization-Id` only for the context request. It does
+not add selected-organization state to Zustand, browser storage, or cookies.
+
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).
 

@@ -8,7 +8,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'http://localhost:3000',
-        authAdapterEnabled: false,
+        apiAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'development',
       })
@@ -20,7 +20,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://demo.example.com/api/',
         appUrl: 'https://demo.example.com',
-        authAdapterEnabled: false,
+        apiAdapterEnabled: false,
         mockBffEnabled: true,
         nodeEnv: 'production',
       })
@@ -32,7 +32,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://api.example.com',
         appUrl: 'https://app.example.com',
-        authAdapterEnabled: false,
+        apiAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'production',
       })
@@ -44,7 +44,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'https://app.example.com',
-        authAdapterEnabled: false,
+        apiAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'production',
       })
@@ -56,7 +56,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: 'https://api.example.com',
         appUrl: 'http://localhost:3000',
-        authAdapterEnabled: false,
+        apiAdapterEnabled: false,
         mockBffEnabled: false,
         nodeEnv: 'development',
       })
@@ -68,7 +68,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'https://app.example.com',
-        authAdapterEnabled: true,
+        apiAdapterEnabled: true,
         mockBffEnabled: false,
         nodeEnv: 'production',
       })
@@ -80,7 +80,7 @@ describe('auth runtime mode', () => {
       resolveAuthRuntimeMode({
         apiUrl: '/api',
         appUrl: 'https://app.example.com',
-        authAdapterEnabled: true,
+        apiAdapterEnabled: true,
         mockBffEnabled: true,
         nodeEnv: 'production',
       })

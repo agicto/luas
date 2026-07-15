@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { isIP } from 'node:net';
-
 import type {
   AuthResponse,
   AuthUser,
@@ -9,24 +7,16 @@ import type {
   RegisterRequest,
 } from '@/features/auth/types';
 import { authTokenMaxAgeSeconds } from '@/features/auth/server/auth-token';
+import { ApiErrorCode, type ApiErrorCodeValue } from '@/http/codes';
 import {
-  ApiErrorCode,
-  HttpStatusErrorCodeMap,
-  type ApiErrorCodeValue,
-} from '@/http/codes';
-
-const FORWARDED_RESPONSE_HEADERS = [
-  'retry-after',
-  'x-ratelimit-limit',
-  'x-ratelimit-remaining',
-  'x-ratelimit-reset',
-] as const;
-const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/;
-const knownErrorCodes = new Set<string>(Object.values(ApiErrorCode));
+  GoApiClient,
+  type GoApiError,
+} from '@/server/api-adapter/go-api-client';
 
 export interface GoApiAuthAdapterConfig {
   apiUrl: string;
   timeoutMs: number;
+  maxResponseBytes?: number;
   clientIpHeader?: string;
 }
 
@@ -70,19 +60,30 @@ interface UpstreamSuccess {
 }
 
 export class GoApiAuthAdapter {
-  private readonly baseUrl: URL;
   private readonly dependencies: AdapterDependencies;
+  private readonly client: GoApiClient;
 
   constructor(
-    private readonly config: GoApiAuthAdapterConfig,
+    config: GoApiAuthAdapterConfig,
     dependencies: Partial<AdapterDependencies> = {}
   ) {
-    this.baseUrl = new URL(`${config.apiUrl.replace(/\/+$/, '')}/`);
     this.dependencies = {
       fetch: dependencies.fetch ?? fetch,
       now: dependencies.now ?? Date.now,
       randomUUID: dependencies.randomUUID ?? (() => crypto.randomUUID()),
     };
+    this.client = new GoApiClient(
+      {
+        apiUrl: config.apiUrl,
+        timeoutMs: config.timeoutMs,
+        maxResponseBytes: config.maxResponseBytes ?? 1_048_576,
+        clientIpHeader: config.clientIpHeader,
+      },
+      {
+        fetch: this.dependencies.fetch,
+        randomUUID: this.dependencies.randomUUID,
+      }
+    );
   }
 
   async login(
@@ -220,60 +221,28 @@ export class GoApiAuthAdapter {
     incomingHeaders: Headers,
     signal?: AbortSignal
   ): Promise<AdapterResult<UpstreamSuccess>> {
-    const requestId = resolveRequestId(incomingHeaders, this.dependencies.randomUUID);
-    const headers = new Headers({
-      accept: 'application/json',
-      'x-request-id': requestId,
+    const result = await this.client.request({
+      method: options.method,
+      path,
+      incomingHeaders,
+      body: options.body,
+      accessToken: options.accessToken,
+      fieldMap: authFieldMap(operation),
+      signal,
     });
-
-    if (options.body) {
-      headers.set('content-type', 'application/json');
+    if (!result.ok) {
+      return { ok: false, error: authenticationError(operation, result.error) };
     }
-    if (options.accessToken) {
-      headers.set('authorization', `Bearer ${options.accessToken}`);
-    }
-
-    const clientIp = resolveClientIp(incomingHeaders, this.config.clientIpHeader);
-    if (clientIp) {
-      headers.set('x-forwarded-for', clientIp);
-    }
-
-    const timeoutSignal = AbortSignal.timeout(this.config.timeoutMs);
-    const combinedSignal = signal
-      ? AbortSignal.any([signal, timeoutSignal])
-      : timeoutSignal;
-
-    let response: Response;
-    try {
-      response = await this.dependencies.fetch(new URL(path, this.baseUrl), {
-        method: options.method,
-        headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
-        cache: 'no-store',
-        redirect: 'error',
-        signal: combinedSignal,
-      });
-    } catch (error) {
-      return isAbortError(error) || combinedSignal.aborted
-        ? adapterTimeout(requestId)
-        : adapterUnavailable(requestId);
-    }
-
-    const payload = await readJson(response);
-    if (!response.ok) {
-      return {
-        ok: false,
-        error: upstreamError(operation, response, payload, requestId),
-      };
-    }
-
-    if (!isRecord(payload) || payload.code !== 0 || !('data' in payload)) {
-      return adapterUnavailable(requestId);
+    if (!result.data.envelope) {
+      return adapterUnavailable(result.data.requestId);
     }
 
     return {
       ok: true,
-      data: { data: payload.data, requestId },
+      data: {
+        data: result.data.envelope.data,
+        requestId: result.data.requestId,
+      },
     };
   }
 }
@@ -320,98 +289,34 @@ function isActiveGoApiUser(value: unknown): boolean {
   return isGoApiUser(value) && value.status === 1;
 }
 
-function resolveRequestId(
-  headers: Headers,
-  randomUUID: () => string
-): string {
-  const candidate = headers.get('x-request-id');
-  return candidate && SAFE_REQUEST_ID.test(candidate) ? candidate : randomUUID();
-}
-
-function resolveClientIp(
-  headers: Headers,
-  sourceHeader: string | undefined
-): string | undefined {
-  if (!sourceHeader) {
-    return undefined;
-  }
-
-  const candidate = headers.get(sourceHeader)?.trim();
-
-  if (!candidate || candidate.includes(',')) {
-    return undefined;
-  }
-
-  return isIP(candidate) !== 0 ? candidate : undefined;
-}
-
-function upstreamError(
-  operation: AdapterOperation,
-  response: Response,
-  payload: unknown,
-  fallbackRequestId: string
-): AdapterError {
-  const body = isRecord(payload) ? payload : {};
-  const status = response.status >= 400 && response.status <= 599
-    ? response.status
-    : 503;
-  const candidateCode = body.error_code;
-  const errorCode =
-    typeof candidateCode === 'string' && knownErrorCodes.has(candidateCode)
-      ? (candidateCode as ApiErrorCodeValue)
-      : HttpStatusErrorCodeMap[status] ?? ApiErrorCode.COMMON_SERVICE_UNAVAILABLE;
-  const requestId =
-    typeof body.request_id === 'string' && SAFE_REQUEST_ID.test(body.request_id)
-      ? body.request_id
-      : fallbackRequestId;
-  const fieldErrors = mapFieldErrors(operation, body.errors);
-  const responseHeaders = forwardedResponseHeaders(response.headers);
-
-  return {
-    status,
-    errorCode,
-    message: genericErrorMessage(operation, status),
-    ...(fieldErrors ? { fieldErrors } : {}),
-    requestId,
-    ...(responseHeaders ? { responseHeaders } : {}),
-  };
-}
-
-function mapFieldErrors(
-  operation: AdapterOperation,
-  value: unknown
-): Record<string, string[]> | undefined {
-  if (!isRecord(value)) {
-    return undefined;
-  }
-
-  const allowedFields = operation === 'register'
+function authFieldMap(
+  operation: AdapterOperation
+): Readonly<Record<string, string>> {
+  return operation === 'register'
     ? { email: 'email', nickname: 'name', password: 'password' }
     : operation === 'login'
       ? { username: 'email', password: 'password' }
       : {};
-  const mapped: Record<string, string[]> = {};
-
-  for (const [upstreamField, browserField] of Object.entries(allowedFields)) {
-    if (Array.isArray(value[upstreamField]) && value[upstreamField].length > 0) {
-      mapped[browserField] = ['Invalid value'];
-    }
-  }
-
-  return Object.keys(mapped).length > 0 ? mapped : undefined;
 }
 
-function forwardedResponseHeaders(headers: Headers): Record<string, string> | undefined {
-  const forwarded: Record<string, string> = {};
+function authenticationError(
+  operation: AdapterOperation,
+  error: GoApiError
+): AdapterError {
+  const message = error.cause === 'timeout'
+    ? 'Authentication service timed out'
+    : error.cause === 'unavailable'
+      ? 'Authentication service unavailable'
+      : genericErrorMessage(operation, error.status);
 
-  for (const name of FORWARDED_RESPONSE_HEADERS) {
-    const value = headers.get(name);
-    if (value) {
-      forwarded[name] = value;
-    }
-  }
-
-  return Object.keys(forwarded).length > 0 ? forwarded : undefined;
+  return {
+    status: error.status,
+    errorCode: error.errorCode,
+    message,
+    ...(error.fieldErrors ? { fieldErrors: error.fieldErrors } : {}),
+    requestId: error.requestId,
+    ...(error.responseHeaders ? { responseHeaders: error.responseHeaders } : {}),
+  };
 }
 
 function genericErrorMessage(operation: AdapterOperation, status: number): string {
@@ -431,18 +336,6 @@ function genericErrorMessage(operation: AdapterOperation, status: number): strin
     return 'Too many authentication attempts';
   }
   return 'Authentication service unavailable';
-}
-
-function adapterTimeout(requestId: string): AdapterResult<never> {
-  return {
-    ok: false,
-    error: {
-      status: 503,
-      errorCode: ApiErrorCode.COMMON_TIMEOUT,
-      message: 'Authentication service timed out',
-      requestId,
-    },
-  };
 }
 
 function accountDisabled(requestId: string): AdapterResult<never> {
@@ -467,21 +360,6 @@ function adapterUnavailable(requestId: string): AdapterResult<never> {
       requestId,
     },
   };
-}
-
-function isAbortError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === 'AbortError' || error.name === 'TimeoutError')
-  );
-}
-
-async function readJson(response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

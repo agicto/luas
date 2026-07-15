@@ -7,6 +7,10 @@ const routeFileName = 'route.ts';
 const routeHandlerPattern =
   /\bexport\s+(?:(?:async\s+)?function\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*\(|const\s+(GET|POST|PUT|PATCH|DELETE|OPTIONS|HEAD)\s*=)/g;
 const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+const organizationRouteModule = resolve(
+  process.cwd(),
+  'src/features/organization/server/organization-route.ts'
+);
 
 const forbiddenRoutePatterns = [
   {
@@ -50,6 +54,14 @@ function productionGuard(path: string): string {
     : 'guardMockBffRoute(';
 }
 
+function delegatesOrganizationGuard(path: string, handler: RouteHandlerSource): boolean {
+  const route = relativeRoute(path);
+  return (
+    (route === 'organization-context/route.ts' || route.startsWith('organizations/')) &&
+    /\b(?:create|get|list|resolve|update)Organizations?(?:Context)?Route\b/.test(handler.source)
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -85,7 +97,11 @@ describe('mock BFF route contract', () => {
   it('keeps every route handler behind its production availability guard', () => {
     const offenders = routeFiles.flatMap((path) =>
       routeHandlers(path)
-        .filter((handler) => !handler.source.includes(productionGuard(path)))
+        .filter(
+          (handler) =>
+            !handler.source.includes(productionGuard(path)) &&
+            !delegatesOrganizationGuard(path, handler)
+        )
         .map((handler) => `${relativeRoute(path)}:${handler.method}`)
     );
 
@@ -96,6 +112,7 @@ describe('mock BFF route contract', () => {
     const offenders = routeFiles.flatMap((path) =>
       routeHandlers(path)
         .filter((handler) => unsafeMethods.has(handler.method))
+        .filter((handler) => !delegatesOrganizationGuard(path, handler))
         .filter((handler) => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -110,6 +127,27 @@ describe('mock BFF route contract', () => {
     );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('keeps delegated organization writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(organizationRouteModule, 'utf8');
+    const nextFunction = 'export async function getOrganizationRoute';
+    const create = source
+      .split('export async function createOrganizationRoute', 2)[1]
+      ?.split(nextFunction, 1)[0] ?? '';
+    const update = source
+      .split('export async function updateOrganizationRoute', 2)[1]
+      ?.split('export async function resolveOrganizationContextRoute', 1)[0] ?? '';
+
+    for (const handler of [create, update]) {
+      const availabilityGuard = handler.indexOf('resolveOrganizationRoute(');
+      const originGuard = handler.indexOf('guardSameOriginMutation(');
+      const bodyRead = handler.indexOf('readJsonBody(');
+
+      expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+      expect(originGuard).toBeGreaterThan(availabilityGuard);
+      expect(bodyRead).toBeGreaterThan(originGuard);
+    }
   });
 
   it('keeps mock route JSON envelopes behind shared response helpers', () => {

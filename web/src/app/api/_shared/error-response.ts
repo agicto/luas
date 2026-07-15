@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
-import type { ZodError } from 'zod';
 import { ApiErrorCode, type ApiErrorCodeValue } from '@/http/codes';
+
+interface ValidationError {
+  issues: readonly {
+    path: readonly PropertyKey[];
+    message: string;
+  }[];
+}
 
 interface ApiErrorResponseOptions {
   status: number;
@@ -39,7 +45,24 @@ export function apiInvalidInputResponse(message: string): NextResponse {
   });
 }
 
-export function apiValidationErrorResponse(message: string, error?: ZodError): NextResponse {
+export function apiJsonBodyErrorResponse(
+  error: 'invalid' | 'too_large'
+): NextResponse {
+  if (error === 'too_large') {
+    return apiErrorResponse({
+      status: 413,
+      errorCode: ApiErrorCode.COMMON_REQUEST_TOO_LARGE,
+      message: 'JSON body exceeds the allowed size',
+    });
+  }
+
+  return apiInvalidInputResponse('Malformed JSON body');
+}
+
+export function apiValidationErrorResponse(
+  message: string,
+  error?: ValidationError
+): NextResponse {
   return apiErrorResponse({
     status: 422,
     errorCode: ApiErrorCode.COMMON_VALIDATION_FAILED,
@@ -56,9 +79,9 @@ export function apiNotFoundResponse(message: string): NextResponse {
   });
 }
 
-function zodFieldErrors(error: ZodError): Record<string, string[]> {
+function zodFieldErrors(error: ValidationError): Record<string, string[]> {
   return error.issues.reduce<Record<string, string[]>>((fieldErrors, issue) => {
-    const field = issue.path.join('.') || 'body';
+    const field = issue.path.map(String).join('.') || 'body';
     fieldErrors[field] = [...(fieldErrors[field] ?? []), issue.message];
     return fieldErrors;
   }, {});

@@ -27,6 +27,7 @@ describe('client i18n message boundaries', () => {
       global: ['common', 'errors'],
       auth: ['auth'],
       console: ['auth', 'nav', 'console'],
+      organization: ['organization'],
       i18nTest: ['test'],
     });
   });
@@ -68,6 +69,9 @@ describe('client i18n message boundaries', () => {
     const rootLayout = readSource('app/layout.tsx');
     const authLayout = readSource('app/(auth)/layout.tsx');
     const consoleLayout = readSource('app/(protected)/(console)/layout.tsx');
+    const organizationLayout = readSource(
+      'app/(protected)/(console)/console/organizations/layout.tsx'
+    );
     const i18nTestLayout = readSource(
       'app/(protected)/(devtools)/i18n-test/layout.tsx'
     );
@@ -76,6 +80,7 @@ describe('client i18n message boundaries', () => {
     expect(rootLayout).not.toContain('messages={messages}');
     expect(authLayout).toContain('CLIENT_MESSAGE_NAMESPACES.auth');
     expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.console');
+    expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.organization');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');
   });
 });

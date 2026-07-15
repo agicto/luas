@@ -18,6 +18,8 @@ export const ROUTES = {
   // Console (Admin) routes
   CONSOLE: {
     HOME: '/console',
+    ORGANIZATIONS: '/console/organizations',
+    ORGANIZATION: '/console/organizations/:organizationId',
     SETTINGS: '/console/settings',
   },
 
@@ -67,6 +69,10 @@ export function getAuthRoute(route: AuthRoutes): string {
 
 export function getConsoleRoute(route: ConsoleRoutes): string {
   return ROUTES.CONSOLE[route];
+}
+
+export function getOrganizationRoute(organizationId: number | string): string {
+  return buildRoute(ROUTES.CONSOLE.ORGANIZATION, { organizationId });
 }
 
 export function getDevtoolsRoute(route: DevtoolsRoutes): string {

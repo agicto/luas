@@ -3,6 +3,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { locales } from '@/i18n/locales';
+import { parseOptionalWebFeatures } from './optional-features';
 
 const booleanEnv = z.preprocess((value) => {
   if (value === undefined || value === '') {
@@ -48,16 +49,29 @@ export const publicEnvSchema = z.object({
   NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
   NEXT_PUBLIC_DEFAULT_LOCALE: z.enum(locales),
   NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED: z.boolean(),
+  NEXT_PUBLIC_OPTIONAL_FEATURES: z.string().superRefine((value, context) => {
+    try {
+      parseOptionalWebFeatures(value);
+    } catch (error) {
+      context.addIssue({
+        code: 'custom',
+        message: error instanceof Error ? error.message : 'Invalid optional Web features',
+      });
+    }
+  }),
   NODE_ENV: z.enum(['development', 'production', 'test']),
 });
 
 export type PublicEnv = z.infer<typeof publicEnvSchema>;
 
 export const serverEnvSchema = z.object({
-  AUTH_ADAPTER_ENABLED: booleanEnv.default(false),
-  AUTH_API_TIMEOUT_MS: integerEnv.pipe(z.number().min(100).max(30_000)).default(5_000),
-  AUTH_API_URL: optionalString(z.string().url()),
-  AUTH_CLIENT_IP_HEADER: optionalString(
+  API_ADAPTER_ENABLED: booleanEnv.default(false),
+  API_UPSTREAM_TIMEOUT_MS: integerEnv.pipe(z.number().min(100).max(30_000)).default(5_000),
+  API_UPSTREAM_MAX_RESPONSE_BYTES: integerEnv
+    .pipe(z.number().min(1_024).max(16 * 1_024 * 1_024))
+    .default(1_048_576),
+  API_UPSTREAM_URL: optionalString(z.string().url()),
+  API_CLIENT_IP_HEADER: optionalString(
     z.string().regex(/^[a-z0-9!#$%&'*+.^_`|~-]+$/i).transform((value) => value.toLowerCase())
   ),
   MOCK_BFF_ENABLED: booleanEnv.default(false),

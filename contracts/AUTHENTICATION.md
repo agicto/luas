@@ -71,24 +71,30 @@ The starter email adapter is currently synchronous. Products that require strict
 uniformity for password recovery should enqueue token delivery through a bounded, observable,
 durable worker and keep the HTTP response independent of delivery completion.
 
-## Production Auth Adapter
+## Production API Adapter
 
-Luas ships a same-origin Web adapter for the Go `user` starter. Set browser requests to the
-same-origin `/api` route, enable the adapter on the Web server, and configure its private Go API
-base URL:
+Luas ships a same-origin Web adapter with explicit route handlers for the Go `user` starter and
+enabled optional starter features. Set browser requests to the same-origin `/api` route, enable the
+adapter on the Web server, and configure its private Go API base URL:
 
 ```dotenv
 NEXT_PUBLIC_API_URL=/api
-AUTH_ADAPTER_ENABLED=true
-AUTH_API_URL=http://api:8025/v1
-AUTH_API_TIMEOUT_MS=5000
-AUTH_CLIENT_IP_HEADER=x-real-ip
+API_ADAPTER_ENABLED=true
+API_UPSTREAM_URL=http://api:8025/v1
+API_UPSTREAM_TIMEOUT_MS=5000
+API_UPSTREAM_MAX_RESPONSE_BYTES=1048576
+API_CLIENT_IP_HEADER=x-real-ip
 ```
 
-`AUTH_API_URL` and `AUTH_CLIENT_IP_HEADER` are server-only. The adapter calls only its fixed auth
-paths; it is not an arbitrary proxy. Production startup rejects an enabled adapter without a
-same-origin browser target, private upstream configuration, or an explicit ingress-owned client-IP
-header.
+`API_UPSTREAM_URL` and `API_CLIENT_IP_HEADER` are server-only. The adapter calls only fixed paths
+owned by checked-in Route Handlers; it is not an arbitrary proxy. Production startup rejects an
+enabled adapter without a same-origin browser target, private upstream configuration, or an
+explicit ingress-owned client-IP header. Upstream response bodies are rejected above
+`API_UPSTREAM_MAX_RESPONSE_BYTES` before JSON parsing.
+
+The former auth-only environment names remain accepted as deprecated aliases for one migration
+window. Setting a canonical and deprecated name to different values fails startup. New deployments
+and documentation must use the `API_*` names because the adapter now serves more than auth.
 
 ### Operation Mapping
 
@@ -119,7 +125,7 @@ issuance should add that capability to the API contract instead of hiding compen
 - Login, registration, and logout require exact same-origin browser mutations. The adapter forwards
   no incoming cookies, authorization headers, or arbitrary paths to Go. The allowed browser origin
   comes from validated `NEXT_PUBLIC_APP_URL`, not a proxy-normalized internal request URL.
-- `AUTH_CLIENT_IP_HEADER` names the ingress-owned header from which one validated IP is forwarded as
+- `API_CLIENT_IP_HEADER` names the ingress-owned header from which one validated IP is forwarded as
   `X-Forwarded-For`; missing, malformed, or comma-separated values are not forwarded. The Go API
   must trust only the Web adapter network through
   `SERVER_TRUSTED_PROXIES`; this preserves endpoint-specific source-IP and subject quotas without

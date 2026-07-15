@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { AxiosError } from 'axios';
+import type { AxiosAdapter, AxiosError } from 'axios';
 
 import { ApiErrorCode, ClientErrorCode } from './codes';
-import { toApiError } from './request';
+import { createRequest, toApiError } from './request';
 
 describe('toApiError', () => {
   it('prefers Go API error_code over numeric status code', () => {
@@ -70,5 +70,35 @@ describe('toApiError', () => {
     } as AxiosError;
 
     expect(toApiError(error).errorCode).toBe(ClientErrorCode.NETWORK_ERROR);
+  });
+});
+
+describe('HttpClient response modes', () => {
+  it('extracts data by default but preserves an explicitly requested envelope', async () => {
+    const envelope = {
+      code: 0,
+      message: 'success',
+      data: [{ id: 42 }],
+      meta: {
+        current_page: 1,
+        per_page: 15,
+        total: 1,
+        last_page: 1,
+        from: 1,
+        to: 1,
+      },
+      links: { first: '/items?page=1', last: '/items?page=1', prev: null, next: null },
+    };
+    const adapter: AxiosAdapter = async (config) => ({
+      config,
+      data: envelope,
+      headers: {},
+      status: 200,
+      statusText: 'OK',
+    });
+    const client = createRequest({ adapter });
+
+    await expect(client.get('/items')).resolves.toEqual([{ id: 42 }]);
+    await expect(client.getEnvelope('/items')).resolves.toEqual(envelope);
   });
 });

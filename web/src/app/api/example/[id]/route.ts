@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  apiInvalidInputResponse,
+  apiJsonBodyErrorResponse,
   apiNotFoundResponse,
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
@@ -63,7 +63,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const payload = await readJsonBody(request);
 
   if (!payload.ok) {
-    return apiInvalidInputResponse('Malformed JSON body');
+    return apiJsonBodyErrorResponse(payload.error);
   }
 
   const parsed = updateSchema.safeParse(payload.data);

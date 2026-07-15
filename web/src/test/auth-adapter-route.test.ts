@@ -26,10 +26,11 @@ describe('production auth adapter route boundary', () => {
     cookieStore.get.mockReset();
     cookieStore.set.mockReset();
 
-    process.env.AUTH_ADAPTER_ENABLED = 'true';
-    process.env.AUTH_API_TIMEOUT_MS = '5000';
-    process.env.AUTH_API_URL = 'https://api.example.com/v1';
-    process.env.AUTH_CLIENT_IP_HEADER = 'x-forwarded-for';
+    process.env.API_ADAPTER_ENABLED = 'true';
+    process.env.API_UPSTREAM_TIMEOUT_MS = '5000';
+    process.env.API_UPSTREAM_MAX_RESPONSE_BYTES = '1048576';
+    process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
+    process.env.API_CLIENT_IP_HEADER = 'x-forwarded-for';
     process.env.NEXT_PUBLIC_API_URL = '/api';
     process.env.NEXT_PUBLIC_APP_URL = 'https://app.example.com';
     delete process.env.NEXT_PHASE;
@@ -41,10 +42,11 @@ describe('production auth adapter route boundary', () => {
     vi.resetModules();
 
     for (const key of [
-      'AUTH_ADAPTER_ENABLED',
-      'AUTH_API_TIMEOUT_MS',
-      'AUTH_API_URL',
-      'AUTH_CLIENT_IP_HEADER',
+      'API_ADAPTER_ENABLED',
+      'API_UPSTREAM_TIMEOUT_MS',
+      'API_UPSTREAM_MAX_RESPONSE_BYTES',
+      'API_UPSTREAM_URL',
+      'API_CLIENT_IP_HEADER',
       'NEXT_PHASE',
       'NEXT_PUBLIC_API_URL',
       'NEXT_PUBLIC_APP_URL',

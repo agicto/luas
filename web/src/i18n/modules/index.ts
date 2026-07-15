@@ -8,6 +8,8 @@ import site from './site/en-US';
 import type { SiteMessages } from './site/zh-Hans';
 import console from './console/en-US';
 import type { ConsoleMessages } from './console/zh-Hans';
+import organization from './organization/en-US';
+import type { OrganizationMessages } from './organization/zh-Hans';
 import settings from './settings/en-US';
 import type { SettingsMessages } from './settings/zh-Hans';
 import errors from './errors/en-US';
@@ -29,6 +31,7 @@ export const messages = {
   nav,
   site,
   console,
+  organization,
   settings,
   errors,
   metadata,
@@ -46,6 +49,7 @@ export interface MessageSchema {
   nav: NavMessages;
   site: SiteMessages;
   console: ConsoleMessages;
+  organization: OrganizationMessages;
   settings: SettingsMessages;
   errors: ErrorsMessages;
   metadata: MetadataMessages;

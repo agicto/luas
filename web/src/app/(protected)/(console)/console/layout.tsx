@@ -1,8 +1,9 @@
 'use client';
 
+import { lazy, Suspense } from 'react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette } from "lucide-react";
+import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette, Building2 } from "lucide-react";
 
 import { cn } from "@/utils";
 import { ROUTES } from "@/constants/routes";
@@ -19,6 +20,14 @@ import { LanguageSwitcher } from "@/components/common";
 import { useT, type AllTranslationKeys } from "@/i18n";
 import { useLogout } from "@/features/auth/hooks/use-auth";
 import { useAuthStore } from "@/features/auth/store/auth-store";
+import { isWebFeatureEnabled } from "@/config/features";
+
+const OrganizationSwitcher = lazy(async () => {
+  const organizationFeature = await import(
+    '@/features/organization/components/organization-switcher'
+  );
+  return { default: organizationFeature.OrganizationSwitcher };
+});
 
 interface NavItem {
   titleKey: Extract<AllTranslationKeys, `nav.${string}`>;
@@ -35,6 +44,7 @@ export default function ConsoleLayout({
   const t = useT();
   const user = useAuthStore.use.user();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const organizationEnabled = isWebFeatureEnabled('organization');
 
   const mainNavItems: NavItem[] = [
     {
@@ -42,6 +52,13 @@ export default function ConsoleLayout({
       href: ROUTES.CONSOLE.HOME,
       icon: Home,
     },
+    ...(organizationEnabled
+      ? [{
+          titleKey: "nav.organizations" as const,
+          href: ROUTES.CONSOLE.ORGANIZATIONS,
+          icon: Building2,
+        }]
+      : []),
   ];
 
   const secondaryNavItems: NavItem[] = [
@@ -61,20 +78,25 @@ export default function ConsoleLayout({
     <div className="flex h-screen flex-col overflow-hidden bg-bg-canvas text-text-main">
       {/* Fixed Header */}
       <header className="flex h-16 shrink-0 items-center justify-between border-b bg-bg-surface px-4 md:px-6 shadow-sm z-50">
-        <div className="flex items-center gap-4">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-4">
           <Link href={ROUTES.SITE.HOME} className="flex items-center gap-2 group">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">Luas Console</span>
+            <span className="hidden text-xl font-bold sm:inline">Luas Console</span>
           </Link>
+          {organizationEnabled ? (
+            <Suspense fallback={<div className="h-8 w-9 rounded-md border bg-muted" aria-hidden="true" />}>
+              <OrganizationSwitcher />
+            </Suspense>
+          ) : null}
         </div>
 
-        <div className="flex items-center gap-2">
-          <LanguageSwitcher />
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="hidden sm:block"><LanguageSwitcher /></div>
           <ThemeToggle />
           
-          <Button variant="ghost" isIcon className="h-9 w-9 rounded-full relative">
+          <Button variant="ghost" isIcon className="relative hidden h-9 w-9 rounded-full sm:inline-flex">
             <Bell className="h-4 w-4 text-text-muted" />
             <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary border-2 border-bg-surface" />
             <span className="sr-only">{t('console.notifications')}</span>
@@ -137,12 +159,12 @@ export default function ConsoleLayout({
         <aside className="hidden w-[220px] shrink-0 border-r bg-background md:flex md:flex-col">
           <div className="flex flex-1 flex-col overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium">
-              {mainNavItems.map((item, index) => {
+              {mainNavItems.map((item) => {
                 const IconComponent = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = isNavigationItemActive(pathname, item.href);
                 return (
                   <Link
-                    key={index}
+                    key={item.href}
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
@@ -160,12 +182,12 @@ export default function ConsoleLayout({
           </div>
           <div className="mt-auto p-4">
             <nav className="grid items-start gap-1 text-sm font-medium">
-              {secondaryNavItems.map((item, index) => {
+              {secondaryNavItems.map((item) => {
                 const IconComponent = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = isNavigationItemActive(pathname, item.href);
                 return (
                   <Link
-                    key={index}
+                    key={item.href}
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
@@ -190,10 +212,16 @@ export default function ConsoleLayout({
         </aside>
 
         {/* Scrollable Main Content */}
-        <main className="h-full w-full overflow-y-auto">
+        <main className="h-full min-w-0 w-full overflow-y-auto">
           {children}
         </main>
       </div>
     </div>
+  );
+}
+
+function isNavigationItemActive(pathname: string, href: string): boolean {
+  return pathname === href || (
+    href !== ROUTES.CONSOLE.HOME && pathname.startsWith(`${href}/`)
   );
 }

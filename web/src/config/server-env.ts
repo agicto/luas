@@ -11,10 +11,21 @@ if (!parsedPublicEnv.success) {
 }
 
 const parsed = serverEnvSchema.safeParse({
-  AUTH_ADAPTER_ENABLED: process.env.AUTH_ADAPTER_ENABLED,
-  AUTH_API_TIMEOUT_MS: process.env.AUTH_API_TIMEOUT_MS,
-  AUTH_API_URL: process.env.AUTH_API_URL,
-  AUTH_CLIENT_IP_HEADER: process.env.AUTH_CLIENT_IP_HEADER,
+  API_ADAPTER_ENABLED: environmentAlias(
+    'API_ADAPTER_ENABLED',
+    'AUTH_ADAPTER_ENABLED'
+  ),
+  API_UPSTREAM_TIMEOUT_MS: environmentAlias(
+    'API_UPSTREAM_TIMEOUT_MS',
+    'AUTH_API_TIMEOUT_MS'
+  ),
+  API_UPSTREAM_MAX_RESPONSE_BYTES:
+    process.env.API_UPSTREAM_MAX_RESPONSE_BYTES,
+  API_UPSTREAM_URL: environmentAlias('API_UPSTREAM_URL', 'AUTH_API_URL'),
+  API_CLIENT_IP_HEADER: environmentAlias(
+    'API_CLIENT_IP_HEADER',
+    'AUTH_CLIENT_IP_HEADER'
+  ),
   MOCK_BFF_ENABLED: process.env.MOCK_BFF_ENABLED,
   SESSION_SECRET: process.env.SESSION_SECRET,
 });
@@ -45,7 +56,7 @@ function targetsSameOriginApiRoute(apiUrl: string, appUrl: string): boolean {
   }
 }
 
-function isValidAuthApiUrl(value: string): boolean {
+function isValidApiUpstreamUrl(value: string): boolean {
   const url = new URL(value);
 
   return (
@@ -57,13 +68,15 @@ function isValidAuthApiUrl(value: string): boolean {
   );
 }
 
-if (serverEnv.AUTH_ADAPTER_ENABLED && !isProductionBuildPhase) {
-  if (!serverEnv.AUTH_API_URL) {
-    throw new Error('AUTH_API_URL must be set when AUTH_ADAPTER_ENABLED=true');
+if (serverEnv.API_ADAPTER_ENABLED && !isProductionBuildPhase) {
+  if (!serverEnv.API_UPSTREAM_URL) {
+    throw new Error('API_UPSTREAM_URL must be set when API_ADAPTER_ENABLED=true');
   }
 
-  if (!isValidAuthApiUrl(serverEnv.AUTH_API_URL)) {
-    throw new Error('AUTH_API_URL must be an HTTP(S) URL without credentials, query, or fragment');
+  if (!isValidApiUpstreamUrl(serverEnv.API_UPSTREAM_URL)) {
+    throw new Error(
+      'API_UPSTREAM_URL must be an HTTP(S) URL without credentials, query, or fragment'
+    );
   }
 
   if (
@@ -73,15 +86,30 @@ if (serverEnv.AUTH_ADAPTER_ENABLED && !isProductionBuildPhase) {
     )
   ) {
     throw new Error(
-      'NEXT_PUBLIC_API_URL must target the same-origin /api route when AUTH_ADAPTER_ENABLED=true'
+      'NEXT_PUBLIC_API_URL must target the same-origin /api route when API_ADAPTER_ENABLED=true'
     );
   }
 
-  if (env.NODE_ENV === 'production' && !serverEnv.AUTH_CLIENT_IP_HEADER) {
+  if (env.NODE_ENV === 'production' && !serverEnv.API_CLIENT_IP_HEADER) {
     throw new Error(
-      'AUTH_CLIENT_IP_HEADER must be set when AUTH_ADAPTER_ENABLED=true in production runtime'
+      'API_CLIENT_IP_HEADER must be set when API_ADAPTER_ENABLED=true in production runtime'
     );
   }
+}
+
+function environmentAlias(canonical: string, legacy: string): string | undefined {
+  const canonicalValue = process.env[canonical];
+  const legacyValue = process.env[legacy];
+
+  if (
+    canonicalValue !== undefined &&
+    legacyValue !== undefined &&
+    canonicalValue !== legacyValue
+  ) {
+    throw new Error(`${canonical} conflicts with deprecated ${legacy}`);
+  }
+
+  return canonicalValue ?? legacyValue;
 }
 
 if (

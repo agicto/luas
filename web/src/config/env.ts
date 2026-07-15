@@ -91,6 +91,8 @@ export const env: PublicEnv = {
     process.env.NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED,
     true
   ),
+  NEXT_PUBLIC_OPTIONAL_FEATURES:
+    process.env.NEXT_PUBLIC_OPTIONAL_FEATURES ?? '',
   NODE_ENV: readNodeEnv(process.env.NODE_ENV),
 };
 

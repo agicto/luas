@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  apiInvalidInputResponse,
+  apiJsonBodyErrorResponse,
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   const payload = await readJsonBody(request);
 
   if (!payload.ok) {
-    return apiInvalidInputResponse('Malformed JSON body');
+    return apiJsonBodyErrorResponse(payload.error);
   }
 
   const parsed = createSchema.safeParse(payload.data);

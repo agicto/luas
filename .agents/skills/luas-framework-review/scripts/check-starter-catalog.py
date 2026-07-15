@@ -148,7 +148,9 @@ def main() -> int:
         "contracts/ORGANIZATIONS.md",
         (
             "OPTIONAL_STARTERS=organization",
+            "NEXT_PUBLIC_OPTIONAL_FEATURES=organization",
             "GET /v1/organization-context",
+            "GET /api/organization-context",
             "Organization-Id",
             "POST /v1/organizations/:id/invitations",
             "POST /v1/organization-invitations/accept",
@@ -171,6 +173,99 @@ def main() -> int:
             "ORGANIZATION.MEMBER_NOT_FOUND",
             "ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED",
             "ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID",
+            "Deliberate Deferrals",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/config/optional-features.ts",
+        (
+            "OPTIONAL_WEB_FEATURES = ['organization']",
+            "Duplicate optional Web feature",
+            "Unknown optional Web feature",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/server/organization-route.ts",
+        (
+            "resolveOrganizationRoute(",
+            "authenticateOrganizationBackend(",
+            "isWebFeatureEnabled('organization')",
+            "guardSameOriginMutation(request)",
+            "readJsonBody(request)",
+            "forwardAuthenticatedGoApi(request",
+            "Organization-Id",
+            "ORGANIZATION_CONTEXT_REQUIRED",
+            "ORGANIZATION_CONTEXT_INVALID",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/services/organization-service.ts",
+        (
+            "getEnvelope<unknown>('/organizations'",
+            "organizationPageEnvelopeSchema.safeParse",
+            "'Organization-Id': String(organizationId)",
+            "ClientErrorCode.INVALID_RESPONSE",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/schemas.ts",
+        (
+            "from 'zod/mini'",
+            "iso.datetime({ offset: true })",
+            "maximum(Number.MAX_SAFE_INTEGER)",
+            "Array.from(value).length",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/server/api-adapter/authenticated-route.ts",
+        (
+            "getApiSessionToken()",
+            "API_UPSTREAM_MAX_RESPONSE_BYTES",
+            "cache-control', 'private, no-store",
+            "clearApiSessionCookie()",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/server/api-adapter/go-api-client.ts",
+        (
+            "fixed relative API path",
+            "readBoundedBody(",
+            "organization-id",
+            "FORWARDED_RESPONSE_HEADERS",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/app/(protected)/(console)/console/organizations/[organizationId]/page.tsx",
+        (
+            "isWebFeatureEnabled('organization')",
+            "organizationRouteIdSchema.safeParse",
+            "OrganizationOverview",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/app/(protected)/(console)/console/layout.tsx",
+        (
+            "lazy(async () =>",
+            "OrganizationSwitcher",
+            "ROUTES.CONSOLE.ORGANIZATIONS",
+        ),
+    )
+    require_all(
+        failures,
+        "web/docs/ORGANIZATIONS.md",
+        (
+            "OPTIONAL_STARTERS=organization",
+            "NEXT_PUBLIC_OPTIONAL_FEATURES=organization",
+            "API_ADAPTER_ENABLED=true",
+            "selected organization URL",
             "Deliberate Deferrals",
         ),
     )

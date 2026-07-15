@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import {
-  apiInvalidInputResponse,
+  apiJsonBodyErrorResponse,
   apiValidationErrorResponse,
 } from '@/app/api/_shared/error-response';
 import { resolveAuthRoute } from '@/app/api/_shared/auth-route';
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const payload = await readJsonBody(request);
 
   if (!payload.ok) {
-    return apiInvalidInputResponse('Malformed JSON body');
+    return apiJsonBodyErrorResponse(payload.error);
   }
 
   const parsed = registerSchema.safeParse(payload.data);

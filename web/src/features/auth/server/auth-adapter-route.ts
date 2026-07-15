@@ -23,16 +23,20 @@ import {
 import { clearSessionCookie } from '@/features/auth/server/session';
 import { ApiErrorCode } from '@/http/codes';
 
+let adapter: GoApiAuthAdapter | undefined;
+
 function configuredAdapter(): GoApiAuthAdapter {
-  if (!serverEnv.AUTH_API_URL) {
-    throw new Error('AUTH_API_URL is required by the production auth adapter');
+  if (!serverEnv.API_UPSTREAM_URL) {
+    throw new Error('API_UPSTREAM_URL is required by the production API adapter');
   }
 
-  return new GoApiAuthAdapter({
-    apiUrl: serverEnv.AUTH_API_URL,
-    timeoutMs: serverEnv.AUTH_API_TIMEOUT_MS,
-    clientIpHeader: serverEnv.AUTH_CLIENT_IP_HEADER,
+  adapter ??= new GoApiAuthAdapter({
+    apiUrl: serverEnv.API_UPSTREAM_URL,
+    timeoutMs: serverEnv.API_UPSTREAM_TIMEOUT_MS,
+    maxResponseBytes: serverEnv.API_UPSTREAM_MAX_RESPONSE_BYTES,
+    clientIpHeader: serverEnv.API_CLIENT_IP_HEADER,
   });
+  return adapter;
 }
 
 function adapterErrorResponse(error: AdapterError): NextResponse {

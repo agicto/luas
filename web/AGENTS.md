@@ -59,6 +59,7 @@ src/
 │   └── features/           # Shared feature-facing UI blocks
 ├── features/               # Feature-first folders (preferred)
 │   ├── auth/               # components, hooks, services, store, server, types
+│   ├── organization/       # optional browser workflow, fixed adapter routes, mock state
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
 ├── constants/              # Route constants, enums
@@ -70,6 +71,7 @@ src/
 │   ├── server.ts           # Server translation accessor (getT)
 │   └── modules/            # Translation namespaces (common, auth, etc.)
 ├── providers/              # React context providers
+├── server/                 # Shared server-only infrastructure such as the bounded API adapter
 ├── services/               # Compatibility exports for feature services
 ├── store/                  # Shared global stores only
 ├── test/                   # Test utilities and setup (unit tests in src/test)
@@ -99,6 +101,12 @@ For downstream production apps, replace mock handlers with production endpoints 
 behavior disabled. The Go JWT endpoints are not a drop-in implementation of the Web browser auth
 contract; use the shipped same-origin adapter defined in `../contracts/AUTHENTICATION.md`.
 Replacement and resolution rules live in `docs/MOCK_BFF.md` and `docs/AUTHENTICATION.md`.
+
+The production `src/server/api-adapter/` transport is shared by fixed auth and optional starter
+Route Handlers. It accepts only code-owned relative paths, owns the HttpOnly bearer credential,
+bounds upstream JSON, and never forwards browser cookies or authorization. Do not turn it into a
+catch-all proxy. The optional organization workflow and its URL-scoped selection rules are in
+`docs/ORGANIZATIONS.md`.
 
 ### 2. Authentication Flow
 
@@ -170,6 +178,8 @@ authorization.
 - **Server state**: React Query for all API data. Each `QueryProvider` creates an isolated
   `QueryClient`; never export a module-level cache singleton. Write mutations do not retry by
   default because retries require endpoint-specific idempotency evidence.
+- **Organization state**: Server state lives in React Query. The selected organization comes from
+  `/console/organizations/:id`; never persist it in Zustand, `localStorage`, or a global cookie.
 - **UI state**: `src/store/ui-store.ts` (Zustand).
 - **Auth config**: `src/config/auth.ts` owns browser-safe navigation; `src/config/mock-session.ts`
   owns the server-only mock cookie policy; `src/features/auth/server/mock-identity.ts` owns the
