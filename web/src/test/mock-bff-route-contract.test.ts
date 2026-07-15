@@ -15,6 +15,7 @@ const organizationLifecycleRouteModule = resolve(
   process.cwd(),
   'src/features/organization/server/organization-lifecycle-route.ts'
 );
+const apiKeyRouteModule = resolve(process.cwd(), 'src/features/api-key/server/api-key-route.ts');
 
 const forbiddenRoutePatterns = [
   {
@@ -32,7 +33,7 @@ const forbiddenRoutePatterns = [
 ] as const;
 
 function listRouteFiles(dir: string): string[] {
-  return readdirSync(dir).flatMap((entry) => {
+  return readdirSync(dir).flatMap(entry => {
     const path = resolve(dir, entry);
     const stat = statSync(path);
 
@@ -53,22 +54,25 @@ function relativeRoute(path: string): string {
 }
 
 function productionGuard(path: string): string {
-  return relativeRoute(path).startsWith('auth/')
-    ? 'resolveAuthRoute('
-    : 'guardMockBffRoute(';
+  return relativeRoute(path).startsWith('auth/') ? 'resolveAuthRoute(' : 'guardMockBffRoute(';
 }
 
 function delegatesOrganizationGuard(path: string, handler: RouteHandlerSource): boolean {
   const route = relativeRoute(path);
   return (
-    (
-      route === 'organization-context/route.ts' ||
+    (route === 'organization-context/route.ts' ||
       route.startsWith('organization-invitations/') ||
-      route.startsWith('organizations/')
-    ) &&
+      route.startsWith('organizations/')) &&
     /\b(?:accept|create|get|list|remove|resolve|revoke|transfer|update)Organization[A-Za-z]*Route\b/.test(
       handler.source
     )
+  );
+}
+
+function delegatesApiKeyGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    relativeRoute(path).startsWith('api-keys/') &&
+    /\b(?:create|list|revoke)ApiKeys?Route\b/.test(handler.source)
   );
 }
 
@@ -98,42 +102,40 @@ describe('mock BFF route contract', () => {
 
   it('discovers at least one exported HTTP handler in every route file', () => {
     const offenders = routeFiles
-      .filter((path) => routeHandlers(path).length === 0)
+      .filter(path => routeHandlers(path).length === 0)
       .map(relativeRoute);
 
     expect(offenders).toEqual([]);
   });
 
   it('keeps every route handler behind its production availability guard', () => {
-    const offenders = routeFiles.flatMap((path) =>
+    const offenders = routeFiles.flatMap(path =>
       routeHandlers(path)
         .filter(
-          (handler) =>
+          handler =>
             !handler.source.includes(productionGuard(path)) &&
-            !delegatesOrganizationGuard(path, handler)
+            !delegatesOrganizationGuard(path, handler) &&
+            !delegatesApiKeyGuard(path, handler)
         )
-        .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
 
     expect(offenders).toEqual([]);
   });
 
   it('keeps every unsafe mock BFF handler behind the same-origin guard', () => {
-    const offenders = routeFiles.flatMap((path) =>
+    const offenders = routeFiles.flatMap(path =>
       routeHandlers(path)
-        .filter((handler) => unsafeMethods.has(handler.method))
-        .filter((handler) => !delegatesOrganizationGuard(path, handler))
-        .filter((handler) => {
+        .filter(handler => unsafeMethods.has(handler.method))
+        .filter(handler => !delegatesOrganizationGuard(path, handler))
+        .filter(handler => !delegatesApiKeyGuard(path, handler))
+        .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
 
-          return (
-            originGuard < 0 ||
-            availabilityGuard < 0 ||
-            originGuard < availabilityGuard
-          );
+          return originGuard < 0 || availabilityGuard < 0 || originGuard < availabilityGuard;
         })
-        .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
 
     expect(offenders).toEqual([]);
@@ -141,11 +143,11 @@ describe('mock BFF route contract', () => {
 
   it('finalizes every auth route as a private no-store response', () => {
     const offenders = routeFiles
-      .filter((path) => relativeRoute(path).startsWith('auth/'))
-      .flatMap((path) =>
+      .filter(path => relativeRoute(path).startsWith('auth/'))
+      .flatMap(path =>
         routeHandlers(path)
-          .filter((handler) => !handler.source.includes('privateAuthResponse('))
-          .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+          .filter(handler => !handler.source.includes('privateAuthResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
       );
 
     expect(offenders).toEqual([]);
@@ -153,7 +155,7 @@ describe('mock BFF route contract', () => {
 
   it('finalizes every organization route as a private no-store response', () => {
     const offenders = routeFiles
-      .filter((path) => {
+      .filter(path => {
         const route = relativeRoute(path);
         return (
           route === 'organization-context/route.ts' ||
@@ -161,12 +163,22 @@ describe('mock BFF route contract', () => {
           route.startsWith('organizations/')
         );
       })
-      .flatMap((path) =>
+      .flatMap(path =>
         routeHandlers(path)
-          .filter(
-            (handler) => !handler.source.includes('privateOrganizationResponse(')
-          )
-          .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+          .filter(handler => !handler.source.includes('privateOrganizationResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every API key route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter(path => relativeRoute(path).startsWith('api-keys/'))
+      .flatMap(path =>
+        routeHandlers(path)
+          .filter(handler => !handler.source.includes('privateApiKeyResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
       );
 
     expect(offenders).toEqual([]);
@@ -175,12 +187,14 @@ describe('mock BFF route contract', () => {
   it('keeps delegated organization writes ordered behind availability and origin guards', () => {
     const source = readFileSync(organizationRouteModule, 'utf8');
     const nextFunction = 'export async function getOrganizationRoute';
-    const create = source
-      .split('export async function createOrganizationRoute', 2)[1]
-      ?.split(nextFunction, 1)[0] ?? '';
-    const update = source
-      .split('export async function updateOrganizationRoute', 2)[1]
-      ?.split('export async function resolveOrganizationContextRoute', 1)[0] ?? '';
+    const create =
+      source
+        .split('export async function createOrganizationRoute', 2)[1]
+        ?.split(nextFunction, 1)[0] ?? '';
+    const update =
+      source
+        .split('export async function updateOrganizationRoute', 2)[1]
+        ?.split('export async function resolveOrganizationContextRoute', 1)[0] ?? '';
 
     for (const handler of [create, update]) {
       const availabilityGuard = handler.indexOf('resolveOrganizationRoute(');
@@ -216,16 +230,32 @@ describe('mock BFF route contract', () => {
     }
   });
 
+  it('keeps delegated API key writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(apiKeyRouteModule, 'utf8');
+    for (const name of ['createApiKeyRoute', 'revokeApiKeyRoute']) {
+      const handler = exportedFunction(source, name);
+      const availabilityGuard = handler.indexOf('resolveApiKeyRoute(');
+      const originGuard = handler.indexOf('guardSameOriginMutation(');
+      const authentication = handler.indexOf('authenticateApiKeyBackend(');
+      const bodyRead = handler.indexOf('readJsonBody(');
+
+      expect(availabilityGuard, name).toBeGreaterThanOrEqual(0);
+      expect(originGuard, name).toBeGreaterThan(availabilityGuard);
+      expect(authentication, name).toBeGreaterThan(originGuard);
+      if (bodyRead >= 0) expect(bodyRead, name).toBeGreaterThan(authentication);
+    }
+  });
+
   it('keeps mock route JSON envelopes behind shared response helpers', () => {
     const offenders = routeFiles
-      .filter((path) => /\bNextResponse\.json\s*\(/.test(readRoute(path)))
+      .filter(path => /\bNextResponse\.json\s*\(/.test(readRoute(path)))
       .map(relativeRoute);
 
     expect(offenders).toEqual([]);
   });
 
   it('keeps mock route errors on canonical API error codes', () => {
-    const offenders = routeFiles.flatMap((path) => {
+    const offenders = routeFiles.flatMap(path => {
       const source = readRoute(path);
 
       return forbiddenRoutePatterns

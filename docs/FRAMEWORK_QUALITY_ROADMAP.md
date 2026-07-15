@@ -62,6 +62,13 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web route handlers are contract-tested so mock-only routes call `guardMockBffRoute()`, hybrid auth
   routes call `resolveAuthRoute()`, unsafe mutations apply the same-origin guard after availability,
   success envelopes use shared helpers, and legacy underscore-style error codes stay absent.
+- The default API key starter now has atomic idempotent revocation that cannot be cleared by a stale
+  usage write, throttled `last_used_at`, structured JSON scope storage with legacy read compatibility,
+  bounded `namespace:action` scope grammar, and a route-level exact scope guard. The Web replaces its
+  fabricated settings key with strict fixed-path production/mock routes and a real create/list/revoke
+  workflow; plaintext is shown once, immediately removed from mutation state, and forbidden from list
+  metadata. [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) and an executable boundary check own
+  the cross-service semantics.
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, toast, and Zustand runtime dependencies from `(site)` routes.
@@ -106,6 +113,23 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` starter includes ownership, invitation and member lifecycles, verified request-scoped active context, fixed production/mock browser adapters, and role-aware organization/member/invitation/ownership UI. It is ready when explicitly enabled in both halves; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
+
+### Completed P0 — API Key Revocation And One-Time Secret Boundary
+
+The previous repository saved a stale full row when recording use, so a concurrent revoke could be
+overwritten with `revoked_at = NULL`. Scopes were stored as ambiguous comma-separated text without
+grammar bounds, and the Web settings page displayed a fabricated `sk_demo` value with a nonfunctional
+regenerate button. Revocation now updates only revocation columns, usage writes only `last_used_at`
+for an active stale row, scopes use JSON for new writes, and route guards consume exact normalized
+scopes. The browser feature uses fixed authenticated adapter paths or the explicit mock BFF and
+keeps create plaintext out of list and mutation caches.
+
+Verification:
+
+- `cd api && go test ./internal/modules/apikey -count=1`
+- `cd web && pnpm vitest run src/test/api-key-contract.test.ts src/test/api-key-route.test.ts src/test/api-key-ui.test.tsx`
+- `python3 .agents/skills/luas-framework-review/scripts/check-api-key-boundary.py`
+- `make check`
 
 ### Completed P0 — HTTP Listen and Transport Configuration
 

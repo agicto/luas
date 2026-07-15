@@ -2,6 +2,8 @@ package apikey
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -29,7 +31,10 @@ func (r *repository) Create(ctx context.Context, key *domain.APIKey) error {
 	if err != nil {
 		return err
 	}
-	po := newAPIKeyPO(key)
+	po, err := newAPIKeyPO(key)
+	if err != nil {
+		return err
+	}
 	if err := db.Create(po).Error; err != nil {
 		return err
 	}
@@ -40,36 +45,62 @@ func (r *repository) Create(ctx context.Context, key *domain.APIKey) error {
 	return nil
 }
 
-func (r *repository) Update(ctx context.Context, key *domain.APIKey) error {
+func (r *repository) Revoke(
+	ctx context.Context,
+	userID, id uint,
+	revokedAt time.Time,
+) (bool, error) {
 	db, err := r.withContext(ctx)
 	if err != nil {
-		return err
-	}
-	po := newAPIKeyPO(key)
-	if err := db.Save(po).Error; err != nil {
-		return err
+		return false, err
 	}
 
-	key.UpdatedAt = po.UpdatedAt
-	return nil
+	result := db.Model(&APIKeyPO{}).
+		Where("id = ? AND user_id = ? AND revoked_at IS NULL", id, userID).
+		Updates(map[string]any{
+			"revoked_at": revokedAt,
+			"updated_at": revokedAt,
+		})
+	if result.Error != nil {
+		return false, result.Error
+	}
+	if result.RowsAffected == 1 {
+		return true, nil
+	}
+
+	var existing APIKeyPO
+	err = db.Select("id", "revoked_at").
+		Where("id = ? AND user_id = ?", id, userID).
+		First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return false, domain.ErrAPIKeyNotFound
+	}
+	if err != nil {
+		return false, err
+	}
+	return false, nil
 }
 
-func (r *repository) FindByID(ctx context.Context, id uint) (*domain.APIKey, error) {
+func (r *repository) RecordUse(
+	ctx context.Context,
+	id uint,
+	usedAt, staleBefore time.Time,
+) error {
 	db, err := r.withContext(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var po APIKeyPO
-	if err := db.First(&po, id).Error; err != nil {
-		return nil, err
-	}
-	return po.toDomain(), nil
+	return db.Model(&APIKeyPO{}).
+		Where("id = ? AND revoked_at IS NULL", id).
+		Where("expires_at IS NULL OR expires_at > ?", usedAt).
+		Where("last_used_at IS NULL OR last_used_at <= ?", staleBefore).
+		UpdateColumn("last_used_at", usedAt).Error
 }
 
 func (r *repository) FindByUserID(ctx context.Context, userID uint, page, pageSize int) ([]*domain.APIKey, int64, error) {
-	db, err := r.withContext(ctx)
-	if err != nil {
-		return nil, 0, err
+	db, dbErr := r.withContext(ctx)
+	if dbErr != nil {
+		return nil, 0, dbErr
 	}
 	var (
 		items []*APIKeyPO
@@ -87,7 +118,11 @@ func (r *repository) FindByUserID(ctx context.Context, userID uint, page, pageSi
 		return nil, 0, err
 	}
 
-	return toDomainList(items), total, nil
+	keys, err := toDomainList(items)
+	if err != nil {
+		return nil, 0, err
+	}
+	return keys, total, nil
 }
 
 func (r *repository) FindByHash(ctx context.Context, hash string) (*domain.APIKey, error) {
@@ -99,5 +134,5 @@ func (r *repository) FindByHash(ctx context.Context, hash string) (*domain.APIKe
 	if err := db.Where("key_hash = ?", hash).First(&po).Error; err != nil {
 		return nil, err
 	}
-	return po.toDomain(), nil
+	return po.toDomain()
 }

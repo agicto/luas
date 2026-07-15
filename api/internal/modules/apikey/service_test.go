@@ -3,7 +3,12 @@ package apikey
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/zgiai/luas/api/internal/domain"
 )
@@ -11,8 +16,9 @@ import (
 type fakeRepository struct {
 	nextID        uint
 	keys          map[uint]*domain.APIKey
-	findByIDErr   error
 	findByHashErr error
+	revokeErr     error
+	revokeWrites  int
 }
 
 func newFakeRepository() *fakeRepository {
@@ -29,20 +35,44 @@ func (r *fakeRepository) Create(ctx context.Context, key *domain.APIKey) error {
 	return nil
 }
 
-func (r *fakeRepository) Update(ctx context.Context, key *domain.APIKey) error {
-	r.keys[key.ID] = cloneAPIKey(key)
-	return nil
-}
-
-func (r *fakeRepository) FindByID(ctx context.Context, id uint) (*domain.APIKey, error) {
-	if r.findByIDErr != nil {
-		return nil, r.findByIDErr
+func (r *fakeRepository) Revoke(
+	ctx context.Context,
+	userID, id uint,
+	revokedAt time.Time,
+) (bool, error) {
+	if r.revokeErr != nil {
+		return false, r.revokeErr
 	}
 	key, ok := r.keys[id]
-	if !ok {
-		return nil, domain.ErrAPIKeyNotFound
+	if !ok || key.UserID != userID {
+		return false, domain.ErrAPIKeyNotFound
 	}
-	return cloneAPIKey(key), nil
+	if key.RevokedAt != nil {
+		return false, nil
+	}
+	updated := cloneAPIKey(key)
+	updated.RevokedAt = &revokedAt
+	r.keys[id] = updated
+	r.revokeWrites++
+	return true, nil
+}
+
+func (r *fakeRepository) RecordUse(
+	ctx context.Context,
+	id uint,
+	usedAt, staleBefore time.Time,
+) error {
+	key, ok := r.keys[id]
+	if !ok || key.RevokedAt != nil || (key.ExpiresAt != nil && !key.ExpiresAt.After(usedAt)) {
+		return nil
+	}
+	if key.LastUsedAt != nil && key.LastUsedAt.After(staleBefore) {
+		return nil
+	}
+	updated := cloneAPIKey(key)
+	updated.LastUsedAt = &usedAt
+	r.keys[id] = updated
+	return nil
 }
 
 func (r *fakeRepository) FindByUserID(ctx context.Context, userID uint, page, pageSize int) ([]*domain.APIKey, int64, error) {
@@ -107,6 +137,34 @@ func TestServiceCreateAndValidate(t *testing.T) {
 	}
 }
 
+func TestServiceCanonicalizesScopesAndAcceptsWildcard(t *testing.T) {
+	repo := newFakeRepository()
+	created, err := NewService(repo).CreateForUser(context.Background(), 42, &APIKeyCreateRequest{
+		Name:   " deploy ",
+		Scopes: []string{" Models:Read ", "*", "models:read"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "deploy", created.APIKey.Name)
+	assert.Equal(t, []string{"*", "models:read"}, created.APIKey.Scopes)
+
+	_, err = NewService(repo).Validate(context.Background(), created.PlaintextKey, "jobs:write")
+	require.NoError(t, err)
+}
+
+func TestServiceRejectsExpiredKeyAtCreation(t *testing.T) {
+	repo := newFakeRepository()
+	expiresAt := time.Now().Add(-time.Minute)
+
+	_, err := NewService(repo).CreateForUser(context.Background(), 42, &APIKeyCreateRequest{
+		Name:      "expired",
+		Scopes:    []string{"models:read"},
+		ExpiresAt: &expiresAt,
+	})
+
+	assert.ErrorIs(t, err, domain.ErrInvalidInput)
+	assert.Empty(t, repo.keys)
+}
+
 func TestServiceValidateScopeDenied(t *testing.T) {
 	repo := newFakeRepository()
 	service := NewService(repo)
@@ -125,10 +183,72 @@ func TestServiceValidateScopeDenied(t *testing.T) {
 	}
 }
 
+func TestServiceRejectsInvalidScopesBeforePersistence(t *testing.T) {
+	tests := []struct {
+		name   string
+		scopes []string
+	}{
+		{name: "ambiguous delimiter", scopes: []string{"models:read,admin:all"}},
+		{name: "missing action", scopes: []string{"models"}},
+		{name: "empty element", scopes: []string{"models:read", " "}},
+		{name: "too many", scopes: apiKeyTestScopes(33)},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := newFakeRepository()
+
+			_, err := NewService(repo).CreateForUser(
+				context.Background(),
+				7,
+				&APIKeyCreateRequest{Name: "invalid", Scopes: tt.scopes},
+			)
+
+			if !errors.Is(err, domain.ErrInvalidInput) {
+				t.Fatalf("CreateForUser() error = %v, want invalid input", err)
+			}
+			if len(repo.keys) != 0 {
+				t.Fatalf("persisted %d key(s) for invalid scopes", len(repo.keys))
+			}
+		})
+	}
+}
+
+func apiKeyTestScopes(count int) []string {
+	scopes := make([]string, count)
+	for i := range scopes {
+		scopes[i] = fmt.Sprintf("models%d:read", i)
+	}
+	return scopes
+}
+
+func TestServiceRevocationIsIdempotent(t *testing.T) {
+	repo := newFakeRepository()
+	created, err := NewService(repo).CreateForUser(
+		context.Background(),
+		7,
+		&APIKeyCreateRequest{Name: "deploy", Scopes: []string{"models:invoke"}},
+	)
+	if err != nil {
+		t.Fatalf("CreateForUser() error = %v", err)
+	}
+
+	service := NewService(repo)
+	if err := service.RevokeForUser(context.Background(), 7, created.APIKey.ID); err != nil {
+		t.Fatalf("first RevokeForUser() error = %v", err)
+	}
+	if err := service.RevokeForUser(context.Background(), 7, created.APIKey.ID); err != nil {
+		t.Fatalf("second RevokeForUser() error = %v", err)
+	}
+	if repo.revokeWrites != 1 {
+		t.Fatalf("Revoke() writes = %d, want 1", repo.revokeWrites)
+	}
+}
+
 func TestServicePreservesServiceUnavailable(t *testing.T) {
 	t.Run("revoke", func(t *testing.T) {
 		repo := newFakeRepository()
-		repo.findByIDErr = domain.ErrServiceUnavailable
+		repo.revokeErr = domain.ErrServiceUnavailable
 
 		err := NewService(repo).RevokeForUser(context.Background(), 7, 1)
 

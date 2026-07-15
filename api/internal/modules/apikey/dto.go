@@ -9,7 +9,7 @@ import (
 // APIKeyCreateRequest represents an API key creation request.
 type APIKeyCreateRequest struct {
 	Name      string     `json:"name" binding:"required,max=100"`
-	Scopes    []string   `json:"scopes"`
+	Scopes    []string   `json:"scopes" binding:"max=32,dive,required,max=65"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 

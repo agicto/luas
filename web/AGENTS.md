@@ -59,6 +59,7 @@ src/
 │   └── features/           # Shared feature-facing UI blocks
 ├── features/               # Feature-first folders (preferred)
 │   ├── auth/               # components, hooks, services, store, server, types
+│   ├── api-key/            # default API key workflow, strict contracts, fixed adapter, mock state
 │   ├── organization/       # optional browser workflow, fixed adapter routes, mock state
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
@@ -107,6 +108,10 @@ Route Handlers. It accepts only code-owned relative paths, owns the HttpOnly bea
 bounds upstream JSON, and never forwards browser cookies or authorization. Do not turn it into a
 catch-all proxy. The optional organization workflow and its URL-scoped selection rules are in
 `docs/ORGANIZATIONS.md`.
+
+The default API key browser workflow uses the same fixed production adapter and a development mock
+store. Plaintext is returned only by create and kept in dialog-local state; list contracts reject
+both plaintext and hashes. See `docs/API_KEYS.md` and `../contracts/API_KEYS.md`.
 
 ### 2. Authentication Flow
 

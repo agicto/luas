@@ -74,6 +74,11 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   feature derives browser selection from the current organization URL and forwards it per request;
   it does not persist a global current organization.
 
+**API key scope**
+: A lowercase `namespace:action` attenuation attached to one user-owned API key. Scope checks are
+  exact unless the explicit `*` wildcard is present. A scope may reduce what the key can do; it does
+  not elevate the owning user, represent an organization role, or replace a permission/RBAC model.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -101,6 +106,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - Core and capabilities are reusable; starters and features express application behavior.
 - Contracts connect deployable units. Source code is not shared across deployable units.
 - Active organization context is selected per request and verified against current membership.
+- API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -113,3 +119,5 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable. Use the explicit production API adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.
+- **API key scope vs role/permission**: API key scopes constrain one credential. Organization roles
+  describe membership; a future permission starter would own generalized policy and grants.

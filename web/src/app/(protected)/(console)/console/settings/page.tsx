@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { ApiKeyPanel } from '@/features/api-key';
 import { getT } from '@/i18n/server';
 
 /**
@@ -195,45 +196,7 @@ export default async function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="api" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('api.title')}</CardTitle>
-              <CardDescription>{t('api.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="api-key">{t('api.apiKey')}</Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    id="api-key"
-                    value="sk_demo_xxxxxxxxxxxxx"
-                    aria-describedby="api-key-warning"
-                    readOnly
-                  />
-                  <Button variant="outline" size="sm">
-                    {t('api.regenerate')}
-                  </Button>
-                </div>
-                <p id="api-key-warning" className="text-sm text-muted-foreground">
-                  {t('api.apiKeyWarning')}
-                </p>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="api-access" className="text-base">
-                    {t('api.enable')}
-                  </Label>
-                  <p id="api-access-description" className="text-sm text-muted-foreground">
-                    {t('api.enableDescription')}
-                  </p>
-                </div>
-                <Switch id="api-access" aria-describedby="api-access-description" defaultChecked />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>{t('api.save')}</Button>
-            </CardFooter>
-          </Card>
+          <ApiKeyPanel />
         </TabsContent>
       </Tabs>
     </div>

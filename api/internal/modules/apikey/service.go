@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/capabilities/idgen"
@@ -20,6 +22,13 @@ import (
 // fresher than this window. Sub-minute precision on "last used" tracking
 // is not useful and the write amplification on hot keys is real.
 const lastUsedAtThrottle = time.Minute
+
+const (
+	MaxAPIKeyScopes      = 32
+	MaxAPIKeyScopeLength = 65
+)
+
+var apiKeyScopePattern = regexp.MustCompile(`^(?:\*|[a-z][a-z0-9_-]{0,31}:[a-z][a-z0-9_-]{0,31})$`)
 
 // Service defines API key operations.
 type Service interface {
@@ -50,7 +59,14 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 	}
 
 	name := strings.TrimSpace(req.Name)
-	if name == "" {
+	if name == "" || utf8.RuneCountInString(name) > 100 {
+		return nil, domain.ErrInvalidInput
+	}
+	scopes, err := normalizeAPIKeyScopes(req.Scopes)
+	if err != nil {
+		return nil, err
+	}
+	if req.ExpiresAt != nil && !req.ExpiresAt.After(time.Now()) {
 		return nil, domain.ErrInvalidInput
 	}
 
@@ -67,7 +83,7 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 		Name:      name,
 		KeyPrefix: keyPrefix,
 		KeyHash:   crypto.SHA256Hex(plaintext),
-		Scopes:    normalizeScopes(req.Scopes),
+		Scopes:    scopes,
 		ExpiresAt: req.ExpiresAt,
 	}
 
@@ -102,32 +118,30 @@ func (s *service) ListForUser(ctx context.Context, userID uint, page, pageSize i
 }
 
 func (s *service) RevokeForUser(ctx context.Context, userID, id uint) error {
-	key, err := s.repo.FindByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, domain.ErrServiceUnavailable) {
-			return err
-		}
-		return domain.ErrAPIKeyNotFound
-	}
-	if key.UserID != userID {
-		return domain.ErrAPIKeyNotFound
+	if userID == 0 || id == 0 {
+		return domain.ErrInvalidInput
 	}
 
 	now := time.Now()
-	before := key.RevokedAt
-	key.RevokedAt = &now
-	if err := s.repo.Update(ctx, key); err != nil {
+	changed, err := s.repo.Revoke(ctx, userID, id, now)
+	if err != nil {
+		if errors.Is(err, domain.ErrServiceUnavailable) || errors.Is(err, domain.ErrAPIKeyNotFound) {
+			return err
+		}
 		return fmt.Errorf("failed to revoke api key: %w", err)
+	}
+	if !changed {
+		return nil
 	}
 
 	auditstarter.RecordChange(ctx, auditstarter.Change{
 		Action:     "revoke",
 		Resource:   "api_keys",
 		TargetType: "api_key",
-		TargetID:   strconv.FormatUint(uint64(key.ID), 10),
+		TargetID:   strconv.FormatUint(uint64(id), 10),
 		Result:     domain.AuditResultSuccess,
 		Changes: map[string]domain.AuditValueChange{
-			"revoked_at": {Before: before, After: now},
+			"revoked_at": {After: now},
 		},
 	})
 	return nil
@@ -154,31 +168,40 @@ func (s *service) Validate(ctx context.Context, plaintext string, requiredScopes
 	if key.ExpiresAt != nil && key.ExpiresAt.Before(now) {
 		return nil, domain.ErrAPIKeyExpired
 	}
-	for _, scope := range normalizeScopes(requiredScopes) {
+	normalizedRequiredScopes, err := normalizeAPIKeyScopes(requiredScopes)
+	if err != nil {
+		return nil, fmt.Errorf("invalid required api key scope configuration: %w", err)
+	}
+	for _, scope := range normalizedRequiredScopes {
 		if !key.HasScope(scope) {
 			return nil, domain.ErrPermissionDenied
 		}
 	}
 
 	if key.LastUsedAt == nil || now.Sub(*key.LastUsedAt) >= lastUsedAtThrottle {
-		key.LastUsedAt = &now
-		if err := s.repo.Update(ctx, key); err != nil {
+		if err := s.repo.RecordUse(ctx, key.ID, now, now.Add(-lastUsedAtThrottle)); err != nil {
 			// Auth already succeeded; degrade gracefully on the write.
 			log.Printf("apikey: failed to update LastUsedAt for key %d: %v", key.ID, err)
+		} else {
+			key.LastUsedAt = &now
 		}
 	}
 
 	return key, nil
 }
 
-func normalizeScopes(scopes []string) []string {
+func normalizeAPIKeyScopes(scopes []string) ([]string, error) {
+	if len(scopes) > MaxAPIKeyScopes {
+		return nil, domain.ErrInvalidInput
+	}
+
 	normalized := make([]string, 0, len(scopes))
 	seen := make(map[string]struct{}, len(scopes))
 
 	for _, scope := range scopes {
 		scope = strings.ToLower(strings.TrimSpace(scope))
-		if scope == "" {
-			continue
+		if scope == "" || len(scope) > MaxAPIKeyScopeLength || !apiKeyScopePattern.MatchString(scope) {
+			return nil, domain.ErrInvalidInput
 		}
 		if _, exists := seen[scope]; exists {
 			continue
@@ -188,5 +211,5 @@ func normalizeScopes(scopes []string) []string {
 	}
 
 	slices.Sort(normalized)
-	return normalized
+	return normalized, nil
 }

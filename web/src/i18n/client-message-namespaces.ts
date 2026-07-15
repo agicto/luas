@@ -5,6 +5,7 @@ export const CLIENT_MESSAGE_NAMESPACES = {
   global: ['common', 'errors'],
   auth: ['auth'],
   console: ['auth', 'nav', 'console'],
+  settings: ['settings'],
   organization: ['organization'],
   i18nTest: ['test'],
 } as const satisfies Record<string, readonly ModuleName[]>;

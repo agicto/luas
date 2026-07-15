@@ -1,10 +1,10 @@
 # Mock BFF Replacement Guide
 
 The Web mock BFF is the development-only behavior behind Next.js route handlers under
-`src/app/api/**`. It lets the web shell run before a real backend is available. Auth and optional
-organization Route Handlers are hybrid entry points: they select either this mock behavior or the
-shipped production API adapter. A route location under `/api` does not by itself make behavior mock
-or production.
+`src/app/api/**`. It lets the web shell run before a real backend is available. Auth, default API
+key, and optional organization Route Handlers are hybrid entry points: they select either this mock
+behavior or the shipped production API adapter. A route location under `/api` does not by itself
+make behavior mock or production.
 
 Use this guide when turning Luas into a downstream app.
 
@@ -48,6 +48,8 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
    - `src/features/auth/server/session.ts`
    - `src/features/auth/server/auth-adapter-route.ts`
    - `src/features/auth/server/go-api-auth-adapter.ts`
+   - `src/features/api-key/server/mock-api-key-store.ts`
+   - `src/features/api-key/server/api-key-route.ts`
    - `src/features/organization/server/mock-organization-store.ts`
    - `src/features/organization/server/organization-route.ts`
    - `src/features/organization/server/organization-lifecycle-route.ts`
@@ -68,6 +70,8 @@ Some downstream apps keep mock routes for local or preview development. In that 
   or touching mock state. Hybrid auth routes call `resolveAuthRoute()` first and mutate mock state
   only when it selects the mock BFF. Hybrid organization routes call `resolveOrganizationRoute()`
   and require `NEXT_PUBLIC_OPTIONAL_FEATURES=organization` before touching their mock store.
+  Hybrid API key routes call `resolveApiKeyRoute()` and follow the one-time secret contract in
+  [`API_KEYS.md`](API_KEYS.md).
 - Every `POST`, `PUT`, `PATCH`, or `DELETE` handler must then call
   `guardSameOriginMutation(request)` before reading request bodies or touching mock state.
 - The guard compares browser `Origin` with validated `NEXT_PUBLIC_APP_URL`, so a public host remains

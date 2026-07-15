@@ -122,6 +122,20 @@ Starter-owned middleware is registered through the starter registry, not the cor
 
 Keep starter-owned middleware route-scoped or starter-scoped. Do not move it into the core kernel just because many routes use it.
 
+API key authentication reads `X-API-Key`, validates only the stored SHA-256 hash, and places the
+owner plus normalized scopes in request context. Scope authorization is an additional route decision:
+
+```go
+route := r.GET("/models", handler)
+route.Middleware(apikey.RequireScopes("models:read"))
+```
+
+Apply `RequireScopes` after the named `api_key` middleware. It requires every configured scope,
+honors only the explicit `*` wildcard, returns `PERMISSION.DENIED` when a key is too narrow, and
+panics during route assembly for invalid scope configuration. These scopes attenuate a user-owned
+credential; they are not organization roles or generalized RBAC. See
+[`../../contracts/API_KEYS.md`](../../contracts/API_KEYS.md).
+
 The authentication guard is enabled by default in production and disabled by default elsewhere.
 It uses separate buckets per endpoint, then independent source-IP and normalized/hashed subject
 buckets where configured. A single `IP+subject` combined key is intentionally avoided because it

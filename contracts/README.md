@@ -12,6 +12,9 @@ Optional backend starter contracts are documented independently. The first owner
 default, and each delivered browser operation is listed explicitly rather than implied by the
 backend starter.
 
+The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
+and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
+
 ## Success Responses
 
 Non-paginated API success responses use:

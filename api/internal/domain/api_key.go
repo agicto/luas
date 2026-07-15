@@ -54,8 +54,8 @@ func (k *APIKey) HasScope(scope string) bool {
 // APIKeyRepository defines the contract for API key persistence.
 type APIKeyRepository interface {
 	Create(ctx context.Context, key *APIKey) error
-	Update(ctx context.Context, key *APIKey) error
-	FindByID(ctx context.Context, id uint) (*APIKey, error)
+	Revoke(ctx context.Context, userID, id uint, revokedAt time.Time) (bool, error)
+	RecordUse(ctx context.Context, id uint, usedAt, staleBefore time.Time) error
 	FindByUserID(ctx context.Context, userID uint, page, pageSize int) ([]*APIKey, int64, error)
 	FindByHash(ctx context.Context, hash string) (*APIKey, error)
 }

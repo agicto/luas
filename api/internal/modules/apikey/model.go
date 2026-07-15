@@ -1,6 +1,8 @@
 package apikey
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -30,9 +32,13 @@ func (APIKeyPO) TableName() string {
 	return "api_keys"
 }
 
-func (po *APIKeyPO) toDomain() *domain.APIKey {
+func (po *APIKeyPO) toDomain() (*domain.APIKey, error) {
 	if po == nil {
-		return nil
+		return nil, nil
+	}
+	scopes, err := decodeScopes(po.Scopes)
+	if err != nil {
+		return nil, fmt.Errorf("decode api key scopes: %w", err)
 	}
 
 	return &domain.APIKey{
@@ -41,18 +47,22 @@ func (po *APIKeyPO) toDomain() *domain.APIKey {
 		Name:       po.Name,
 		KeyPrefix:  po.KeyPrefix,
 		KeyHash:    po.KeyHash,
-		Scopes:     splitScopes(po.Scopes),
+		Scopes:     scopes,
 		LastUsedAt: po.LastUsedAt,
 		ExpiresAt:  po.ExpiresAt,
 		RevokedAt:  po.RevokedAt,
 		CreatedAt:  po.CreatedAt,
 		UpdatedAt:  po.UpdatedAt,
-	}
+	}, nil
 }
 
-func newAPIKeyPO(key *domain.APIKey) *APIKeyPO {
+func newAPIKeyPO(key *domain.APIKey) (*APIKeyPO, error) {
 	if key == nil {
-		return nil
+		return nil, nil
+	}
+	encodedScopes, err := encodeScopes(key.Scopes)
+	if err != nil {
+		return nil, fmt.Errorf("encode api key scopes: %w", err)
 	}
 
 	return &APIKeyPO{
@@ -63,27 +73,44 @@ func newAPIKeyPO(key *domain.APIKey) *APIKeyPO {
 		Name:       key.Name,
 		KeyPrefix:  key.KeyPrefix,
 		KeyHash:    key.KeyHash,
-		Scopes:     joinScopes(key.Scopes),
+		Scopes:     encodedScopes,
 		LastUsedAt: key.LastUsedAt,
 		ExpiresAt:  key.ExpiresAt,
 		RevokedAt:  key.RevokedAt,
-	}
+	}, nil
 }
 
-func toDomainList(items []*APIKeyPO) []*domain.APIKey {
+func toDomainList(items []*APIKeyPO) ([]*domain.APIKey, error) {
 	result := make([]*domain.APIKey, len(items))
 	for i, item := range items {
-		result[i] = item.toDomain()
+		key, err := item.toDomain()
+		if err != nil {
+			return nil, err
+		}
+		result[i] = key
 	}
-	return result
+	return result, nil
 }
 
-func splitScopes(value string) []string {
+func decodeScopes(value string) ([]string, error) {
 	if strings.TrimSpace(value) == "" {
-		return []string{}
+		return []string{}, nil
 	}
 
-	parts := strings.Split(value, ",")
+	trimmed := strings.TrimSpace(value)
+	if strings.HasPrefix(trimmed, "[") {
+		var scopes []string
+		if err := json.Unmarshal([]byte(trimmed), &scopes); err != nil {
+			return nil, err
+		}
+		if scopes == nil {
+			return []string{}, nil
+		}
+		return scopes, nil
+	}
+
+	// Compatibility for rows written before scopes became JSON encoded.
+	parts := strings.Split(trimmed, ",")
 	scopes := make([]string, 0, len(parts))
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
@@ -91,12 +118,16 @@ func splitScopes(value string) []string {
 			scopes = append(scopes, part)
 		}
 	}
-	return scopes
+	return scopes, nil
 }
 
-func joinScopes(scopes []string) string {
-	if len(scopes) == 0 {
-		return ""
+func encodeScopes(scopes []string) (string, error) {
+	if scopes == nil {
+		scopes = []string{}
 	}
-	return strings.Join(scopes, ",")
+	encoded, err := json.Marshal(scopes)
+	if err != nil {
+		return "", err
+	}
+	return string(encoded), nil
 }

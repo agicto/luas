@@ -1,11 +1,8 @@
 package apikey
 
 import (
-	"errors"
-
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
@@ -50,19 +47,15 @@ func (h *Handler) RegisterMiddleware(r *router.Router) {
 			return &middleware.KeyAuthResult{
 				Key: key,
 				Values: map[string]any{
-					"apiKeyID":     apiKey.ID,
-					"apiKeyUserID": apiKey.UserID,
-					"apiKeyScopes": append([]string(nil), apiKey.Scopes...),
-					"userID":       apiKey.UserID,
+					"apiKeyID":             apiKey.ID,
+					"apiKeyUserID":         apiKey.UserID,
+					apiKeyScopesContextKey: append([]string(nil), apiKey.Scopes...),
+					"userID":               apiKey.UserID,
 				},
 			}, nil
 		},
 		ValidationErrorHandler: func(c *gin.Context, err error) {
-			if errors.Is(err, domain.ErrServiceUnavailable) {
-				response.HandleError(c, "API key validation unavailable", err)
-				return
-			}
-			response.AbortUnauthorized(c, "Invalid or missing API key")
+			response.HandleError(c, "API key authentication failed", err)
 		},
 	})
 
