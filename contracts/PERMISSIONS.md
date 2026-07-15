@@ -92,7 +92,7 @@ A permission context is computed from current persistence on every request:
 ```
 
 Owner contexts return every registered catalog key and `is_owner: true`. Arrays are sorted and
-deduplicated. Permission checks do not trust JWT claims or browser state, so revocation takes effect
+deduplicated. Permission checks do not trust credential claims or browser state, so revocation takes effect
 without token refresh.
 
 An access role contains its immutable organization-scoped slug and complete permission set:

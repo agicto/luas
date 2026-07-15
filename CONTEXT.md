@@ -49,7 +49,10 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : Development-only route handlers that let the web shell run without a real backend. A mock BFF must preserve the browser-facing contract of the production endpoint or adapter it substitutes, including the shared envelope and error semantics. It is not automatically a mock of every backend endpoint, it is not the production API, and production runtime must require explicit opt-in before serving mock routes.
 
 **Production auth adapter**
-: The server-only Web seam that maps the browser auth contract to the Go `user` starter over HTTP. It owns the same-origin HttpOnly access-token cookie, fixed upstream paths and DTO mappings, timeout/error translation, and trusted client-IP forwarding. It is not a generic reverse proxy and never exposes the API bearer token to browser JavaScript.
+: The server-only Web seam that maps the browser auth contract to the Go `user` starter over HTTP. It owns the same-origin HttpOnly authentication-session cookie, fixed upstream paths and DTO mappings, timeout/error translation, remote logout, and trusted client-IP forwarding. It is not a generic reverse proxy and never exposes the API bearer credential to browser JavaScript.
+
+**Authentication session**
+: One signed-in user's server-side, revocable login state. Its bearer credential is opaque and stored only by hash; identity, account status, absolute expiry, idle expiry, and revocation are resolved from current persistence. It is not an API key, authorization claim container, browser-visible token, or global user preference.
 
 **Web shell**
 : The default browser-facing application surface. It includes route groups, providers, layout, design-system integration, i18n, mock auth, and starter/example UI.
@@ -68,7 +71,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 **Active organization context**
 : The organization membership explicitly selected and revalidated for one API request. It is
-  request-scoped, not a global user preference or a long-lived JWT claim. Context-protected routes
+  request-scoped, not a global user preference or an authentication-session claim. Context-protected routes
   use the canonical organization header and consume the resolved organization ID, membership ID,
   user ID, and role from typed request context rather than trusting raw transport input. The Web
   feature derives browser selection from the current organization URL and forwards it per request;
@@ -188,8 +191,10 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - Contracts connect deployable units. Source code is not shared across deployable units.
 - Active organization context is selected per request and verified against current membership.
 - API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
+- Authentication sessions identify current signed-in users; API keys identify machine/API access.
+  Neither credential carries current organization roles or permission grants as trusted claims.
 - Access roles group exact permission keys inside one active organization; owner bypass and every
-  non-owner grant are resolved from current persistence rather than JWT claims.
+  non-owner grant are resolved from current persistence rather than credential claims.
 - A notification represents the user-facing event once; notification deliveries represent its
   independently executed channels and retry lifecycle.
 - An asset owns business metadata and lifecycle; a stored object owns provider-neutral byte
@@ -209,7 +214,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **starter vs feature**: Use starter for default or optional Luas-provided building blocks. Use feature for downstream or product-facing slices.
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
-- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's JWT endpoints are not interchangeable. Use the explicit production API adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
+- **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's opaque authentication-session endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.
 - **API key scope vs role/permission**: API key scopes constrain one credential. Organization roles

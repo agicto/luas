@@ -7,16 +7,20 @@ import {
   getAuthSessionCookieName,
 } from '@/config/auth-session';
 import {
-  authTokenMaxAgeSeconds,
-  isCompactJwt,
-} from '@/features/auth/server/auth-token';
+  authenticationSessionMaxAgeSeconds,
+  isOpaqueAuthenticationCredential,
+} from '@/features/auth/server/auth-credential';
+
+const opaqueCredential = Buffer.from(
+  '0123456789abcdef0123456789abcdef'
+).toString('base64url');
 
 describe('production auth session cookie', () => {
   it('uses a host-only secure cookie in production', () => {
     expect(getAuthSessionCookieName('production')).toBe('__Host-luas_auth');
-    expect(createAuthSessionCookie('a.b.c', 600, 'production')).toEqual({
+    expect(createAuthSessionCookie(opaqueCredential, 600, 'production')).toEqual({
       name: '__Host-luas_auth',
-      value: 'a.b.c',
+      value: opaqueCredential,
       httpOnly: true,
       sameSite: 'lax',
       secure: true,
@@ -28,7 +32,7 @@ describe('production auth session cookie', () => {
 
   it('uses a separate non-secure name for local HTTP development', () => {
     expect(getAuthSessionCookieName('development')).toBe('luas_auth');
-    expect(createAuthSessionCookie('a.b.c', 600, 'development')).toMatchObject({
+    expect(createAuthSessionCookie(opaqueCredential, 600, 'development')).toMatchObject({
       name: 'luas_auth',
       secure: false,
     });
@@ -37,7 +41,7 @@ describe('production auth session cookie', () => {
   it('caps token persistence and expires the exact cookie scope', () => {
     expect(
       createAuthSessionCookie(
-        'a.b.c',
+        opaqueCredential,
         AUTH_SESSION_MAX_AGE_SECONDS * 2,
         'production'
       ).maxAge
@@ -52,27 +56,19 @@ describe('production auth session cookie', () => {
     });
   });
 
-  it('accepts only bounded compact JWT values', () => {
-    expect(isCompactJwt('header.payload.signature')).toBe(true);
-    expect(isCompactJwt('not-a-jwt')).toBe(false);
-    expect(isCompactJwt(`a.${'b'.repeat(3_500)}.c`)).toBe(false);
+  it('accepts only exact 256-bit base64url credentials', () => {
+    expect(isOpaqueAuthenticationCredential(opaqueCredential)).toBe(true);
+    expect(isOpaqueAuthenticationCredential('header.payload.signature')).toBe(false);
+    expect(isOpaqueAuthenticationCredential('a'.repeat(42))).toBe(false);
+    expect(isOpaqueAuthenticationCredential(`${'a'.repeat(42)}!`)).toBe(false);
   });
 
-  it('derives cookie lifetime only from a valid future integer exp claim', () => {
-    const token = compactJwt({ exp: 1_700_000_600 });
-
-    expect(authTokenMaxAgeSeconds(token, 1_700_000_000_000)).toBe(600);
-    expect(
-      authTokenMaxAgeSeconds(compactJwt({ exp: 1_699_999_999 }), 1_700_000_000_000)
-    ).toBeNull();
-    expect(authTokenMaxAgeSeconds(compactJwt({ exp: 'soon' }))).toBeNull();
+  it('accepts only a positive safe expires_in and caps browser persistence', () => {
+    expect(authenticationSessionMaxAgeSeconds(600)).toBe(600);
+    expect(authenticationSessionMaxAgeSeconds(AUTH_SESSION_MAX_AGE_SECONDS * 2)).toBe(
+      AUTH_SESSION_MAX_AGE_SECONDS
+    );
+    expect(authenticationSessionMaxAgeSeconds(0)).toBeNull();
+    expect(authenticationSessionMaxAgeSeconds('soon')).toBeNull();
   });
 });
-
-function compactJwt(payload: Record<string, unknown>): string {
-  return [
-    Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url'),
-    Buffer.from(JSON.stringify(payload)).toString('base64url'),
-    'signature',
-  ].join('.');
-}

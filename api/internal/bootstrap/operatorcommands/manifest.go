@@ -9,6 +9,7 @@ func Manifest() infracommands.Manifest {
 		infracommands.Registration{Command: NewSettingListCommand()},
 		infracommands.Registration{Command: NewSettingSetCommand()},
 		infracommands.Registration{Command: NewSettingResetCommand()},
+		infracommands.Registration{Command: NewAuthenticationSessionPruneCommand()},
 		infracommands.Registration{Command: NewUsageListCommand()},
 		infracommands.Registration{Command: NewUsageRecordCommand()},
 		infracommands.Registration{Command: NewUsageConsumeCommand()},

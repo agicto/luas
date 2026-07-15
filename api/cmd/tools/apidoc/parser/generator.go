@@ -64,7 +64,7 @@ func GenerateMarkdown(endpoints []Endpoint, outputFile string) error {
 
 	// Authentication
 	sb.WriteString("## Authentication\n\n")
-	sb.WriteString("Protected endpoints require a JWT token in the `Authorization` header:\n\n")
+	sb.WriteString("Protected endpoints require a bearer authentication credential in the `Authorization` header:\n\n")
 	sb.WriteString("```\nAuthorization: Bearer <token>\n```\n\n")
 
 	// Overview
@@ -127,7 +127,7 @@ func writeEndpointEnhanced(sb *strings.Builder, ep Endpoint, config APIConfig) {
 	if ep.Route.IsPublic {
 		sb.WriteString("| Auth | 🔓 Not required |\n")
 	} else {
-		sb.WriteString("| Auth | 🔒 JWT Required |\n")
+		sb.WriteString("| Auth | 🔒 Bearer Required |\n")
 	}
 	if ep.Route.Name != "" {
 		fmt.Fprintf(sb, "| Route Name | `%s` |\n", ep.Route.Name)
@@ -279,7 +279,7 @@ func writeEndpoint(sb *strings.Builder, ep Endpoint) {
 	if ep.Route.IsPublic {
 		sb.WriteString("🔓 **Authentication:** Not required\n\n")
 	} else {
-		sb.WriteString("🔒 **Authentication:** Required (JWT)\n\n")
+		sb.WriteString("🔒 **Authentication:** Required (Bearer credential)\n\n")
 	}
 
 	// Route name

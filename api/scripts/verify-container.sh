@@ -37,7 +37,6 @@ docker run --detach \
   --publish 127.0.0.1::8025 \
   --env DB_ENABLED=false \
   --env METRICS_ENABLED=false \
-  --env JWT_SECRET=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
   --env CORS_ALLOW_ORIGINS=https://app.example.com \
   "${IMAGE_TAG}" >/dev/null
 

@@ -14,6 +14,7 @@ Use one identical selection for serving replicas, migration jobs, cleanup jobs, 
 
 ```dotenv
 OPTIONAL_STARTERS=asset
+ASSET_TRANSFER_SIGNING_KEY=replace-with-openssl-rand-hex-32
 ```
 
 Outside production, selecting `asset` defaults `OBJECT_STORAGE_DRIVER` to `local`. Production
@@ -27,6 +28,7 @@ Relevant configuration:
 | `OBJECT_STORAGE_DRIVER` | `disabled`, or `local` when selected outside production | `disabled`, `local`, or `r2`; production asset deployments require `r2` |
 | `OBJECT_STORAGE_LOCAL_ROOT` | `storage/objects` | Private development root; directories are `0700`, files are `0600` |
 | `OBJECT_STORAGE_REQUEST_TIMEOUT` | `30s` | Bounds one provider metadata, object, or signing operation |
+| `ASSET_TRANSFER_SIGNING_KEY` | none | At least 32 characters for local transfers only; generate a purpose-specific value and never reuse an auth/provider key |
 | `ASSET_MAX_BYTES` | `10485760` | Per-object limit; valid range is 1 byte through 100 MiB |
 | `ASSET_UPLOAD_GRANT_TTL` | `10m` | Upload credential lifetime; no more than one hour |
 | `ASSET_DOWNLOAD_GRANT_TTL` | `5m` | Download credential lifetime; no more than 15 minutes |

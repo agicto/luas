@@ -25,7 +25,7 @@ Production runtime fails fast when `MOCK_BFF_ENABLED=true` without a strong `SES
 normal downstream production runtime and production builds can omit this mock-only secret.
 
 Authentication is an explicit exception to generic base-URL replacement: the default Web
-`/auth/*` cookie/session contract and Go `/v1/*` JWT contract have different paths, DTOs, and
+`/auth/*` cookie/session contract and Go `/v1/*` authentication-session contract have different paths, DTOs, and
 credential ownership. Use the production adapter documented in
 [`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) instead of pointing the
 existing auth service directly at Go.

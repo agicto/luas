@@ -47,6 +47,13 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   loopback liveness check. Local Compose is explicitly development-only, and CI builds and exercises
   the same image contract through `make container-check`.
 - API client-IP controls now deny forwarding-header trust by default, validate exact `SERVER_TRUSTED_PROXIES`, and reject trust-all networks. Public auth routes add production-default independent per-IP/per-subject quotas, hashed subject keys, generic `COMMON.RATE_LIMITED` responses without bucket diagnostics, one-query login lookup, fixed dummy-hash work for unknown accounts, and the same `AUTH.INVALID_CREDENTIALS` response for unknown, wrong-password, and disabled accounts.
+- Default user authentication now uses revocable server-side sessions: 256-bit opaque credentials are
+  stored only by SHA-256 hash, absolute and idle expiry are checked against current account state,
+  activity writes are throttled, logout revokes the presented session, and password/account security
+  events revoke all sessions transactionally. A bounded `auth-session:prune` command owns retention;
+  Web keeps the credential HttpOnly and performs remote logout. See
+  [`../api/docs/AUTHENTICATION.md`](../api/docs/AUTHENTICATION.md) and
+  [`../contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md).
 - The API minimum toolchain is now Go 1.25.12 and `quic-go` is at 0.59.1, closing the reachable standard-library and HTTP/3 findings reported against Go 1.25.0 / `quic-go` 0.58.0. A full `govulncheck ./...` reports zero reachable vulnerabilities; three advisories remain only in required modules with no called symbols. With both trees built by Go 1.25.12 using `-trimpath -ldflags='-s -w'`, the auth/proxy/tooling slice moves `cmd/server` from 34,412,002 to 34,445,090 bytes (+33,088 bytes, 0.10%) against baseline `fcb58b1`; `x/tools` and `x/vuln` remain absent from the server package dependency graph.
 - API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
 - Removing the unwired Swagger runtime dependencies reduced the local Go module graph from 298 to 271 modules and the stripped `cmd/server` binary from 44,835,362 to 34,395,426 bytes (23.29%) on Go 1.25.0 `darwin/arm64`. This is a dependency and binary-footprint baseline measured with `go list -m all` and `go build -trimpath -ldflags='-s -w'`; it is not a throughput claim.
@@ -281,7 +288,7 @@ Verification:
 
 The Web browser session contract now connects to the Go `user` starter through an explicit
 server-only adapter instead of pretending the two HTTP contracts are interchangeable. Browser
-routes remain on same-origin `/api/auth/*`; the adapter maps fixed Go paths and DTOs, stores the JWT
+routes remain on same-origin `/api/auth/*`; the adapter maps fixed Go paths and DTOs, stores the opaque credential
 in an HttpOnly host cookie, resolves protected sessions on the server, preserves canonical status,
 `error_code`, `request_id`, and rate-limit evidence, and never exposes bearer credentials to browser
 JavaScript. Login and registration reject cross-origin mutations, upstream requests reject redirects
@@ -292,8 +299,8 @@ URL.
 
 The fictitious Web-only `admin` / `member` role was removed because the scaffold does not yet ship a
 permission starter. Auth bootstrap now distinguishes authenticated, unauthenticated, forbidden, and
-dependency-unavailable states without converting an API outage into a false logout. Stateless logout
-is documented honestly: deleting the browser cookie does not revoke an already issued Go JWT.
+dependency-unavailable states without converting an API outage into a false logout. The later
+authentication-session slice added immediate remote revocation without changing the browser contract.
 
 Against baseline commit `f12e9ca`, `/login` and `/register` remain at 11 client chunks and move from
 404,909 to 404,980 raw bytes (+71 bytes, 0.018%), while gzip moves from 127,145 to 127,142 bytes
@@ -305,7 +312,7 @@ Core Web Vitals.
 A real Docker Postgres + Go API + Next.js run proved registration, current-session resolution, and
 the protected page at HTTP `200`; invalid credentials at `401`; cross-origin mutation rejection at
 `403` without reaching Go; logout followed by `401`; and API outage as `503` while the protected page
-remained on its URL in a retryable unavailable state. The browser response exposed neither JWT nor
+remained on its URL in a retryable unavailable state. The browser response exposed neither bearer credential nor
 invented role fields.
 
 Verification:
@@ -314,6 +321,30 @@ Verification:
 - `cd web && pnpm type-check && pnpm lint && pnpm build`
 - `make governance` and `make check`
 - Real Web-to-Go registration, server-resolved session, invalid login, logout, and API-outage flows.
+
+### Completed P0 — Revocable Authentication Session Authority
+
+The default `user` starter no longer issues long-lived stateless JWTs. Login creates a 32-byte CSPRNG
+opaque credential, persists only SHA-256, and resolves current user status, revocation, absolute
+expiry, and idle expiry in one indexed query. Activity writes occur only after a configurable touch
+interval. Logout revokes the presented session; password change, successful reset, disablement, and
+account deletion invalidate existing access. Session persistence failures fail closed as
+`503 COMMON.SERVICE_UNAVAILABLE`.
+
+The migration is additive and reversible, but the application upgrade intentionally invalidates old
+JWTs and rejects legacy JWT configuration. Terminal rows have bounded retention and the
+`auth-session:prune` operator command. Web validates only the opaque credential shape and API-owned
+`expires_in`, keeps it in a host-only HttpOnly cookie, calls remote logout, treats upstream `401` as
+idempotent success, and removes local credential custody even when remote availability is unknown.
+Asset local-transfer signing now has a separate purpose-specific key instead of sharing an auth key.
+
+Verification:
+
+- API session service, middleware, password-event, migration Up/Down, retention, CLI, race, and
+  PostgreSQL runtime tests.
+- Web opaque credential, cookie, adapter, remote logout, 401-idempotency, and outage tests.
+- `make governance`, `make check`, reachable vulnerability scan, container contract, and real
+  register/login/profile/logout/reuse flow.
 
 ### Completed P0 — Private Authenticated Response Cache Boundary
 
@@ -372,7 +403,7 @@ Verification:
 
 - `cd api && go test ./pkg/env ./pkg/logger ./pkg/errors ./internal/infra/config ./internal/bootstrap ./internal/infra/console/commands ./tests/unit`
 - `cd api && go test -race ./tests/unit ./internal/infra/config ./internal/infra/console/commands ./internal/bootstrap ./pkg/env ./pkg/logger ./pkg/errors`
-- `cd api && env DB_ENABLED=false JWT_SECRET=... AI_ENABLED=false go run ./cmd/luas doctor`
+- `cd api && env DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas doctor`
 - `make governance`, `make check`, `cd api && make container-check`, and `cd api && make compose-check`
 
 ### Completed P1 — Database-Disabled Runtime Degradation

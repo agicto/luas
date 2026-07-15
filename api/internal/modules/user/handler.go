@@ -1,11 +1,12 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	"github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
@@ -14,12 +15,12 @@ import (
 
 // Handler handles user-related HTTP requests and exposes route, middleware, and event capabilities.
 type Handler struct {
-	auth       AuthService
-	profile    ProfileService
-	query      UserQueryService
-	jwtService *jwt.Service
-	mailer     UserMailer
-	authGuard  *AuthAbuseGuard
+	auth      AuthService
+	profile   ProfileService
+	query     UserQueryService
+	sessions  *SessionService
+	mailer    UserMailer
+	authGuard *AuthAbuseGuard
 }
 
 var (
@@ -34,18 +35,37 @@ func NewHandler(
 	auth AuthService,
 	profile ProfileService,
 	query UserQueryService,
-	jwtService *jwt.Service,
+	sessions *SessionService,
 	mailer UserMailer,
 	authGuard *AuthAbuseGuard,
 ) *Handler {
 	return &Handler{
-		auth:       auth,
-		profile:    profile,
-		query:      query,
-		jwtService: jwtService,
-		mailer:     mailer,
-		authGuard:  authGuard,
+		auth:      auth,
+		profile:   profile,
+		query:     query,
+		sessions:  sessions,
+		mailer:    mailer,
+		authGuard: authGuard,
 	}
+}
+
+// Logout revokes the current server-side authentication session.
+func (h *Handler) Logout(c *gin.Context) {
+	sessionID, ok := authenticationSessionID(c)
+	if !ok {
+		response.ErrorWithCode(
+			c,
+			http.StatusUnauthorized,
+			response.ErrorCodeUnauthorized,
+			"Authentication required",
+		)
+		return
+	}
+	if err := h.sessions.RevokeByID(c.Request.Context(), sessionID, sessionRevocationLogout); err != nil {
+		response.HandleError(c, "Failed to end session", err)
+		return
+	}
+	response.Success(c, gin.H{"success": true})
 }
 
 // Name returns the module name

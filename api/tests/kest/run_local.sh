@@ -94,7 +94,6 @@ COMMON_ENV=(
   DB_ENABLED=true
   DB_DRIVER=sqlite
   DB_NAME="${DB_PATH}"
-  JWT_SECRET=kest-test-secret
   AI_ENABLED=false
   TRACING_ENABLED=false
 )

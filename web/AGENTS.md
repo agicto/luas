@@ -104,7 +104,7 @@ Browser -> src/http/request.ts -> /api/* -> route backend (mock or production au
 - Fast local development without backend
 
 For downstream production apps, replace mock handlers with production endpoints and keep mock
-behavior disabled. The Go JWT endpoints are not a drop-in implementation of the Web browser auth
+behavior disabled. The Go authentication-session endpoints are not a drop-in implementation of the Web browser auth
 contract; use the shipped same-origin adapter defined in `../contracts/AUTHENTICATION.md`.
 Replacement and resolution rules live in `docs/MOCK_BFF.md` and `docs/AUTHENTICATION.md`.
 

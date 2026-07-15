@@ -35,6 +35,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrOrganizationContextInvalid, http.StatusBadRequest, domain.CodeOrganizationContextInvalid)
 
 	mapper.Register(domain.ErrInvalidCredentials, http.StatusUnauthorized, domain.CodeInvalidCredentials)
+	mapper.Register(domain.ErrAuthenticationRequired, http.StatusUnauthorized, response.ErrorCodeUnauthorized)
 	mapper.Register(domain.ErrAPIKeyInvalid, http.StatusUnauthorized, domain.CodeAPIKeyInvalid)
 	mapper.Register(domain.ErrAPIKeyExpired, http.StatusUnauthorized, domain.CodeAPIKeyExpired)
 	mapper.Register(domain.ErrAPIKeyRevoked, http.StatusUnauthorized, domain.CodeAPIKeyRevoked)

@@ -7,20 +7,20 @@ import {
   createExpiredAuthSessionCookie,
   getAuthSessionCookieName,
 } from '@/config/auth-session';
-import { isCompactJwt } from '@/features/auth/server/auth-token';
+import { isOpaqueAuthenticationCredential } from '@/features/auth/server/auth-credential';
 
 export async function getApiSessionToken(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(getAuthSessionCookieName())?.value;
 
-  return isCompactJwt(token) ? token : null;
+  return isOpaqueAuthenticationCredential(token) ? token : null;
 }
 
 export async function setApiSessionCookie(
   token: string,
   maxAgeSeconds: number
 ): Promise<void> {
-  if (!isCompactJwt(token)) {
+  if (!isOpaqueAuthenticationCredential(token)) {
     throw new Error('Refusing to store a malformed API access token');
   }
 

@@ -105,7 +105,12 @@ func TestAuditDoctorPreservesProductionAliasInReport(t *testing.T) {
 func healthyDoctorConfig() *config.Config {
 	return &config.Config{
 		App: config.AppConfig{Env: "development"},
-		JWT: config.JWTConfig{Secret: "0123456789abcdef0123456789abcdef"},
+		Authentication: config.AuthenticationConfig{
+			SessionTTL:           config.DefaultAuthenticationSessionTTL,
+			SessionIdleTimeout:   config.DefaultAuthenticationSessionIdleTimeout,
+			SessionTouchInterval: config.DefaultAuthenticationSessionTouchInterval,
+			SessionRetention:     config.DefaultAuthenticationSessionRetention,
+		},
 		CORS: config.CORSConfig{
 			AllowOrigins:     []string{"http://localhost:3000"},
 			AllowCredentials: true,

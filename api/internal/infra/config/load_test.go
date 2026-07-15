@@ -45,7 +45,6 @@ func loadConfigForRateLimitDefault(t *testing.T, appEnv string) *Config {
 	)
 	t.Setenv("APP_ENV", appEnv)
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -73,11 +72,41 @@ func TestLoad_RateLimitDefaultsByEnvironment(t *testing.T) {
 	}
 }
 
+func TestLoad_AuthenticationSessionDefaultsAndLegacyJWTRejection(t *testing.T) {
+	withoutEnv(
+		t,
+		"AUTH_SESSION_TTL",
+		"AUTH_SESSION_IDLE_TIMEOUT",
+		"AUTH_SESSION_TOUCH_INTERVAL",
+		"AUTH_SESSION_RETENTION",
+		"JWT_SECRET",
+		"JWT_EXPIRE_DAYS",
+	)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Authentication.SessionTTL != DefaultAuthenticationSessionTTL ||
+		cfg.Authentication.SessionIdleTimeout != DefaultAuthenticationSessionIdleTimeout ||
+		cfg.Authentication.SessionTouchInterval != DefaultAuthenticationSessionTouchInterval ||
+		cfg.Authentication.SessionRetention != DefaultAuthenticationSessionRetention {
+		t.Fatalf("authentication defaults = %#v", cfg.Authentication)
+	}
+
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	if _, err := LoadFresh(); err == nil || !strings.Contains(err.Error(), "no longer supported") {
+		t.Fatalf("LoadFresh() legacy JWT error = %v", err)
+	}
+}
+
 func TestLoad_OptionalStartersAreAdditiveAndEmptyByDefault(t *testing.T) {
 	withoutEnv(t, "OPTIONAL_STARTERS")
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -102,7 +131,6 @@ func TestLoad_EmailRequestTimeout(t *testing.T) {
 	withoutEnv(t, "MAIL_FROM", "RESEND_API_KEY", "MAIL_REQUEST_TIMEOUT")
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -129,7 +157,6 @@ func TestLoad_OrganizationInvitationTTL(t *testing.T) {
 	withoutEnv(t, "ORGANIZATION_INVITATION_TTL")
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -163,7 +190,6 @@ func TestLoad_WebhookDefaultsAndOverrides(t *testing.T) {
 	)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -212,7 +238,6 @@ func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	)
 	t.Setenv("GO_ENV", " release ")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -254,7 +279,6 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_ENABLED", "true")
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_MAX", "42")
@@ -308,7 +332,6 @@ func loadConfigForAuthRateLimitDefault(t *testing.T, appEnv string) *Config {
 	withoutEnv(t, authRateLimitEnvKeys()...)
 	t.Setenv("APP_ENV", appEnv)
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -344,7 +367,6 @@ func TestLoad_AuthenticationRateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	withoutEnv(t, authRateLimitEnvKeys()...)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("AUTH_RATE_LIMIT_ENABLED", "true")
 	t.Setenv("AUTH_RATE_LIMIT_LOGIN_IP_MAX", "7")
@@ -373,7 +395,6 @@ func TestLoad_TrustedProxyDefaultsAndOverride(t *testing.T) {
 	withoutEnv(t, "SERVER_TRUSTED_PROXIES")
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -400,7 +421,6 @@ func loadConfigForMetricsDefault(t *testing.T, appEnv string) *Config {
 	withoutEnv(t, "METRICS_ENABLED")
 	t.Setenv("APP_ENV", appEnv)
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -426,7 +446,6 @@ func TestLoad_MetricsExplicitEnvOverridesDefault(t *testing.T) {
 	withoutEnv(t, "METRICS_ENABLED")
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("METRICS_ENABLED", "true")
 
@@ -456,7 +475,6 @@ func TestLoad_ServerTransportDefaultsAreSafeAndCoherent(t *testing.T) {
 	withoutEnv(t, serverTransportEnvKeys()...)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 
 	cfg, err := LoadFresh()
@@ -495,7 +513,6 @@ func TestLoad_ServerTransportExplicitEnvOverridesDefaults(t *testing.T) {
 	withoutEnv(t, serverTransportEnvKeys()...)
 	t.Setenv("APP_ENV", "development")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("SERVER_HOST", "::1")
 	t.Setenv("SERVER_PORT", "9025")
@@ -530,7 +547,6 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 	t.Setenv("APP_ENV", "production")
 	t.Setenv("APP_DEBUG", "false")
 	t.Setenv("DB_ENABLED", "false")
-	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("LOG_STDOUT", "true")
 	t.Setenv("LOG_FILE_ENABLED", "false")
@@ -555,7 +571,7 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 }
 
 func TestLoadAIConfigDoesNotRequireServerRuntimeSecrets(t *testing.T) {
-	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL", "DB_PASSWORD", "JWT_SECRET")
+	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL", "DB_PASSWORD")
 	t.Setenv("AI_ENABLED", "true")
 	t.Setenv("AI_DEFAULT_PROVIDER", "openai")
 	t.Setenv("AI_DEFAULT_MODEL", "provider-model")

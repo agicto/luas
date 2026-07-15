@@ -672,7 +672,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="surface">
 					<div class="card-kicker">Starter</div>
 					<h3>User auth</h3>
-					<p>注册、登录、JWT 鉴权、当前用户资料和密码相关流程。适合作为几乎所有后台项目的最小业务起点。</p>
+					<p>注册、登录、可撤销认证会话、当前用户资料和密码相关流程。适合作为几乎所有后台项目的最小业务起点。</p>
 				</article>
 				<article class="surface">
 					<div class="card-kicker">Starter</div>

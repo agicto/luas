@@ -10,7 +10,7 @@ Use this document when changing `api/internal/bootstrap/http.go`, adding starter
 |---|---|---|
 | Core default | Always part of the API HTTP kernel or enabled by safe production defaults. | request ID, recovery, security headers, body limit, timeout, CORS, production rate limit |
 | Core opt-in | Core operational behavior with explicit runtime configuration. | Prometheus request instrumentation and `/metrics` |
-| Starter-owned | Registered by a default or optional starter because it needs starter dependencies or domain rules. | JWT auth, authentication abuse guard, API key auth, audit logging |
+| Starter-owned | Registered by a default or optional starter because it needs starter dependencies or domain rules. | authentication-session auth, authentication abuse guard, API key auth, audit logging |
 | Route/starter opt-in | Available in the scaffold, but only specific routes or starters should choose it. | compression, version middleware, custom throttles |
 | Deployment-owned | Better handled by the gateway, CDN, WAF, load balancer, or hosting platform. | global compression, distributed rate limits, TLS termination, bot protection |
 
@@ -115,7 +115,7 @@ Starter-owned middleware is registered through the starter registry, not the cor
 
 | Middleware | Owner | Why |
 |---|---|---|
-| JWT auth | `user` starter | Needs the JWT service and auth domain errors. |
+| Authentication-session auth | `user` starter | Resolves current hash-only session and account state from persistence. |
 | Authentication abuse guard | `user` starter | Public login, registration, and reset operations need endpoint-specific per-IP and per-subject quotas. |
 | API key auth | `apikey` starter | Needs API key hashing, lookup, expiry, and revocation rules. |
 | Audit logging | `audit` starter | Needs audit persistence and starter-specific write-side behavior. |

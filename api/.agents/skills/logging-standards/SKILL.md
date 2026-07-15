@@ -61,7 +61,7 @@ Every log line should carry the identifiers that let you correlate it with other
 | Key | Where it comes from | Example |
 |---|---|---|
 | `request_id` | gin middleware | `c.GetString("request_id")` |
-| `user_id` | jwt claims | `c.GetUint("user_id")` |
+| `user_id` | resolved authentication session | `c.GetUint("user_id")` |
 | `correlation_id` | event/job metadata | `meta.CorrelationID` |
 | `module` | static, per-package | `"user"`, `"audit"` |
 | `outcome` | the result | `"success"`, `"denied"`, `"timeout"` |

@@ -243,7 +243,7 @@ describe('webhook browser route boundary', () => {
   it('forwards only fixed paths and reviewed conditional and idempotency headers', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock.mockResolvedValue(Response.json({ code: 0, message: 'success', data: { id: 1 } }));
     const route = await import('@/features/webhook/server/webhook-route');
 
@@ -333,6 +333,6 @@ function mockUser(id: string) {
   return { id, email: `${id}@example.com`, name: id };
 }
 
-function compactJwt(): string {
-  return 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature';
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }

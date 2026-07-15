@@ -1,14 +1,12 @@
 package user
 
 import (
-	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
-// RegisterMiddleware registers the auth middleware group for JWT-protected routes.
+// RegisterMiddleware registers the persistent authentication-session middleware.
 func (h *Handler) RegisterMiddleware(r *router.Router) {
-	r.MiddlewareGroup("auth", middleware.JWTAuth(h.jwtService))
-	r.AliasMiddleware("jwt", middleware.JWTAuth(h.jwtService))
+	r.MiddlewareGroup("auth", sessionAuth(h.sessions))
 }
 
 // RegisterRoutes registers the user module routes
@@ -23,6 +21,8 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 	// Protected routes
 	r.Group("", func(auth *router.Router) {
 		auth.WithMiddleware("auth")
+
+		auth.POST("/logout", h.Logout).Name("auth.logout")
 
 		// Profile
 		auth.GET("/users/profile", h.GetProfile).Name("users.profile")

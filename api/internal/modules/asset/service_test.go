@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/url"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
@@ -38,14 +37,15 @@ func newAssetServiceTest(t *testing.T) (*service, uint) {
 	objects, err := infrastorage.NewLocalStore(t.TempDir())
 	require.NoError(t, err)
 	cfg := &config.Config{
-		App:      config.AppConfig{URL: "http://127.0.0.1:8025"},
-		Starters: config.StarterConfig{Optional: []string{"asset"}},
-		JWT:      config.JWTConfig{Secret: strings.Repeat("s", 64)},
+		App:           config.AppConfig{URL: "http://127.0.0.1:8025"},
+		Starters:      config.StarterConfig{Optional: []string{"asset"}},
+		ObjectStorage: config.ObjectStorageConfig{Driver: "local"},
 		Asset: config.AssetConfig{
-			MaxBytes:         10 * 1024 * 1024,
-			UploadGrantTTL:   10 * time.Minute,
-			DownloadGrantTTL: 5 * time.Minute,
-			PendingTTL:       time.Hour,
+			TransferSigningKey: "asset-test-transfer-signing-key-0001",
+			MaxBytes:           10 * 1024 * 1024,
+			UploadGrantTTL:     10 * time.Minute,
+			DownloadGrantTTL:   5 * time.Minute,
+			PendingTTL:         time.Hour,
 		},
 	}
 	signer, err := NewTransferSigner(cfg)

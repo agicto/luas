@@ -31,7 +31,7 @@ Workspace-level architecture docs:
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for keeping agent workflows aligned with vocabulary, contracts, and architecture
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — surface classification, downstream actions, and verification matrix
 - [contracts/README.md](contracts/README.md) — HTTP contracts shared by `api/` and `web/`
-- [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
+- [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, opaque API sessions, and production adapter ownership
 - [contracts/API_KEYS.md](contracts/API_KEYS.md) — user-owned API key lifecycle, one-time plaintext, scope attenuation, and browser adapter
 - [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — optional organization activation, ownership scope, API, and deliberate deferrals
 - [contracts/PERMISSIONS.md](contracts/PERMISSIONS.md) — optional access roles, exact permission checks, delegated-management limits, and guard seam
@@ -42,6 +42,7 @@ Workspace-level architecture docs:
 - [contracts/WEBHOOKS.md](contracts/WEBHOOKS.md) — optional outbound subscriptions, Standard Webhooks signing, durable retries, privacy, and browser adapter
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
+- [api/docs/AUTHENTICATION.md](api/docs/AUTHENTICATION.md) — opaque session lifecycle, revocation, retention, and replacement
 - [api/docs/AI.md](api/docs/AI.md) — bounded provider execution, streaming, error privacy, and AI product boundary
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
 - [api/docs/NOTIFICATIONS.md](api/docs/NOTIFICATIONS.md) — notification publication, lease worker, delivery privacy, and replacement boundary

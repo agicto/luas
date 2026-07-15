@@ -39,8 +39,8 @@ downstream apps own their cloud, registry, secret store, rollout, and rollback.
 
 ### Production Deployment
 
-- Inject `JWT_SECRET`, production CORS origins, database credentials, and trusted proxy ranges through
-  the deployment platform.
+- Inject production CORS origins, database/provider credentials, and trusted proxy ranges through
+  the deployment platform. Authentication sessions use typed lifetime policy and no signing secret.
 - Keep liveness and readiness separate: liveness detects a stuck process; readiness controls traffic.
 - Run migrations as one explicit pre-deploy job. Do not let every replica race to migrate on startup.
 - Keep TLS, distributed rate limits, network policy, replica count, autoscaling, and secret rotation

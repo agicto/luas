@@ -2,7 +2,6 @@ package feature
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -36,9 +35,10 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 	cfg.Database.Memory = true
 	cfg.Database.MaxIdleConns = 1
 	cfg.Database.MaxOpenConns = 1
-	cfg.JWT.Secret = "testing-secret"
-	cfg.JWT.Expire = time.Hour
-	cfg.JWT.ExpireDays = 1
+	cfg.Authentication.SessionTTL = config.DefaultAuthenticationSessionTTL
+	cfg.Authentication.SessionIdleTimeout = config.DefaultAuthenticationSessionIdleTimeout
+	cfg.Authentication.SessionTouchInterval = config.DefaultAuthenticationSessionTouchInterval
+	cfg.Authentication.SessionRetention = config.DefaultAuthenticationSessionRetention
 	cfg.CORS.AllowOrigins = []string{"http://localhost:3000"}
 	cfg.CORS.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	cfg.CORS.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-API-Key", "X-Request-ID"}

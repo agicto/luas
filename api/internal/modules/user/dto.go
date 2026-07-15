@@ -55,7 +55,9 @@ type UserPasswordResetConfirmRequest struct {
 // UserLoginResponse represents the login response
 type UserLoginResponse struct {
 	AccessToken string       `json:"access_token"`
-	User        *domain.User `json:"user"` // Domain直接输出，Password自动隐藏
+	TokenType   string       `json:"token_type"`
+	ExpiresIn   int64        `json:"expires_in"`
+	User        *domain.User `json:"user"`
 }
 
 // ============================================================================

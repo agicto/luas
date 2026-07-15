@@ -4,7 +4,7 @@ The Web shell owns one browser authentication contract with three resolution mod
 who can authoritatively resolve the current browser session; it does not change the Web `/auth/*`
 contract.
 
-The Go `user` starter owns a separate JWT contract. Luas ships an explicit same-origin production
+The Go `user` starter owns a separate opaque authentication-session contract. Luas ships an explicit same-origin production
 adapter between them; pointing the browser directly at Go remains incorrect because paths, DTOs,
 user views, and credential ownership still differ. See
 [`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) for the canonical mapping.
@@ -86,9 +86,11 @@ workflow:
 - Do not redirect on network, timeout, malformed success, validation, or authentication failures.
 
 Logout is idempotent from the user's perspective. Success and `401` / `AUTH.UNAUTHORIZED` both
-clear local auth state and navigate to the logged-out route. Availability failures and malformed
-success payloads preserve local state and show localized failure feedback because the server-side
-session outcome is unknown.
+clear local auth state and navigate to the logged-out route. In `api-session` mode the adapter sends
+the opaque credential to `POST /v1/logout`, then removes the HttpOnly cookie for every upstream
+outcome. A `503` still reports that remote revocation is unknown; browser credential custody is gone
+even if the client store preserves its last view until the next authoritative resolution. Malformed
+success payloads remain failures.
 
 ## Security Boundary
 
@@ -100,8 +102,9 @@ session outcome is unknown.
   `__Host-luas_session` cookie with `Path=/`, no Domain attribute, and an exact-scope expiry on
   logout.
 - The production adapter uses a separate Secure `__Host-luas_auth` cookie. It stores the Go bearer
-  token HttpOnly, caps persistence at 30 days, and expires no later than the JWT `exp`. Web does not
-  trust token claims for authorization; Go validates the token on profile resolution.
+  credential HttpOnly, validates an exact 256-bit base64url shape, caps persistence at 30 days, and
+  expires no later than the API-owned `expires_in`. The credential has no client-readable claims;
+  Go resolves current session, account, idle expiry, and revocation state on every protected request.
 - Adapter routes call only fixed Go auth paths, reject redirects, never forward incoming cookies or
   authorization headers, and replace backend messages with generic local text. Configured
   `API_CLIENT_IP_HEADER` input is parsed as one IP before becoming `X-Forwarded-For`.
@@ -135,7 +138,7 @@ session outcome is unknown.
 
 ## Downstream Adaptation
 
-1. Read `contracts/AUTHENTICATION.md`; do not assume the Go JWT endpoints implement the Web DTOs.
+1. Read `contracts/AUTHENTICATION.md`; do not assume the Go authentication-session endpoints implement the Web DTOs.
 2. Use the shipped `api-session` adapter for the Luas Go starter; configure the private API URL,
    timeout, ingress client-IP header, and API trusted proxies together.
 3. Keep `client-session` when another identity provider owns a cross-origin cookie or token exchange.
@@ -145,8 +148,8 @@ session outcome is unknown.
    middleware permissive and rely on the API plus `AuthGuard`.
 6. Preserve the provider-owned store so request isolation and initialization deduplication remain
    intact.
-7. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, expired-session,
-   and logout flows in a real browser before deployment.
+7. Verify authenticated, unauthenticated, forbidden, API-unavailable, retry recovery, revoked/expired
+   session, idempotent logout, and logout-outage flows in a real browser before deployment.
 
 ## Verification
 

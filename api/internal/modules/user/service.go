@@ -16,7 +16,6 @@ import (
 	"github.com/zgiai/luas/api/internal/capabilities/idgen"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
 )
 
@@ -63,10 +62,15 @@ type passwordResetStore interface {
 	ResetPasswordWithToken(ctx context.Context, tokenHash string, passwordHash string, now time.Time) error
 }
 
+type authenticationSessionIssuer interface {
+	Issue(ctx context.Context, user *domain.User) (*IssuedAuthenticationSession, error)
+}
+
 type userRepository interface {
 	domain.UserRepository
 	FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error)
 	DeleteAccount(ctx context.Context, userID uint, check func(context.Context) error) error
+	UpdatePasswordAndRevokeSessions(ctx context.Context, userID uint, passwordHash string, now time.Time) error
 }
 
 const dummyPasswordHash = "$2a$10$BoIQPcmnuQfwI8s38RMnmeXm5V8xwU2lJVIF4EueN3y5x6KYUXelq"
@@ -75,7 +79,7 @@ const dummyPasswordHash = "$2a$10$BoIQPcmnuQfwI8s38RMnmeXm5V8xwU2lJVIF4EueN3y5x6
 type service struct {
 	repo           userRepository
 	passwordResets passwordResetStore
-	jwtService     *jwt.Service
+	sessions       authenticationSessionIssuer
 	eventBus       *events.EventBus
 	mailer         UserMailer
 	deletionPolicy *AccountDeletionPolicy
@@ -93,7 +97,7 @@ var (
 func NewService(
 	repo userRepository,
 	passwordResets passwordResetStore,
-	jwtService *jwt.Service,
+	sessions authenticationSessionIssuer,
 	eventBus *events.EventBus,
 	mailer UserMailer,
 	deletionPolicy *AccountDeletionPolicy,
@@ -101,7 +105,7 @@ func NewService(
 	return &service{
 		repo:           repo,
 		passwordResets: passwordResets,
-		jwtService:     jwtService,
+		sessions:       sessions,
 		eventBus:       eventBus,
 		mailer:         mailer,
 		deletionPolicy: deletionPolicy,
@@ -178,9 +182,12 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 		return nil, domain.ErrInvalidCredentials
 	}
 
-	token, err := s.jwtService.GenerateToken(user.ID, user.Username)
+	if s.sessions == nil {
+		return nil, domain.ErrServiceUnavailable
+	}
+	issued, err := s.sessions.Issue(ctx, user)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
+		return nil, err
 	}
 
 	// Update last login. Auth has already succeeded; a write failure
@@ -195,8 +202,10 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 	}
 
 	return &UserLoginResponse{
-		AccessToken: token,
-		User:        user, // Domain直接输出
+		AccessToken: issued.AccessToken,
+		TokenType:   issued.TokenType,
+		ExpiresIn:   issued.ExpiresIn,
+		User:        user,
 	}, nil
 }
 
@@ -280,8 +289,12 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	user.Password = string(hashedPassword)
-	if err := s.repo.Update(ctx, user); err != nil {
+	if err := s.repo.UpdatePasswordAndRevokeSessions(
+		ctx,
+		user.ID,
+		string(hashedPassword),
+		time.Now().UTC(),
+	); err != nil {
 		return err
 	}
 

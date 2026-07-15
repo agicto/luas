@@ -14,6 +14,7 @@ var (
 	ErrUsernameAlreadyExists     = errors.New("username already registered")
 	ErrInvalidCredentials        = errors.New("invalid username or password")
 	ErrAccountDisabled           = errors.New("account is disabled")
+	ErrAuthenticationRequired    = errors.New("authentication is required")
 	ErrPasswordResetTokenInvalid = errors.New("password reset token is invalid")
 	ErrPasswordResetTokenExpired = errors.New("password reset token is expired")
 

@@ -7,7 +7,6 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/database"
 	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/infra/storage"
 )
@@ -25,9 +24,6 @@ var ProviderSet = wire.NewSet(
 var ConfiguredProviderSet = wire.NewSet(
 	// Database - depends on Config
 	database.NewDB,
-
-	// JWT Service - depends on Config
-	jwt.NewService,
 
 	// Email Service - depends on Config
 	email.NewService,

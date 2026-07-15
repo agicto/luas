@@ -6,7 +6,10 @@ import type {
   LoginRequest,
   RegisterRequest,
 } from '@/features/auth/types';
-import { authTokenMaxAgeSeconds } from '@/features/auth/server/auth-token';
+import {
+  authenticationSessionMaxAgeSeconds,
+  isOpaqueAuthenticationCredential,
+} from '@/features/auth/server/auth-credential';
 import { ApiErrorCode, type ApiErrorCodeValue } from '@/http/codes';
 import {
   GoApiClient,
@@ -22,7 +25,6 @@ export interface GoApiAuthAdapterConfig {
 
 interface AdapterDependencies {
   fetch: typeof fetch;
-  now: () => number;
   randomUUID: () => string;
 }
 
@@ -44,7 +46,7 @@ export interface AdapterSession extends AuthResponse {
   maxAgeSeconds: number;
 }
 
-type AdapterOperation = 'login' | 'register' | 'session';
+type AdapterOperation = 'login' | 'logout' | 'register' | 'session';
 
 interface GoApiUser {
   id: number;
@@ -69,7 +71,6 @@ export class GoApiAuthAdapter {
   ) {
     this.dependencies = {
       fetch: dependencies.fetch ?? fetch,
-      now: dependencies.now ?? Date.now,
       randomUUID: dependencies.randomUUID ?? (() => crypto.randomUUID()),
     };
     this.client = new GoApiClient(
@@ -179,6 +180,36 @@ export class GoApiAuthAdapter {
     return { ok: true, data: { user } };
   }
 
+  async logout(
+    accessToken: string,
+    incomingHeaders: Headers,
+    signal?: AbortSignal
+  ): Promise<AdapterResult<{ success: true }>> {
+    if (!isOpaqueAuthenticationCredential(accessToken)) {
+      return adapterUnavailable(this.dependencies.randomUUID());
+    }
+
+    const result = await this.request(
+      'logout',
+      'logout',
+      {
+        method: 'POST',
+        accessToken,
+      },
+      incomingHeaders,
+      signal
+    );
+
+    if (!result.ok) {
+      return result;
+    }
+    if (!isRecord(result.data.data) || result.data.data.success !== true) {
+      return adapterUnavailable(result.data.requestId);
+    }
+
+    return { ok: true, data: { success: true } };
+  }
+
   private sessionFromLoginData(
     value: unknown,
     requestId: string
@@ -188,12 +219,14 @@ export class GoApiAuthAdapter {
     }
 
     const user = mapGoApiUser(value.user);
-    const maxAgeSeconds =
-      typeof value.access_token === 'string'
-        ? authTokenMaxAgeSeconds(value.access_token, this.dependencies.now())
-        : null;
+    const maxAgeSeconds = authenticationSessionMaxAgeSeconds(value.expires_in);
 
-    if (!user || !maxAgeSeconds) {
+    if (
+      !user ||
+      !isOpaqueAuthenticationCredential(value.access_token) ||
+      value.token_type !== 'Bearer' ||
+      !maxAgeSeconds
+    ) {
       return adapterUnavailable(requestId);
     }
     if (!isActiveGoApiUser(value.user)) {
@@ -204,7 +237,7 @@ export class GoApiAuthAdapter {
       ok: true,
       data: {
         user,
-        accessToken: value.access_token as string,
+        accessToken: value.access_token,
         maxAgeSeconds,
       },
     };

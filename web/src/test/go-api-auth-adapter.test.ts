@@ -7,8 +7,10 @@ import {
 } from '@/features/auth/server/go-api-auth-adapter';
 import { ApiErrorCode } from '@/http/codes';
 
-const now = 1_700_000_000_000;
 const randomId = '01234567-89ab-cdef-0123-456789abcdef';
+const opaqueCredential = Buffer.from(
+  '0123456789abcdef0123456789abcdef'
+).toString('base64url');
 const activeApiUser = {
   id: 42,
   username: 'ada',
@@ -31,7 +33,6 @@ describe('GoApiAuthAdapter', () => {
       },
       {
         fetch: fetchMock,
-        now: () => now,
         randomUUID: () => randomId,
       }
     );
@@ -40,7 +41,9 @@ describe('GoApiAuthAdapter', () => {
   it('maps browser login to the fixed Go endpoint and returns a bounded session', async () => {
     fetchMock.mockResolvedValueOnce(
       successResponse({
-        access_token: compactJwt({ exp: 1_700_000_600 }),
+        access_token: opaqueCredential,
+        token_type: 'Bearer',
+        expires_in: 600,
         user: activeApiUser,
       })
     );
@@ -64,7 +67,7 @@ describe('GoApiAuthAdapter', () => {
           email: 'ada@example.com',
           name: 'Ada Lovelace',
         },
-        accessToken: compactJwt({ exp: 1_700_000_600 }),
+        accessToken: opaqueCredential,
         maxAgeSeconds: 600,
       },
     });
@@ -92,7 +95,9 @@ describe('GoApiAuthAdapter', () => {
       .mockResolvedValueOnce(successResponse(activeApiUser, 201))
       .mockResolvedValueOnce(
         successResponse({
-          access_token: compactJwt({ exp: 1_700_000_900 }),
+          access_token: opaqueCredential,
+          token_type: 'Bearer',
+          expires_in: 900,
           user: activeApiUser,
         })
       );
@@ -134,7 +139,7 @@ describe('GoApiAuthAdapter', () => {
 
   it('loads the profile with only the server-owned bearer token', async () => {
     fetchMock.mockResolvedValueOnce(successResponse(activeApiUser));
-    const token = compactJwt({ exp: 1_700_000_600 });
+    const token = opaqueCredential;
 
     await expect(
       adapter.profile(token, new Headers({ cookie: 'untrusted=1' }))
@@ -204,7 +209,7 @@ describe('GoApiAuthAdapter', () => {
     );
 
     await expect(
-      adapter.profile(compactJwt({ exp: 1_700_000_600 }), new Headers())
+      adapter.profile(opaqueCredential, new Headers())
     ).resolves.toMatchObject({
       ok: false,
       error: {
@@ -214,12 +219,14 @@ describe('GoApiAuthAdapter', () => {
     });
   });
 
-  it('turns malformed success data and expired tokens into availability failures', async () => {
+  it('turns malformed success data and non-opaque credentials into availability failures', async () => {
     fetchMock
       .mockResolvedValueOnce(successResponse({ user: activeApiUser }))
       .mockResolvedValueOnce(
         successResponse({
-          access_token: compactJwt({ exp: 1_699_999_999 }),
+          access_token: compactJwt({ exp: 1_700_000_600 }),
+          token_type: 'Bearer',
+          expires_in: 600,
           user: activeApiUser,
         })
       );
@@ -249,6 +256,26 @@ describe('GoApiAuthAdapter', () => {
         errorCode: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
       },
     });
+  });
+
+  it('revokes only the server-owned opaque credential on logout', async () => {
+    fetchMock.mockResolvedValueOnce(successResponse({ success: true }));
+    const incoming = new Headers({
+      authorization: 'Bearer browser-controlled',
+      cookie: 'browser=controlled',
+      'x-request-id': 'req-logout-1',
+    });
+
+    await expect(
+      adapter.logout(opaqueCredential, incoming)
+    ).resolves.toEqual({ ok: true, data: { success: true } });
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://api.example.com/v1/logout');
+    expect(init).toMatchObject({ method: 'POST' });
+    const headers = new Headers(init?.headers);
+    expect(headers.get('authorization')).toBe(`Bearer ${opaqueCredential}`);
+    expect(headers.get('cookie')).toBeNull();
   });
 
   it('maps aborts to the canonical timeout and rejects forwarded IP chains', async () => {

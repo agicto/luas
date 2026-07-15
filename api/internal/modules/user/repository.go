@@ -102,6 +102,14 @@ func (r *repository) DeleteAccount(ctx context.Context, id uint, check func(cont
 				return checkErr
 			}
 		}
+		if revokeErr := revokeUserSessionsDB(
+			tx.WithContext(transactionContext),
+			id,
+			time.Now().UTC(),
+			sessionRevocationAccountDeleted,
+		); revokeErr != nil {
+			return revokeErr
+		}
 
 		result := tx.WithContext(transactionContext).Delete(&po)
 		if result.Error != nil {
@@ -111,6 +119,34 @@ func (r *repository) DeleteAccount(ctx context.Context, id uint, check func(cont
 			return domain.ErrUserNotFound
 		}
 		return nil
+	})
+}
+
+// UpdatePasswordAndRevokeSessions changes the password and invalidates every active session atomically.
+func (r *repository) UpdatePasswordAndRevokeSessions(
+	ctx context.Context,
+	userID uint,
+	passwordHash string,
+	now time.Time,
+) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		result := tx.Model(&UserPO{}).
+			Where("id = ?", userID).
+			Updates(map[string]any{
+				"password":   passwordHash,
+				"updated_at": now,
+			})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != 1 {
+			return domain.ErrUserNotFound
+		}
+		return revokeUserSessionsDB(tx, userID, now, sessionRevocationPasswordChange)
 	})
 }
 
@@ -242,6 +278,9 @@ func (r *repository) ResetPasswordWithToken(ctx context.Context, tokenHash strin
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return domain.ErrUserNotFound
 			}
+			return err
+		}
+		if err := revokeUserSessionsDB(tx, token.UserID, now, sessionRevocationPasswordReset); err != nil {
 			return err
 		}
 

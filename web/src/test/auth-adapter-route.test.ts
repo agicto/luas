@@ -59,7 +59,7 @@ describe('production auth adapter route boundary', () => {
   });
 
   it('sets the HttpOnly API cookie without exposing the bearer token', async () => {
-    const token = compactJwt(Math.floor(Date.now() / 1_000) + 600);
+    const token = opaqueCredential();
     fetchMock.mockResolvedValueOnce(loginResponse(token));
     const { loginWithGoApi } = await import(
       '@/features/auth/server/auth-adapter-route'
@@ -102,7 +102,7 @@ describe('production auth adapter route boundary', () => {
   });
 
   it('clears a rejected API session and preserves the canonical upstream error', async () => {
-    const token = compactJwt(Math.floor(Date.now() / 1_000) + 600);
+    const token = opaqueCredential();
     cookieStore.get.mockReturnValue({ value: token });
     fetchMock.mockResolvedValueOnce(
       Response.json(
@@ -139,19 +139,90 @@ describe('production auth adapter route boundary', () => {
     );
   });
 
-  it('expires both auth schemes on logout without calling an absent revoke endpoint', async () => {
+  it('revokes the upstream session before expiring both local auth schemes', async () => {
+    const token = opaqueCredential();
+    cookieStore.get.mockReturnValue({ value: token });
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ code: 0, message: 'success', data: { success: true } })
+    );
     const { logoutFromGoApi } = await import(
       '@/features/auth/server/auth-adapter-route'
     );
 
-    const response = await logoutFromGoApi();
+    const response = await logoutFromGoApi(authRequest('/api/auth/logout'));
 
     expect(response.status).toBe(200);
     expectPrivateAuthResponse(response);
     await expect(response.json()).resolves.toMatchObject({
       data: { success: true },
     });
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://api.example.com/v1/logout');
+    expect(new Headers(init?.headers).get('authorization')).toBe(`Bearer ${token}`);
+    expect(cookieStore.set.mock.calls.map(([cookie]) => cookie.name).sort()).toEqual([
+      'luas_auth',
+      'luas_session',
+    ]);
+  });
+
+  it('treats an upstream 401 as idempotent logout success', async () => {
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        {
+          code: 401,
+          error_code: 'AUTH.UNAUTHORIZED',
+          message: 'already absent',
+        },
+        { status: 401 }
+      )
+    );
+    const { logoutFromGoApi } = await import(
+      '@/features/auth/server/auth-adapter-route'
+    );
+
+    const response = await logoutFromGoApi(authRequest('/api/auth/logout'));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      data: { success: true },
+    });
+    expect(cookieStore.set).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not hide an availability failure carrying a mismatched unauthorized code', async () => {
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
+    fetchMock.mockResolvedValueOnce(
+      Response.json(
+        {
+          code: 503,
+          error_code: 'AUTH.UNAUTHORIZED',
+          message: 'mismatched upstream failure',
+        },
+        { status: 503 }
+      )
+    );
+    const { logoutFromGoApi } = await import(
+      '@/features/auth/server/auth-adapter-route'
+    );
+
+    const response = await logoutFromGoApi(authRequest('/api/auth/logout'));
+
+    expect(response.status).toBe(503);
+    expect(cookieStore.set).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports an upstream outage after removing local credential custody', async () => {
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
+    fetchMock.mockRejectedValueOnce(new Error('upstream offline'));
+    const { logoutFromGoApi } = await import(
+      '@/features/auth/server/auth-adapter-route'
+    );
+
+    const response = await logoutFromGoApi(authRequest('/api/auth/logout'));
+
+    expect(response.status).toBe(503);
     expect(cookieStore.set.mock.calls.map(([cookie]) => cookie.name).sort()).toEqual([
       'luas_auth',
       'luas_session',
@@ -160,7 +231,7 @@ describe('production auth adapter route boundary', () => {
 
   it('keeps an upstream outage distinct from an absent server session', async () => {
     cookieStore.get.mockReturnValue({
-      value: compactJwt(Math.floor(Date.now() / 1_000) + 600),
+      value: opaqueCredential(),
     });
     fetchMock.mockRejectedValueOnce(new Error('upstream offline'));
     const { resolveGoApiAuthBootstrap } = await import(
@@ -191,6 +262,8 @@ function loginResponse(token: string): Response {
     message: 'success',
     data: {
       access_token: token,
+      token_type: 'Bearer',
+      expires_in: 600,
       user: {
         id: 42,
         username: 'ada',
@@ -202,10 +275,6 @@ function loginResponse(token: string): Response {
   });
 }
 
-function compactJwt(exp: number): string {
-  return [
-    Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url'),
-    Buffer.from(JSON.stringify({ exp })).toString('base64url'),
-    'signature',
-  ].join('.');
+function opaqueCredential(): string {
+  return Buffer.from('0123456789abcdef0123456789abcdef').toString('base64url');
 }

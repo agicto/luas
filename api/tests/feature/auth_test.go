@@ -47,7 +47,13 @@ func TestUserLogin(t *testing.T) {
 		}).
 		Call().
 		AssertOk().
-		AssertJSONStructure([]string{"data.access_token", "data.user"})
+		AssertJSONStructure([]string{
+			"data.access_token",
+			"data.token_type",
+			"data.expires_in",
+			"data.user",
+		}).
+		AssertJSONPath("data.token_type", "Bearer")
 }
 
 func TestPasswordResetRequestReturnsGenericSuccessMessage(t *testing.T) {

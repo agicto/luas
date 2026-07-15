@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Keep the current Web browser auth and Go JWT boundary explicit."""
+"""Keep browser auth and revocable Go authentication sessions aligned."""
 
 from __future__ import annotations
 
@@ -44,6 +44,11 @@ def require_absent(
             failures.append(f"{relative_path} must not contain stale marker {marker!r}")
 
 
+def require_missing(failures: list[str], relative_path: str) -> None:
+    if (ROOT / relative_path).exists():
+        failures.append(f"{relative_path} must remain removed")
+
+
 def main() -> int:
     failures: list[str] = []
 
@@ -52,6 +57,7 @@ def main() -> int:
         "CONTEXT.md",
         (
             "Production API adapter",
+            "Authentication session",
             "browser auth contract vs API auth contract",
             "not interchangeable",
             "changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping",
@@ -71,7 +77,11 @@ def main() -> int:
             "GET /api/auth/me",
             "## Go API User Starter Contract",
             "POST /v1/login",
+            "POST /v1/logout",
             "GET /v1/users/profile",
+            "opaque, cryptographically random session credential",
+            "stores only its SHA-256 hash",
+            "AUTH_SESSION_IDLE_TIMEOUT=168h",
             "AUTH.INVALID_CREDENTIALS",
             "per-IP and normalized/hashed per-subject buckets",
             "SERVER_TRUSTED_PROXIES",
@@ -83,13 +93,17 @@ def main() -> int:
             "__Host-luas_auth",
             "Cache-Control: private, no-store",
             "varies on `Cookie`",
-            "no refresh token, token denylist, or remote logout",
+            "Sends the opaque credential to `POST /v1/logout`",
         ),
     )
     require_absent(
         failures,
         "contracts/AUTHENTICATION.md",
-        ("does not yet ship a production adapter", "not ready-to-use"),
+        (
+            "does not yet ship a production adapter",
+            "not ready-to-use",
+            "no refresh token, token denylist, or remote logout",
+        ),
     )
     require_all(
         failures,
@@ -97,7 +111,9 @@ def main() -> int:
         (
             'r.POST("/login"',
             'r.POST("/register"',
+            'auth.POST("/logout"',
             'auth.GET("/users/profile"',
+            "sessionAuth",
             "protectPublicRoute",
         ),
     )
@@ -131,8 +147,82 @@ def main() -> int:
     require_all(
         failures,
         "api/internal/modules/user/dto.go",
-        ('json:"username"', 'json:"access_token"', 'json:"user"'),
+        (
+            'json:"username"',
+            'json:"access_token"',
+            'json:"token_type"',
+            'json:"expires_in"',
+            'json:"user"',
+        ),
     )
+    require_all(
+        failures,
+        "api/internal/modules/user/model.go",
+        (
+            "type AuthenticationSessionPO struct",
+            "TokenHash",
+            'gorm:"size:64;not null;uniqueIndex"',
+            "IdleExpiresAt",
+            "RevokedAt",
+        ),
+    )
+    require_absent(
+        failures,
+        "api/internal/modules/user/model.go",
+        ("IPAddress", "UserAgent", "PlaintextToken"),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/session_service.go",
+        (
+            "authenticationCredentialBytes   = 32",
+            "crypto.GenerateKey",
+            "crypto.SHA256Hex(credential)",
+            "func (s *SessionService) Authenticate",
+            "PruneAuthenticationSessions",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/repository.go",
+        (
+            "UpdatePasswordAndRevokeSessions",
+            "sessionRevocationPasswordReset",
+            "sessionRevocationAccountDeleted",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/authentication_middleware.go",
+        ("sessionAuth", "domain.SessionAuthenticator", "authenticationSessionID"),
+    )
+    require_all(
+        failures,
+        "api/database/migrations/2026_07_15_070000_create_authentication_sessions_table.go",
+        ("AuthenticationSessionPO", "UseTransaction: true", "DropTable"),
+    )
+    require_all(
+        failures,
+        "api/internal/bootstrap/operatorcommands/authentication_session.go",
+        ("auth-session:prune", "PruneAuthenticationSessions", "--batch"),
+    )
+    require_all(
+        failures,
+        "api/.env.example",
+        (
+            "AUTH_SESSION_TTL=720h",
+            "AUTH_SESSION_IDLE_TIMEOUT=168h",
+            "AUTH_SESSION_TOUCH_INTERVAL=5m",
+            "AUTH_SESSION_RETENTION=720h",
+        ),
+    )
+    if re.search(r"^JWT_(?:SECRET|EXPIRE_DAYS)=", env_example, re.MULTILINE):
+        failures.append("api/.env.example must not advertise retired JWT configuration")
+    require_missing(failures, "api/internal/infra/jwt/jwt.go")
+    require_missing(failures, "api/internal/infra/middleware/jwt.go")
+    require_missing(failures, "web/src/features/auth/server/auth-token.ts")
+    if "github.com/golang-jwt/jwt" in read("api/go.mod"):
+        failures.append("api/go.mod must not retain the removed JWT runtime dependency")
     require_all(
         failures,
         "web/src/features/auth/services/auth-service.ts",
@@ -179,6 +269,16 @@ def main() -> int:
     )
     require_all(
         failures,
+        "web/src/features/auth/server/auth-credential.ts",
+        (
+            "isOpaqueAuthenticationCredential",
+            "{43}",
+            "byteLength === 32",
+            "authenticationSessionMaxAgeSeconds",
+        ),
+    )
+    require_all(
+        failures,
         "web/src/app/api/_shared/mock-bff.ts",
         ("env.NEXT_PUBLIC_APP_URL", "parsedOrigin.origin !== allowedOrigin"),
     )
@@ -187,6 +287,9 @@ def main() -> int:
         "web/src/features/auth/server/go-api-auth-adapter.ts",
         (
             "'users/profile'",
+            "'logout'",
+            "value.token_type !== 'Bearer'",
+            "value.expires_in",
             "new GoApiClient(",
             "generatedUsername",
             "mapGoApiUser",
@@ -216,6 +319,7 @@ def main() -> int:
             "setApiSessionCookie",
             "getApiSessionToken",
             "clearApiSessionCookie",
+            "configuredAdapter().logout",
             "resolveGoApiAuthBootstrap",
             "privateAuthResponse(",
         ),
@@ -254,6 +358,8 @@ def main() -> int:
             "three resolution modes",
             "`api-session`",
             "`__Host-luas_auth`",
+            "opaque credential",
+            "`POST /v1/logout`",
             "Cache-Control: private, no-store",
             "src/server/http/private-response.ts",
         ),
@@ -287,7 +393,7 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print("Auth contract boundary check passed (production API adapter and auth ownership are explicit).")
+    print("Auth contract boundary check passed (revocable sessions and adapter ownership are explicit).")
     return 0
 
 

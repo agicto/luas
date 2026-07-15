@@ -26,7 +26,7 @@ async function handleLogout(request: Request) {
   }
 
   if (resolution.backend === 'go-api') {
-    return logoutFromGoApi();
+    return logoutFromGoApi(request);
   }
 
   await clearApiSessionCookie();

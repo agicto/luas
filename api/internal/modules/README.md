@@ -6,7 +6,7 @@ Route-owning starter modules directory, following Domain-Driven Design (DDD) pat
 
 | Surface | Description | Type |
 |---------|-------------|------|
-| `user` | Default auth starter (register/login/JWT/profile) | Default starter |
+| `user` | Default auth starter (register/login/revocable session/profile) | Default starter |
 | `apikey` | Default API key starter (create/list/revoke + middleware) | Default starter |
 | `audit` | Default audit starter (global write-request logging + history API) | Default starter |
 | `organization` | Organization ownership, membership, invitation, active-context, and transfer lifecycle. | Optional starter |

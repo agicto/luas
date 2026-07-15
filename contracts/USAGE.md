@@ -116,8 +116,8 @@ unpaginated because the code-owned catalog is capped at 64 definitions.
 
 | Method | Path | Auth | Behavior |
 |---|---|---|---|
-| `GET` | `/v1/usage/user` | JWT user | Current user's effective summaries |
-| `GET` | `/v1/organization-usage` | JWT + verified `Organization-Id` | Owner/admin organization summaries |
+| `GET` | `/v1/usage/user` | Authentication session | Current user's effective summaries |
+| `GET` | `/v1/organization-usage` | Authentication session + verified `Organization-Id` | Owner/admin organization summaries |
 
 Organization members receive `403 COMMON.PERMISSION_DENIED`. Every response, including errors, is
 `Cache-Control: private, no-store`, `Pragma: no-cache`, and varies on authorization; organization

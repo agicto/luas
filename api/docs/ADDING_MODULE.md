@@ -42,11 +42,9 @@ service_test.go
 ## Optional Starter Verification
 
 ```bash
-DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
-  go run ./cmd/luas route:list
+DB_ENABLED=false go run ./cmd/luas route:list
 
-DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
-  OPTIONAL_STARTERS=<name> go run ./cmd/luas route:list
+DB_ENABLED=false OPTIONAL_STARTERS=<name> go run ./cmd/luas route:list
 
 go test ./internal/starter/... ./internal/modules/<name>/...
 ```
@@ -54,8 +52,6 @@ go test ./internal/starter/... ./internal/modules/<name>/...
 The first command must show no optional routes. The second must show exactly the selected routes,
 and `ConfiguredMigrations` tests must prove the matching migration set. Unknown, duplicate, default,
 non-canonical, missing-dependency, or cyclic selections must fail rather than being ignored.
-The inline secret exists only to construct auth-owned handlers for route inspection; never start a
-server with it.
 
 ## Organization-Scoped Product Modules
 

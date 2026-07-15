@@ -76,13 +76,13 @@ git diff main...HEAD         # Review your own changes
 ✅ Good PR Description:
 
 ## What
-Implemented user authentication with JWT tokens
+Implemented user authentication with opaque server-side sessions
 
 ## Why  
 Users need secure login without storing passwords in session
 
 ## How
-- Added JWT middleware
+- Added authentication-session middleware
 - Created auth service with token generation
 - Added login/logout endpoints
 - Migrated password hashing to bcrypt

@@ -162,7 +162,7 @@ describe('notification browser route boundary', () => {
   it('forwards only fixed production notification paths and canonical query values', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock
       .mockResolvedValueOnce(Response.json(pageEnvelope([])))
       .mockResolvedValueOnce(Response.json({
@@ -184,7 +184,7 @@ describe('notification browser route boundary', () => {
       'https://api.example.com/v1/notification-preferences'
     );
     expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('authorization')).toBe(
-      `Bearer ${compactJwt()}`
+      `Bearer ${opaqueCredential()}`
     );
   });
 });
@@ -209,8 +209,8 @@ function mockUser(id: string) {
   return { id, email: `${id}@example.com`, name: id };
 }
 
-function compactJwt(): string {
-  return 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature';
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }
 
 function pageEnvelope(data: unknown[]) {

@@ -108,7 +108,7 @@ Classify each touched surface before changing it.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.
-   - For auth, read `contracts/AUTHENTICATION.md`; the Web cookie contract and Go JWT contract are
+   - For auth, read `contracts/AUTHENTICATION.md`; the Web cookie contract and Go authentication-session contract are
      not interchangeable through a base-URL change.
    - Preserve the provider-owned auth store. Keep `client-session` unless the downstream Next.js
      server can authoritatively resolve the real session, then replace only the bootstrap adapter.

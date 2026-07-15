@@ -22,7 +22,7 @@ dependencies must be named explicitly.
   ownership, invitations, member removal, and transfer rules.
 - `AccessRole` is owned by `permission`, belongs to one organization, and groups exact
   `PermissionKey` values.
-- `PermissionContext` is computed for one current membership. It is not embedded in JWTs or stored
+- `PermissionContext` is computed for one current membership. It is not embedded in credentials or stored
   as a global current-user object.
 - Product resource ownership remains in product policies. An `articles.update` grant answers
   whether the action is available; an article policy still decides whether the caller can update a

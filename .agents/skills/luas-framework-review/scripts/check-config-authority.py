@@ -132,6 +132,8 @@ def main() -> int:
 
     env_example = read("api/.env.example")
     removed_keys = (
+        "JWT_SECRET",
+        "JWT_EXPIRE_DAYS",
         "LOG_CH_ENABLED",
         "LOG_MAX_SIZE",
         "LOG_MAX_AGE",

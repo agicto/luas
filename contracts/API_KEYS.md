@@ -16,7 +16,7 @@ An authenticated user may manage only their own API keys.
 | Revoke key | `DELETE /api/api-keys/:id` | `DELETE /v1/api-keys/:id` | `204` |
 
 The Web production API adapter owns the HttpOnly API session credential and forwards only these
-fixed relative paths. The browser never receives the Go JWT. Every browser response is
+fixed relative paths. The browser never receives the Go authentication-session credential. Every browser response is
 `Cache-Control: private, no-store` and varies on `Cookie`.
 
 ## Create

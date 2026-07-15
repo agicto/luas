@@ -133,9 +133,30 @@ export async function getCurrentGoApiSession(
   return privateAuthResponse(apiSuccessResponse(result.data));
 }
 
-export async function logoutFromGoApi(): Promise<NextResponse> {
-  await clearApiSessionCookie();
-  await clearSessionCookie();
+export async function logoutFromGoApi(request: Request): Promise<NextResponse> {
+  const accessToken = await getApiSessionToken();
+  let result: Awaited<ReturnType<GoApiAuthAdapter['logout']>> | undefined;
+
+  try {
+    if (accessToken) {
+      result = await configuredAdapter().logout(
+        accessToken,
+        request.headers,
+        request.signal
+      );
+    }
+  } finally {
+    await clearApiSessionCookie();
+    await clearSessionCookie();
+  }
+
+  if (
+    result &&
+    !result.ok &&
+    result.error.status !== 401
+  ) {
+    return adapterErrorResponse(result.error);
+  }
 
   return privateAuthResponse(apiSuccessResponse({ success: true as const }));
 }

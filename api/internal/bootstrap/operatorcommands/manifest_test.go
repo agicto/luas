@@ -14,6 +14,7 @@ func TestManifestRegistersBusinessOperatorCommands(t *testing.T) {
 	infracommands.RegisterManifest(application, Manifest())
 
 	assert.True(t, application.HasCommand("setting:list"))
+	assert.True(t, application.HasCommand("auth-session:prune"))
 	assert.True(t, application.HasCommand("usage:record"))
 	assert.True(t, application.HasCommand("webhook:work"))
 	assert.True(t, application.HasCommand("webhook:publish-test"))

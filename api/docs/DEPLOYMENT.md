@@ -96,8 +96,9 @@ docker compose up --build --wait
 docker compose down
 ```
 
-Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
-`JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
+Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override the local database credential
+with `LUAS_DB_PASSWORD`. Compose supplies a visibly local-only asset transfer key when the asset
+starter is selected. Set `OPTIONAL_STARTERS=organization` to exercise the optional
 ownership kernel, `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state, or
 `OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage. Use
 `OPTIONAL_STARTERS=organization,setting` for typed preferences or
@@ -112,7 +113,6 @@ process and its local startup migration receive the same starter selection.
 
 A downstream production deployment must inject at least:
 
-- `JWT_SECRET`: generated secret with at least 32 characters.
 - `CORS_ALLOW_ORIGINS`: explicit production browser origins.
 - `CORS_ALLOW_HEADERS`: retain `Authorization` and `Organization-Id` when a cross-origin browser
   calls active-organization routes; Luas includes both in its default allow-list.
@@ -123,6 +123,10 @@ A downstream production deployment must inject at least:
 - `OPTIONAL_STARTERS`: one identical additive selection for every API replica, migration job, and
   seeder job, plus notification workers and asset cleanup jobs when selected. Omit or set empty when
   no optional starter is enabled.
+- Authentication policy when the defaults do not match product requirements:
+  `AUTH_SESSION_TTL`, `AUTH_SESSION_IDLE_TIMEOUT`, `AUTH_SESSION_TOUCH_INTERVAL`, and
+  `AUTH_SESSION_RETENTION`. Schedule `luas auth-session:prune --batch=500`; no authentication signing
+  secret exists.
 - Asset deployments: `OBJECT_STORAGE_DRIVER=r2` plus the complete R2 secret group, exact provider
   CORS rules for browser PUT/GET, and a short lifecycle rule for `asset-uploads/`. Do not use a
   container filesystem as durable production storage.

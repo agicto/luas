@@ -12,7 +12,6 @@ import (
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 )
 
 type fakeRepo struct {
@@ -26,6 +25,22 @@ type fakeRepo struct {
 	findAllFn        func(context.Context, int, int) ([]*domain.User, int64, error)
 	storeResetFn     func(context.Context, uint, string, time.Time) error
 	resetByTokenFn   func(context.Context, string, string, time.Time) error
+	updatePasswordFn func(context.Context, uint, string, time.Time) error
+}
+
+type fakeSessionIssuer struct {
+	issueErr error
+}
+
+func (s *fakeSessionIssuer) Issue(context.Context, *domain.User) (*IssuedAuthenticationSession, error) {
+	if s.issueErr != nil {
+		return nil, s.issueErr
+	}
+	return &IssuedAuthenticationSession{
+		AccessToken: "test-session-credential",
+		TokenType:   "Bearer",
+		ExpiresIn:   3600,
+	}, nil
 }
 
 type fakeUserMailer struct {
@@ -125,8 +140,15 @@ func (r *fakeRepo) ResetPasswordWithToken(ctx context.Context, tokenHash string,
 	return nil
 }
 
+func (r *fakeRepo) UpdatePasswordAndRevokeSessions(ctx context.Context, userID uint, passwordHash string, now time.Time) error {
+	if r.updatePasswordFn != nil {
+		return r.updatePasswordFn(ctx, userID, passwordHash, now)
+	}
+	return nil
+}
+
 func newTestService(repo userRepository) *service {
-	return NewService(repo, repo.(passwordResetStore), jwt.NewTestService(), events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
+	return NewService(repo, repo.(passwordResetStore), &fakeSessionIssuer{}, events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
 }
 
 func mustHashTestPassword(t *testing.T) string {
@@ -433,7 +455,7 @@ func TestServiceRequestPasswordResetPropagatesContextToMailer(t *testing.T) {
 	svc := NewService(
 		repo,
 		repo,
-		jwt.NewTestService(),
+		&fakeSessionIssuer{},
 		events.NewEventBus(),
 		mailer,
 		NewAccountDeletionPolicy(),
@@ -459,7 +481,7 @@ func TestServiceRegisterDetachesFireAndForgetEventFromCanceledRequest(t *testing
 	svc := NewService(
 		repo,
 		repo,
-		jwt.NewTestService(),
+		&fakeSessionIssuer{},
 		eventBus,
 		&fakeUserMailer{},
 		NewAccountDeletionPolicy(),
@@ -511,7 +533,7 @@ func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailur
 			svc := NewService(
 				repo,
 				repo,
-				jwt.NewTestService(),
+				&fakeSessionIssuer{},
 				events.NewEventBus(),
 				&fakeUserMailer{passwordResetErr: tt.mailErr},
 				NewAccountDeletionPolicy(),

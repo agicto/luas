@@ -30,7 +30,7 @@ type transferSigner struct {
 
 func newTransferSigner(secret string) (*transferSigner, error) {
 	if len(secret) < 32 {
-		return nil, fmt.Errorf("JWT secret is required for local asset transfer signing")
+		return nil, fmt.Errorf("asset transfer signing key must be at least 32 characters")
 	}
 	derived := sha256.Sum256([]byte("luas:asset-transfer:v1:" + secret))
 	return &transferSigner{

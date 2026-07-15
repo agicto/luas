@@ -94,8 +94,10 @@ malformed `2xx` JSON resolves as `unavailable`, never `authenticated`.
 - Authentication mutations disable retries. Do not retry writes without explicit idempotency
   evidence from the endpoint contract.
 - Logout is user-idempotent: `401` / `AUTH.UNAUTHORIZED` means the session is already absent, so
-  clear local state and navigate to the logged-out route. Preserve local state for availability
-  failures because the remote outcome is unknown.
+  clear local state and navigate to the logged-out route. In `api-session` mode the server adapter
+  always removes the HttpOnly credential after attempting remote revocation; a `503` reports that
+  the remote outcome is unknown even though browser credential custody is gone. Client-owned modes
+  preserve local state for availability failures until their authority can be resolved again.
 
 ## Related Skills
 

@@ -6,13 +6,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/wiring"
 	"github.com/zgiai/luas/api/pkg/response"
 )
@@ -31,9 +29,11 @@ func TestHTTPKernelDatabaseDisabledDoesNotPanic(t *testing.T) {
 		Database: config.DatabaseConfig{
 			Enabled: false,
 		},
-		JWT: config.JWTConfig{
-			Secret: "database-disabled-test-secret",
-			Expire: time.Hour,
+		Authentication: config.AuthenticationConfig{
+			SessionTTL:           config.DefaultAuthenticationSessionTTL,
+			SessionIdleTimeout:   config.DefaultAuthenticationSessionIdleTimeout,
+			SessionTouchInterval: config.DefaultAuthenticationSessionTouchInterval,
+			SessionRetention:     config.DefaultAuthenticationSessionRetention,
 		},
 		CORS: config.CORSConfig{
 			AllowOrigins: []string{"http://localhost:3000"},
@@ -50,10 +50,7 @@ func TestHTTPKernelDatabaseDisabledDoesNotPanic(t *testing.T) {
 		t.Fatalf("initialize application: %v", err)
 	}
 	kernel := bootstrap.NewHttpKernel(application)
-	token, err := jwt.NewService(cfg).GenerateToken(7, "disabled-db-user")
-	if err != nil {
-		t.Fatalf("generate JWT: %v", err)
-	}
+	token := strings.Repeat("x", 43)
 
 	tests := []struct {
 		name       string

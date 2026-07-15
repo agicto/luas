@@ -29,6 +29,7 @@ func newUsageTestFixture(t *testing.T) usageTestFixture {
 	require.NoError(t, db.Exec("PRAGMA foreign_keys = ON").Error)
 	require.NoError(t, db.AutoMigrate(
 		&user.UserPO{},
+		&user.AuthenticationSessionPO{},
 		&organization.OrganizationPO{},
 		&UsageCounterPO{},
 		&UsageQuotaPO{},

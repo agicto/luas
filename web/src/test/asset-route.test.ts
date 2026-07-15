@@ -144,7 +144,7 @@ describe('asset browser route boundary', () => {
   it('forwards only fixed production asset paths', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock
       .mockResolvedValueOnce(Response.json(pageEnvelope([])))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
@@ -192,8 +192,8 @@ function mockUser(id: string) {
   return { id, email: `${id}@example.com`, name: id };
 }
 
-function compactJwt(): string {
-  return 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature';
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }
 
 function pageEnvelope(data: unknown[]) {

@@ -53,6 +53,7 @@ print(payload["user"]["id"], payload["access_token"])
 
 command -v docker >/dev/null 2>&1 || fail "docker is not installed"
 command -v curl >/dev/null 2>&1 || fail "curl is not installed"
+command -v python3 >/dev/null 2>&1 || fail "python3 is required for authentication response checks"
 docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
 
 if (( $# == 0 )); then
@@ -87,6 +88,55 @@ register_status="$(curl --noproxy '*' --silent --show-error \
   --data '{"username":"compose_check","email":"compose-check@example.com","password":"secret12"}' \
   "http://127.0.0.1:${published_port}/v1/register")"
 [[ "${register_status}" == "201" ]] || fail "post-migration registration returned HTTP ${register_status}"
+
+login_status="$(curl --noproxy '*' --silent --show-error \
+  --output "${TMP_DIR}/authentication-login.json" \
+  --write-out '%{http_code}' \
+  --header 'Content-Type: application/json' \
+  --data '{"username":"compose-check@example.com","password":"secret12"}' \
+  "http://127.0.0.1:${published_port}/v1/login")"
+[[ "${login_status}" == "200" ]] || fail "authentication login returned HTTP ${login_status}"
+if ! authentication_token="$(python3 -c '
+import base64, json, re, sys
+
+payload = json.load(open(sys.argv[1]))["data"]
+token = payload["access_token"]
+expires_in = payload["expires_in"]
+if payload["token_type"] != "Bearer":
+    raise SystemExit(1)
+if not isinstance(expires_in, int) or isinstance(expires_in, bool) or expires_in <= 0:
+    raise SystemExit(1)
+if not isinstance(token, str) or re.fullmatch(r"[A-Za-z0-9_-]{43}", token) is None:
+    raise SystemExit(1)
+if len(base64.urlsafe_b64decode(token + "=")) != 32:
+    raise SystemExit(1)
+print(token)
+' "${TMP_DIR}/authentication-login.json")"; then
+  fail "authentication login response does not satisfy the opaque credential contract"
+fi
+
+profile_status="$(curl --noproxy '*' --silent --show-error \
+  --output "${TMP_DIR}/authentication-profile.json" \
+  --write-out '%{http_code}' \
+  --header "Authorization: Bearer ${authentication_token}" \
+  "http://127.0.0.1:${published_port}/v1/users/profile")"
+[[ "${profile_status}" == "200" ]] || fail "authenticated profile returned HTTP ${profile_status}"
+
+logout_status="$(curl --noproxy '*' --silent --show-error \
+  --output "${TMP_DIR}/authentication-logout.json" \
+  --write-out '%{http_code}' \
+  --request POST \
+  --header "Authorization: Bearer ${authentication_token}" \
+  "http://127.0.0.1:${published_port}/v1/logout")"
+[[ "${logout_status}" == "200" ]] || fail "authentication logout returned HTTP ${logout_status}"
+
+revoked_status="$(curl --noproxy '*' --silent --show-error \
+  --output "${TMP_DIR}/authentication-revoked.json" \
+  --write-out '%{http_code}' \
+  --header "Authorization: Bearer ${authentication_token}" \
+  "http://127.0.0.1:${published_port}/v1/users/profile")"
+[[ "${revoked_status}" == "401" ]] || fail "revoked authentication credential returned HTTP ${revoked_status}"
+authentication_flow="${login_status}/${profile_status}/${logout_status}/${revoked_status}"
 
 organization_flow="skipped"
 organization_context_flow="skipped"
@@ -1649,6 +1699,7 @@ esac
 printf 'compose API health: %s\n' "${api_health}"
 printf 'compose loopback address: %s\n' "${published_address}"
 printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_status}"
+printf 'compose authentication login/profile/logout/revoked: %s\n' "${authentication_flow}"
 printf 'compose organization/invitation flow: %s\n' "${organization_flow}"
 printf 'compose organization/context flow: %s\n' "${organization_context_flow}"
 printf 'compose organization/member flow: %s\n' "${membership_flow}"

@@ -40,11 +40,11 @@ can select the shipped production adapter. Mock behavior is available outside pr
 production returns `503 COMMON.SERVICE_UNAVAILABLE` unless a production backend or explicit
 demo-only `MOCK_BFF_ENABLED=true` is configured.
 
-The Go JWT auth endpoints and Web browser auth endpoints are not drop-in compatible. Luas ships a
+The Go authentication-session endpoints and Web browser auth endpoints are not drop-in compatible. Luas ships a
 same-origin server adapter that performs the mapping without exposing bearer tokens to browser
 JavaScript. Changing `NEXT_PUBLIC_API_URL` alone still does not enable it; read
 [../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) for its server-only configuration,
-cookie, timeout, trusted-proxy, and stateless logout contract.
+cookie, timeout, trusted-proxy, and remote-revocation contract.
 
 See [docs/MOCK_BFF.md](docs/MOCK_BFF.md) before replacing, deleting, or intentionally enabling the mock BFF.
 
@@ -108,8 +108,8 @@ API_UPSTREAM_MAX_RESPONSE_BYTES=1048576
 API_CLIENT_IP_HEADER=x-real-ip
 ```
 
-The adapter takes precedence over mock auth, stores the API JWT in an HttpOnly host cookie, resolves
-protected sessions on the server, and leaves unrelated mock routes disabled. Downstream apps using
+The adapter takes precedence over mock auth, stores the opaque API credential in an HttpOnly host
+cookie, resolves protected sessions on the server, remotely revokes logout, and leaves unrelated mock routes disabled. Downstream apps using
 another identity provider can keep `client-session` mode and replace this adapter seam.
 
 ## Organization Feature

@@ -128,15 +128,17 @@ func (r *doctorReport) addConfigChecks(cfg *config.Config) {
 		r.add(checkOK, fmt.Sprintf("APP_ENV=%s (development defaults active)", cfg.App.Env), "")
 	}
 
-	if len(cfg.JWT.Secret) >= 32 {
-		r.add(checkOK, "JWT_SECRET length >= 32", "")
-	} else {
-		level := checkWarning
-		if cfg.IsProduction() {
-			level = checkFailure
-		}
-		r.add(level, "JWT_SECRET length < 32", fmt.Sprintf("got %d chars", len(cfg.JWT.Secret)))
-	}
+	r.add(
+		checkOK,
+		"opaque authentication sessions enabled",
+		fmt.Sprintf(
+			"absolute=%s idle=%s touch=%s retention=%s",
+			cfg.Authentication.SessionTTL,
+			cfg.Authentication.SessionIdleTimeout,
+			cfg.Authentication.SessionTouchInterval,
+			cfg.Authentication.SessionRetention,
+		),
+	)
 
 	if hasWildcardOrigin(cfg.CORS.AllowOrigins) && cfg.CORS.AllowCredentials {
 		r.add(checkFailure, "CORS '*' + credentials combination", "browsers reject this; set explicit origins")

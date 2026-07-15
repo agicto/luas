@@ -26,6 +26,7 @@ func newSettingTestFixture(t *testing.T) settingTestFixture {
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(
 		&user.UserPO{},
+		&user.AuthenticationSessionPO{},
 		&organization.OrganizationPO{},
 		&SettingPO{},
 	))

@@ -20,7 +20,7 @@ configuration. `config.LoadFresh()` exists for tests and one-shot diagnostics. N
 rebuilds already constructed services.
 
 `config.LoadAIConfig()` is the capability-scoped loader for `ai:chat`; it returns the same typed
-`AIConfig` used by the full snapshot without requiring unrelated database or JWT settings. Runtime
+`AIConfig` used by the full snapshot without requiring unrelated database or authentication-session settings. Runtime
 packages still do not read environment variables directly. It also applies the same enablement,
 endpoint, timeout, and byte-limit validation as the full application loader.
 
@@ -91,6 +91,26 @@ migration. It is not a per-request flag and must not be toggled independently ac
 against this immutable startup policy; changing the value affects newly created invitations only and
 requires a process restart like every other configuration change.
 
+## Authentication Session Policy
+
+The default `user` starter issues opaque server-side authentication sessions. Policy is typed and
+restart-scoped; no JWT signing key or browser-readable claim is involved:
+
+| Variable | Default | Validation |
+|---|---:|---|
+| `AUTH_SESSION_TTL` | `720h` | Absolute lifetime, 15 minutes through 180 days |
+| `AUTH_SESSION_IDLE_TIMEOUT` | `168h` | Inactivity lifetime, 5 minutes through the absolute TTL |
+| `AUTH_SESSION_TOUCH_INTERVAL` | `5m` | Activity-write throttle, positive, no more than one hour or the idle timeout |
+| `AUTH_SESSION_RETENTION` | `720h` | Terminal-row retention, zero through 365 days |
+
+The API remains authoritative even when a browser cookie has a longer local lifetime: revocation,
+idle expiry, account state, password security events, and persistence availability are checked on
+every protected request. Run `luas auth-session:prune --batch=500` as a bounded scheduled job.
+
+`JWT_SECRET` and `JWT_EXPIRE_DAYS` are retired keys. A non-empty legacy value fails startup instead
+of creating the false impression that stateless JWTs are still accepted. See
+[`AUTHENTICATION.md`](AUTHENTICATION.md) for the breaking migration and rollback boundary.
+
 ## Outbound Webhook Configuration
 
 Selecting `webhook` requires `WEBHOOK_ENCRYPTION_KEY` with at least 32 characters. It protects
@@ -135,7 +155,9 @@ The R2 driver requires the all-or-none secret group `R2_ACCOUNT_ID`, `R2_ACCESS_
 `R2_ACCESS_KEY_SECRET`, `R2_BUCKET`, and `R2_ENDPOINT`. Production requires an HTTPS endpoint.
 `OBJECT_STORAGE_REQUEST_TIMEOUT` bounds provider operations and defaults to `30s`.
 
-Asset policy is independently typed through `ASSET_MAX_BYTES`, `ASSET_UPLOAD_GRANT_TTL`,
+The local asset adapter additionally requires a purpose-specific `ASSET_TRANSFER_SIGNING_KEY` of at
+least 32 characters. R2 uses provider-owned presigning and does not consume that local key. Asset
+policy is independently typed through `ASSET_MAX_BYTES`, `ASSET_UPLOAD_GRANT_TTL`,
 `ASSET_DOWNLOAD_GRANT_TTL`, and `ASSET_PENDING_TTL`. Size and lifetime bounds fail startup rather
 than weakening upload or cleanup behavior. See [`ASSETS.md`](ASSETS.md) for the storage boundary,
 CORS/lifecycle deployment responsibilities, and privacy rules.
@@ -153,7 +175,7 @@ provider call independently and composes with caller cancellation. See [`EMAIL.m
 
 ## Secrets And Deployment
 
-Luas does not serialize a configuration cache. A cache would duplicate `JWT_SECRET`, database
+Luas does not serialize a configuration cache. A cache would duplicate database
 credentials, provider keys, and other secrets on disk while bypassing the deployment platform's
 secret lifecycle. Production images also do not contain `.env` or `.env.example`; inject required
 values through the runtime or a mounted secret source.

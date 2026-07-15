@@ -26,15 +26,60 @@ before reading a body or mutating state.
 
 ## Go API User Starter Contract
 
-The Go `user` starter exposes JWT-oriented endpoints under `/v1`:
+The Go `user` starter exposes server-side authentication-session endpoints under `/v1`:
 
 | Operation | API endpoint | Request | Successful `data` |
 |---|---|---|---|
-| Login | `POST /v1/login` | `{ username, password }` | `{ access_token, user }` |
+| Login | `POST /v1/login` | `{ username, password }` | `{ access_token, token_type: "Bearer", expires_in, user }` |
+| Logout | `POST /v1/logout` | Bearer session token | `{ success: true }` |
 | Register | `POST /v1/register` | `{ username, password, email, nickname?, phone? }` | API user |
 | Request password reset | `POST /v1/password/reset` | `{ email }` | Generic message |
 | Confirm password reset | `POST /v1/password/reset/confirm` | `{ token, new_password }` | Generic message |
 | Profile | `GET /v1/users/profile` | Bearer token | API user |
+
+`access_token` is an opaque, cryptographically random session credential. It is not a JWT and has
+no client-readable claims. The API stores only its SHA-256 hash and resolves identity, account
+status, revocation, absolute expiry, and idle expiry from current persistence on every protected
+request. `expires_in` is the number of whole seconds remaining until the absolute session expiry;
+the server remains authoritative if an idle timeout or security event ends the session earlier.
+
+API keys remain the default machine-to-machine credential. Authentication sessions represent one
+signed-in user session and must not be reused as API-key scope, organization role, or permission
+evidence.
+
+### Session Lifecycle
+
+- A successful login creates one new session with at least 256 bits of CSPRNG entropy. Plaintext
+  session credentials exist only in the login response and caller custody; persistence, logs,
+  traces, audit metadata, and errors contain neither plaintext nor a reversible value.
+- The default absolute lifetime is 30 days and the default idle timeout is 7 days. Activity is
+  touched at a bounded interval so authentication adds one indexed read per request without adding
+  one write per request. Both limits are enforced server-side.
+- `POST /v1/logout` revokes the presented session before returning success. A revoked, expired, or
+  unknown credential receives `401 AUTH.UNAUTHORIZED` on later requests.
+- Password change, successful password reset, account disablement, and account deletion invalidate
+  existing access. Password change and reset revoke every session for that user in the same
+  database transaction as the password update.
+- Disabled accounts receive `403 AUTH.ACCOUNT_DISABLED` even when their session has not otherwise
+  expired. Session persistence failures fail closed as `503 COMMON.SERVICE_UNAVAILABLE` rather than
+  accepting an unverifiable credential.
+- Revoked and expired rows are retained for a bounded operational window and pruned by the shipped
+  operator command. The session row deliberately stores no IP address, user agent, device label, or
+  provider payload; downstream apps may add reviewed device policy at their own boundary.
+
+Session policy is restart-scoped typed configuration:
+
+```dotenv
+AUTH_SESSION_TTL=720h
+AUTH_SESSION_IDLE_TIMEOUT=168h
+AUTH_SESSION_TOUCH_INTERVAL=5m
+AUTH_SESSION_RETENTION=720h
+```
+
+`JWT_SECRET` and `JWT_EXPIRE_DAYS` no longer configure user authentication. This is an intentional
+security-breaking migration: deploying the session migration invalidates previously issued
+stateless JWTs, so existing users sign in again. Luas does not silently keep the old seven-day
+unrevocable path beside the new authority.
 
 The API user uses numeric identity and backend fields such as `username`, `nickname`, and
 `status`. It does not directly emit the Web shell's `name` view.
@@ -101,10 +146,10 @@ and documentation must use the `API_*` names because the adapter now serves more
 
 | Browser operation | Adapter behavior |
 |---|---|
-| Login | Sends `{ username: email, password }` to `POST /v1/login`, validates the envelope/JWT/user, then sets the API session cookie. |
+| Login | Sends `{ username: email, password }` to `POST /v1/login`, validates the envelope/opaque credential/user, then sets the API session cookie. |
 | Register | Sends a non-identifying generated username plus `{ email, nickname: name, password }` to `POST /v1/register`, then logs in by email and sets the cookie. |
-| Current session | Reads the server-only cookie, sends `Authorization: Bearer ...` to `GET /v1/users/profile`, and maps the API user to `{ id, email, name }`. |
-| Logout | Expires the exact-scope cookie and returns `{ success: true }`; the current stateless Go JWT remains valid until its own expiry. |
+| Current session | Reads the server-only opaque session cookie, sends `Authorization: Bearer ...` to `GET /v1/users/profile`, and maps the API user to `{ id, email, name }`. |
+| Logout | Sends the opaque credential to `POST /v1/logout`, then expires the exact-scope cookie. An upstream `401` is idempotent success because the server session is already absent; an availability failure is reported while local credential custody is still removed. |
 
 The generated username has the form `user_<random-id>` and exists only to satisfy the API starter's
 current account model. Browser identity remains email-based. Registration accepts a 2-50 character
@@ -118,11 +163,12 @@ issuance should add that capability to the API contract instead of hiding compen
 
 ### Session And Security Semantics
 
-- Production stores the bearer token in `__Host-luas_auth`; non-production uses `luas_auth`.
+- Production stores the opaque bearer token in `__Host-luas_auth`; non-production uses `luas_auth`.
   The cookie is HttpOnly, `Secure` in production, `SameSite=Lax`, `Path=/`, has no `Domain`, and
-  expires no later than the JWT `exp` claim.
-- Token claims are not treated as authorization evidence by Web. The adapter only reads unverified
-  `exp` to bound cookie lifetime; the Go API validates the signature and account status.
+  expires no later than the API-owned `expires_in` lifetime. Browser code never receives the token.
+- The Web adapter validates only the bounded opaque credential shape and positive `expires_in`
+  value before accepting login success. It does not decode identity or authorization claims from
+  the credential; the Go API resolves current session and account state from persistence.
 - Login, registration, and logout require exact same-origin browser mutations. The adapter forwards
   no incoming cookies, authorization headers, or arbitrary paths to Go. The allowed browser origin
   comes from validated `NEXT_PUBLIC_APP_URL`, not a proxy-normalized internal request URL.
@@ -143,10 +189,6 @@ issuance should add that capability to the API contract instead of hiding compen
   as a cache policy.
 - Timeout, network, malformed-envelope, malformed-user, and malformed-token failures become
   `503 COMMON.TIMEOUT` or `503 COMMON.SERVICE_UNAVAILABLE`, never a false unauthenticated session.
-- A missing or rejected token becomes `401 AUTH.UNAUTHORIZED`. A disabled API user becomes
+- A missing, revoked, idle-expired, absolute-expired, or rejected token becomes
+  `401 AUTH.UNAUTHORIZED`. A disabled API user becomes
   `403 AUTH.ACCOUNT_DISABLED`. Availability failures remain retryable and do not redirect to login.
-
-The first production adapter intentionally has no refresh token, token denylist, or remote logout
-endpoint. Logout removes the browser's only copy of the bearer token, but immediate server-side
-revocation requires a future API session/refresh-token contract. Downstream apps with that
-requirement must replace this stateless boundary rather than claiming cookie deletion revokes JWTs.

@@ -49,6 +49,26 @@ func (PasswordResetTokenPO) TableName() string {
 	return "password_reset_tokens"
 }
 
+// AuthenticationSessionPO stores one opaque user session credential by hash.
+// Transport credentials and request fingerprint data never enter this record.
+type AuthenticationSessionPO struct {
+	ID               string `gorm:"size:32;primaryKey"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	UserID           uint       `gorm:"not null;index"`
+	TokenHash        string     `gorm:"size:64;not null;uniqueIndex"`
+	ExpiresAt        time.Time  `gorm:"not null;index"`
+	IdleExpiresAt    time.Time  `gorm:"not null;index"`
+	LastSeenAt       time.Time  `gorm:"not null"`
+	RevokedAt        *time.Time `gorm:"index"`
+	RevocationReason string     `gorm:"size:32;not null;default:''"`
+}
+
+// TableName specifies the authentication session table name.
+func (AuthenticationSessionPO) TableName() string {
+	return "authentication_sessions"
+}
+
 // toDomain converts UserPO to domain.User
 func (po *UserPO) toDomain() *domain.User {
 	if po == nil {

@@ -15,7 +15,7 @@ import (
 func TestRepositoryDeleteAccountRunsPolicyAndSoftDeleteAtomically(t *testing.T) {
 	db, err := infradatabase.NewTestDB()
 	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&UserPO{}))
+	require.NoError(t, db.AutoMigrate(&UserPO{}, &AuthenticationSessionPO{}))
 	po := &UserPO{
 		Username: "atomic-delete",
 		Email:    "atomic-delete@example.com",

@@ -246,7 +246,7 @@ describe('setting browser route boundary', () => {
   it('forwards only fixed production paths and explicit conditional headers', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock
       .mockResolvedValueOnce(
         new Response(null, {
@@ -326,8 +326,8 @@ function mockUser(id: string) {
   return { id, email: `${id}@example.com`, name: id };
 }
 
-function compactJwt(): string {
-  return 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature';
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }
 
 function userSettings() {

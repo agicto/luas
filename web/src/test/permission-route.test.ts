@@ -119,7 +119,7 @@ describe('permission browser route boundary', () => {
   it('forwards assignment replacement through the fixed PUT path and tenant header', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock.mockResolvedValueOnce(Response.json({
       code: 0,
       message: 'success',
@@ -169,12 +169,8 @@ function request(
   return result;
 }
 
-function compactJwt(): string {
-  return [
-    Buffer.from('{}').toString('base64url'),
-    Buffer.from('{"exp":4102444800}').toString('base64url'),
-    'signature',
-  ].join('.');
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }
 
 function owner() {

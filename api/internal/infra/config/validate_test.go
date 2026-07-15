@@ -16,8 +16,11 @@ func baseValidConfig(env string) *Config {
 			Driver:   "sqlite",
 			Password: "",
 		},
-		JWT: JWTConfig{
-			Secret: strings.Repeat("a", 64),
+		Authentication: AuthenticationConfig{
+			SessionTTL:           DefaultAuthenticationSessionTTL,
+			SessionIdleTimeout:   DefaultAuthenticationSessionIdleTimeout,
+			SessionTouchInterval: DefaultAuthenticationSessionTouchInterval,
+			SessionRetention:     DefaultAuthenticationSessionRetention,
 		},
 		CORS: CORSConfig{
 			AllowOrigins:     []string{"https://app.example.com"},
@@ -35,54 +38,23 @@ func TestValidate_AcceptsValidConfig(t *testing.T) {
 	}
 }
 
-func TestValidate_RejectsEmptyJWTSecret(t *testing.T) {
-	cfg := baseValidConfig("development")
-	cfg.JWT.Secret = ""
-	if err := validate(cfg); err == nil {
-		t.Fatal("expected error for empty JWT_SECRET")
+func TestValidate_RejectsUnsafeAuthenticationSessionPolicy(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*AuthenticationConfig)
+	}{
+		{name: "zero absolute lifetime", mutate: func(cfg *AuthenticationConfig) { cfg.SessionTTL = 0 }},
+		{name: "idle exceeds absolute", mutate: func(cfg *AuthenticationConfig) { cfg.SessionIdleTimeout = cfg.SessionTTL + time.Second }},
+		{name: "touch exceeds idle", mutate: func(cfg *AuthenticationConfig) { cfg.SessionTouchInterval = cfg.SessionIdleTimeout + time.Second }},
+		{name: "negative retention", mutate: func(cfg *AuthenticationConfig) { cfg.SessionRetention = -time.Second }},
 	}
-}
 
-func TestValidate_RejectsPlaceholderJWTSecretInProduction(t *testing.T) {
-	for _, secret := range []string{
-		"replace_me_with_a_long_random_secret_at_least_32_chars",
-		"your_jwt_secret_key_here",
-		"replace-me",
-	} {
-		cfg := baseValidConfig("production")
-		cfg.JWT.Secret = secret
-		err := validate(cfg)
-		if err == nil || !strings.Contains(err.Error(), "placeholder") {
-			t.Fatalf("expected placeholder error for %q, got %v", secret, err)
-		}
-	}
-}
-
-func TestValidate_AllowsPlaceholderInDevelopment(t *testing.T) {
-	cfg := baseValidConfig("development")
-	cfg.JWT.Secret = "your_jwt_secret_key_here"
-	if err := validate(cfg); err != nil {
-		t.Fatalf("dev mode should tolerate placeholder, got %v", err)
-	}
-}
-
-func TestValidate_RejectsShortJWTSecretInProduction(t *testing.T) {
-	cfg := baseValidConfig("production")
-	cfg.JWT.Secret = strings.Repeat("a", 16)
-	err := validate(cfg)
-	if err == nil || !strings.Contains(err.Error(), "32 characters") {
-		t.Fatalf("expected length error, got %v", err)
-	}
-}
-
-func TestValidate_ProductionAliasesUseProductionRules(t *testing.T) {
-	for _, environment := range []string{"production", "prod", "release", " RELEASE "} {
-		t.Run(environment, func(t *testing.T) {
-			cfg := baseValidConfig(environment)
-			cfg.JWT.Secret = "short"
-			err := validate(cfg)
-			if err == nil || !strings.Contains(err.Error(), "32 characters") {
-				t.Fatalf("validate() with APP_ENV=%q error = %v, want production secret error", environment, err)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			test.mutate(&cfg.Authentication)
+			if err := validate(cfg); err == nil {
+				t.Fatal("validate() error = nil, want unsafe session policy rejection")
 			}
 		})
 	}
@@ -357,10 +329,11 @@ func TestValidate_AssetStoragePolicy(t *testing.T) {
 			RequestTimeout: 30 * time.Second,
 		}
 		cfg.Asset = AssetConfig{
-			MaxBytes:         DefaultAssetMaxBytes,
-			UploadGrantTTL:   DefaultAssetUploadGrantTTL,
-			DownloadGrantTTL: DefaultAssetDownloadGrantTTL,
-			PendingTTL:       DefaultAssetPendingTTL,
+			TransferSigningKey: "asset-test-transfer-signing-key-0001",
+			MaxBytes:           DefaultAssetMaxBytes,
+			UploadGrantTTL:     DefaultAssetUploadGrantTTL,
+			DownloadGrantTTL:   DefaultAssetDownloadGrantTTL,
+			PendingTTL:         DefaultAssetPendingTTL,
 		}
 		if driver == "r2" {
 			cfg.R2 = R2Config{
@@ -381,9 +354,19 @@ func TestValidate_AssetStoragePolicy(t *testing.T) {
 	}{
 		{name: "development local", config: validAsset("development", "local")},
 		{name: "production r2", config: validAsset("production", "r2")},
+		{name: "production r2 needs no local transfer key", config: func() *Config {
+			cfg := validAsset("production", "r2")
+			cfg.Asset.TransferSigningKey = ""
+			return cfg
+		}()},
 		{name: "disabled selected", config: validAsset("development", "disabled"), wantErr: "must be enabled"},
 		{name: "production local", config: validAsset("production", "local"), wantErr: "must be r2"},
 		{name: "unknown driver", config: validAsset("development", "s3"), wantErr: "OBJECT_STORAGE_DRIVER"},
+		{name: "missing transfer signing key", config: func() *Config {
+			cfg := validAsset("development", "local")
+			cfg.Asset.TransferSigningKey = ""
+			return cfg
+		}(), wantErr: "ASSET_TRANSFER_SIGNING_KEY"},
 		{name: "oversized policy", config: func() *Config {
 			cfg := validAsset("development", "local")
 			cfg.Asset.MaxBytes = 100*1024*1024 + 1

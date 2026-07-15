@@ -106,6 +106,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets.
+- [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md) — opaque session lifecycle, revocation, retention, deployment, and replacement.
 - [`docs/AI.md`](docs/AI.md) — bounded provider execution, streaming, error privacy, and AI product boundary.
 - [`docs/EMAIL.md`](docs/EMAIL.md) — outbound provider timeout, cancellation, privacy, and best-effort delivery semantics.
 - [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — optional notification publication, durable lease worker, retry/privacy rules, and replacement.

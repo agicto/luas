@@ -76,7 +76,7 @@ var (
 // NewContentInspector creates the conservative default content-integrity inspector.
 func NewContentInspector() contentInspector { return newBaselineInspector() }
 
-// NewTransferSigner creates the local development transfer signer from the auth secret.
+// NewTransferSigner creates the local development transfer signer from its purpose-specific key.
 func NewTransferSigner(cfg *config.Config) (*transferSigner, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required for asset transfer signing")
@@ -84,7 +84,10 @@ func NewTransferSigner(cfg *config.Config) (*transferSigner, error) {
 	if !slices.Contains(cfg.Starters.Optional, "asset") {
 		return &transferSigner{}, nil
 	}
-	return newTransferSigner(cfg.JWT.Secret)
+	if cfg.ObjectStorage.Driver != "local" {
+		return &transferSigner{}, nil
+	}
+	return newTransferSigner(cfg.Asset.TransferSigningKey)
 }
 
 // NewService creates the optional private asset service.

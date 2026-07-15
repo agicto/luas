@@ -125,7 +125,7 @@ describe('API key browser route boundary', () => {
   it('forwards only fixed production API key paths', async () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
-    cookieStore.get.mockReturnValue({ value: compactJwt() });
+    cookieStore.get.mockReturnValue({ value: opaqueCredential() });
     fetchMock
       .mockResolvedValueOnce(Response.json(pageEnvelope([])))
       .mockResolvedValueOnce(new Response(null, { status: 204 }));
@@ -140,7 +140,7 @@ describe('API key browser route boundary', () => {
     );
     expect(String(fetchMock.mock.calls[1][0])).toBe('https://api.example.com/v1/api-keys/42');
     expect(new Headers(fetchMock.mock.calls[0][1]?.headers).get('authorization')).toBe(
-      `Bearer ${compactJwt()}`
+      `Bearer ${opaqueCredential()}`
     );
   });
 
@@ -183,8 +183,8 @@ function mockUser() {
   return { id: 'demo-admin', email: 'admin@example.com', name: 'Admin User' };
 }
 
-function compactJwt(): string {
-  return 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature';
+function opaqueCredential(): string {
+  return 'A'.repeat(43);
 }
 
 function pageEnvelope(data: unknown[]) {

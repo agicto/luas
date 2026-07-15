@@ -95,7 +95,7 @@ The optional starter exposes one verification endpoint:
   compliant cache cannot reuse one organization's representation for another.
 - Existing organization-management routes remain explicitly path-scoped. Do not combine a path
   organization ID and the context header unless the route rejects mismatches.
-- The API does not persist a current organization and does not put it into Luas JWTs. Browser
+- The API does not persist a current organization and does not put it into authentication sessions. Browser
   selection belongs to the active tab or URL, and a production adapter forwards the selected ID on
   each request. This avoids cross-tab selection races and stale membership claims.
 - Cross-origin browser deployments must include `Organization-Id` in `CORS_ALLOW_HEADERS` when

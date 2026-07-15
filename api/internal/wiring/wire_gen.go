@@ -12,7 +12,6 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/database"
 	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/infra/storage"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
@@ -52,12 +51,12 @@ func InitApplication() (*app.Application, error) {
 	apikeyService := apikey.NewService(apikeyRepository)
 	apikeyHandler := apikey.NewHandler(apikeyService)
 	userRepository := user.NewRepository(db)
-	jwtService := jwt.NewService(configConfig)
+	sessionService := user.NewSessionService(userRepository, configConfig)
 	userMailer := user.NewUserMailer(service)
 	accountDeletionPolicy := user.NewAccountDeletionPolicy()
-	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer, accountDeletionPolicy)
+	userService := user.NewService(userRepository, userRepository, sessionService, eventBus, userMailer, accountDeletionPolicy)
 	authAbuseGuard := user.NewAuthAbuseGuard(configConfig)
-	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
+	userHandler := user.NewHandler(userService, userService, userService, sessionService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
 	invitationMailer := organization.NewInvitationMailer(service)
 	invitationPolicy := organization.NewInvitationPolicy(configConfig)
@@ -128,6 +127,7 @@ func InitApplication() (*app.Application, error) {
 		Migrator:               migrator,
 		Starters:               registry,
 		AuditRecorder:          auditService,
+		AuthenticationSessions: sessionService,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
 		AssetReader:            assetService,
@@ -166,12 +166,12 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	apikeyService := apikey.NewService(apikeyRepository)
 	apikeyHandler := apikey.NewHandler(apikeyService)
 	userRepository := user.NewRepository(db)
-	jwtService := jwt.NewService(cfg)
+	sessionService := user.NewSessionService(userRepository, cfg)
 	userMailer := user.NewUserMailer(service)
 	accountDeletionPolicy := user.NewAccountDeletionPolicy()
-	userService := user.NewService(userRepository, userRepository, jwtService, eventBus, userMailer, accountDeletionPolicy)
+	userService := user.NewService(userRepository, userRepository, sessionService, eventBus, userMailer, accountDeletionPolicy)
 	authAbuseGuard := user.NewAuthAbuseGuard(cfg)
-	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
+	userHandler := user.NewHandler(userService, userService, userService, sessionService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
 	invitationMailer := organization.NewInvitationMailer(service)
 	invitationPolicy := organization.NewInvitationPolicy(cfg)
@@ -242,6 +242,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		Migrator:               migrator,
 		Starters:               registry,
 		AuditRecorder:          auditService,
+		AuthenticationSessions: sessionService,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
 		AssetReader:            assetService,

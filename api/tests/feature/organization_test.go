@@ -149,7 +149,7 @@ func TestOrganizationActiveContextHTTPContract(t *testing.T) {
 		AssertJSONPath("request_id", "req-organization-context-required")
 
 	tc.Get("/v1/organization-context").
-		WithToken("not-a-valid-jwt").
+		WithToken("not-a-valid-session-credential").
 		WithHeader("Organization-Id", organizationID).
 		Call().
 		AssertUnauthorized().

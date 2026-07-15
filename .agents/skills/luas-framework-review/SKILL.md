@@ -123,7 +123,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-doc-links.py` scans local Markdown links in docs and agent guidance so navigation does not point at deleted files, renamed skills, or stale examples.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
-- `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go JWT endpoints, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
+- `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go opaque authentication sessions, revocation, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-api-key-boundary.py` keeps hash-only API key persistence, atomic revoke/use writes, structured scopes, route guards, one-time plaintext, fixed Web adapter paths, and mock behavior aligned.
 - `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.
 - `scripts/check-permission-boundary.py` keeps access roles organization-scoped, permission keys exact, authorization fail-closed, delegated administration bounded, and API/Web/contracts aligned.

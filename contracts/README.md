@@ -4,7 +4,7 @@ This directory documents the contracts shared by `api/` and `web/`.
 
 The response envelope, validation classes, `error_code`, and `request_id` semantics are global.
 Feature endpoint paths and DTOs are shared only when their owning contract says so. In particular,
-the current browser authentication surface and Go API JWT surface require an explicit adapter;
+the current browser authentication surface and Go API authentication-session surface require an explicit adapter;
 see [`AUTHENTICATION.md`](AUTHENTICATION.md).
 
 Optional backend starter contracts are documented independently. The first ownership foundation is

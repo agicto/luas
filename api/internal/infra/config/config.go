@@ -43,6 +43,14 @@ const (
 	DefaultAIMaxStreamEventBytes = 1024 * 1024
 	// DefaultOrganizationInvitationTTL bounds one organization invitation token.
 	DefaultOrganizationInvitationTTL = 7 * 24 * time.Hour
+	// DefaultAuthenticationSessionTTL is the absolute lifetime of one user session.
+	DefaultAuthenticationSessionTTL = 30 * 24 * time.Hour
+	// DefaultAuthenticationSessionIdleTimeout expires an inactive user session.
+	DefaultAuthenticationSessionIdleTimeout = 7 * 24 * time.Hour
+	// DefaultAuthenticationSessionTouchInterval bounds persistence writes for active sessions.
+	DefaultAuthenticationSessionTouchInterval = 5 * time.Minute
+	// DefaultAuthenticationSessionRetention keeps terminal rows briefly for operations and audit correlation.
+	DefaultAuthenticationSessionRetention = 30 * 24 * time.Hour
 	// DefaultObjectStorageRequestTimeout bounds one provider metadata or object operation.
 	DefaultObjectStorageRequestTimeout = 30 * time.Second
 	// DefaultAssetMaxBytes bounds the first single-object asset workflow.
@@ -65,27 +73,27 @@ const (
 
 // Config holds all application configuration
 type Config struct {
-	App           AppConfig
-	Starters      StarterConfig
-	Server        ServerConfig
-	Database      DatabaseConfig
-	Redis         RedisConfig
-	Queue         QueueConfig
-	Scheduler     SchedulerConfig
-	JWT           JWTConfig
-	Log           LogConfig
-	Sentry        SentryConfig
-	CORS          CORSConfig
-	Email         EmailConfig
-	Organization  OrganizationConfig
-	AI            AIConfig
-	ObjectStorage ObjectStorageConfig
-	Asset         AssetConfig
-	Webhook       WebhookConfig
-	R2            R2Config
-	Middleware    MiddlewareConfig
-	Metrics       MetricsConfig
-	Tracing       TracingConfig
+	App            AppConfig
+	Starters       StarterConfig
+	Server         ServerConfig
+	Database       DatabaseConfig
+	Redis          RedisConfig
+	Queue          QueueConfig
+	Scheduler      SchedulerConfig
+	Authentication AuthenticationConfig
+	Log            LogConfig
+	Sentry         SentryConfig
+	CORS           CORSConfig
+	Email          EmailConfig
+	Organization   OrganizationConfig
+	AI             AIConfig
+	ObjectStorage  ObjectStorageConfig
+	Asset          AssetConfig
+	Webhook        WebhookConfig
+	R2             R2Config
+	Middleware     MiddlewareConfig
+	Metrics        MetricsConfig
+	Tracing        TracingConfig
 }
 
 // StarterConfig controls additive activation of starters that are not part of the defaults.
@@ -207,15 +215,12 @@ type SchedulerConfig struct {
 	Enabled bool
 }
 
-type JWTConfig struct {
-	Secret     string
-	ExpireDays int
-	Expire     time.Duration
-}
-
-// ExpireDuration returns the expiration duration (alias for Expire)
-func (j JWTConfig) ExpireDuration() time.Duration {
-	return j.Expire
+// AuthenticationConfig owns the server-side user session lifecycle.
+type AuthenticationConfig struct {
+	SessionTTL           time.Duration
+	SessionIdleTimeout   time.Duration
+	SessionTouchInterval time.Duration
+	SessionRetention     time.Duration
 }
 
 type LogConfig struct {
@@ -284,10 +289,11 @@ type ObjectStorageConfig struct {
 
 // AssetConfig owns policy for the optional asset starter rather than provider details.
 type AssetConfig struct {
-	MaxBytes         int64
-	UploadGrantTTL   time.Duration
-	DownloadGrantTTL time.Duration
-	PendingTTL       time.Duration
+	TransferSigningKey string
+	MaxBytes           int64
+	UploadGrantTTL     time.Duration
+	DownloadGrantTTL   time.Duration
+	PendingTTL         time.Duration
 }
 
 // WebhookConfig owns outbound delivery safety and retention policy.
@@ -318,7 +324,9 @@ func Load() (*Config, error) {
 	appEnv := env.AppEnv()
 	isProd := isProductionEnvironment(appEnv)
 	appDebug := env.GetBool("APP_DEBUG", !isProd)
-	expireDays := env.GetInt("JWT_EXPIRE_DAYS", 7)
+	if legacy := configuredLegacyJWTKey(); legacy != "" {
+		return nil, fmt.Errorf("%s is no longer supported; Luas user authentication now uses opaque server-side sessions", legacy)
+	}
 
 	cfg := &Config{
 		App: AppConfig{
@@ -375,10 +383,11 @@ func Load() (*Config, error) {
 		Scheduler: SchedulerConfig{
 			Enabled: env.GetBool("SCHEDULER_ENABLED", false),
 		},
-		JWT: JWTConfig{
-			Secret:     env.Get("JWT_SECRET", ""),
-			ExpireDays: expireDays,
-			Expire:     time.Duration(expireDays) * 24 * time.Hour,
+		Authentication: AuthenticationConfig{
+			SessionTTL:           env.GetDuration("AUTH_SESSION_TTL", DefaultAuthenticationSessionTTL),
+			SessionIdleTimeout:   env.GetDuration("AUTH_SESSION_IDLE_TIMEOUT", DefaultAuthenticationSessionIdleTimeout),
+			SessionTouchInterval: env.GetDuration("AUTH_SESSION_TOUCH_INTERVAL", DefaultAuthenticationSessionTouchInterval),
+			SessionRetention:     env.GetDuration("AUTH_SESSION_RETENTION", DefaultAuthenticationSessionRetention),
 		},
 		Log: LogConfig{
 			Level:       env.Get("LOG_LEVEL", defaultLogLevel(isProd)),
@@ -415,10 +424,11 @@ func Load() (*Config, error) {
 			RequestTimeout: env.GetDuration("OBJECT_STORAGE_REQUEST_TIMEOUT", DefaultObjectStorageRequestTimeout),
 		},
 		Asset: AssetConfig{
-			MaxBytes:         int64(env.GetInt("ASSET_MAX_BYTES", int(DefaultAssetMaxBytes))),
-			UploadGrantTTL:   env.GetDuration("ASSET_UPLOAD_GRANT_TTL", DefaultAssetUploadGrantTTL),
-			DownloadGrantTTL: env.GetDuration("ASSET_DOWNLOAD_GRANT_TTL", DefaultAssetDownloadGrantTTL),
-			PendingTTL:       env.GetDuration("ASSET_PENDING_TTL", DefaultAssetPendingTTL),
+			TransferSigningKey: env.Get("ASSET_TRANSFER_SIGNING_KEY", ""),
+			MaxBytes:           int64(env.GetInt("ASSET_MAX_BYTES", int(DefaultAssetMaxBytes))),
+			UploadGrantTTL:     env.GetDuration("ASSET_UPLOAD_GRANT_TTL", DefaultAssetUploadGrantTTL),
+			DownloadGrantTTL:   env.GetDuration("ASSET_DOWNLOAD_GRANT_TTL", DefaultAssetDownloadGrantTTL),
+			PendingTTL:         env.GetDuration("ASSET_PENDING_TTL", DefaultAssetPendingTTL),
 		},
 		Webhook: WebhookConfig{
 			EncryptionKey:       env.Get("WEBHOOK_ENCRYPTION_KEY", ""),
@@ -558,6 +568,15 @@ func defaultServerMode(production bool) string {
 	return "debug"
 }
 
+func configuredLegacyJWTKey() string {
+	for _, key := range []string{"JWT_SECRET", "JWT_EXPIRE_DAYS"} {
+		if strings.TrimSpace(env.Get(key, "")) != "" {
+			return key
+		}
+	}
+	return ""
+}
+
 // MustLoad loads configuration or panics
 func MustLoad() *Config {
 	cfg, err := Load()
@@ -567,41 +586,17 @@ func MustLoad() *Config {
 	return cfg
 }
 
-// placeholderJWTSecrets are values shipped with .env.example or previously
-// used by the scaffold; treating them as "real" would silently weaken auth.
-var placeholderJWTSecrets = map[string]struct{}{
-	"": {},
-	"replace_me_with_a_long_random_secret_at_least_32_chars": {},
-	"your_jwt_secret_key_here":                               {},
-	"replace-me":                                             {},
-	"change_me_in_production":                                {},
-}
-
 func validate(cfg *Config) error {
 	if cfg.Database.Enabled && cfg.Database.Driver != "sqlite" && cfg.Database.Password == "" {
 		return fmt.Errorf("DB_PASSWORD is required when database is enabled")
-	}
-
-	if cfg.JWT.Secret == "" {
-		return fmt.Errorf("JWT_SECRET is required")
 	}
 
 	isProd := cfg.IsProduction()
 	if err := validateAIConfig(cfg.AI, isProd); err != nil {
 		return err
 	}
-
-	// JWT_SECRET strength: in production, reject known placeholders and
-	// secrets shorter than 32 chars. In other envs, log a clear warning by
-	// returning a non-fatal hint — but we don't have a logger here yet, so
-	// we keep the hard rule production-only.
-	if isProd {
-		if _, isPlaceholder := placeholderJWTSecrets[cfg.JWT.Secret]; isPlaceholder {
-			return fmt.Errorf("JWT_SECRET is set to a known placeholder value; generate one with `openssl rand -hex 32`")
-		}
-		if len(cfg.JWT.Secret) < 32 {
-			return fmt.Errorf("JWT_SECRET must be at least 32 characters in production (current: %d)", len(cfg.JWT.Secret))
-		}
+	if err := validateAuthenticationConfig(cfg.Authentication); err != nil {
+		return err
 	}
 
 	if err := validateEmailConfig(cfg.Email); err != nil {
@@ -615,7 +610,11 @@ func validate(cfg *Config) error {
 	if err := validateObjectStorageConfig(cfg, assetSelected); err != nil {
 		return err
 	}
-	if err := validateAssetConfig(cfg.Asset, assetSelected); err != nil {
+	if err := validateAssetConfig(
+		cfg.Asset,
+		assetSelected,
+		assetSelected && strings.TrimSpace(cfg.ObjectStorage.Driver) == "local",
+	); err != nil {
 		return err
 	}
 	webhookSelected := slices.Contains(cfg.Starters.Optional, "webhook")
@@ -680,6 +679,30 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateAuthenticationConfig(cfg AuthenticationConfig) error {
+	const (
+		minSessionTTL  = 15 * time.Minute
+		maxSessionTTL  = 180 * 24 * time.Hour
+		minIdleTimeout = 5 * time.Minute
+		maxTouch       = time.Hour
+		maxRetention   = 365 * 24 * time.Hour
+	)
+
+	if cfg.SessionTTL < minSessionTTL || cfg.SessionTTL > maxSessionTTL {
+		return fmt.Errorf("AUTH_SESSION_TTL must be between %s and %s", minSessionTTL, maxSessionTTL)
+	}
+	if cfg.SessionIdleTimeout < minIdleTimeout || cfg.SessionIdleTimeout > cfg.SessionTTL {
+		return fmt.Errorf("AUTH_SESSION_IDLE_TIMEOUT must be between %s and AUTH_SESSION_TTL", minIdleTimeout)
+	}
+	if cfg.SessionTouchInterval <= 0 || cfg.SessionTouchInterval > maxTouch || cfg.SessionTouchInterval > cfg.SessionIdleTimeout {
+		return fmt.Errorf("AUTH_SESSION_TOUCH_INTERVAL must be greater than 0, no more than %s, and no longer than AUTH_SESSION_IDLE_TIMEOUT", maxTouch)
+	}
+	if cfg.SessionRetention < 0 || cfg.SessionRetention > maxRetention {
+		return fmt.Errorf("AUTH_SESSION_RETENTION must be between 0 and %s", maxRetention)
+	}
 	return nil
 }
 
@@ -805,9 +828,12 @@ func validateObjectStorageConfig(cfg *Config, assetSelected bool) error {
 	return nil
 }
 
-func validateAssetConfig(asset AssetConfig, selected bool) error {
+func validateAssetConfig(asset AssetConfig, selected, localTransfers bool) error {
 	if !selected && asset == (AssetConfig{}) {
 		return nil
+	}
+	if localTransfers && len(strings.TrimSpace(asset.TransferSigningKey)) < 32 {
+		return fmt.Errorf("ASSET_TRANSFER_SIGNING_KEY must be at least 32 characters for local asset transfers")
 	}
 	if asset.MaxBytes <= 0 || asset.MaxBytes > 100*1024*1024 {
 		return fmt.Errorf("ASSET_MAX_BYTES must be between 1 and 104857600")

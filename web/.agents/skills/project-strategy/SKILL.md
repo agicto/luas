@@ -61,7 +61,7 @@ export default async function ProtectedLayout({ children }) {
 - `(site)`: Public marketing and information pages.
 
 > [!NOTE]
-> **Production boundary**: Downstream apps should replace mock routes with production endpoints or a same-origin adapter and keep the mock BFF disabled unless running a demo-only deployment. The Web cookie auth contract and Go JWT contract require the adapter documented in `contracts/AUTHENTICATION.md`; a base-URL change alone is insufficient. `AuthGuard` is UX; the API, Route Handlers, and Server Actions remain the authorization boundary.
+> **Production boundary**: Downstream apps should replace mock routes with production endpoints or a same-origin adapter and keep the mock BFF disabled unless running a demo-only deployment. The Web cookie auth contract and Go authentication-session contract require the adapter documented in `contracts/AUTHENTICATION.md`; a base-URL change alone is insufficient. `AuthGuard` is UX; the API, Route Handlers, and Server Actions remain the authorization boundary.
 
 ## Related Skills
 

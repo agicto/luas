@@ -16,7 +16,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 - Provider-neutral AI capability 与内置 CLI `ai:chat`
 - 可取消、可安全关闭的 workflow queue capability 与 worker CLI
 - 统一 API 响应与错误处理
-- 分页、验证、日志、JWT、中间件
+- 分页、验证、日志、可撤销认证会话、中间件
 - 测试辅助工具与集成测试基线
 - 可选集成：Redis、邮件、OpenTelemetry、R2、Sentry
 
@@ -48,8 +48,6 @@ DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_NAME=luas
-
-JWT_SECRET=replace-me
 ```
 
 `user`、`apikey`、`audit` 默认启用。组织、权限、通知、资产、设置和用量是可选 Starter；需要权限时给 HTTP
@@ -79,6 +77,7 @@ HTTP 进程、迁移任务和 worker 必须使用同一份 `OPTIONAL_STARTERS` �
 
 ```bash
 OPTIONAL_STARTERS=asset
+ASSET_TRANSFER_SIGNING_KEY=replace-with-openssl-rand-hex-32
 go run ./cmd/luas asset:prune --batch=100
 ```
 
@@ -121,14 +120,12 @@ go run ./cmd/server
 
 ```bash
 go run ./cmd/luas version
-DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
-  go run ./cmd/luas route:list
+DB_ENABLED=false go run ./cmd/luas route:list
 go run ./cmd/luas migrate
 go run ./cmd/luas seed
+go run ./cmd/luas auth-session:prune --batch=500
 go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
-
-这里内联的 route-list secret 仅用于非服务态检查，禁止在实际运行的 API 中复用。
 
 ## 常用命令
 
