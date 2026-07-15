@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 type changeCollectorKey struct{}
@@ -104,9 +105,37 @@ func normalizeChange(change Change) Change {
 	change.TargetType = strings.TrimSpace(change.TargetType)
 	change.TargetID = strings.TrimSpace(change.TargetID)
 	change.Result = strings.TrimSpace(change.Result)
-	change.Changes = cloneChanges(change.Changes)
-	change.Metadata = cloneMetadata(change.Metadata)
+	change.Changes = redactChanges(change.Changes)
+	change.Metadata = redact.Map(change.Metadata)
 	return change
+}
+
+func redactChanges(changes map[string]domain.AuditValueChange) map[string]domain.AuditValueChange {
+	if len(changes) == 0 {
+		return nil
+	}
+	result := make(map[string]domain.AuditValueChange, len(changes))
+	for field, value := range changes {
+		if redact.IsSensitiveKey(field) {
+			result[field] = domain.AuditValueChange{
+				Before: redactAuditValue(value.Before),
+				After:  redactAuditValue(value.After),
+			}
+			continue
+		}
+		result[field] = domain.AuditValueChange{
+			Before: redact.Value(value.Before),
+			After:  redact.Value(value.After),
+		}
+	}
+	return result
+}
+
+func redactAuditValue(value any) any {
+	if value == nil {
+		return nil
+	}
+	return redact.Placeholder
 }
 
 func cloneChanges(changes map[string]domain.AuditValueChange) map[string]domain.AuditValueChange {

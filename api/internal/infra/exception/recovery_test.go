@@ -52,7 +52,7 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	engine.Use(tracing.InjectTraceID())
 	engine.Use(logger.GinLogger())
 	engine.Use(exception.Recovery(true))
-	engine.GET("/panic", func(c *gin.Context) {
+	engine.GET("/panic/:subject", func(c *gin.Context) {
 		c.Set("route_name", "debug.panic")
 		logger.Info("before panic", map[string]any{
 			"request_id": c.GetString("request_id"),
@@ -66,9 +66,16 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 		panic("boom from test")
 	})
 
-	req := httptest.NewRequest(http.MethodGet, "/panic?hello=world", nil)
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/panic/private-customer?hello=%3Cscript%3Ealert%281%29%3C%2Fscript%3E&access_token=query-secret",
+		nil,
+	)
 	req.Header.Set("Accept", "text/html")
 	req.Header.Set("X-Request-ID", "req-debug-page-1")
+	req.Header.Set("Authorization", "Bearer authorization-secret")
+	req.Header.Set("Cookie", "session=cookie-secret")
+	req.Header.Set("X-API-Key", "luas_header.secret")
 
 	recorder := httptest.NewRecorder()
 	engine.ServeHTTP(recorder, req)
@@ -82,7 +89,14 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	require.Contains(t, body, "SELECT 1")
 	require.Contains(t, body, "before panic")
 	require.Contains(t, body, "hello")
-	require.Contains(t, body, "world")
+	require.Contains(t, body, "&lt;script&gt;alert(1)&lt;/script&gt;")
+	require.Contains(t, body, "[REDACTED]")
+	require.NotContains(t, body, "query-secret")
+	require.NotContains(t, body, "authorization-secret")
+	require.NotContains(t, body, "cookie-secret")
+	require.NotContains(t, body, "luas_header.secret")
+	require.NotContains(t, body, "private-customer")
+	require.NotContains(t, body, "<script>alert(1)</script>")
 
 	traceID := strings.TrimSpace(recorder.Header().Get("X-Trace-ID"))
 	require.NotEmpty(t, traceID)

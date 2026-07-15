@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 // Service defines audit logging operations.
@@ -40,6 +41,8 @@ func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
 	entry.TargetType = strings.TrimSpace(entry.TargetType)
 	entry.TargetID = strings.TrimSpace(entry.TargetID)
 	entry.Result = strings.TrimSpace(entry.Result)
+	entry.Changes = redactChanges(entry.Changes)
+	entry.Metadata = redact.Map(entry.Metadata)
 
 	if entry.Method == "" || entry.Path == "" {
 		return domain.ErrInvalidInput

@@ -1,15 +1,24 @@
 ---
 name: logging-standards
-description: Structured logging with log/slog — wide events, high-cardinality context, request-scoped loggers, level criteria. Use when adding logs or debugging.
+description: Structured logging across Luas business/event and HTTP runtime seams, including redaction, stable events, correlation, and level criteria.
 ---
 
 # Logging Standards
 
 ## Purpose
 
-Logs only earn their cost when they can answer a future question. This skill enforces structured `log/slog` logging with enough context to be useful in production.
+Logs only earn their cost when they can answer a future question. This skill enforces structured
+logging with enough context to be useful in production and a hard boundary against credentials and
+unbounded request data.
 
-The project uses Go's stdlib `log/slog` (see `internal/infra/events/middleware.go` for the canonical wrapper). Do **not** introduce `logrus`, `zap`, or `zerolog` — keep the dependency surface small.
+Luas currently has two deliberate logging seams:
+
+- business and event operations use Go's `log/slog` through existing module/event patterns;
+- HTTP requests, configured output handlers, the recent-log buffer, and exception diagnostics use
+  `pkg/logger`.
+
+Do not introduce `logrus`, `zap`, `zerolog`, or a third seam. Do not migrate between the two in an
+unrelated change. See `docs/OBSERVABILITY.md` for redaction and request-shape ownership.
 
 ## When to Use
 
@@ -78,6 +87,12 @@ Naming convention: `<module>.<noun>[.verb]` — `user.login`, `apikey.revoked`, 
 - Credit card data → never.
 
 If you must log a token for debugging, log its prefix (`token[:8]`) and length, never the value.
+
+`pkg/logger` recursively redacts credential-shaped context keys as defense in depth. That does not
+protect secrets embedded in free-form messages or hidden under vague keys. Request logs use the Gin
+route template (or the bounded `unmatched` sentinel), never concrete path parameters, raw query
+strings, or bodies. HTTP traces omit concrete paths and free-form error text. GORM logs remain
+parameterized, including the special `Scan` recorder path.
 
 ## Level Criteria
 
@@ -184,17 +199,20 @@ logger.InfoContext(ctx, "job.completed", "duration_ms", time.Since(start).Millis
 - **Logging without context**: a log with no identifiers is worse than no log — it costs storage and doesn't help triage.
 - **Excessive DEBUG**: DEBUG that fires on every request becomes line noise. If it fires every request, it's INFO; if it never fires, delete it.
 - **Logging the raw request/response body**: PII risk + huge cost. Log shape (length, content-type, ID), not contents.
-- **Adding `logrus` or `zap`**: stdlib `log/slog` is sufficient; new dependencies need explicit justification.
+- **Logging concrete path parameters or query values**: they create privacy risk and unbounded cardinality. Use the route template and stable identifiers.
+- **Adding `logrus` or `zap`**: the existing `log/slog` and `pkg/logger` seams are sufficient; new dependencies need explicit justification.
 - **Using `log.Printf`** for new code: it goes to stderr without structure. Replace with `slog.InfoContext` / `slog.ErrorContext`.
 
 ## Verification Checklist
 
 When reviewing a PR that adds logs:
 
-- [ ] Uses `log/slog`, not `log.Printf`, `fmt.Println`, `logrus`, or `zap`.
+- [ ] Uses the owning `log/slog` or `pkg/logger` seam, not `log.Printf`, `fmt.Println`, `logrus`, or `zap`.
 - [ ] First arg is a stable event name (`module.verb`), not a sentence.
 - [ ] Includes `request_id` / `correlation_id` / `user_id` where the operation has them.
 - [ ] No secrets, tokens, passwords, or full PII in log args.
+- [ ] Request logs contain route templates and no concrete path parameters, query values, or bodies.
+- [ ] SQL logging remains parameterized and diagnostic HTML is escaped.
 - [ ] Error logs include the `err` field, not just an interpolated message.
 - [ ] Level matches criteria above (no INFO for routine cache hits; no ERROR for expected 404s).
 - [ ] One log per logical operation, not per micro-step.
@@ -207,7 +225,10 @@ When reviewing a PR that adds logs:
 
 ## Reference: Project Files
 
-- `internal/infra/events/middleware.go` — canonical slog middleware pattern.
+- `docs/OBSERVABILITY.md` — canonical sensitive-data and request-log boundary.
+- `pkg/redact` — shared credential-shaped redaction.
+- `pkg/logger/gin.go` — HTTP request logger and route-template behavior.
+- `internal/infra/events/middleware.go` — canonical slog event middleware pattern.
 - `internal/infra/events/middleware_test.go` — how to assert on structured logs in tests.
 - `examples/logging-setup.go` (this skill) — minimal slog wiring example.
 

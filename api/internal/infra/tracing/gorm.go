@@ -3,7 +3,6 @@ package tracing
 import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
@@ -129,8 +128,7 @@ func (p *GormPlugin) after() func(*gorm.DB) {
 
 		// Record error if any
 		if db.Error != nil && db.Error != gorm.ErrRecordNotFound {
-			span.RecordError(db.Error)
-			span.SetStatus(codes.Error, db.Error.Error())
+			recordErrorType(span, db.Error)
 		}
 	}
 }

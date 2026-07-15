@@ -3,12 +3,17 @@ package errors
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 // Config holds error handler configuration
@@ -256,25 +261,29 @@ func parseStackTrace(stack string) []StackFrame {
 
 // logError logs the error to console
 func logError(c *gin.Context, err *AppError, config Config) {
-	// Build log message
-	msg := fmt.Sprintf("[ERROR] %s %s - %d %s: %s",
-		c.Request.Method,
-		c.Request.URL.Path,
-		err.Status,
-		err.Code,
-		err.Message,
-	)
-
-	if err.Internal != nil {
-		msg += fmt.Sprintf(" (internal: %v)", err.Internal)
+	path := c.FullPath()
+	if path == "" {
+		path = "unmatched"
 	}
-
-	fmt.Println(msg)
+	fields := map[string]any{
+		"method":     c.Request.Method,
+		"path":       path,
+		"status":     err.Status,
+		"error_code": err.Code,
+		"request_id": c.GetString("request_id"),
+	}
+	if err.Internal != nil {
+		fields["internal_error_type"] = fmt.Sprintf("%T", err.Internal)
+	}
+	logger.Error("HTTP Request Error", fields)
 
 	// Print stack in debug mode
 	if config.Debug && config.ShowStack && err.Stack != "" {
-		fmt.Println("Stack trace:")
-		fmt.Println(err.Stack)
+		logger.Debug("HTTP Error Stack", map[string]any{
+			"error_code": err.Code,
+			"request_id": c.GetString("request_id"),
+			"stack":      err.Stack,
+		})
 	}
 }
 
@@ -464,29 +473,15 @@ func RenderDebugPage(c *gin.Context, err *AppError) {
 		Stack:   parseStackTrace(err.Stack),
 		Request: RequestInfo{
 			Method:  c.Request.Method,
-			URL:     c.Request.URL.String(),
-			Headers: make(map[string]string),
-			Query:   make(map[string]string),
+			URL:     redact.URLWithPath(c.Request.URL, c.FullPath()),
+			Headers: redact.Headers(c.Request.Header),
+			Query:   redact.Query(c.Request.URL.Query()),
 		},
 		Environment: map[string]string{
 			"Go Version": runtime.Version(),
 			"OS":         runtime.GOOS,
 			"Arch":       runtime.GOARCH,
 		},
-	}
-
-	// Collect headers
-	for k, v := range c.Request.Header {
-		if len(v) > 0 {
-			data.Request.Headers[k] = v[0]
-		}
-	}
-
-	// Collect query params
-	for k, v := range c.Request.URL.Query() {
-		if len(v) > 0 {
-			data.Request.Query[k] = v[0]
-		}
 	}
 
 	RenderDebugPageData(c, err.Status, data)
@@ -500,6 +495,8 @@ func RenderDebugPageData(c *gin.Context, status int, data DebugPageData) {
 
 // renderDebugHTML generates a beautiful modern debug HTML page
 func renderDebugHTML(data DebugPageData) string {
+	data = escapeDebugPageData(data)
+
 	stackHTML := `<tr><td colspan="4" class="empty">No stack frames captured</td></tr>`
 	if len(data.Stack) > 0 {
 		stackHTML = ""
@@ -715,6 +712,84 @@ func renderDebugHTML(data DebugPageData) string {
 		logsHTML,
 		envHTML,
 	)
+}
+
+func escapeDebugPageData(data DebugPageData) DebugPageData {
+	escape := html.EscapeString
+	data.Request = redactDebugRequest(data.Request)
+	data.Title = escape(data.Title)
+	data.Message = escape(data.Message)
+	data.Code = escape(data.Code)
+	data.File = escape(data.File)
+	data.RouteName = escape(data.RouteName)
+	data.RequestID = escape(data.RequestID)
+	data.TraceID = escape(data.TraceID)
+
+	data.Stack = append([]StackFrame(nil), data.Stack...)
+	for index := range data.Stack {
+		data.Stack[index].File = escape(data.Stack[index].File)
+		data.Stack[index].Function = escape(data.Stack[index].Function)
+	}
+
+	data.Request.Method = escape(data.Request.Method)
+	data.Request.URL = escape(data.Request.URL)
+	data.Request.Body = escape(data.Request.Body)
+	data.Request.Headers = escapeStringMap(data.Request.Headers)
+	data.Request.Query = escapeStringMap(data.Request.Query)
+
+	data.SQLQueries = append([]DebugSQLQuery(nil), data.SQLQueries...)
+	for index := range data.SQLQueries {
+		data.SQLQueries[index].Time = escape(data.SQLQueries[index].Time)
+		data.SQLQueries[index].Duration = escape(data.SQLQueries[index].Duration)
+		data.SQLQueries[index].Statement = escape(data.SQLQueries[index].Statement)
+		data.SQLQueries[index].Error = escape(data.SQLQueries[index].Error)
+	}
+
+	data.RecentLogs = append([]DebugLogEntry(nil), data.RecentLogs...)
+	for index := range data.RecentLogs {
+		data.RecentLogs[index].Time = escape(data.RecentLogs[index].Time)
+		data.RecentLogs[index].Level = escape(data.RecentLogs[index].Level)
+		data.RecentLogs[index].Channel = escape(data.RecentLogs[index].Channel)
+		data.RecentLogs[index].Message = escape(data.RecentLogs[index].Message)
+		data.RecentLogs[index].RequestID = escape(data.RecentLogs[index].RequestID)
+		data.RecentLogs[index].TraceID = escape(data.RecentLogs[index].TraceID)
+		data.RecentLogs[index].Context = escape(data.RecentLogs[index].Context)
+	}
+
+	data.Environment = escapeStringMap(data.Environment)
+	return data
+}
+
+func redactDebugRequest(request RequestInfo) RequestInfo {
+	if parsed, err := url.Parse(request.URL); err == nil {
+		request.URL = redact.URL(parsed)
+	} else {
+		request.URL = redact.Placeholder
+	}
+
+	headers := make(http.Header, len(request.Headers))
+	for key, value := range request.Headers {
+		headers.Set(key, value)
+	}
+	request.Headers = redact.Headers(headers)
+
+	query := make(url.Values, len(request.Query))
+	for key, value := range request.Query {
+		query.Set(key, value)
+	}
+	request.Query = redact.Query(query)
+	return request
+}
+
+func escapeStringMap(values map[string]string) map[string]string {
+	if len(values) == 0 {
+		return nil
+	}
+	result := make(map[string]string, len(values))
+	for key, value := range values {
+		result[html.EscapeString(key)] = html.EscapeString(value)
+	}
+	return result
 }
 
 // DebugHandler returns a handler that renders HTML debug pages

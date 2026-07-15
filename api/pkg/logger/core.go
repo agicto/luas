@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 // Logger is the main logger struct that manages handlers
@@ -169,7 +171,7 @@ func (l *Logger) mergeContext(ctx map[string]any) map[string]any {
 	for k, v := range ctx {
 		merged[k] = v
 	}
-	return merged
+	return redact.Map(merged)
 }
 
 func decorateEntryIdentifiers(entry *Entry, ctx map[string]any) {

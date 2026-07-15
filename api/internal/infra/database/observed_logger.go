@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/infra/exception"
@@ -11,6 +12,14 @@ import (
 
 type observedLogger struct {
 	base logger.Interface
+}
+
+var _ gorm.ParamsFilter = (*observedLogger)(nil)
+
+func init() {
+	// GORM's Scan path records SQL through a package-level trace recorder before
+	// handing it back to the configured logger. Keep that path parameterized too.
+	logger.RecorderParamsFilter = parameterizedQueryFilter
 }
 
 func wrapObservedLogger(base logger.Interface) logger.Interface {
@@ -34,6 +43,25 @@ func (l *observedLogger) Warn(ctx context.Context, msg string, data ...interface
 
 func (l *observedLogger) Error(ctx context.Context, msg string, data ...interface{}) {
 	l.base.Error(ctx, msg, data...)
+}
+
+// ParamsFilter keeps GORM from interpolating bound values before Trace sees SQL.
+// The wrapper must implement this optional GORM interface itself; otherwise the
+// wrapped logger's ParameterizedQueries setting is bypassed.
+func (l *observedLogger) ParamsFilter(
+	ctx context.Context,
+	sql string,
+	params ...interface{},
+) (string, []interface{}) {
+	return parameterizedQueryFilter(ctx, sql, params...)
+}
+
+func parameterizedQueryFilter(
+	_ context.Context,
+	sql string,
+	_ ...interface{},
+) (string, []interface{}) {
+	return sql, nil
 }
 
 func (l *observedLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {

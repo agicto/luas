@@ -69,6 +69,12 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   workflow; plaintext is shown once, immediately removed from mutation state, and forbidden from list
   metadata. [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) and an executable boundary check own
   the cross-service semantics.
+- Sensitive telemetry now has one standard-library-only `pkg/redact` boundary. HTTP logs use route
+  templates (plus a bounded unmatched sentinel) and omit concrete paths/query values/bodies; HTTP
+  traces omit concrete paths and free-form errors; logger context and audit metadata are recursively
+  sanitized; the development exception center redacts credential headers/query values and escapes
+  every dynamic HTML field; and all GORM trace paths are permanently parameterized. An executable
+  governance check keeps these seams aligned with [`../api/docs/OBSERVABILITY.md`](../api/docs/OBSERVABILITY.md).
 - Web mock BFF replacement is documented in [`../web/docs/MOCK_BFF.md`](../web/docs/MOCK_BFF.md), including production modes, deletion seams, and verification.
 - Web Query/Auth providers are route-scoped: root keeps only app-wide UI context, `(auth)` owns React Query mutations, and `(protected)` owns authenticated providers.
 - Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, toast, and Zustand runtime dependencies from `(site)` routes.
@@ -113,6 +119,38 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` starter includes ownership, invitation and member lifecycles, verified request-scoped active context, fixed production/mock browser adapters, and role-aware organization/member/invitation/ownership UI. It is ready when explicitly enabled in both halves; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
+
+### Completed P0 — Sensitive Telemetry And Diagnostic Output Boundary
+
+The request logger previously appended the complete raw query to `path`, so access tokens and other
+query values reached production logs. The local exception center copied Authorization, Cookie,
+`X-API-Key`, and query credentials into its debug model and interpolated all dynamic values into HTML
+without escaping, making a panic response both a secret disclosure and debug-mode XSS surface. GORM
+logging also allowed interpolated parameter values, while arbitrary audit changes/metadata had no
+defense-in-depth redaction.
+
+Request logs now keep only the Gin route template, use a bounded sentinel for unmatched routes, and
+never collect concrete paths, query values, or bodies. HTTP traces similarly retain the route shape
+and typed error summary without concrete paths or free-form error messages, including database
+spans. `pkg/redact` applies one
+credential-key vocabulary recursively across configured logger context, exception request data,
+recent log context, and audit persistence. The exception renderer escapes every dynamic field, SQL
+logs parameterize normal and GORM `Scan` traces, and a root governance check blocks drift. Callers
+must still avoid secrets in free-form messages and ambiguous keys; automatic redaction is a final
+boundary, not a logging API.
+
+On Go 1.25.12, Apple M3 Max, the five-run representative redaction microbenchmark measured
+593.5-626.2 ns/op, 400 B/op, and 9 allocs/op for the six-field request-log context; the nested
+sensitive context measured 655.7-675.0 ns/op, 744 B/op, and 11 allocs/op. These are host-sensitive
+sanitizer costs, not end-to-end request latency or an SLO.
+
+Verification:
+
+- red/green tests across `pkg/logger`, `pkg/errors`, `internal/infra/exception`, HTTP tracing,
+  database diagnostics, and audit service
+- `cd api && go test ./pkg/redact -run '^$' -bench '^BenchmarkMap$' -benchmem -count=5`
+- `python3 .agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py`
+- `make check`
 
 ### Completed P0 — API Key Revocation And One-Time Secret Boundary
 

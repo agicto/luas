@@ -103,3 +103,41 @@ func TestServiceRecordMergesBusinessChangeFromContext(t *testing.T) {
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 }
+
+func TestServiceRecordRedactsSensitiveBusinessMetadata(t *testing.T) {
+	repo := new(mockRepository)
+	svc := NewService(repo)
+	ctx := withChangeCollector(context.Background())
+	RecordChange(ctx, Change{
+		Changes: map[string]domain.AuditValueChange{
+			"password":      {Before: "old-password", After: "new-password"},
+			"client_secret": {Before: nil, After: "new-client-secret"},
+		},
+		Metadata: map[string]any{
+			"access_token": "audit-access-token",
+			"nested": map[string]any{
+				"client_secret": "audit-client-secret",
+				"outcome":       "success",
+			},
+		},
+	})
+
+	repo.On("Create", ctx, mock.MatchedBy(func(entry *domain.AuditLog) bool {
+		password := entry.Changes["password"]
+		clientSecret := entry.Changes["client_secret"]
+		nested, ok := entry.Metadata["nested"].(map[string]any)
+		return password.Before == "[REDACTED]" &&
+			password.After == "[REDACTED]" &&
+			clientSecret.Before == nil &&
+			clientSecret.After == "[REDACTED]" &&
+			entry.Metadata["access_token"] == "[REDACTED]" &&
+			ok &&
+			nested["client_secret"] == "[REDACTED]" &&
+			nested["outcome"] == "success"
+	})).Return(nil)
+
+	err := svc.Record(ctx, &domain.AuditLog{Method: "POST", Path: "/v1/example"})
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}

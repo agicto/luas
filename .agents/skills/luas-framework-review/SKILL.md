@@ -75,6 +75,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-error-contracts.py` when changing scaffold-level HTTP status or `error_code` behavior.
    - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, public failure semantics, abuse controls, proxy trust, adapter status, or starter readiness.
    - Run `scripts/check-api-key-boundary.py` when changing API key persistence, scope grammar or guards, management routes, one-time plaintext handling, or the Web API key feature.
+   - Run `scripts/check-sensitive-telemetry.py` when changing request logging/tracing, logger context, exception diagnostics, SQL logging, tracing statements, or audit metadata.
    - Run `scripts/check-config-authority.py` when changing environment loading, typed configuration, logger startup, runtime reload behavior, or configuration cache semantics.
    - Run `scripts/check-email-boundary.py` when changing outbound email config, provider HTTP behavior, templates, or starter-owned mailer calls.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
@@ -117,6 +118,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
 - `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go JWT endpoints, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-api-key-boundary.py` keeps hash-only API key persistence, atomic revoke/use writes, structured scopes, route guards, one-time plaintext, fixed Web adapter paths, and mock behavior aligned.
+- `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.
 - `scripts/check-config-authority.py` keeps runtime environment access behind `config.Config`, requires one startup snapshot for logging and Wire, and blocks removed dynamic reload/cache surfaces.
 - `scripts/check-email-boundary.py` keeps email configuration, caller cancellation, provider timeout, bounded response reads, privacy rules, and user-starter mailer calls aligned.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.

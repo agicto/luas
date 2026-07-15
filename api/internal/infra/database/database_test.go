@@ -1,7 +1,9 @@
 package database
 
 import (
+	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/infra/exception"
 )
 
 func TestResolveGormLogLevel_DefaultsToInfoForDebugAndTest(t *testing.T) {
@@ -89,6 +92,7 @@ func TestBuildLoggerConfig_UsesDatabaseSettings(t *testing.T) {
 	assert.Equal(t, 2*time.Second, loggerCfg.SlowThreshold)
 	assert.False(t, loggerCfg.IgnoreRecordNotFoundError)
 	assert.True(t, loggerCfg.Colorful)
+	assert.True(t, loggerCfg.ParameterizedQueries)
 }
 
 func TestNewDB_ReturnsNilWhenDisabled(t *testing.T) {
@@ -119,4 +123,22 @@ func TestNewDB_ReturnsErrorWhenEnabledDatabaseUnavailable(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "database is enabled but unavailable")
 	assert.Nil(t, db)
+}
+
+func TestDatabaseDiagnosticsDoNotCaptureBoundValues(t *testing.T) {
+	db, err := NewTestDB()
+	require.NoError(t, err)
+	collector := exception.NewCollector(nil)
+	ctx := exception.WithCollector(context.Background(), collector)
+
+	var result string
+	require.NoError(t, db.WithContext(ctx).
+		Raw("SELECT ? AS secret_value", "database-secret").
+		Scan(&result).Error)
+
+	queries := collector.SQL()
+	require.NotEmpty(t, queries)
+	statement := queries[len(queries)-1].Statement
+	assert.NotContains(t, statement, "database-secret")
+	assert.True(t, strings.Contains(statement, "?") || strings.Contains(statement, "$1"))
 }

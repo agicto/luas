@@ -37,6 +37,7 @@ Workspace-level architecture docs:
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
+- [api/docs/OBSERVABILITY.md](api/docs/OBSERVABILITY.md) — request-log minimization, redaction, exception diagnostics, parameterized SQL, and audit privacy
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
@@ -74,6 +75,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
 - `.agents/skills/luas-framework-review/scripts/check-api-key-boundary.py` — keep API key hash-only persistence, atomic revoke/use writes, scope semantics, one-time plaintext, and Web adapter behavior aligned.
+- `.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py` — keep request logs/traces, exception diagnostics, SQL logs, logger context, and audit metadata behind one minimization/redaction boundary.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.
 - `.agents/skills/luas-framework-review/scripts/check-email-boundary.py` — keep outbound email context, timeout, response limits, privacy, config, and caller semantics aligned.
 - `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` — enforce reviewed full-SHA action pins, Node 24-compatible releases, explicit permissions, and safe workflow triggers.

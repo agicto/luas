@@ -115,6 +115,7 @@ func buildLoggerConfig(cfg *config.Config) logger.Config {
 		LogLevel:                  resolveGormLogLevel(cfg),
 		IgnoreRecordNotFoundError: cfg.Database.IgnoreRecordNotFound,
 		Colorful:                  true,
+		ParameterizedQueries:      true,
 	}
 }
 

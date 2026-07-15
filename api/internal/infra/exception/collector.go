@@ -6,6 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 type collectorKey struct{}
@@ -24,7 +26,6 @@ type Collector struct {
 	mu      sync.Mutex
 	started time.Time
 	method  string
-	url     string
 	headers map[string]string
 	query   map[string]string
 	sql     []SQLQuery
@@ -42,20 +43,8 @@ func NewCollector(req *http.Request) *Collector {
 	}
 
 	collector.method = req.Method
-	collector.url = req.URL.String()
-
-	for key, values := range req.Header {
-		if len(values) == 0 {
-			continue
-		}
-		collector.headers[key] = values[0]
-	}
-	for key, values := range req.URL.Query() {
-		if len(values) == 0 {
-			continue
-		}
-		collector.query[key] = values[0]
-	}
+	collector.headers = redact.Headers(req.Header)
+	collector.query = redact.Query(req.URL.Query())
 
 	return collector
 }
@@ -112,14 +101,6 @@ func (c *Collector) Method() string {
 		return ""
 	}
 	return c.method
-}
-
-// URL returns the original request URL.
-func (c *Collector) URL() string {
-	if c == nil {
-		return ""
-	}
-	return c.url
 }
 
 // Headers returns a copy of captured request headers.

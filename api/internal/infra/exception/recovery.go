@@ -13,6 +13,7 @@ import (
 
 	zerrors "github.com/zgiai/luas/api/pkg/errors"
 	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/redact"
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
@@ -84,10 +85,14 @@ func panicToError(value any) *zerrors.AppError {
 }
 
 func logPanic(c *gin.Context, err *zerrors.AppError) {
+	path := c.FullPath()
+	if path == "" {
+		path = "unmatched"
+	}
 	fields := map[string]any{
 		"error_code": err.Code,
 		"request_id": c.GetString("request_id"),
-		"path":       c.Request.URL.Path,
+		"path":       path,
 		"method":     c.Request.Method,
 		"route_name": c.GetString("route_name"),
 	}
@@ -113,17 +118,20 @@ func buildDebugPageData(c *gin.Context, err *zerrors.AppError, collector *Collec
 	traceID, hasTrace := traceIDs(c.Request.Context())
 
 	data := zerrors.DebugPageData{
-		Title:      string(err.Code),
-		Message:    err.Message,
-		Code:       string(err.Code),
-		Status:     err.Status,
-		File:       err.File,
-		Line:       err.Line,
-		Stack:      zerrors.DebugStackFrames(err.Stack),
-		RouteName:  c.GetString("route_name"),
-		RequestID:  requestID,
-		TraceID:    traceID,
-		Request:    zerrors.RequestInfo{Method: c.Request.Method, URL: c.Request.URL.String()},
+		Title:     string(err.Code),
+		Message:   err.Message,
+		Code:      string(err.Code),
+		Status:    err.Status,
+		File:      err.File,
+		Line:      err.Line,
+		Stack:     zerrors.DebugStackFrames(err.Stack),
+		RouteName: c.GetString("route_name"),
+		RequestID: requestID,
+		TraceID:   traceID,
+		Request: zerrors.RequestInfo{
+			Method: c.Request.Method,
+			URL:    redact.URLWithPath(c.Request.URL, c.FullPath()),
+		},
 		SQLQueries: buildSQLDebugRows(collector),
 		RecentLogs: buildRecentLogRows(requestID, traceID),
 		Environment: map[string]string{
@@ -139,9 +147,6 @@ func buildDebugPageData(c *gin.Context, err *zerrors.AppError, collector *Collec
 	if collector != nil {
 		if method := collector.Method(); method != "" {
 			data.Request.Method = method
-		}
-		if url := collector.URL(); url != "" {
-			data.Request.URL = url
 		}
 		data.Request.Headers = collector.Headers()
 		data.Request.Query = collector.Query()
@@ -194,7 +199,7 @@ func prettyContext(ctx map[string]any) string {
 	if len(ctx) == 0 {
 		return ""
 	}
-	payload, err := json.MarshalIndent(ctx, "", "  ")
+	payload, err := json.MarshalIndent(redact.Map(ctx), "", "  ")
 	if err != nil {
 		return ""
 	}

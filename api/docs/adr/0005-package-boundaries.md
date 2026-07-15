@@ -9,7 +9,7 @@ Accepted
 Luas has four API homes that can plausibly host shared code or shared vocabulary:
 
 - `pkg/` — currently houses `encryption`, `env`, `errors`, `events`, `handler`,
-  `hash`, `logger`, `pagination`, `request`, `resource`, `response`, `support`,
+  `hash`, `logger`, `pagination`, `redact`, `request`, `resource`, `response`, `support`,
   `utils`, `validation`.
 - `internal/domain/` — currently houses starter domain entities, domain errors,
   domain events, value objects, repository interfaces, and stable API `error_code`
@@ -40,7 +40,7 @@ A package belongs in `pkg/` when **all** of the following hold:
    without inheriting Luas's architecture.
 3. It owns no global state, no init-time side effects, no DI wiring.
 
-Examples that fit: `pkg/env`, `pkg/pagination`, `pkg/errors`.
+Examples that fit: `pkg/env`, `pkg/pagination`, `pkg/errors`, `pkg/redact`.
 
 Smell test: would a Go developer outside Luas reasonably copy this file
 into their own project unchanged? If yes, `pkg/`.

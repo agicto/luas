@@ -69,6 +69,8 @@ None.
 - Broad collection and map helper libraries were removed from `pkg/support`; collection transforms,
   map shaping, and data projection should stay local to the caller or the starter/capability seam
   that owns the shape.
+- Credential-shaped telemetry sanitization lives in the focused, standard-library-only
+  `pkg/redact` package rather than a broad support helper or duplicated logger/exception blacklists.
 - Mutating dot-notation data helpers were removed from `pkg/support`; nested data writes and shape
   mutations should stay local to the owning package instead of becoming scaffold-wide helpers.
 - `pkg/support` is now documented and guarded as a small read-only helper surface limited to

@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -10,8 +11,6 @@ import (
 func GinLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
 
 		// Process request
 		c.Next()
@@ -21,9 +20,9 @@ func GinLogger() gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
-
-		if raw != "" {
-			path = path + "?" + raw
+		path := c.FullPath()
+		if path == "" {
+			path = "unmatched"
 		}
 
 		// Use the platform logger
@@ -37,7 +36,12 @@ func GinLogger() gin.HandlerFunc {
 		}
 
 		if len(c.Errors) > 0 {
-			fields["errors"] = c.Errors.String()
+			errorTypes := make([]string, 0, len(c.Errors))
+			for _, requestError := range c.Errors {
+				errorTypes = append(errorTypes, fmt.Sprintf("%T", requestError.Err))
+			}
+			fields["error_count"] = len(c.Errors)
+			fields["error_types"] = errorTypes
 			Error("HTTP Request Error", fields)
 		} else {
 			Info("HTTP Request", fields)

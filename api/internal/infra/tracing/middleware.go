@@ -20,23 +20,24 @@ func Middleware(serviceName string) gin.HandlerFunc {
 		// Extract trace context from incoming request
 		ctx := propagator.Extract(c.Request.Context(), propagation.HeaderCarrier(c.Request.Header))
 
-		// Start a new span
-		spanName := fmt.Sprintf("%s %s", c.Request.Method, c.FullPath())
-		if c.FullPath() == "" {
-			spanName = fmt.Sprintf("%s %s", c.Request.Method, c.Request.URL.Path)
+		// Route templates keep span names bounded and avoid exporting path values.
+		route := c.FullPath()
+		spanName := c.Request.Method
+		attributes := []attribute.KeyValue{
+			semconv.HTTPRequestMethodKey.String(c.Request.Method),
+			semconv.URLScheme(c.Request.URL.Scheme),
+			semconv.ServerAddress(c.Request.Host),
+			semconv.UserAgentOriginal(c.Request.UserAgent()),
+			attribute.String("http.client_ip", c.ClientIP()),
+		}
+		if route != "" {
+			spanName = fmt.Sprintf("%s %s", c.Request.Method, route)
+			attributes = append(attributes, semconv.HTTPRoute(route))
 		}
 
 		ctx, span := tracer.Start(ctx, spanName,
 			trace.WithSpanKind(trace.SpanKindServer),
-			trace.WithAttributes(
-				semconv.HTTPRequestMethodKey.String(c.Request.Method),
-				semconv.URLPath(c.Request.URL.Path),
-				semconv.HTTPRoute(c.FullPath()),
-				semconv.URLScheme(c.Request.URL.Scheme),
-				semconv.ServerAddress(c.Request.Host),
-				semconv.UserAgentOriginal(c.Request.UserAgent()),
-				attribute.String("http.client_ip", c.ClientIP()),
-			),
+			trace.WithAttributes(attributes...),
 		)
 		defer span.End()
 
@@ -55,10 +56,14 @@ func Middleware(serviceName string) gin.HandlerFunc {
 
 		// Record errors
 		if len(c.Errors) > 0 {
-			span.SetAttributes(attribute.String("http.errors", c.Errors.String()))
+			errorTypes := make([]string, 0, len(c.Errors))
 			for _, err := range c.Errors {
-				span.RecordError(err.Err)
+				errorTypes = append(errorTypes, fmt.Sprintf("%T", err.Err))
 			}
+			span.SetAttributes(
+				attribute.Int("http.error_count", len(c.Errors)),
+				attribute.StringSlice("error.types", errorTypes),
+			)
 		}
 
 		// Set span status based on HTTP status code

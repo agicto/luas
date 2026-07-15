@@ -6,6 +6,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
@@ -156,8 +157,16 @@ func SetAttributes(ctx context.Context, attrs ...attribute.KeyValue) {
 	span.SetAttributes(attrs...)
 }
 
-// RecordError records an error on the current span
+// RecordError records only the stable error type, never the free-form message.
 func RecordError(ctx context.Context, err error) {
 	span := trace.SpanFromContext(ctx)
-	span.RecordError(err)
+	recordErrorType(span, err)
+}
+
+func recordErrorType(span trace.Span, err error) {
+	if span == nil || err == nil {
+		return
+	}
+	span.SetAttributes(semconv.ErrorTypeKey.String(fmt.Sprintf("%T", err)))
+	span.SetStatus(codes.Error, "")
 }

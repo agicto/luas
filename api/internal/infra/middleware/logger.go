@@ -12,8 +12,6 @@ import (
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
-		path := c.Request.URL.Path
-		raw := c.Request.URL.RawQuery
 
 		// Process request
 		c.Next()
@@ -23,9 +21,9 @@ func Logger() gin.HandlerFunc {
 		clientIP := c.ClientIP()
 		method := c.Request.Method
 		statusCode := c.Writer.Status()
-
-		if raw != "" {
-			path = path + "?" + raw
+		path := c.FullPath()
+		if path == "" {
+			path = "unmatched"
 		}
 
 		logger.Info("HTTP Request", map[string]any{
