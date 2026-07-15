@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	register("2026_07_15_070000_create_authentication_sessions_table", &createAuthenticationSessionsTable{
+	register("2026_04_27_000003_create_authentication_sessions_table", &createAuthenticationSessionsTable{
 		BaseMigration: migration.BaseMigration{UseTransaction: true},
 	})
 }

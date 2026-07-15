@@ -56,7 +56,7 @@ terminal; it does not remove active sessions.
 
 ## Deployment And Upgrade
 
-Apply `2026_07_15_070000_create_authentication_sessions_table` before deploying code that issues
+Apply `2026_04_27_000003_create_authentication_sessions_table` before deploying code that issues
 opaque sessions. The table is additive, so the prior application can run during migration. The new
 application intentionally rejects `JWT_SECRET` and `JWT_EXPIRE_DAYS` and does not accept previously
 issued JWTs. Users sign in again after the upgrade.
