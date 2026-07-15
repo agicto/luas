@@ -122,8 +122,10 @@ bucket, bounding memory while preserving hot abusive identities.
 There is no automatic Redis activation. The removed `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`,
 and `REDIS_DB` keys had no assembled runtime consumer and therefore violated the typed configuration
 authority. The generic Redis cache adapter remains available for explicit downstream composition;
-it is not a rate-limit driver. Multi-replica rate limiting belongs to the gateway/WAF or a deliberately
-assembled shared adapter with atomic decisions, explicit outage semantics, and owned lifecycle.
+it receives a borrowed client and typed adapter config directly, does not read environment variables,
+and is documented in [`CACHE.md`](CACHE.md). It is not a rate-limit driver. Multi-replica rate
+limiting belongs to the gateway/WAF or a deliberately assembled shared adapter with atomic decisions,
+explicit outage semantics, and owned lifecycle.
 
 ## Outbound Webhook Configuration
 

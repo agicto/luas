@@ -75,6 +75,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-error-contracts.py` when changing scaffold-level HTTP status or `error_code` behavior.
    - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, public failure semantics, abuse controls, proxy trust, adapter status, or starter readiness.
    - Run `scripts/check-rate-limit-boundary.py` when changing global/auth quotas, limiter algorithms, active-bucket resource policy, shared-store claims, or Redis rate-limit ownership.
+   - Run `scripts/check-cache-boundary.py` when changing cache values, TTLs, memory capacity, atomic operations, loaders, Redis adapter ownership, or cache documentation.
    - Run `scripts/check-api-key-boundary.py` when changing API key persistence, scope grammar or guards, management routes, one-time plaintext handling, or the Web API key feature.
    - Run `scripts/check-sensitive-telemetry.py` when changing request logging/tracing, logger context, exception diagnostics, SQL logging, tracing statements, or audit metadata.
    - Run `scripts/check-permission-boundary.py` when changing access-role persistence, permission keys, authorization guards, organization-scoped assignments, permission contracts, or the Web permission feature.
@@ -126,6 +127,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
 - `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go opaque authentication sessions, revocation, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-rate-limit-boundary.py` keeps the built-in limiter atomic and cardinality-bounded, blocks inert Redis activation claims, and makes shared multi-replica enforcement an explicit adapter/deployment decision.
+- `scripts/check-cache-boundary.py` keeps the optional cache byte-oriented, bounded, atomic where named, free of global lifecycle state, and explicit about Redis ownership and non-authority.
 - `scripts/check-api-key-boundary.py` keeps hash-only API key persistence, atomic revoke/use writes, structured scopes, route guards, one-time plaintext, fixed Web adapter paths, and mock behavior aligned.
 - `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.
 - `scripts/check-permission-boundary.py` keeps access roles organization-scoped, permission keys exact, authorization fail-closed, delegated administration bounded, and API/Web/contracts aligned.

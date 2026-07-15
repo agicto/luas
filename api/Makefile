@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -142,6 +142,11 @@ benchmark-http:
 benchmark-rate-limit:
 	@echo "Benchmarking process-local rate limiter..."
 	go test ./internal/infra/ratelimit -run '^$$' -bench '^BenchmarkMemoryStoreTake$$' -benchmem -count=5
+
+# Measure bounded process-local cache reads and unique-key churn
+benchmark-cache:
+	@echo "Benchmarking bounded process-local cache..."
+	go test ./internal/infra/cache -run '^$$' -bench '^BenchmarkMemory(Get|GetParallel|BoundedChurn)$$' -benchmem -count=5
 
 # Run tests with coverage
 cover:
@@ -281,6 +286,7 @@ help:
 	@echo "  make test-race          - Run tests with race detection"
 	@echo "  make test-race-critical - Run CI queue lifecycle race tests"
 	@echo "  make benchmark-http     - Benchmark core HTTP middleware with metrics off/on"
+	@echo "  make benchmark-cache    - Benchmark bounded memory-cache reads and churn"
 	@echo "  make benchmark-workflow - Benchmark memory queue round trips"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

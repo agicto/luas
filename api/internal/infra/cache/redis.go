@@ -2,152 +2,162 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-// RedisStore implements a Redis-backed cache store
+const maxRedisNamespaceBytes = 256
+
+// RedisClient is the narrow borrowed-client seam required by RedisStore.
+// The composition root owns connection configuration, readiness, and Close.
+type RedisClient interface {
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.BoolCmd
+	GetDel(ctx context.Context, key string) *redis.StringCmd
+	Unlink(ctx context.Context, keys ...string) *redis.IntCmd
+}
+
+// RedisConfig controls namespacing and one-item payload limits. Namespace is
+// required so a shared deployment cannot accidentally collide with other apps.
+type RedisConfig struct {
+	Namespace    string
+	MaxItemBytes int
+}
+
+// RedisStore is a shared cache adapter for Redis 6.2 or later. It borrows its
+// client and therefore deliberately exposes no Close method.
 type RedisStore struct {
-	client *redis.Client
-	prefix string
+	client       RedisClient
+	namespace    string
+	maxItemBytes int
 }
 
-// RedisOption configures the Redis store
-type RedisOption func(*RedisStore)
-
-// WithPrefix sets a key prefix for all cache keys
-func WithPrefix(prefix string) RedisOption {
-	return func(s *RedisStore) {
-		s.prefix = prefix
+// NewRedisStore creates a namespaced shared cache adapter.
+func NewRedisStore(client RedisClient, config RedisConfig) (*RedisStore, error) {
+	if isNilRedisClient(client) {
+		return nil, ErrNilDependency
 	}
-}
-
-// NewRedisStore creates a new Redis cache store
-func NewRedisStore(client *redis.Client, opts ...RedisOption) *RedisStore {
-	s := &RedisStore{
-		client: client,
-		prefix: "cache:",
+	if !validRedisNamespace(config.Namespace) {
+		return nil, ErrInvalidNamespace
 	}
-
-	for _, opt := range opts {
-		opt(s)
+	if config.MaxItemBytes == 0 {
+		config.MaxItemBytes = DefaultMaxItemBytes
 	}
-
-	return s
+	if config.MaxItemBytes < 0 {
+		return nil, ErrInvalidCapacity
+	}
+	return &RedisStore{
+		client:       client,
+		namespace:    config.Namespace,
+		maxItemBytes: config.MaxItemBytes,
+	}, nil
 }
 
-// NewRedisStoreFromConfig creates a Redis store from connection config
-func NewRedisStoreFromConfig(addr, password string, db int, opts ...RedisOption) *RedisStore {
-	client := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: password,
-		DB:       db,
-	})
-
-	return NewRedisStore(client, opts...)
+func (s *RedisStore) Get(ctx context.Context, key string) ([]byte, error) {
+	if err := s.validateOperation(ctx, key); err != nil {
+		return nil, err
+	}
+	return redisBytes(s.client.Get(ctx, s.namespace+key))
 }
 
-// prefixKey adds the prefix to a key
-func (s *RedisStore) prefixKey(key string) string {
-	return s.prefix + key
+func (s *RedisStore) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	if err := validateTTL(ttl); err != nil {
+		return err
+	}
+	return s.set(ctx, key, value, ttl)
 }
 
-// Get retrieves a value from the cache
-func (s *RedisStore) Get(ctx context.Context, key string) (interface{}, error) {
-	val, err := s.client.Get(ctx, s.prefixKey(key)).Result()
+func (s *RedisStore) SetForever(ctx context.Context, key string, value []byte) error {
+	return s.set(ctx, key, value, 0)
+}
+
+func (s *RedisStore) set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	if err := s.validateOperation(ctx, key); err != nil {
+		return err
+	}
+	if err := validateItemSize(value, s.maxItemBytes); err != nil {
+		return err
+	}
+	return s.client.Set(ctx, s.namespace+key, cloneBytes(value), ttl).Err()
+}
+
+func (s *RedisStore) Add(
+	ctx context.Context,
+	key string,
+	value []byte,
+	ttl time.Duration,
+) (bool, error) {
+	if err := s.validateOperation(ctx, key); err != nil {
+		return false, err
+	}
+	if err := validateTTL(ttl); err != nil {
+		return false, err
+	}
+	if err := validateItemSize(value, s.maxItemBytes); err != nil {
+		return false, err
+	}
+	return s.client.SetNX(ctx, s.namespace+key, cloneBytes(value), ttl).Result()
+}
+
+func (s *RedisStore) Take(ctx context.Context, key string) ([]byte, error) {
+	if err := s.validateOperation(ctx, key); err != nil {
+		return nil, err
+	}
+	return redisBytes(s.client.GetDel(ctx, s.namespace+key))
+}
+
+func (s *RedisStore) Delete(ctx context.Context, key string) error {
+	if err := s.validateOperation(ctx, key); err != nil {
+		return err
+	}
+	return s.client.Unlink(ctx, s.namespace+key).Err()
+}
+
+func (s *RedisStore) validateOperation(ctx context.Context, key string) error {
+	if err := validateContext(ctx); err != nil {
+		return err
+	}
+	return validateKey(key)
+}
+
+func redisBytes(command *redis.StringCmd) ([]byte, error) {
+	value, err := command.Bytes()
 	if errors.Is(err, redis.Nil) {
 		return nil, ErrCacheMiss
 	}
 	if err != nil {
 		return nil, err
 	}
-
-	// Try to unmarshal as JSON. Non-JSON payloads are returned verbatim —
-	// callers that stored a raw string get it back.
-	var result interface{}
-	if err := json.Unmarshal([]byte(val), &result); err != nil {
-		return val, nil //nolint:nilerr // intentional fallback to raw string
-	}
-
-	return result, nil
+	return cloneBytes(value), nil
 }
 
-// Put stores a value in the cache with expiration
-func (s *RedisStore) Put(ctx context.Context, key string, value interface{}, ttl time.Duration) error {
-	var val string
+func validRedisNamespace(namespace string) bool {
+	if namespace == "" || len(namespace) > maxRedisNamespaceBytes ||
+		strings.TrimSpace(namespace) != namespace || !strings.HasSuffix(namespace, ":") {
+		return false
+	}
+	for _, character := range namespace {
+		if character < 0x20 || character == 0x7f {
+			return false
+		}
+	}
+	return true
+}
 
-	switch v := value.(type) {
-	case string:
-		val = v
-	case []byte:
-		val = string(v)
+func isNilRedisClient(client RedisClient) bool {
+	if client == nil {
+		return true
+	}
+	value := reflect.ValueOf(client)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
 	default:
-		data, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
-		val = string(data)
+		return false
 	}
-
-	return s.client.Set(ctx, s.prefixKey(key), val, ttl).Err()
-}
-
-// Forever stores a value in the cache indefinitely
-func (s *RedisStore) Forever(ctx context.Context, key string, value interface{}) error {
-	return s.Put(ctx, key, value, 0)
-}
-
-// Forget removes a value from the cache
-func (s *RedisStore) Forget(ctx context.Context, key string) error {
-	return s.client.Del(ctx, s.prefixKey(key)).Err()
-}
-
-// Flush removes all values with the prefix from the cache
-func (s *RedisStore) Flush(ctx context.Context) error {
-	iter := s.client.Scan(ctx, 0, s.prefix+"*", 0).Iterator()
-	for iter.Next(ctx) {
-		if err := s.client.Del(ctx, iter.Val()).Err(); err != nil {
-			return err
-		}
-	}
-	return iter.Err()
-}
-
-// Has checks if a key exists in the cache
-func (s *RedisStore) Has(ctx context.Context, key string) bool {
-	exists, err := s.client.Exists(ctx, s.prefixKey(key)).Result()
-	return err == nil && exists > 0
-}
-
-// Increment increments a numeric value
-func (s *RedisStore) Increment(ctx context.Context, key string, value int64) (int64, error) {
-	return s.client.IncrBy(ctx, s.prefixKey(key), value).Result()
-}
-
-// Decrement decrements a numeric value
-func (s *RedisStore) Decrement(ctx context.Context, key string, value int64) (int64, error) {
-	return s.client.DecrBy(ctx, s.prefixKey(key), value).Result()
-}
-
-// GetClient returns the underlying Redis client
-func (s *RedisStore) GetClient() *redis.Client {
-	return s.client
-}
-
-// Close closes the Redis connection
-func (s *RedisStore) Close() error {
-	return s.client.Close()
-}
-
-// TTL returns the remaining time to live of a key
-func (s *RedisStore) TTL(ctx context.Context, key string) (time.Duration, error) {
-	return s.client.TTL(ctx, s.prefixKey(key)).Result()
-}
-
-// Expire sets a new expiration time on a key
-func (s *RedisStore) Expire(ctx context.Context, key string, ttl time.Duration) error {
-	return s.client.Expire(ctx, s.prefixKey(key), ttl).Err()
 }

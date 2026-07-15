@@ -33,6 +33,12 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Capability**
 : A reusable technical integration or helper that does not own an application workflow. Examples include AI clients, crypto helpers, ID generation, tracing, storage, queueing, and workflow primitives.
 
+**Cache capability**
+: An optional, non-authoritative acceleration seam with explicit byte values, TTL, invalidation,
+  adapter, and outage policy. Cached values are disposable copies; cache state is not a business
+  record, authentication session, permission authority, idempotency receipt, quota, rate limit,
+  durable queue, or distributed lock.
+
 **Feature**
 : A user-facing or developer-facing vertical slice of behavior. A feature may have UI, state, services, contracts, tests, and supporting server routes. Feature is the preferred term for product-facing work.
 
@@ -185,6 +191,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 - Luas produces a downstream app.
 - A scaffold contains core, starters, capabilities, examples, contracts, and agent guidance.
+- The cache capability may accelerate an owning starter or downstream feature, but the caller keeps
+  authoritative reads, invalidation, staleness, tenant key scope, and failure behavior local.
 - A starter may span persistence, HTTP routes, contracts, mock BFF behavior, UI, tests, and docs.
 - A feature is product-facing behavior; a module is the internal implementation shape behind a seam.
 - Core and capabilities are reusable; starters and features express application behavior.
@@ -234,6 +242,9 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   metric and subject. Telemetry explains system operation, HTTP rate limits protect transport,
   quotas gate a usage counter, and billing converts reviewed usage into provider-specific money.
   Do not use these terms interchangeably.
+- **cache vs state/coordination**: Cache means disposable acceleration data. Durable state,
+  authentication sessions, idempotency, quotas, rate limits, queues, and distributed locks retain
+  their own authorities and atomicity contracts; a generic cache operation does not replace them.
 - **webhook vs event bus/workflow/inbound callback**: Webhook means an outbound, signed HTTP
   delivery owned by the optional starter. The in-process event bus is best-effort process
   coordination, workflow owns generic execution primitives, and inbound provider callbacks require

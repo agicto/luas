@@ -84,6 +84,11 @@ None.
   inside the workflow capability; `internal/infra/schedule` remains as a compatibility wrapper.
 - `internal/capabilities/workflow` no longer imports `internal/infra/queue`. Background job queue behavior now
   lives inside the workflow capability; `internal/infra/queue` remains as a compatibility wrapper.
+- The cache seam now lives once in `internal/infra/cache`; the duplicate `internal/infra/contracts`
+  cache interfaces and global manager were removed. Downstream callers inject the byte-oriented
+  store instead of selecting mutable process-global drivers.
+- Cache request coalescing uses maintained `golang.org/x/sync/singleflight`; the shallow custom
+  wrapper package and its cancellation bug were removed.
 
 ## Review Rule
 

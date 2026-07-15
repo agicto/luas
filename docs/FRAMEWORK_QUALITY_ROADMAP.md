@@ -24,6 +24,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures. Process-local rate-limit stores are atomically enforced, cardinality-bounded with configurable LRU eviction, exact at window expiry, and own no cleanup goroutines; the misleading unassembled Redis limiter and inert `REDIS_*` runtime config were removed. Multi-replica enforcement remains an explicit gateway/WAF/shared-adapter responsibility.
+- The optional API cache capability now has one byte-oriented contract across memory and Redis, atomic `Add`/`Take`, explicit positive TTLs, typed JSON helpers, per-store request coalescing, bounded memory cardinality/payloads, and zero persistent cleanup goroutines. Redis requires a namespace and borrowed client; cache remains non-authoritative and unassembled until a downstream business seam owns invalidation and outage policy.
 - API transport configuration now owns the real socket boundary: local defaults bind to `127.0.0.1`,
   container surfaces explicitly bind `0.0.0.0`, and read-header/read/write/idle/header-size budgets
   are wired into `http.Server`. Configuration validation rejects negative values and a positive write
@@ -442,9 +443,44 @@ Verification:
 - `cd api && go test ./...`
 - `cd api && make benchmark-workflow`
 
+### Completed P0 — Cache Capability Runtime Boundary
+
+The legacy cache surface mixed a global mutable manager, implicit memory instance, duplicate
+interfaces, non-atomic `Add`/`Pull`, and an `any` value contract whose runtime types changed when a
+caller switched from memory to Redis. Every memory instance started a permanent cleanup goroutine
+and retained unbounded unique keys. Redis construction and `Close` also made client ownership
+ambiguous, and prefix scanning exposed a broad flush operation.
+
+The replacement seam carries owned bytes, requires positive TTLs unless `SetForever` is explicit,
+and offers typed JSON helpers above that contract. `Add`/`Take` map to one atomic store operation.
+Memory is bounded by 10,000 entries, 64 MiB of key/value payload, and 1 MiB per item with intrusive
+LRU eviction and no background lifecycle. Redis 6.2+ uses a required namespace, borrowed client,
+`SET NX`, `GETDEL`, and `UNLINK`; backend failures propagate and never trigger a hidden local
+fallback. Per-store cache-aside loading uses maintained `x/sync/singleflight`, while the docs make
+clear that same-process coalescing is not multi-replica coordination or distributed locking.
+
+On an Apple M3 Max with Go 1.25.12, five-run medians changed as follows. Hot reads moved from about
+`44.03 ns/op`, `0 B/op`, `0 allocs/op` to `54.23 ns/op`, `8 B/op`, `1 alloc/op`; the roughly 23%
+cost is the retained ownership copy that prevents caller mutation and makes adapter behavior
+substitutable. The final 14-way `RunParallel` hot-read median was `203.3 ns/op`, `8 B/op`, and
+`1 alloc/op`, or roughly 4.9 million owned reads per second on this host. Unique-key churn moved
+from about `481.8 ns/op`, `166 B/op`, `5 allocs/op`, retaining every generated key, to
+`276.9 ns/op`, `112 B/op`, `4 allocs/op`, retaining exactly 10,000 entries.
+That is about 43% lower churn latency, 33% fewer bytes, and 20% fewer allocations while converting
+unbounded growth to a fixed ceiling. Creating 64 old stores added 64 permanent goroutines; the new
+store adds none. These are local comparison measurements, not a CI latency budget.
+
+Verification:
+
+- `cd api && go test ./internal/infra/cache -count=20`
+- `cd api && go test -race ./internal/infra/cache -count=10`
+- `cd api && make benchmark-cache`
+- Real Redis contract run through `LUAS_TEST_REDIS_ADDR`.
+- `make governance` and `make check`
+
 ### P1 — Measured Performance Baseline
 
-Problem: Luas now has one measured API dependency/binary baseline and bounded HTTP metric labels, but it does not yet guard API latency, database query behavior, Web route bundles, or Core Web Vitals with repeatable budgets.
+Problem: Luas now has measured HTTP, queue, rate-limit, and cache baselines, but it does not yet guard database query behavior, Web route bundles, or Core Web Vitals with repeatable budgets.
 
 The core HTTP middleware portion now has a repeatable metrics-off/metrics-on benchmark and a
 steady-state allocation gate. On an Apple M3 Max with Go 1.25.12, the metrics-disabled median moved
@@ -464,6 +500,7 @@ Recommended slice:
 Verification:
 
 - `cd api && go test -run '^$' -bench . -benchmem ./internal/bootstrap/... ./internal/infra/metrics/...`
+- `cd api && make benchmark-cache`
 - `cd api && go build -trimpath -ldflags='-s -w' -o /tmp/luas-server ./cmd/server`
 - `cd web && pnpm build`
 

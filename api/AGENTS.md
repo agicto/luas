@@ -106,6 +106,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets.
+- [`docs/CACHE.md`](docs/CACHE.md) — bounded byte semantics, memory/Redis adapter ownership, cache-aside loading, and invalidation policy.
 - [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md) — opaque session lifecycle, revocation, retention, deployment, and replacement.
 - [`docs/AI.md`](docs/AI.md) — bounded provider execution, streaming, error privacy, and AI product boundary.
 - [`docs/EMAIL.md`](docs/EMAIL.md) — outbound provider timeout, cancellation, privacy, and best-effort delivery semantics.
@@ -164,6 +165,7 @@ make build         # Build CLI
 make test          # Run tests
 make test-race-critical # Run queue/worker lifecycle race tests required by CI
 make benchmark-http # Measure the core HTTP middleware chain with metrics off/on
+make benchmark-cache # Measure bounded memory-cache reads and unique-key churn
 make container-check # Build and exercise the production image contract
 make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
