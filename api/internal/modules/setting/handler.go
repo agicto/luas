@@ -155,6 +155,7 @@ func (h *Handler) OrganizationReset(c *gin.Context) {
 	})
 }
 
+// luas:bounded-list max=64 reason=finite-code-owned-catalog
 func (h *Handler) list(c *gin.Context, target domain.SettingTarget) {
 	values, err := h.service.ListSettings(c.Request.Context(), target)
 	if err != nil {

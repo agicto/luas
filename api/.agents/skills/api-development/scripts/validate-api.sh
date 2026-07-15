@@ -49,11 +49,31 @@ if grep -q "func.*List.*gin.Context" "${HANDLER_FILE}"; then
          grep -q "pagination.NewPaginator" "${HANDLER_FILE}"; then
         echo "✅ Pagination detected (FromContext + NewPaginator pattern)"
     else
-        echo "❌ List endpoint found but no pagination detected!"
-        echo "   Required either:"
-        echo "     - pagination.PaginateFromContext[T](c, db)"
-        echo "     - pagination.FromContext(c) + pagination.NewPaginator(...)"
-        ERRORS=$((ERRORS + 1))
+        BOUNDED_LIST_MARKERS=$(grep -E '^[[:space:]]*// luas:bounded-list max=[1-9][0-9]{0,2} reason=[a-z0-9]+(-[a-z0-9]+)*[[:space:]]*$' "${HANDLER_FILE}" || true)
+        BOUNDED_LIST_COUNT=$(awk 'NF { count++ } END { print count + 0 }' <<< "${BOUNDED_LIST_MARKERS}")
+        if [ "${BOUNDED_LIST_COUNT}" -eq 1 ]; then
+            BOUNDED_LIST_MAX=$(sed -E 's/.* max=([0-9]+) .*/\1/' <<< "${BOUNDED_LIST_MARKERS}")
+            if [ "${BOUNDED_LIST_MAX}" -le 100 ]; then
+                echo "✅ Bounded list declaration detected (max=${BOUNDED_LIST_MAX})"
+            else
+                echo "❌ Bounded list maximum must not exceed 100 (found ${BOUNDED_LIST_MAX})"
+                ERRORS=$((ERRORS + 1))
+            fi
+        elif [ "${BOUNDED_LIST_COUNT}" -gt 1 ]; then
+            echo "❌ Multiple bounded list declarations found; use one module-level declaration"
+            ERRORS=$((ERRORS + 1))
+        elif grep -q "luas:bounded-list" "${HANDLER_FILE}"; then
+            echo "❌ Malformed bounded list declaration"
+            echo "   Expected: // luas:bounded-list max=<1..100> reason=<kebab-case>"
+            ERRORS=$((ERRORS + 1))
+        else
+            echo "❌ List endpoint found but no pagination detected!"
+            echo "   Required either:"
+            echo "     - pagination.PaginateFromContext[T](c, db)"
+            echo "     - pagination.FromContext(c) + pagination.NewPaginator(...)"
+            echo "     - a reviewed finite catalog declaration (see SKILL.md)"
+            ERRORS=$((ERRORS + 1))
+        fi
     fi
 else
     echo "⚠️  No List function found (may not be needed)"

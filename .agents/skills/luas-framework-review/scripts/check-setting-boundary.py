@@ -190,6 +190,7 @@ def main() -> int:
             "private, no-store",
             "CanManageOrganization()",
             "response.NoContent(c)",
+            "// luas:bounded-list max=64 reason=finite-code-owned-catalog",
         ),
     )
     require_all(

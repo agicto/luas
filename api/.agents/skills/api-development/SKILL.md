@@ -1,11 +1,11 @@
 ---
 name: api-development
 description: Luas API development standards including pagination, error handling, and RESTful design
-version: 1.1.0
+version: 1.2.0
 category: development
 tags: [api, rest, pagination, errors, standards]
 author: Luas Team
-updated: 2026-07-13
+updated: 2026-07-15
 ---
 
 # API Development Standards
@@ -32,7 +32,25 @@ This skill provides HTTP standards for route-owning Luas modules. It applies to 
 
 ### 1. Pagination (MANDATORY)
 
-**Rule**: All list/collection endpoints **MUST** implement pagination.
+**Rule**: All unbounded list/collection endpoints **MUST** implement pagination.
+
+An intrinsically finite, code-owned catalog may return an unpaginated array only when all of these
+conditions hold:
+
+- the hard maximum is at most 100 and is enforced independently of persisted row count;
+- the contract documents the fixed bound and unpaginated response shape;
+- a module-specific governance check keeps the declaration aligned with the implementation;
+- the shared list handler carries exactly one machine-readable declaration immediately above it:
+
+```go
+// luas:bounded-list max=64 reason=finite-code-owned-catalog
+func (h *Handler) list(c *gin.Context, target domain.Target) {
+    // ...
+}
+```
+
+Do not use this declaration for user-created records, event history, search results, or any dataset
+whose cardinality can grow at runtime.
 
 #### Why Pagination is Required
 
@@ -543,7 +561,8 @@ See [`examples/complete-crud-handler.go`](./examples/complete-crud-handler.go) f
 Use this checklist before submitting API code:
 
 ### Pagination
-- [ ] All list endpoints use `pagination.PaginateFromContext[T]()`
+- [ ] Unbounded list endpoints use `pagination.PaginateFromContext[T]()`
+- [ ] Finite catalog exceptions declare a reviewed maximum of 100 or less and have a governance check
 - [ ] Response includes `meta` (total, page, pageSize, totalPages)
 - [ ] Response includes `links` (first, last, prev, next)
 - [ ] Default page size is 20, max is 100
@@ -704,7 +723,7 @@ func (h *Handler) Delete(c *gin.Context) {
 ## 📝 Quick Reference
 
 ```go
-// Pagination (MUST)
+// Pagination (MUST for unbounded collections)
 users, paginator, _ := pagination.PaginateFromContext[T](c, db)
 response.Success(c, paginator)
 
