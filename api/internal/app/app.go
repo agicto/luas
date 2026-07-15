@@ -22,4 +22,6 @@ type Application struct {
 	Starters               *starter.Registry
 	NotificationPublisher  domain.NotificationPublisher
 	NotificationDispatcher domain.NotificationDispatcher
+	AssetReader            domain.AssetReader
+	AssetMaintainer        domain.AssetMaintainer
 }

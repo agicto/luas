@@ -20,6 +20,7 @@ export const ROUTES = {
     HOME: '/console',
     ORGANIZATIONS: '/console/organizations',
     ORGANIZATION: '/console/organizations/:organizationId',
+    ASSETS: '/console/assets',
     SETTINGS: '/console/settings',
   },
 
@@ -43,18 +44,15 @@ export type ConsoleRoute = (typeof ROUTES.CONSOLE)[ConsoleRoutes];
 export type DevtoolsRoute = (typeof ROUTES.DEVTOOLS)[DevtoolsRoutes];
 
 // Dynamic route builder with type checking
-export function buildRoute(
-  basePath: string,
-  params?: Record<string, string | number>
-): string {
+export function buildRoute(basePath: string, params?: Record<string, string | number>): string {
   let route = basePath;
-  
+
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       route = route.replace(`:${key}`, String(value));
     });
   }
-  
+
   return route;
 }
 

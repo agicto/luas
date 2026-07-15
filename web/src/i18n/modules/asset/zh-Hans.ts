@@ -1,0 +1,45 @@
+const messages = {
+  title: '资产',
+  count: '共 {count} 项',
+  upload: '上传',
+  uploading: '正在上传',
+  uploaded: '上传完成',
+  uploadError: '无法完成上传。',
+  invalidFile: '文件类型或大小不符合要求。',
+  download: '下载',
+  downloadError: '无法下载资产。',
+  delete: '删除',
+  deleted: '资产已删除',
+  deleteError: '无法删除资产。',
+  deleteTitle: '删除资产',
+  deleteDescription: '此操作会删除存储的文件，且无法撤销。',
+  confirmDelete: '确认删除',
+  cancel: '取消',
+  loading: '正在加载资产',
+  loadError: '无法加载资产。',
+  retry: '重试',
+  empty: '暂无资产',
+  filterLabel: '按状态筛选',
+  filter: {
+    all: '全部',
+    pending: '待完成',
+    ready: '可用',
+    rejected: '已拒绝',
+  },
+  status: {
+    pending: '待完成',
+    ready: '可用',
+    rejected: '已拒绝',
+  },
+  columns: {
+    name: '名称',
+    type: '类型',
+    size: '大小',
+    status: '状态',
+    created: '创建时间',
+    actions: '操作',
+  },
+} as const;
+
+export default messages;
+export type AssetMessages = typeof messages;

@@ -61,13 +61,14 @@ development process, which creates a complete new dependency graph.
 
 `OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
 empty; `audit`, `apikey`, and `user` remain active without being named. Available values are
-`organization`, `permission`, and `notification`; permission explicitly depends on organization,
-while notification can be selected independently:
+`organization`, `permission`, `notification`, and `asset`; permission explicitly depends on
+organization, while notification and asset can be selected independently:
 
 ```dotenv
 OPTIONAL_STARTERS=organization,permission
 ORGANIZATION_INVITATION_TTL=168h
 # or: OPTIONAL_STARTERS=notification
+# or: OPTIONAL_STARTERS=asset
 ```
 
 Selection is resolved through `internal/starter` from the same typed configuration snapshot used by
@@ -84,6 +85,23 @@ migration. It is not a per-request flag and must not be toggled independently ac
 `168h` (7 days). It must be positive when `organization` is selected. Invitation expiry is evaluated
 against this immutable startup policy; changing the value affects newly created invitations only and
 requires a process restart like every other configuration change.
+
+## Object Storage And Asset Configuration
+
+`OBJECT_STORAGE_DRIVER` selects the provider-neutral object adapter. It defaults to `disabled`,
+except that selecting `asset` outside production defaults it to `local`. A production process with
+the asset starter fails validation unless the driver is explicitly `r2`; container-local storage is
+never a production fallback.
+
+The local driver uses `OBJECT_STORAGE_LOCAL_ROOT` and is intended for private development data only.
+The R2 driver requires the all-or-none secret group `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+`R2_ACCESS_KEY_SECRET`, `R2_BUCKET`, and `R2_ENDPOINT`. Production requires an HTTPS endpoint.
+`OBJECT_STORAGE_REQUEST_TIMEOUT` bounds provider operations and defaults to `30s`.
+
+Asset policy is independently typed through `ASSET_MAX_BYTES`, `ASSET_UPLOAD_GRANT_TTL`,
+`ASSET_DOWNLOAD_GRANT_TTL`, and `ASSET_PENDING_TTL`. Size and lifetime bounds fail startup rather
+than weakening upload or cleanup behavior. See [`ASSETS.md`](ASSETS.md) for the storage boundary,
+CORS/lifecycle deployment responsibilities, and privacy rules.
 
 ## Email Provider Configuration
 
@@ -140,6 +158,6 @@ settings.
 
 ```bash
 go test ./tests/unit -run '^TestEnv_'
-go test ./internal/infra/config ./internal/infra/email ./internal/infra/console/commands
-go test -race ./tests/unit ./internal/infra/config ./internal/infra/email ./internal/infra/console/commands
+go test ./internal/infra/config ./internal/infra/email ./internal/infra/storage ./internal/infra/console/commands
+go test -race ./tests/unit ./internal/infra/config ./internal/infra/email ./internal/infra/storage ./internal/infra/console/commands
 ```

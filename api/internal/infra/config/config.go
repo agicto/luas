@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/mail"
+	"net/url"
 	"slices"
 	"strings"
 	"time"
@@ -32,28 +33,40 @@ const (
 	DefaultEmailRequestTimeout = 10 * time.Second
 	// DefaultOrganizationInvitationTTL bounds one organization invitation token.
 	DefaultOrganizationInvitationTTL = 7 * 24 * time.Hour
+	// DefaultObjectStorageRequestTimeout bounds one provider metadata or object operation.
+	DefaultObjectStorageRequestTimeout = 30 * time.Second
+	// DefaultAssetMaxBytes bounds the first single-object asset workflow.
+	DefaultAssetMaxBytes int64 = 10 * 1024 * 1024
+	// DefaultAssetUploadGrantTTL keeps upload bearer credentials short-lived.
+	DefaultAssetUploadGrantTTL = 10 * time.Minute
+	// DefaultAssetDownloadGrantTTL keeps download bearer credentials short-lived.
+	DefaultAssetDownloadGrantTTL = 5 * time.Minute
+	// DefaultAssetPendingTTL bounds incomplete staging-object lifetime.
+	DefaultAssetPendingTTL = time.Hour
 )
 
 // Config holds all application configuration
 type Config struct {
-	App          AppConfig
-	Starters     StarterConfig
-	Server       ServerConfig
-	Database     DatabaseConfig
-	Redis        RedisConfig
-	Queue        QueueConfig
-	Scheduler    SchedulerConfig
-	JWT          JWTConfig
-	Log          LogConfig
-	Sentry       SentryConfig
-	CORS         CORSConfig
-	Email        EmailConfig
-	Organization OrganizationConfig
-	AI           AIConfig
-	R2           R2Config
-	Middleware   MiddlewareConfig
-	Metrics      MetricsConfig
-	Tracing      TracingConfig
+	App           AppConfig
+	Starters      StarterConfig
+	Server        ServerConfig
+	Database      DatabaseConfig
+	Redis         RedisConfig
+	Queue         QueueConfig
+	Scheduler     SchedulerConfig
+	JWT           JWTConfig
+	Log           LogConfig
+	Sentry        SentryConfig
+	CORS          CORSConfig
+	Email         EmailConfig
+	Organization  OrganizationConfig
+	AI            AIConfig
+	ObjectStorage ObjectStorageConfig
+	Asset         AssetConfig
+	R2            R2Config
+	Middleware    MiddlewareConfig
+	Metrics       MetricsConfig
+	Tracing       TracingConfig
 }
 
 // StarterConfig controls additive activation of starters that are not part of the defaults.
@@ -238,8 +251,21 @@ type R2Config struct {
 	Bucket          string
 	Region          string
 	Endpoint        string
-	PublicURL       string
-	PublicDomain    string
+}
+
+// ObjectStorageConfig selects a provider-neutral object adapter.
+type ObjectStorageConfig struct {
+	Driver         string
+	LocalRoot      string
+	RequestTimeout time.Duration
+}
+
+// AssetConfig owns policy for the optional asset starter rather than provider details.
+type AssetConfig struct {
+	MaxBytes         int64
+	UploadGrantTTL   time.Duration
+	DownloadGrantTTL time.Duration
+	PendingTTL       time.Duration
 }
 
 // TracingConfig holds OpenTelemetry tracing configuration
@@ -350,14 +376,23 @@ func Load() (*Config, error) {
 			InvitationTTL: env.GetDuration("ORGANIZATION_INVITATION_TTL", DefaultOrganizationInvitationTTL),
 		},
 		AI: loadAIConfig(),
+		ObjectStorage: ObjectStorageConfig{
+			Driver:         env.Get("OBJECT_STORAGE_DRIVER", defaultObjectStorageDriver(env.GetSlice("OPTIONAL_STARTERS", []string{}), isProd)),
+			LocalRoot:      env.Get("OBJECT_STORAGE_LOCAL_ROOT", "storage/objects"),
+			RequestTimeout: env.GetDuration("OBJECT_STORAGE_REQUEST_TIMEOUT", DefaultObjectStorageRequestTimeout),
+		},
+		Asset: AssetConfig{
+			MaxBytes:         int64(env.GetInt("ASSET_MAX_BYTES", int(DefaultAssetMaxBytes))),
+			UploadGrantTTL:   env.GetDuration("ASSET_UPLOAD_GRANT_TTL", DefaultAssetUploadGrantTTL),
+			DownloadGrantTTL: env.GetDuration("ASSET_DOWNLOAD_GRANT_TTL", DefaultAssetDownloadGrantTTL),
+			PendingTTL:       env.GetDuration("ASSET_PENDING_TTL", DefaultAssetPendingTTL),
+		},
 		R2: R2Config{
 			AccessKeyID:     env.Get("R2_ACCESS_KEY_ID", ""),
 			SecretAccessKey: env.Get("R2_SECRET_ACCESS_KEY", ""),
 			Bucket:          env.Get("R2_BUCKET", ""),
 			Region:          env.Get("R2_REGION", "auto"),
 			Endpoint:        env.Get("R2_ENDPOINT", ""),
-			PublicURL:       env.Get("R2_PUBLIC_URL", ""),
-			PublicDomain:    env.Get("R2_PUBLIC_DOMAIN", ""),
 		},
 		Middleware: MiddlewareConfig{
 			RequestTimeout: env.GetInt("MIDDLEWARE_REQUEST_TIMEOUT", DefaultMiddlewareRequestTimeoutSeconds),
@@ -524,6 +559,13 @@ func validate(cfg *Config) error {
 		(slices.Contains(cfg.Starters.Optional, "organization") && cfg.Organization.InvitationTTL == 0) {
 		return fmt.Errorf("ORGANIZATION_INVITATION_TTL must be greater than 0 when the organization starter is selected")
 	}
+	assetSelected := slices.Contains(cfg.Starters.Optional, "asset")
+	if err := validateObjectStorageConfig(cfg, assetSelected); err != nil {
+		return err
+	}
+	if err := validateAssetConfig(cfg.Asset, assetSelected); err != nil {
+		return err
+	}
 
 	// CORS: wildcard origin + credentials is rejected by browsers anyway.
 	// Catch the misconfiguration early at startup.
@@ -582,6 +624,90 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func defaultObjectStorageDriver(optionalStarters []string, production bool) string {
+	if slices.Contains(optionalStarters, "asset") && !production {
+		return "local"
+	}
+	return "disabled"
+}
+
+func validateObjectStorageConfig(cfg *Config, assetSelected bool) error {
+	driver := strings.TrimSpace(cfg.ObjectStorage.Driver)
+	if driver == "" {
+		driver = "disabled"
+	}
+	if driver != "disabled" && driver != "local" && driver != "r2" {
+		return fmt.Errorf("OBJECT_STORAGE_DRIVER must be one of disabled, local, or r2")
+	}
+	if cfg.ObjectStorage.RequestTimeout < 0 ||
+		(driver != "disabled" && cfg.ObjectStorage.RequestTimeout == 0) {
+		return fmt.Errorf("OBJECT_STORAGE_REQUEST_TIMEOUT must be greater than 0 when object storage is enabled")
+	}
+	if driver == "local" && strings.TrimSpace(cfg.ObjectStorage.LocalRoot) == "" {
+		return fmt.Errorf("OBJECT_STORAGE_LOCAL_ROOT is required for the local object storage driver")
+	}
+	if assetSelected && driver == "disabled" {
+		return fmt.Errorf("OBJECT_STORAGE_DRIVER must be enabled when the asset starter is selected")
+	}
+	if assetSelected && cfg.IsProduction() && driver != "r2" {
+		return fmt.Errorf("OBJECT_STORAGE_DRIVER must be r2 for the asset starter in production")
+	}
+
+	r2Values := []string{
+		strings.TrimSpace(cfg.R2.AccessKeyID),
+		strings.TrimSpace(cfg.R2.SecretAccessKey),
+		strings.TrimSpace(cfg.R2.Bucket),
+		strings.TrimSpace(cfg.R2.Endpoint),
+	}
+	configured := 0
+	for _, value := range r2Values {
+		if value != "" {
+			configured++
+		}
+	}
+	if configured != 0 && configured != len(r2Values) {
+		return fmt.Errorf("R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, and R2_ENDPOINT must be configured together")
+	}
+	if driver == "r2" && configured != len(r2Values) {
+		return fmt.Errorf("R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET, and R2_ENDPOINT are required for the r2 object storage driver")
+	}
+	if configured == len(r2Values) {
+		endpoint, err := url.Parse(r2Values[3])
+		if err != nil || endpoint.Host == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" || (endpoint.Path != "" && endpoint.Path != "/") {
+			return fmt.Errorf("R2_ENDPOINT must be an absolute http or https origin without credentials, path, query, or fragment")
+		}
+		if endpoint.Scheme != "https" && endpoint.Scheme != "http" {
+			return fmt.Errorf("R2_ENDPOINT must use http or https")
+		}
+		if cfg.IsProduction() && endpoint.Scheme != "https" {
+			return fmt.Errorf("R2_ENDPOINT must use https in production")
+		}
+		if strings.TrimSpace(cfg.R2.Region) == "" {
+			return fmt.Errorf("R2_REGION is required when R2 is configured")
+		}
+	}
+	return nil
+}
+
+func validateAssetConfig(asset AssetConfig, selected bool) error {
+	if !selected && asset == (AssetConfig{}) {
+		return nil
+	}
+	if asset.MaxBytes <= 0 || asset.MaxBytes > 100*1024*1024 {
+		return fmt.Errorf("ASSET_MAX_BYTES must be between 1 and 104857600")
+	}
+	if asset.UploadGrantTTL <= 0 || asset.UploadGrantTTL > time.Hour {
+		return fmt.Errorf("ASSET_UPLOAD_GRANT_TTL must be greater than 0 and no more than 1h")
+	}
+	if asset.DownloadGrantTTL <= 0 || asset.DownloadGrantTTL > 15*time.Minute {
+		return fmt.Errorf("ASSET_DOWNLOAD_GRANT_TTL must be greater than 0 and no more than 15m")
+	}
+	if asset.PendingTTL < asset.UploadGrantTTL || asset.PendingTTL > 24*time.Hour {
+		return fmt.Errorf("ASSET_PENDING_TTL must be at least ASSET_UPLOAD_GRANT_TTL and no more than 24h")
+	}
 	return nil
 }
 

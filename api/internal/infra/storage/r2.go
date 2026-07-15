@@ -1,188 +1,301 @@
 package storage
 
 import (
-	"bytes"
+	"context"
+	"errors"
 	"fmt"
 	"io"
+	"mime"
+	"net/http"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/google/uuid"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/smithy-go"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
 )
 
-// R2Storage implements storage operations for Cloudflare R2
-type R2Storage struct {
-	client       *s3.S3
-	bucket       string
-	publicURL    string
-	publicDomain string
+// R2Options configures the private S3-compatible Cloudflare R2 adapter.
+type R2Options struct {
+	AccessKeyID     string
+	SecretAccessKey string
+	Bucket          string
+	Region          string
+	Endpoint        string
+	RequestTimeout  time.Duration
 }
 
-var r2Storage *R2Storage
+type s3API interface {
+	PutObject(context.Context, *s3.PutObjectInput, ...func(*s3.Options)) (*s3.PutObjectOutput, error)
+	GetObject(context.Context, *s3.GetObjectInput, ...func(*s3.Options)) (*s3.GetObjectOutput, error)
+	HeadObject(context.Context, *s3.HeadObjectInput, ...func(*s3.Options)) (*s3.HeadObjectOutput, error)
+	CopyObject(context.Context, *s3.CopyObjectInput, ...func(*s3.Options)) (*s3.CopyObjectOutput, error)
+	DeleteObject(context.Context, *s3.DeleteObjectInput, ...func(*s3.Options)) (*s3.DeleteObjectOutput, error)
+}
 
-// InitR2Storage initializes the R2 storage client
-func InitR2Storage(cfg *config.Config) error {
-	if cfg.R2.AccessKeyID == "" || cfg.R2.SecretAccessKey == "" || cfg.R2.Endpoint == "" || cfg.R2.Bucket == "" {
-		return fmt.Errorf("missing required R2 configuration")
+type s3Presigner interface {
+	PresignPutObject(context.Context, *s3.PutObjectInput, ...func(*s3.PresignOptions)) (*v4.PresignedHTTPRequest, error)
+	PresignGetObject(context.Context, *s3.GetObjectInput, ...func(*s3.PresignOptions)) (*v4.PresignedHTTPRequest, error)
+}
+
+// R2Store implements ObjectStore and provider-native direct transfer grants.
+type R2Store struct {
+	client    s3API
+	presigner s3Presigner
+	bucket    string
+	now       func() time.Time
+}
+
+var (
+	_ storagecap.ObjectStore         = (*R2Store)(nil)
+	_ storagecap.DirectTransferStore = (*R2Store)(nil)
+)
+
+// NewR2Store creates an AWS SDK for Go v2 client without consulting ambient AWS profiles.
+func NewR2Store(options R2Options) (*R2Store, error) {
+	if strings.TrimSpace(options.AccessKeyID) == "" ||
+		strings.TrimSpace(options.SecretAccessKey) == "" ||
+		strings.TrimSpace(options.Bucket) == "" ||
+		strings.TrimSpace(options.Region) == "" ||
+		strings.TrimSpace(options.Endpoint) == "" ||
+		options.RequestTimeout <= 0 {
+		return nil, fmt.Errorf("complete R2 options are required")
+	}
+	endpoint, err := url.Parse(options.Endpoint)
+	if err != nil || endpoint.Host == "" || (endpoint.Scheme != "http" && endpoint.Scheme != "https") {
+		return nil, fmt.Errorf("valid R2 endpoint is required")
 	}
 
-	// Create an AWS session
-	sess, err := session.NewSession(&aws.Config{
-		Credentials:      credentials.NewStaticCredentials(cfg.R2.AccessKeyID, cfg.R2.SecretAccessKey, ""),
-		Endpoint:         aws.String(cfg.R2.Endpoint),
-		Region:           aws.String(cfg.R2.Region),
-		S3ForcePathStyle: aws.Bool(true),
+	awsConfig := aws.Config{
+		Region:                     options.Region,
+		Credentials:                aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(options.AccessKeyID, options.SecretAccessKey, "")),
+		HTTPClient:                 &http.Client{Timeout: options.RequestTimeout},
+		RequestChecksumCalculation: aws.RequestChecksumCalculationWhenRequired,
+		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
+		RetryMaxAttempts:           3,
+		RetryMode:                  aws.RetryModeStandard,
+	}
+	client := s3.NewFromConfig(awsConfig, func(value *s3.Options) {
+		value.BaseEndpoint = aws.String(strings.TrimRight(options.Endpoint, "/"))
+		value.UsePathStyle = true
 	})
-	if err != nil {
-		return fmt.Errorf("failed to create R2 session: %w", err)
-	}
-
-	// Create S3 service client
-	r2Storage = &R2Storage{
-		client:       s3.New(sess),
-		bucket:       cfg.R2.Bucket,
-		publicURL:    cfg.R2.PublicURL,
-		publicDomain: cfg.R2.PublicDomain,
-	}
-
-	fmt.Printf("Bucket: %s\n", r2Storage.bucket)
-	fmt.Printf("Public URL: %s\n", r2Storage.publicURL)
-	fmt.Printf("Public Domain: %s\n", r2Storage.publicDomain)
-	fmt.Printf("Endpoint: %s\n", *sess.Config.Endpoint)
-	fmt.Printf("Region: %s\n", *sess.Config.Region)
-
-	return nil
+	return &R2Store{
+		client:    client,
+		presigner: s3.NewPresignClient(client),
+		bucket:    options.Bucket,
+		now:       func() time.Time { return time.Now().UTC() },
+	}, nil
 }
 
-// GetR2Storage returns the R2 storage instance
-func GetR2Storage() *R2Storage {
-	return r2Storage
-}
+func (s *R2Store) Driver() string { return storagecap.DriverR2 }
 
-// UploadFile uploads a file to R2 storage
-func (s *R2Storage) UploadFile(data []byte, fileName string, contentType string) (string, error) {
-	// Generate a unique file name if not provided
-	if fileName == "" {
-		ext := filepath.Ext(fileName)
-		if ext == "" {
-			// Default to .bin if no extension
-			ext = ".bin"
-		}
-		fileName = uuid.New().String() + ext
+func (s *R2Store) Put(
+	ctx context.Context,
+	key string,
+	body io.Reader,
+	size int64,
+	mediaType string,
+) error {
+	if err := validateR2Operation(ctx, s, key); err != nil {
+		return err
 	}
-
-	// Prepare the S3 input parameters
-	params := &s3.PutObjectInput{
+	if body == nil || size < 0 {
+		return storagecap.ErrObjectSizeMismatch
+	}
+	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket:        aws.String(s.bucket),
-		Key:           aws.String(fileName),
-		Body:          bytes.NewReader(data),
-		ContentLength: aws.Int64(int64(len(data))),
-		ContentType:   aws.String(contentType),
-	}
-
-	// Upload the file
-	_, err := s.client.PutObject(params)
-	if err != nil {
-		return "", fmt.Errorf("failed to upload file to R2: %w", err)
-	}
-
-	// Return the file URL
-	if s.publicURL != "" {
-		return fmt.Sprintf("%s/%s", strings.TrimRight(s.publicURL, "/"), url.PathEscape(fileName)), nil
-	}
-
-	// Use the S3-compatible URL format if no public URL is configured
-	return fmt.Sprintf("https://%s.%s/%s", s.bucket, strings.TrimPrefix(strings.TrimPrefix(s.client.Endpoint, "https://"), "http://"), url.PathEscape(fileName)), nil
+		Key:           aws.String(key),
+		Body:          body,
+		ContentLength: aws.Int64(size),
+		ContentType:   aws.String(mediaType),
+	}, s3.WithAPIOptions(v4.SwapComputePayloadSHA256ForUnsignedPayloadMiddleware))
+	return mapR2Error(err)
 }
 
-// GetFileURL returns the public URL for a file
-func (s *R2Storage) GetFileURL(fileName string) string {
-	// Use configured public domain from .env
-	if s.publicDomain != "" {
-		return fmt.Sprintf("https://%s/%s", s.publicDomain, fileName)
+func (s *R2Store) Open(ctx context.Context, key string) (io.ReadCloser, error) {
+	if err := validateR2Operation(ctx, s, key); err != nil {
+		return nil, err
 	}
-
-	// Fallback to public URL if available
-	if s.publicURL != "" {
-		return fmt.Sprintf("%s/%s", strings.TrimRight(s.publicURL, "/"), url.PathEscape(fileName))
-	}
-
-	// Fallback to S3-compatible URL format
-	return fmt.Sprintf("https://%s.%s/%s", s.bucket, strings.TrimPrefix(strings.TrimPrefix(s.client.Endpoint, "https://"), "http://"), url.PathEscape(fileName))
-}
-
-// GetPresignedURL returns a presigned URL for a file
-func (s *R2Storage) GetPresignedURL(fileName string, expires time.Duration) (string, error) {
-	req, _ := s.client.GetObjectRequest(&s3.GetObjectInput{
+	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucket),
-		Key:    aws.String(fileName),
+		Key:    aws.String(key),
 	})
-
-	// Generate the presigned URL
-	urlStr, err := req.Presign(expires)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+		return nil, mapR2Error(err)
 	}
-
-	return urlStr, nil
+	if result == nil || result.Body == nil {
+		return nil, storagecap.ErrObjectStoreUnavailable
+	}
+	return result.Body, nil
 }
 
-// DeleteFile deletes a file from R2 storage
-func (s *R2Storage) DeleteFile(fileName string) error {
-	_, err := s.client.DeleteObject(&s3.DeleteObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(fileName),
-	})
-
-	if err != nil {
-		return fmt.Errorf("failed to delete file from R2: %w", err)
+func (s *R2Store) Stat(ctx context.Context, key string) (storagecap.ObjectInfo, error) {
+	if err := validateR2Operation(ctx, s, key); err != nil {
+		return storagecap.ObjectInfo{}, err
 	}
+	result, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return storagecap.ObjectInfo{}, mapR2Error(err)
+	}
+	if result == nil || result.ContentLength == nil {
+		return storagecap.ObjectInfo{}, storagecap.ErrObjectStoreUnavailable
+	}
+	return storagecap.ObjectInfo{
+		Size:         *result.ContentLength,
+		MediaType:    aws.ToString(result.ContentType),
+		ETag:         strings.Trim(aws.ToString(result.ETag), `"`),
+		LastModified: aws.ToTime(result.LastModified),
+	}, nil
+}
 
+func (s *R2Store) Copy(ctx context.Context, sourceKey, destinationKey string) error {
+	if err := validateR2Operation(ctx, s, sourceKey); err != nil {
+		return err
+	}
+	if err := storagecap.ValidateObjectKey(destinationKey); err != nil {
+		return err
+	}
+	copySource := url.PathEscape(s.bucket + "/" + sourceKey)
+	_, err := s.client.CopyObject(ctx, &s3.CopyObjectInput{
+		Bucket:     aws.String(s.bucket),
+		Key:        aws.String(destinationKey),
+		CopySource: aws.String(copySource),
+	})
+	return mapR2Error(err)
+}
+
+func (s *R2Store) Delete(ctx context.Context, key string) error {
+	if err := validateR2Operation(ctx, s, key); err != nil {
+		return err
+	}
+	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	return mapR2Error(err)
+}
+
+func (s *R2Store) PresignUpload(
+	ctx context.Context,
+	options storagecap.UploadGrantOptions,
+) (storagecap.TransferGrant, error) {
+	if err := validateR2Grant(ctx, s, options.Key, options.TTL); err != nil {
+		return storagecap.TransferGrant{}, err
+	}
+	if strings.TrimSpace(options.MediaType) == "" {
+		return storagecap.TransferGrant{}, storagecap.ErrDirectTransferUnsupported
+	}
+	request, err := s.presigner.PresignPutObject(ctx, &s3.PutObjectInput{
+		Bucket:      aws.String(s.bucket),
+		Key:         aws.String(options.Key),
+		ContentType: aws.String(options.MediaType),
+	}, func(value *s3.PresignOptions) {
+		value.Expires = options.TTL
+	})
+	if err != nil {
+		return storagecap.TransferGrant{}, mapR2Error(err)
+	}
+	return transferGrant(request, s.now().Add(options.TTL)), nil
+}
+
+func (s *R2Store) PresignDownload(
+	ctx context.Context,
+	options storagecap.DownloadGrantOptions,
+) (storagecap.TransferGrant, error) {
+	if err := validateR2Grant(ctx, s, options.Key, options.TTL); err != nil {
+		return storagecap.TransferGrant{}, err
+	}
+	disposition, err := attachmentDisposition(options.DownloadName)
+	if err != nil {
+		return storagecap.TransferGrant{}, err
+	}
+	request, err := s.presigner.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket:                     aws.String(s.bucket),
+		Key:                        aws.String(options.Key),
+		ResponseContentDisposition: aws.String(disposition),
+		ResponseContentType:        aws.String(options.MediaType),
+	}, func(value *s3.PresignOptions) {
+		value.Expires = options.TTL
+	})
+	if err != nil {
+		return storagecap.TransferGrant{}, mapR2Error(err)
+	}
+	return transferGrant(request, s.now().Add(options.TTL)), nil
+}
+
+func transferGrant(request *v4.PresignedHTTPRequest, expiresAt time.Time) storagecap.TransferGrant {
+	headers := make(map[string]string, len(request.SignedHeader))
+	for name, values := range request.SignedHeader {
+		normalized := strings.ToLower(name)
+		if len(values) > 0 && browserMaySetHeader(normalized) {
+			headers[normalized] = strings.Join(values, ",")
+		}
+	}
+	return storagecap.TransferGrant{
+		Method:    request.Method,
+		URL:       request.URL,
+		Headers:   headers,
+		ExpiresAt: expiresAt,
+	}
+}
+
+func browserMaySetHeader(name string) bool {
+	switch name {
+	case "authorization", "content-length", "cookie", "host", "origin", "referer", "set-cookie":
+		return false
+	default:
+		return true
+	}
+}
+
+func attachmentDisposition(name string) (string, error) {
+	if name == "" || name != strings.TrimSpace(name) || strings.ContainsAny(name, "\r\n\x00/\\") {
+		return "", storagecap.ErrDirectTransferUnsupported
+	}
+	return mime.FormatMediaType("attachment", map[string]string{"filename": name}), nil
+}
+
+func validateR2Grant(ctx context.Context, store *R2Store, key string, ttl time.Duration) error {
+	if err := validateR2Operation(ctx, store, key); err != nil {
+		return err
+	}
+	if ttl <= 0 || ttl > time.Hour || store.presigner == nil || store.now == nil {
+		return storagecap.ErrDirectTransferUnsupported
+	}
 	return nil
 }
 
-// DownloadFile downloads a file from R2 storage
-func (s *R2Storage) DownloadFile(fileName string) ([]byte, error) {
-	result, err := s.client.GetObject(&s3.GetObjectInput{
-		Bucket: aws.String(s.bucket),
-		Key:    aws.String(fileName),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to download file from R2: %w", err)
+func validateR2Operation(ctx context.Context, store *R2Store, key string) error {
+	if err := ctx.Err(); err != nil {
+		return err
 	}
-	defer result.Body.Close()
-
-	return io.ReadAll(result.Body)
-}
-
-// R2Client represents an R2 storage client
-type R2Client struct {
-	cfg *config.Config
-}
-
-// NewR2Client creates a new R2 client
-func NewR2Client(cfg *config.Config) *R2Client {
-	return &R2Client{
-		cfg: cfg,
+	if store == nil || store.client == nil || strings.TrimSpace(store.bucket) == "" {
+		return storagecap.ErrObjectStoreUnavailable
 	}
+	return storagecap.ValidateObjectKey(key)
 }
 
-// FileExists checks if a file exists in R2
-func (c *R2Client) FileExists(key string) (bool, error) {
-	// Implementation here
-	return false, nil
-}
-
-// GeneratePresignedURL generates a presigned URL for uploading a file
-func (c *R2Client) GeneratePresignedURL(key string, contentType string) (string, error) {
-	// Implementation here
-	return "", nil
+func mapR2Error(err error) error {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	var apiError smithy.APIError
+	if errors.As(err, &apiError) {
+		switch apiError.ErrorCode() {
+		case "NoSuchKey", "NotFound", "404":
+			return storagecap.ErrObjectNotFound
+		}
+	}
+	return storagecap.ErrObjectStoreUnavailable
 }

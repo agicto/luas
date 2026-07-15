@@ -26,7 +26,9 @@ Default starter modules:
 
 Optional starter modules are compiled but activated additively. `organization` owns tenancy and
 membership, `permission` adds organization-scoped exact grants, and `notification` owns user-scoped
-records, preferences, read state, and a durable channel delivery ledger.
+records, preferences, read state, and a durable channel delivery ledger. `asset` owns private
+user-upload metadata, inspection, lifecycle, and deletion while opaque bytes remain behind the
+storage capability.
 
 Typical flow:
 
@@ -116,6 +118,15 @@ deployed `luas notification:work` processes email deliveries through bounded dat
 stable provider idempotency key. The Web feature owns strict same-origin adapters, development mock
 parity, unread state, preferences, and a lazy notification center; it never receives provider
 responses or recipient routing data.
+
+The independent `asset` starter is selected with `asset` in both halves. API routes own the private
+metadata lifecycle and issue short-lived upload/download grants through a provider-neutral object
+store. Uploads land on random staging keys and become downloadable only after authoritative metadata
+and bounded content inspection promote bytes to an immutable final key. The Web feature owns strict
+fixed management adapters, ephemeral transfer execution, bounded mock parity, and console state; it
+never receives object keys, local paths, checksums, or durable provider URLs. Production requires an
+explicit R2 adapter while local storage remains a rooted development implementation. See
+[`../contracts/ASSETS.md`](../contracts/ASSETS.md).
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

@@ -1,4 +1,9 @@
-export const OPTIONAL_WEB_FEATURES = ['organization', 'permission', 'notification'] as const;
+export const OPTIONAL_WEB_FEATURES = [
+  'organization',
+  'permission',
+  'notification',
+  'asset',
+] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
 
@@ -16,11 +21,7 @@ export function parseOptionalWebFeatures(value: string): readonly OptionalWebFea
   const seen = new Set<string>();
 
   for (const feature of selected) {
-    if (
-      feature.length === 0 ||
-      feature !== feature.trim() ||
-      !/^[a-z][a-z0-9-]*$/.test(feature)
-    ) {
+    if (feature.length === 0 || feature !== feature.trim() || !/^[a-z][a-z0-9-]*$/.test(feature)) {
       throw new Error(`Optional Web feature "${feature}" must use a canonical lowercase name`);
     }
     if (seen.has(feature)) {
@@ -37,9 +38,7 @@ export function parseOptionalWebFeatures(value: string): readonly OptionalWebFea
   for (const feature of selected as OptionalWebFeature[]) {
     for (const dependency of featureDependencies[feature] ?? []) {
       if (!seen.has(dependency)) {
-        throw new Error(
-          `Optional Web feature "${feature}" requires "${dependency}"`
-        );
+        throw new Error(`Optional Web feature "${feature}" requires "${dependency}"`);
       }
     }
   }

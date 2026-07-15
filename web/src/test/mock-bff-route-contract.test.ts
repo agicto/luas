@@ -24,6 +24,7 @@ const notificationRouteModule = resolve(
   process.cwd(),
   'src/features/notification/server/notification-route.ts'
 );
+const assetRouteModule = resolve(process.cwd(), 'src/features/asset/server/asset-route.ts');
 
 const forbiddenRoutePatterns = [
   {
@@ -121,6 +122,22 @@ function delegatesNotificationGuard(path: string, handler: RouteHandlerSource): 
   );
 }
 
+function isAssetRoute(path: string): boolean {
+  const route = relativeRoute(path);
+  return (
+    route === 'assets/route.ts' ||
+    route.startsWith('assets/') ||
+    route.startsWith('asset-transfers/')
+  );
+}
+
+function delegatesAssetGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    isAssetRoute(path) &&
+    /\b(?:accept|complete|create|delete|download|list)Asset[A-Za-z]*Route\b/.test(handler.source)
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -162,7 +179,8 @@ describe('mock BFF route contract', () => {
             !delegatesOrganizationGuard(path, handler) &&
             !delegatesApiKeyGuard(path, handler) &&
             !delegatesPermissionGuard(path, handler) &&
-            !delegatesNotificationGuard(path, handler)
+            !delegatesNotificationGuard(path, handler) &&
+            !delegatesAssetGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -178,6 +196,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesApiKeyGuard(path, handler))
         .filter(handler => !delegatesPermissionGuard(path, handler))
         .filter(handler => !delegatesNotificationGuard(path, handler))
+        .filter(handler => !delegatesAssetGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -234,27 +253,58 @@ describe('mock BFF route contract', () => {
   });
 
   it('finalizes every permission route as a private no-store response', () => {
-    const offenders = routeFiles
-      .filter(isPermissionRoute)
-      .flatMap(path =>
-        routeHandlers(path)
-          .filter(handler => !handler.source.includes('privateOrganizationResponse('))
-          .map(handler => `${relativeRoute(path)}:${handler.method}`)
-      );
+    const offenders = routeFiles.filter(isPermissionRoute).flatMap(path =>
+      routeHandlers(path)
+        .filter(handler => !handler.source.includes('privateOrganizationResponse('))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
+    );
 
     expect(offenders).toEqual([]);
   });
 
   it('finalizes every notification route as a private no-store response', () => {
-    const offenders = routeFiles
-      .filter(isNotificationRoute)
-      .flatMap(path =>
-        routeHandlers(path)
-          .filter(handler => !handler.source.includes('privateNotificationResponse('))
-          .map(handler => `${relativeRoute(path)}:${handler.method}`)
-      );
+    const offenders = routeFiles.filter(isNotificationRoute).flatMap(path =>
+      routeHandlers(path)
+        .filter(handler => !handler.source.includes('privateNotificationResponse('))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
+    );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every asset route as a private no-store response', () => {
+    const offenders = routeFiles.filter(isAssetRoute).flatMap(path =>
+      routeHandlers(path)
+        .filter(handler => !handler.source.includes('privateAssetResponse('))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps delegated asset writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(assetRouteModule, 'utf8');
+    const resolver =
+      source
+        .split('async function resolveMutationRoute', 2)[1]
+        ?.split('async function resolveAuthenticatedRoute', 1)[0] ?? '';
+    const availabilityGuard = resolver.indexOf('resolveAssetRoute(');
+    const originGuard = resolver.indexOf('guardSameOriginMutation(');
+    const authentication = resolver.indexOf('resolveAuthenticatedRoute(');
+
+    expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+    expect(originGuard).toBeGreaterThan(availabilityGuard);
+    expect(authentication).toBeGreaterThan(originGuard);
+
+    for (const name of [
+      'createAssetUploadIntentRoute',
+      'completeAssetRoute',
+      'createAssetDownloadGrantRoute',
+      'deleteAssetRoute',
+    ]) {
+      const handler = exportedFunction(source, name);
+      expect(handler.indexOf('resolveMutationRoute('), name).toBeGreaterThanOrEqual(0);
+    }
   });
 
   it('keeps delegated notification writes ordered behind availability and origin guards', () => {
@@ -287,9 +337,10 @@ describe('mock BFF route contract', () => {
 
   it('keeps delegated permission writes ordered behind availability and origin guards', () => {
     const source = readFileSync(permissionRouteModule, 'utf8');
-    const resolver = source
-      .split('async function resolveMutationRoute', 2)[1]
-      ?.split('async function resolveAuthenticatedRoute', 1)[0] ?? '';
+    const resolver =
+      source
+        .split('async function resolveMutationRoute', 2)[1]
+        ?.split('async function resolveAuthenticatedRoute', 1)[0] ?? '';
     const availabilityGuard = resolver.indexOf('resolvePermissionRoute(');
     const originGuard = resolver.indexOf('guardSameOriginMutation(');
     const authentication = resolver.indexOf('resolveAuthenticatedRoute(');

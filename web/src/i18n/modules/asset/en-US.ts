@@ -1,0 +1,47 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { AssetMessages } from './zh-Hans';
+
+const messages = {
+  title: 'Assets',
+  count: '{count} items',
+  upload: 'Upload',
+  uploading: 'Uploading',
+  uploaded: 'Upload complete',
+  uploadError: 'The upload could not be completed.',
+  invalidFile: 'The file type or size is not allowed.',
+  download: 'Download',
+  downloadError: 'The asset could not be downloaded.',
+  delete: 'Delete',
+  deleted: 'Asset deleted',
+  deleteError: 'The asset could not be deleted.',
+  deleteTitle: 'Delete asset',
+  deleteDescription: 'This removes the stored file and cannot be undone.',
+  confirmDelete: 'Delete asset',
+  cancel: 'Cancel',
+  loading: 'Loading assets',
+  loadError: 'Assets could not be loaded.',
+  retry: 'Retry',
+  empty: 'No assets',
+  filterLabel: 'Filter by status',
+  filter: {
+    all: 'All',
+    pending: 'Pending',
+    ready: 'Ready',
+    rejected: 'Rejected',
+  },
+  status: {
+    pending: 'Pending',
+    ready: 'Ready',
+    rejected: 'Rejected',
+  },
+  columns: {
+    name: 'Name',
+    type: 'Type',
+    size: 'Size',
+    status: 'Status',
+    created: 'Created',
+    actions: 'Actions',
+  },
+} as const satisfies LocaleMessageShape<AssetMessages>;
+
+export default messages;

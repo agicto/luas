@@ -106,6 +106,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewWorkflowScheduleRunCommand()},
 		Registration{Command: NewWorkflowScheduleWorkCommand()},
 		Registration{Command: NewNotificationWorkCommand()},
+		Registration{Command: NewAssetPruneCommand()},
 	)
 
 	return []Manifest{makeManifest, databaseManifest, coreManifest}

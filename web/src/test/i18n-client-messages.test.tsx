@@ -31,6 +31,7 @@ describe('client i18n message boundaries', () => {
       organization: ['organization'],
       permission: ['permission'],
       notification: ['notification'],
+      asset: ['asset'],
       i18nTest: ['test'],
     });
   });
@@ -49,16 +50,10 @@ describe('client i18n message boundaries', () => {
     render(
       <NextIntlClientProvider
         locale="en-US"
-        messages={selectMessageNamespaces(
-          messages,
-          CLIENT_MESSAGE_NAMESPACES.global
-        )}
+        messages={selectMessageNamespaces(messages, CLIENT_MESSAGE_NAMESPACES.global)}
       >
         <RouteMessagesProvider
-          additionalMessages={selectMessageNamespaces(
-            messages,
-            CLIENT_MESSAGE_NAMESPACES.auth
-          )}
+          additionalMessages={selectMessageNamespaces(messages, CLIENT_MESSAGE_NAMESPACES.auth)}
         >
           <TranslationProbe />
         </RouteMessagesProvider>
@@ -75,18 +70,15 @@ describe('client i18n message boundaries', () => {
     const organizationLayout = readSource(
       'app/(protected)/(console)/console/organizations/layout.tsx'
     );
-    const settingsLayout = readSource(
-      'app/(protected)/(console)/console/settings/layout.tsx'
-    );
-    const i18nTestLayout = readSource(
-      'app/(protected)/(devtools)/i18n-test/layout.tsx'
-    );
+    const settingsLayout = readSource('app/(protected)/(console)/console/settings/layout.tsx');
+    const i18nTestLayout = readSource('app/(protected)/(devtools)/i18n-test/layout.tsx');
 
     expect(rootLayout).toContain('CLIENT_MESSAGE_NAMESPACES.global');
     expect(rootLayout).not.toContain('messages={messages}');
     expect(authLayout).toContain('CLIENT_MESSAGE_NAMESPACES.auth');
     expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.console');
     expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.notification');
+    expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.asset');
     expect(settingsLayout).toContain('CLIENT_MESSAGE_NAMESPACES.settings');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.organization');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');

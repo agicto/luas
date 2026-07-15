@@ -76,6 +76,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and every non-template `SKILL.md` for vocabulary drift from `CONTEXT.md`.
 - `luas-framework-review/scripts/check-doc-links.py` checks local Markdown links across docs and agent guidance.
 - `luas-framework-review/scripts/check-error-contracts.py` checks scaffold-level HTTP status and `error_code` alignment across contracts, API response constants, and Web fallbacks.
+- `luas-framework-review/scripts/check-asset-boundary.py` checks private asset ownership, bounded object storage, ephemeral grants, inspection, cleanup, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-surface-catalog.py` checks scaffold surface classification alignment across `CONTEXT.md`, `docs/SCAFFOLD_SURFACES.md`, and downstream extraction guidance.
 - `luas-framework-review/scripts/check-branch-governance.sh` checks that branch/release docs stay aligned with CI-managed deployment branch mappings.
 - **`name`** is `kebab-case`, ≤ 64 chars.

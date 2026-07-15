@@ -8,7 +8,7 @@ import {
 } from '@/http/codes';
 
 const apiErrorCodePattern =
-  /^(?:COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE|NOTIFICATION)(?:\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$/;
+  /^(?:COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE|NOTIFICATION|ASSET)(?:\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$/;
 const clientErrorCodePattern = /^CLIENT\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 const legacyErrorCodePattern = /^(?:SYS|AUTH|BIZ|VAL)_\d{3}$/;
 
@@ -16,7 +16,7 @@ function duplicateValues(values: string[]): string[] {
   const seen = new Set<string>();
   const duplicates = new Set<string>();
 
-  values.forEach((value) => {
+  values.forEach(value => {
     if (seen.has(value)) {
       duplicates.add(value);
     }
@@ -30,7 +30,7 @@ function duplicateValues(values: string[]): string[] {
 describe('error code vocabulary', () => {
   it('keeps API error codes on canonical server namespaces', () => {
     const values = Object.values(ApiErrorCode);
-    const offenders = values.filter((value) => !apiErrorCodePattern.test(value));
+    const offenders = values.filter(value => !apiErrorCodePattern.test(value));
 
     expect(offenders).toEqual([]);
     expect(duplicateValues(values)).toEqual([]);
@@ -38,7 +38,7 @@ describe('error code vocabulary', () => {
 
   it('keeps client fallback codes separate from server error_code values', () => {
     const values = Object.values(ClientErrorCode);
-    const offenders = values.filter((value) => !clientErrorCodePattern.test(value));
+    const offenders = values.filter(value => !clientErrorCodePattern.test(value));
 
     expect(offenders).toEqual([]);
     expect(duplicateValues(values)).toEqual([]);
@@ -57,7 +57,7 @@ describe('error code vocabulary', () => {
     const legacyExamples = ['SYS_001', 'AUTH_401', 'VAL_400', 'BIZ_404'];
     const emittedCodes = [...Object.values(ApiErrorCode), ...Object.values(ClientErrorCode)];
 
-    expect(emittedCodes.filter((code) => legacyErrorCodePattern.test(code))).toEqual([]);
+    expect(emittedCodes.filter(code => legacyErrorCodePattern.test(code))).toEqual([]);
     expect(legacyExamples.map(normalizeLegacyErrorCode)).toEqual([
       ClientErrorCode.UNKNOWN,
       ApiErrorCode.AUTH_UNAUTHORIZED,

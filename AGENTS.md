@@ -36,10 +36,12 @@ Workspace-level architecture docs:
 - [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — optional organization activation, ownership scope, API, and deliberate deferrals
 - [contracts/PERMISSIONS.md](contracts/PERMISSIONS.md) — optional access roles, exact permission checks, delegated-management limits, and guard seam
 - [contracts/NOTIFICATIONS.md](contracts/NOTIFICATIONS.md) — optional user notifications, preferences, read state, durable email delivery, and browser adapter
+- [contracts/ASSETS.md](contracts/ASSETS.md) — optional user assets, secure transfer grants, content inspection, cleanup, and browser adapter
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
 - [api/docs/NOTIFICATIONS.md](api/docs/NOTIFICATIONS.md) — notification publication, lease worker, delivery privacy, and replacement boundary
+- [api/docs/ASSETS.md](api/docs/ASSETS.md) — asset/object distinction, secure providers, inspection, cleanup, and replacement boundary
 - [api/docs/OBSERVABILITY.md](api/docs/OBSERVABILITY.md) — request-log minimization, redaction, exception diagnostics, parameterized SQL, and audit privacy
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
@@ -50,6 +52,7 @@ Workspace-level architecture docs:
 - [web/docs/ORGANIZATIONS.md](web/docs/ORGANIZATIONS.md) — optional browser activation, URL-scoped organization selection, adapter ownership, and replacement
 - [web/docs/PERMISSIONS.md](web/docs/PERMISSIONS.md) — optional permission UI, fixed browser routes, mock parity, and removal
 - [web/docs/NOTIFICATIONS.md](web/docs/NOTIFICATIONS.md) — optional notification center, adapter/mock ownership, strict parsing, and removal
+- [web/docs/ASSETS.md](web/docs/ASSETS.md) — optional private asset workflow, ephemeral transfer grants, mock parity, and removal
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills
@@ -82,6 +85,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
 - `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.
+- `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py` — keep asset ownership, storage adapters, transfer grants, inspection, cleanup, and API/Web/contracts aligned.
 - `.agents/skills/luas-framework-review/scripts/check-api-key-boundary.py` — keep API key hash-only persistence, atomic revoke/use writes, scope semantics, one-time plaintext, and Web adapter behavior aligned.
 - `.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py` — keep request logs/traces, exception diagnostics, SQL logs, logger context, and audit metadata behind one minimization/redaction boundary.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.

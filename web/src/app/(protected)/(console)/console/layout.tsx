@@ -1,38 +1,46 @@
 'use client';
 
 import { lazy, Suspense } from 'react';
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LucideIcon, BarChart3, Settings, Home, Bell, LogOut, Palette, Building2 } from "lucide-react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  LucideIcon,
+  BarChart3,
+  Settings,
+  Home,
+  Bell,
+  LogOut,
+  Palette,
+  Building2,
+  FolderOpen,
+} from 'lucide-react';
 
-import { cn } from "@/utils";
-import { ROUTES } from "@/constants/routes";
+import { cn } from '@/utils';
+import { ROUTES } from '@/constants/routes';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LanguageSwitcher } from "@/components/common";
-import { useT, type AllTranslationKeys } from "@/i18n";
-import { useLogout } from "@/features/auth/hooks/use-auth";
-import { useAuthStore } from "@/features/auth/store/auth-store";
-import { isWebFeatureEnabled } from "@/config/features";
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { LanguageSwitcher } from '@/components/common';
+import { useT, type AllTranslationKeys } from '@/i18n';
+import { useLogout } from '@/features/auth/hooks/use-auth';
+import { useAuthStore } from '@/features/auth/store/auth-store';
+import { isWebFeatureEnabled } from '@/config/features';
 
 const OrganizationSwitcher = lazy(async () => {
-  const organizationFeature = await import(
-    '@/features/organization/components/organization-switcher'
-  );
+  const organizationFeature =
+    await import('@/features/organization/components/organization-switcher');
   return { default: organizationFeature.OrganizationSwitcher };
 });
 
 const NotificationCenter = lazy(async () => {
-  const notificationFeature = await import(
-    '@/features/notification/components/notification-center'
-  );
+  const notificationFeature =
+    await import('@/features/notification/components/notification-center');
   return { default: notificationFeature.NotificationCenter };
 });
 
@@ -42,41 +50,49 @@ interface NavItem {
   icon: LucideIcon;
 }
 
-export default function ConsoleLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useT();
   const user = useAuthStore.use.user();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
   const organizationEnabled = isWebFeatureEnabled('organization');
   const notificationEnabled = isWebFeatureEnabled('notification');
+  const assetEnabled = isWebFeatureEnabled('asset');
 
   const mainNavItems: NavItem[] = [
     {
-      titleKey: "nav.console",
+      titleKey: 'nav.console',
       href: ROUTES.CONSOLE.HOME,
       icon: Home,
     },
     ...(organizationEnabled
-      ? [{
-          titleKey: "nav.organizations" as const,
-          href: ROUTES.CONSOLE.ORGANIZATIONS,
-          icon: Building2,
-        }]
+      ? [
+          {
+            titleKey: 'nav.organizations' as const,
+            href: ROUTES.CONSOLE.ORGANIZATIONS,
+            icon: Building2,
+          },
+        ]
+      : []),
+    ...(assetEnabled
+      ? [
+          {
+            titleKey: 'nav.assets' as const,
+            href: ROUTES.CONSOLE.ASSETS,
+            icon: FolderOpen,
+          },
+        ]
       : []),
   ];
 
   const secondaryNavItems: NavItem[] = [
     {
-      titleKey: "nav.styleguide",
+      titleKey: 'nav.styleguide',
       href: ROUTES.DEVTOOLS.STYLEGUIDE,
       icon: Palette,
     },
     {
-      titleKey: "nav.settings",
+      titleKey: 'nav.settings',
       href: ROUTES.CONSOLE.SETTINGS,
       icon: Settings,
     },
@@ -94,16 +110,20 @@ export default function ConsoleLayout({
             <span className="hidden text-xl font-bold sm:inline">Luas Console</span>
           </Link>
           {organizationEnabled ? (
-            <Suspense fallback={<div className="h-8 w-9 rounded-md border bg-muted" aria-hidden="true" />}>
+            <Suspense
+              fallback={<div className="h-8 w-9 rounded-md border bg-muted" aria-hidden="true" />}
+            >
               <OrganizationSwitcher />
             </Suspense>
           ) : null}
         </div>
 
         <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-          <div className="hidden sm:block"><LanguageSwitcher /></div>
+          <div className="hidden sm:block">
+            <LanguageSwitcher />
+          </div>
           <ThemeToggle />
-          
+
           {notificationEnabled ? (
             <Suspense
               fallback={
@@ -130,7 +150,7 @@ export default function ConsoleLayout({
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {user?.name
                       ?.split(' ')
-                      .map((part) => part[0])
+                      .map(part => part[0])
                       .join('')
                       .slice(0, 2)
                       .toUpperCase() || 'LF'}
@@ -152,7 +172,7 @@ export default function ConsoleLayout({
               <div className="h-px bg-border/50 my-1" />
               <DropdownMenuItem
                 className="rounded-lg cursor-pointer text-error focus:bg-destructive/10"
-                onSelect={(event) => {
+                onSelect={event => {
                   event.preventDefault();
                   logout();
                 }}
@@ -174,7 +194,7 @@ export default function ConsoleLayout({
         <aside className="hidden w-[220px] shrink-0 border-r bg-background md:flex md:flex-col">
           <div className="flex flex-1 flex-col overflow-y-auto py-2">
             <nav className="grid items-start px-2 text-sm font-medium">
-              {mainNavItems.map((item) => {
+              {mainNavItems.map(item => {
                 const IconComponent = item.icon;
                 const isActive = isNavigationItemActive(pathname, item.href);
                 return (
@@ -182,10 +202,8 @@ export default function ConsoleLayout({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isActive
-                        ? "bg-muted text-primary"
-                        : "text-text-subtle hover:bg-muted/50"
+                      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
+                      isActive ? 'bg-muted text-primary' : 'text-text-subtle hover:bg-muted/50'
                     )}
                   >
                     <IconComponent className="h-4.5 w-4.5" />
@@ -197,7 +215,7 @@ export default function ConsoleLayout({
           </div>
           <div className="mt-auto p-4">
             <nav className="grid items-start gap-1 text-sm font-medium">
-              {secondaryNavItems.map((item) => {
+              {secondaryNavItems.map(item => {
                 const IconComponent = item.icon;
                 const isActive = isNavigationItemActive(pathname, item.href);
                 return (
@@ -205,10 +223,8 @@ export default function ConsoleLayout({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                      isActive
-                        ? "bg-muted text-primary"
-                        : "text-text-subtle hover:bg-muted/50"
+                      'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary',
+                      isActive ? 'bg-muted text-primary' : 'text-text-subtle hover:bg-muted/50'
                     )}
                   >
                     <IconComponent className="h-4.5 w-4.5" />
@@ -227,16 +243,12 @@ export default function ConsoleLayout({
         </aside>
 
         {/* Scrollable Main Content */}
-        <main className="h-full min-w-0 w-full overflow-y-auto">
-          {children}
-        </main>
+        <main className="h-full min-w-0 w-full overflow-y-auto">{children}</main>
       </div>
     </div>
   );
 }
 
 function isNavigationItemActive(pathname: string, href: string): boolean {
-  return pathname === href || (
-    href !== ROUTES.CONSOLE.HOME && pathname.startsWith(`${href}/`)
-  );
+  return pathname === href || (href !== ROUTES.CONSOLE.HOME && pathname.startsWith(`${href}/`));
 }

@@ -6,38 +6,38 @@
 
 **Luas** - A production-ready Next.js scaffold optimized for rapid AI-assisted development.
 
-| Tech | Version | Purpose |
-|------|---------|---------|
-| Next.js | 16.x | App Router, RSC, API Routes |
-| React | 19.x | UI Library |
-| TypeScript | 5.x | Type Safety |
-| Tailwind CSS | 4.x | Styling |
-| shadcn/ui | Latest | UI Components |
-| Zustand | 5.x | State Management |
-| React Query | 5.x | Server State |
-| next-intl | 4.x | i18n |
+| Tech         | Version | Purpose                     |
+| ------------ | ------- | --------------------------- |
+| Next.js      | 16.x    | App Router, RSC, API Routes |
+| React        | 19.x    | UI Library                  |
+| TypeScript   | 5.x     | Type Safety                 |
+| Tailwind CSS | 4.x     | Styling                     |
+| shadcn/ui    | Latest  | UI Components               |
+| Zustand      | 5.x     | State Management            |
+| React Query  | 5.x     | Server State                |
+| next-intl    | 4.x     | i18n                        |
 
 ## AI Agent Skills
 
 The web side ships with a Skills System in `.agents/skills/` that codex CLI auto-loads. Each skill is a self-contained workflow loaded only when its description matches the task.
 
-| Skill | When to Use |
-|---|---|
-| [`vercel-react-best-practices`](./.agents/skills/vercel-react-best-practices/) | Writing or refactoring React / Next.js code |
-| [`frontend-design`](./.agents/skills/frontend-design/) | Building components, pages, dashboards, landing pages |
-| [`web-design-guidelines`](./.agents/skills/web-design-guidelines/) | Applying project design tokens and component rules |
-| [`ui-styling-guide`](./.agents/skills/ui-styling-guide/) | Tailwind + shadcn styling patterns |
-| [`data-state-management`](./.agents/skills/data-state-management/) | Zustand / React Query / form state |
-| [`i18n-handler`](./.agents/skills/i18n-handler/) | next-intl translation keys and scoped translations |
-| [`api-error-handling`](./.agents/skills/api-error-handling/) | Client error contracts and user-facing surfaces |
-| [`environment-config`](./.agents/skills/environment-config/) | Env vars, runtime config, build-time vs runtime |
-| [`webapp-testing`](./.agents/skills/webapp-testing/) | Browser-driven test patterns (Playwright) |
-| [`testing-standards`](./.agents/skills/testing-standards/) | Unit / component test conventions |
-| [`utility-tooling`](./.agents/skills/utility-tooling/) | Project utility patterns |
-| [`project-strategy`](./.agents/skills/project-strategy/) | Long-term direction and trade-off framing |
-| [`skill-creator`](./.agents/skills/skill-creator/) | Creating or updating a skill |
-| [`accessibility-audit`](./.agents/skills/accessibility-audit/) | WCAG 2.2 AA review (keyboard, ARIA, contrast) |
-| [`web-perf`](./.agents/skills/web-perf/) | Core Web Vitals audit (LCP / INP / CLS) for Next 16 |
+| Skill                                                                          | When to Use                                           |
+| ------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| [`vercel-react-best-practices`](./.agents/skills/vercel-react-best-practices/) | Writing or refactoring React / Next.js code           |
+| [`frontend-design`](./.agents/skills/frontend-design/)                         | Building components, pages, dashboards, landing pages |
+| [`web-design-guidelines`](./.agents/skills/web-design-guidelines/)             | Applying project design tokens and component rules    |
+| [`ui-styling-guide`](./.agents/skills/ui-styling-guide/)                       | Tailwind + shadcn styling patterns                    |
+| [`data-state-management`](./.agents/skills/data-state-management/)             | Zustand / React Query / form state                    |
+| [`i18n-handler`](./.agents/skills/i18n-handler/)                               | next-intl translation keys and scoped translations    |
+| [`api-error-handling`](./.agents/skills/api-error-handling/)                   | Client error contracts and user-facing surfaces       |
+| [`environment-config`](./.agents/skills/environment-config/)                   | Env vars, runtime config, build-time vs runtime       |
+| [`webapp-testing`](./.agents/skills/webapp-testing/)                           | Browser-driven test patterns (Playwright)             |
+| [`testing-standards`](./.agents/skills/testing-standards/)                     | Unit / component test conventions                     |
+| [`utility-tooling`](./.agents/skills/utility-tooling/)                         | Project utility patterns                              |
+| [`project-strategy`](./.agents/skills/project-strategy/)                       | Long-term direction and trade-off framing             |
+| [`skill-creator`](./.agents/skills/skill-creator/)                             | Creating or updating a skill                          |
+| [`accessibility-audit`](./.agents/skills/accessibility-audit/)                 | WCAG 2.2 AA review (keyboard, ARIA, contrast)         |
+| [`web-perf`](./.agents/skills/web-perf/)                                       | Core Web Vitals audit (LCP / INP / CLS) for Next 16   |
 
 Root-level skills under `../.agents/skills/` — `grill-before-build`, `systematic-debugging`, `verification-before-completion`, `pr-description-writer` — also apply here.
 
@@ -61,6 +61,7 @@ src/
 │   ├── auth/               # components, hooks, services, store, server, types
 │   ├── api-key/            # default API key workflow, strict contracts, fixed adapter, mock state
 │   ├── organization/       # optional browser workflow, fixed adapter routes, mock state
+│   ├── asset/              # optional private upload workflow and ephemeral transfer grants
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
 ├── constants/              # Route constants, enums
@@ -94,6 +95,7 @@ Browser -> src/http/request.ts -> /api/* -> route backend (mock or production au
 ```
 
 **Benefits:**
+
 - No external dependencies for development
 - httpOnly cookie sessions (secure)
 - Fast local development without backend
@@ -112,6 +114,10 @@ catch-all proxy. The optional organization workflow and its URL-scoped selection
 The independent notification workflow uses the same fixed transport, strict successful-response
 schemas, user-isolated mock state, and lazy console center. Its activation and removal boundary is
 in `docs/NOTIFICATIONS.md`; provider delivery details never enter Web code.
+
+The independent asset workflow keeps provider keys and signed grants out of persistent client
+state, uses only fixed management adapters, and validates every transfer URL before byte I/O. See
+`docs/ASSETS.md` and `../contracts/ASSETS.md`.
 
 The default API key browser workflow uses the same fixed production adapter and a development mock
 store. Plaintext is returned only by create and kept in dialog-local state; list contracts reject
@@ -135,6 +141,7 @@ form when `mock-session` mode is active; production reaches that mode only throu
 BFF opt-in.
 
 **Route Groups:**
+
 - `(auth)/*` - Public auth pages (login, register)
 - `(protected)/*` - Protected routes (mock sessions are verified by `middleware.ts`; every mode uses `AuthGuard` for navigation UX)
 - `(protected)/(console)/*` - Business console pages
@@ -224,6 +231,7 @@ The project uses `next-intl` with a unified translation pattern that supports bo
 #### Type System
 
 The i18n system derives key and scope safety from the message tree through:
+
 - **`MessageSchema`**: Canonical literal schema derived from the `zh-Hans` base locale.
 - **`AllTranslationKeys`**: Union of translatable leaf paths such as `auth.login`; object nodes are excluded.
 - **`AllScopePaths`**: Union of valid object paths such as `test.level1`; leaf paths are excluded.
@@ -233,6 +241,7 @@ The i18n system derives key and scope safety from the message tree through:
 - **`UnifiedTranslations`**: Combined type that supports both dot notation and namespace accessors
 
 #### Client Components
+
 ```tsx
 import { useT } from '@/i18n';
 
@@ -242,7 +251,7 @@ function MyComponent() {
     <div>
       {/* Dot notation (recommended) */}
       <button>{t('common.save')}</button>
-      
+
       {/* Namespace-based (backward compatible) */}
       <button>{t.common('save')}</button>
     </div>
@@ -253,6 +262,7 @@ function MyComponent() {
 Client Components only receive explicitly owned namespaces. When a route introduces a new client-side `useT` namespace, add it to `src/i18n/client-message-namespaces.ts` and mount the selected messages through `RouteMessagesProvider` at the nearest owning route layout. Do not restore the full `getMessages()` object to the root client provider.
 
 #### Server Components
+
 ```tsx
 import { getT } from '@/i18n/server';
 
@@ -263,44 +273,46 @@ export default async function Page() {
 ```
 
 #### Scoped Translations
+
 For components with many translations from a single namespace:
+
 ```tsx
 function SettingsPage() {
-  const t = useT('settings');  // Scoped to 'settings' namespace
-  return <h1>{t('title')}</h1>;  // settings.title
+  const t = useT('settings'); // Scoped to 'settings' namespace
+  return <h1>{t('title')}</h1>; // settings.title
 }
 ```
 
 #### Available Translation Namespaces
 
-| Namespace | Description |
-|--------|-------------|
-| `common` | Common UI text (buttons, labels, messages) |
-| `auth` | Authentication-related text |
-| `nav` | Navigation labels |
-| `site` | Public scaffold site copy |
-| `console` | Replaceable authenticated console copy |
-| `settings` | Settings page translations |
-| `errors` | Error messages |
-| `metadata` | Page titles and SEO metadata |
-| `test` | Testing translations |
+| Namespace  | Description                                |
+| ---------- | ------------------------------------------ |
+| `common`   | Common UI text (buttons, labels, messages) |
+| `auth`     | Authentication-related text                |
+| `nav`      | Navigation labels                          |
+| `site`     | Public scaffold site copy                  |
+| `console`  | Replaceable authenticated console copy     |
+| `settings` | Settings page translations                 |
+| `errors`   | Error messages                             |
+| `metadata` | Page titles and SEO metadata               |
+| `test`     | Testing translations                       |
 
 #### Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/i18n/config.ts` | Locale configuration and settings |
-| `src/i18n/translations.ts` | Client-only `useT` implementation |
-| `src/i18n/server.ts` | Server-only `getT` implementation |
-| `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and pure facade construction |
-| `src/i18n/locale-message-shape.ts` | Locale structure and ICU variable-parity type guards |
-| `src/i18n/module-names.ts` | Canonical translation module names |
-| `src/i18n/loader.ts` | Dynamic translation namespace loading |
-| `src/i18n/client-message-namespaces.ts` | Global and route-owned client namespace registry |
-| `src/i18n/message-selection.ts` | Type-safe top-level namespace selection |
-| `src/i18n/route-messages-provider.tsx` | Additive nested client message provider |
-| `src/i18n/modules/index.ts` | Static type generation from translation modules |
-| `src/i18n/README.md` | Detailed documentation with examples |
+| File                                    | Purpose                                                           |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `src/i18n/config.ts`                    | Locale configuration and settings                                 |
+| `src/i18n/translations.ts`              | Client-only `useT` implementation                                 |
+| `src/i18n/server.ts`                    | Server-only `getT` implementation                                 |
+| `src/i18n/translation-shared.ts`        | Message-tree-derived key/scope types and pure facade construction |
+| `src/i18n/locale-message-shape.ts`      | Locale structure and ICU variable-parity type guards              |
+| `src/i18n/module-names.ts`              | Canonical translation module names                                |
+| `src/i18n/loader.ts`                    | Dynamic translation namespace loading                             |
+| `src/i18n/client-message-namespaces.ts` | Global and route-owned client namespace registry                  |
+| `src/i18n/message-selection.ts`         | Type-safe top-level namespace selection                           |
+| `src/i18n/route-messages-provider.tsx`  | Additive nested client message provider                           |
+| `src/i18n/modules/index.ts`             | Static type generation from translation modules                   |
+| `src/i18n/README.md`                    | Detailed documentation with examples                              |
 
 **Type Safety:** Invalid keys, missing or extra ICU variables, and locale placeholder drift cause TypeScript errors. Keep base-locale messages `as const`; other locales must use `as const satisfies LocaleMessageShape<BaseMessages>` so translated values stay literal while structure remains aligned. `src/test/i18n-types.test.ts` guards locale coverage, variable parity, valid scopes, leaf-only global keys, exact interpolation arguments, and runtime prefix composition.
 
@@ -327,6 +339,7 @@ function SettingsPage() {
 The project uses a structured Design Token system based on OKLCH and CSS variables, layered for better governance and maintainability.
 
 #### Layered Architecture:
+
 1.  **Primitives (`src/themes/primitives.css`)**: Base color palette (e.g., `--neutral-500`, `--blue-500`). **Do not use directly.**
 2.  **Semantic Tokens (`light.css` / `dark.css`)**: Functional naming based on purpose.
     - **Backgrounds**: `bg-canvas`, `bg-surface`, `bg-subtle`.
@@ -338,7 +351,9 @@ The project uses a structured Design Token system based on OKLCH and CSS variabl
 Use `text-error` for readable error/status copy. Reserve `destructive` for destructive action surfaces and borders; one token cannot simultaneously guarantee readable text on page surfaces and readable foreground text on a destructive button. `pnpm lint:theme-contrast` verifies the supported light/dark semantic text pairs at WCAG AA 4.5:1 and is part of `pnpm lint`.
 
 #### Usage in Tailwind (Strict Mode):
+
 Always prefer semantic classes over raw color values.
+
 ```tsx
 // Using Semantic Tokens
 <div className="bg-bg-surface text-text-main border-border-subtle shadow-md p-4 rounded-lg">
@@ -385,11 +400,13 @@ The project uses a **Strict Environment Variable** system to ensure type safety 
 - Never re-export `server-env` from `src/config/index.ts` or another client-reachable barrel.
 
 **❌ DO NOT:**
+
 ```typescript
 const apiUrl = process.env.NEXT_PUBLIC_API_URL; // Unsafe, untyped
 ```
 
 **✅ DO:**
+
 ```typescript
 import { env } from '@/config/env';
 
@@ -407,33 +424,36 @@ const mockEnabled = serverEnv.MOCK_BFF_ENABLED;
 This is enforced by `src/test/env-contract.test.ts`: production source files must not read `process.env` outside the environment entries, server values cannot leak into client config, and production mock BFF opt-in requires a strong `SESSION_SECRET`.
 
 ### 2. Validation (Zod)
+
 We use `zod` to validate environment variables at runtime. If a required runtime variable is missing, the app fails to start with a clear error message.
 
 ### 3. Supported Variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | No | `/api` | Base URL for API requests. |
-| `NEXT_PUBLIC_APP_URL` | No | `http://localhost:3000` | Absolute site URL for metadata, sitemap, and robots. |
-| `NEXT_PUBLIC_DEFAULT_LOCALE` | No | `zh-Hans` | Default locale. Must be one of `locales` from `src/i18n/locales.ts`. |
-| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No | `true` | Shows or hides the language switcher. |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
-| `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
-| `MOCK_BFF_ENABLED` | Production opt-in only | `false` | Enables development mock BFF route handlers in production runtime. Keep false for downstream production apps. |
-| `SESSION_SECRET` | Production mock BFF | - | Server-only secret used to HMAC-sign the mock auth session cookie. Required when `MOCK_BFF_ENABLED=true`; use at least 32 characters. |
+| Variable                              | Required               | Default                 | Description                                                                                                                           |
+| ------------------------------------- | ---------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_API_URL`                 | No                     | `/api`                  | Base URL for API requests.                                                                                                            |
+| `NEXT_PUBLIC_APP_URL`                 | No                     | `http://localhost:3000` | Absolute site URL for metadata, sitemap, and robots.                                                                                  |
+| `NEXT_PUBLIC_DEFAULT_LOCALE`          | No                     | `zh-Hans`               | Default locale. Must be one of `locales` from `src/i18n/locales.ts`.                                                                  |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No                     | `true`                  | Shows or hides the language switcher.                                                                                                 |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID`       | No                     | -                       | Google Analytics ID.                                                                                                                  |
+| `NODE_ENV`                            | No                     | `development`           | App environment (`development` \| `production` \| `test`).                                                                            |
+| `MOCK_BFF_ENABLED`                    | Production opt-in only | `false`                 | Enables development mock BFF route handlers in production runtime. Keep false for downstream production apps.                         |
+| `SESSION_SECRET`                      | Production mock BFF    | -                       | Server-only secret used to HMAC-sign the mock auth session cookie. Required when `MOCK_BFF_ENABLED=true`; use at least 32 characters. |
 
 To add a new variable:
+
 1. Add it to `.env.local`
 2. Put browser-safe values in `src/config/env.ts` and secrets/server-only values in `src/config/server-env.ts`
 3. Add the value to the matching Zod schema and exported object
-
 
 ## Tooling & Utility Standards (ARW)
 
 To maintain a lean and consistent codebase, AI agents MUST follow the **"Search First"** rule before implementing any new utility or hook.
 
 ### 1. The "Search First" Rule
+
 Before writing a new utility function or React hook, you **MUST**:
+
 1.  **Check `src/utils/index.ts`**: Scan the exports to see if a similar utility already exists.
 2.  **Check `src/hooks/`**: Browse the file names and signatures for existing logic.
 3.  **Check Approved Libraries**: Verify if the functionality is provided by:
@@ -442,18 +462,23 @@ Before writing a new utility function or React hook, you **MUST**:
     - `validator`: For complex string validation.
 
 ### 2. Implementation Priority
+
 Follow this order of preference:
+
 1.  **Native Web APIs**: `Intl`, `URL`, `Crypto`, etc.
 2.  **Existing Project Utils/Hooks**: Reuse what's already in `src/utils` or `src/hooks`.
 3.  **Approved Third-Party Libraries**: Use existing dependencies from `package.json`.
 4.  **Custom Implementation**: Only if the above options are exhausted.
 
 ### 3. Utility & Hook Discovery Tags
+
 Use these tags in JSDoc headers to aid AI discovery:
+
 - `@util`: Marks a pure utility function.
 - `@hook`: Marks a reusable React hook.
 
 ### 4. Contract for New Additions
+
 - **Utils**: Must be pure functions in `src/utils/[category].ts`, exported via `index.ts`, with tests in `__tests__/`.
 - **Hooks**: Must be in `src/hooks/use-[purpose].ts` and follow React Hook rules.
 
@@ -489,9 +514,9 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 - **Named Exports**: Always use named exports. Do NOT use `export default`.
   - `export function ComponentName({ ... }: ComponentNameProps) { ... }`
 - **Strict Typing**: Always define an interface for props named `[ComponentName]Props`.
-- **RSC First Strategy**: 
+- **RSC First Strategy**:
   - Components are **Server Components** by default.
-  - If a component needs interactivity (hooks or events), extract the interactive logic into a **small, leaf-level Client Component** (marked with `'use client'`). 
+  - If a component needs interactivity (hooks or events), extract the interactive logic into a **small, leaf-level Client Component** (marked with `'use client'`).
   - Avoid turning large feature components into Client Components.
 - **Localized Core Copy**: User-facing copy in formal site, auth, and console surfaces must use `getT` or `useT`; follow the Core Copy Boundary above for narrow exceptions and disposable surfaces.
 - **Icon Consistency**: Use `lucide-react`. Standardize size using Tailwind's `size-4` (16px) or `size-5` (20px) for consistent alignment.
@@ -513,6 +538,7 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 Following [Vercel React Best Practices](./.agents/skills/vercel-react-best-practices/SKILL.md) for optimal performance:
 
 - **Dynamic Imports** (`bundle-dynamic-imports`): Use `next/dynamic` for components > 50KB (charts, editors, rich-text, maps):
+
   ```tsx
   const HeavyEditor = dynamic(() => import('./heavy-editor'), {
     loading: () => <Skeleton className="h-64" />,
@@ -520,6 +546,7 @@ Following [Vercel React Best Practices](./.agents/skills/vercel-react-best-pract
   ```
 
 - **React.memo** (`rerender-memo`): Use for expensive child components that receive stable props:
+
   ```tsx
   export const ExpensiveList = React.memo(function ExpensiveList({ items }: Props) {
     // Heavy rendering logic
@@ -527,18 +554,23 @@ Following [Vercel React Best Practices](./.agents/skills/vercel-react-best-pract
   ```
 
 - **Conditional Rendering** (`rendering-conditional-render`): Use ternary operators, not `&&`:
+
   ```tsx
   // ✅ Correct
-  {condition ? <Component /> : null}
-  
+  {
+    condition ? <Component /> : null;
+  }
+
   // ❌ Avoid (may render '0' or 'false')
-  {condition && <Component />}
+  {
+    condition && <Component />;
+  }
   ```
 
 - **RSC Caching** (`server-cache-react`): Use `React.cache()` for per-request deduplication in Server Components:
   ```tsx
   import { cache } from 'react';
-  
+
   export const getUser = cache(async (id: string) => {
     return await db.user.findUnique({ where: { id } });
   });
@@ -565,15 +597,25 @@ All components MUST include a standardized JSDoc header for discovery and AI-ass
 All data handling must follow the strict **Service-Hook-Type** layered architecture to ensure separation of concerns and type safety.
 
 #### 1. Define Types (`src/features/[feature]/types.ts`)
+
 All data structures (Domain models, DTOs, Query schemas) must be strictly typed.
 
 ```typescript
-export interface ExampleItem { id: string; title: string; status: 'active' | 'inactive'; }
-export interface UpdateExampleRequest { title?: string; status?: 'active' | 'inactive'; }
+export interface ExampleItem {
+  id: string;
+  title: string;
+  status: 'active' | 'inactive';
+}
+export interface UpdateExampleRequest {
+  title?: string;
+  status?: 'active' | 'inactive';
+}
 ```
 
 #### 2. Implement Stateless Service (`src/features/[feature]/services/*.ts`)
+
 Services are pure functional objects.
+
 - **Stateless**: They do not hold state or use hooks.
 - **Dedicated Clients**: Use the appropriate HTTP client for the feature.
 - **Simple**: Just wrappers around named `request` instances.
@@ -588,15 +630,16 @@ export const fileRequest = createRequest({ baseURL: env.FILE_URL, timeout: 60000
 
 // 2. Map services to the correct client
 // src/features/user/services/user-service.ts
-import request from '@/http/request'; 
+import request from '@/http/request';
 export const userService = { get: () => request.get('/user') };
 
 // src/features/file/services/file-service.ts
 import { fileRequest } from '@/http/request';
-export const fileService = { upload: (file) => fileRequest.post('/upload', file) };
+export const fileService = { upload: file => fileRequest.post('/upload', file) };
 ```
 
 #### 3. Implement Encapsulated Hooks (`src/features/[feature]/hooks/*.ts`)
+
 Hooks manage React Query state and side effects.
 
 **Standard Pattern: Full CRUD Optimistic Updates**
@@ -611,42 +654,44 @@ export const exampleKeys = {
 };
 
 // 2. Query Hooks
-export const useExample = (id: string) => useQuery({
-  queryKey: exampleKeys.detail(id),
-  queryFn: () => exampleService.get(id),
-});
+export const useExample = (id: string) =>
+  useQuery({
+    queryKey: exampleKeys.detail(id),
+    queryFn: () => exampleService.get(id),
+  });
 
 // 3. Mutation Hooks (Optimistic Template)
 export function useUpdateExample() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string, data: UpdateExampleRequest }) => 
+    mutationFn: ({ id, data }: { id: string; data: UpdateExampleRequest }) =>
       exampleService.update(id, data),
-    
+
     // Step 1: Push optimistic update to UI
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: exampleKeys.detail(id) });
       const prev = queryClient.getQueryData(exampleKeys.detail(id));
-      if (prev) queryClient.setQueryData(exampleKeys.detail(id), { ...prev as any, ...data });
+      if (prev) queryClient.setQueryData(exampleKeys.detail(id), { ...(prev as any), ...data });
       return { prev };
     },
-    
+
     // Step 2: Rollback via Refetch on failure
     onError: (err, { id }) => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
       toast.error(err.message);
     },
-    
+
     // Step 3: Final synchronization
     onSettled: (data, err, { id }) => {
       queryClient.invalidateQueries({ queryKey: exampleKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: exampleKeys.lists() });
-    }
+    },
   });
 }
 ```
 
 **Key Strategies:**
+
 - **Cancel outgoing refetches** in `onMutate` to prevent race conditions.
 - **Rollback via Invalidation**: Simpler and more robust than manual state restoration.
 - **Always Sync**: Final invalidation in `onSettled` ensures local state perfect alignment with the server.
@@ -656,7 +701,9 @@ export function useUpdateExample() {
 The project uses a standardized error code system to ensure consistency between the frontend and backend.
 
 ### 1. Error Response Format
+
 All error responses from the backend (BFF or mock) MUST follow this format:
+
 ```json
 {
   "code": 404,
@@ -667,19 +714,21 @@ All error responses from the backend (BFF or mock) MUST follow this format:
 ```
 
 ### 2. Error Code Namespaces
+
 Backend `error_code` is the canonical branching field. New backend, BFF, and mock responses MUST use uppercase dot-separated values from `ApiErrorCode`.
 
-| Namespace | Owner | Examples |
-|-----------|-------|----------|
-| `COMMON.*` | Shared API contract | `COMMON.NOT_FOUND`, `COMMON.VALIDATION_FAILED` |
-| `AUTH.*` | Auth API contract | `AUTH.UNAUTHORIZED`, `AUTH.INVALID_CREDENTIALS` |
-| `USER.*` | User API contract | `USER.EMAIL_ALREADY_EXISTS` |
-| `API_KEY.*` | API key API contract | `API_KEY.REVOKED` |
-| `CLIENT.*` | Client-owned failure | `CLIENT.NETWORK_ERROR`, `CLIENT.TIMEOUT`, `CLIENT.INVALID_RESPONSE` |
+| Namespace   | Owner                | Examples                                                            |
+| ----------- | -------------------- | ------------------------------------------------------------------- |
+| `COMMON.*`  | Shared API contract  | `COMMON.NOT_FOUND`, `COMMON.VALIDATION_FAILED`                      |
+| `AUTH.*`    | Auth API contract    | `AUTH.UNAUTHORIZED`, `AUTH.INVALID_CREDENTIALS`                     |
+| `USER.*`    | User API contract    | `USER.EMAIL_ALREADY_EXISTS`                                         |
+| `API_KEY.*` | API key API contract | `API_KEY.REVOKED`                                                   |
+| `CLIENT.*`  | Client-owned failure | `CLIENT.NETWORK_ERROR`, `CLIENT.TIMEOUT`, `CLIENT.INVALID_RESPONSE` |
 
 Legacy frontend-only codes such as `VAL_400` may be normalized for backward compatibility, but new code MUST NOT emit them.
 
 ### 3. Usage in Code
+
 - **Constants**: Use `ApiErrorCode` from `@/http/codes` for backend `error_code` values; use
   `ClientErrorCode` for client-owned failures such as network, timeout, or an invalid successful
   response. This split is enforced by `src/test/error-code-vocabulary.test.ts`.
@@ -706,12 +755,12 @@ Legacy frontend-only codes such as `VAL_400` may be normalized for backward comp
 
 ## Quick Reference
 
-| Action | Command |
-|--------|---------|
-| Install deps | `pnpm install` |
-| Dev server | `pnpm dev` |
-| Build | `pnpm build` |
-| Type check | `pnpm type-check` |
-| Lint | `pnpm lint` |
-| Format | `pnpm format` |
+| Action           | Command                        |
+| ---------------- | ------------------------------ |
+| Install deps     | `pnpm install`                 |
+| Dev server       | `pnpm dev`                     |
+| Build            | `pnpm build`                   |
+| Type check       | `pnpm type-check`              |
+| Lint             | `pnpm lint`                    |
+| Format           | `pnpm format`                  |
 | Add UI component | `npx shadcn@latest add [name]` |

@@ -23,5 +23,6 @@ func TestDefaultManifestsRegisterExpectedCommands(t *testing.T) {
 	assert.True(t, app.HasCommand("workflow:work"))
 	assert.True(t, app.HasCommand("workflow:schedule:run"))
 	assert.True(t, app.HasCommand("workflow:schedule:work"))
+	assert.True(t, app.HasCommand("asset:prune"))
 	assert.False(t, app.HasCommand("deploy:run"))
 }

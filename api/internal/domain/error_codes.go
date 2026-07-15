@@ -59,4 +59,12 @@ const (
 	CodeNotificationNotFound            = "NOTIFICATION.NOT_FOUND"
 	CodeNotificationIdempotencyConflict = "NOTIFICATION.IDEMPOTENCY_CONFLICT"
 	CodeNotificationInvalidChannel      = "NOTIFICATION.INVALID_CHANNEL"
+
+	CodeAssetNotFound            = "ASSET.NOT_FOUND"
+	CodeAssetNotReady            = "ASSET.NOT_READY"
+	CodeAssetIdempotencyConflict = "ASSET.IDEMPOTENCY_CONFLICT"
+	CodeAssetCleanupRequired     = "ASSET.CLEANUP_REQUIRED"
+	CodeAssetUploadExpired       = "ASSET.UPLOAD_EXPIRED"
+	CodeAssetSizeExceeded        = "ASSET.SIZE_EXCEEDED"
+	CodeAssetInvalidMediaType    = "ASSET.INVALID_MEDIA_TYPE"
 )

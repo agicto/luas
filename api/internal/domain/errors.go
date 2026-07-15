@@ -51,6 +51,15 @@ var (
 	ErrNotificationIdempotencyConflict = errors.New("notification idempotency key conflicts with existing content")
 	ErrNotificationInvalidChannel      = errors.New("notification channel is invalid")
 
+	// Asset errors
+	ErrAssetNotFound            = errors.New("asset not found")
+	ErrAssetNotReady            = errors.New("asset is not ready")
+	ErrAssetIdempotencyConflict = errors.New("asset idempotency key conflicts with existing metadata")
+	ErrAssetCleanupRequired     = errors.New("active assets must be deleted before account deletion")
+	ErrAssetUploadExpired       = errors.New("asset upload expired")
+	ErrAssetSizeExceeded        = errors.New("asset size exceeds policy")
+	ErrAssetInvalidMediaType    = errors.New("asset media type is invalid")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

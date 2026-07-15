@@ -95,6 +95,9 @@ permission_flow="skipped"
 permission_migration_flow="skipped"
 notification_flow="skipped"
 notification_migration_flow="skipped"
+asset_flow="skipped"
+asset_migration_flow="skipped"
+asset_account_race_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,notification,*)
@@ -327,6 +330,173 @@ WHERE table_schema = 'public'
       "http://127.0.0.1:${published_port}/v1/notification-status")"
     [[ "${notification_post_migrate_status}" == "200" ]] || fail "notification status after migration re-apply returned HTTP ${notification_post_migrate_status}"
     notification_migration_flow="down:${notification_tables_down}/up:${notification_tables_up}/http:${notification_post_migrate_status}"
+    ;;
+esac
+
+case ",${OPTIONAL_STARTERS:-}," in
+  *,asset,*)
+    command -v python3 >/dev/null 2>&1 || fail "python3 is required for asset response checks"
+    command -v cmp >/dev/null 2>&1 || fail "cmp is required for asset byte checks"
+
+    read -r asset_user_id asset_token < <(
+      register_and_login_user "compose_asset_owner" "compose-asset-owner@example.com" "asset-owner"
+    )
+    [[ -n "${asset_user_id}" && -n "${asset_token}" ]] || fail "asset owner login response is incomplete"
+
+    printf 'Luas asset compose check\n' >"${TMP_DIR}/asset-upload.txt"
+    asset_size="$(wc -c <"${TMP_DIR}/asset-upload.txt" | tr -d ' ')"
+    asset_intent_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-intent.json" \
+      --write-out '%{http_code}' \
+      --request POST \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${asset_token}" \
+      --data "{\"idempotency_key\":\"compose-asset-upload\",\"original_name\":\"compose-check.txt\",\"media_type\":\"text/plain\",\"size_bytes\":${asset_size}}" \
+      "http://127.0.0.1:${published_port}/v1/assets/upload-intents")"
+    [[ "${asset_intent_status}" == "201" ]] || fail "asset upload intent returned HTTP ${asset_intent_status}"
+    if ! read -r asset_id asset_upload_path < <(python3 -c '
+import json, sys
+from urllib.parse import urlsplit
+payload = json.load(open(sys.argv[1]))["data"]
+parts = urlsplit(payload["upload"]["url"])
+path = parts.path + (("?" + parts.query) if parts.query else "")
+print(payload["asset"]["id"], path)
+' "${TMP_DIR}/asset-intent.json"); then
+      fail "asset upload intent response is incomplete"
+    fi
+
+    asset_upload_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-upload-response.json" \
+      --write-out '%{http_code}' \
+      --request PUT \
+      --header 'Content-Type: text/plain' \
+      --data-binary "@${TMP_DIR}/asset-upload.txt" \
+      "http://127.0.0.1:${published_port}${asset_upload_path}")"
+    [[ "${asset_upload_status}" == "204" ]] || fail "asset byte upload returned HTTP ${asset_upload_status}"
+
+    asset_complete_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-complete.json" \
+      --write-out '%{http_code}' \
+      --request POST \
+      --header "Authorization: Bearer ${asset_token}" \
+      "http://127.0.0.1:${published_port}/v1/assets/${asset_id}/complete")"
+    [[ "${asset_complete_status}" == "200" ]] || fail "asset completion returned HTTP ${asset_complete_status}"
+    if ! python3 -c '
+import json, sys
+asset = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if asset["status"] == "ready" and asset["ready_at"] else 1)
+' "${TMP_DIR}/asset-complete.json"; then
+      fail "asset completion did not return a ready asset"
+    fi
+
+    asset_grant_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-grant.json" \
+      --write-out '%{http_code}' \
+      --request POST \
+      --header "Authorization: Bearer ${asset_token}" \
+      "http://127.0.0.1:${published_port}/v1/assets/${asset_id}/download-grant")"
+    [[ "${asset_grant_status}" == "200" ]] || fail "asset download grant returned HTTP ${asset_grant_status}"
+    if ! asset_download_path="$(python3 -c '
+import json, sys
+from urllib.parse import urlsplit
+parts = urlsplit(json.load(open(sys.argv[1]))["data"]["url"])
+print(parts.path + (("?" + parts.query) if parts.query else ""))
+' "${TMP_DIR}/asset-grant.json")"; then
+      fail "asset download grant response is incomplete"
+    fi
+    asset_download_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-download.txt" \
+      --write-out '%{http_code}' \
+      "http://127.0.0.1:${published_port}${asset_download_path}")"
+    [[ "${asset_download_status}" == "200" ]] || fail "asset download returned HTTP ${asset_download_status}"
+    cmp --silent "${TMP_DIR}/asset-upload.txt" "${TMP_DIR}/asset-download.txt" || fail "asset download bytes differ from uploaded bytes"
+
+    asset_delete_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-delete.json" \
+      --write-out '%{http_code}' \
+      --request DELETE \
+      --header "Authorization: Bearer ${asset_token}" \
+      "http://127.0.0.1:${published_port}/v1/assets/${asset_id}")"
+    [[ "${asset_delete_status}" == "200" ]] || fail "asset deletion returned HTTP ${asset_delete_status}"
+    asset_deleted_grant_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-deleted-grant.json" \
+      --write-out '%{http_code}' \
+      --request POST \
+      --header "Authorization: Bearer ${asset_token}" \
+      "http://127.0.0.1:${published_port}/v1/assets/${asset_id}/download-grant")"
+    [[ "${asset_deleted_grant_status}" == "404" ]] || fail "deleted asset download grant returned HTTP ${asset_deleted_grant_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))
+raise SystemExit(0 if payload.get("error_code") == "ASSET.NOT_FOUND" else 1)
+' "${TMP_DIR}/asset-deleted-grant.json"; then
+      fail "deleted asset did not preserve ASSET.NOT_FOUND non-disclosure"
+    fi
+    asset_flow="${asset_intent_status}/${asset_upload_status}/${asset_complete_status}/${asset_grant_status}/${asset_download_status}/${asset_delete_status}/${asset_deleted_grant_status}"
+
+    read -r asset_race_user_id asset_race_token < <(
+      register_and_login_user "compose_asset_race" "compose-asset-race@example.com" "asset-race"
+    )
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/asset-race-create.json" \
+        --write-out '%{http_code}' \
+        --request POST \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: Bearer ${asset_race_token}" \
+        --data '{"idempotency_key":"asset-account-race","original_name":"race.txt","media_type":"text/plain","size_bytes":4}' \
+        "http://127.0.0.1:${published_port}/v1/assets/upload-intents" \
+        >"${TMP_DIR}/asset-race-create.status"
+    ) &
+    asset_race_create_pid=$!
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/asset-race-delete.json" \
+        --write-out '%{http_code}' \
+        --request DELETE \
+        --header "Authorization: Bearer ${asset_race_token}" \
+        "http://127.0.0.1:${published_port}/v1/users/account" \
+        >"${TMP_DIR}/asset-race-delete.status"
+    ) &
+    asset_race_delete_pid=$!
+    wait "${asset_race_create_pid}"
+    wait "${asset_race_delete_pid}"
+    asset_race_create_status="$(cat "${TMP_DIR}/asset-race-create.status")"
+    asset_race_delete_status="$(cat "${TMP_DIR}/asset-race-delete.status")"
+    if [[ "${asset_race_create_status}/${asset_race_delete_status}" != "201/409" && \
+          "${asset_race_create_status}/${asset_race_delete_status}" != "404/204" ]]; then
+      fail "asset/account race returned ${asset_race_create_status}/${asset_race_delete_status}"
+    fi
+    orphaned_assets="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM assets AS a
+JOIN users AS u ON u.id = a.user_id
+WHERE a.deleted_at IS NULL AND u.deleted_at IS NOT NULL;
+")"
+    [[ "${orphaned_assets}" == "0" ]] || fail "concurrent account deletion left ${orphaned_assets} active orphan asset(s)"
+    asset_account_race_flow="${asset_race_create_status}/${asset_race_delete_status}/orphans:${orphaned_assets}/user:${asset_race_user_id}"
+
+    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/asset-rollback.log" 2>&1; then
+      fail "asset migration rollback failed"
+    fi
+    asset_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'assets';
+")"
+    [[ "${asset_tables_down}" == "0" ]] || fail "asset migration rollback left ${asset_tables_down} table(s)"
+    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/asset-migrate.log" 2>&1; then
+      fail "asset migration re-apply failed"
+    fi
+    asset_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'assets';
+")"
+    [[ "${asset_tables_up}" == "1" ]] || fail "asset migration re-apply created ${asset_tables_up}/1 tables"
+    asset_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/asset-post-migrate.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${asset_token}" \
+      "http://127.0.0.1:${published_port}/v1/assets")"
+    [[ "${asset_post_migrate_status}" == "200" ]] || fail "asset list after migration re-apply returned HTTP ${asset_post_migrate_status}"
+    asset_migration_flow="down:${asset_tables_down}/up:${asset_tables_up}/http:${asset_post_migrate_status}"
     ;;
 esac
 
@@ -862,4 +1032,7 @@ printf 'compose permission flow: %s\n' "${permission_flow}"
 printf 'compose permission migration flow: %s\n' "${permission_migration_flow}"
 printf 'compose notification flow: %s\n' "${notification_flow}"
 printf 'compose notification migration flow: %s\n' "${notification_migration_flow}"
+printf 'compose asset flow: %s\n' "${asset_flow}"
+printf 'compose asset migration flow: %s\n' "${asset_migration_flow}"
+printf 'compose asset/account race: %s\n' "${asset_account_race_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

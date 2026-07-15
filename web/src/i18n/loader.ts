@@ -47,6 +47,10 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/notification/zh-Hans'),
     'en-US': () => import('./modules/notification/en-US'),
   },
+  asset: {
+    'zh-Hans': () => import('./modules/asset/zh-Hans'),
+    'en-US': () => import('./modules/asset/en-US'),
+  },
   settings: {
     'zh-Hans': () => import('./modules/settings/zh-Hans'),
     'en-US': () => import('./modules/settings/en-US'),
@@ -79,15 +83,17 @@ function unwrapModule(moduleData: Awaited<ReturnType<ModuleLoader>>): MessageNam
  * Load all translation modules for a given locale
  */
 export async function loadAllModules(locale: Locale): Promise<Messages> {
-  const entries = await Promise.all(AVAILABLE_MODULES.map(async (moduleName) => {
-    try {
-      const loadedModule = await moduleRegistry[moduleName][locale]();
-      return [moduleName, unwrapModule(loadedModule)] as const;
-    } catch (error) {
-      console.warn(`Failed to load ${moduleName} module for locale ${locale}:`, error);
-      return [moduleName, {}] as const;
-    }
-  }));
+  const entries = await Promise.all(
+    AVAILABLE_MODULES.map(async moduleName => {
+      try {
+        const loadedModule = await moduleRegistry[moduleName][locale]();
+        return [moduleName, unwrapModule(loadedModule)] as const;
+      } catch (error) {
+        console.warn(`Failed to load ${moduleName} module for locale ${locale}:`, error);
+        return [moduleName, {}] as const;
+      }
+    })
+  );
 
   return Object.fromEntries(entries) as Messages;
 }

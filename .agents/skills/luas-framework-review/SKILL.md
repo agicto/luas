@@ -78,6 +78,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-sensitive-telemetry.py` when changing request logging/tracing, logger context, exception diagnostics, SQL logging, tracing statements, or audit metadata.
    - Run `scripts/check-permission-boundary.py` when changing access-role persistence, permission keys, authorization guards, organization-scoped assignments, permission contracts, or the Web permission feature.
    - Run `scripts/check-notification-boundary.py` when changing notification publication, preferences, read state, delivery leases/retries, provider idempotency, notification contracts, or the Web notification feature.
+   - Run `scripts/check-asset-boundary.py` when changing asset ownership/lifecycle, object-storage adapters, transfer grants, inspection, cleanup, asset contracts, or the Web asset feature.
    - Run `scripts/check-config-authority.py` when changing environment loading, typed configuration, logger startup, runtime reload behavior, or configuration cache semantics.
    - Run `scripts/check-email-boundary.py` when changing outbound email config, provider HTTP behavior, templates, or starter-owned mailer calls.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
@@ -123,6 +124,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.
 - `scripts/check-permission-boundary.py` keeps access roles organization-scoped, permission keys exact, authorization fail-closed, delegated administration bounded, and API/Web/contracts aligned.
 - `scripts/check-notification-boundary.py` keeps notification publication idempotent, user state private, email delivery lease-safe, provider retries stable, and API/Web/contracts aligned.
+- `scripts/check-asset-boundary.py` keeps asset ownership private, object I/O bounded and provider-neutral, transfer grants ephemeral, cleanup safe, and API/Web/contracts aligned.
 - `scripts/check-config-authority.py` keeps runtime environment access behind `config.Config`, requires one startup snapshot for logging and Wire, and blocks removed dynamic reload/cache surfaces.
 - `scripts/check-email-boundary.py` keeps email configuration, caller cancellation, provider timeout, bounded response reads, privacy rules, and user-starter mailer calls aligned.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.

@@ -120,9 +120,9 @@ def main() -> int:
     optional_packages = [
         module_imports.get(alias, alias) for alias in optional_aliases
     ]
-    if optional_packages != ["organization", "permission", "notification"]:
+    if optional_packages != ["organization", "permission", "notification", "asset"]:
         failures.append(
-            "optional starter catalog must contain organization, permission, and notification in canonical order"
+            "optional starter catalog must contain organization, permission, notification, and asset in canonical order"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
@@ -198,7 +198,11 @@ def main() -> int:
         failures,
         "web/src/config/optional-features.ts",
         (
-            "OPTIONAL_WEB_FEATURES = ['organization', 'permission', 'notification']",
+            "OPTIONAL_WEB_FEATURES = [",
+            "'organization'",
+            "'permission'",
+            "'notification'",
+            "'asset'",
             "permission: ['organization']",
             "Duplicate optional Web feature",
             "Unknown optional Web feature",
@@ -712,6 +716,7 @@ def main() -> int:
             "Optional Starter Activation",
             "OPTIONAL_STARTERS=organization",
             "OPTIONAL_STARTERS=notification",
+            "OPTIONAL_STARTERS=asset",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
     )
@@ -721,6 +726,7 @@ def main() -> int:
         (
             "`organization` optional starter",
             "`notification` optional starter",
+            "`asset` optional starter",
             "Yes, when enabled",
             "request-scoped active context",
         ),
@@ -751,7 +757,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization, permission, notification]",),
+        ("module: [user, apikey, audit, organization, permission, notification, asset]",),
     )
 
     if failures:

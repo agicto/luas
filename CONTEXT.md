@@ -100,6 +100,16 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   provider response bodies or recipient addresses. `in_app` and `email` are the starter's current
   channels; provider-specific payloads remain adapter details.
 
+**Asset**
+: A user-owned metadata record and lifecycle for one opaque stored object. The optional `asset`
+  starter owns upload intent, validation, readiness, private download, and deletion policy. An asset
+  is not a filesystem path, browser `File`, public URL, or storage-provider object by itself.
+
+**Stored object**
+: The opaque bytes addressed by an application-generated key behind the object-storage capability.
+  Staging and final objects are provider details and never become owner or asset identifiers in HTTP
+  contracts. Feature code depends on the capability seam rather than an R2/S3 SDK.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -132,6 +142,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   non-owner grant are resolved from current persistence rather than JWT claims.
 - A notification represents the user-facing event once; notification deliveries represent its
   independently executed channels and retry lifecycle.
+- An asset owns business metadata and lifecycle; a stored object owns provider-neutral byte
+  operations. Signed transfer URLs are short-lived bearer credentials, not durable asset identity.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -150,3 +162,6 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **notification vs delivery/message**: A notification is the immutable user event. A notification
   delivery is one channel execution ledger entry. Provider messages, receipts, and callback payloads
   are adapter details and must not create a second global meaning for notification.
+- **asset vs file/object**: Use asset for the user-owned workflow record. Use stored object for bytes
+  behind the object-storage capability. Use file only for a local operating-system or browser value;
+  never expose a provider key or filesystem path as the asset identifier.

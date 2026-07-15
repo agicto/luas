@@ -6,6 +6,7 @@ const messages = {
   home: 'Home',
   console: 'Console',
   organizations: 'Organizations',
+  assets: 'Assets',
   settings: 'Settings',
   profile: 'Profile',
   analytics: 'Analytics',

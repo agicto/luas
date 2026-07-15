@@ -164,6 +164,48 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeNotificationInvalidChannel,
 		},
 		{
+			name:       "asset is not visible",
+			err:        fmt.Errorf("load asset: %w", domain.ErrAssetNotFound),
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeAssetNotFound,
+		},
+		{
+			name:       "asset is not ready",
+			err:        domain.ErrAssetNotReady,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeAssetNotReady,
+		},
+		{
+			name:       "asset idempotency conflicts",
+			err:        domain.ErrAssetIdempotencyConflict,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeAssetIdempotencyConflict,
+		},
+		{
+			name:       "asset cleanup blocks account deletion",
+			err:        domain.ErrAssetCleanupRequired,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeAssetCleanupRequired,
+		},
+		{
+			name:       "asset upload expired",
+			err:        domain.ErrAssetUploadExpired,
+			statusCode: http.StatusGone,
+			errorCode:  domain.CodeAssetUploadExpired,
+		},
+		{
+			name:       "asset size exceeded",
+			err:        domain.ErrAssetSizeExceeded,
+			statusCode: http.StatusRequestEntityTooLarge,
+			errorCode:  domain.CodeAssetSizeExceeded,
+		},
+		{
+			name:       "asset media type is invalid",
+			err:        domain.ErrAssetInvalidMediaType,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodeAssetInvalidMediaType,
+		},
+		{
 			name:       "wrapped service unavailable",
 			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
 			statusCode: http.StatusServiceUnavailable,

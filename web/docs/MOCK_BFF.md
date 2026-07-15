@@ -2,7 +2,7 @@
 
 The Web mock BFF is the development-only behavior behind Next.js route handlers under
 `src/app/api/**`. It lets the web shell run before a real backend is available. Auth, default API
-key, optional organization, permission, and notification Route Handlers are hybrid entry points: they select either this mock
+key, optional organization, permission, notification, and asset Route Handlers are hybrid entry points: they select either this mock
 behavior or the shipped production API adapter. A route location under `/api` does not by itself
 make behavior mock or production.
 
@@ -10,12 +10,12 @@ Use this guide when turning Luas into a downstream app.
 
 ## Runtime Modes
 
-| Mode | Browser target | Server switches | Use |
-|---|---|---|---|
-| Local scaffold development | `/api` | adapter off; mock unset/false | Uses mock route behavior. |
-| Demo deployment without a backend | `/api` | `MOCK_BFF_ENABLED=true` | Demo-only. Also set a strong `SESSION_SECRET`. |
-| Production Luas Go API | `/api` | `API_ADAPTER_ENABLED=true` plus adapter settings | Auth and explicitly enabled starter routes use fixed production handlers; unrelated mock routes stay disabled. |
-| Other production backend | Contract-compatible endpoint or replacement adapter | adapter/mock off | Uses the downstream production contract and keeps Luas mock behavior disabled. |
+| Mode                              | Browser target                                      | Server switches                                  | Use                                                                                                            |
+| --------------------------------- | --------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Local scaffold development        | `/api`                                              | adapter off; mock unset/false                    | Uses mock route behavior.                                                                                      |
+| Demo deployment without a backend | `/api`                                              | `MOCK_BFF_ENABLED=true`                          | Demo-only. Also set a strong `SESSION_SECRET`.                                                                 |
+| Production Luas Go API            | `/api`                                              | `API_ADAPTER_ENABLED=true` plus adapter settings | Auth and explicitly enabled starter routes use fixed production handlers; unrelated mock routes stay disabled. |
+| Other production backend          | Contract-compatible endpoint or replacement adapter | adapter/mock off                                 | Uses the downstream production contract and keeps Luas mock behavior disabled.                                 |
 
 If production uses the same `/api` path, route that path to the real API at the deployment layer.
 If production calls a cross-origin API, the API must allow credentialed browser requests from the
@@ -57,11 +57,13 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
    - `src/features/permission/server/permission-route.ts`
    - `src/features/notification/server/mock-notification-store.ts`
    - `src/features/notification/server/notification-route.ts`
+   - `src/features/asset/server/mock-asset-store.ts`
+   - `src/features/asset/server/asset-route.ts`
    - `src/features/example/server/mock-example-store.ts`
    - `src/features/auth/server/mock-identity.ts`
    - `src/config/mock-session.ts`
-   Keep `AuthBootstrap` and the provider-owned store. Replace `resolveAuthBootstrap()` only if the
-   downstream server can safely and authoritatively resolve the real session.
+     Keep `AuthBootstrap` and the provider-owned store. Replace `resolveAuthBootstrap()` only if the
+     downstream server can safely and authoritatively resolve the real session.
 5. Leave `MOCK_BFF_ENABLED=false` for production unless the deployment is explicitly demo-only.
 6. When all mock route handlers are removed, remove or adapt `src/test/mock-bff-route-contract.test.ts`
    because that test is a scaffold guardrail for existing mock routes.
@@ -80,6 +82,10 @@ Some downstream apps keep mock routes for local or preview development. In that 
   Hybrid notification routes call `resolveNotificationRoute()`, require the explicit `notification`
   selection, isolate state by authenticated user, and preserve read high-water and preference
   semantics.
+  Hybrid asset routes call `resolveAssetRoute()`, require the explicit `asset` selection, isolate
+  metadata and bytes by authenticated user, and preserve idempotency, inspection, lifecycle,
+  attachment download, and ownership non-disclosure. Transfer grants remain short-lived and are not
+  persisted in browser state.
   Hybrid API key routes call `resolveApiKeyRoute()` and follow the one-time secret contract in
   [`API_KEYS.md`](API_KEYS.md).
 - Every `POST`, `PUT`, `PATCH`, or `DELETE` handler must then call

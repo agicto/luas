@@ -14,7 +14,9 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/storage"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
+	"github.com/zgiai/luas/api/internal/modules/asset"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/notification"
 	"github.com/zgiai/luas/api/internal/modules/organization"
@@ -72,7 +74,19 @@ func InitApplication() (*app.Application, error) {
 	eventPublisher := notification.ProvideEventPublisher(eventBus)
 	notificationService := notification.NewService(configConfig, notificationRepository, emailSender, eventPublisher)
 	notificationHandler := notification.NewHandler(notificationService)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler)
+	assetRepository := asset.NewRepository(db)
+	objectStore, err := storage.NewObjectStore(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	contentInspector := asset.NewContentInspector()
+	transferSigner, err := asset.NewTransferSigner(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	assetService := asset.NewService(configConfig, assetRepository, objectStore, contentInspector, transferSigner)
+	assetHandler := asset.NewHandler(assetService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -85,6 +99,8 @@ func InitApplication() (*app.Application, error) {
 		Starters:               registry,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
+		AssetReader:            assetService,
+		AssetMaintainer:        assetService,
 	}
 	return application, nil
 }
@@ -133,7 +149,19 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	eventPublisher := notification.ProvideEventPublisher(eventBus)
 	notificationService := notification.NewService(cfg, notificationRepository, emailSender, eventPublisher)
 	notificationHandler := notification.NewHandler(notificationService)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler)
+	assetRepository := asset.NewRepository(db)
+	objectStore, err := storage.NewObjectStore(cfg)
+	if err != nil {
+		return nil, err
+	}
+	contentInspector := asset.NewContentInspector()
+	transferSigner, err := asset.NewTransferSigner(cfg)
+	if err != nil {
+		return nil, err
+	}
+	assetService := asset.NewService(cfg, assetRepository, objectStore, contentInspector, transferSigner)
+	assetHandler := asset.NewHandler(assetService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +174,8 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		Starters:               registry,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
+		AssetReader:            assetService,
+		AssetMaintainer:        assetService,
 	}
 	return application, nil
 }

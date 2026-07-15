@@ -19,6 +19,9 @@ User-scoped in-app records, channel preferences, idempotent internal publication
 delivery, and the fixed browser notification center are defined in
 [`NOTIFICATIONS.md`](NOTIFICATIONS.md).
 
+User-owned upload intents, immutable object promotion, private download grants, content inspection,
+and deletion semantics are defined in [`ASSETS.md`](ASSETS.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

@@ -15,16 +15,21 @@ describe('optional Web feature selection', () => {
     ]);
   });
 
-  it.each([' organization', 'organization ', 'Organization', 'organization,organization', 'billing'])(
-    'rejects ambiguous or unknown selection %s',
-    (selection) => {
-      expect(() => parseOptionalWebFeatures(selection)).toThrow();
-    }
-  );
+  it('selects asset independently', () => {
+    expect(parseOptionalWebFeatures('asset')).toEqual(['asset']);
+  });
+
+  it.each([
+    ' organization',
+    'organization ',
+    'Organization',
+    'organization,organization',
+    'billing',
+  ])('rejects ambiguous or unknown selection %s', selection => {
+    expect(() => parseOptionalWebFeatures(selection)).toThrow();
+  });
 
   it('requires feature dependencies explicitly', () => {
-    expect(() => parseOptionalWebFeatures('permission')).toThrow(
-      'requires "organization"'
-    );
+    expect(() => parseOptionalWebFeatures('permission')).toThrow('requires "organization"');
   });
 });

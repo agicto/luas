@@ -4,14 +4,14 @@ Luas Web is the Next.js half of the Luas scaffold. It provides a feature-first R
 
 ## Stack
 
-| Area | Tooling |
-|---|---|
-| Framework | Next.js 16.2.9 App Router |
-| UI | React 19.2.7, Tailwind CSS 4, Radix UI, lucide-react |
-| State | TanStack Query 5, Zustand 5 |
-| i18n | next-intl 4 |
-| Tests | Vitest 4, Testing Library, happy-dom |
-| Tooling | TypeScript 5.9, ESLint 9, Prettier |
+| Area      | Tooling                                              |
+| --------- | ---------------------------------------------------- |
+| Framework | Next.js 16.2.9 App Router                            |
+| UI        | React 19.2.7, Tailwind CSS 4, Radix UI, lucide-react |
+| State     | TanStack Query 5, Zustand 5                          |
+| i18n      | next-intl 4                                          |
+| Tests     | Vitest 4, Testing Library, happy-dom                 |
+| Tooling   | TypeScript 5.9, ESLint 9, Prettier                   |
 
 ## Quick Start
 
@@ -156,6 +156,21 @@ uses fixed same-origin adapter routes and the HttpOnly API session. Provider con
 plain text, action URLs are restricted to safe local paths, and preference mutations are same-origin
 only. See [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md) and
 [../contracts/NOTIFICATIONS.md](../contracts/NOTIFICATIONS.md).
+
+## Asset Feature
+
+Asset is user-scoped and must be selected in both deployable halves:
+
+```env
+OPTIONAL_STARTERS=asset
+NEXT_PUBLIC_OPTIONAL_FEATURES=asset
+```
+
+The console then exposes private upload, lifecycle status, download, and delete operations. Grants
+remain ephemeral, successful payloads are strictly parsed, and browser transfers reject unsafe URLs,
+headers, credentials, and redirects. Development uses a bounded per-user mock object store;
+production uses fixed same-origin management adapters and direct short-lived R2 grants. See
+[docs/ASSETS.md](docs/ASSETS.md) and [../contracts/ASSETS.md](../contracts/ASSETS.md).
 
 ## HTTP Contract
 

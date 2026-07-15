@@ -3,6 +3,7 @@ const messages = {
   home: '首页',
   console: '控制台',
   organizations: '组织',
+  assets: '资产',
   settings: '设置',
   profile: '个人资料',
   analytics: '数据分析',

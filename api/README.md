@@ -52,7 +52,7 @@ DB_NAME=luas
 JWT_SECRET=replace-me
 ```
 
-`user`、`apikey`、`audit` 默认启用。组织、权限和通知是可选 Starter；需要权限时给 HTTP
+`user`、`apikey`、`audit` 默认启用。组织、权限、通知和资产是可选 Starter；需要权限时给 HTTP
 进程、迁移任务和 seeder 任务统一设置完整依赖：
 
 ```bash
@@ -74,6 +74,17 @@ go run ./cmd/luas notification:work --batch=25 --poll=2s
 HTTP 进程、迁移任务和 worker 必须使用同一份 `OPTIONAL_STARTERS` 与邮件配置。见
 [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) 与
 [`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md)。
+
+资产 starter 提供用户私有上传、内容基线检查、短期传输凭证、删除和清理闭环：
+
+```bash
+OPTIONAL_STARTERS=asset
+go run ./cmd/luas asset:prune --batch=100
+```
+
+开发环境默认使用受根目录约束的本地存储；生产启用资产时必须显式配置 R2，不能回退到容器
+文件系统。见 [`docs/ASSETS.md`](docs/ASSETS.md) 与
+[`../contracts/ASSETS.md`](../contracts/ASSETS.md)。
 
 ### 3. 生成依赖注入代码
 
@@ -216,6 +227,7 @@ luas/api/
 - `internal/modules/user` 是默认认证 starter，会参与默认路由、迁移和数据初始化
 - `internal/modules/apikey` 是默认 API key starter，会参与默认路由和迁移，并提供 `api_key` 中间件组
 - `internal/modules/audit` 是默认审计 starter，会记录全局写请求，并提供当前用户的审计历史查询
+- `internal/modules/asset` 是可选用户资产 starter，负责所有权、元数据、检查、生命周期和删除；对象字节通过 storage capability 管理
 
 业务模块建议遵循 8 文件结构：
 
@@ -322,7 +334,7 @@ r.Group("/v1", func(api *router.Router) {
 - `Sentry`
 - `OpenTelemetry`
 - `Resend` 邮件 capability：10 秒默认 provider timeout、64 KiB 响应上限和 context 取消；边界见 [docs/EMAIL.md](docs/EMAIL.md)
-- `R2` 对象存储
+- `R2` 对象存储 capability：AWS SDK for Go v2、短期签名传输和私密错误边界；由可选 asset starter 赋予业务生命周期，见 [docs/ASSETS.md](docs/ASSETS.md)
 
 如果你的项目不需要这些能力，可以只保留核心 HTTP、配置、数据库、路由和模块层。
 
@@ -343,7 +355,7 @@ docker compose down
 - `health:check`：镜像内置的 loopback liveness probe，不依赖 shell/curl
 - `LOG_STDOUT=true` + `LOG_FILE_ENABLED=false`：容器请求日志输出 JSON 到 stdout
 - `make container-check`：真实构建、启动、探针、日志、env 泄漏和 SIGTERM 验证
-- `make compose-check`：真实 PostgreSQL、启动迁移、readiness 和 starter 注册验证
+- `make compose-check`：真实 PostgreSQL、启动迁移、readiness 和已选择 starter 的端到端验证
 - `.github/workflows/container.yml`：API/container 变更时执行相同 smoke test
 - 可选镜像发布工作流可以使用 buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
 - 可选平台部署需要配置对应平台的 API token Secret

@@ -69,6 +69,9 @@ channel validation, cross-user non-disclosure, preferences, and high-water read 
 runs one worker batch without provider credentials and requires the stable terminal result
 `EMAIL.NOT_CONFIGURED`, verifies that no recipient or provider-response columns exist, rolls all
 three notification tables down, reapplies them, and confirms the HTTP surface recovers.
+When `OPTIONAL_STARTERS` contains `asset`, the verifier creates an upload intent, transfers bounded
+bytes through the local token adapter, completes inspection, downloads and compares the attachment,
+deletes it, verifies post-delete non-disclosure, and exercises the asset migration down/up cycle.
 
 ## Local Compose
 
@@ -84,8 +87,9 @@ docker compose down
 
 Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
 `JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
-ownership kernel or `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state;
-the API process and its local startup migration receive the same value.
+ownership kernel, `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state, or
+`OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage; the API
+process and its local startup migration receive the same value.
 `ORGANIZATION_INVITATION_TTL` is forwarded to the API container and defaults to `168h`.
 `docker compose down --volumes` also deletes local database data.
 
@@ -102,8 +106,11 @@ A downstream production deployment must inject at least:
 - `SERVER_TRUSTED_PROXIES`: only exact ingress/load-balancer IPs or CIDRs when forwarding headers are
   trusted.
 - `OPTIONAL_STARTERS`: one identical additive selection for every API replica, migration job, and
-  seeder job, plus notification workers when selected. Omit or set empty when no optional starter
-  is enabled.
+  seeder job, plus notification workers and asset cleanup jobs when selected. Omit or set empty when
+  no optional starter is enabled.
+- Asset deployments: `OBJECT_STORAGE_DRIVER=r2` plus the complete R2 secret group, exact provider
+  CORS rules for browser PUT/GET, and a short lifecycle rule for `asset-uploads/`. Do not use a
+  container filesystem as durable production storage.
 
 Keep secrets in the deployment platform's secret store, not in the image, Compose file, repository,
 or command history. Keep `/health/live` as the process liveness signal and `/health/ready` as the
@@ -145,6 +152,19 @@ process. Monitor worker exits, terminal failure-code counts, oldest pending age,
 past lease expiry without logging recipients or notification content. Graceful `SIGTERM` stops new
 batches and lets the current provider call obey its bounded context. See
 [`NOTIFICATIONS.md`](NOTIFICATIONS.md) for retry, privacy, and removal semantics.
+
+## Asset Cleanup Job
+
+When `asset` is selected, run the same image periodically as a bounded cleanup job:
+
+```bash
+/app/luas asset:prune --batch=100
+```
+
+The job requires the same database, R2 secrets, object-storage policy, and `OPTIONAL_STARTERS`
+snapshot as HTTP replicas. Provider lifecycle rules on `asset-uploads/` remain defense in depth.
+Monitor nonzero failed counts and oldest pending age without logging filenames, object keys, signed
+URLs, checksums, or content. See [`ASSETS.md`](ASSETS.md) for lifecycle, recovery, and removal.
 
 ## Change Checklist
 

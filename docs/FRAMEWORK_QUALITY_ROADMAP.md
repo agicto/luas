@@ -116,7 +116,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds idempotent internal publication, user preferences, in-app state, durable email delivery, and a strict Web center. All three are ready when explicitly enabled in both halves; file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles. All four are ready when explicitly enabled in both halves; settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -653,6 +653,26 @@ real PostgreSQL Compose run produced notification statuses
 `200/200/422/404/200/200/200`, a worker result of
 `failed:1:EMAIL.NOT_CONFIGURED:64`, and a `3 -> 0 -> 3` migration rollback/reapply cycle.
 
+The independent asset slice separates user-owned metadata from provider-owned bytes. The optional
+starter owns UUID identity, idempotent upload intent, strict media/size policy, staging-to-final
+promotion, bounded inspection and SHA-256, operation leases, private audit, account-deletion guard,
+and bounded cleanup. Storage is a provider-neutral capability with a rooted private local adapter
+and an AWS SDK for Go v2 R2 adapter; production activation fails closed unless R2 is explicit.
+
+The Web feature adds strict successful-response schemas, fixed management adapters, short-lived
+grants that never enter persistent client state, safe transfer URL/header validation, a bounded
+per-user mock object store, and a compact responsive console workflow. The default API route,
+migration, object-storage initialization, Web navigation, and feature execution remain unchanged
+until `asset` is selected.
+
+With Next.js 16.2.9, the default and asset-enabled `/console` entry both contain 22 chunks:
+881,761 raw / 267,365 gzip bytes disabled and 881,681 raw / 267,356 gzip bytes enabled. The 80 raw /
+9 gzip byte decrease is build-hash noise, not a claimed optimization. Visiting `/console/assets`
+adds three route-specific chunks totaling 114,321 raw / 34,461 gzip bytes. The guarded file-system
+route is still compiled into disabled build artifacts, but it is absent from navigation, returns
+not-found, and adds no initial console transfer. Gzip values use Node zlib level 9; these are local
+production-manifest measurements, not network traces or field Core Web Vitals.
+
 Verification:
 
 - `cd api && go test ./...`
@@ -677,7 +697,8 @@ Recommended slice:
 2. Keep the complete optional `organization` lifecycle and its production/mock adapter parity under executable contract and browser regression coverage.
 3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py`.
 4. Keep the delivered `notification` starter user-scoped, idempotent, lease-driven, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py`.
-5. Build file/asset next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
+5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py`.
+6. Build typed settings next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 
 Verification:
 

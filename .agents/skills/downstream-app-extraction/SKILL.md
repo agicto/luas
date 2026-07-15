@@ -29,6 +29,8 @@ Read these before extraction work:
 5. `api/docs/ADDING_MODULE.md` when keeping or adding backend starter-style behavior.
 6. `web/docs/ADDING_FEATURE.md` when keeping or adding Web feature behavior.
 7. `contracts/README.md` when real API behavior or HTTP client behavior changes.
+8. `contracts/ASSETS.md`, `api/docs/ASSETS.md`, and `web/docs/ASSETS.md` when retaining or removing
+   uploaded-object behavior.
 
 ## Surface Classification
 
@@ -83,6 +85,12 @@ Classify each touched surface before changing it.
      email secrets, image, and `OPTIONAL_STARTERS` selection as API replicas. Keep notification
      content plain text, action URLs local, browser state user-scoped, and provider/recipient detail
      outside contracts, audit records, and logs. Define retention before enabling high-volume use.
+   - When retaining `asset`, keep user ownership and lifecycle in the starter while provider byte
+     operations stay behind the storage capability. Run `asset:prune` with the same database,
+     provider secrets, and `OPTIONAL_STARTERS` selection as API replicas. Preserve staging-to-final
+     promotion, bounded inspection, account-deletion guard, signed-grant privacy, exact R2 CORS, and
+     provider lifecycle cleanup. Keep grants out of persistent browser state and never expose object
+     keys, local paths, checksums, or a generic bucket API.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

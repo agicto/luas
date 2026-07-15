@@ -9,6 +9,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/jwt"
 	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/zgiai/luas/api/internal/infra/storage"
 )
 
 // ProviderSet aggregates all infrastructure providers for Wire DI.
@@ -33,6 +34,9 @@ var ConfiguredProviderSet = wire.NewSet(
 
 	// Event Bus
 	events.NewEventBus,
+
+	// Object storage - disabled, local, or private R2 from the typed config.
+	storage.ProviderSet,
 
 	// Migration - depends on Database and EventBus
 	migration.ProviderSet,

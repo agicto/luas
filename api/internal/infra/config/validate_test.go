@@ -346,6 +346,79 @@ func TestValidate_OrganizationInvitationTTLWhenStarterIsSelected(t *testing.T) {
 	}
 }
 
+func TestValidate_AssetStoragePolicy(t *testing.T) {
+	validAsset := func(environment, driver string) *Config {
+		cfg := baseValidConfig(environment)
+		cfg.Starters.Optional = []string{"asset"}
+		cfg.App.URL = "https://api.example.com"
+		cfg.ObjectStorage = ObjectStorageConfig{
+			Driver:         driver,
+			LocalRoot:      "storage/objects",
+			RequestTimeout: 30 * time.Second,
+		}
+		cfg.Asset = AssetConfig{
+			MaxBytes:         DefaultAssetMaxBytes,
+			UploadGrantTTL:   DefaultAssetUploadGrantTTL,
+			DownloadGrantTTL: DefaultAssetDownloadGrantTTL,
+			PendingTTL:       DefaultAssetPendingTTL,
+		}
+		if driver == "r2" {
+			cfg.R2 = R2Config{
+				AccessKeyID:     "access-key",
+				SecretAccessKey: "secret-key",
+				Bucket:          "private-bucket",
+				Region:          "auto",
+				Endpoint:        "https://account.r2.cloudflarestorage.com",
+			}
+		}
+		return cfg
+	}
+
+	tests := []struct {
+		name    string
+		config  *Config
+		wantErr string
+	}{
+		{name: "development local", config: validAsset("development", "local")},
+		{name: "production r2", config: validAsset("production", "r2")},
+		{name: "disabled selected", config: validAsset("development", "disabled"), wantErr: "must be enabled"},
+		{name: "production local", config: validAsset("production", "local"), wantErr: "must be r2"},
+		{name: "unknown driver", config: validAsset("development", "s3"), wantErr: "OBJECT_STORAGE_DRIVER"},
+		{name: "oversized policy", config: func() *Config {
+			cfg := validAsset("development", "local")
+			cfg.Asset.MaxBytes = 100*1024*1024 + 1
+			return cfg
+		}(), wantErr: "ASSET_MAX_BYTES"},
+		{name: "pending shorter than grant", config: func() *Config {
+			cfg := validAsset("development", "local")
+			cfg.Asset.PendingTTL = time.Minute
+			return cfg
+		}(), wantErr: "ASSET_PENDING_TTL"},
+		{name: "partial r2", config: func() *Config {
+			cfg := validAsset("development", "local")
+			cfg.R2.AccessKeyID = "accidental-key"
+			return cfg
+		}(), wantErr: "must be configured together"},
+		{name: "insecure production endpoint", config: func() *Config {
+			cfg := validAsset("production", "r2")
+			cfg.R2.Endpoint = "http://r2.internal"
+			return cfg
+		}(), wantErr: "https in production"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validate(test.config)
+			if test.wantErr == "" && err != nil {
+				t.Fatalf("validate() error = %v", err)
+			}
+			if test.wantErr != "" && (err == nil || !strings.Contains(err.Error(), test.wantErr)) {
+				t.Fatalf("validate() error = %v, want %q", err, test.wantErr)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsInvalidServerTransportBudgets(t *testing.T) {
 	tests := []struct {
 		name string
