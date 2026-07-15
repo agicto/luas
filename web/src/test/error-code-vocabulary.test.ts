@@ -8,7 +8,7 @@ import {
 } from '@/http/codes';
 
 const apiErrorCodePattern =
-  /^(?:COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE)(?:\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$/;
+  /^(?:COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE|NOTIFICATION)(?:\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$/;
 const clientErrorCodePattern = /^CLIENT\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 const legacyErrorCodePattern = /^(?:SYS|AUTH|BIZ|VAL)_\d{3}$/;
 

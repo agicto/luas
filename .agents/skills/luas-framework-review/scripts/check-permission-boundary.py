@@ -142,7 +142,7 @@ def main() -> int:
         failures,
         "web/src/config/optional-features.ts",
         (
-            "['organization', 'permission']",
+            "['organization', 'permission', 'notification']",
             "permission: ['organization']",
         ),
     )

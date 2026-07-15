@@ -109,6 +109,10 @@ bounds upstream JSON, and never forwards browser cookies or authorization. Do no
 catch-all proxy. The optional organization workflow and its URL-scoped selection rules are in
 `docs/ORGANIZATIONS.md`.
 
+The independent notification workflow uses the same fixed transport, strict successful-response
+schemas, user-isolated mock state, and lazy console center. Its activation and removal boundary is
+in `docs/NOTIFICATIONS.md`; provider delivery details never enter Web code.
+
 The default API key browser workflow uses the same fixed production adapter and a development mock
 store. Plaintext is returned only by create and kept in dialog-local state; list contracts reject
 both plaintext and hashes. See `docs/API_KEYS.md` and `../contracts/API_KEYS.md`.

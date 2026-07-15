@@ -93,7 +93,243 @@ organization_context_flow="skipped"
 membership_flow="skipped"
 permission_flow="skipped"
 permission_migration_flow="skipped"
+notification_flow="skipped"
+notification_migration_flow="skipped"
 account_race_flow="skipped"
+case ",${OPTIONAL_STARTERS:-}," in
+  *,notification,*)
+    command -v python3 >/dev/null 2>&1 || fail "python3 is required for notification response checks"
+
+    notification_login_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-login.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --data '{"username":"compose-check@example.com","password":"secret12"}' \
+      "http://127.0.0.1:${published_port}/v1/login")"
+    [[ "${notification_login_status}" == "200" ]] || fail "notification recipient login returned HTTP ${notification_login_status}"
+    if ! read -r notification_user_id notification_token < <(python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+print(payload["user"]["id"], payload["access_token"])
+' "${TMP_DIR}/notification-login.json"); then
+      fail "notification recipient login response is incomplete"
+    fi
+    read -r notification_outsider_id notification_outsider_token < <(
+      register_and_login_user "compose_notification_outsider" "compose-notification-outsider@example.com" "notification-outsider"
+    )
+    [[ "${notification_outsider_id}" != "${notification_user_id}" ]] || fail "notification users are not isolated"
+
+    if ! notification_id="$(compose exec -T postgres psql \
+      --username luas \
+      --dbname luas \
+      --set ON_ERROR_STOP=1 \
+      --quiet \
+      --tuples-only \
+      --no-align \
+      --command "
+INSERT INTO notifications (
+  user_id,
+  idempotency_key,
+  publication_hash,
+  kind,
+  title,
+  body,
+  action_url,
+  created_at,
+  updated_at
+)
+VALUES (
+  ${notification_user_id},
+  'compose:notification:ready',
+  repeat('a', 64),
+  'starter.compose_ready',
+  'Compose notification ready',
+  'PostgreSQL notification state is available.',
+  '/console',
+  NOW(),
+  NOW()
+)
+RETURNING id;
+")"; then
+      fail "notification fixture insertion failed"
+    fi
+    notification_id="$(printf '%s' "${notification_id}" | tr -d '[:space:]')"
+    [[ "${notification_id}" =~ ^[1-9][0-9]*$ ]] || fail "notification fixture returned invalid ID ${notification_id}"
+
+    if ! compose exec -T postgres psql --username luas --dbname luas --set ON_ERROR_STOP=1 --command "
+INSERT INTO notification_deliveries (
+  notification_id,
+  channel,
+  status,
+  attempts,
+  available_at,
+  lease_token,
+  destination_hash,
+  delivered_at,
+  last_failure_code,
+  created_at,
+  updated_at
+)
+VALUES
+  (${notification_id}, 'in_app', 'delivered', 0, NOW(), '', '', NOW(), '', NOW(), NOW()),
+  (${notification_id}, 'email', 'pending', 0, NOW(), '', '', NULL, '', NOW(), NOW());
+" >/dev/null; then
+      fail "notification delivery fixture insertion failed"
+    fi
+
+    notification_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-list.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${notification_token}" \
+      "http://127.0.0.1:${published_port}/v1/notifications?status=unread&per_page=10")"
+    [[ "${notification_list_status}" == "200" ]] || fail "notification list returned HTTP ${notification_list_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))
+item = payload["data"][0]
+forbidden = {"user_id", "idempotency_key", "publication_hash", "deliveries", "recipient", "provider_response"}
+valid = (
+    payload["meta"]["total"] == 1
+    and len(payload["data"]) == 1
+    and item["id"] == int(sys.argv[2])
+    and item["kind"] == "starter.compose_ready"
+    and item["action_url"] == "/console"
+    and item["is_read"] is False
+    and not forbidden.intersection(item)
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/notification-list.json" "${notification_id}"; then
+      fail "notification list violates identity, visibility, or privacy contract"
+    fi
+
+    notification_status_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-status.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${notification_token}" \
+      "http://127.0.0.1:${published_port}/v1/notification-status")"
+    [[ "${notification_status_status}" == "200" ]] || fail "notification status returned HTTP ${notification_status_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["data"]["unread_count"] == 1 else 1)' "${TMP_DIR}/notification-status.json"; then
+      fail "notification status returned the wrong unread count"
+    fi
+
+    notification_invalid_filter_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-invalid-filter.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${notification_token}" \
+      "http://127.0.0.1:${published_port}/v1/notifications?status=everything")"
+    [[ "${notification_invalid_filter_status}" == "422" ]] || fail "invalid notification filter returned HTTP ${notification_invalid_filter_status}"
+
+    notification_outsider_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-outsider.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${notification_outsider_token}" \
+      --data '{"is_read":true}' \
+      "http://127.0.0.1:${published_port}/v1/notifications/${notification_id}")"
+    [[ "${notification_outsider_status}" == "404" ]] || fail "cross-user notification update returned HTTP ${notification_outsider_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "NOTIFICATION.NOT_FOUND" else 1)' "${TMP_DIR}/notification-outsider.json"; then
+      fail "cross-user notification update returned the wrong error_code"
+    fi
+
+    notification_preference_get_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-preference-get.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${notification_token}" \
+      "http://127.0.0.1:${published_port}/v1/notification-preferences")"
+    [[ "${notification_preference_get_status}" == "200" ]] || fail "notification preference read returned HTTP ${notification_preference_get_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if payload == {"in_app_enabled": True, "email_enabled": True} else 1)
+' "${TMP_DIR}/notification-preference-get.json"; then
+      fail "default notification preferences are not enabled"
+    fi
+
+    notification_preference_put_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-preference-put.json" \
+      --write-out '%{http_code}' \
+      --request PUT \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${notification_token}" \
+      --data '{"in_app_enabled":false,"email_enabled":false}' \
+      "http://127.0.0.1:${published_port}/v1/notification-preferences")"
+    [[ "${notification_preference_put_status}" == "200" ]] || fail "notification preference replacement returned HTTP ${notification_preference_put_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if payload == {"in_app_enabled": False, "email_enabled": False} else 1)
+' "${TMP_DIR}/notification-preference-put.json"; then
+      fail "notification preference replacement did not persist both values"
+    fi
+
+    notification_read_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-read-state.json" \
+      --write-out '%{http_code}' \
+      --request PUT \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${notification_token}" \
+      --data "{\"through_id\":${notification_id}}" \
+      "http://127.0.0.1:${published_port}/v1/notification-read-state")"
+    [[ "${notification_read_status}" == "200" ]] || fail "notification read high-water update returned HTTP ${notification_read_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if payload == {"updated_count": 1, "unread_count": 0} else 1)
+' "${TMP_DIR}/notification-read-state.json"; then
+      fail "notification read high-water update returned the wrong counts"
+    fi
+
+    if ! compose exec -T api /app/luas notification:work --once >"${TMP_DIR}/notification-worker.log" 2>&1; then
+      fail "notification worker one-shot dispatch failed"
+    fi
+    notification_delivery_state="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT status || ':' || attempts || ':' || last_failure_code || ':' || length(destination_hash)
+FROM notification_deliveries
+WHERE notification_id = ${notification_id} AND channel = 'email';
+")"
+    [[ "${notification_delivery_state}" == "failed:1:EMAIL.NOT_CONFIGURED:64" ]] || fail "notification worker produced ${notification_delivery_state}"
+    notification_recipient_columns="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = 'notification_deliveries'
+  AND column_name IN ('recipient', 'recipient_email', 'provider_response', 'error_message');
+")"
+    [[ "${notification_recipient_columns}" == "0" ]] || fail "notification delivery ledger exposes ${notification_recipient_columns} sensitive column(s)"
+    notification_flow="${notification_list_status}/${notification_status_status}/${notification_invalid_filter_status}/${notification_outsider_status}/${notification_preference_get_status}/${notification_preference_put_status}/${notification_read_status}/worker:${notification_delivery_state}"
+
+    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/notification-rollback.log" 2>&1; then
+      fail "notification migration rollback failed"
+    fi
+    notification_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('notifications', 'notification_deliveries', 'notification_preferences');
+")"
+    [[ "${notification_tables_down}" == "0" ]] || fail "notification migration rollback left ${notification_tables_down} table(s)"
+
+    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/notification-migrate.log" 2>&1; then
+      fail "notification migration re-apply failed"
+    fi
+    notification_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('notifications', 'notification_deliveries', 'notification_preferences');
+")"
+    [[ "${notification_tables_up}" == "3" ]] || fail "notification migration re-apply created ${notification_tables_up}/3 tables"
+    notification_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/notification-post-migrate.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${notification_token}" \
+      "http://127.0.0.1:${published_port}/v1/notification-status")"
+    [[ "${notification_post_migrate_status}" == "200" ]] || fail "notification status after migration re-apply returned HTTP ${notification_post_migrate_status}"
+    notification_migration_flow="down:${notification_tables_down}/up:${notification_tables_up}/http:${notification_post_migrate_status}"
+    ;;
+esac
+
 case ",${OPTIONAL_STARTERS:-}," in
   *,organization,*)
     command -v python3 >/dev/null 2>&1 || fail "python3 is required for optional starter response checks"
@@ -624,4 +860,6 @@ printf 'compose organization/context flow: %s\n' "${organization_context_flow}"
 printf 'compose organization/member flow: %s\n' "${membership_flow}"
 printf 'compose permission flow: %s\n' "${permission_flow}"
 printf 'compose permission migration flow: %s\n' "${permission_migration_flow}"
+printf 'compose notification flow: %s\n' "${notification_flow}"
+printf 'compose notification migration flow: %s\n' "${notification_migration_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

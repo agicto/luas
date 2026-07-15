@@ -8,5 +8,6 @@ export const CLIENT_MESSAGE_NAMESPACES = {
   settings: ['settings'],
   organization: ['organization'],
   permission: ['permission'],
+  notification: ['notification'],
   i18nTest: ['test'],
 } as const satisfies Record<string, readonly ModuleName[]>;

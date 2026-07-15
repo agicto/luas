@@ -16,6 +16,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/notification"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/user"
@@ -66,17 +67,24 @@ func InitApplication() (*app.Application, error) {
 	permissionService := permission.NewService(permissionRepository, catalog)
 	guard := permission.NewGuard(permissionService)
 	permissionHandler := permission.NewHandler(permissionService, guard)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler)
+	notificationRepository := notification.NewRepository(db)
+	emailSender := notification.ProvideEmailSender(service)
+	eventPublisher := notification.ProvideEventPublisher(eventBus)
+	notificationService := notification.NewService(configConfig, notificationRepository, emailSender, eventPublisher)
+	notificationHandler := notification.NewHandler(notificationService)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler)
 	if err != nil {
 		return nil, err
 	}
 	application := &app.Application{
-		Config:       configConfig,
-		DB:           db,
-		EmailService: service,
-		EventBus:     eventBus,
-		Migrator:     migrator,
-		Starters:     registry,
+		Config:                 configConfig,
+		DB:                     db,
+		EmailService:           service,
+		EventBus:               eventBus,
+		Migrator:               migrator,
+		Starters:               registry,
+		NotificationPublisher:  notificationService,
+		NotificationDispatcher: notificationService,
 	}
 	return application, nil
 }
@@ -120,17 +128,24 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	permissionService := permission.NewService(permissionRepository, catalog)
 	guard := permission.NewGuard(permissionService)
 	permissionHandler := permission.NewHandler(permissionService, guard)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler)
+	notificationRepository := notification.NewRepository(db)
+	emailSender := notification.ProvideEmailSender(service)
+	eventPublisher := notification.ProvideEventPublisher(eventBus)
+	notificationService := notification.NewService(cfg, notificationRepository, emailSender, eventPublisher)
+	notificationHandler := notification.NewHandler(notificationService)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler)
 	if err != nil {
 		return nil, err
 	}
 	application := &app.Application{
-		Config:       cfg,
-		DB:           db,
-		EmailService: service,
-		EventBus:     eventBus,
-		Migrator:     migrator,
-		Starters:     registry,
+		Config:                 cfg,
+		DB:                     db,
+		EmailService:           service,
+		EventBus:               eventBus,
+		Migrator:               migrator,
+		Starters:               registry,
+		NotificationPublisher:  notificationService,
+		NotificationDispatcher: notificationService,
 	}
 	return application, nil
 }

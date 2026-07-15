@@ -12,6 +12,8 @@ import organization from './organization/en-US';
 import type { OrganizationMessages } from './organization/zh-Hans';
 import permission from './permission/en-US';
 import type { PermissionMessages } from './permission/zh-Hans';
+import notification from './notification/en-US';
+import type { NotificationMessages } from './notification/zh-Hans';
 import settings from './settings/en-US';
 import type { SettingsMessages } from './settings/zh-Hans';
 import errors from './errors/en-US';
@@ -35,6 +37,7 @@ export const messages = {
   console,
   organization,
   permission,
+  notification,
   settings,
   errors,
   metadata,
@@ -54,6 +57,7 @@ export interface MessageSchema {
   console: ConsoleMessages;
   organization: OrganizationMessages;
   permission: PermissionMessages;
+  notification: NotificationMessages;
   settings: SettingsMessages;
   errors: ErrorsMessages;
   metadata: MetadataMessages;

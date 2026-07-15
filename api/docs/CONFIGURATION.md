@@ -61,11 +61,13 @@ development process, which creates a complete new dependency graph.
 
 `OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
 empty; `audit`, `apikey`, and `user` remain active without being named. Available values are
-`organization` and `permission`; permission explicitly depends on organization:
+`organization`, `permission`, and `notification`; permission explicitly depends on organization,
+while notification can be selected independently:
 
 ```dotenv
 OPTIONAL_STARTERS=organization,permission
 ORGANIZATION_INVITATION_TTL=168h
+# or: OPTIONAL_STARTERS=notification
 ```
 
 Selection is resolved through `internal/starter` from the same typed configuration snapshot used by

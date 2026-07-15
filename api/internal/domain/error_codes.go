@@ -55,4 +55,8 @@ const (
 	CodeOrganizationInvitationEmailMismatch        = "ORGANIZATION.INVITATION.EMAIL_MISMATCH"
 	CodeOrganizationInvitationAlreadyPending       = "ORGANIZATION.INVITATION.ALREADY_PENDING"
 	CodeOrganizationMemberAlreadyExists            = "ORGANIZATION.MEMBER_ALREADY_EXISTS"
+
+	CodeNotificationNotFound            = "NOTIFICATION.NOT_FOUND"
+	CodeNotificationIdempotencyConflict = "NOTIFICATION.IDEMPOTENCY_CONFLICT"
+	CodeNotificationInvalidChannel      = "NOTIFICATION.INVALID_CHANNEL"
 )

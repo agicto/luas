@@ -2,7 +2,7 @@
 
 The Web mock BFF is the development-only behavior behind Next.js route handlers under
 `src/app/api/**`. It lets the web shell run before a real backend is available. Auth, default API
-key, and optional organization Route Handlers are hybrid entry points: they select either this mock
+key, optional organization, permission, and notification Route Handlers are hybrid entry points: they select either this mock
 behavior or the shipped production API adapter. A route location under `/api` does not by itself
 make behavior mock or production.
 
@@ -53,6 +53,10 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
    - `src/features/organization/server/mock-organization-store.ts`
    - `src/features/organization/server/organization-route.ts`
    - `src/features/organization/server/organization-lifecycle-route.ts`
+   - `src/features/permission/server/mock-permission-store.ts`
+   - `src/features/permission/server/permission-route.ts`
+   - `src/features/notification/server/mock-notification-store.ts`
+   - `src/features/notification/server/notification-route.ts`
    - `src/features/example/server/mock-example-store.ts`
    - `src/features/auth/server/mock-identity.ts`
    - `src/config/mock-session.ts`
@@ -73,6 +77,9 @@ Some downstream apps keep mock routes for local or preview development. In that 
   Hybrid permission routes call `resolvePermissionRoute()`, require the explicit
   `organization,permission` dependency selection, and preserve owner bypass plus delegated
   dominance checks in the mock store.
+  Hybrid notification routes call `resolveNotificationRoute()`, require the explicit `notification`
+  selection, isolate state by authenticated user, and preserve read high-water and preference
+  semantics.
   Hybrid API key routes call `resolveApiKeyRoute()` and follow the one-time secret contract in
   [`API_KEYS.md`](API_KEYS.md).
 - Every `POST`, `PUT`, `PATCH`, or `DELETE` handler must then call

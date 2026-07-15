@@ -12,6 +12,7 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 | `scripts/verify-container.sh` | Verification | Builds and exercises the production image contract. |
 | `scripts/verify-compose.sh` | Verification | Rebuilds the local worktree or reuses one explicitly verified image, then exercises PostgreSQL and startup. |
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
+| `luas notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
 | Production deployment manifests | Downstream app | Own secrets, network policy, replicas, migrations, rollout, and rollback. |
 
 ## Production Image
@@ -62,6 +63,12 @@ transfer gate requires exactly one `200`, one `403`, one persisted owner, and th
 demoted to `admin`. A second concurrency gate races account deletion against organization creation;
 either operation may win, but their status pair must be `201/409` or `204/404`, and a direct
 PostgreSQL check must find zero memberships attached to soft-deleted users.
+When `OPTIONAL_STARTERS` contains `notification`, the verifier also creates two isolated users,
+inserts an internal publication with in-app and email deliveries, and exercises list, unread status,
+channel validation, cross-user non-disclosure, preferences, and high-water read state over HTTP. It
+runs one worker batch without provider credentials and requires the stable terminal result
+`EMAIL.NOT_CONFIGURED`, verifies that no recipient or provider-response columns exist, rolls all
+three notification tables down, reapplies them, and confirms the HTTP surface recovers.
 
 ## Local Compose
 
@@ -77,7 +84,8 @@ docker compose down
 
 Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
 `JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
-ownership kernel; the API process and its local startup migration receive the same value.
+ownership kernel or `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state;
+the API process and its local startup migration receive the same value.
 `ORGANIZATION_INVITATION_TTL` is forwarded to the API container and defaults to `168h`.
 `docker compose down --volumes` also deletes local database data.
 
@@ -94,7 +102,8 @@ A downstream production deployment must inject at least:
 - `SERVER_TRUSTED_PROXIES`: only exact ingress/load-balancer IPs or CIDRs when forwarding headers are
   trusted.
 - `OPTIONAL_STARTERS`: one identical additive selection for every API replica, migration job, and
-  seeder job. Omit or set empty when no optional starter is enabled.
+  seeder job, plus notification workers when selected. Omit or set empty when no optional starter
+  is enabled.
 
 Keep secrets in the deployment platform's secret store, not in the image, Compose file, repository,
 or command history. Keep `/health/live` as the process liveness signal and `/health/ready` as the
@@ -119,6 +128,23 @@ mode from the validated configuration snapshot; `db:migrate`, `db:rollback`, `db
 because startup replicas are not a migration serialization mechanism. A mismatch in
 `OPTIONAL_STARTERS` between the pre-deploy job and serving replicas is a deployment contract
 violation: it can produce routes without tables or tables without owning runtime behavior.
+
+## Notification Worker
+
+When `notification` is selected and any publication requests the `email` channel, deploy the same
+image as a separate long-running worker:
+
+```bash
+/app/luas notification:work --batch=25 --poll=2s
+```
+
+Workers require the same database, email secrets, and `OPTIONAL_STARTERS` snapshot as HTTP replicas.
+They may scale horizontally because row leases and lease-token completion prevent concurrent owners
+from completing the same attempt. Provider calls are not readiness dependencies for the API
+process. Monitor worker exits, terminal failure-code counts, oldest pending age, and processing rows
+past lease expiry without logging recipients or notification content. Graceful `SIGTERM` stops new
+batches and lets the current provider call obey its bounded context. See
+[`NOTIFICATIONS.md`](NOTIFICATIONS.md) for retry, privacy, and removal semantics.
 
 ## Change Checklist
 

@@ -20,6 +20,10 @@ const permissionRouteModule = resolve(
   process.cwd(),
   'src/features/permission/server/permission-route.ts'
 );
+const notificationRouteModule = resolve(
+  process.cwd(),
+  'src/features/notification/server/notification-route.ts'
+);
 
 const forbiddenRoutePatterns = [
   {
@@ -99,6 +103,24 @@ function delegatesPermissionGuard(path: string, handler: RouteHandlerSource): bo
   );
 }
 
+function isNotificationRoute(path: string): boolean {
+  const route = relativeRoute(path);
+  return (
+    route === 'notifications/route.ts' ||
+    route.startsWith('notifications/') ||
+    route === 'notification-status/route.ts' ||
+    route === 'notification-read-state/route.ts' ||
+    route === 'notification-preferences/route.ts'
+  );
+}
+
+function delegatesNotificationGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    isNotificationRoute(path) &&
+    /\b(?:get|list|mark|replace)Notification[A-Za-z]*Route\b/.test(handler.source)
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -139,7 +161,8 @@ describe('mock BFF route contract', () => {
             !handler.source.includes(productionGuard(path)) &&
             !delegatesOrganizationGuard(path, handler) &&
             !delegatesApiKeyGuard(path, handler) &&
-            !delegatesPermissionGuard(path, handler)
+            !delegatesPermissionGuard(path, handler) &&
+            !delegatesNotificationGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -154,6 +177,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesOrganizationGuard(path, handler))
         .filter(handler => !delegatesApiKeyGuard(path, handler))
         .filter(handler => !delegatesPermissionGuard(path, handler))
+        .filter(handler => !delegatesNotificationGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -219,6 +243,46 @@ describe('mock BFF route contract', () => {
       );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every notification route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter(isNotificationRoute)
+      .flatMap(path =>
+        routeHandlers(path)
+          .filter(handler => !handler.source.includes('privateNotificationResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps delegated notification writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(notificationRouteModule, 'utf8');
+    const resolver =
+      source
+        .split('async function resolveMutationRoute', 2)[1]
+        ?.split('async function resolveAuthenticatedRoute', 1)[0] ?? '';
+    const availabilityGuard = resolver.indexOf('resolveNotificationRoute(');
+    const originGuard = resolver.indexOf('guardSameOriginMutation(');
+    const authentication = resolver.indexOf('resolveAuthenticatedRoute(');
+
+    expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+    expect(originGuard).toBeGreaterThan(availabilityGuard);
+    expect(authentication).toBeGreaterThan(originGuard);
+
+    for (const name of [
+      'replaceNotificationReadStateRoute',
+      'markNotificationsReadRoute',
+      'replaceNotificationPreferenceRoute',
+    ]) {
+      const handler = exportedFunction(source, name);
+      const mutationGuard = handler.indexOf('resolveMutationRoute(');
+      const bodyRead = handler.indexOf('readJsonBody(');
+
+      expect(mutationGuard, name).toBeGreaterThanOrEqual(0);
+      expect(bodyRead, name).toBeGreaterThan(mutationGuard);
+    }
   });
 
   it('keeps delegated permission writes ordered behind availability and origin guards', () => {

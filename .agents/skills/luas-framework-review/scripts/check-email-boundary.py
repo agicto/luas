@@ -58,6 +58,8 @@ def main() -> int:
             "ErrNotConfigured",
             "ProviderError",
             "html.EscapeString",
+            "SendEmailIdempotent(",
+            'request.Header.Set("Idempotency-Key", idempotencyKey)',
         ),
     )
     require_all(
@@ -88,7 +90,8 @@ def main() -> int:
             "optional outbound email capability",
             "not a notification starter",
             "reads at most 64 KiB",
-            "direct and best-effort",
+            "Direct capability calls are best-effort",
+            "notification starter persists its own delivery ledger",
             "must persist their business state before attempting email delivery",
         ),
     )

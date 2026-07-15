@@ -120,9 +120,9 @@ def main() -> int:
     optional_packages = [
         module_imports.get(alias, alias) for alias in optional_aliases
     ]
-    if optional_packages != ["organization", "permission"]:
+    if optional_packages != ["organization", "permission", "notification"]:
         failures.append(
-            "optional starter catalog must contain organization followed by permission"
+            "optional starter catalog must contain organization, permission, and notification in canonical order"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
@@ -198,7 +198,7 @@ def main() -> int:
         failures,
         "web/src/config/optional-features.ts",
         (
-            "OPTIONAL_WEB_FEATURES = ['organization', 'permission']",
+            "OPTIONAL_WEB_FEATURES = ['organization', 'permission', 'notification']",
             "permission: ['organization']",
             "Duplicate optional Web feature",
             "Unknown optional Web feature",
@@ -658,6 +658,7 @@ def main() -> int:
         (
             "OPTIONAL_STARTERS=",
             "available: organization",
+            "notification",
             "Authorization,Organization-Id,X-Request-ID",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
@@ -710,6 +711,7 @@ def main() -> int:
         (
             "Optional Starter Activation",
             "OPTIONAL_STARTERS=organization",
+            "OPTIONAL_STARTERS=notification",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
     )
@@ -718,6 +720,7 @@ def main() -> int:
         "docs/STARTER_BUSINESS_ROADMAP.md",
         (
             "`organization` optional starter",
+            "`notification` optional starter",
             "Yes, when enabled",
             "request-scoped active context",
         ),
@@ -748,7 +751,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization, permission]",),
+        ("module: [user, apikey, audit, organization, permission, notification]",),
     )
 
     if failures:
@@ -758,7 +761,7 @@ def main() -> int:
         return 1
 
     print(
-        f"Starter catalog check passed ({len(optional_packages)} optional starter)."
+        f"Starter catalog check passed ({len(optional_packages)} optional starters)."
     )
     return 0
 

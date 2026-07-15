@@ -107,6 +107,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets.
 - [`docs/EMAIL.md`](docs/EMAIL.md) — outbound provider timeout, cancellation, privacy, and best-effort delivery semantics.
+- [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — optional notification publication, durable lease worker, retry/privacy rules, and replacement.
 - [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — request-log minimization, automatic credential redaction, safe exception diagnostics, parameterized SQL, and audit privacy.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
@@ -114,6 +115,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) — API key lifecycle, scope grammar, one-time plaintext, and route authorization contract.
 - [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) — optional organization activation, verified active context, ownership, invitation, member lifecycle, and transfer contract.
 - [`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md) — optional access roles, exact grants, delegated-management safety, and browser contract.
+- [`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md) — optional user notification, preference, read-state, and delivery contract.
 - [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) — permission catalog extension, transactional checks, and authorizer replacement.
 
 ## Directory Structure

@@ -4,14 +4,15 @@ import { getMessages } from 'next-intl/server';
 import { CLIENT_MESSAGE_NAMESPACES } from '@/i18n/client-message-namespaces';
 import { selectMessageNamespaces } from '@/i18n/message-selection';
 import { RouteMessagesProvider } from '@/i18n/route-messages-provider';
+import { isWebFeatureEnabled } from '@/config/features';
 
 export default async function ConsoleRouteGroupLayout({
   children,
 }: PropsWithChildren) {
-  const messages = selectMessageNamespaces(
-    await getMessages(),
-    CLIENT_MESSAGE_NAMESPACES.console
-  );
+  const namespaces = isWebFeatureEnabled('notification')
+    ? [...CLIENT_MESSAGE_NAMESPACES.console, ...CLIENT_MESSAGE_NAMESPACES.notification]
+    : CLIENT_MESSAGE_NAMESPACES.console;
+  const messages = selectMessageNamespaces(await getMessages(), namespaces);
 
   return (
     <RouteMessagesProvider additionalMessages={messages}>

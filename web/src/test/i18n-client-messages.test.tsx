@@ -30,6 +30,7 @@ describe('client i18n message boundaries', () => {
       settings: ['settings'],
       organization: ['organization'],
       permission: ['permission'],
+      notification: ['notification'],
       i18nTest: ['test'],
     });
   });
@@ -85,6 +86,7 @@ describe('client i18n message boundaries', () => {
     expect(rootLayout).not.toContain('messages={messages}');
     expect(authLayout).toContain('CLIENT_MESSAGE_NAMESPACES.auth');
     expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.console');
+    expect(consoleLayout).toContain('CLIENT_MESSAGE_NAMESPACES.notification');
     expect(settingsLayout).toContain('CLIENT_MESSAGE_NAMESPACES.settings');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.organization');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');

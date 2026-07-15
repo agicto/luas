@@ -43,6 +43,10 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/permission/zh-Hans'),
     'en-US': () => import('./modules/permission/en-US'),
   },
+  notification: {
+    'zh-Hans': () => import('./modules/notification/zh-Hans'),
+    'en-US': () => import('./modules/notification/en-US'),
+  },
   settings: {
     'zh-Hans': () => import('./modules/settings/zh-Hans'),
     'en-US': () => import('./modules/settings/en-US'),

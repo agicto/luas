@@ -24,6 +24,10 @@ Default starter modules:
 - `apikey` - API key lifecycle and middleware registration.
 - `audit` - write-request audit trail and user-facing audit history.
 
+Optional starter modules are compiled but activated additively. `organization` owns tenancy and
+membership, `permission` adds organization-scoped exact grants, and `notification` owns user-scoped
+records, preferences, read state, and a durable channel delivery ledger.
+
 Typical flow:
 
 ```text
@@ -104,6 +108,14 @@ access roles group exact code-owned dotted permission keys and attach to organiz
 Organization membership roles continue to own lifecycle and ownership. Effective permission checks
 refresh current persistence, owner bypass is explicit, delegated mutations require dominance over
 both current and requested grants, and resource-instance ownership remains in product policies.
+
+The independent `notification` starter is selected with `notification` in both halves. Downstream
+API modules publish immutable user events through `domain.NotificationPublisher`; no public publish
+endpoint exists. The API commits notification and delivery records atomically, while independently
+deployed `luas notification:work` processes email deliveries through bounded database leases and a
+stable provider idempotency key. The Web feature owns strict same-origin adapters, development mock
+parity, unread state, preferences, and a lazy notification center; it never receives provider
+responses or recipient routing data.
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

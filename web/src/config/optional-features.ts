@@ -1,4 +1,4 @@
-export const OPTIONAL_WEB_FEATURES = ['organization', 'permission'] as const;
+export const OPTIONAL_WEB_FEATURES = ['organization', 'permission', 'notification'] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
 

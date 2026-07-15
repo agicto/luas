@@ -52,7 +52,7 @@ DB_NAME=luas
 JWT_SECRET=replace-me
 ```
 
-`user`、`apikey`、`audit` 默认启用。组织与权限是可选 Starter；需要权限时给 HTTP
+`user`、`apikey`、`audit` 默认启用。组织、权限和通知是可选 Starter；需要权限时给 HTTP
 进程、迁移任务和 seeder 任务统一设置完整依赖：
 
 ```bash
@@ -63,6 +63,17 @@ OPTIONAL_STARTERS=organization,permission
 访问角色、精确授权、事务化分配和可替换 authorizer。见
 [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) 与
 [`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md)。
+
+通知 starter 独立于组织边界，提供幂等发布、用户偏好、站内已读状态和租约驱动的邮件投递：
+
+```bash
+OPTIONAL_STARTERS=notification
+go run ./cmd/luas notification:work --batch=25 --poll=2s
+```
+
+HTTP 进程、迁移任务和 worker 必须使用同一份 `OPTIONAL_STARTERS` 与邮件配置。见
+[`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) 与
+[`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md)。
 
 ### 3. 生成依赖注入代码
 

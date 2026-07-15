@@ -141,6 +141,22 @@ Every browser call carries the URL-derived organization ID; strict schemas valid
 caching, and Go remains authoritative. See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) and
 [../contracts/PERMISSIONS.md](../contracts/PERMISSIONS.md).
 
+## Notification Feature
+
+Notification is independent of organization and must be selected in both deployable halves:
+
+```env
+OPTIONAL_STARTERS=notification
+NEXT_PUBLIC_OPTIONAL_FEATURES=notification
+```
+
+The console then loads a user-scoped notification center with unread status, race-safe read state,
+and explicit in-app/email preferences. Development may use the isolated mock BFF store; production
+uses fixed same-origin adapter routes and the HttpOnly API session. Provider content is rendered as
+plain text, action URLs are restricted to safe local paths, and preference mutations are same-origin
+only. See [docs/NOTIFICATIONS.md](docs/NOTIFICATIONS.md) and
+[../contracts/NOTIFICATIONS.md](../contracts/NOTIFICATIONS.md).
+
 ## HTTP Contract
 
 The default request client is configured by `NEXT_PUBLIC_API_URL`. Error handling understands the Go API error shape:

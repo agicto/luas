@@ -29,6 +29,13 @@ const OrganizationSwitcher = lazy(async () => {
   return { default: organizationFeature.OrganizationSwitcher };
 });
 
+const NotificationCenter = lazy(async () => {
+  const notificationFeature = await import(
+    '@/features/notification/components/notification-center'
+  );
+  return { default: notificationFeature.NotificationCenter };
+});
+
 interface NavItem {
   titleKey: Extract<AllTranslationKeys, `nav.${string}`>;
   href: string;
@@ -45,6 +52,7 @@ export default function ConsoleLayout({
   const user = useAuthStore.use.user();
   const { mutate: logout, isPending: isLoggingOut } = useLogout();
   const organizationEnabled = isWebFeatureEnabled('organization');
+  const notificationEnabled = isWebFeatureEnabled('notification');
 
   const mainNavItems: NavItem[] = [
     {
@@ -96,11 +104,18 @@ export default function ConsoleLayout({
           <div className="hidden sm:block"><LanguageSwitcher /></div>
           <ThemeToggle />
           
-          <Button variant="ghost" isIcon className="relative hidden h-9 w-9 rounded-full sm:inline-flex">
-            <Bell className="h-4 w-4 text-text-muted" />
-            <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary border-2 border-bg-surface" />
-            <span className="sr-only">{t('console.notifications')}</span>
-          </Button>
+          {notificationEnabled ? (
+            <Suspense
+              fallback={
+                <Button variant="ghost" isIcon className="h-9 w-9 rounded-full" disabled>
+                  <Bell className="h-4 w-4 text-text-muted" />
+                  <span className="sr-only">{t('console.notifications')}</span>
+                </Button>
+              }
+            >
+              <NotificationCenter />
+            </Suspense>
+          ) : null}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

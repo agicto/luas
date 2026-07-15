@@ -10,6 +10,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/notification"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	permissionstarter "github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/user"
@@ -23,6 +24,7 @@ var ProviderSet = wire.NewSet(
 	user.ProviderSet,
 	organization.ProviderSet,
 	permissionstarter.ProviderSet,
+	notification.ProviderSet,
 	NewConfiguredRegistry,
 )
 
@@ -36,8 +38,17 @@ func NewConfiguredRegistry(
 	userHandler *user.Handler,
 	organizationHandler *organization.Handler,
 	permissionHandler *permissionstarter.Handler,
+	notificationHandler *notification.Handler,
 ) (*Registry, error) {
-	manifests, err := ConfiguredManifests(cfg, auditHandler, apiKeyHandler, userHandler, organizationHandler, permissionHandler)
+	manifests, err := ConfiguredManifests(
+		cfg,
+		auditHandler,
+		apiKeyHandler,
+		userHandler,
+		organizationHandler,
+		permissionHandler,
+		notificationHandler,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +75,12 @@ func NewDefaultRegistry(
 func OptionalManifests(
 	organizationHandler *organization.Handler,
 	permissionHandler *permissionstarter.Handler,
+	notificationHandler *notification.Handler,
 ) []assembly.StarterManifest {
 	return []assembly.StarterManifest{
 		organization.NewStarterManifest(organizationHandler),
 		permissionstarter.NewStarterManifest(permissionHandler),
+		notification.NewStarterManifest(notificationHandler),
 	}
 }
 
@@ -79,13 +92,14 @@ func ConfiguredManifests(
 	userHandler *user.Handler,
 	organizationHandler *organization.Handler,
 	permissionHandler *permissionstarter.Handler,
+	notificationHandler *notification.Handler,
 ) ([]assembly.StarterManifest, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required for starter selection")
 	}
 	catalog, err := NewCatalog(
 		DefaultManifests(auditHandler, apiKeyHandler, userHandler),
-		OptionalManifests(organizationHandler, permissionHandler),
+		OptionalManifests(organizationHandler, permissionHandler, notificationHandler),
 	)
 	if err != nil {
 		return nil, err
@@ -95,7 +109,7 @@ func ConfiguredManifests(
 
 // ValidateConfig fails before infrastructure work when starter selection is ambiguous.
 func ValidateConfig(cfg *config.Config) error {
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil)
 	return err
 }
 
@@ -119,7 +133,7 @@ func DefaultMigrations() (map[string]migration.Migration, error) {
 
 // ConfiguredMigrations returns migrations from the same additive starter selection as HTTP.
 func ConfiguredMigrations(cfg *config.Config) (map[string]migration.Migration, error) {
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +155,7 @@ func DefaultSeeders() ([]seeders.Seeder, error) {
 
 // ConfiguredSeeders returns seeders from the same additive starter selection as HTTP.
 func ConfiguredSeeders(cfg *config.Config) ([]seeders.Seeder, error) {
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}

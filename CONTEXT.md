@@ -89,6 +89,17 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   allow-only, request-scoped to a verified organization membership, and default-deny. Permission
   keys are not API key scopes, runtime administrator input, or resource-ownership policies.
 
+**Notification**
+: One immutable application event addressed to one user by the optional `notification` starter.
+  It owns user-visible plain-text content, a caller-owned idempotency key, optional relative action
+  URL, and mutable read state only when an `in_app` delivery exists. It is not a provider message.
+
+**Notification delivery**
+: One channel-specific execution record for a notification. A delivery owns channel, state,
+  attempts, availability, worker lease, stable failure code, and completion time without storing
+  provider response bodies or recipient addresses. `in_app` and `email` are the starter's current
+  channels; provider-specific payloads remain adapter details.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -119,6 +130,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
 - Access roles group exact permission keys inside one active organization; owner bypass and every
   non-owner grant are resolved from current persistence rather than JWT claims.
+- A notification represents the user-facing event once; notification deliveries represent its
+  independently executed channels and retry lifecycle.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -134,3 +147,6 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **API key scope vs role/permission**: API key scopes constrain one credential. Organization roles
   describe membership lifecycle; access roles and dotted permission keys belong to the optional
   `permission` starter. Resource-instance ownership still belongs to the owning business policy.
+- **notification vs delivery/message**: A notification is the immutable user event. A notification
+  delivery is one channel execution ledger entry. Provider messages, receipts, and callback payloads
+  are adapter details and must not create a second global meaning for notification.

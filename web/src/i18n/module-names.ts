@@ -6,6 +6,7 @@ export const AVAILABLE_MODULES = [
   'console',
   'organization',
   'permission',
+  'notification',
   'settings',
   'errors',
   'metadata',

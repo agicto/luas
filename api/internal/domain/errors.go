@@ -46,6 +46,11 @@ var (
 	ErrOrganizationInvitationAlreadyPending       = errors.New("organization invitation is already pending")
 	ErrOrganizationMemberAlreadyExists            = errors.New("organization member already exists")
 
+	// Notification errors
+	ErrNotificationNotFound            = errors.New("notification not found")
+	ErrNotificationIdempotencyConflict = errors.New("notification idempotency key conflicts with existing content")
+	ErrNotificationInvalidChannel      = errors.New("notification channel is invalid")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

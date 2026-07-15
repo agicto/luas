@@ -2,8 +2,8 @@
 
 `internal/infra/email` is an optional outbound email capability backed by Resend. It is not a
 provider-neutral transport and it is not a notification starter: it owns provider delivery mechanics,
-while a future notification starter owns
-preferences, records, retries, delivery status, and user-facing workflows.
+while the optional notification starter owns preferences, records, retries, delivery status, and
+user-facing workflows.
 
 ## Configuration
 
@@ -34,6 +34,8 @@ Every send:
   network I/O;
 - reads at most 64 KiB from the provider response;
 - accepts only a 2xx response containing a non-empty provider message ID;
+- optionally accepts a non-empty control-character-free idempotency key up to 256 bytes and sends it
+  only through the provider's `Idempotency-Key` header;
 - returns `ErrNotConfigured`, `ErrInvalidMessage`, `ErrProviderResponseTooLarge`,
   `ErrInvalidProviderResponse`, or a status-only `ProviderError` as appropriate;
 - never returns the provider response body, which may contain recipient PII or provider diagnostics.
@@ -44,8 +46,8 @@ layers may log stable operation names, internal IDs, outcomes, and the sanitized
 
 ## Current Semantics
 
-Delivery is direct and best-effort. Luas does not currently persist an outbox, retry provider
-failures, expose delivery receipts, or provide exactly-once semantics.
+Direct capability calls are best-effort. The capability itself does not persist an outbox, retry
+provider failures, expose delivery receipts, or provide exactly-once semantics.
 
 - Password-reset requests intentionally preserve their generic public success response on lookup,
   storage, configuration, or delivery failure to avoid account enumeration. Internal logs use the
@@ -58,9 +60,14 @@ failures, expose delivery receipts, or provide exactly-once semantics.
   organization starter owns the escaped template and narrow mailer adapter; the API reports only
   whether the synchronous provider call was accepted, failed, or not configured. See
   [`../../contracts/ORGANIZATIONS.md`](../../contracts/ORGANIZATIONS.md).
+- The optional notification starter persists its own delivery ledger, retries transient failures in
+  `luas notification:work`, and supplies a stable provider idempotency key. Those semantics belong to
+  the starter and do not make direct `SendEmail` calls durable. See
+  [`NOTIFICATIONS.md`](NOTIFICATIONS.md).
 
-Use workflow/queue infrastructure or a future notification starter when a downstream app needs
-durable retries, delivery history, preferences, or multiple channels.
+Use the notification starter when a downstream app needs user preferences, in-app state, durable
+email retries, or delivery history. Use a separate workflow/outbox design for non-notification email
+that still requires durable execution.
 
 ## Replacement
 
@@ -73,6 +80,6 @@ contracts, handlers, or Web code.
 
 ```bash
 cd api
-go test ./internal/infra/email ./internal/infra/config ./internal/modules/user ./internal/modules/organization
-go test -race ./internal/infra/email ./internal/modules/user ./internal/modules/organization
+go test ./internal/infra/email ./internal/infra/config ./internal/modules/user ./internal/modules/organization ./internal/modules/notification
+go test -race ./internal/infra/email ./internal/modules/user ./internal/modules/organization ./internal/modules/notification
 ```

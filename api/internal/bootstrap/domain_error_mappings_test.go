@@ -146,6 +146,24 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeOrganizationMemberAlreadyExists,
 		},
 		{
+			name:       "notification is not visible",
+			err:        fmt.Errorf("replace read state: %w", domain.ErrNotificationNotFound),
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeNotificationNotFound,
+		},
+		{
+			name:       "notification idempotency conflicts",
+			err:        domain.ErrNotificationIdempotencyConflict,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeNotificationIdempotencyConflict,
+		},
+		{
+			name:       "notification channel is invalid",
+			err:        domain.ErrNotificationInvalidChannel,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodeNotificationInvalidChannel,
+		},
+		{
 			name:       "wrapped service unavailable",
 			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
 			statusCode: http.StatusServiceUnavailable,

@@ -13,15 +13,15 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
 | `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, request-scoped active context, owner/admin rename, invitation lifecycle, PII-minimized member directory, role/removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards; optional Web directory/create/URL switcher/context/profile/member/invitation/ownership workflow | Yes, when enabled | API, strict Web services, fixed production adapters, development mock state, role-aware UI, contracts, tests, and extraction guidance cover the reusable organization lifecycle. It remains opt-in and deliberately excludes organization deletion, durable email retries, and generalized RBAC. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
 | `permission` optional starter | Organization-scoped access roles, code-owned exact permission catalog, current-persistence authorizer, owner bypass, delegated-management dominance checks, transactional assignment replacement, route guard, audit metadata; optional strict Web role/member management and mock parity | Yes, when enabled with `organization` | It is allow-only and default-deny, with no direct user grants, wildcards, role hierarchy, explicit deny, or resource-instance policy language. Product modules extend the catalog at assembly time and keep ownership checks local. See [`contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md). |
+| `notification` optional starter | Idempotent internal publication, user preferences, in-app records/read state, durable email delivery ledger, lease worker, stable failure codes; optional strict Web notification center and mock parity | Yes, when enabled | It is user-scoped and independent of organization. Required channels can override future-delivery preferences, email retries use stable provider idempotency, and no public publish endpoint or recipient/provider detail enters the browser contract. See [`contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
-| Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email now has typed all-or-none config, caller cancellation, a 10-second provider budget, bounded responses, and PII-safe errors, but delivery remains direct and best-effort. The memory workflow queue is bounded and race-free but process-local and non-durable; capabilities are not business-ready starters by themselves. |
+| Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email has typed all-or-none config, caller cancellation, a 10-second provider budget, bounded responses, PII-safe errors, and optional provider idempotency. Direct user/organization email remains best-effort; the notification starter adds its own durable ledger and worker. The memory workflow queue remains process-local and non-durable; capabilities are not business-ready starters by themselves. |
 
 ## Architecture Review Findings
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P1 | Notification capability exists, but no user-facing notification starter owns preferences, in-app records, or delivery status. | Apps repeatedly rebuild notification preferences and delivery history. | Build a `notification` optional starter backed by events, email, and optional in-app persistence. |
 | P2 | Storage/R2 capability exists, but there is no file or asset starter with ownership, metadata, validation, signed URL, and deletion rules. | Upload features become ad hoc and security-sensitive. | Build a `file` or `asset` optional starter with storage abstraction and audit events. |
 | P2 | App/workspace settings are represented by a console page, not by API-owned durable settings. | Downstream apps need feature flags, branding, locale, and workspace preferences. | Build a `setting` optional starter after organization ownership is clear. |
 | P2 | API keys exist without usage metering, quota, billing, or plan limits. | Developer/API products need usage visibility and limits before production launch. | Build `usage` first, then keep `billing` optional and provider-adapted. |
@@ -30,8 +30,9 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 ## Recommended Starter Sequence
 
-The production auth adapter is complete. The next business boundary is multi-user ownership; do
-not add permission, billing, or workspace settings before deciding which organization owns them.
+The production auth adapter plus the organization, permission, and notification optional starters
+are complete. Keep the sequence below as an ownership map; the next undelivered boundary is a
+secure file/asset starter.
 
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
@@ -47,9 +48,9 @@ not add permission, billing, or workspace settings before deciding which organiz
    - Remains optional because simple and single-user products should not pay the role-management complexity cost.
 
 3. `notification` optional starter
-   - Owns notification records, preferences, read state, delivery attempts, and user-facing notification center.
-   - Uses events and email as capabilities.
-   - Keeps SMS, Slack, or provider-specific channels as adapters, not starter vocabulary.
+   - Delivered across API persistence/publication/worker, contracts, Web adapters/mock/UI, tests, audit, deployment guidance, and governance.
+   - Owns notification records, global user preferences, read state, durable delivery attempts, and the user-facing notification center.
+   - Uses events and email as capabilities; keeps SMS, Slack, or provider-specific channels as future adapters, not starter vocabulary.
 
 4. `file` or `asset` optional starter
    - Owns upload metadata, ownership, size/type validation, signed upload/download URLs, deletion policy, and audit events.
@@ -58,7 +59,7 @@ not add permission, billing, or workspace settings before deciding which organiz
 
 5. `setting` optional starter
    - Owns typed settings at app, organization, and user scopes.
-   - Useful for branding, locale defaults, notification preferences, and feature flags.
+   - Useful for branding, locale defaults, workspace policy, and feature flags; notification channel preferences stay with `notification`.
    - Must define which settings are public, private, cached, or audited.
 
 6. `usage` optional starter before `billing`
@@ -88,7 +89,7 @@ A starter is not ready-to-use until it has all of these:
 | Starter manifest | Migrations, seeders, modules, middleware, and events registered through `internal/starter/assembly` |
 | HTTP contract | Request, response, pagination, `error_code`, and `request_id` behavior documented under `contracts/` before Web integration |
 | Web feature | `web/src/features/<feature>/` service, hooks, types, UI, tests, and route entry points when browser-facing |
-| Mock BFF behavior | Development-only mock route handlers guarded by `guardMockBffRoute()` when Web needs backend-free local development |
+| Mock BFF behavior | Development-only mock route handlers selected through a feature resolver or guarded by `guardMockBffRoute()` when Web needs backend-free local development |
 | Audit behavior | Mutating operations emit audit metadata or explicitly document why audit does not apply |
 | Downstream extraction | Keep/delete/replace guidance is clear in docs and does not leak downstream product assumptions |
 | Verification | Targeted API/Web tests plus `make governance`; use `make check` when both halves move |
@@ -111,7 +112,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Build `notification` next. Organization and permission now provide a stable tenant, membership,
-exact authorization, browser adapter, and persistence boundary without conflating ownership roles,
-access roles, API key scopes, or resource policies. File/asset, settings, usage, billing, webhook,
-and AI workspace starters can reuse those settled boundaries.
+Build `file` or `asset` next. Notification now provides user-scoped publication, preferences,
+in-app state, durable email delivery, and browser workflow without coupling simple applications to
+organizations. The next slice should settle ownership, object-key isolation, MIME/size validation,
+signed upload/download lifetimes, malware-scanning hooks, deletion, and audit before settings,
+usage, billing, webhook, or AI workspace starters depend on stored assets.

@@ -85,6 +85,61 @@ func TestServiceSendEmailUsesDocumentedProviderContract(t *testing.T) {
 	}
 }
 
+func TestServiceSendEmailIdempotentForwardsStableProviderKey(t *testing.T) {
+	keys := make(chan string, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		keys <- r.Header.Get("Idempotency-Key")
+		w.WriteHeader(http.StatusCreated)
+		_, _ = io.WriteString(w, `{"id":"email_123"}`)
+	}))
+	t.Cleanup(server.Close)
+
+	service := configuredEmailService(server.Client(), server.URL, time.Second)
+	err := service.SendEmailIdempotent(
+		context.Background(),
+		[]string{"alice@example.com"},
+		"Subject",
+		"<p>Hello</p>",
+		"notification-email-42",
+	)
+	requireNoEmailError(t, err)
+	if key := <-keys; key != "notification-email-42" {
+		t.Fatalf("Idempotency-Key = %q", key)
+	}
+}
+
+func TestServiceSendEmailIdempotentRejectsUnsafeKeyBeforeNetwork(t *testing.T) {
+	var calls atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		calls.Add(1)
+		w.WriteHeader(http.StatusCreated)
+		_, _ = io.WriteString(w, `{"id":"email_123"}`)
+	}))
+	t.Cleanup(server.Close)
+
+	service := configuredEmailService(server.Client(), server.URL, time.Second)
+	err := service.SendEmailIdempotent(
+		context.Background(),
+		[]string{"alice@example.com"},
+		"Subject",
+		"<p>Hello</p>",
+		"bad\nkey",
+	)
+	if !errors.Is(err, ErrInvalidMessage) {
+		t.Fatalf("SendEmailIdempotent() error = %v, want ErrInvalidMessage", err)
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("provider calls = %d, want 0", calls.Load())
+	}
+}
+
+func requireNoEmailError(t *testing.T, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("email send error = %v", err)
+	}
+}
+
 func TestServiceSendEmailRejectsUnconfiguredCapability(t *testing.T) {
 	service := NewService(&config.Config{})
 	err := service.SendEmail(context.Background(), []string{"alice@example.com"}, "Subject", "<p>Hello</p>")

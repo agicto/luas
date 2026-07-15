@@ -78,6 +78,11 @@ Classify each touched surface before changing it.
      organization context. Keep membership roles separate from access roles and API key scopes.
      Product modules still own resource-instance policies. Never keep permission-management UI
      without API enforcement or replace exact checks with hidden buttons.
+   - When retaining `notification`, keep publication inside trusted API services, derive stable
+     idempotency keys from business operations, and run `notification:work` with the same database,
+     email secrets, image, and `OPTIONAL_STARTERS` selection as API replicas. Keep notification
+     content plain text, action URLs local, browser state user-scoped, and provider/recipient detail
+     outside contracts, audit records, and logs. Define retention before enabling high-volume use.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

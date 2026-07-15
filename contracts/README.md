@@ -15,6 +15,10 @@ backend starter.
 Organization-scoped access roles, exact permission checks, delegated-management safety, and the
 replaceable authorization seam are defined in [`PERMISSIONS.md`](PERMISSIONS.md).
 
+User-scoped in-app records, channel preferences, idempotent internal publication, durable email
+delivery, and the fixed browser notification center are defined in
+[`NOTIFICATIONS.md`](NOTIFICATIONS.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

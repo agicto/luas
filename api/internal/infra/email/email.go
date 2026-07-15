@@ -116,6 +116,31 @@ func (s *Service) IsConfigured() bool {
 
 // SendEmail sends one bounded, context-aware provider request.
 func (s *Service) SendEmail(ctx context.Context, to []string, subject, htmlContent string) error {
+	return s.sendEmail(ctx, to, subject, htmlContent, "")
+}
+
+// SendEmailIdempotent sends one message with a stable provider idempotency key.
+func (s *Service) SendEmailIdempotent(
+	ctx context.Context,
+	to []string,
+	subject string,
+	htmlContent string,
+	idempotencyKey string,
+) error {
+	idempotencyKey = strings.TrimSpace(idempotencyKey)
+	if idempotencyKey == "" || len(idempotencyKey) > 256 || containsControl(idempotencyKey) {
+		return fmt.Errorf("%w: idempotency key is invalid", ErrInvalidMessage)
+	}
+	return s.sendEmail(ctx, to, subject, htmlContent, idempotencyKey)
+}
+
+func (s *Service) sendEmail(
+	ctx context.Context,
+	to []string,
+	subject string,
+	htmlContent string,
+	idempotencyKey string,
+) error {
 	if !s.IsConfigured() {
 		return ErrNotConfigured
 	}
@@ -149,6 +174,9 @@ func (s *Service) SendEmail(ctx context.Context, to []string, subject, htmlConte
 	}
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+s.apiKey)
+	if idempotencyKey != "" {
+		request.Header.Set("Idempotency-Key", idempotencyKey)
+	}
 
 	response, err := s.client.Do(request)
 	if err != nil {
@@ -172,6 +200,15 @@ func (s *Service) SendEmail(ctx context.Context, to []string, subject, htmlConte
 		return ErrInvalidProviderResponse
 	}
 	return nil
+}
+
+func containsControl(value string) bool {
+	for _, char := range value {
+		if char < 0x20 || char == 0x7f {
+			return true
+		}
+	}
+	return false
 }
 
 func validateMessage(to []string, subject, htmlContent string) error {
