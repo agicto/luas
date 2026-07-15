@@ -268,7 +268,181 @@ func TestOrganizationInvitationHTTPContract(t *testing.T) {
 		AssertCreated()
 }
 
-func registerAndLoginOrganizationUser(t *testing.T, tc *testplatform.TestCase, username, email string) string {
+func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
+	invitationTokens := make(chan string, 4)
+	previousTransport := http.DefaultTransport
+	http.DefaultTransport = &organizationEmailTransport{invitationTokens: invitationTokens}
+	t.Cleanup(func() { http.DefaultTransport = previousTransport })
+	engine := setupApp(func(cfg *config.Config) {
+		cfg.Email.From = "Luas <noreply@example.com>"
+		cfg.Email.ResendAPIKey = "feature-test-key"
+		cfg.Email.RequestTimeout = time.Second
+	}, "organization")
+	tc := testplatform.NewTestCase(t, engine)
+	owner := registerOrganizationTestUser(t, tc, "lifecycle-owner", "lifecycle-owner@example.com")
+	admin := registerOrganizationTestUser(t, tc, "lifecycle-admin", "lifecycle-admin@example.com")
+	member := registerOrganizationTestUser(t, tc, "lifecycle-member", "lifecycle-member@example.com")
+	outsider := registerOrganizationTestUser(t, tc, "lifecycle-outsider", "lifecycle-outsider@example.com")
+
+	created := tc.Post("/v1/organizations").
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"name": "Lifecycle Org", "slug": "lifecycle-org"}).
+		Call().
+		AssertCreated().
+		JSON()["data"].(map[string]interface{})
+	organizationID := fmt.Sprintf("%.0f", created["id"].(float64))
+
+	inviteAndAcceptOrganizationMember(t, tc, owner.Token, admin, organizationID, "admin", invitationTokens)
+	inviteAndAcceptOrganizationMember(t, tc, owner.Token, member, organizationID, "member", invitationTokens)
+
+	membersJSON := tc.Get("/v1/organizations/"+organizationID+"/members").
+		WithToken(member.Token).
+		Call().
+		AssertOk().
+		AssertJSONPath("meta.total", float64(3)).
+		JSON()
+	members, ok := membersJSON["data"].([]interface{})
+	require.True(t, ok)
+	require.Len(t, members, 3)
+	membershipIDs := make(map[uint]uint, len(members))
+	for _, item := range members {
+		entry := item.(map[string]interface{})
+		require.NotContains(t, entry, "email")
+		require.NotContains(t, entry, "phone")
+		require.NotContains(t, entry, "status")
+		userID := uint(entry["user_id"].(float64))
+		membershipIDs[userID] = uint(entry["id"].(float64))
+	}
+	require.NotEmpty(t, membershipIDs[owner.ID])
+	require.NotEmpty(t, membershipIDs[admin.ID])
+	require.NotEmpty(t, membershipIDs[member.ID])
+
+	tc.Get("/v1/organizations/"+organizationID+"/members").
+		WithToken(outsider.Token).
+		Call().
+		AssertNotFound().
+		AssertJSONPath("error_code", "ORGANIZATION.NOT_FOUND")
+
+	tc.Patch(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[member.ID])).
+		WithToken(admin.Token).
+		WithJSON(map[string]any{"role": "admin"}).
+		Call().
+		AssertStatus(403).
+		AssertJSONPath("error_code", "PERMISSION.DENIED")
+
+	tc.Patch(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[member.ID])).
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"role": "admin"}).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "admin")
+	tc.Patch(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[member.ID])).
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"role": "member"}).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "member")
+	roleAudit := tc.Get("/v1/audit-logs?action=change_role&resource=organization_members").
+		WithToken(owner.Token).
+		Call().
+		AssertOk().
+		AssertJSONPath("meta.total", float64(2)).
+		JSON()
+	assertOrganizationAuditContainsNoProfileFields(t, roleAudit)
+
+	tc.Patch("/v1/organizations/"+organizationID+"/members/999999").
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"role": "member"}).
+		Call().
+		AssertNotFound().
+		AssertJSONPath("error_code", "ORGANIZATION.MEMBER_NOT_FOUND")
+
+	tc.Delete("/v1/users/account").
+		WithToken(member.Token).
+		Call().
+		AssertStatus(409).
+		AssertJSONPath("error_code", "ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED")
+
+	tc.Delete(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[owner.ID])).
+		WithToken(admin.Token).
+		Call().
+		AssertStatus(403).
+		AssertJSONPath("error_code", "PERMISSION.DENIED")
+	tc.Delete(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[member.ID])).
+		WithToken(admin.Token).
+		Call().
+		AssertNoContent()
+	removeAudit := tc.Get("/v1/audit-logs?action=remove&resource=organization_members").
+		WithToken(admin.Token).
+		Call().
+		AssertOk().
+		AssertJSONPath("meta.total", float64(1)).
+		JSON()
+	assertOrganizationAuditContainsNoProfileFields(t, removeAudit)
+	tc.Delete("/v1/users/account").
+		WithToken(member.Token).
+		Call().
+		AssertNoContent()
+
+	transferJSON := tc.Post("/v1/organizations/"+organizationID+"/ownership-transfer").
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"new_owner_member_id": membershipIDs[admin.ID]}).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.previous_owner.role", "admin").
+		AssertJSONPath("data.new_owner.role", "owner").
+		JSON()
+	transferData := transferJSON["data"].(map[string]interface{})
+	require.NotContains(t, transferData["previous_owner"].(map[string]interface{}), "email")
+	require.NotContains(t, transferData["new_owner"].(map[string]interface{}), "email")
+	transferAudit := tc.Get("/v1/audit-logs?action=transfer_ownership&resource=organizations").
+		WithToken(owner.Token).
+		Call().
+		AssertOk().
+		AssertJSONPath("meta.total", float64(1)).
+		JSON()
+	assertOrganizationAuditContainsNoProfileFields(t, transferAudit)
+
+	tc.Post("/v1/organizations/"+organizationID+"/ownership-transfer").
+		WithToken(admin.Token).
+		WithJSON(map[string]any{"new_owner_member_id": membershipIDs[admin.ID]}).
+		Call().
+		AssertStatus(409).
+		AssertJSONPath("error_code", "ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID")
+
+	tc.Delete("/v1/users/account").
+		WithToken(owner.Token).
+		Call().
+		AssertStatus(409).
+		AssertJSONPath("error_code", "ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED")
+	tc.Delete(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[owner.ID])).
+		WithToken(owner.Token).
+		Call().
+		AssertNoContent()
+	tc.Delete("/v1/users/account").
+		WithToken(owner.Token).
+		Call().
+		AssertNoContent()
+
+	tc.Delete(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[admin.ID])).
+		WithToken(admin.Token).
+		Call().
+		AssertStatus(409).
+		AssertJSONPath("error_code", "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED")
+}
+
+type organizationTestUser struct {
+	ID    uint
+	Token string
+	Email string
+}
+
+func registerOrganizationTestUser(
+	t *testing.T,
+	tc *testplatform.TestCase,
+	username string,
+	email string,
+) organizationTestUser {
 	t.Helper()
 	password := "password123"
 	tc.Post("/v1/register").
@@ -292,5 +466,54 @@ func registerAndLoginOrganizationUser(t *testing.T, tc *testplatform.TestCase, u
 	require.True(t, ok)
 	token, ok := data["access_token"].(string)
 	require.True(t, ok)
-	return token
+	userData, ok := data["user"].(map[string]interface{})
+	require.True(t, ok)
+	return organizationTestUser{
+		ID:    uint(userData["id"].(float64)),
+		Token: token,
+		Email: email,
+	}
+}
+
+func inviteAndAcceptOrganizationMember(
+	t *testing.T,
+	tc *testplatform.TestCase,
+	ownerToken string,
+	invitee organizationTestUser,
+	organizationID string,
+	role string,
+	invitationTokens <-chan string,
+) {
+	t.Helper()
+	tc.Post("/v1/organizations/" + organizationID + "/invitations").
+		WithToken(ownerToken).
+		WithJSON(map[string]any{"email": invitee.Email, "role": role}).
+		Call().
+		AssertCreated()
+	token := <-invitationTokens
+	tc.Post("/v1/organization-invitations/accept").
+		WithToken(invitee.Token).
+		WithJSON(map[string]any{"token": token}).
+		Call().
+		AssertOk()
+}
+
+func assertOrganizationAuditContainsNoProfileFields(t *testing.T, payload map[string]interface{}) {
+	t.Helper()
+	items, ok := payload["data"].([]interface{})
+	require.True(t, ok)
+	require.NotEmpty(t, items)
+	for _, item := range items {
+		entry := item.(map[string]interface{})
+		metadata, ok := entry["metadata"].(map[string]interface{})
+		require.True(t, ok)
+		require.NotContains(t, metadata, "email")
+		require.NotContains(t, metadata, "username")
+		require.NotContains(t, metadata, "nickname")
+		require.NotContains(t, metadata, "avatar")
+	}
+}
+
+func registerAndLoginOrganizationUser(t *testing.T, tc *testplatform.TestCase, username, email string) string {
+	return registerOrganizationTestUser(t, tc, username, email).Token
 }

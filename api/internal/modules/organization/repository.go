@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
 )
 
 type repository struct {
@@ -27,7 +28,7 @@ func (r *repository) withContext(ctx context.Context) (*gorm.DB, error) {
 	if r == nil || r.db == nil {
 		return nil, domain.ErrServiceUnavailable
 	}
-	return r.db.WithContext(ctx), nil
+	return infradatabase.ResolveContextDB(ctx, r.db), nil
 }
 
 func (r *repository) CreateWithOwner(ctx context.Context, organization *domain.Organization, owner *domain.OrganizationMembership) error {
@@ -46,6 +47,12 @@ func (r *repository) CreateWithOwner(ctx context.Context, organization *domain.O
 	organizationPO := newOrganizationPO(organization)
 	ownerPO := newMembershipPO(owner)
 	err = db.Transaction(func(tx *gorm.DB) error {
+		if _, userErr := findUndeletedUserForUpdate(tx, owner.UserID); userErr != nil {
+			if errors.Is(userErr, gorm.ErrRecordNotFound) {
+				return domain.ErrUserNotFound
+			}
+			return userErr
+		}
 		if createErr := tx.Omit(clause.Associations).Create(organizationPO).Error; createErr != nil {
 			if isUniqueViolation(createErr) {
 				return domain.ErrOrganizationSlugAlreadyExists
@@ -145,19 +152,6 @@ func (r *repository) Update(ctx context.Context, organization *domain.Organizati
 	}
 	organization.UpdatedAt = updatedAt
 	return nil
-}
-
-func (r *repository) CountOwnedByUser(ctx context.Context, userID uint) (int64, error) {
-	db, err := r.withContext(ctx)
-	if err != nil {
-		return 0, err
-	}
-
-	var count int64
-	err = db.Model(&OrganizationMembershipPO{}).
-		Where("user_id = ? AND role = ?", userID, domain.OrganizationRoleOwner).
-		Count(&count).Error
-	return count, err
 }
 
 func isUniqueViolation(err error) bool {

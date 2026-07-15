@@ -16,7 +16,7 @@ type fakeRepository struct {
 	findFn   func(context.Context, uint, uint) (*domain.OrganizationMembership, error)
 	listFn   func(context.Context, uint, int, int) ([]*domain.OrganizationMembership, int64, error)
 	updateFn func(context.Context, *domain.Organization) error
-	countFn  func(context.Context, uint) (int64, error)
+	countFn  func(context.Context, uint) (int64, int64, error)
 }
 
 func newOrganizationService(repo domain.OrganizationRepository) *service {
@@ -35,11 +35,27 @@ func (r *fakeRepository) ListForUser(ctx context.Context, userID uint, page, pag
 	return r.listFn(ctx, userID, page, pageSize)
 }
 
+func (r *fakeRepository) ListMembers(context.Context, uint, uint, int, int) ([]*domain.OrganizationMembership, int64, error) {
+	return nil, 0, nil
+}
+
+func (r *fakeRepository) ChangeMemberRole(context.Context, uint, uint, uint, domain.OrganizationRole, time.Time) (*domain.OrganizationMembershipRoleChange, error) {
+	return nil, nil
+}
+
+func (r *fakeRepository) RemoveMember(context.Context, uint, uint, uint) (*domain.OrganizationMembership, error) {
+	return nil, nil
+}
+
+func (r *fakeRepository) TransferOwnership(context.Context, uint, uint, uint, time.Time) (*domain.OrganizationOwnershipTransfer, error) {
+	return nil, nil
+}
+
 func (r *fakeRepository) Update(ctx context.Context, organization *domain.Organization) error {
 	return r.updateFn(ctx, organization)
 }
 
-func (r *fakeRepository) CountOwnedByUser(ctx context.Context, userID uint) (int64, error) {
+func (r *fakeRepository) CountMembershipsForUser(ctx context.Context, userID uint) (int64, int64, error) {
 	return r.countFn(ctx, userID)
 }
 
@@ -136,9 +152,9 @@ func TestServiceUpdateAllowsOwnerAndReturnsMembershipView(t *testing.T) {
 
 func TestServiceAccountDeletionGuardProtectsOwnedOrganizations(t *testing.T) {
 	repo := &fakeRepository{
-		countFn: func(_ context.Context, userID uint) (int64, error) {
+		countFn: func(_ context.Context, userID uint) (int64, int64, error) {
 			assert.Equal(t, uint(17), userID)
-			return 2, nil
+			return 2, 2, nil
 		},
 	}
 	svc := newOrganizationService(repo)
@@ -146,4 +162,16 @@ func TestServiceAccountDeletionGuardProtectsOwnedOrganizations(t *testing.T) {
 	assert.Equal(t, "organization", svc.AccountDeletionGuardName())
 	err := svc.CheckAccountDeletion(context.Background(), 17)
 	require.ErrorIs(t, err, domain.ErrOrganizationOwnershipTransferRequired)
+}
+
+func TestServiceAccountDeletionGuardRequiresMembershipExit(t *testing.T) {
+	repo := &fakeRepository{
+		countFn: func(_ context.Context, userID uint) (int64, int64, error) {
+			assert.Equal(t, uint(17), userID)
+			return 2, 0, nil
+		},
+	}
+
+	err := newOrganizationService(repo).CheckAccountDeletion(context.Background(), 17)
+	require.ErrorIs(t, err, domain.ErrOrganizationMembershipExitRequired)
 }

@@ -33,12 +33,28 @@ func (r *invitationRepositoryStub) ListForUser(context.Context, uint, int, int) 
 	return nil, 0, nil
 }
 
+func (r *invitationRepositoryStub) ListMembers(context.Context, uint, uint, int, int) ([]*domain.OrganizationMembership, int64, error) {
+	return nil, 0, nil
+}
+
+func (r *invitationRepositoryStub) ChangeMemberRole(context.Context, uint, uint, uint, domain.OrganizationRole, time.Time) (*domain.OrganizationMembershipRoleChange, error) {
+	return nil, nil
+}
+
+func (r *invitationRepositoryStub) RemoveMember(context.Context, uint, uint, uint) (*domain.OrganizationMembership, error) {
+	return nil, nil
+}
+
+func (r *invitationRepositoryStub) TransferOwnership(context.Context, uint, uint, uint, time.Time) (*domain.OrganizationOwnershipTransfer, error) {
+	return nil, nil
+}
+
 func (r *invitationRepositoryStub) Update(context.Context, *domain.Organization) error {
 	return nil
 }
 
-func (r *invitationRepositoryStub) CountOwnedByUser(context.Context, uint) (int64, error) {
-	return 0, nil
+func (r *invitationRepositoryStub) CountMembershipsForUser(context.Context, uint) (int64, int64, error) {
+	return 0, 0, nil
 }
 
 func (r *invitationRepositoryStub) CreateInvitation(ctx context.Context, invitation *domain.OrganizationInvitation, now time.Time) error {

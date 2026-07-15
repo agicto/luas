@@ -19,6 +19,10 @@ type Service interface {
 	List(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
 	Get(ctx context.Context, userID, organizationID uint) (*domain.OrganizationMembership, error)
 	Update(ctx context.Context, userID, organizationID uint, req *UpdateOrganizationRequest) (*domain.OrganizationMembership, error)
+	ListMembers(ctx context.Context, userID, organizationID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
+	ChangeMemberRole(ctx context.Context, userID, organizationID, memberID uint, req *UpdateOrganizationMemberRequest) (*domain.OrganizationMembership, error)
+	RemoveMember(ctx context.Context, userID, organizationID, memberID uint) error
+	TransferOwnership(ctx context.Context, userID, organizationID uint, req *TransferOrganizationOwnershipRequest) (*domain.OrganizationOwnershipTransfer, error)
 	Invite(ctx context.Context, userID, organizationID uint, req *CreateOrganizationInvitationRequest) (*OrganizationInvitationResult, error)
 	ListInvitations(ctx context.Context, userID, organizationID uint, page, pageSize int) ([]*domain.OrganizationInvitation, int64, error)
 	RevokeInvitation(ctx context.Context, userID, organizationID, invitationID uint) error
@@ -167,17 +171,20 @@ func (s *service) AccountDeletionGuardName() string {
 	return "organization"
 }
 
-// CheckAccountDeletion prevents a soft-deleted account from orphaning owned organizations.
+// CheckAccountDeletion prevents orphaned or stale memberships after soft deletion.
 func (s *service) CheckAccountDeletion(ctx context.Context, userID uint) error {
 	if userID == 0 {
 		return domain.ErrInvalidInput
 	}
-	count, err := s.repo.CountOwnedByUser(ctx, userID)
+	total, owned, err := s.repo.CountMembershipsForUser(ctx, userID)
 	if err != nil {
-		return fmt.Errorf("count owned organizations: %w", err)
+		return fmt.Errorf("count organization memberships: %w", err)
 	}
-	if count > 0 {
+	if owned > 0 {
 		return domain.ErrOrganizationOwnershipTransferRequired
+	}
+	if total > 0 {
+		return domain.ErrOrganizationMembershipExitRequired
 	}
 	return nil
 }

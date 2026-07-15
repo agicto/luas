@@ -34,6 +34,16 @@ type AcceptOrganizationInvitationRequest struct {
 	Token string `json:"token" binding:"required,max=256"`
 }
 
+// UpdateOrganizationMemberRequest changes one non-owner membership role.
+type UpdateOrganizationMemberRequest struct {
+	Role domain.OrganizationRole `json:"role" binding:"required"`
+}
+
+// TransferOrganizationOwnershipRequest selects an existing member as the new owner.
+type TransferOrganizationOwnershipRequest struct {
+	NewOwnerMemberID uint `json:"new_owner_member_id" binding:"required"`
+}
+
 // OrganizationResponse is a membership-scoped organization view.
 type OrganizationResponse struct {
 	ID        uint                    `json:"id"`
@@ -42,6 +52,24 @@ type OrganizationResponse struct {
 	Role      domain.OrganizationRole `json:"role"`
 	CreatedAt time.Time               `json:"created_at"`
 	UpdatedAt time.Time               `json:"updated_at"`
+}
+
+// OrganizationMemberResponse is the PII-minimized public member view.
+type OrganizationMemberResponse struct {
+	ID        uint                    `json:"id"`
+	UserID    uint                    `json:"user_id"`
+	Username  string                  `json:"username"`
+	Nickname  string                  `json:"nickname,omitempty"`
+	Avatar    string                  `json:"avatar,omitempty"`
+	Role      domain.OrganizationRole `json:"role"`
+	JoinedAt  time.Time               `json:"joined_at"`
+	UpdatedAt time.Time               `json:"updated_at"`
+}
+
+// OrganizationOwnershipTransferResponse exposes both post-transfer roles.
+type OrganizationOwnershipTransferResponse struct {
+	PreviousOwner *OrganizationMemberResponse `json:"previous_owner"`
+	NewOwner      *OrganizationMemberResponse `json:"new_owner"`
 }
 
 // InvitationEmailSendStatus describes only the synchronous provider request.
@@ -117,6 +145,24 @@ func (r *AcceptOrganizationInvitationRequest) validationErrors() map[string][]st
 	}
 }
 
+func (r *UpdateOrganizationMemberRequest) validationErrors() map[string][]string {
+	if r != nil && r.Role.CanBeInvited() {
+		return nil
+	}
+	return map[string][]string{
+		"role": {"role must be admin or member"},
+	}
+}
+
+func (r *TransferOrganizationOwnershipRequest) validationErrors() map[string][]string {
+	if r != nil && r.NewOwnerMemberID > 0 {
+		return nil
+	}
+	return map[string][]string{
+		"new_owner_member_id": {"new_owner_member_id must be a positive integer"},
+	}
+}
+
 func validOrganizationName(name string) bool {
 	length := utf8.RuneCountInString(strings.TrimSpace(name))
 	return length >= 2 && length <= 100
@@ -152,6 +198,25 @@ func toResponse(membership *domain.OrganizationMembership) *OrganizationResponse
 		CreatedAt: organization.CreatedAt,
 		UpdatedAt: organization.UpdatedAt,
 	}
+}
+
+func toMemberResponse(membership *domain.OrganizationMembership) *OrganizationMemberResponse {
+	if membership == nil {
+		return nil
+	}
+	response := &OrganizationMemberResponse{
+		ID:        membership.ID,
+		UserID:    membership.UserID,
+		Role:      membership.Role,
+		JoinedAt:  membership.CreatedAt,
+		UpdatedAt: membership.UpdatedAt,
+	}
+	if membership.User != nil {
+		response.Username = membership.User.Username
+		response.Nickname = membership.User.Nickname
+		response.Avatar = membership.User.Avatar
+	}
+	return response
 }
 
 func toInvitationResponse(invitation *domain.OrganizationInvitation, now time.Time) *OrganizationInvitationResponse {

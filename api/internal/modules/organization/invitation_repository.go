@@ -14,7 +14,6 @@ import (
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 var _ domain.OrganizationInvitationRepository = (*repository)(nil)
@@ -218,8 +217,8 @@ func (r *repository) AcceptInvitation(ctx context.Context, tokenHash string, use
 			return domain.ErrOrganizationInvitationInvalid
 		}
 
-		var invitee user.UserPO
-		if userErr := tx.First(&invitee, userID).Error; userErr != nil {
+		invitee, userErr := findUndeletedUserForUpdate(tx, userID)
+		if userErr != nil {
 			if errors.Is(userErr, gorm.ErrRecordNotFound) {
 				return domain.ErrOrganizationInvitationInvalid
 			}

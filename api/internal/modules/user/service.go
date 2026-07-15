@@ -66,6 +66,7 @@ type passwordResetStore interface {
 type userRepository interface {
 	domain.UserRepository
 	FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error)
+	DeleteAccount(ctx context.Context, userID uint, check func(context.Context) error) error
 }
 
 const dummyPasswordHash = "$2a$10$BoIQPcmnuQfwI8s38RMnmeXm5V8xwU2lJVIF4EueN3y5x6KYUXelq"
@@ -300,10 +301,9 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 
 // DeleteAccount deletes user account
 func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
-	if err := s.deletionPolicy.Check(ctx, userID); err != nil {
-		return err
-	}
-	if err := s.repo.Delete(ctx, userID); err != nil {
+	if err := s.repo.DeleteAccount(ctx, userID, func(transactionContext context.Context) error {
+		return s.deletionPolicy.Check(transactionContext, userID)
+	}); err != nil {
 		return err
 	}
 

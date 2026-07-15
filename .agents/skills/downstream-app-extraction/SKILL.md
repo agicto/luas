@@ -61,6 +61,10 @@ Classify each touched surface before changing it.
    - Keep core and capabilities unless there is a clear product reason.
    - Keep default starters when they remain useful as business-ready building blocks.
    - Select retained API optional starters through the canonical catalog; do not hand-register their routes or migrations.
+   - When retaining `organization`, keep `organization` as the tenant/account term unless the product
+     deliberately adds a separate child concept. Preserve member IDs as membership-resource IDs,
+     keep email out of the member-directory response, and run the same `OPTIONAL_STARTERS` value in
+     API replicas and migration jobs before attaching product resources or permission scopes.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

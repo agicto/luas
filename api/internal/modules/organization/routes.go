@@ -11,6 +11,18 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 		auth.POST("/organizations", h.Create).Name("organizations.store")
 		auth.GET("/organizations/:id", h.Get).Name("organizations.show").WhereNumber("id")
 		auth.PATCH("/organizations/:id", h.Update).Name("organizations.update").WhereNumber("id")
+		auth.GET("/organizations/:id/members", h.ListMembers).Name("organization-members.index").WhereNumber("id")
+		auth.PATCH("/organizations/:id/members/:member_id", h.ChangeMemberRole).
+			Name("organization-members.update").
+			WhereNumber("id").
+			WhereNumber("member_id")
+		auth.DELETE("/organizations/:id/members/:member_id", h.RemoveMember).
+			Name("organization-members.destroy").
+			WhereNumber("id").
+			WhereNumber("member_id")
+		auth.POST("/organizations/:id/ownership-transfer", h.TransferOwnership).
+			Name("organization-ownership.transfer").
+			WhereNumber("id")
 		auth.GET("/organizations/:id/invitations", h.ListInvitations).Name("organization-invitations.index").WhereNumber("id")
 		auth.POST("/organizations/:id/invitations", h.Invite).Name("organization-invitations.store").WhereNumber("id")
 		auth.DELETE("/organizations/:id/invitations/:invitation_id", h.RevokeInvitation).

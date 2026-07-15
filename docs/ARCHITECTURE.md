@@ -35,6 +35,21 @@ Infrastructure capabilities live under `api/internal/infra/` and `api/internal/c
 For the starter readiness matrix and next reusable business starters, see
 [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md).
 
+### Cross-Starter Transactions
+
+Most starter operations own their transaction inside one repository. When an invariant spans two
+active starters on the same database, the transaction owner may bind its GORM transaction to a
+callback-only context through `api/internal/infra/database/transaction_context.go`. Cooperating
+repositories resolve that context before falling back to their configured database.
+
+- The transaction context must not escape its callback or be stored for later work.
+- The owner controls commit and rollback; participants return errors and never commit independently.
+- Every participating repository must define one lock order. Account deletion and organization
+  membership creation use `user -> membership`, preventing a soft-deleted user from gaining a
+  concurrent membership.
+- Do not use this seam across deployable services or background jobs. Those require an explicit
+  event, outbox, or workflow contract instead of an in-process database transaction.
+
 ## Web Shape
 
 The web app uses Next.js App Router and feature-first folders under `web/src/features/`.

@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
 )
 
 // repository implements domain.UserRepository
@@ -28,7 +29,7 @@ func (r *repository) withContext(ctx context.Context) (*gorm.DB, error) {
 	if r == nil || r.db == nil {
 		return nil, domain.ErrServiceUnavailable
 	}
-	return r.db.WithContext(ctx), nil
+	return infradatabase.ResolveContextDB(ctx, r.db), nil
 }
 
 // Create adds a new user
@@ -69,6 +70,48 @@ func (r *repository) Delete(ctx context.Context, id uint) error {
 		return err
 	}
 	return db.Delete(&UserPO{}, id).Error
+}
+
+// DeleteAccount locks the undeleted user row, runs starter policies, and soft-deletes
+// in one transaction shared through the callback context.
+func (r *repository) DeleteAccount(ctx context.Context, id uint, check func(context.Context) error) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	if id == 0 {
+		return domain.ErrInvalidInput
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		var po UserPO
+		query := tx
+		if tx.Dialector != nil && tx.Name() != "sqlite" {
+			query = query.Clauses(clause.Locking{Strength: "UPDATE"})
+		}
+		if findErr := query.First(&po, id).Error; findErr != nil {
+			if errors.Is(findErr, gorm.ErrRecordNotFound) {
+				return domain.ErrUserNotFound
+			}
+			return findErr
+		}
+
+		transactionContext := infradatabase.ContextWithTransaction(ctx, tx)
+		if check != nil {
+			if checkErr := check(transactionContext); checkErr != nil {
+				return checkErr
+			}
+		}
+
+		result := tx.WithContext(transactionContext).Delete(&po)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected != 1 {
+			return domain.ErrUserNotFound
+		}
+		return nil
+	})
 }
 
 // FindByID retrieves a user by ID

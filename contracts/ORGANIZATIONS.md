@@ -48,15 +48,65 @@ An organization membership view contains:
 - Creating an organization and its `owner` membership is one database transaction.
 - Roles are organization-scoped values: `owner`, `admin`, and `member`. They are not global RBAC
   roles. Direct creation grants only the owner membership; the invitation lifecycle may add
-  `admin` or `member` memberships, while later membership mutation remains deliberately deferred.
+  `admin` or `member` memberships.
 - Listing and lookup are always scoped by the authenticated user's membership. A non-member gets
   the same `404 ORGANIZATION.NOT_FOUND` response as an absent organization, preventing existence
   disclosure.
 - `owner` and `admin` may rename an organization. A known member without that capability gets
   `403 PERMISSION.DENIED`.
-- An account that owns one or more organizations cannot self-delete. Until ownership transfer is
-  added, deletion returns `409 ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` instead of orphaning a
-  tenant.
+- An account that owns one or more organizations cannot self-delete. Deletion returns
+  `409 ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` instead of orphaning a tenant. A non-owner must
+  leave every remaining organization before account deletion; otherwise the API returns
+  `409 ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED` instead of retaining memberships for a soft-deleted
+  user.
+
+## Member Lifecycle
+
+Member endpoints require the standard Go API bearer token. The public `member` resource represents
+one internal organization membership; `member_id` is the membership ID, not the user's global ID.
+
+| Operation | Endpoint | Request | Successful `data` |
+|---|---|---|---|
+| List members | `GET /v1/organizations/:id/members` | Pagination query | Paginated member views |
+| Change role | `PATCH /v1/organizations/:id/members/:member_id` | `{ role }` | Member view |
+| Remove or leave | `DELETE /v1/organizations/:id/members/:member_id` | none | `204 No Content` |
+| Transfer ownership | `POST /v1/organizations/:id/ownership-transfer` | `{ new_owner_member_id }` | `{ previous_owner, new_owner }` |
+
+A member view contains the relationship ID and a deliberately small public identity projection:
+
+```json
+{
+  "id": 91,
+  "user_id": 17,
+  "username": "alex",
+  "nickname": "Alex",
+  "avatar": "https://cdn.example.com/alex.png",
+  "role": "member",
+  "joined_at": "2026-07-15T20:00:00Z",
+  "updated_at": "2026-07-15T20:00:00Z"
+}
+```
+
+- Every current member may list the member directory. Email, phone, account status, and other user
+  profile fields are not part of the member view. A non-member receives the same
+  `404 ORGANIZATION.NOT_FOUND` response as an absent organization.
+- Only the current `owner` may change another member between `admin` and `member`. Ownership is
+  never granted or removed through the role endpoint; attempting to demote the owner returns
+  `409 ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED`.
+- The `owner` may remove an `admin` or `member`. An `admin` may remove a `member`, but not another
+  admin or the owner. Any non-owner may delete their own member resource to leave. The owner must
+  transfer ownership before leaving.
+- Ownership transfer accepts an existing `admin` or `member` in the same organization. It is one
+  database transaction: the target becomes `owner` and the previous owner becomes `admin`. The
+  transaction locks the persisted memberships so concurrent requests cannot create two owners or
+  leave the organization ownerless.
+- Account deletion locks the undeleted user row, evaluates every active starter deletion guard, and
+  performs the soft delete in one transaction. Organization creation and invitation acceptance
+  acquire the same undeleted-user row lock before writing a membership. Therefore concurrent
+  deletion and membership creation may let either business action win, but may not leave a
+  membership pointing at a soft-deleted user.
+- Member role changes, removals, leaves, and ownership transfers emit audit changes using member,
+  organization, and user IDs plus roles. Member profile fields are not copied into audit metadata.
 
 ## Invitation Lifecycle
 
@@ -119,6 +169,9 @@ An invitation view contains no plaintext token:
 | 409 | `ORGANIZATION.INVITATION.ALREADY_PENDING` | An unexpired invitation already exists for this email |
 | 409 | `ORGANIZATION.MEMBER_ALREADY_EXISTS` | The invited email already belongs to an organization member |
 | 409 | `ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` | Account deletion would leave an owned organization without an owner |
+| 409 | `ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID` | Ownership transfer targets the current owner or another invalid member state |
+| 409 | `ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED` | Account deletion would retain one or more non-owner memberships |
+| 404 | `ORGANIZATION.MEMBER_NOT_FOUND` | The member resource does not exist in the visible organization |
 | 403 | `ORGANIZATION.INVITATION.EMAIL_MISMATCH` | The token belongs to a different account email |
 | 403 | `PERMISSION.DENIED` | The caller is a member but the role cannot perform the mutation |
 | 422 | `COMMON.VALIDATION_FAILED` | A request field fails the documented shape |
@@ -129,7 +182,6 @@ All failures use the global error envelope and `request_id` rules in [`README.md
 ## Deliberate Deferrals
 
 This remains a backend foundation, not yet a complete business-ready organization starter.
-Member role changes, member removal and leave flows, ownership transfer, organization deletion,
-active organization context, durable invitation delivery retries, permission policies, Web UI, and
-mock BFF parity remain explicit follow-up work. The starter must not be marked ready in the starter
-roadmap until those surfaces and extraction rules exist.
+Organization deletion, active organization context, durable invitation delivery retries,
+permission policies, Web UI, and mock BFF parity remain explicit follow-up work. The starter must
+not be marked ready in the starter roadmap until those surfaces and extraction rules exist.

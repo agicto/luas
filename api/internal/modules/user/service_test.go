@@ -67,6 +67,15 @@ func (r *fakeRepo) Delete(ctx context.Context, id uint) error {
 	return nil
 }
 
+func (r *fakeRepo) DeleteAccount(ctx context.Context, id uint, check func(context.Context) error) error {
+	if check != nil {
+		if err := check(ctx); err != nil {
+			return err
+		}
+	}
+	return r.Delete(ctx, id)
+}
+
 func (r *fakeRepo) FindByID(ctx context.Context, id uint) (*domain.User, error) {
 	if r.findByIDFn != nil {
 		return r.findByIDFn(ctx, id)

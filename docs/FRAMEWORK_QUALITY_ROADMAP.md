@@ -406,12 +406,14 @@ HTTP.
 
 The first optional entry is an `organization` ownership kernel: atomic organization/owner creation,
 membership-scoped list/get, owner/admin rename, stable organization errors, audit changes, and an
-active-only account-deletion guard that prevents orphaned tenants. Its invitation lifecycle adds
+membership-aware account-deletion guard that prevents orphaned tenants. Its invitation lifecycle adds
 manager-scoped create/list/revoke, transactional acceptance, immutable token hashes, explicit email
 attempt semantics, stable errors, and audit changes. `organization` means the tenant boundary; it is
 not interchangeable with a future workspace concept. The starter remains foundation-only until
-member lifecycle, ownership transfer, active organization, Web, mock, and extraction surfaces are
-complete.
+active organization, Web, mock, and extraction surfaces are complete. Its member lifecycle now
+adds a PII-minimized directory, owner-only role changes, manager removal and self-leave policy,
+transactional ownership transfer, membership audit changes, and account-deletion guards that stop
+soft-deleted users from leaving stale membership rows.
 
 At the initial ownership-kernel delivery against baseline commit `98865a7`, default assembly stayed
 at 14 routes and seven migrations while the optional starter exposed four additional routes and one
@@ -442,12 +444,34 @@ step. An `OPTIONAL_STARTERS=organization` PostgreSQL run exercises organization/
 This closes the prior false-green path where a stale local `luas-api:compose-check` tag could bypass
 the current source tree.
 
+The member-lifecycle slice keeps the default assembly at 14 routes and seven migrations, raises
+`OPTIONAL_STARTERS=organization` from eight to twelve additional routes, and keeps its migration
+count at two. No schema change is needed: role and membership transitions fit the existing table,
+and member pagination follows `user_id`, which is already the second column of the unique
+`(organization_id, user_id)` index. PostgreSQL `FOR UPDATE` locks serialize mutations by locking the
+actor membership before the target. A real concurrent transfer produced exactly `200/403`, retained
+one owner, and demoted the previous owner to admin; the same run covered directory privacy, role
+policy, account-deletion guards, manager removal, self-leave, and owner-leave rejection.
+Account deletion now locks the undeleted user row and runs starter guards plus soft deletion in one shared
+transaction. Organization creation and invitation acceptance take the same user lock before writing
+memberships. A PostgreSQL race between account deletion and organization creation allows only
+`201/409` or `204/404`, followed by a direct zero-orphan membership assertion.
+
+Against pre-slice commit `f4213e6`, the stripped `CGO_ENABLED=0` Darwin/arm64 server moves from
+35,350,818 to 35,402,146 bytes (+51,328 bytes, 0.145%), and the production image moves from
+25,047,624 to 25,088,293 bytes (+40,669 bytes, 0.162%). The module graph remains at 276 with no
+`go.mod` or `go.sum` change. Five 2-second HTTP middleware runs move median time from 1,238 to 1,247
+ns/request with metrics disabled (+0.7%) and from 1,428 to 1,460 ns/request with metrics enabled
+(+2.2%); all runs retain 18 allocations/request. These host-local results are regression evidence,
+not an SLO or field-performance claim, and the new organization routes remain outside the default
+runtime surface.
+
 Verification:
 
-- `cd api && go test ./internal/starter/... ./internal/modules/organization ./tests/feature -run 'TestOrganization'`
-- `cd api && go test ./database/migrations ./internal/infra/config`
+- `cd api && go test ./...`
+- Targeted race-enabled user, organization, bootstrap, and feature tests
 - Disabled/enabled `go run ./cmd/luas route:list` comparison
-- Real PostgreSQL migration and ownership HTTP flow
+- Real PostgreSQL invitation/member HTTP flows plus ownership-transfer and account-deletion races
 - `make governance` and `make check`
 
 ### P1 — Starter Business Readiness
@@ -457,7 +481,7 @@ Problem: the current default starter set is useful for auth, API keys, and audit
 Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
-2. Finish membership lifecycle, ownership transfer, active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
+2. Finish active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
 3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
 4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 

@@ -22,6 +22,35 @@ fail() {
   exit 1
 }
 
+register_and_login_user() {
+  local username="$1"
+  local email="$2"
+  local prefix="$3"
+  local status
+
+  status="$(curl --noproxy '*' --silent --show-error \
+    --output "${TMP_DIR}/${prefix}-register.json" \
+    --write-out '%{http_code}' \
+    --header 'Content-Type: application/json' \
+    --data "{\"username\":\"${username}\",\"email\":\"${email}\",\"password\":\"secret12\"}" \
+    "http://127.0.0.1:${published_port}/v1/register")"
+  [[ "${status}" == "201" ]] || fail "${prefix} registration returned HTTP ${status}"
+
+  status="$(curl --noproxy '*' --silent --show-error \
+    --output "${TMP_DIR}/${prefix}-login.json" \
+    --write-out '%{http_code}' \
+    --header 'Content-Type: application/json' \
+    --data "{\"username\":\"${email}\",\"password\":\"secret12\"}" \
+    "http://127.0.0.1:${published_port}/v1/login")"
+  [[ "${status}" == "200" ]] || fail "${prefix} login returned HTTP ${status}"
+
+  python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+print(payload["user"]["id"], payload["access_token"])
+' "${TMP_DIR}/${prefix}-login.json"
+}
+
 command -v docker >/dev/null 2>&1 || fail "docker is not installed"
 command -v curl >/dev/null 2>&1 || fail "curl is not installed"
 docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
@@ -60,6 +89,8 @@ register_status="$(curl --noproxy '*' --silent --show-error \
 [[ "${register_status}" == "201" ]] || fail "post-migration registration returned HTTP ${register_status}"
 
 organization_flow="skipped"
+membership_flow="skipped"
+account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,organization,*)
     command -v python3 >/dev/null 2>&1 || fail "python3 is required for optional starter response checks"
@@ -73,6 +104,9 @@ case ",${OPTIONAL_STARTERS:-}," in
     [[ "${login_status}" == "200" ]] || fail "organization owner login returned HTTP ${login_status}"
     if ! owner_token="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["access_token"])' "${TMP_DIR}/login.json")"; then
       fail "organization owner login response has no access token"
+    fi
+    if ! owner_user_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["user"]["id"])' "${TMP_DIR}/login.json")"; then
+      fail "organization owner login response has no user ID"
     fi
 
     organization_status="$(curl --noproxy '*' --silent --show-error \
@@ -143,6 +177,228 @@ print(payload["invitation"]["id"])
       "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations")"
     [[ "${replacement_status}" == "201" ]] || fail "replacement invitation returned HTTP ${replacement_status}"
     organization_flow="${organization_status}/${invitation_status}/${duplicate_status}/${invitation_list_status}/${revoke_status}/${replacement_status}"
+
+    read -r admin_user_id admin_token < <(register_and_login_user "compose_admin" "compose-admin@example.com" "organization-admin")
+    read -r member_a_user_id member_a_token < <(register_and_login_user "compose_member_a" "compose-member-a@example.com" "organization-member-a")
+    read -r member_b_user_id member_b_token < <(register_and_login_user "compose_member_b" "compose-member-b@example.com" "organization-member-b")
+
+    if ! compose exec -T postgres psql --username luas --dbname luas --set ON_ERROR_STOP=1 --command "
+INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
+VALUES
+  (${organization_id}, ${admin_user_id}, 'admin', NOW(), NOW()),
+  (${organization_id}, ${member_a_user_id}, 'member', NOW(), NOW()),
+  (${organization_id}, ${member_b_user_id}, 'member', NOW(), NOW());
+" >/dev/null; then
+      fail "organization member fixture insertion failed"
+    fi
+
+    member_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-list.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${member_a_token}" \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members")"
+    [[ "${member_list_status}" == "200" ]] || fail "organization member list returned HTTP ${member_list_status}"
+    if ! read -r owner_member_id admin_member_id member_a_member_id member_b_member_id < <(python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))
+items = payload["data"]
+if payload["meta"]["total"] != 4 or len(items) != 4:
+    raise SystemExit(1)
+for item in items:
+    if any(field in item for field in ("email", "phone", "status", "password")):
+        raise SystemExit(1)
+by_user = {item["user_id"]: item["id"] for item in items}
+print(*(by_user[int(value)] for value in sys.argv[2:]))
+' "${TMP_DIR}/member-list.json" "${owner_user_id}" "${admin_user_id}" "${member_a_user_id}" "${member_b_user_id}"); then
+      fail "organization member list violates count, identity, or privacy contract"
+    fi
+
+    admin_role_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-role-admin-denied.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${admin_token}" \
+      --data '{"role":"admin"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${member_a_member_id}")"
+    [[ "${admin_role_status}" == "403" ]] || fail "admin member role change returned HTTP ${admin_role_status}"
+
+    role_promote_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-role-promote.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"role":"admin"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${member_a_member_id}")"
+    [[ "${role_promote_status}" == "200" ]] || fail "owner member promotion returned HTTP ${role_promote_status}"
+
+    role_demote_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-role-demote.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"role":"member"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${member_a_member_id}")"
+    [[ "${role_demote_status}" == "200" ]] || fail "owner member demotion returned HTTP ${role_demote_status}"
+
+    membership_delete_blocked_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-account-delete-blocked.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${member_a_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/users/account")"
+    [[ "${membership_delete_blocked_status}" == "409" ]] || fail "member account deletion guard returned HTTP ${membership_delete_blocked_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED" else 1)' "${TMP_DIR}/member-account-delete-blocked.json"; then
+      fail "member account deletion guard returned the wrong error_code"
+    fi
+
+    member_remove_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${admin_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${member_a_member_id}")"
+    [[ "${member_remove_status}" == "204" ]] || fail "admin member removal returned HTTP ${member_remove_status}"
+
+    removed_account_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${member_a_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/users/account")"
+    [[ "${removed_account_status}" == "204" ]] || fail "removed member account deletion returned HTTP ${removed_account_status}"
+
+    # Run two ownership requests together against PostgreSQL. Exactly one may commit.
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/ownership-transfer-admin.json" \
+        --write-out '%{http_code}' \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: Bearer ${owner_token}" \
+        --data "{\"new_owner_member_id\":${admin_member_id}}" \
+        "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/ownership-transfer" \
+        >"${TMP_DIR}/ownership-transfer-admin.status"
+    ) &
+    transfer_admin_pid=$!
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/ownership-transfer-member.json" \
+        --write-out '%{http_code}' \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: Bearer ${owner_token}" \
+        --data "{\"new_owner_member_id\":${member_b_member_id}}" \
+        "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/ownership-transfer" \
+        >"${TMP_DIR}/ownership-transfer-member.status"
+    ) &
+    transfer_member_pid=$!
+    wait "${transfer_admin_pid}"
+    wait "${transfer_member_pid}"
+    transfer_admin_status="$(<"${TMP_DIR}/ownership-transfer-admin.status")"
+    transfer_member_status="$(<"${TMP_DIR}/ownership-transfer-member.status")"
+    transfer_statuses="$(printf '%s\n%s\n' "${transfer_admin_status}" "${transfer_member_status}" | sort -n | paste -sd/ -)"
+    [[ "${transfer_statuses}" == "200/403" ]] || fail "concurrent ownership transfer returned HTTP ${transfer_statuses}"
+
+    post_transfer_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/member-list-post-transfer.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members")"
+    [[ "${post_transfer_list_status}" == "200" ]] || fail "post-transfer member list returned HTTP ${post_transfer_list_status}"
+    if ! read -r current_owner_member_id current_owner_user_id < <(python3 -c '
+import json, sys
+items = json.load(open(sys.argv[1]))["data"]
+owners = [item for item in items if item["role"] == "owner"]
+previous = [item for item in items if item["user_id"] == int(sys.argv[2])]
+if len(owners) != 1 or len(previous) != 1 or previous[0]["role"] != "admin":
+    raise SystemExit(1)
+print(owners[0]["id"], owners[0]["user_id"])
+' "${TMP_DIR}/member-list-post-transfer.json" "${owner_user_id}"); then
+      fail "ownership transfer did not preserve exactly one owner and demote the previous owner"
+    fi
+
+    if [[ "${current_owner_user_id}" == "${admin_user_id}" ]]; then
+      current_owner_token="${admin_token}"
+    elif [[ "${current_owner_user_id}" == "${member_b_user_id}" ]]; then
+      current_owner_token="${member_b_token}"
+    else
+      fail "ownership transfer selected an unexpected owner"
+    fi
+
+    self_transfer_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/ownership-transfer-self.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${current_owner_token}" \
+      --data "{\"new_owner_member_id\":${current_owner_member_id}}" \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/ownership-transfer")"
+    [[ "${self_transfer_status}" == "409" ]] || fail "self ownership transfer returned HTTP ${self_transfer_status}"
+
+    previous_owner_leave_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${owner_member_id}")"
+    [[ "${previous_owner_leave_status}" == "204" ]] || fail "previous owner leave returned HTTP ${previous_owner_leave_status}"
+
+    previous_owner_delete_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/users/account")"
+    [[ "${previous_owner_delete_status}" == "204" ]] || fail "previous owner account deletion returned HTTP ${previous_owner_delete_status}"
+
+    current_owner_leave_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/current-owner-leave.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${current_owner_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/members/${current_owner_member_id}")"
+    [[ "${current_owner_leave_status}" == "409" ]] || fail "current owner leave returned HTTP ${current_owner_leave_status}"
+    membership_flow="${member_list_status}/${admin_role_status}/${role_promote_status}/${role_demote_status}/${membership_delete_blocked_status}/${member_remove_status}/${removed_account_status}/${transfer_statuses}/${post_transfer_list_status}/${self_transfer_status}/${previous_owner_leave_status}/${previous_owner_delete_status}/${current_owner_leave_status}"
+
+    read -r race_user_id race_user_token < <(register_and_login_user "compose_race_user" "compose-race-user@example.com" "organization-race-user")
+    # Account deletion and membership creation share a user-row lock. Either may win, never both.
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/race-account-delete.json" \
+        --write-out '%{http_code}' \
+        --header "Authorization: Bearer ${race_user_token}" \
+        --request DELETE \
+        "http://127.0.0.1:${published_port}/v1/users/account" \
+        >"${TMP_DIR}/race-account-delete.status"
+    ) &
+    race_delete_pid=$!
+    (
+      curl --noproxy '*' --silent --show-error \
+        --output "${TMP_DIR}/race-organization-create.json" \
+        --write-out '%{http_code}' \
+        --header 'Content-Type: application/json' \
+        --header "Authorization: Bearer ${race_user_token}" \
+        --data '{"name":"Compose Race Organization","slug":"compose-race-organization"}' \
+        "http://127.0.0.1:${published_port}/v1/organizations" \
+        >"${TMP_DIR}/race-organization-create.status"
+    ) &
+    race_create_pid=$!
+    wait "${race_delete_pid}"
+    wait "${race_create_pid}"
+    race_delete_status="$(<"${TMP_DIR}/race-account-delete.status")"
+    race_create_status="$(<"${TMP_DIR}/race-organization-create.status")"
+    race_statuses="$(printf '%s\n%s\n' "${race_delete_status}" "${race_create_status}" | sort -n | paste -sd/ -)"
+    if [[ "${race_statuses}" != "201/409" && "${race_statuses}" != "204/404" ]]; then
+      fail "concurrent account deletion and membership creation returned HTTP ${race_statuses}"
+    fi
+    orphaned_memberships="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM organization_memberships AS memberships
+JOIN users ON users.id = memberships.user_id
+WHERE memberships.user_id = ${race_user_id} AND users.deleted_at IS NOT NULL;
+")"
+    [[ "${orphaned_memberships}" == "0" ]] || fail "concurrent account deletion left ${orphaned_memberships} stale membership(s)"
+    account_race_flow="${race_create_status}/${race_delete_status}/orphans:${orphaned_memberships}"
     ;;
 esac
 
@@ -150,3 +406,5 @@ printf 'compose API health: %s\n' "${api_health}"
 printf 'compose loopback address: %s\n' "${published_address}"
 printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_status}"
 printf 'compose organization/invitation flow: %s\n' "${organization_flow}"
+printf 'compose organization/member flow: %s\n' "${membership_flow}"
+printf 'compose organization/account race: %s\n' "${account_race_flow}"

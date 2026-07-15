@@ -29,6 +29,23 @@ func (r OrganizationRole) CanManageOrganization() bool {
 	return r == OrganizationRoleOwner || r == OrganizationRoleAdmin
 }
 
+// CanChangeMemberRoles reports whether the role may grant or revoke admin.
+func (r OrganizationRole) CanChangeMemberRoles() bool {
+	return r == OrganizationRoleOwner
+}
+
+// CanRemoveMember reports whether the role may remove another membership.
+func (r OrganizationRole) CanRemoveMember(target OrganizationRole) bool {
+	switch r {
+	case OrganizationRoleOwner:
+		return target == OrganizationRoleAdmin || target == OrganizationRoleMember
+	case OrganizationRoleAdmin:
+		return target == OrganizationRoleMember
+	default:
+		return false
+	}
+}
+
 // CanBeInvited reports whether the role may be granted by an invitation.
 func (r OrganizationRole) CanBeInvited() bool {
 	return r == OrganizationRoleAdmin || r == OrganizationRoleMember
@@ -51,8 +68,22 @@ type OrganizationMembership struct {
 	UserID         uint             `json:"user_id"`
 	Role           OrganizationRole `json:"role"`
 	Organization   *Organization    `json:"-"`
+	User           *User            `json:"-"`
 	CreatedAt      time.Time        `json:"created_at"`
 	UpdatedAt      time.Time        `json:"updated_at"`
+}
+
+// OrganizationMembershipRoleChange captures the persisted role transition.
+type OrganizationMembershipRoleChange struct {
+	Membership *OrganizationMembership
+	BeforeRole OrganizationRole
+}
+
+// OrganizationOwnershipTransfer captures both post-transfer memberships.
+type OrganizationOwnershipTransfer struct {
+	PreviousOwner      *OrganizationMembership
+	NewOwner           *OrganizationMembership
+	NewOwnerBeforeRole OrganizationRole
 }
 
 // OrganizationInvitationStatus is the externally visible invitation lifecycle state.
@@ -101,8 +132,12 @@ type OrganizationRepository interface {
 	CreateWithOwner(ctx context.Context, organization *Organization, owner *OrganizationMembership) error
 	FindForUser(ctx context.Context, organizationID, userID uint) (*OrganizationMembership, error)
 	ListForUser(ctx context.Context, userID uint, page, pageSize int) ([]*OrganizationMembership, int64, error)
+	ListMembers(ctx context.Context, organizationID, userID uint, page, pageSize int) ([]*OrganizationMembership, int64, error)
+	ChangeMemberRole(ctx context.Context, organizationID, userID, memberID uint, role OrganizationRole, now time.Time) (*OrganizationMembershipRoleChange, error)
+	RemoveMember(ctx context.Context, organizationID, userID, memberID uint) (*OrganizationMembership, error)
+	TransferOwnership(ctx context.Context, organizationID, userID, newOwnerMemberID uint, now time.Time) (*OrganizationOwnershipTransfer, error)
 	Update(ctx context.Context, organization *Organization) error
-	CountOwnedByUser(ctx context.Context, userID uint) (int64, error)
+	CountMembershipsForUser(ctx context.Context, userID uint) (total, owned int64, err error)
 }
 
 // OrganizationInvitationRepository owns invitation persistence and atomic acceptance.

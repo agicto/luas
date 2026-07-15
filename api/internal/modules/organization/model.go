@@ -136,7 +136,7 @@ func (po *OrganizationMembershipPO) toDomain() *domain.OrganizationMembership {
 	if po == nil {
 		return nil
 	}
-	return &domain.OrganizationMembership{
+	membership := &domain.OrganizationMembership{
 		ID:             po.ID,
 		OrganizationID: po.OrganizationID,
 		UserID:         po.UserID,
@@ -145,6 +145,15 @@ func (po *OrganizationMembershipPO) toDomain() *domain.OrganizationMembership {
 		CreatedAt:      po.CreatedAt,
 		UpdatedAt:      po.UpdatedAt,
 	}
+	if po.User.ID != 0 {
+		membership.User = &domain.User{
+			ID:       po.User.ID,
+			Username: po.User.Username,
+			Nickname: po.User.Nickname,
+			Avatar:   po.User.Avatar,
+		}
+	}
+	return membership
 }
 
 func (po *OrganizationInvitationPO) toDomain() *domain.OrganizationInvitation {

@@ -11,7 +11,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, auth abuse guard, seed user; Web mock auth plus same-origin production adapter | Yes | The adapter maps the browser contract to Go, keeps JWTs HttpOnly, preserves auth errors and rate-limit identity, and server-resolves protected sessions. Stateless logout cannot revoke an already issued JWT; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
 | `apikey` default starter | User-owned API key create, list, revoke, validation middleware, scoped key model | Yes | Good for developer tools, integrations, and AI/API products. Usage metering is not included yet. |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
-| `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped list/get, owner/admin rename, persistent invitation create/list/revoke/accept, email adapter, audit metadata, account-deletion ownership guard | Foundation only | The backend ownership and invitation kernels are runnable and contract-tested, but member lifecycle, ownership transfer, active organization context, Web UI, and extraction flow are still required before this is marked ready. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
+| `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, owner/admin rename, invitation lifecycle, PII-minimized member directory, owner-only role changes, removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards | Foundation only | The backend ownership, invitation, and member-lifecycle kernels are runnable and contract-tested, but active organization context, Web UI, and complete downstream extraction flow are still required before this is marked ready. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email now has typed all-or-none config, caller cancellation, a 10-second provider budget, bounded responses, and PII-safe errors, but delivery remains direct and best-effort. The memory workflow queue is bounded and race-free but process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -20,7 +20,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P1 | The organization ownership and invitation kernels now establish tenant ownership and onboarding, but member administration and active context are not yet complete. | Most SaaS, internal tools, and B2B apps need role changes, removal/leave flows, and a safe ownership-transfer path before product work can rely on the boundary. | Complete the `organization` optional starter without promoting it to the defaults yet. |
+| P1 | The organization backend now establishes tenant ownership, invitation onboarding, member administration, and safe ownership transfer, but active context and browser workflows are not complete. | Product resources still need one authoritative current-organization resolution path, while browser users need switcher, member, invitation, and settings workflows. | Add active organization context next, then complete the Web and extraction surfaces without promoting the starter to defaults yet. |
 | P1 | Permission/RBAC is documented as an optional starter decision, but no runnable `permission` starter is currently wired. | New teams may assume roles and permissions are available when only error vocabulary and examples remain. | Treat `permission` as a planned optional starter until its module, migrations, contracts, Web feature, and tests exist. |
 | P1 | Notification capability exists, but no user-facing notification starter owns preferences, in-app records, or delivery status. | Apps repeatedly rebuild notification preferences and delivery history. | Build a `notification` optional starter backed by events, email, and optional in-app persistence. |
 | P2 | Storage/R2 capability exists, but there is no file or asset starter with ownership, metadata, validation, signed URL, and deletion rules. | Upload features become ad hoc and security-sensitive. | Build a `file` or `asset` optional starter with storage abstraction and audit events. |
@@ -36,8 +36,8 @@ not add permission, billing, or workspace settings before deciding which organiz
 
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
-   - The delivered foundation owns organizations, owner membership, membership-scoped reads, settings authorization, invitation onboarding, audit metadata, and account-deletion ownership protection.
-   - Next owns member role/removal/leave flows, ownership transfer, active organization context, and remaining membership audit events.
+   - The delivered foundation owns organizations, membership-scoped reads, settings authorization, invitation onboarding, a privacy-minimized member directory, role/removal/leave flows, atomic ownership transfer, membership audit events, and account-deletion integrity guards.
+   - Next owns active organization context and the browser-facing workflows.
    - Depends on `user`, `audit`, and email.
    - Web owns the organization switcher, member list, invitation flow, and organization settings.
 
@@ -111,8 +111,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Finish the member lifecycle, transfer, active-context, Web, and extraction surfaces of
-`organization`, then build `permission` and `notification`. The ownership kernel now gives those
+Finish the active-context, Web, and extraction surfaces of `organization`, then build `permission`
+and `notification`. The ownership and member-lifecycle kernels now give those
 starters a stable tenant term and persistence boundary, but Luas must not advertise a complete
 multi-user workflow until the remaining readiness rows are satisfied. File/asset, settings, usage,
 billing, webhook, and AI workspace starters become much easier once ownership and permission scopes

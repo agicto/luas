@@ -53,7 +53,13 @@ silently building a different artifact. It then starts PostgreSQL on random loop
 explicit local migration opt-in, waits for readiness, and completes a real starter registration.
 When `OPTIONAL_STARTERS` contains `organization`, the same check also exercises PostgreSQL-backed
 organization creation plus invitation create, duplicate conflict, list, revoke, and replacement
-semantics without requiring an external email provider.
+semantics without requiring an external email provider. It then creates registered-user membership
+fixtures and exercises the PII-minimized member directory, owner-only role mutation, account-delete
+guard, admin removal, previous-owner leave, and a concurrent two-request ownership transfer. The
+transfer gate requires exactly one `200`, one `403`, one persisted owner, and the previous owner
+demoted to `admin`. A second concurrency gate races account deletion against organization creation;
+either operation may win, but their status pair must be `201/409` or `204/404`, and a direct
+PostgreSQL check must find zero memberships attached to soft-deleted users.
 
 ## Local Compose
 

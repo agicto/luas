@@ -28,15 +28,18 @@ var (
 	ErrAPIKeyRevoked  = errors.New("api key is revoked")
 
 	// Organization errors
-	ErrOrganizationNotFound                  = errors.New("organization not found")
-	ErrOrganizationSlugAlreadyExists         = errors.New("organization slug already exists")
-	ErrOrganizationOwnershipTransferRequired = errors.New("organization ownership must be transferred before account deletion")
-	ErrOrganizationInvitationNotFound        = errors.New("organization invitation not found")
-	ErrOrganizationInvitationInvalid         = errors.New("organization invitation is invalid")
-	ErrOrganizationInvitationExpired         = errors.New("organization invitation is expired")
-	ErrOrganizationInvitationEmailMismatch   = errors.New("organization invitation belongs to another account")
-	ErrOrganizationInvitationAlreadyPending  = errors.New("organization invitation is already pending")
-	ErrOrganizationMemberAlreadyExists       = errors.New("organization member already exists")
+	ErrOrganizationNotFound                       = errors.New("organization not found")
+	ErrOrganizationSlugAlreadyExists              = errors.New("organization slug already exists")
+	ErrOrganizationOwnershipTransferRequired      = errors.New("organization ownership must be transferred first")
+	ErrOrganizationOwnershipTransferTargetInvalid = errors.New("organization ownership transfer target is invalid")
+	ErrOrganizationMembershipExitRequired         = errors.New("organization memberships must be exited before account deletion")
+	ErrOrganizationMemberNotFound                 = errors.New("organization member not found")
+	ErrOrganizationInvitationNotFound             = errors.New("organization invitation not found")
+	ErrOrganizationInvitationInvalid              = errors.New("organization invitation is invalid")
+	ErrOrganizationInvitationExpired              = errors.New("organization invitation is expired")
+	ErrOrganizationInvitationEmailMismatch        = errors.New("organization invitation belongs to another account")
+	ErrOrganizationInvitationAlreadyPending       = errors.New("organization invitation is already pending")
+	ErrOrganizationMemberAlreadyExists            = errors.New("organization member already exists")
 
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")

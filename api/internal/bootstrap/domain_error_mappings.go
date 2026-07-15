@@ -21,6 +21,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrRoleNotFound, http.StatusNotFound, domain.CodeRoleNotFound)
 	mapper.Register(domain.ErrAPIKeyNotFound, http.StatusNotFound, domain.CodeAPIKeyNotFound)
 	mapper.Register(domain.ErrOrganizationNotFound, http.StatusNotFound, domain.CodeOrganizationNotFound)
+	mapper.Register(domain.ErrOrganizationMemberNotFound, http.StatusNotFound, domain.CodeOrganizationMemberNotFound)
 	mapper.Register(domain.ErrOrganizationInvitationNotFound, http.StatusNotFound, domain.CodeOrganizationInvitationNotFound)
 	mapper.Register(domain.ErrOrganizationInvitationInvalid, http.StatusNotFound, domain.CodeOrganizationInvitationInvalid)
 
@@ -40,6 +41,8 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrConflict, http.StatusConflict, domain.CodeConflict)
 	mapper.Register(domain.ErrOrganizationSlugAlreadyExists, http.StatusConflict, domain.CodeOrganizationSlugAlreadyExists)
 	mapper.Register(domain.ErrOrganizationOwnershipTransferRequired, http.StatusConflict, domain.CodeOrganizationOwnershipTransferRequired)
+	mapper.Register(domain.ErrOrganizationOwnershipTransferTargetInvalid, http.StatusConflict, domain.CodeOrganizationOwnershipTransferTargetInvalid)
+	mapper.Register(domain.ErrOrganizationMembershipExitRequired, http.StatusConflict, domain.CodeOrganizationMembershipExitRequired)
 	mapper.Register(domain.ErrOrganizationInvitationAlreadyPending, http.StatusConflict, domain.CodeOrganizationInvitationAlreadyPending)
 	mapper.Register(domain.ErrOrganizationMemberAlreadyExists, http.StatusConflict, domain.CodeOrganizationMemberAlreadyExists)
 

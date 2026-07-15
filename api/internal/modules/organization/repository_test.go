@@ -69,8 +69,9 @@ func TestRepositoryCreateWithOwnerAndMembershipScopedReads(t *testing.T) {
 	require.Len(t, items, 1)
 	assert.Equal(t, organization.ID, items[0].OrganizationID)
 
-	owned, err := repo.CountOwnedByUser(context.Background(), ownerID)
+	totalMemberships, owned, err := repo.CountMembershipsForUser(context.Background(), ownerID)
 	require.NoError(t, err)
+	assert.Equal(t, int64(1), totalMemberships)
 	assert.Equal(t, int64(1), owned)
 }
 
@@ -123,6 +124,24 @@ func TestRepositoryCreateWithOwnerRejectsNonOwnerMembership(t *testing.T) {
 		&domain.OrganizationMembership{UserID: userID, Role: domain.OrganizationRoleMember},
 	)
 	require.ErrorIs(t, err, domain.ErrInvalidInput)
+
+	var organizations int64
+	require.NoError(t, db.Model(&OrganizationPO{}).Count(&organizations).Error)
+	assert.Zero(t, organizations)
+}
+
+func TestRepositoryCreateWithOwnerRejectsSoftDeletedUser(t *testing.T) {
+	db := newOrganizationRepositoryTestDB(t)
+	repo := NewRepository(db)
+	userID := createOrganizationTestUser(t, db, "deleted-owner")
+	require.NoError(t, db.Delete(&user.UserPO{}, userID).Error)
+
+	err := repo.CreateWithOwner(
+		context.Background(),
+		&domain.Organization{Name: "Deleted Owner Org", Slug: "deleted-owner-org", CreatedBy: userID},
+		&domain.OrganizationMembership{UserID: userID, Role: domain.OrganizationRoleOwner},
+	)
+	require.ErrorIs(t, err, domain.ErrUserNotFound)
 
 	var organizations int64
 	require.NoError(t, db.Model(&OrganizationPO{}).Count(&organizations).Error)

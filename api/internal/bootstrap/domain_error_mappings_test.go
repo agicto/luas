@@ -62,6 +62,24 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeOrganizationOwnershipTransferRequired,
 		},
 		{
+			name:       "organization ownership target is invalid",
+			err:        domain.ErrOrganizationOwnershipTransferTargetInvalid,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeOrganizationOwnershipTransferTargetInvalid,
+		},
+		{
+			name:       "organization memberships block account deletion",
+			err:        domain.ErrOrganizationMembershipExitRequired,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeOrganizationMembershipExitRequired,
+		},
+		{
+			name:       "organization member is not visible",
+			err:        domain.ErrOrganizationMemberNotFound,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeOrganizationMemberNotFound,
+		},
+		{
 			name:       "organization invitation is not visible",
 			err:        domain.ErrOrganizationInvitationNotFound,
 			statusCode: http.StatusNotFound,
