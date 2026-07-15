@@ -64,6 +64,7 @@ def main() -> int:
             "POST /v1/assets/:id/complete",
             "POST /v1/assets/:id/download-grant",
             "DELETE /v1/assets/:id",
+            "HTTP 204 No Content",
             "ASSET.NOT_FOUND",
             "ASSET.INVALID_MEDIA_TYPE",
             "account-deletion guard",
@@ -222,6 +223,16 @@ def main() -> int:
             'json:"ready_at"',
         ),
     )
+    require_all(
+        failures,
+        "api/internal/modules/asset/handler.go",
+        ("func (h *Handler) Delete", "response.NoContent(c)"),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/asset/handler_test.go",
+        ("TestHandlerDeleteReturnsNoContent", "http.StatusNoContent"),
+    )
     forbid_any(
         failures,
         "api/internal/modules/asset/dto.go",
@@ -261,8 +272,12 @@ def main() -> int:
             "ASSET_MAX_BROWSER_BYTES",
             "transferGrantSchema",
             "uploadIntentResultSchema",
-            "deleteAssetResultSchema",
         ),
+    )
+    forbid_any(
+        failures,
+        "web/src/features/asset/schemas.ts",
+        ("deleteAssetResultSchema",),
     )
     require_all(
         failures,
@@ -290,6 +305,7 @@ def main() -> int:
             "return this.complete(intent.asset.id)",
             "parseTransferGrant",
             "downloadFromGrant",
+            "await request.delete<void>",
         ),
     )
     require_all(
@@ -303,6 +319,7 @@ def main() -> int:
             "forwardAuthenticatedGoApi(request",
             "readJsonBody(request, maxIntentBodyBytes)",
             "mockAssetStore.acceptUpload",
+            "apiNoContentResponse()",
         ),
     )
     require_all(
@@ -379,6 +396,7 @@ def main() -> int:
             "asset upload intent returned HTTP",
             "asset download bytes differ from uploaded bytes",
             "asset migration re-apply created",
+            'asset_delete_status}" == "204"',
             'asset_account_race_flow="skipped"',
             '!= "201/409"',
             '!= "404/204"',

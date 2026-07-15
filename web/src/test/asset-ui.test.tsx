@@ -58,7 +58,7 @@ describe('asset console workflow', () => {
     state.download.mutateAsync.mockResolvedValue(undefined);
     state.remove.isPending = false;
     state.remove.mutateAsync.mockReset();
-    state.remove.mutateAsync.mockResolvedValue({ deleted: true });
+    state.remove.mutateAsync.mockResolvedValue(undefined);
     toast.success.mockReset();
     toast.error.mockReset();
   });

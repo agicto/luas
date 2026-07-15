@@ -104,7 +104,6 @@ export const createUploadIntentSchema = strictObject({
   size_bytes: assetSizeSchema,
 });
 
-export const deleteAssetResultSchema = strictObject({ deleted: literal(true) });
 export const assetRouteIdSchema = assetIdSchema;
 export const assetTransferTokenSchema = string().check(regex(/^[A-Za-z0-9._-]{32,256}$/));
 

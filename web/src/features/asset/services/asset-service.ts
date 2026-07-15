@@ -1,7 +1,6 @@
 import {
   assetPageEnvelopeSchema,
   assetSchema,
-  deleteAssetResultSchema,
   transferGrantSchema,
   uploadIntentResultSchema,
 } from '@/features/asset/schemas';
@@ -11,7 +10,6 @@ import type {
   AssetItem,
   AssetPage,
   CreateUploadIntentInput,
-  DeleteAssetResult,
   TransferGrant,
   UploadIntentResult,
 } from '@/features/asset/types';
@@ -62,8 +60,8 @@ export const assetService = {
     await downloadFromGrant(grant, asset.original_name, asset.size_bytes, asset.media_type);
   },
 
-  async delete(assetId: string): Promise<DeleteAssetResult> {
-    return parseDeleteAsset(await request.delete<unknown>(`/assets/${assetId}`));
+  async delete(assetId: string): Promise<void> {
+    await request.delete<void>(`/assets/${assetId}`);
   },
 };
 
@@ -87,12 +85,6 @@ export function parseUploadIntent(value: unknown): UploadIntentResult {
 
 export function parseTransferGrant(value: unknown): TransferGrant {
   const parsed = transferGrantSchema.safeParse(value);
-  if (!parsed.success) throw invalidResponse();
-  return parsed.data;
-}
-
-export function parseDeleteAsset(value: unknown): DeleteAssetResult {
-  const parsed = deleteAssetResultSchema.safeParse(value);
   if (!parsed.success) throw invalidResponse();
   return parsed.data;
 }

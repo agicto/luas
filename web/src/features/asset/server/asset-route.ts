@@ -9,7 +9,11 @@ import {
 } from '@/app/api/_shared/error-response';
 import { readJsonBody } from '@/app/api/_shared/json-body';
 import { guardSameOriginMutation } from '@/app/api/_shared/mock-bff';
-import { apiPaginatedResponse, apiSuccessResponse } from '@/app/api/_shared/success-response';
+import {
+  apiNoContentResponse,
+  apiPaginatedResponse,
+  apiSuccessResponse,
+} from '@/app/api/_shared/success-response';
 import { env } from '@/config/env';
 import { isWebFeatureEnabled } from '@/config/features';
 import { isMockBffEnabled } from '@/config/mock-bff';
@@ -183,7 +187,7 @@ export async function deleteAssetRoute(
   }
   try {
     mockAssetStore.delete(route.authentication.user, assetId);
-    return apiSuccessResponse({ deleted: true as const });
+    return apiNoContentResponse();
   } catch (error) {
     return mockAssetErrorResponse(error);
   }

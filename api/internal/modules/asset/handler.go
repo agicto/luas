@@ -137,7 +137,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		response.HandleError(c, "Failed to delete asset", err)
 		return
 	}
-	response.Success(c, &DeleteAssetResponse{Deleted: true})
+	response.NoContent(c)
 }
 
 func (h *Handler) LocalUpload(c *gin.Context) {

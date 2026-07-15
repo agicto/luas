@@ -120,11 +120,11 @@ describe('asset browser route boundary', () => {
     expect(
       (await route.deleteAssetRoute(mutationRequest(`/api/assets/${assetId}`, 'DELETE'), assetId))
         .status
-    ).toBe(200);
+    ).toBe(204);
     expect(
       (await route.deleteAssetRoute(mutationRequest(`/api/assets/${assetId}`, 'DELETE'), assetId))
         .status
-    ).toBe(200);
+    ).toBe(204);
   });
 
   it('rejects cross-origin intent creation before auth or body parsing', async () => {
@@ -145,13 +145,9 @@ describe('asset browser route boundary', () => {
     process.env.API_ADAPTER_ENABLED = 'true';
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
     cookieStore.get.mockReturnValue({ value: compactJwt() });
-    fetchMock.mockResolvedValueOnce(Response.json(pageEnvelope([]))).mockResolvedValueOnce(
-      Response.json({
-        code: 0,
-        message: 'success',
-        data: { deleted: true },
-      })
-    );
+    fetchMock
+      .mockResolvedValueOnce(Response.json(pageEnvelope([])))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
     const route = await import('@/features/asset/server/asset-route');
     const id = '019bf6d8-17c5-7a98-a084-6d45793f5f0c';
 

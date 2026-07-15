@@ -36,10 +36,6 @@ type UploadIntentResponse struct {
 	Upload TransferGrantResponse `json:"upload"`
 }
 
-type DeleteAssetResponse struct {
-	Deleted bool `json:"deleted"`
-}
-
 func toAssetResponse(asset *domain.Asset) *AssetResponse {
 	if asset == nil {
 		return nil

@@ -47,7 +47,3 @@ export interface CreateUploadIntentInput {
   media_type: string;
   size_bytes: number;
 }
-
-export interface DeleteAssetResult {
-  deleted: true;
-}

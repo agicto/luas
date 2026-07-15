@@ -417,7 +417,7 @@ print(parts.path + (("?" + parts.query) if parts.query else ""))
       --request DELETE \
       --header "Authorization: Bearer ${asset_token}" \
       "http://127.0.0.1:${published_port}/v1/assets/${asset_id}")"
-    [[ "${asset_delete_status}" == "200" ]] || fail "asset deletion returned HTTP ${asset_delete_status}"
+    [[ "${asset_delete_status}" == "204" ]] || fail "asset deletion returned HTTP ${asset_delete_status}"
     asset_deleted_grant_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/asset-deleted-grant.json" \
       --write-out '%{http_code}' \

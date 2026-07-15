@@ -158,7 +158,7 @@ user's data. List results are paginated, exclude deleted rows, and are ordered n
 | Create upload intent | `POST /v1/assets/upload-intents` | HTTP 201 `{ asset, upload }` |
 | Complete upload | `POST /v1/assets/:id/complete` | Asset |
 | Create download grant | `POST /v1/assets/:id/download-grant` | `{ method, url, headers, expires_at }` |
-| Delete asset | `DELETE /v1/assets/:id` | `{ deleted: true }` |
+| Delete asset | `DELETE /v1/assets/:id` | HTTP 204 No Content |
 
 A ready asset response is:
 
