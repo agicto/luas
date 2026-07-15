@@ -6,6 +6,7 @@ import {
 } from '@/config/mock-bff';
 import { env } from '@/config/env';
 import { serverEnv } from '@/config/server-env';
+import { privateAuthResponse } from '@/features/auth/server/auth-response';
 import { ApiErrorCode } from '@/http/codes';
 import { apiErrorResponse } from './error-response';
 
@@ -40,10 +41,12 @@ export function resolveAuthRoute(
 
   return {
     available: false,
-    response: apiErrorResponse({
-      status: 503,
-      errorCode: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
-      message: 'Authentication backend is unavailable',
-    }),
+    response: privateAuthResponse(
+      apiErrorResponse({
+        status: 503,
+        errorCode: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
+        message: 'Authentication backend is unavailable',
+      })
+    ),
   };
 }

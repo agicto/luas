@@ -9,6 +9,7 @@ import {
   getApiSessionToken,
 } from '@/features/auth/server/api-session';
 import { ApiErrorCode } from '@/http/codes';
+import { privateNoStoreHeaders } from '@/server/http/private-response';
 import {
   GoApiClient,
   type GoApiError,
@@ -116,8 +117,7 @@ function authenticatedResponseHeaders(
   upstream: Record<string, string> | undefined = undefined,
   requestId?: string
 ): Headers {
-  const headers = new Headers(upstream);
-  headers.set('cache-control', 'private, no-store');
+  const headers = privateNoStoreHeaders(upstream, ['Cookie']);
   if (requestId) {
     headers.set('x-request-id', requestId);
   }

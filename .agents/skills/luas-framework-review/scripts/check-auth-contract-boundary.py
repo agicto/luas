@@ -81,6 +81,8 @@ def main() -> int:
             "API_UPSTREAM_MAX_RESPONSE_BYTES=1048576",
             "API_CLIENT_IP_HEADER=x-real-ip",
             "__Host-luas_auth",
+            "Cache-Control: private, no-store",
+            "varies on `Cookie`",
             "no refresh token, token denylist, or remote logout",
         ),
     )
@@ -204,25 +206,43 @@ def main() -> int:
     )
     require_all(
         failures,
+        "web/src/features/auth/server/auth-response.ts",
+        ("privateAuthResponse<", "privateNoStoreResponse(response, ['Cookie'])"),
+    )
+    require_all(
+        failures,
         "web/src/features/auth/server/auth-adapter-route.ts",
         (
             "setApiSessionCookie",
             "getApiSessionToken",
             "clearApiSessionCookie",
             "resolveGoApiAuthBootstrap",
+            "privateAuthResponse(",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/server/http/private-response.ts",
+        (
+            "private, no-store",
+            "privateNoStoreHeaders(",
+            "privateNoStoreResponse<",
+            "current === '*'",
+            "value.toLowerCase() === name.toLowerCase()",
         ),
     )
     for route in ("login", "register", "me", "logout"):
         require_all(
             failures,
             f"web/src/app/api/auth/{route}/route.ts",
-            ("resolveAuthRoute()",),
+            ("resolveAuthRoute()", "privateAuthResponse("),
         )
     for test_file in (
         "web/src/test/auth-adapter-route.test.ts",
         "web/src/test/auth-route-backend.test.ts",
         "web/src/test/auth-session-cookie.test.ts",
         "web/src/test/go-api-auth-adapter.test.ts",
+        "web/src/test/private-response.test.ts",
     ):
         if not (ROOT / test_file).exists():
             failures.append(f"{test_file} is missing")
@@ -234,6 +254,8 @@ def main() -> int:
             "three resolution modes",
             "`api-session`",
             "`__Host-luas_auth`",
+            "Cache-Control: private, no-store",
+            "src/server/http/private-response.ts",
         ),
     )
     require_absent(

@@ -16,6 +16,7 @@ import {
   getApiSessionToken,
   setApiSessionCookie,
 } from '@/features/auth/server/api-session';
+import { privateAuthResponse } from '@/features/auth/server/auth-response';
 import {
   type AdapterError,
   GoApiAuthAdapter,
@@ -40,14 +41,16 @@ function configuredAdapter(): GoApiAuthAdapter {
 }
 
 function adapterErrorResponse(error: AdapterError): NextResponse {
-  return apiErrorResponse({
-    status: error.status,
-    errorCode: error.errorCode,
-    message: error.message,
-    errors: error.fieldErrors,
-    headers: error.responseHeaders,
-    requestId: error.requestId,
-  });
+  return privateAuthResponse(
+    apiErrorResponse({
+      status: error.status,
+      errorCode: error.errorCode,
+      message: error.message,
+      errors: error.fieldErrors,
+      headers: error.responseHeaders,
+      requestId: error.requestId,
+    })
+  );
 }
 
 export async function loginWithGoApi(
@@ -70,7 +73,7 @@ export async function loginWithGoApi(
     result.data.maxAgeSeconds
   );
 
-  return apiSuccessResponse({ user: result.data.user });
+  return privateAuthResponse(apiSuccessResponse({ user: result.data.user }));
 }
 
 export async function registerWithGoApi(
@@ -93,7 +96,7 @@ export async function registerWithGoApi(
     result.data.maxAgeSeconds
   );
 
-  return apiSuccessResponse({ user: result.data.user });
+  return privateAuthResponse(apiSuccessResponse({ user: result.data.user }));
 }
 
 export async function currentGoApiSession(
@@ -127,14 +130,14 @@ export async function getCurrentGoApiSession(
     return adapterErrorResponse(result.error);
   }
 
-  return apiSuccessResponse(result.data);
+  return privateAuthResponse(apiSuccessResponse(result.data));
 }
 
 export async function logoutFromGoApi(): Promise<NextResponse> {
   await clearApiSessionCookie();
   await clearSessionCookie();
 
-  return apiSuccessResponse({ success: true as const });
+  return privateAuthResponse(apiSuccessResponse({ success: true as const }));
 }
 
 export async function resolveGoApiAuthBootstrap(): Promise<AuthBootstrap> {

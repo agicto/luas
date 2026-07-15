@@ -27,6 +27,10 @@ import {
 import { mockOrganizationStore } from './mock-organization-store';
 import { ApiErrorCode } from '@/http/codes';
 import { forwardAuthenticatedGoApi } from '@/server/api-adapter/authenticated-route';
+import {
+  privateNoStoreHeaders,
+  privateNoStoreResponse,
+} from '@/server/http/private-response';
 
 type OrganizationBackend = 'go-api' | 'mock';
 
@@ -63,6 +67,10 @@ export function resolveOrganizationRoute(
     return { available: true, backend: 'mock' };
   }
   return unavailable('Organization backend is unavailable');
+}
+
+export function privateOrganizationResponse<T extends Response>(response: T): T {
+  return privateNoStoreResponse(response, ['Cookie']);
 }
 
 export async function listOrganizationsRoute(request: Request): Promise<NextResponse> {
@@ -308,11 +316,9 @@ function organizationNotFound(headers: HeadersInit = noStoreHeaders()): NextResp
 }
 
 function noStoreHeaders(): Headers {
-  return new Headers({ 'cache-control': 'private, no-store' });
+  return privateNoStoreHeaders(undefined, ['Cookie']);
 }
 
 function contextHeaders(): Headers {
-  const headers = noStoreHeaders();
-  headers.set('vary', 'Organization-Id');
-  return headers;
+  return privateNoStoreHeaders(undefined, ['Cookie', 'Organization-Id']);
 }

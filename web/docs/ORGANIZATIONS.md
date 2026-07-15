@@ -55,7 +55,9 @@ never cross the boundary.
 `src/app/api/organizations/**` and `src/app/api/organization-context/` are explicit allowlist Route
 Handlers. Unsafe operations reject cross-origin requests before reading bounded JSON. The adapter
 preserves stable status, `error_code`, field ownership, `request_id`, rate-limit headers, and `Vary`,
-but does not render upstream copy.
+but does not render upstream copy. Every organization Route Handler also applies
+`Cache-Control: private, no-store` and merges `Vary: Cookie`; context responses retain
+`Organization-Id` as an additional cache dimension.
 
 ## Development Mock
 

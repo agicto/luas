@@ -36,6 +36,7 @@ describe('mock BFF contract', () => {
       message: 'Malformed JSON body',
     });
     expect(response.status).toBe(400);
+    expectPrivateAuthResponse(response);
   });
 
   it('rejects cross-origin mutations before reading an invalid body', async () => {
@@ -55,6 +56,7 @@ describe('mock BFF contract', () => {
       message: 'Cross-origin mutation is not allowed',
     });
     expect(response.status).toBe(403);
+    expectPrivateAuthResponse(response);
   });
 
   it('returns 422 COMMON.VALIDATION_FAILED with field errors for schema failures', async () => {
@@ -80,6 +82,7 @@ describe('mock BFF contract', () => {
     });
     expect(body.errors.email).toEqual(expect.arrayContaining([expect.any(String)]));
     expect(body.errors.password).toEqual(expect.arrayContaining([expect.any(String)]));
+    expectPrivateAuthResponse(response);
   });
 
   it('returns 404 COMMON.NOT_FOUND for missing mock resources', async () => {
@@ -97,3 +100,8 @@ describe('mock BFF contract', () => {
     expect(response.status).toBe(404);
   });
 });
+
+function expectPrivateAuthResponse(response: Response): void {
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  expect(response.headers.get('vary')).toContain('Cookie');
+}

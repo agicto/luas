@@ -1,5 +1,6 @@
 import {
   getOrganizationRoute,
+  privateOrganizationResponse,
   updateOrganizationRoute,
 } from '@/features/organization/server/organization-route';
 
@@ -15,9 +16,13 @@ async function organizationId(context: RouteContext): Promise<string> {
 }
 
 export async function GET(request: Request, context: RouteContext) {
-  return getOrganizationRoute(request, await organizationId(context));
+  return privateOrganizationResponse(
+    await getOrganizationRoute(request, await organizationId(context))
+  );
 }
 
 export async function PATCH(request: Request, context: RouteContext) {
-  return updateOrganizationRoute(request, await organizationId(context));
+  return privateOrganizationResponse(
+    await updateOrganizationRoute(request, await organizationId(context))
+  );
 }

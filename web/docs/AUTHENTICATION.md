@@ -105,6 +105,12 @@ session outcome is unknown.
 - Adapter routes call only fixed Go auth paths, reject redirects, never forward incoming cookies or
   authorization headers, and replace backend messages with generic local text. Configured
   `API_CLIENT_IP_HEADER` input is parsed as one IP before becoming `X-Forwarded-For`.
+- Every auth Route Handler finalizes success and failure responses with
+  `Cache-Control: private, no-store` and `Vary: Cookie`. This includes malformed input,
+  cross-origin rejection, missing sessions, upstream failures, and disabled-backend responses.
+  `src/server/http/private-response.ts` merges existing `Vary`, request-ID, and rate-limit headers;
+  do not replace this with an assumption that a cookie read automatically protects intermediary
+  caches.
 - The API must set `SERVER_TRUSTED_PROXIES` to the Web adapter network, never a trust-all range, so
   Go's public-auth source and subject quotas remain meaningful behind the adapter.
 - Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component

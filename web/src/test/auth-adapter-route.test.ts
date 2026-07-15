@@ -71,6 +71,7 @@ describe('production auth adapter route boundary', () => {
     );
 
     expect(response.status).toBe(200);
+    expectPrivateAuthResponse(response);
     const body = await response.json();
     expect(body).toEqual({
       code: 0,
@@ -123,6 +124,7 @@ describe('production auth adapter route boundary', () => {
     );
 
     expect(response.status).toBe(401);
+    expectPrivateAuthResponse(response);
     await expect(response.json()).resolves.toEqual({
       code: 401,
       error_code: 'AUTH.UNAUTHORIZED',
@@ -145,6 +147,7 @@ describe('production auth adapter route boundary', () => {
     const response = await logoutFromGoApi();
 
     expect(response.status).toBe(200);
+    expectPrivateAuthResponse(response);
     await expect(response.json()).resolves.toMatchObject({
       data: { success: true },
     });
@@ -175,6 +178,11 @@ function authRequest(path: string, method = 'POST'): Request {
     method,
     headers: requestHeaders,
   });
+}
+
+function expectPrivateAuthResponse(response: Response): void {
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  expect(response.headers.get('vary')).toContain('Cookie');
 }
 
 function loginResponse(token: string): Response {

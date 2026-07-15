@@ -83,6 +83,7 @@ describe('organization browser route boundary', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(response.headers.get('vary')).toContain('Cookie');
     await expect(response.json()).resolves.toMatchObject({
       code: 0,
       data: [{ id: 1, role: 'owner' }],
@@ -185,20 +186,23 @@ describe('organization browser route boundary', () => {
     process.env.API_UPSTREAM_URL = 'https://api.example.com/v1';
     cookieStore.get.mockReturnValue({ value: compactJwt() });
     fetchMock.mockResolvedValueOnce(
-      Response.json({
-        code: 0,
-        message: 'success',
-        data: [],
-        meta: {
-          current_page: 1,
-          per_page: 15,
-          total: 0,
-          last_page: 1,
-          from: 0,
-          to: 0,
+      Response.json(
+        {
+          code: 0,
+          message: 'success',
+          data: [],
+          meta: {
+            current_page: 1,
+            per_page: 15,
+            total: 0,
+            last_page: 1,
+            from: 0,
+            to: 0,
+          },
+          links: { first: '', last: '', prev: null, next: null },
         },
-        links: { first: '', last: '', prev: null, next: null },
-      })
+        { headers: { vary: 'Organization-Id' } }
+      )
     );
     const { listOrganizationsRoute } = await import(
       '@/features/organization/server/organization-route'
@@ -208,6 +212,8 @@ describe('organization browser route boundary', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
+    expect(response.headers.get('vary')).toContain('Organization-Id');
+    expect(response.headers.get('vary')).toContain('Cookie');
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toBe('https://api.example.com/v1/organizations?page=1&per_page=15');
     expect(new Headers(init?.headers).get('authorization')).toBe(`Bearer ${compactJwt()}`);

@@ -37,6 +37,10 @@ describe('auth route backend resolution', () => {
     }
 
     expect(resolution.response.status).toBe(503);
+    expect(resolution.response.headers.get('cache-control')).toBe(
+      'private, no-store'
+    );
+    expect(resolution.response.headers.get('vary')).toContain('Cookie');
     await expect(resolution.response.json()).resolves.toEqual({
       code: 503,
       error_code: ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,

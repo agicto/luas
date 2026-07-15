@@ -191,6 +191,7 @@ def main() -> int:
         (
             "resolveOrganizationRoute(",
             "authenticateOrganizationBackend(",
+            "privateOrganizationResponse<",
             "isWebFeatureEnabled('organization')",
             "guardSameOriginMutation(request)",
             "readJsonBody(request)",
@@ -226,7 +227,7 @@ def main() -> int:
         (
             "getApiSessionToken()",
             "API_UPSTREAM_MAX_RESPONSE_BYTES",
-            "cache-control', 'private, no-store",
+            "privateNoStoreHeaders(upstream, ['Cookie'])",
             "clearApiSessionCookie()",
         ),
     )

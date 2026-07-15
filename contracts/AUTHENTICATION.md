@@ -135,6 +135,11 @@ issuance should add that capability to the API contract instead of hiding compen
   preserved. Backend messages and field messages are replaced with adapter-owned generic text;
   `nickname` validation ownership maps to the browser `name` field and generated `username` errors
   are not exposed as user input.
+- Every `/api/auth/*` success, validation failure, same-origin rejection, authentication failure,
+  and backend-availability response sets `Cache-Control: private, no-store` and varies on `Cookie`.
+  The shared response boundary merges existing `Vary`, request-ID, and rate-limit headers instead
+  of replacing them. Authenticated browser responses must never rely on framework dynamism alone
+  as a cache policy.
 - Timeout, network, malformed-envelope, malformed-user, and malformed-token failures become
   `503 COMMON.TIMEOUT` or `503 COMMON.SERVICE_UNAVAILABLE`, never a false unauthenticated session.
 - A missing or rejected token becomes `401 AUTH.UNAUTHORIZED`. A disabled API user becomes

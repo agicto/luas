@@ -129,6 +129,35 @@ describe('mock BFF route contract', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('finalizes every auth route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter((path) => relativeRoute(path).startsWith('auth/'))
+      .flatMap((path) =>
+        routeHandlers(path)
+          .filter((handler) => !handler.source.includes('privateAuthResponse('))
+          .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every organization route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter((path) => {
+        const route = relativeRoute(path);
+        return route === 'organization-context/route.ts' || route.startsWith('organizations/');
+      })
+      .flatMap((path) =>
+        routeHandlers(path)
+          .filter(
+            (handler) => !handler.source.includes('privateOrganizationResponse(')
+          )
+          .map((handler) => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
   it('keeps delegated organization writes ordered behind availability and origin guards', () => {
     const source = readFileSync(organizationRouteModule, 'utf8');
     const nextFunction = 'export async function getOrganizationRoute';

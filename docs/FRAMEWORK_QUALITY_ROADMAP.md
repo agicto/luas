@@ -54,6 +54,11 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
 - Web error-code vocabulary is contract-tested so `ApiErrorCode` remains server-scoped, `ClientErrorCode` remains frontend-only, and legacy underscore codes stay normalization input only.
 - Web mock BFF routes are disabled in production runtime by default through `guardMockBffRoute()` and require explicit `MOCK_BFF_ENABLED=true` opt-in for demo-only deployments.
+- Authenticated Web Route Handlers now declare their intermediary-cache boundary explicitly. Every
+  auth success/failure and organization response uses `Cache-Control: private, no-store`; auth and
+  organization routes vary on `Cookie`, while organization context also retains `Organization-Id`.
+  A shared server-only helper merges existing `Vary`, request-ID, and rate-limit evidence, and route
+  contract tests prevent new auth or organization handlers from bypassing the finalizer.
 - Web route handlers are contract-tested so mock-only routes call `guardMockBffRoute()`, hybrid auth
   routes call `resolveAuthRoute()`, unsafe mutations apply the same-origin guard after availability,
   success envelopes use shared helpers, and legacy underscore-style error codes stay absent.
@@ -213,6 +218,33 @@ Verification:
 - `cd web && pnpm type-check && pnpm lint && pnpm build`
 - `make governance` and `make check`
 - Real Web-to-Go registration, server-resolved session, invalid login, logout, and API-outage flows.
+
+### Completed P0 — Private Authenticated Response Cache Boundary
+
+Auth Route Handlers previously relied on Next.js route dynamism and cookie access without declaring
+an intermediary-cache policy. Real production login and current-session responses therefore had no
+`Cache-Control` header despite carrying identity state and `Set-Cookie`. Every auth success,
+validation error, same-origin rejection, missing-session response, upstream failure, and unavailable
+backend now passes through one route-level finalizer that sets `Cache-Control: private, no-store` and
+adds `Vary: Cookie`. Organization Route Handlers use the same server-only primitive; active-context
+responses merge `Organization-Id` instead of replacing either dimension. Existing request-ID,
+rate-limit, and upstream `Vary` headers survive, comparisons are case-insensitive, and `Vary: *`
+remains intact.
+
+Against baseline commit `40b2f8e` with the optional organization feature enabled, all 42 static
+files and all 40 JavaScript files are byte-identical: static JavaScript remains 1,575,882 bytes with
+content-set SHA-256 `0a27629484c61dddc3bf75c1893b3c4f137c3726d54f343cd3decfca9fb84375`.
+The 205 server JavaScript artifacts move from 5,799,376 to 5,801,640 bytes (+2,264, 0.039%). These
+are local production-build footprint measurements, not a CDN conformance or latency claim. A real
+production process returned the policy on login `200`, current session `200`, malformed login `400`,
+and cross-origin logout `403`; organization context returned `Vary: Cookie, Organization-Id`.
+
+Verification:
+
+- `cd web && pnpm exec vitest run src/test/private-response.test.ts src/test/auth-route-backend.test.ts src/test/auth-adapter-route.test.ts src/test/api-error-contract.test.ts src/test/mock-bff-route-contract.test.ts src/test/organization-route.test.ts`
+- `cd web && pnpm type-check && pnpm lint && pnpm build`
+- `make governance` and `make check`
+- Production HTTP replay across auth success/error/origin branches and organization context.
 
 ### Completed P1 — Typed Configuration Authority
 

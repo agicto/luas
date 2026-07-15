@@ -10,6 +10,7 @@ import { guardSameOriginMutation } from '@/app/api/_shared/mock-bff';
 import { apiSuccessResponse } from '@/app/api/_shared/success-response';
 import { loginWithGoApi } from '@/features/auth/server/auth-adapter-route';
 import { clearApiSessionCookie } from '@/features/auth/server/api-session';
+import { privateAuthResponse } from '@/features/auth/server/auth-response';
 import { authenticateMockIdentity } from '@/features/auth/server/mock-identity';
 import { setSessionCookie } from '@/features/auth/server/session';
 import { ApiErrorCode } from '@/http/codes';
@@ -22,6 +23,10 @@ const loginSchema = z.object({
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
+  return privateAuthResponse(await handleLogin(request));
+}
+
+async function handleLogin(request: Request) {
   const resolution = resolveAuthRoute();
 
   if (!resolution.available) {
