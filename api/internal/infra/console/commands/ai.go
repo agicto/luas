@@ -27,7 +27,7 @@ func NewAIChatCommand() *AIChatCommand {
 func (c *AIChatCommand) Name() string        { return "ai:chat" }
 func (c *AIChatCommand) Description() string { return "Send a prompt to the configured AI provider" }
 func (c *AIChatCommand) Usage() string {
-	return `ai:chat [--provider=openai] [--model=gpt-5] [--system="You are terse"] [--effort=low] [--no-stream] "prompt"`
+	return `ai:chat [--provider=openai] [--model=provider-model] [--system="You are terse"] [--effort=low] [--no-stream] "prompt"`
 }
 
 func (c *AIChatCommand) Run(args []string) error {
@@ -95,6 +95,11 @@ func aiRuntimeConfig(cfg config.AIConfig) ai.Config {
 		DefaultProvider: cfg.DefaultProvider,
 		DefaultModel:    cfg.DefaultModel,
 		RequestTimeout:  cfg.RequestTimeout,
+		Limits: ai.RequestLimits{
+			MaxInputBytes:       cfg.MaxInputBytes,
+			MaxResponseBytes:    cfg.MaxResponseBytes,
+			MaxStreamEventBytes: cfg.MaxStreamEventBytes,
+		},
 		OpenAI: ai.ProviderConfig{
 			APIKey:  cfg.OpenAI.APIKey,
 			BaseURL: cfg.OpenAI.BaseURL,

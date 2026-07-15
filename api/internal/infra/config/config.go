@@ -8,6 +8,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/zgiai/luas/api/pkg/env"
 )
@@ -31,6 +33,14 @@ const (
 	DefaultMiddlewareRequestTimeoutSeconds = 180
 	// DefaultEmailRequestTimeout caps one outbound provider call.
 	DefaultEmailRequestTimeout = 10 * time.Second
+	// DefaultAIRequestTimeout caps one complete provider call or streaming session.
+	DefaultAIRequestTimeout = 120 * time.Second
+	// DefaultAIMaxInputBytes bounds input plus instructions before provider serialization.
+	DefaultAIMaxInputBytes = 1024 * 1024
+	// DefaultAIMaxResponseBytes bounds a decompressed one-shot provider response.
+	DefaultAIMaxResponseBytes int64 = 4 * 1024 * 1024
+	// DefaultAIMaxStreamEventBytes bounds one provider SSE event line.
+	DefaultAIMaxStreamEventBytes = 1024 * 1024
 	// DefaultOrganizationInvitationTTL bounds one organization invitation token.
 	DefaultOrganizationInvitationTTL = 7 * 24 * time.Hour
 	// DefaultObjectStorageRequestTimeout bounds one provider metadata or object operation.
@@ -245,11 +255,14 @@ type AIProviderConfig struct {
 }
 
 type AIConfig struct {
-	Enabled         bool
-	DefaultProvider string
-	DefaultModel    string
-	RequestTimeout  time.Duration
-	OpenAI          AIProviderConfig
+	Enabled             bool
+	DefaultProvider     string
+	DefaultModel        string
+	RequestTimeout      time.Duration
+	MaxInputBytes       int
+	MaxResponseBytes    int64
+	MaxStreamEventBytes int
+	OpenAI              AIProviderConfig
 	// To add a new provider: add a field here, wire it in config.Load,
 	// and register the provider in ai.NewManager.
 }
@@ -508,15 +521,22 @@ func LoadAIConfig() (AIConfig, error) {
 	if err := env.Load(); err != nil {
 		return AIConfig{}, fmt.Errorf("load environment: %w", err)
 	}
-	return loadAIConfig(), nil
+	cfg := loadAIConfig()
+	if err := validateAIConfig(cfg, isProductionEnvironment(env.AppEnv())); err != nil {
+		return AIConfig{}, err
+	}
+	return cfg, nil
 }
 
 func loadAIConfig() AIConfig {
 	return AIConfig{
-		Enabled:         env.GetBool("AI_ENABLED", true),
-		DefaultProvider: env.Get("AI_DEFAULT_PROVIDER", "openai"),
-		DefaultModel:    env.Get("AI_DEFAULT_MODEL", "gpt-5"),
-		RequestTimeout:  env.GetDuration("AI_REQUEST_TIMEOUT", 120*time.Second),
+		Enabled:             env.GetBool("AI_ENABLED", false),
+		DefaultProvider:     env.Get("AI_DEFAULT_PROVIDER", "openai"),
+		DefaultModel:        env.Get("AI_DEFAULT_MODEL", ""),
+		RequestTimeout:      env.GetDuration("AI_REQUEST_TIMEOUT", DefaultAIRequestTimeout),
+		MaxInputBytes:       env.GetInt("AI_MAX_INPUT_BYTES", DefaultAIMaxInputBytes),
+		MaxResponseBytes:    int64(env.GetInt("AI_MAX_RESPONSE_BYTES", int(DefaultAIMaxResponseBytes))),
+		MaxStreamEventBytes: env.GetInt("AI_MAX_STREAM_EVENT_BYTES", DefaultAIMaxStreamEventBytes),
 		OpenAI: AIProviderConfig{
 			APIKey:  env.Get("OPENAI_API_KEY", ""),
 			BaseURL: env.Get("OPENAI_BASE_URL", "https://api.openai.com/v1"),
@@ -567,6 +587,9 @@ func validate(cfg *Config) error {
 	}
 
 	isProd := cfg.IsProduction()
+	if err := validateAIConfig(cfg.AI, isProd); err != nil {
+		return err
+	}
 
 	// JWT_SECRET strength: in production, reject known placeholders and
 	// secrets shorter than 32 chars. In other envs, log a clear warning by
@@ -658,6 +681,63 @@ func validate(cfg *Config) error {
 	}
 
 	return nil
+}
+
+func validateAIConfig(aiConfig AIConfig, production bool) error {
+	if !aiConfig.Enabled {
+		return nil
+	}
+	if aiConfig.RequestTimeout <= 0 || aiConfig.RequestTimeout > 15*time.Minute {
+		return fmt.Errorf("AI_REQUEST_TIMEOUT must be greater than 0 and no more than 15m")
+	}
+	if aiConfig.MaxInputBytes < 1024 || aiConfig.MaxInputBytes > 16*1024*1024 {
+		return fmt.Errorf("AI_MAX_INPUT_BYTES must be between 1024 and 16777216")
+	}
+	if aiConfig.MaxResponseBytes < 1024 || aiConfig.MaxResponseBytes > 32*1024*1024 {
+		return fmt.Errorf("AI_MAX_RESPONSE_BYTES must be between 1024 and 33554432")
+	}
+	if aiConfig.MaxStreamEventBytes < 1024 || aiConfig.MaxStreamEventBytes > 4*1024*1024 {
+		return fmt.Errorf("AI_MAX_STREAM_EVENT_BYTES must be between 1024 and 4194304")
+	}
+	if int64(aiConfig.MaxStreamEventBytes) > aiConfig.MaxResponseBytes {
+		return fmt.Errorf("AI_MAX_STREAM_EVENT_BYTES must not exceed AI_MAX_RESPONSE_BYTES")
+	}
+	provider := strings.ToLower(strings.TrimSpace(aiConfig.DefaultProvider))
+	if !validAIIdentifier(provider, 64) {
+		return fmt.Errorf("AI_DEFAULT_PROVIDER must be a valid provider identifier")
+	}
+	if !validAIIdentifier(strings.TrimSpace(aiConfig.DefaultModel), 256) {
+		return fmt.Errorf("AI_DEFAULT_MODEL must be an explicit valid provider model identifier when AI is enabled")
+	}
+	if provider != "openai" {
+		return fmt.Errorf("AI_DEFAULT_PROVIDER %q is not registered by this scaffold", provider)
+	}
+	if strings.TrimSpace(aiConfig.OpenAI.APIKey) == "" {
+		return fmt.Errorf("OPENAI_API_KEY is required when AI_ENABLED is true and AI_DEFAULT_PROVIDER is openai")
+	}
+	endpoint, err := url.Parse(strings.TrimSpace(aiConfig.OpenAI.BaseURL))
+	if err != nil || !endpoint.IsAbs() || endpoint.Host == "" || endpoint.User != nil || endpoint.RawQuery != "" || endpoint.Fragment != "" {
+		return fmt.Errorf("OPENAI_BASE_URL must be an absolute http or https URL without credentials, query, or fragment")
+	}
+	if endpoint.Scheme != "https" && endpoint.Scheme != "http" {
+		return fmt.Errorf("OPENAI_BASE_URL must use http or https")
+	}
+	if production && endpoint.Scheme != "https" {
+		return fmt.Errorf("OPENAI_BASE_URL must use https in production")
+	}
+	return nil
+}
+
+func validAIIdentifier(value string, maxBytes int) bool {
+	if value == "" || len(value) > maxBytes || !utf8.ValidString(value) {
+		return false
+	}
+	for _, char := range value {
+		if unicode.IsSpace(char) || unicode.IsControl(char) {
+			return false
+		}
+	}
+	return true
 }
 
 func defaultObjectStorageDriver(optionalStarters []string, production bool) string {

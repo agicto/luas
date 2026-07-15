@@ -57,6 +57,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — ready-to-use starter review and prioritized reusable business starter roadmap.
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for skill governance and AI workflow quality.
+- [api/docs/AI.md](api/docs/AI.md) — provider-neutral AI execution limits and the boundary before product-specific AI workspaces.
 
 ## Working with AI agents
 

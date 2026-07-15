@@ -42,6 +42,7 @@ Workspace-level architecture docs:
 - [contracts/WEBHOOKS.md](contracts/WEBHOOKS.md) — optional outbound subscriptions, Standard Webhooks signing, durable retries, privacy, and browser adapter
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
+- [api/docs/AI.md](api/docs/AI.md) — bounded provider execution, streaming, error privacy, and AI product boundary
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
 - [api/docs/NOTIFICATIONS.md](api/docs/NOTIFICATIONS.md) — notification publication, lease worker, delivery privacy, and replacement boundary
 - [api/docs/ASSETS.md](api/docs/ASSETS.md) — asset/object distinction, secure providers, inspection, cleanup, and replacement boundary
@@ -98,6 +99,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py` — keep typed setting definitions finite, scalar, versioned, private where required, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py` — keep usage definitions finite, ingestion trusted, consumption atomic, quota history versioned, and API/Web/contracts aligned.
 - `.agents/skills/luas-framework-review/scripts/check-webhook-boundary.py` — keep outbound catalogs finite, targets SSRF-safe, secrets encrypted, delivery leases idempotent, and API/Web/contracts aligned.
+- `.agents/skills/luas-framework-review/scripts/check-ai-boundary.py` — keep AI execution disabled by default, explicitly modeled, bounded, redirect-safe, timeout-aware, private, and product-neutral.
 - `.agents/skills/luas-framework-review/scripts/check-api-key-boundary.py` — keep API key hash-only persistence, atomic revoke/use writes, scope semantics, one-time plaintext, and Web adapter behavior aligned.
 - `.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py` — keep request logs/traces, exception diagnostics, SQL logs, logger context, and audit metadata behind one minimization/redaction boundary.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.

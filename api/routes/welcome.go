@@ -762,8 +762,8 @@ func RegisterWelcome(r *gin.Engine) {
 		appName := "Luas"
 		appEnv := "development"
 		appURL := "http://localhost:8025"
-		aiProvider := "openai"
-		aiModel := "gpt-5"
+		aiProvider := "disabled"
+		aiModel := "not configured"
 
 		if config.GlobalConfig != nil {
 			appName = config.GlobalConfig.App.Name

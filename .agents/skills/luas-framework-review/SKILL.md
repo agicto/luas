@@ -82,6 +82,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-setting-boundary.py` when changing setting definitions, scopes, values, versions, cache/privacy behavior, account cleanup, setting contracts, or the Web setting feature.
    - Run `scripts/check-usage-boundary.py` when changing usage metrics, trusted events, counters, atomic quota decisions, retention, usage contracts, or the Web usage feature.
    - Run `scripts/check-webhook-boundary.py` when changing outbound event definitions, endpoint custody, signing, target policy, delivery leases/retries, replay, webhook contracts, or the Web webhook feature.
+   - Run `scripts/check-ai-boundary.py` when changing AI provider config, request validation, transport, streaming, limits, errors, or the AI product/capability boundary.
    - Run `scripts/check-config-authority.py` when changing environment loading, typed configuration, logger startup, runtime reload behavior, or configuration cache semantics.
    - Run `scripts/check-email-boundary.py` when changing outbound email config, provider HTTP behavior, templates, or starter-owned mailer calls.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
@@ -131,6 +132,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-setting-boundary.py` keeps definitions finite and scalar, CAS/reset history monotonic, public/private caching explicit, audit values absent, and API/Web/contracts aligned.
 - `scripts/check-usage-boundary.py` keeps metrics and dimensions finite, ingestion trusted, idempotency exact, consumption atomic, quota history monotonic, reads private, and API/Web/contracts aligned.
 - `scripts/check-webhook-boundary.py` keeps events finite and trusted, endpoint secrets encrypted, targets SSRF-resistant, signatures exact, retries lease-safe, ledgers private, and API/Web/contracts aligned.
+- `scripts/check-ai-boundary.py` keeps AI execution disabled by default, explicitly modeled, bounded, redirect-safe, timeout-aware, private, deterministic, and product-neutral.
 - `scripts/check-config-authority.py` keeps runtime environment access behind `config.Config`, requires one startup snapshot for logging and Wire, and blocks removed dynamic reload/cache surfaces.
 - `scripts/check-email-boundary.py` keeps email configuration, caller cancellation, provider timeout, bounded response reads, privacy rules, and user-starter mailer calls aligned.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.

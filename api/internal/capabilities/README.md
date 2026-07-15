@@ -27,7 +27,7 @@ or `internal/modules/`.
 |------|--------|------|
 | **idgen** | `capabilities/idgen` | ID 生成（UUID、Snowflake、NanoID） |
 | **crypto** | `capabilities/crypto` | 加密解密、哈希、密码 |
-| **ai** | `capabilities/ai` | Provider-neutral AI 调用能力，默认支持 OpenAI Responses API |
+| **ai** | `capabilities/ai` | Provider-neutral、有界的 AI 执行能力，内置 OpenAI Responses API 适配器 |
 
 ---
 

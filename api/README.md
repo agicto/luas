@@ -303,14 +303,14 @@ make test-kest
 
 ## AI Capability
 
-脚手架内置了 provider-neutral 的 `internal/capabilities/ai` 能力层，当前默认接了 OpenAI Responses API。
+脚手架内置了 provider-neutral 的 `internal/capabilities/ai` 技术能力层，当前提供 OpenAI Responses API 适配器。该能力默认关闭，不拥有 Prompt、会话、run、计费等产品语义。
 
 最小配置：
 
 ```bash
 AI_ENABLED=true
 AI_DEFAULT_PROVIDER=openai
-AI_DEFAULT_MODEL=gpt-5
+AI_DEFAULT_MODEL=provider-model
 OPENAI_API_KEY=replace-me
 ```
 
@@ -318,8 +318,10 @@ OPENAI_API_KEY=replace-me
 
 ```bash
 go run ./cmd/luas ai:chat "Write a short project summary"
-go run ./cmd/luas ai:chat --system="Answer in JSON" --model=gpt-5 "List 3 scaffold priorities"
+go run ./cmd/luas ai:chat --system="Answer in JSON" --model=provider-model "List 3 scaffold priorities"
 ```
+
+完整的超时、输入/响应上限、错误隐私、streaming 与下游 AI workspace 边界见 [`docs/AI.md`](docs/AI.md)。
 
 ## API Key Starter
 

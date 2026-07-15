@@ -26,7 +26,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P3 | AI capability exists, but no starter owns conversations, prompts, runs, evaluations, or cost tracking. | AI-first apps still need repeated product scaffolding. | Build an `ai-workspace` optional starter only after organization and usage seams are settled. |
+| P3 | The bounded AI execution capability exists, but no starter owns conversations, prompts, runs, evaluations, or cost tracking. | AI-first apps still need repeated product scaffolding. | Run semantic discovery before deciding whether an `ai-workspace` is reusable enough to enter the scaffold. |
 | P3 | Usage is intentionally provider-neutral and has no pricing, invoice, tax, subscription, or payment lifecycle. | Monetized products still need product-specific commercial policy before launch. | Keep `billing` optional and provider-adapted after pricing and entitlement semantics are explicit. |
 
 ## Recommended Starter Sequence
@@ -88,7 +88,7 @@ undelivered boundary is an intentionally product-sensitive AI workspace.
 
 8. `ai-workspace` optional starter
    - Owns prompt templates, conversation/session records, run history, cost attribution, and evaluation hooks.
-   - Uses the AI capability, workflow, usage, and organization starters.
+   - Uses the bounded execution contract in [`../api/docs/AI.md`](../api/docs/AI.md) plus workflow, usage, and organization starters.
    - Should be optional because many Luas downstream apps will not be AI products.
 
 ## Starter Readiness Contract
@@ -126,8 +126,9 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Run a semantic discovery slice before building `ai-workspace`. Decide whether conversation, prompt,
-run, evaluation, and cost attribution are genuinely reusable starter concepts or product-specific
-examples; keep model-provider SDKs in the AI capability and consume the delivered organization,
-usage, asset, webhook, and workflow seams rather than duplicating their ownership. Billing remains
-separate until pricing, entitlement, invoice, tax, and provider lifecycle semantics are explicit.
+The AI provider execution boundary is now bounded and documented. Run a semantic discovery slice
+before building `ai-workspace`: decide whether conversation, prompt, run, evaluation, and cost
+attribution are genuinely reusable starter concepts or product-specific examples. Keep provider
+adapters in the AI capability and consume the delivered organization, usage, asset, webhook, and
+workflow seams rather than duplicating their ownership. Billing remains separate until pricing,
+entitlement, invoice, tax, and provider lifecycle semantics are explicit.

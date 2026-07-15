@@ -120,6 +120,40 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 
 ## Candidate Queue
 
+### Completed P0 — AI Provider Execution Boundary
+
+The built-in OpenAI Responses adapter previously read one-shot response bodies without a limit,
+returned provider-supplied error text to callers, followed authenticated redirects, and left streams
+unbounded when callers used `context.Background()`. The provider list also inherited Go map iteration
+order, while input, model, reasoning, and provider identifiers had no size or shape policy. An
+adversarial provider could therefore consume unbounded memory, disclose diagnostic or echoed prompt
+content, move a bearer credential through redirect handling, or hold a CLI/runtime stream forever.
+
+The provider-neutral AI capability now enforces a 1 MiB combined input limit, 4 MiB decompressed
+one-shot response limit, 1 MiB SSE event-line limit, 64 KiB response-header limit, and a configurable
+total request/stream timeout. Its reusable transport requires TLS 1.2 for HTTPS, keeps enterprise
+proxy support and connection reuse, and blocks redirects. Provider failures expose only a typed
+`ProviderError` status/retry classification under `ErrProviderRequestFailed`; raw provider bodies and
+messages never enter errors. Provider discovery is deterministic, malformed identifiers and invalid
+UTF-8 fail before provider execution, and direct adapter calls repeat the manager's validation.
+
+AI is now disabled by default and has no framework-selected model. Enabling it requires an explicit
+provider-owned model, provider secret, validated endpoint, timeout, and byte limits; production
+requires HTTPS. [`../api/docs/AI.md`](../api/docs/AI.md) fixes the semantic boundary: this capability
+owns bounded execution, while any future AI workspace starter must own prompts, conversations, runs,
+evaluations, cost attribution, permissions, retention, and durable retry policy. Root governance now
+guards that boundary with `check-ai-boundary.py`.
+
+The regression suite first reproduced all six old behaviors: leaked provider text, a fully read 5 MiB
+body, a followed 307 redirect, a 25 ms stream lasting about 252 ms, nondeterministic provider order,
+and a 2 MiB prompt reaching the provider. The same tests now pass with bounded, stable behavior.
+
+Verification:
+
+- `cd api && go test ./internal/capabilities/ai ./internal/infra/config ./internal/infra/console/commands`
+- `cd api && go test -race ./internal/capabilities/ai`
+- `make governance`, `make check`, `cd api && make vuln`, and `cd api && make container-check`
+
 ### Completed P0 — Sensitive Telemetry And Diagnostic Output Boundary
 
 The request logger previously appended the complete raw query to `path`, so access tokens and other

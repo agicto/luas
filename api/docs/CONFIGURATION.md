@@ -21,7 +21,8 @@ rebuilds already constructed services.
 
 `config.LoadAIConfig()` is the capability-scoped loader for `ai:chat`; it returns the same typed
 `AIConfig` used by the full snapshot without requiring unrelated database or JWT settings. Runtime
-packages still do not read environment variables directly.
+packages still do not read environment variables directly. It also applies the same enablement,
+endpoint, timeout, and byte-limit validation as the full application loader.
 
 ## Precedence
 
@@ -107,6 +108,20 @@ defaults to `24h`; `WEBHOOK_EVENT_RETENTION` controls terminal replay history an
 Production rejects either override. Local Compose enables them so its isolated verifier can dispatch
 to the API container itself; downstream production deployments should also enforce outbound network
 policy independently of application validation. See [`WEBHOOKS.md`](WEBHOOKS.md).
+
+## AI Capability Configuration
+
+`AI_ENABLED` defaults to `false`. Enabling it requires an explicit `AI_DEFAULT_MODEL` and the secret
+for the selected registered provider; Luas intentionally does not choose a model whose behavior and
+availability can change independently of the scaffold. The built-in provider requires
+`OPENAI_API_KEY`. `OPENAI_BASE_URL` must be an absolute HTTP(S) URL without credentials, query, or
+fragment, and production requires HTTPS.
+
+`AI_REQUEST_TIMEOUT` defaults to `120s` and bounds both a one-shot request and the complete lifetime
+of a streaming session. `AI_MAX_INPUT_BYTES`, `AI_MAX_RESPONSE_BYTES`, and
+`AI_MAX_STREAM_EVENT_BYTES` default to 1 MiB, 4 MiB, and 1 MiB respectively. Typed startup validation
+keeps each value inside its documented hard range and ensures the stream-event cap cannot exceed the
+response cap. See [`AI.md`](AI.md) for transport, privacy, error, retry, and product-boundary rules.
 
 ## Object Storage And Asset Configuration
 

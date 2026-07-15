@@ -555,11 +555,14 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 }
 
 func TestLoadAIConfigDoesNotRequireServerRuntimeSecrets(t *testing.T) {
-	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "OPENAI_API_KEY", "OPENAI_BASE_URL", "DB_PASSWORD", "JWT_SECRET")
+	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL", "DB_PASSWORD", "JWT_SECRET")
 	t.Setenv("AI_ENABLED", "true")
 	t.Setenv("AI_DEFAULT_PROVIDER", "openai")
 	t.Setenv("AI_DEFAULT_MODEL", "provider-model")
 	t.Setenv("AI_REQUEST_TIMEOUT", "45s")
+	t.Setenv("AI_MAX_INPUT_BYTES", "262144")
+	t.Setenv("AI_MAX_RESPONSE_BYTES", "2097152")
+	t.Setenv("AI_MAX_STREAM_EVENT_BYTES", "131072")
 	t.Setenv("OPENAI_API_KEY", "test-key")
 	t.Setenv("OPENAI_BASE_URL", "https://provider.example/v1")
 	if err := pkgenv.LoadFresh(); err != nil {
@@ -573,7 +576,60 @@ func TestLoadAIConfigDoesNotRequireServerRuntimeSecrets(t *testing.T) {
 	if cfg.DefaultModel != "provider-model" || cfg.RequestTimeout != 45*time.Second {
 		t.Fatalf("AI config = model:%q timeout:%s", cfg.DefaultModel, cfg.RequestTimeout)
 	}
+	if cfg.MaxInputBytes != 262144 || cfg.MaxResponseBytes != 2097152 || cfg.MaxStreamEventBytes != 131072 {
+		t.Fatalf("AI limits = input:%d response:%d event:%d", cfg.MaxInputBytes, cfg.MaxResponseBytes, cfg.MaxStreamEventBytes)
+	}
 	if cfg.OpenAI.APIKey != "test-key" || cfg.OpenAI.BaseURL != "https://provider.example/v1" {
 		t.Fatalf("OpenAI config = key:%q base:%q", cfg.OpenAI.APIKey, cfg.OpenAI.BaseURL)
+	}
+}
+
+func TestLoadAIConfigDefaultsToDisabledWithoutModel(t *testing.T) {
+	withoutEnv(t, "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL")
+	if err := pkgenv.LoadFresh(); err != nil {
+		t.Fatalf("env.LoadFresh() error = %v", err)
+	}
+
+	cfg, err := LoadAIConfig()
+	if err != nil {
+		t.Fatalf("LoadAIConfig() error = %v", err)
+	}
+	if cfg.Enabled || cfg.DefaultModel != "" {
+		t.Fatalf("AI defaults = enabled:%v model:%q, want disabled with no model", cfg.Enabled, cfg.DefaultModel)
+	}
+}
+
+func TestLoadAIConfigRejectsIncompleteEnabledProvider(t *testing.T) {
+	withoutEnv(t, "APP_ENV", "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("AI_ENABLED", "true")
+	t.Setenv("AI_DEFAULT_PROVIDER", "openai")
+	t.Setenv("AI_DEFAULT_MODEL", "provider-model")
+	t.Setenv("OPENAI_API_KEY", "")
+	if err := pkgenv.LoadFresh(); err != nil {
+		t.Fatalf("env.LoadFresh() error = %v", err)
+	}
+
+	_, err := LoadAIConfig()
+	if err == nil || !strings.Contains(err.Error(), "OPENAI_API_KEY") {
+		t.Fatalf("LoadAIConfig() error = %v, want missing provider key error", err)
+	}
+}
+
+func TestLoadAIConfigRejectsInsecureProductionEndpoint(t *testing.T) {
+	withoutEnv(t, "APP_ENV", "AI_ENABLED", "AI_DEFAULT_PROVIDER", "AI_DEFAULT_MODEL", "AI_REQUEST_TIMEOUT", "AI_MAX_INPUT_BYTES", "AI_MAX_RESPONSE_BYTES", "AI_MAX_STREAM_EVENT_BYTES", "OPENAI_API_KEY", "OPENAI_BASE_URL")
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("AI_ENABLED", "true")
+	t.Setenv("AI_DEFAULT_PROVIDER", "openai")
+	t.Setenv("AI_DEFAULT_MODEL", "provider-model")
+	t.Setenv("OPENAI_API_KEY", "test-key")
+	t.Setenv("OPENAI_BASE_URL", "http://provider.example/v1")
+	if err := pkgenv.LoadFresh(); err != nil {
+		t.Fatalf("env.LoadFresh() error = %v", err)
+	}
+
+	_, err := LoadAIConfig()
+	if err == nil || !strings.Contains(err.Error(), "https") {
+		t.Fatalf("LoadAIConfig() error = %v, want production HTTPS error", err)
 	}
 }
