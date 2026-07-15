@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-http benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -137,6 +137,11 @@ benchmark-workflow:
 benchmark-http:
 	@echo "Benchmarking core HTTP middleware..."
 	go test ./internal/bootstrap -run '^$$' -bench '^BenchmarkHTTPMiddlewareChain$$' -benchmem -count=5
+
+# Measure process-local rate-limit hot paths and bounded identity churn
+benchmark-rate-limit:
+	@echo "Benchmarking process-local rate limiter..."
+	go test ./internal/infra/ratelimit -run '^$$' -bench '^BenchmarkMemoryStoreTake$$' -benchmem -count=5
 
 # Run tests with coverage
 cover:

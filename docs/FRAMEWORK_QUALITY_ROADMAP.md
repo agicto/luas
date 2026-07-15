@@ -23,7 +23,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API and Web remain independent deployable units and share contracts, not source code.
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
-- API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures.
+- API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures. Process-local rate-limit stores are atomically enforced, cardinality-bounded with configurable LRU eviction, exact at window expiry, and own no cleanup goroutines; the misleading unassembled Redis limiter and inert `REDIS_*` runtime config were removed. Multi-replica enforcement remains an explicit gateway/WAF/shared-adapter responsibility.
 - API transport configuration now owns the real socket boundary: local defaults bind to `127.0.0.1`,
   container surfaces explicitly bind `0.0.0.0`, and read-header/read/write/idle/header-size budgets
   are wired into `http.Server`. Configuration validation rejects negative values and a positive write

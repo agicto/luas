@@ -97,20 +97,31 @@ func TestValidate_RejectsInvalidRateLimitWhenEnabled(t *testing.T) {
 		{
 			name: "zero max",
 			cfg: RateLimitConfig{
-				Enabled: true,
-				Max:     0,
-				Window:  time.Minute,
+				Enabled:    true,
+				Max:        0,
+				Window:     time.Minute,
+				MaxBuckets: DefaultRateLimitMaxBuckets,
 			},
 			want: "MIDDLEWARE_RATE_LIMIT_MAX",
 		},
 		{
 			name: "zero window",
 			cfg: RateLimitConfig{
-				Enabled: true,
-				Max:     100,
-				Window:  0,
+				Enabled:    true,
+				Max:        100,
+				Window:     0,
+				MaxBuckets: DefaultRateLimitMaxBuckets,
 			},
 			want: "MIDDLEWARE_RATE_LIMIT_WINDOW",
+		},
+		{
+			name: "zero max buckets",
+			cfg: RateLimitConfig{
+				Enabled: true,
+				Max:     100,
+				Window:  time.Minute,
+			},
+			want: "MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS",
 		},
 	}
 
@@ -172,6 +183,13 @@ func TestValidate_RejectsInvalidAuthenticationRateLimitWhenEnabled(t *testing.T)
 		want string
 	}{
 		{
+			name: "zero max buckets per rule",
+			edit: func(cfg *AuthenticationRateLimitConfig) {
+				cfg.MaxBucketsPerRule = 0
+			},
+			want: "AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE",
+		},
+		{
 			name: "zero login IP max",
 			edit: func(cfg *AuthenticationRateLimitConfig) {
 				cfg.Login.PerIP.Max = 0
@@ -197,7 +215,8 @@ func TestValidate_RejectsInvalidAuthenticationRateLimitWhenEnabled(t *testing.T)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			auth := AuthenticationRateLimitConfig{
-				Enabled: true,
+				Enabled:           true,
+				MaxBucketsPerRule: DefaultRateLimitMaxBuckets,
 				Login: AuthenticationEndpointRateLimitConfig{
 					PerIP:      validRule,
 					PerSubject: validRule,

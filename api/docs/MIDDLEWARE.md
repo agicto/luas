@@ -64,7 +64,7 @@ requests can be rejected by the Go transport before Gin, so they do not use the 
 | `BodyLimit` | Limits request bodies to `MIDDLEWARE_BODY_LIMIT_MB`, default 10 MB. | `413` + `COMMON.REQUEST_TOO_LARGE`. |
 | `Timeout` | Adds a cooperative request context deadline from `MIDDLEWARE_REQUEST_TIMEOUT`, default 180 seconds. | `503` + `COMMON.TIMEOUT` when the handler respects context and has not written a response. |
 | `CORS` | Allows configured browser origins. Production must use explicit origins. | CORS headers and preflight handling. |
-| `RateLimit` | Enabled by default only when `APP_ENV=production`; default `600` requests per minute per client IP. | `429` + `COMMON.RATE_LIMITED`, `Retry-After`, and `X-RateLimit-*` headers. |
+| `RateLimit` | Enabled by default only when `APP_ENV=production`; default `600` requests per minute per client IP, with at most 10,000 active process-local buckets. | `429` + `COMMON.RATE_LIMITED`, `Retry-After`, and `X-RateLimit-*` headers. |
 | `Metrics` | Enabled by default outside production and disabled by default in production. Unmatched routes share the bounded `unmatched` path label. | Prometheus text endpoint at `/metrics` when enabled. |
 
 Environment knobs:
@@ -81,6 +81,7 @@ MIDDLEWARE_BODY_LIMIT_MB=10
 MIDDLEWARE_RATE_LIMIT_ENABLED=true
 MIDDLEWARE_RATE_LIMIT_MAX=600
 MIDDLEWARE_RATE_LIMIT_WINDOW=1m
+MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS=10000
 MIDDLEWARE_RATE_LIMIT_SKIP_PATHS=/health,/health/live,/health/ready,/metrics,/v1/health
 METRICS_ENABLED=true
 ```
@@ -145,6 +146,7 @@ quota diagnostics or a bucket-specific reason.
 
 ```bash
 AUTH_RATE_LIMIT_ENABLED=true
+AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE=10000
 AUTH_RATE_LIMIT_LOGIN_IP_MAX=20
 AUTH_RATE_LIMIT_LOGIN_IP_WINDOW=5m
 AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX=10
@@ -155,10 +157,18 @@ AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_MAX=3
 AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_WINDOW=1h
 ```
 
-These starter limits use process-local memory. Multi-replica deployments must enforce equivalent
-distributed buckets in a WAF/gateway or replace the store with Redis. Per-IP limiting is a baseline,
-not a complete credential-stuffing defense; downstream products should add MFA, risk signals, and
-graduated challenges according to their threat model.
+Each built-in store is a bounded, process-local fixed-window limiter. Expired buckets are removed
+on the request path; no rule starts a cleanup goroutine. At the configured cardinality ceiling, the
+least recently used bucket is evicted to keep attacker-controlled identity churn from growing memory
+without bound. Eviction and fixed-window boundary bursts make this a single-replica baseline, not a
+distributed security control.
+
+Multi-replica deployments must enforce equivalent shared buckets in a WAF/gateway or add an explicit
+shared limiter adapter at composition time. Luas does not ship a built-in Redis rate-limit driver,
+and the Redis cache adapter does not activate one. A future shared driver must define its atomic
+algorithm, failure mode, readiness behavior, key privacy, and client lifecycle; it must never
+silently fall back to independent per-process buckets. Per-IP limiting is still only one layer;
+downstream products should add MFA, risk signals, and graduated challenges for their threat model.
 
 ## Opt-In Middleware
 
@@ -186,6 +196,16 @@ The API test suite also guards a steady-state allocation budget of at most `21 a
 both variants. The budget deliberately leaves headroom above the current `18 allocs/request` and is
 stable across repeated runs on the pinned Go toolchain. Nanosecond timings are measurement evidence,
 not a CI service-level objective; compare them on the same host and toolchain.
+
+Changes to local quota accounting should also run the focused limiter benchmark:
+
+```bash
+make benchmark-rate-limit
+```
+
+It measures allowed and denied hot identities separately from adversarial identity churn at a
+1,024-bucket ceiling. Report same-host `ns/op`, `B/op`, and `allocs/op`; the churn case includes one
+new bounded LRU entry per request after warm-up and is intentionally more expensive than a hot key.
 
 ## Change Checklist
 

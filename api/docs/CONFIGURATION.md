@@ -111,6 +111,20 @@ every protected request. Run `luas auth-session:prune --batch=500` as a bounded 
 of creating the false impression that stateless JWTs are still accepted. See
 [`AUTHENTICATION.md`](AUTHENTICATION.md) for the breaking migration and rollback boundary.
 
+## Rate-Limit Resource Policy
+
+The production-default global and authentication limiters are process-local fixed-window stores.
+`MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS` caps active client-IP buckets for the global store;
+`AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE` caps each endpoint/dimension store. Both default to 10,000
+and must be positive when their limiter is enabled. Reaching the cap evicts the least recently used
+bucket, bounding memory while preserving hot abusive identities.
+
+There is no automatic Redis activation. The removed `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`,
+and `REDIS_DB` keys had no assembled runtime consumer and therefore violated the typed configuration
+authority. The generic Redis cache adapter remains available for explicit downstream composition;
+it is not a rate-limit driver. Multi-replica rate limiting belongs to the gateway/WAF or a deliberately
+assembled shared adapter with atomic decisions, explicit outage semantics, and owned lifecycle.
+
 ## Outbound Webhook Configuration
 
 Selecting `webhook` requires `WEBHOOK_ENCRYPTION_KEY` with at least 32 characters. It protects

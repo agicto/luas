@@ -77,7 +77,6 @@ type Config struct {
 	Starters       StarterConfig
 	Server         ServerConfig
 	Database       DatabaseConfig
-	Redis          RedisConfig
 	Queue          QueueConfig
 	Scheduler      SchedulerConfig
 	Authentication AuthenticationConfig
@@ -134,12 +133,16 @@ type MiddlewareConfig struct {
 	AuthenticationRateLimit AuthenticationRateLimitConfig // Public authentication abuse guardrails
 }
 
+// DefaultRateLimitMaxBuckets bounds one process-local limiter store by default.
+const DefaultRateLimitMaxBuckets = 10_000
+
 // RateLimitConfig holds default HTTP rate limit configuration.
 type RateLimitConfig struct {
-	Enabled   bool
-	Max       int
-	Window    time.Duration
-	SkipPaths []string
+	Enabled    bool
+	Max        int
+	Window     time.Duration
+	MaxBuckets int
+	SkipPaths  []string
 }
 
 // RateLimitRuleConfig defines one fixed-window quota.
@@ -160,6 +163,7 @@ type AuthenticationEndpointRateLimitConfig struct {
 // meaningful boundary for an endpoint.
 type AuthenticationRateLimitConfig struct {
 	Enabled              bool
+	MaxBucketsPerRule    int
 	Login                AuthenticationEndpointRateLimitConfig
 	Register             AuthenticationEndpointRateLimitConfig
 	PasswordReset        AuthenticationEndpointRateLimitConfig
@@ -193,13 +197,6 @@ type DatabaseConfig struct {
 // DBName returns the database name (alias for Name)
 func (d DatabaseConfig) DBName() string {
 	return d.Name
-}
-
-type RedisConfig struct {
-	Host     string
-	Port     int
-	Password string
-	DB       int
 }
 
 type QueueConfig struct {
@@ -366,12 +363,6 @@ func Load() (*Config, error) {
 			SlowThreshold:        env.GetDuration("DB_SLOW_THRESHOLD", time.Second),
 			IgnoreRecordNotFound: env.GetBool("DB_LOG_IGNORE_NOT_FOUND", true),
 		},
-		Redis: RedisConfig{
-			Host:     env.Get("REDIS_HOST", "localhost"),
-			Port:     env.GetInt("REDIS_PORT", 6379),
-			Password: env.Get("REDIS_PASSWORD", ""),
-			DB:       env.GetInt("REDIS_DB", 0),
-		},
 		Queue: QueueConfig{
 			Driver:            env.Get("QUEUE_DRIVER", "sync"),
 			DefaultQueue:      env.Get("QUEUE_DEFAULT", "default"),
@@ -450,9 +441,10 @@ func Load() (*Config, error) {
 			RequestTimeout: env.GetInt("MIDDLEWARE_REQUEST_TIMEOUT", DefaultMiddlewareRequestTimeoutSeconds),
 			BodyLimit:      int64(env.GetInt("MIDDLEWARE_BODY_LIMIT_MB", 10)) * 1024 * 1024,
 			RateLimit: RateLimitConfig{
-				Enabled: env.GetBool("MIDDLEWARE_RATE_LIMIT_ENABLED", isProd),
-				Max:     env.GetInt("MIDDLEWARE_RATE_LIMIT_MAX", 600),
-				Window:  env.GetDuration("MIDDLEWARE_RATE_LIMIT_WINDOW", time.Minute),
+				Enabled:    env.GetBool("MIDDLEWARE_RATE_LIMIT_ENABLED", isProd),
+				Max:        env.GetInt("MIDDLEWARE_RATE_LIMIT_MAX", 600),
+				Window:     env.GetDuration("MIDDLEWARE_RATE_LIMIT_WINDOW", time.Minute),
+				MaxBuckets: env.GetInt("MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS", DefaultRateLimitMaxBuckets),
 				SkipPaths: env.GetSlice("MIDDLEWARE_RATE_LIMIT_SKIP_PATHS", []string{
 					"/health",
 					"/health/live",
@@ -462,7 +454,8 @@ func Load() (*Config, error) {
 				}),
 			},
 			AuthenticationRateLimit: AuthenticationRateLimitConfig{
-				Enabled: env.GetBool("AUTH_RATE_LIMIT_ENABLED", isProd),
+				Enabled:           env.GetBool("AUTH_RATE_LIMIT_ENABLED", isProd),
+				MaxBucketsPerRule: env.GetInt("AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE", DefaultRateLimitMaxBuckets),
 				Login: AuthenticationEndpointRateLimitConfig{
 					PerIP: RateLimitRuleConfig{
 						Max:    env.GetInt("AUTH_RATE_LIMIT_LOGIN_IP_MAX", 20),
@@ -649,6 +642,9 @@ func validate(cfg *Config) error {
 		if cfg.Middleware.RateLimit.Window <= 0 {
 			return fmt.Errorf("MIDDLEWARE_RATE_LIMIT_WINDOW must be greater than 0 when rate limit is enabled")
 		}
+		if cfg.Middleware.RateLimit.MaxBuckets <= 0 {
+			return fmt.Errorf("MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS must be greater than 0 when rate limit is enabled")
+		}
 	}
 
 	if err := validateServerTransport(cfg.Server, cfg.Middleware); err != nil {
@@ -660,6 +656,9 @@ func validate(cfg *Config) error {
 	}
 
 	if cfg.Middleware.AuthenticationRateLimit.Enabled {
+		if cfg.Middleware.AuthenticationRateLimit.MaxBucketsPerRule <= 0 {
+			return fmt.Errorf("AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE must be greater than 0 when authentication rate limit is enabled")
+		}
 		endpoints := []struct {
 			prefix string
 			config AuthenticationEndpointRateLimitConfig

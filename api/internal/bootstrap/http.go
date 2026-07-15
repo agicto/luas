@@ -250,8 +250,9 @@ func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config) {
 
 	if cfg.Middleware.RateLimit.Enabled {
 		r.Use(ratelimit.Middleware(ratelimit.Config{
-			Max:      cfg.Middleware.RateLimit.Max,
-			Duration: cfg.Middleware.RateLimit.Window,
+			Max:        cfg.Middleware.RateLimit.Max,
+			Duration:   cfg.Middleware.RateLimit.Window,
+			MaxBuckets: cfg.Middleware.RateLimit.MaxBuckets,
 			SkipFunc: func(c *gin.Context) bool {
 				return pathInList(c.Request.URL.Path, cfg.Middleware.RateLimit.SkipPaths)
 			},

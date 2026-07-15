@@ -41,6 +41,7 @@ func loadConfigForRateLimitDefault(t *testing.T, appEnv string) *Config {
 		"MIDDLEWARE_RATE_LIMIT_ENABLED",
 		"MIDDLEWARE_RATE_LIMIT_MAX",
 		"MIDDLEWARE_RATE_LIMIT_WINDOW",
+		"MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS",
 		"MIDDLEWARE_RATE_LIMIT_SKIP_PATHS",
 	)
 	t.Setenv("APP_ENV", appEnv)
@@ -64,6 +65,9 @@ func TestLoad_RateLimitDefaultsByEnvironment(t *testing.T) {
 	}
 	if prod.Middleware.RateLimit.Window != time.Minute {
 		t.Fatalf("production rate limit window = %s, want 1m", prod.Middleware.RateLimit.Window)
+	}
+	if prod.Middleware.RateLimit.MaxBuckets != DefaultRateLimitMaxBuckets {
+		t.Fatalf("production rate limit max buckets = %d, want %d", prod.Middleware.RateLimit.MaxBuckets, DefaultRateLimitMaxBuckets)
 	}
 
 	dev := loadConfigForRateLimitDefault(t, "development")
@@ -275,6 +279,7 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 		"MIDDLEWARE_RATE_LIMIT_ENABLED",
 		"MIDDLEWARE_RATE_LIMIT_MAX",
 		"MIDDLEWARE_RATE_LIMIT_WINDOW",
+		"MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS",
 		"MIDDLEWARE_RATE_LIMIT_SKIP_PATHS",
 	)
 	t.Setenv("APP_ENV", "development")
@@ -283,6 +288,7 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_ENABLED", "true")
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_MAX", "42")
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_WINDOW", "30s")
+	t.Setenv("MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS", "321")
 	t.Setenv("MIDDLEWARE_RATE_LIMIT_SKIP_PATHS", "/health,/metrics")
 
 	cfg, err := LoadFresh()
@@ -299,6 +305,9 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	if cfg.Middleware.RateLimit.Window != 30*time.Second {
 		t.Fatalf("rate limit window = %s, want 30s", cfg.Middleware.RateLimit.Window)
 	}
+	if cfg.Middleware.RateLimit.MaxBuckets != 321 {
+		t.Fatalf("rate limit max buckets = %d, want 321", cfg.Middleware.RateLimit.MaxBuckets)
+	}
 	if got := strings.Join(cfg.Middleware.RateLimit.SkipPaths, ","); got != "/health,/metrics" {
 		t.Fatalf("rate limit skip paths = %q, want /health,/metrics", got)
 	}
@@ -307,6 +316,7 @@ func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 func authRateLimitEnvKeys() []string {
 	return []string{
 		"AUTH_RATE_LIMIT_ENABLED",
+		"AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE",
 		"AUTH_RATE_LIMIT_LOGIN_IP_MAX",
 		"AUTH_RATE_LIMIT_LOGIN_IP_WINDOW",
 		"AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX",
@@ -347,6 +357,9 @@ func TestLoad_AuthenticationRateLimitDefaultsByEnvironment(t *testing.T) {
 	if !got.Enabled {
 		t.Fatal("production should enable authentication rate limits by default")
 	}
+	if got.MaxBucketsPerRule != DefaultRateLimitMaxBuckets {
+		t.Fatalf("authentication max buckets per rule = %d, want %d", got.MaxBucketsPerRule, DefaultRateLimitMaxBuckets)
+	}
 	if got.Login.PerIP.Max != 20 || got.Login.PerIP.Window != 5*time.Minute {
 		t.Fatalf("login per-IP default = %#v, want 20/5m", got.Login.PerIP)
 	}
@@ -369,6 +382,7 @@ func TestLoad_AuthenticationRateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	t.Setenv("DB_ENABLED", "false")
 	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
 	t.Setenv("AUTH_RATE_LIMIT_ENABLED", "true")
+	t.Setenv("AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE", "123")
 	t.Setenv("AUTH_RATE_LIMIT_LOGIN_IP_MAX", "7")
 	t.Setenv("AUTH_RATE_LIMIT_LOGIN_IP_WINDOW", "45s")
 	t.Setenv("AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX", "4")
@@ -382,6 +396,9 @@ func TestLoad_AuthenticationRateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	got := cfg.Middleware.AuthenticationRateLimit
 	if !got.Enabled {
 		t.Fatal("explicit env should enable authentication rate limits")
+	}
+	if got.MaxBucketsPerRule != 123 {
+		t.Fatalf("authentication max buckets per rule = %d, want 123", got.MaxBucketsPerRule)
 	}
 	if got.Login.PerIP.Max != 7 || got.Login.PerIP.Window != 45*time.Second {
 		t.Fatalf("login per-IP override = %#v, want 7/45s", got.Login.PerIP)

@@ -94,6 +94,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
+- `.agents/skills/luas-framework-review/scripts/check-rate-limit-boundary.py` — keep local rate-limit cardinality bounded, Redis claims honest, and multi-replica enforcement explicit.
 - `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py` — keep asset ownership, storage adapters, transfer grants, inspection, cleanup, and API/Web/contracts aligned.
@@ -132,6 +133,7 @@ cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
 cd api && make test-race-critical       # queue/worker lifecycle race gate
 cd api && make benchmark-http           # compare core HTTP middleware with metrics off/on
+cd api && make benchmark-rate-limit     # measure hot-bucket and bounded identity-churn limiter paths
 cd api && make container-check          # build and exercise the production image contract
 cd api && make compose-check            # verify local DB, migration, readiness, and starter flow
 cd api && make vuln                     # pinned reachable-vulnerability scan

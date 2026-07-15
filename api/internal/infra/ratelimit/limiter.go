@@ -13,24 +13,12 @@ import (
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
-// Limiter defines the rate limiter interface
+// DefaultMaxBuckets bounds attacker-controlled identity cardinality per store.
+const DefaultMaxBuckets = 10_000
+
+// Limiter atomically evaluates and consumes one rate-limit decision.
 type Limiter interface {
-	// Take atomically checks and decrements the budget in one step.
-	// Prefer this over the Allow / Hit pair, which is racy under load:
-	// two concurrent requests can both pass Allow before either records
-	// a Hit, letting bursts exceed the configured max.
 	Take(ctx context.Context, key string) (allowed bool, remaining int, resetAt time.Time)
-
-	// Allow checks if a request is allowed and returns remaining attempts.
-	// Kept for backwards compatibility; new code should use Take.
-	Allow(ctx context.Context, key string) (allowed bool, remaining int, resetAt time.Time)
-
-	// Hit records a hit for the given key.
-	// Kept for backwards compatibility; new code should use Take.
-	Hit(ctx context.Context, key string) (remaining int, resetAt time.Time)
-
-	// Reset resets the limiter for a key
-	Reset(ctx context.Context, key string) error
 }
 
 // Config holds rate limiter configuration
@@ -40,6 +28,9 @@ type Config struct {
 
 	// Duration for the rate limit window
 	Duration time.Duration
+
+	// MaxBuckets bounds process-local identity cardinality.
+	MaxBuckets int
 
 	// KeyFunc extracts the rate limit key from request
 	KeyFunc func(*gin.Context) string
@@ -61,8 +52,9 @@ type Config struct {
 // DefaultConfig returns default rate limiter configuration
 func DefaultConfig() Config {
 	return Config{
-		Max:      60,
-		Duration: time.Minute,
+		Max:        60,
+		Duration:   time.Minute,
+		MaxBuckets: DefaultMaxBuckets,
 		KeyFunc: func(c *gin.Context) string {
 			return c.ClientIP()
 		},
@@ -77,142 +69,177 @@ func DefaultConfig() Config {
 	}
 }
 
-// MemoryStore implements an in-memory rate limiter store
+// MemoryStore implements a bounded, process-local fixed-window limiter.
 type MemoryStore struct {
-	mu      sync.RWMutex
-	entries map[string]*entry
-	max     int
-	window  time.Duration
+	mu          sync.Mutex
+	entries     map[string]*entry
+	mostRecent  *entry
+	leastRecent *entry
+	max         int
+	window      time.Duration
 
-	stopCleanup chan struct{}
+	maxBuckets    int
+	now           func() time.Time
+	cleanupEvery  time.Duration
+	nextCleanupAt time.Time
 }
 
 type entry struct {
-	hits    int
-	resetAt time.Time
+	key      string
+	hits     int
+	resetAt  time.Time
+	previous *entry
+	next     *entry
 }
 
-// NewMemoryStore creates a new in-memory rate limiter store
-func NewMemoryStore(max int, window time.Duration) *MemoryStore {
-	s := &MemoryStore{
-		entries:     make(map[string]*entry),
-		max:         max,
-		window:      window,
-		stopCleanup: make(chan struct{}),
+// MemoryStoreOption configures process-local limiter resource policy.
+type MemoryStoreOption func(*MemoryStore)
+
+// WithMaxBuckets caps the number of active identity buckets retained by one
+// store. Once full, the least recently used bucket is evicted.
+func WithMaxBuckets(max int) MemoryStoreOption {
+	return func(store *MemoryStore) {
+		if max > 0 {
+			store.maxBuckets = max
+		}
+	}
+}
+
+func withClock(now func() time.Time) MemoryStoreOption {
+	return func(store *MemoryStore) {
+		if now != nil {
+			store.now = now
+		}
+	}
+}
+
+// NewMemoryStore creates a bounded in-memory rate limiter store. Expired
+// buckets are removed opportunistically, so each rule owns no background
+// goroutine and needs no shutdown hook.
+func NewMemoryStore(max int, window time.Duration, options ...MemoryStoreOption) *MemoryStore {
+	defaults := DefaultConfig()
+	if max <= 0 {
+		max = defaults.Max
+	}
+	if window <= 0 {
+		window = defaults.Duration
 	}
 
-	// Start cleanup goroutine
-	go s.cleanup()
+	cleanupEvery := window
+	if cleanupEvery > time.Minute {
+		cleanupEvery = time.Minute
+	}
+
+	s := &MemoryStore{
+		entries:      make(map[string]*entry),
+		max:          max,
+		window:       window,
+		maxBuckets:   DefaultMaxBuckets,
+		now:          time.Now,
+		cleanupEvery: cleanupEvery,
+	}
+	for _, option := range options {
+		option(s)
+	}
+	s.nextCleanupAt = s.now().Add(s.cleanupEvery)
 
 	return s
 }
 
-// cleanup periodically removes expired entries
-func (s *MemoryStore) cleanup() {
-	ticker := time.NewTicker(time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			s.mu.Lock()
-			now := time.Now()
-			for key, e := range s.entries {
-				if now.After(e.resetAt) {
-					delete(s.entries, key)
-				}
-			}
-			s.mu.Unlock()
-		case <-s.stopCleanup:
-			return
-		}
-	}
-}
-
-// Close stops the cleanup goroutine
-func (s *MemoryStore) Close() {
-	close(s.stopCleanup)
-}
-
-// Allow checks if a request is allowed
-func (s *MemoryStore) Allow(ctx context.Context, key string) (bool, int, time.Time) {
-	s.mu.RLock()
-	e, exists := s.entries[key]
-	s.mu.RUnlock()
-
-	now := time.Now()
-
-	if !exists || now.After(e.resetAt) {
-		return true, s.max, now.Add(s.window)
-	}
-
-	remaining := s.max - e.hits
-	if remaining <= 0 {
-		return false, 0, e.resetAt
-	}
-
-	return true, remaining, e.resetAt
-}
-
-// Hit records a hit for the given key
-func (s *MemoryStore) Hit(ctx context.Context, key string) (int, time.Time) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := time.Now()
-	e, exists := s.entries[key]
-
-	if !exists || now.After(e.resetAt) {
-		e = &entry{
-			hits:    1,
-			resetAt: now.Add(s.window),
-		}
-		s.entries[key] = e
-		return s.max - 1, e.resetAt
-	}
-
-	e.hits++
-	remaining := s.max - e.hits
-	if remaining < 0 {
-		remaining = 0
-	}
-
-	return remaining, e.resetAt
-}
-
-// Take atomically checks the quota and records the hit. Returns
-// allowed=false without incrementing when the window is exhausted.
+// Take atomically checks the quota and records the hit. A denied request still
+// refreshes recency so a hot abusive identity is not preferentially evicted.
 func (s *MemoryStore) Take(ctx context.Context, key string) (bool, int, time.Time) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	now := time.Now()
-	e, exists := s.entries[key]
-
-	if !exists || now.After(e.resetAt) {
-		e = &entry{hits: 1, resetAt: now.Add(s.window)}
-		s.entries[key] = e
-		return true, s.max - 1, e.resetAt
+	now := s.now()
+	if !now.Before(s.nextCleanupAt) {
+		s.removeExpired(now)
+		s.nextCleanupAt = now.Add(s.cleanupEvery)
 	}
 
+	e, exists := s.entries[key]
+	if exists && !now.Before(e.resetAt) {
+		s.removeEntry(key, e)
+		e = nil
+		exists = false
+	}
+
+	if !exists {
+		if len(s.entries) >= s.maxBuckets {
+			s.evictLeastRecentlyUsed()
+		}
+		e = &entry{key: key, hits: 1, resetAt: now.Add(s.window)}
+		s.addMostRecent(e)
+		s.entries[key] = e
+		return true, max(0, s.max-1), e.resetAt
+	}
+
+	s.moveToMostRecent(e)
 	if e.hits >= s.max {
 		return false, 0, e.resetAt
 	}
 
 	e.hits++
-	remaining := s.max - e.hits
-	if remaining < 0 {
-		remaining = 0
-	}
-	return true, remaining, e.resetAt
+	return true, max(0, s.max-e.hits), e.resetAt
 }
 
-// Reset resets the limiter for a key
-func (s *MemoryStore) Reset(ctx context.Context, key string) error {
-	s.mu.Lock()
+func (s *MemoryStore) removeExpired(now time.Time) {
+	for key, current := range s.entries {
+		if !now.Before(current.resetAt) {
+			s.removeEntry(key, current)
+		}
+	}
+}
+
+func (s *MemoryStore) evictLeastRecentlyUsed() {
+	if s.leastRecent == nil {
+		return
+	}
+	s.removeEntry(s.leastRecent.key, s.leastRecent)
+}
+
+func (s *MemoryStore) removeEntry(key string, current *entry) {
 	delete(s.entries, key)
-	s.mu.Unlock()
-	return nil
+	if current.previous != nil {
+		current.previous.next = current.next
+	} else {
+		s.mostRecent = current.next
+	}
+	if current.next != nil {
+		current.next.previous = current.previous
+	} else {
+		s.leastRecent = current.previous
+	}
+	current.previous = nil
+	current.next = nil
+}
+
+func (s *MemoryStore) addMostRecent(current *entry) {
+	current.next = s.mostRecent
+	if s.mostRecent != nil {
+		s.mostRecent.previous = current
+	} else {
+		s.leastRecent = current
+	}
+	s.mostRecent = current
+}
+
+func (s *MemoryStore) moveToMostRecent(current *entry) {
+	if s.mostRecent == current {
+		return
+	}
+	if current.previous != nil {
+		current.previous.next = current.next
+	}
+	if current.next != nil {
+		current.next.previous = current.previous
+	} else {
+		s.leastRecent = current.previous
+	}
+	current.previous = nil
+	current.next = nil
+	s.addMostRecent(current)
 }
 
 // --- Middleware Functions ---
@@ -226,8 +253,11 @@ func Middleware(cfg Config) gin.HandlerFunc {
 	if cfg.Duration <= 0 {
 		cfg.Duration = defaults.Duration
 	}
+	if cfg.MaxBuckets <= 0 {
+		cfg.MaxBuckets = DefaultMaxBuckets
+	}
 	if cfg.Store == nil {
-		cfg.Store = NewMemoryStore(cfg.Max, cfg.Duration)
+		cfg.Store = NewMemoryStore(cfg.Max, cfg.Duration, WithMaxBuckets(cfg.MaxBuckets))
 	}
 	if cfg.KeyFunc == nil {
 		cfg.KeyFunc = defaults.KeyFunc
@@ -245,9 +275,8 @@ func Middleware(cfg Config) gin.HandlerFunc {
 
 		key := cfg.KeyFunc(c)
 
-		// Atomically check the quota and record the hit. The previous
-		// Allow-then-Hit pattern let concurrent bursts slip past the cap
-		// (and on RedisStore actually consumed two tokens per request).
+		// Check and consume in one store operation so concurrent requests
+		// cannot pass independently before recording their hits.
 		allowed, remaining, resetAt := cfg.Store.Take(c.Request.Context(), key)
 		if !allowed {
 			cfg.ErrorHandler(c, resetAt)

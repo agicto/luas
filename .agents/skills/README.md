@@ -76,6 +76,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and every non-template `SKILL.md` for vocabulary drift from `CONTEXT.md`.
 - `luas-framework-review/scripts/check-doc-links.py` checks local Markdown links across docs and agent guidance.
 - `luas-framework-review/scripts/check-error-contracts.py` checks scaffold-level HTTP status and `error_code` alignment across contracts, API response constants, and Web fallbacks.
+- `luas-framework-review/scripts/check-rate-limit-boundary.py` checks bounded process-local limiter semantics, active-bucket configuration, removed inert Redis settings, and explicit multi-replica ownership.
 - `luas-framework-review/scripts/check-asset-boundary.py` checks private asset ownership, bounded object storage, ephemeral grants, inspection, cleanup, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-setting-boundary.py` checks finite typed definitions, strong version preconditions, reset history, cache/privacy behavior, audit minimization, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-usage-boundary.py` checks finite metrics, trusted idempotent events, atomic consumption, quota history, retention, privacy, and API/Web contract alignment.

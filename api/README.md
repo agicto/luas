@@ -18,7 +18,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 - 统一 API 响应与错误处理
 - 分页、验证、日志、可撤销认证会话、中间件
 - 测试辅助工具与集成测试基线
-- 可选集成：Redis、邮件、OpenTelemetry、R2、Sentry
+- 可选集成：需显式组装的 Redis cache adapter、邮件、OpenTelemetry、R2、Sentry
 
 ## 快速开始
 
@@ -26,7 +26,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 
 - Go 1.25.12+
 - PostgreSQL 12+ 或 SQLite
-- Redis 6+（可选）
+- Redis（仅在下游显式组装 cache adapter 或共享基础设施时需要）
 
 ### 2. 初始化配置
 
@@ -174,7 +174,9 @@ MIDDLEWARE_BODY_LIMIT_MB=10
 MIDDLEWARE_RATE_LIMIT_ENABLED=true
 MIDDLEWARE_RATE_LIMIT_MAX=600
 MIDDLEWARE_RATE_LIMIT_WINDOW=1m
+MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS=10000
 AUTH_RATE_LIMIT_ENABLED=true
+AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE=10000
 AUTH_RATE_LIMIT_LOGIN_IP_MAX=20
 AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX=10
 SERVER_TRUSTED_PROXIES=10.20.0.0/16
@@ -185,7 +187,7 @@ CORS_ALLOW_ORIGINS=https://app.example.com
 `MIDDLEWARE_REQUEST_TIMEOUT`，确保 cooperative timeout 有机会写出标准错误响应；只有明确由网关或
 流式端点拥有写入期限时才应设为 `0`。负数 transport 预算和矛盾的超时关系会在启动时失败。
 
-Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。全局与认证限流都使用进程内 memory store，适合作为 scaffold 的单实例安全默认；多实例生产环境应在网关、WAF、Redis store 或部署层补充分布式限流。认证限流不会返回桶类型或剩余额度，且不能替代 MFA、风险识别和渐进式挑战。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
+Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。全局与认证限流都使用有容量上限、无后台清理 goroutine 的进程内 fixed-window store，适合作为 scaffold 的单实例安全默认；多实例生产环境应在网关、WAF 或显式共享 adapter 中补充分布式限流，且不得在共享依赖故障时静默退回各实例独立计数。认证限流不会返回桶类型或剩余额度，且不能替代 MFA、风险识别和渐进式挑战。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
 
 完整 middleware 分类见 [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md)。
 
@@ -341,7 +343,7 @@ r.Group("/v1", func(api *router.Router) {
 
 这些能力保留在仓库中，但都应该被视为可选基础设施，而不是脚手架默认业务身份：
 
-- `Redis`
+- Redis cache adapter：只提供 `cache.Store` 实现，需要下游显式创建 client 并注入；仓库没有会自动生效的 `REDIS_*` 配置，也不包含 Redis 限流 driver
 - `Sentry`
 - `OpenTelemetry`
 - `Resend` 邮件 capability：10 秒默认 provider timeout、64 KiB 响应上限和 context 取消；边界见 [docs/EMAIL.md](docs/EMAIL.md)

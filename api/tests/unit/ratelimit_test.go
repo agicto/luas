@@ -18,33 +18,29 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
-func TestMemoryStore_Allow(t *testing.T) {
+func TestMemoryStore_TakeConsumesQuota(t *testing.T) {
 	store := ratelimit.NewMemoryStore(5, time.Minute)
-	defer store.Close()
 	ctx := context.Background()
 
-	// First request should be allowed
-	allowed, remaining, _ := store.Allow(ctx, "test-key")
+	allowed, remaining, _ := store.Take(ctx, "test-key")
 	if !allowed {
 		t.Error("First request should be allowed")
 	}
-	if remaining != 5 {
-		t.Errorf("Expected 5 remaining, got %d", remaining)
+	if remaining != 4 {
+		t.Errorf("Expected 4 remaining, got %d", remaining)
 	}
 }
 
-func TestMemoryStore_Hit(t *testing.T) {
+func TestMemoryStore_TakeTracksRemainingQuota(t *testing.T) {
 	store := ratelimit.NewMemoryStore(5, time.Minute)
-	defer store.Close()
 	ctx := context.Background()
 
-	// Record hits
-	remaining, _ := store.Hit(ctx, "test-key")
+	_, remaining, _ := store.Take(ctx, "test-key")
 	if remaining != 4 {
 		t.Errorf("Expected 4 remaining after first hit, got %d", remaining)
 	}
 
-	remaining, _ = store.Hit(ctx, "test-key")
+	_, remaining, _ = store.Take(ctx, "test-key")
 	if remaining != 3 {
 		t.Errorf("Expected 3 remaining after second hit, got %d", remaining)
 	}
@@ -52,16 +48,15 @@ func TestMemoryStore_Hit(t *testing.T) {
 
 func TestMemoryStore_ExceedsLimit(t *testing.T) {
 	store := ratelimit.NewMemoryStore(3, time.Minute)
-	defer store.Close()
 	ctx := context.Background()
 
 	// Exhaust the limit
-	store.Hit(ctx, "test-key")
-	store.Hit(ctx, "test-key")
-	store.Hit(ctx, "test-key")
+	store.Take(ctx, "test-key")
+	store.Take(ctx, "test-key")
+	store.Take(ctx, "test-key")
 
 	// Next request should be denied
-	allowed, remaining, _ := store.Allow(ctx, "test-key")
+	allowed, remaining, _ := store.Take(ctx, "test-key")
 	if allowed {
 		t.Error("Request should be denied after exceeding limit")
 	}
@@ -70,40 +65,17 @@ func TestMemoryStore_ExceedsLimit(t *testing.T) {
 	}
 }
 
-func TestMemoryStore_Reset(t *testing.T) {
-	store := ratelimit.NewMemoryStore(5, time.Minute)
-	defer store.Close()
-	ctx := context.Background()
-
-	// Record some hits
-	store.Hit(ctx, "test-key")
-	store.Hit(ctx, "test-key")
-
-	// Reset the key
-	store.Reset(ctx, "test-key")
-
-	// Should have full quota again
-	allowed, remaining, _ := store.Allow(ctx, "test-key")
-	if !allowed {
-		t.Error("Request should be allowed after reset")
-	}
-	if remaining != 5 {
-		t.Errorf("Expected 5 remaining after reset, got %d", remaining)
-	}
-}
-
 func TestMemoryStore_WindowExpiry(t *testing.T) {
 	store := ratelimit.NewMemoryStore(3, 100*time.Millisecond)
-	defer store.Close()
 	ctx := context.Background()
 
 	// Exhaust the limit
-	store.Hit(ctx, "test-key")
-	store.Hit(ctx, "test-key")
-	store.Hit(ctx, "test-key")
+	store.Take(ctx, "test-key")
+	store.Take(ctx, "test-key")
+	store.Take(ctx, "test-key")
 
 	// Should be denied
-	allowed, _, _ := store.Allow(ctx, "test-key")
+	allowed, _, _ := store.Take(ctx, "test-key")
 	if allowed {
 		t.Error("Request should be denied")
 	}
@@ -112,12 +84,12 @@ func TestMemoryStore_WindowExpiry(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 
 	// Should be allowed again
-	allowed, remaining, _ := store.Allow(ctx, "test-key")
+	allowed, remaining, _ := store.Take(ctx, "test-key")
 	if !allowed {
 		t.Error("Request should be allowed after window expiry")
 	}
-	if remaining != 3 {
-		t.Errorf("Expected 3 remaining after expiry, got %d", remaining)
+	if remaining != 2 {
+		t.Errorf("Expected 2 remaining after expiry, got %d", remaining)
 	}
 }
 
