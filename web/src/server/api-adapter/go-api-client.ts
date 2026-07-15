@@ -32,7 +32,7 @@ interface GoApiClientDependencies {
   randomUUID: () => string;
 }
 
-export type GoApiMethod = 'DELETE' | 'GET' | 'PATCH' | 'POST';
+export type GoApiMethod = 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
 
 export interface GoApiRequest {
   method: GoApiMethod;

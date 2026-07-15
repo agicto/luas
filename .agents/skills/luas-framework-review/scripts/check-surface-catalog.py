@@ -44,6 +44,7 @@ REQUIRED_REFERENCES = [
     "check-downstream-contamination.sh",
     "check-surface-catalog.py",
     "check-starter-catalog.py",
+    "check-permission-boundary.py",
 ]
 TABLE_ROW_RE = re.compile(r"^\|(.+)\|$")
 

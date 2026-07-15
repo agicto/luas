@@ -34,16 +34,19 @@ Workspace-level architecture docs:
 - [contracts/AUTHENTICATION.md](contracts/AUTHENTICATION.md) — browser auth, API JWT, and production adapter ownership
 - [contracts/API_KEYS.md](contracts/API_KEYS.md) — user-owned API key lifecycle, one-time plaintext, scope attenuation, and browser adapter
 - [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — optional organization activation, ownership scope, API, and deliberate deferrals
+- [contracts/PERMISSIONS.md](contracts/PERMISSIONS.md) — optional access roles, exact permission checks, delegated-management limits, and guard seam
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
 - [api/docs/OBSERVABILITY.md](api/docs/OBSERVABILITY.md) — request-log minimization, redaction, exception diagnostics, parameterized SQL, and audit privacy
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
+- [api/docs/PERMISSIONS.md](api/docs/PERMISSIONS.md) — catalog extension, transactional authorizer semantics, and replacement boundary
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
 - [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
 - [web/docs/API_KEYS.md](web/docs/API_KEYS.md) — API key browser modes, one-time secret handling, and downstream replacement
 - [web/docs/ORGANIZATIONS.md](web/docs/ORGANIZATIONS.md) — optional browser activation, URL-scoped organization selection, adapter ownership, and replacement
+- [web/docs/PERMISSIONS.md](web/docs/PERMISSIONS.md) — optional permission UI, fixed browser routes, mock parity, and removal
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills
@@ -74,6 +77,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
+- `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-api-key-boundary.py` — keep API key hash-only persistence, atomic revoke/use writes, scope semantics, one-time plaintext, and Web adapter behavior aligned.
 - `.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py` — keep request logs/traces, exception diagnostics, SQL logs, logger context, and audit metadata behind one minimization/redaction boundary.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.

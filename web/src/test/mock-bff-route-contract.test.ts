@@ -16,6 +16,10 @@ const organizationLifecycleRouteModule = resolve(
   'src/features/organization/server/organization-lifecycle-route.ts'
 );
 const apiKeyRouteModule = resolve(process.cwd(), 'src/features/api-key/server/api-key-route.ts');
+const permissionRouteModule = resolve(
+  process.cwd(),
+  'src/features/permission/server/permission-route.ts'
+);
 
 const forbiddenRoutePatterns = [
   {
@@ -76,6 +80,25 @@ function delegatesApiKeyGuard(path: string, handler: RouteHandlerSource): boolea
   );
 }
 
+function isPermissionRoute(path: string): boolean {
+  const route = relativeRoute(path);
+  return (
+    route === 'permission-context/route.ts' ||
+    route === 'permissions/route.ts' ||
+    route.startsWith('access-roles/') ||
+    /^organization-members\/[^/]+\/access-roles\/route\.ts$/.test(route)
+  );
+}
+
+function delegatesPermissionGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    isPermissionRoute(path) &&
+    /\b(?:create|delete|get|list|replace|update)(?:AccessRole|MemberAccessRole|Permission)[A-Za-z]*Route\b/.test(
+      handler.source
+    )
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -115,7 +138,8 @@ describe('mock BFF route contract', () => {
           handler =>
             !handler.source.includes(productionGuard(path)) &&
             !delegatesOrganizationGuard(path, handler) &&
-            !delegatesApiKeyGuard(path, handler)
+            !delegatesApiKeyGuard(path, handler) &&
+            !delegatesPermissionGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -129,6 +153,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => unsafeMethods.has(handler.method))
         .filter(handler => !delegatesOrganizationGuard(path, handler))
         .filter(handler => !delegatesApiKeyGuard(path, handler))
+        .filter(handler => !delegatesPermissionGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -182,6 +207,48 @@ describe('mock BFF route contract', () => {
       );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every permission route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter(isPermissionRoute)
+      .flatMap(path =>
+        routeHandlers(path)
+          .filter(handler => !handler.source.includes('privateOrganizationResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps delegated permission writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(permissionRouteModule, 'utf8');
+    const resolver = source
+      .split('async function resolveMutationRoute', 2)[1]
+      ?.split('async function resolveAuthenticatedRoute', 1)[0] ?? '';
+    const availabilityGuard = resolver.indexOf('resolvePermissionRoute(');
+    const originGuard = resolver.indexOf('guardSameOriginMutation(');
+    const authentication = resolver.indexOf('resolveAuthenticatedRoute(');
+
+    expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+    expect(originGuard).toBeGreaterThan(availabilityGuard);
+    expect(authentication).toBeGreaterThan(originGuard);
+
+    for (const name of [
+      'createAccessRoleRoute',
+      'updateAccessRoleRoute',
+      'deleteAccessRoleRoute',
+      'replaceMemberAccessRolesRoute',
+    ]) {
+      const handler = exportedFunction(source, name);
+      const mutationGuard = handler.indexOf('resolveMutationRoute(');
+      const bodyRead = handler.indexOf('readJsonBody(');
+
+      expect(mutationGuard, name).toBeGreaterThanOrEqual(0);
+      if (bodyRead >= 0) {
+        expect(bodyRead, name).toBeGreaterThan(mutationGuard);
+      }
+    }
   });
 
   it('keeps delegated organization writes ordered behind availability and origin guards', () => {

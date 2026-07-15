@@ -30,8 +30,11 @@ const (
 	CodePasswordResetTokenInvalid = "AUTH.PASSWORD_RESET_TOKEN_INVALID"
 	CodePasswordResetTokenExpired = "AUTH.PASSWORD_RESET_TOKEN_EXPIRED"
 
-	CodePermissionDenied = "PERMISSION.DENIED"
-	CodeRoleNotFound     = "ROLE.NOT_FOUND"
+	CodePermissionDenied            = "PERMISSION.DENIED"
+	CodePermissionUnknown           = "PERMISSION.UNKNOWN"
+	CodeAccessRoleNotFound          = "PERMISSION.ROLE_NOT_FOUND"
+	CodeAccessRoleSlugAlreadyExists = "PERMISSION.ROLE_SLUG_ALREADY_EXISTS"
+	CodeRoleNotFound                = "ROLE.NOT_FOUND" // Deprecated: use CodeAccessRoleNotFound.
 
 	CodeAPIKeyNotFound = "API_KEY.NOT_FOUND"
 	CodeAPIKeyInvalid  = "API_KEY.INVALID"

@@ -12,6 +12,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `apikey` default starter | User-owned API key create/list/revoke, atomic hash-only persistence, exact scope guard, one-time plaintext, fixed production browser adapter, strict Web management UI, development mock | Yes | Good for developer tools, integrations, and AI/API products. Scopes attenuate the owner and do not replace RBAC. Usage metering is not included yet; see [`contracts/API_KEYS.md`](../contracts/API_KEYS.md). |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
 | `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, request-scoped active context, owner/admin rename, invitation lifecycle, PII-minimized member directory, role/removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards; optional Web directory/create/URL switcher/context/profile/member/invitation/ownership workflow | Yes, when enabled | API, strict Web services, fixed production adapters, development mock state, role-aware UI, contracts, tests, and extraction guidance cover the reusable organization lifecycle. It remains opt-in and deliberately excludes organization deletion, durable email retries, and generalized RBAC. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
+| `permission` optional starter | Organization-scoped access roles, code-owned exact permission catalog, current-persistence authorizer, owner bypass, delegated-management dominance checks, transactional assignment replacement, route guard, audit metadata; optional strict Web role/member management and mock parity | Yes, when enabled with `organization` | It is allow-only and default-deny, with no direct user grants, wildcards, role hierarchy, explicit deny, or resource-instance policy language. Product modules extend the catalog at assembly time and keep ownership checks local. See [`contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email now has typed all-or-none config, caller cancellation, a 10-second provider budget, bounded responses, and PII-safe errors, but delivery remains direct and best-effort. The memory workflow queue is bounded and race-free but process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -20,7 +21,6 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P1 | Permission/RBAC is documented as an optional starter decision, but no runnable `permission` starter is currently wired. | New teams may assume roles and permissions are available when only error vocabulary and examples remain. | Treat `permission` as a planned optional starter until its module, migrations, contracts, Web feature, and tests exist. |
 | P1 | Notification capability exists, but no user-facing notification starter owns preferences, in-app records, or delivery status. | Apps repeatedly rebuild notification preferences and delivery history. | Build a `notification` optional starter backed by events, email, and optional in-app persistence. |
 | P2 | Storage/R2 capability exists, but there is no file or asset starter with ownership, metadata, validation, signed URL, and deletion rules. | Upload features become ad hoc and security-sensitive. | Build a `file` or `asset` optional starter with storage abstraction and audit events. |
 | P2 | App/workspace settings are represented by a console page, not by API-owned durable settings. | Downstream apps need feature flags, branding, locale, and workspace preferences. | Build a `setting` optional starter after organization ownership is clear. |
@@ -42,9 +42,9 @@ not add permission, billing, or workspace settings before deciding which organiz
    - Web owns the organization switcher, member list, invitation flow, and organization settings.
 
 2. `permission` optional starter
-   - Owns roles, permissions, grants, policy checks, and route/service guard seams.
-   - Depends on `organization` if permissions are workspace-scoped.
-   - Should stay optional until the default scaffold proves that role complexity helps more apps than it slows down.
+   - Delivered as an organization-dependent optional starter across API, migrations, contracts, Web, mock, UI, tests, audit, and governance.
+   - Owns access roles, exact permission grants, policy checks, and route/service guard seams without changing organization membership roles.
+   - Remains optional because simple and single-user products should not pay the role-management complexity cost.
 
 3. `notification` optional starter
    - Owns notification records, preferences, read state, delivery attempts, and user-facing notification center.
@@ -111,7 +111,7 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Build `permission` next, then `notification`. The optional organization starter now gives those
-starters a stable tenant term, role lifecycle, browser adapter, and persistence boundary without
-pretending its three organization roles are generalized RBAC. File/asset, settings, usage, billing,
-webhook, and AI workspace starters become much easier once permission scopes are settled.
+Build `notification` next. Organization and permission now provide a stable tenant, membership,
+exact authorization, browser adapter, and persistence boundary without conflating ownership roles,
+access roles, API key scopes, or resource policies. File/asset, settings, usage, billing, webhook,
+and AI workspace starters can reuse those settled boundaries.

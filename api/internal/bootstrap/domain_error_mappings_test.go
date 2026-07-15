@@ -38,6 +38,24 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodePermissionDenied,
 		},
 		{
+			name:       "access role not found",
+			err:        domain.ErrAccessRoleNotFound,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeAccessRoleNotFound,
+		},
+		{
+			name:       "access role slug already exists",
+			err:        domain.ErrAccessRoleSlugAlreadyExists,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeAccessRoleSlugAlreadyExists,
+		},
+		{
+			name:       "permission is unknown",
+			err:        domain.ErrPermissionUnknown,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodePermissionUnknown,
+		},
+		{
 			name:       "username already exists",
 			err:        domain.ErrUsernameAlreadyExists,
 			statusCode: http.StatusConflict,

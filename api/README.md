@@ -52,16 +52,17 @@ DB_NAME=luas
 JWT_SECRET=replace-me
 ```
 
-`user`、`apikey`、`audit` 默认启用。组织所有权后端基础是可选 Starter；需要时给 HTTP
-进程、迁移任务和 seeder 任务统一设置：
+`user`、`apikey`、`audit` 默认启用。组织与权限是可选 Starter；需要权限时给 HTTP
+进程、迁移任务和 seeder 任务统一设置完整依赖：
 
 ```bash
-OPTIONAL_STARTERS=organization
+OPTIONAL_STARTERS=organization,permission
 ```
 
-该 starter 已包含持久化邀请、邮件适配、接受与撤销闭环；尚未交付的成员变更、所有权转移、
-活跃组织上下文和 Web 边界见
-[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)。
+组织 starter 已包含邀请、成员、所有权转移和活跃上下文闭环；权限 starter 提供组织范围的
+访问角色、精确授权、事务化分配和可替换 authorizer。见
+[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) 与
+[`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md)。
 
 ### 3. 生成依赖注入代码
 
@@ -86,11 +87,14 @@ go run ./cmd/server
 
 ```bash
 go run ./cmd/luas version
-go run ./cmd/luas route:list
+DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
+  go run ./cmd/luas route:list
 go run ./cmd/luas migrate
 go run ./cmd/luas seed
 go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
+
+这里内联的 route-list secret 仅用于非服务态检查，禁止在实际运行的 API 中复用。
 
 ## 常用命令
 

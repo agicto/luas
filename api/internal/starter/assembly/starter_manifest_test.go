@@ -16,3 +16,15 @@ func TestWithStarterModuleIgnoresTypedNilPointers(t *testing.T) {
 
 	assert.Empty(t, manifest.Modules())
 }
+
+func TestStaticStarterManifestReturnsDefensiveDependencyCopies(t *testing.T) {
+	manifest := NewStaticStarterManifest(
+		"permission",
+		WithStarterDependencies("organization"),
+	)
+
+	dependencies := manifest.Dependencies()
+	assert.Equal(t, []string{"organization"}, dependencies)
+	dependencies[0] = "changed"
+	assert.Equal(t, []string{"organization"}, manifest.Dependencies())
+}

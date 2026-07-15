@@ -17,6 +17,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/apikey"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/organization"
+	"github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter"
 )
@@ -57,7 +58,15 @@ func InitApplication() (*app.Application, error) {
 	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
 	contextResolver := organization.NewContextResolver(organizationService)
 	organizationHandler := organization.NewHandler(organizationService, contextResolver, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler)
+	permissionRepository := permission.NewRepository(db)
+	catalog, err := permission.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	permissionService := permission.NewService(permissionRepository, catalog)
+	guard := permission.NewGuard(permissionService)
+	permissionHandler := permission.NewHandler(permissionService, guard)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +112,15 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
 	contextResolver := organization.NewContextResolver(organizationService)
 	organizationHandler := organization.NewHandler(organizationService, contextResolver, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler)
+	permissionRepository := permission.NewRepository(db)
+	catalog, err := permission.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	permissionService := permission.NewService(permissionRepository, catalog)
+	guard := permission.NewGuard(permissionService)
+	permissionHandler := permission.NewHandler(permissionService, guard)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler)
 	if err != nil {
 		return nil, err
 	}

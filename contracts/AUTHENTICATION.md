@@ -15,8 +15,9 @@ The Web feature service and development mock BFF use a browser-oriented, same-or
 | Current session | `GET /api/auth/me` | none | `{ user: { id, email, name } }` |
 | Logout | `POST /api/auth/logout` | none | `{ success: true }` |
 
-The browser user view deliberately has no `role` or permission field. The default scaffold does
-not yet ship a permission starter, so assigning `admin` or `member` here would invent authorization
+The browser user view deliberately has no `role` or permission field. The optional permission
+starter is organization-scoped and resolves current grants through its own context endpoint;
+assigning `admin`, `member`, or global permissions to the auth user view would invent authorization
 meaning that the Go API cannot prove.
 
 The development implementation owns an HttpOnly signed mock cookie. The production adapter owns a

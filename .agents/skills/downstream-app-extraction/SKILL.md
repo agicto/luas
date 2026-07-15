@@ -73,6 +73,11 @@ Classify each touched surface before changing it.
      When retaining the same-origin adapter, keep organization selection in the URL and extend only
      explicit Route Handlers; never replace `src/server/api-adapter/` with a browser-controlled
      catch-all proxy.
+   - When retaining `permission`, retain `organization` in both optional selections, extend the
+     code-owned dotted permission catalog at assembly time, and authorize only from the typed active
+     organization context. Keep membership roles separate from access roles and API key scopes.
+     Product modules still own resource-instance policies. Never keep permission-management UI
+     without API enforcement or replace exact checks with hidden buttons.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

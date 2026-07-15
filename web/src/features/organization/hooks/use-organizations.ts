@@ -63,11 +63,11 @@ export function useOrganizationContext(organizationId: number) {
   });
 }
 
-export function useOrganizationMembers(organizationId: number) {
+export function useOrganizationMembers(organizationId: number, enabled = true) {
   return useQuery({
     queryKey: organizationKeys.members(organizationId),
     queryFn: () => organizationService.listMembers(organizationId),
-    enabled: validId(organizationId),
+    enabled: enabled && validId(organizationId),
     staleTime: 15_000,
   });
 }

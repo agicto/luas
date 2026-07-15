@@ -92,7 +92,7 @@ boundary instead of adding a mock-only secret response.
 
 ## Deliberate Deferrals
 
-Organization deletion, durable invitation delivery retries, generalized permission policies, and
-arbitrary product resource routes remain deferred by the API contract. They belong to separate
-business decisions or starters; the organization feature does not pretend that its three scoped
-roles are a general RBAC system.
+Organization deletion, durable invitation delivery retries, and arbitrary product resource routes
+remain deferred by the API contract. Generalized access roles and exact grants are now available
+through the separate optional [`permission`](PERMISSIONS.md) feature; the organization feature still
+does not pretend that its three lifecycle roles are a general RBAC system.

@@ -79,6 +79,16 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   exact unless the explicit `*` wildcard is present. A scope may reduce what the key can do; it does
   not elevate the owning user, represent an organization role, or replace a permission/RBAC model.
 
+**Access role**
+: An organization-scoped grouping of exact permission keys owned by the optional `permission`
+  starter. Access roles attach to organization memberships. They do not replace the membership
+  roles (`owner`, `admin`, `member`) that govern organization lifecycle and ownership.
+
+**Permission key**
+: A code-owned lowercase dotted capability such as `projects.read`. Permission checks are exact,
+  allow-only, request-scoped to a verified organization membership, and default-deny. Permission
+  keys are not API key scopes, runtime administrator input, or resource-ownership policies.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -107,6 +117,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - Contracts connect deployable units. Source code is not shared across deployable units.
 - Active organization context is selected per request and verified against current membership.
 - API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
+- Access roles group exact permission keys inside one active organization; owner bypass and every
+  non-owner grant are resolved from current persistence rather than JWT claims.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -120,4 +132,5 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.
 - **API key scope vs role/permission**: API key scopes constrain one credential. Organization roles
-  describe membership; a future permission starter would own generalized policy and grants.
+  describe membership lifecycle; access roles and dotted permission keys belong to the optional
+  `permission` starter. Resource-instance ownership still belongs to the owning business policy.

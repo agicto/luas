@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertCircle,
@@ -10,6 +10,7 @@ import {
   Mail,
   RefreshCw,
   Settings2,
+  ShieldCheck,
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -35,6 +36,14 @@ import {
   resolveOrganizationErrorKey,
 } from '@/features/organization/utils/organization-error';
 import { useT } from '@/i18n';
+import { isWebFeatureEnabled } from '@/config/features';
+
+const PermissionManagement = lazy(async () => {
+  const feature = await import(
+    '@/features/permission/components/permission-management'
+  );
+  return { default: feature.PermissionManagement };
+});
 
 export function OrganizationOverview({ organizationId }: { organizationId: number }) {
   const t = useT('organization');
@@ -81,6 +90,7 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
   const [clientError, setClientError] = useState<string>();
   const canManageOrganization =
     context.role === 'owner' || context.role === 'admin';
+  const permissionEnabled = isWebFeatureEnabled('permission');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -148,6 +158,12 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
             <TabsTrigger value="invitations">
               <Mail aria-hidden="true" />
               {t('tabs.invitations')}
+            </TabsTrigger>
+          ) : null}
+          {permissionEnabled ? (
+            <TabsTrigger value="permissions">
+              <ShieldCheck aria-hidden="true" />
+              {t('tabs.permissions')}
             </TabsTrigger>
           ) : null}
         </TabsList>
@@ -224,6 +240,14 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
         {canManageOrganization ? (
           <TabsContent value="invitations">
             <OrganizationInvitations organizationId={context.organization_id} />
+          </TabsContent>
+        ) : null}
+
+        {permissionEnabled ? (
+          <TabsContent value="permissions">
+            <Suspense fallback={<OrganizationOverviewSkeleton />}>
+              <PermissionManagement context={context} />
+            </Suspense>
           </TabsContent>
         ) : null}
       </Tabs>

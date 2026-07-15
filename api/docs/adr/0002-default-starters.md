@@ -16,19 +16,17 @@ The default scaffold ships with three starters:
 - `apikey`
 - `audit`
 
-The `permission` starter remains planned optional starter behavior, not part of the default scaffold.
-It is not runnable until its module, migrations, contracts, Web feature, and tests exist.
-
-The `organization` backend ownership kernel is the first runnable optional entry. It remains
-disabled unless `OPTIONAL_STARTERS=organization` and is not yet business-ready across every
-surface; invitation, membership, ownership-transfer, active-context, Web, and extraction work is
-tracked in the starter roadmap and organization contract.
+`organization` and its dependent `permission` starter are runnable optional entries. Organization
+is enabled with `OPTIONAL_STARTERS=organization`; permission requires the explicit selection
+`OPTIONAL_STARTERS=organization,permission`. Both are business-ready across their documented API,
+migrations, Web, mock, UI, test, governance, and extraction surfaces, while remaining absent from
+the default runtime.
 
 ## Consequences
 
 - New projects get auth, machine access, and write-side audit logging without extra setup.
 - Default starters should prefer self-service surfaces over admin/control-plane APIs.
-- RBAC stays a planned optional starter direction, but it does not increase default complexity for every app.
+- Organization-scoped RBAC is available when selected, but it does not increase default complexity for every app.
 - Default starters cannot be subtracted through optional configuration.
 - Routes, migrations, seeders, and runtime hooks are derived from default plus selected optional
   manifests through the starter registry.

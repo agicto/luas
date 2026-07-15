@@ -70,6 +70,9 @@ Some downstream apps keep mock routes for local or preview development. In that 
   or touching mock state. Hybrid auth routes call `resolveAuthRoute()` first and mutate mock state
   only when it selects the mock BFF. Hybrid organization routes call `resolveOrganizationRoute()`
   and require `NEXT_PUBLIC_OPTIONAL_FEATURES=organization` before touching their mock store.
+  Hybrid permission routes call `resolvePermissionRoute()`, require the explicit
+  `organization,permission` dependency selection, and preserve owner bypass plus delegated
+  dominance checks in the mock store.
   Hybrid API key routes call `resolveApiKeyRoute()` and follow the one-time secret contract in
   [`API_KEYS.md`](API_KEYS.md).
 - Every `POST`, `PUT`, `PATCH`, or `DELETE` handler must then call

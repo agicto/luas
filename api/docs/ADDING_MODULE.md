@@ -20,7 +20,7 @@ provider.go
 service_test.go
 ```
 
-5. Add one `NewStarterManifest` that owns the module, migration names, seeder names, and any optional runtime hook.
+5. Add one `NewStarterManifest` that owns the module, dependency names, migration names, seeder names, and any optional runtime hook.
 6. For a default starter, add the manifest to `DefaultManifests`; for an optional starter, add its provider and manifest to the optional catalog without editing `routes/api.go`.
 7. Generate Wire with `make wire`. Routes register through the selected manifest's module.
 8. Verify both disabled and enabled assembly, including route and migration parity.
@@ -34,16 +34,18 @@ service_test.go
 - Return domain values from repositories when practical; avoid leaking GORM models upward.
 - Add a test at the service seam before broad handler tests.
 - Keep optional activation additive. Never use the optional list to subtract defaults.
+- Declare starter prerequisites with `WithStarterDependencies`; do not infer dependencies from
+  import order or silently auto-enable them.
 - Ensure account/resource lifecycle hooks activate only with their owning starter.
 - Pass the same `OPTIONAL_STARTERS` value to HTTP, migration, and seeder processes.
 
 ## Optional Starter Verification
 
 ```bash
-DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
   go run ./cmd/luas route:list
 
-DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
   OPTIONAL_STARTERS=<name> go run ./cmd/luas route:list
 
 go test ./internal/starter/... ./internal/modules/<name>/...
@@ -51,7 +53,9 @@ go test ./internal/starter/... ./internal/modules/<name>/...
 
 The first command must show no optional routes. The second must show exactly the selected routes,
 and `ConfiguredMigrations` tests must prove the matching migration set. Unknown, duplicate, default,
-or non-canonical starter names must fail rather than being ignored.
+non-canonical, missing-dependency, or cyclic selections must fail rather than being ignored.
+The inline secret exists only to construct auth-owned handlers for route inspection; never start a
+server with it.
 
 ## Organization-Scoped Product Modules
 

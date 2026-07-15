@@ -40,7 +40,7 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "audit", manifests[0].Name())
@@ -59,10 +59,35 @@ func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 	assert.True(t, invitationMigration.WithinTransaction())
 }
 
+func TestConfiguredManifestsEnablePermissionAfterOrganization(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission", "organization"}}}
+
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, manifests, 5)
+	assert.Equal(t, "organization", manifests[3].Name())
+	assert.Equal(t, "permission", manifests[4].Name())
+
+	migrations, err := ConfiguredMigrations(cfg)
+	require.NoError(t, err)
+	assert.Len(t, migrations, 10)
+	permissionMigration, exists := migrations["2026_07_15_010000_create_permission_tables"]
+	require.True(t, exists)
+	assert.True(t, permissionMigration.WithinTransaction())
+}
+
+func TestConfiguredManifestsRequireOrganizationForPermission(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission"}}}
+
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `optional starter "permission" requires "organization"`)
+}
+
 func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"billing"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown optional starter")
 }

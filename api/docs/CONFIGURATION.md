@@ -60,18 +60,19 @@ development process, which creates a complete new dependency graph.
 ## Optional Starter Activation
 
 `OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
-empty; `audit`, `apikey`, and `user` remain active without being named. The current available value
-is `organization`:
+empty; `audit`, `apikey`, and `user` remain active without being named. Available values are
+`organization` and `permission`; permission explicitly depends on organization:
 
 ```dotenv
-OPTIONAL_STARTERS=organization
+OPTIONAL_STARTERS=organization,permission
 ORGANIZATION_INVITATION_TTL=168h
 ```
 
 Selection is resolved through `internal/starter` from the same typed configuration snapshot used by
-Wire. Unknown names, duplicates, non-lowercase names, and default starter names fail before server
-startup or CLI database work. HTTP routes, runtime hooks, migrations, and seeders consume the same
-selection; do not maintain a second starter list in a command or deployment script.
+Wire. Unknown names, duplicates, non-lowercase names, default starter names, missing dependencies,
+and dependency cycles fail before server startup or CLI database work. Dependency order is resolved
+deterministically. HTTP routes, runtime hooks, migrations, and seeders consume the same selection;
+do not maintain a second starter list in a command or deployment script.
 
 All API replicas, migration jobs, and seeder jobs for one environment must receive the same value.
 Changing it requires a deployment and, when enabling a persistence-owning starter, its pre-deploy

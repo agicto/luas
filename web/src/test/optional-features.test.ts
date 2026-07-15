@@ -9,6 +9,10 @@ describe('optional Web feature selection', () => {
 
   it('selects the organization feature by its canonical name', () => {
     expect(parseOptionalWebFeatures('organization')).toEqual(['organization']);
+    expect(parseOptionalWebFeatures('permission,organization')).toEqual([
+      'permission',
+      'organization',
+    ]);
   });
 
   it.each([' organization', 'organization ', 'Organization', 'organization,organization', 'billing'])(
@@ -17,4 +21,10 @@ describe('optional Web feature selection', () => {
       expect(() => parseOptionalWebFeatures(selection)).toThrow();
     }
   );
+
+  it('requires feature dependencies explicitly', () => {
+    expect(() => parseOptionalWebFeatures('permission')).toThrow(
+      'requires "organization"'
+    );
+  });
 });

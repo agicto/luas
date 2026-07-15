@@ -18,8 +18,11 @@ var (
 	ErrPasswordResetTokenExpired = errors.New("password reset token is expired")
 
 	// Permission errors
-	ErrPermissionDenied = errors.New("permission denied")
-	ErrRoleNotFound     = errors.New("role not found")
+	ErrPermissionDenied            = errors.New("permission denied")
+	ErrPermissionUnknown           = errors.New("permission is not registered")
+	ErrAccessRoleNotFound          = errors.New("access role not found")
+	ErrAccessRoleSlugAlreadyExists = errors.New("access role slug already exists")
+	ErrRoleNotFound                = errors.New("role not found") // Deprecated: use ErrAccessRoleNotFound.
 
 	// API key errors
 	ErrAPIKeyNotFound = errors.New("api key not found")

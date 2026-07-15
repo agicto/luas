@@ -113,6 +113,8 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
 - [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) — API key lifecycle, scope grammar, one-time plaintext, and route authorization contract.
 - [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) — optional organization activation, verified active context, ownership, invitation, member lifecycle, and transfer contract.
+- [`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md) — optional access roles, exact grants, delegated-management safety, and browser contract.
+- [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) — permission catalog extension, transactional checks, and authorizer replacement.
 
 ## Directory Structure
 

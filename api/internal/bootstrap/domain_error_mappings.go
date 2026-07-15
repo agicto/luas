@@ -19,6 +19,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrNotFound, http.StatusNotFound, domain.CodeNotFound)
 	mapper.Register(domain.ErrUserNotFound, http.StatusNotFound, domain.CodeUserNotFound)
 	mapper.Register(domain.ErrRoleNotFound, http.StatusNotFound, domain.CodeRoleNotFound)
+	mapper.Register(domain.ErrAccessRoleNotFound, http.StatusNotFound, domain.CodeAccessRoleNotFound)
 	mapper.Register(domain.ErrAPIKeyNotFound, http.StatusNotFound, domain.CodeAPIKeyNotFound)
 	mapper.Register(domain.ErrOrganizationNotFound, http.StatusNotFound, domain.CodeOrganizationNotFound)
 	mapper.Register(domain.ErrOrganizationMemberNotFound, http.StatusNotFound, domain.CodeOrganizationMemberNotFound)
@@ -47,9 +48,11 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrOrganizationMembershipExitRequired, http.StatusConflict, domain.CodeOrganizationMembershipExitRequired)
 	mapper.Register(domain.ErrOrganizationInvitationAlreadyPending, http.StatusConflict, domain.CodeOrganizationInvitationAlreadyPending)
 	mapper.Register(domain.ErrOrganizationMemberAlreadyExists, http.StatusConflict, domain.CodeOrganizationMemberAlreadyExists)
+	mapper.Register(domain.ErrAccessRoleSlugAlreadyExists, http.StatusConflict, domain.CodeAccessRoleSlugAlreadyExists)
 
 	mapper.Register(domain.ErrOrganizationInvitationExpired, http.StatusGone, domain.CodeOrganizationInvitationExpired)
 
 	mapper.Register(domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput)
+	mapper.Register(domain.ErrPermissionUnknown, http.StatusUnprocessableEntity, domain.CodePermissionUnknown)
 	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

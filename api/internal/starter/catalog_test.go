@@ -25,6 +25,69 @@ func TestCatalogSelectKeepsDefaultsAndAddsRequestedOptionalStarters(t *testing.T
 	assert.Equal(t, []string{"notification", "organization"}, catalog.OptionalNames())
 }
 
+func TestCatalogSelectRequiresAndOrdersOptionalDependencies(t *testing.T) {
+	catalog, err := NewCatalog(
+		[]assembly.StarterManifest{testManifest("user")},
+		[]assembly.StarterManifest{
+			testManifestWithDependencies("permission", "organization"),
+			testManifest("organization"),
+		},
+	)
+	require.NoError(t, err)
+
+	_, err = catalog.Select([]string{"permission"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `optional starter "permission" requires "organization"`)
+
+	selected, err := catalog.Select([]string{"permission", "organization"})
+	require.NoError(t, err)
+	require.Len(t, selected, 3)
+	assert.Equal(t, "user", selected[0].Name())
+	assert.Equal(t, "organization", selected[1].Name())
+	assert.Equal(t, "permission", selected[2].Name())
+}
+
+func TestNewCatalogRejectsInvalidDependencyGraphs(t *testing.T) {
+	tests := []struct {
+		name     string
+		defaults []assembly.StarterManifest
+		optional []assembly.StarterManifest
+		contains string
+	}{
+		{
+			name: "unknown dependency",
+			optional: []assembly.StarterManifest{
+				testManifestWithDependencies("permission", "organization"),
+			},
+			contains: "unknown starter",
+		},
+		{
+			name: "default depends on optional",
+			defaults: []assembly.StarterManifest{
+				testManifestWithDependencies("user", "organization"),
+			},
+			optional: []assembly.StarterManifest{testManifest("organization")},
+			contains: "default starter",
+		},
+		{
+			name: "cycle",
+			optional: []assembly.StarterManifest{
+				testManifestWithDependencies("permission", "organization"),
+				testManifestWithDependencies("organization", "permission"),
+			},
+			contains: "dependency cycle",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := NewCatalog(tt.defaults, tt.optional)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.contains)
+		})
+	}
+}
+
 func TestCatalogSelectRejectsAmbiguousConfiguration(t *testing.T) {
 	catalog, err := NewCatalog(
 		[]assembly.StarterManifest{testManifest("user")},
@@ -84,6 +147,7 @@ func (*nilManifest) Name() string               { return "nil-manifest" }
 func (*nilManifest) Modules() []assembly.Module { return nil }
 func (*nilManifest) MigrationNames() []string   { return nil }
 func (*nilManifest) SeederNames() []string      { return nil }
+func (*nilManifest) Dependencies() []string     { return nil }
 
 func typedNilManifest() assembly.StarterManifest {
 	var manifest *nilManifest
@@ -92,4 +156,11 @@ func typedNilManifest() assembly.StarterManifest {
 
 func testManifest(name string) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(name)
+}
+
+func testManifestWithDependencies(name string, dependencies ...string) assembly.StarterManifest {
+	return assembly.NewStaticStarterManifest(
+		name,
+		assembly.WithStarterDependencies(dependencies...),
+	)
 }

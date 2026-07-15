@@ -107,12 +107,22 @@ def main() -> int:
     optional_segment = between(
         defaults, "func OptionalManifests(", "// ConfiguredManifests"
     )
-    optional_packages = re.findall(
+    optional_aliases = re.findall(
         r"([a-z][a-z0-9_]*)\.NewStarterManifest", optional_segment
     )
-    if optional_packages != ["organization"]:
+    module_imports = {
+        (alias or module_name): module_name
+        for alias, module_name in re.findall(
+            r'(?m)^\s*(?:([a-z][a-z0-9_]*)\s+)?"github\.com/zgiai/luas/api/internal/modules/([a-z][a-z0-9_]*)"',
+            defaults,
+        )
+    }
+    optional_packages = [
+        module_imports.get(alias, alias) for alias in optional_aliases
+    ]
+    if optional_packages != ["organization", "permission"]:
         failures.append(
-            "optional starter catalog must currently contain exactly organization"
+            "optional starter catalog must contain organization followed by permission"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
@@ -188,7 +198,8 @@ def main() -> int:
         failures,
         "web/src/config/optional-features.ts",
         (
-            "OPTIONAL_WEB_FEATURES = ['organization']",
+            "OPTIONAL_WEB_FEATURES = ['organization', 'permission']",
+            "permission: ['organization']",
             "Duplicate optional Web feature",
             "Unknown optional Web feature",
         ),
@@ -737,7 +748,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization]",),
+        ("module: [user, apikey, audit, organization, permission]",),
     )
 
     if failures:

@@ -91,6 +91,8 @@ register_status="$(curl --noproxy '*' --silent --show-error \
 organization_flow="skipped"
 organization_context_flow="skipped"
 membership_flow="skipped"
+permission_flow="skipped"
+permission_migration_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,organization,*)
@@ -301,6 +303,130 @@ print(*(by_user[int(value)] for value in sys.argv[2:]))
       fail "organization member list violates count, identity, or privacy contract"
     fi
 
+    case ",${OPTIONAL_STARTERS:-}," in
+      *,permission,*)
+        permission_owner_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-owner.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/permission-context")"
+        [[ "${permission_owner_status}" == "200" ]] || fail "owner permission context returned HTTP ${permission_owner_status}"
+        if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+expected = {
+    "permission.roles.read",
+    "permission.roles.manage",
+    "permission.assignments.read",
+    "permission.assignments.manage",
+}
+valid = payload["is_owner"] is True and set(payload["permissions"]) == expected
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/permission-owner.json"; then
+          fail "owner permission context does not expose the registered catalog"
+        fi
+
+        permission_admin_denied_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-admin-denied.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${admin_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/access-roles")"
+        [[ "${permission_admin_denied_status}" == "403" ]] || fail "ungranted access-role list returned HTTP ${permission_admin_denied_status}"
+
+        permission_role_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-manager-role.json" \
+          --write-out '%{http_code}' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --data '{"name":"Role Manager","slug":"role-manager","permissions":["permission.roles.read","permission.roles.manage"]}' \
+          "http://127.0.0.1:${published_port}/v1/access-roles")"
+        [[ "${permission_role_status}" == "201" ]] || fail "permission manager role creation returned HTTP ${permission_role_status}"
+        permission_role_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "${TMP_DIR}/permission-manager-role.json")"
+
+        permission_assign_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-admin-assignment.json" \
+          --write-out '%{http_code}' \
+          --request PUT \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --data "{\"access_role_ids\":[${permission_role_id}]}" \
+          "http://127.0.0.1:${published_port}/v1/organization-members/${admin_member_id}/access-roles")"
+        [[ "${permission_assign_status}" == "200" ]] || fail "permission manager assignment returned HTTP ${permission_assign_status}"
+
+        permission_delegated_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-delegated-role.json" \
+          --write-out '%{http_code}' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${admin_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --data '{"name":"Role Reader","slug":"role-reader","permissions":["permission.roles.read"]}' \
+          "http://127.0.0.1:${published_port}/v1/access-roles")"
+        [[ "${permission_delegated_status}" == "201" ]] || fail "delegated subset role creation returned HTTP ${permission_delegated_status}"
+
+        permission_escalation_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-escalation-denied.json" \
+          --write-out '%{http_code}' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${admin_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --data '{"name":"Assignment Manager","slug":"assignment-manager","permissions":["permission.assignments.manage"]}' \
+          "http://127.0.0.1:${published_port}/v1/access-roles")"
+        [[ "${permission_escalation_status}" == "403" ]] || fail "delegated privilege escalation returned HTTP ${permission_escalation_status}"
+
+        permission_delete_status="$(curl --noproxy '*' --silent --show-error \
+          --output /dev/null \
+          --write-out '%{http_code}' \
+          --request DELETE \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/access-roles/${permission_role_id}")"
+        [[ "${permission_delete_status}" == "204" ]] || fail "permission role cascade delete returned HTTP ${permission_delete_status}"
+
+        permission_admin_revoked_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-admin-revoked.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${admin_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/access-roles")"
+        [[ "${permission_admin_revoked_status}" == "403" ]] || fail "deleted role did not revoke delegated permission"
+        permission_flow="${permission_owner_status}/${permission_admin_denied_status}/${permission_role_status}/${permission_assign_status}/${permission_delegated_status}/${permission_escalation_status}/${permission_delete_status}/${permission_admin_revoked_status}"
+
+        if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/permission-rollback.log" 2>&1; then
+          fail "permission migration rollback failed"
+        fi
+        permission_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('permission_roles', 'permission_role_grants', 'permission_role_assignments');
+")"
+        [[ "${permission_tables_down}" == "0" ]] || fail "permission migration rollback left ${permission_tables_down} table(s)"
+
+        if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/permission-migrate.log" 2>&1; then
+          fail "permission migration re-apply failed"
+        fi
+        permission_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('permission_roles', 'permission_role_grants', 'permission_role_assignments');
+")"
+        [[ "${permission_tables_up}" == "3" ]] || fail "permission migration re-apply created ${permission_tables_up}/3 tables"
+        permission_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/permission-post-migrate.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/permission-context")"
+        [[ "${permission_post_migrate_status}" == "200" ]] || fail "permission context after migration re-apply returned HTTP ${permission_post_migrate_status}"
+        permission_migration_flow="down:${permission_tables_down}/up:${permission_tables_up}/http:${permission_post_migrate_status}"
+        ;;
+    esac
+
     admin_role_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/member-role-admin-denied.json" \
       --write-out '%{http_code}' \
@@ -496,4 +622,6 @@ printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_statu
 printf 'compose organization/invitation flow: %s\n' "${organization_flow}"
 printf 'compose organization/context flow: %s\n' "${organization_context_flow}"
 printf 'compose organization/member flow: %s\n' "${membership_flow}"
+printf 'compose permission flow: %s\n' "${permission_flow}"
+printf 'compose permission migration flow: %s\n' "${permission_migration_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

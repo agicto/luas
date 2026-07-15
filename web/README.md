@@ -120,12 +120,26 @@ Enable the browser feature only when the API process also enables the optional o
 NEXT_PUBLIC_OPTIONAL_FEATURES=organization
 ```
 
-The first browser workflow provides the organization directory, creation, URL-scoped switching,
-active-context verification, and basic rename settings. Development uses a replaceable in-memory
-mock; production uses fixed same-origin adapter routes and the HttpOnly API session. Selection is
-derived from `/console/organizations/:id` and is never persisted globally. See
+The browser workflow provides organization directory/create, URL-scoped switching, active-context
+verification, profile, member, invitation, and ownership management. Development uses a replaceable
+in-memory mock; production uses fixed same-origin adapter routes and the HttpOnly API session.
+Selection is derived from `/console/organizations/:id` and is never persisted globally. See
 [docs/ORGANIZATIONS.md](docs/ORGANIZATIONS.md) and
 [../contracts/ORGANIZATIONS.md](../contracts/ORGANIZATIONS.md).
+
+## Permission Feature
+
+Enable permission only with its organization dependency in both deployable halves:
+
+```env
+OPTIONAL_STARTERS=organization,permission
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization,permission
+```
+
+The organization detail page then lazy-loads access-role CRUD and member assignment management.
+Every browser call carries the URL-derived organization ID; strict schemas validate responses before
+caching, and Go remains authoritative. See [docs/PERMISSIONS.md](docs/PERMISSIONS.md) and
+[../contracts/PERMISSIONS.md](../contracts/PERMISSIONS.md).
 
 ## HTTP Contract
 

@@ -29,6 +29,7 @@ describe('client i18n message boundaries', () => {
       console: ['auth', 'nav', 'console'],
       settings: ['settings'],
       organization: ['organization'],
+      permission: ['permission'],
       i18nTest: ['test'],
     });
   });

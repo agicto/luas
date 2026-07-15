@@ -775,16 +775,17 @@ wire: blog: wrote /path/to/luas/api/internal/wiring/wire_gen.go
 For an optional starter, compare the same CLI with and without selection:
 
 ```bash
-DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
   go run ./cmd/luas route:list
 
-DB_ENABLED=false JWT_SECRET=0123456789abcdef0123456789abcdef \
+DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 \
   OPTIONAL_STARTERS=blog go run ./cmd/luas route:list
 ```
 
 The first output must contain no blog routes. The second must contain the module's exact route set.
 Add catalog tests proving that `ConfiguredMigrations` changes by the matching migration and that an
 unknown, duplicate, default, or non-canonical selection fails.
+The inline secret is for non-serving route inspection only and must never be reused by a server.
 
 ### Step 13: Create Database Migration
 
@@ -941,7 +942,7 @@ wire: blog: wire_gen.go:XX:YY: no provider found for ...
    404 by design.
 3. Check middleware aliases and authentication before changing route ownership.
 4. Inspect the actual assembly with
-   `OPTIONAL_STARTERS=blog go run ./cmd/luas route:list`.
+   `DB_ENABLED=false JWT_SECRET=route-list-inspection-only-0000000000000000 OPTIONAL_STARTERS=blog go run ./cmd/luas route:list`.
 
 ### Common Error 3: Database Table Not Found
 

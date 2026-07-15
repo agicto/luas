@@ -5,6 +5,7 @@ import "reflect"
 // StarterManifest describes how a starter contributes modules and bootstrap assets.
 type StarterManifest interface {
 	Name() string
+	Dependencies() []string
 	Modules() []Module
 	MigrationNames() []string
 	SeederNames() []string
@@ -13,9 +14,15 @@ type StarterManifest interface {
 // StaticStarterManifest is a small immutable manifest for starters with fixed assets.
 type StaticStarterManifest struct {
 	name           string
+	dependencies   []string
 	modules        []Module
 	migrationNames []string
 	seederNames    []string
+}
+
+// Dependencies returns starter names that must be selected before this manifest.
+func (m *StaticStarterManifest) Dependencies() []string {
+	return append([]string(nil), m.dependencies...)
 }
 
 // StarterManifestOption mutates a StaticStarterManifest during construction.
@@ -59,6 +66,13 @@ func WithStarterModule(module Module) StarterManifestOption {
 			return
 		}
 		manifest.modules = append(manifest.modules, module)
+	}
+}
+
+// WithStarterDependencies declares starter assembly prerequisites.
+func WithStarterDependencies(names ...string) StarterManifestOption {
+	return func(manifest *StaticStarterManifest) {
+		manifest.dependencies = append(manifest.dependencies, names...)
 	}
 }
 

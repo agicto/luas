@@ -94,10 +94,16 @@ Browser feature -> /api allowlist Route Handler -> bounded server-only API clien
 JSON, safe response headers, and generic display copy. It accepts code-owned relative paths only;
 do not replace the allowlist with a catch-all proxy. The optional organization feature is selected
 with `NEXT_PUBLIC_OPTIONAL_FEATURES=organization`, derives the active organization from
-`/console/organizations/:id`, and forwards `Organization-Id` only for the context request. Explicit
+`/console/organizations/:id`, and forwards `Organization-Id` to context-scoped operations. Explicit
 member, invitation, ownership-transfer, and token-acceptance handlers map to fixed upstream paths;
 the invitation token exists only in a same-origin POST body. The feature does not add selected
 organization or invitation-secret state to Zustand, browser storage, cookies, or URLs.
+
+The dependent `permission` starter is selected with `organization,permission` in both halves. Its
+access roles group exact code-owned dotted permission keys and attach to organization memberships.
+Organization membership roles continue to own lifecycle and ownership. Effective permission checks
+refresh current persistence, owner bypass is explicit, delegated mutations require dominance over
+both current and requested grants, and resource-instance ownership remains in product policies.
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

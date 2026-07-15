@@ -12,6 +12,9 @@ Optional backend starter contracts are documented independently. The first owner
 default, and each delivered browser operation is listed explicitly rather than implied by the
 backend starter.
 
+Organization-scoped access roles, exact permission checks, delegated-management safety, and the
+replaceable authorization seam are defined in [`PERMISSIONS.md`](PERMISSIONS.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

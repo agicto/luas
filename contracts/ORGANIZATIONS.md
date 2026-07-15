@@ -279,7 +279,7 @@ The optional starter now owns the reusable organization lifecycle across API, fi
 adapter, development mock, UI, contracts, tests, and downstream extraction guidance. It remains
 optional and must be enabled in both deployable halves.
 
-Organization deletion, durable invitation delivery retries, generalized permission policies, and
-arbitrary product resources remain deliberate follow-up work. Those concerns require separate
-domain decisions and must not be inferred from the organization-scoped `owner`, `admin`, and
-`member` lifecycle delivered here.
+Organization deletion, durable invitation delivery retries, and arbitrary product resources remain
+deliberate follow-up work. Generalized access roles and exact grants are delivered separately by
+[`PERMISSIONS.md`](PERMISSIONS.md); they must not be inferred from the organization-scoped
+`owner`, `admin`, and `member` lifecycle delivered here.

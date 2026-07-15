@@ -116,7 +116,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` starter includes ownership, invitation and member lifecycles, verified request-scoped active context, fixed production/mock browser adapters, and role-aware organization/member/invitation/ownership UI. It is ready when explicitly enabled in both halves; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds code-owned exact grants, access roles, transactional delegated management, fixed production/mock browser adapters, and role/member UI. Both are ready when explicitly enabled in both halves; notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -647,8 +647,8 @@ Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
 2. Keep the complete optional `organization` lifecycle and its production/mock adapter parity under executable contract and browser regression coverage.
-3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
-4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
+3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py`.
+4. Build notification next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 
 Verification:
 

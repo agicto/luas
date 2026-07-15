@@ -1,8 +1,11 @@
-export const OPTIONAL_WEB_FEATURES = ['organization'] as const;
+export const OPTIONAL_WEB_FEATURES = ['organization', 'permission'] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
 
 const knownFeatures = new Set<string>(OPTIONAL_WEB_FEATURES);
+const featureDependencies: Partial<Record<OptionalWebFeature, readonly OptionalWebFeature[]>> = {
+  permission: ['organization'],
+};
 
 export function parseOptionalWebFeatures(value: string): readonly OptionalWebFeature[] {
   if (value === '') {
@@ -29,6 +32,16 @@ export function parseOptionalWebFeatures(value: string): readonly OptionalWebFea
       );
     }
     seen.add(feature);
+  }
+
+  for (const feature of selected as OptionalWebFeature[]) {
+    for (const dependency of featureDependencies[feature] ?? []) {
+      if (!seen.has(dependency)) {
+        throw new Error(
+          `Optional Web feature "${feature}" requires "${dependency}"`
+        );
+      }
+    }
   }
 
   return selected as OptionalWebFeature[];
