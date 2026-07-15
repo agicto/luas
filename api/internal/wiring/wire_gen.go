@@ -52,7 +52,9 @@ func InitApplication() (*app.Application, error) {
 	authAbuseGuard := user.NewAuthAbuseGuard(configConfig)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
-	organizationService := organization.NewService(organizationRepository)
+	invitationMailer := organization.NewInvitationMailer(service)
+	invitationPolicy := organization.NewInvitationPolicy(configConfig)
+	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
 	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
 	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {
@@ -95,7 +97,9 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	authAbuseGuard := user.NewAuthAbuseGuard(cfg)
 	userHandler := user.NewHandler(userService, userService, userService, jwtService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
-	organizationService := organization.NewService(organizationRepository)
+	invitationMailer := organization.NewInvitationMailer(service)
+	invitationPolicy := organization.NewInvitationPolicy(cfg)
+	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
 	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
 	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {

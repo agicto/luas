@@ -54,7 +54,10 @@ failures, expose delivery receipts, or provide exactly-once semantics.
 - Welcome delivery is fire-and-forget after account creation. It keeps request correlation values but
   is detached from request cancellation; the email timeout still bounds the provider operation.
 - Organization invitations must persist their business state before attempting email delivery. A
-  provider failure must not erase or silently accept an invitation state transition.
+  provider failure must not erase or silently accept an invitation state transition. The
+  organization starter owns the escaped template and narrow mailer adapter; the API reports only
+  whether the synchronous provider call was accepted, failed, or not configured. See
+  [`../../contracts/ORGANIZATIONS.md`](../../contracts/ORGANIZATIONS.md).
 
 Use workflow/queue infrastructure or a future notification starter when a downstream app needs
 durable retries, delivery history, preferences, or multiple channels.
@@ -70,6 +73,6 @@ contracts, handlers, or Web code.
 
 ```bash
 cd api
-go test ./internal/infra/email ./internal/infra/config ./internal/modules/user
-go test -race ./internal/infra/email ./internal/modules/user
+go test ./internal/infra/email ./internal/infra/config ./internal/modules/user ./internal/modules/organization
+go test -race ./internal/infra/email ./internal/modules/user ./internal/modules/organization
 ```

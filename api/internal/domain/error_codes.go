@@ -41,4 +41,10 @@ const (
 	CodeOrganizationNotFound                  = "ORGANIZATION.NOT_FOUND"
 	CodeOrganizationSlugAlreadyExists         = "ORGANIZATION.SLUG_ALREADY_EXISTS"
 	CodeOrganizationOwnershipTransferRequired = "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED"
+	CodeOrganizationInvitationNotFound        = "ORGANIZATION.INVITATION.NOT_FOUND"
+	CodeOrganizationInvitationInvalid         = "ORGANIZATION.INVITATION.INVALID"
+	CodeOrganizationInvitationExpired         = "ORGANIZATION.INVITATION.EXPIRED"
+	CodeOrganizationInvitationEmailMismatch   = "ORGANIZATION.INVITATION.EMAIL_MISMATCH"
+	CodeOrganizationInvitationAlreadyPending  = "ORGANIZATION.INVITATION.ALREADY_PENDING"
+	CodeOrganizationMemberAlreadyExists       = "ORGANIZATION.MEMBER_ALREADY_EXISTS"
 )

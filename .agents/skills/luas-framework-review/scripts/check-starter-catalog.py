@@ -47,6 +47,8 @@ def main() -> int:
         (
             "type StarterConfig struct",
             'env.GetSlice("OPTIONAL_STARTERS", []string{})',
+            "DefaultOrganizationInvitationTTL",
+            'env.GetDuration("ORGANIZATION_INVITATION_TTL", DefaultOrganizationInvitationTTL)',
         ),
     )
     require_all(
@@ -146,9 +148,18 @@ def main() -> int:
         "contracts/ORGANIZATIONS.md",
         (
             "OPTIONAL_STARTERS=organization",
+            "POST /v1/organizations/:id/invitations",
+            "POST /v1/organization-invitations/accept",
+            "ORGANIZATION_INVITATION_TTL",
+            "stores only their SHA-256 hash",
             "ORGANIZATION.NOT_FOUND",
             "ORGANIZATION.SLUG_ALREADY_EXISTS",
             "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED",
+            "ORGANIZATION.INVITATION.INVALID",
+            "ORGANIZATION.INVITATION.EXPIRED",
+            "ORGANIZATION.INVITATION.EMAIL_MISMATCH",
+            "ORGANIZATION.INVITATION.ALREADY_PENDING",
+            "ORGANIZATION.MEMBER_ALREADY_EXISTS",
             "Deliberate Deferrals",
         ),
     )
@@ -159,6 +170,22 @@ def main() -> int:
             '"ORGANIZATION.NOT_FOUND"',
             '"ORGANIZATION.SLUG_ALREADY_EXISTS"',
             '"ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED"',
+            '"ORGANIZATION.INVITATION.INVALID"',
+            '"ORGANIZATION.INVITATION.EXPIRED"',
+            '"ORGANIZATION.INVITATION.EMAIL_MISMATCH"',
+            '"ORGANIZATION.INVITATION.ALREADY_PENDING"',
+            '"ORGANIZATION.MEMBER_ALREADY_EXISTS"',
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/bootstrap/domain_error_mappings.go",
+        (
+            "ErrOrganizationInvitationInvalid, http.StatusNotFound",
+            "ErrOrganizationInvitationEmailMismatch, http.StatusForbidden",
+            "ErrOrganizationInvitationAlreadyPending, http.StatusConflict",
+            "ErrOrganizationMemberAlreadyExists, http.StatusConflict",
+            "ErrOrganizationInvitationExpired, http.StatusGone",
         ),
     )
     require_all(
@@ -172,23 +199,121 @@ def main() -> int:
     )
     require_all(
         failures,
+        "api/database/migrations/2026_07_15_000000_create_organization_invitations_table.go",
+        (
+            "UseTransaction: true",
+            "organization.OrganizationInvitationPO{}",
+            "DropTable(&organization.OrganizationInvitationPO{})",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/domain/organization.go",
+        (
+            'TokenHash      string           `json:"-"`',
+            "type OrganizationInvitationRepository interface",
+            "OrganizationInvitationStatusExpired",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/organization/model.go",
+        (
+            'TokenHash      string     `gorm:"size:64;not null;uniqueIndex"`',
+            'PendingKey     *string    `gorm:"size:64;uniqueIndex"`',
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/organization/routes.go",
+        (
+            'POST("/organizations/:id/invitations"',
+            'GET("/organizations/:id/invitations"',
+            'DELETE("/organizations/:id/invitations/:invitation_id"',
+            'POST("/organization-invitations/accept"',
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/organization/invitation_mailer.go",
+        ("html.EscapeString", "email.ErrNotConfigured"),
+    )
+
+    try:
+        invitation_service = read(
+            "api/internal/modules/organization/invitation_service.go"
+        )
+    except FileNotFoundError:
+        failures.append(
+            "api/internal/modules/organization/invitation_service.go is missing"
+        )
+    else:
+        persist_at = invitation_service.find("s.invitationRepo.CreateInvitation(")
+        send_at = invitation_service.find("s.invitationMailer.SendInvitation(")
+        if persist_at < 0 or send_at < 0 or persist_at > send_at:
+            failures.append(
+                "organization invitations must persist before attempting email delivery"
+            )
+
+    try:
+        organization_dto = read("api/internal/modules/organization/dto.go")
+    except FileNotFoundError:
+        failures.append("api/internal/modules/organization/dto.go is missing")
+    else:
+        invitation_response = between(
+            organization_dto,
+            "type OrganizationInvitationResponse struct",
+            "// CreateOrganizationInvitationResponse",
+        )
+        if not invitation_response or "Token" in invitation_response:
+            failures.append(
+                "OrganizationInvitationResponse must exist without exposing a token field"
+            )
+    require_all(
+        failures,
         "api/.env.example",
-        ("OPTIONAL_STARTERS=", "available: organization"),
+        (
+            "OPTIONAL_STARTERS=",
+            "available: organization",
+            "ORGANIZATION_INVITATION_TTL=168h",
+        ),
     )
     require_all(
         failures,
         "api/docker-compose.yml",
-        ("OPTIONAL_STARTERS: ${OPTIONAL_STARTERS:-}",),
+        (
+            "OPTIONAL_STARTERS: ${OPTIONAL_STARTERS:-}",
+            "ORGANIZATION_INVITATION_TTL: ${ORGANIZATION_INVITATION_TTL:-168h}",
+        ),
+    )
+    require_all(
+        failures,
+        "api/scripts/verify-compose.sh",
+        (
+            "*,organization,*)",
+            "/v1/organizations/${organization_id}/invitations",
+            "ORGANIZATION.INVITATION.ALREADY_PENDING",
+            "email_send_status",
+            "replacement invitation",
+        ),
     )
     require_all(
         failures,
         "api/docs/CONFIGURATION.md",
-        ("Optional Starter Activation", "OPTIONAL_STARTERS=organization"),
+        (
+            "Optional Starter Activation",
+            "OPTIONAL_STARTERS=organization",
+            "ORGANIZATION_INVITATION_TTL=168h",
+        ),
     )
     require_all(
         failures,
         "docs/STARTER_BUSINESS_ROADMAP.md",
-        ("`organization` optional starter", "Foundation only"),
+        (
+            "`organization` optional starter",
+            "Foundation only",
+            "ownership and invitation kernels",
+        ),
     )
     require_all(
         failures,

@@ -1,6 +1,8 @@
 package organization
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/modules/user"
@@ -131,6 +133,116 @@ func (h *Handler) Update(c *gin.Context) {
 	membership, err := h.service.Update(c.Request.Context(), userID, organizationID, &req)
 	if err != nil {
 		response.HandleError(c, "Failed to update organization", err)
+		return
+	}
+	response.Success(c, toResponse(membership))
+}
+
+// Invite persists an organization invitation before attempting email delivery.
+func (h *Handler) Invite(c *gin.Context) {
+	userID, ok := handler.GetUserID(c)
+	if !ok {
+		return
+	}
+	organizationID, ok := handler.ParseID(c, "id")
+	if !ok {
+		return
+	}
+
+	var req CreateOrganizationInvitationRequest
+	if !handler.BindJSON(c, &req) {
+		return
+	}
+	if errors := req.validationErrors(); len(errors) > 0 {
+		response.ValidationFailed(c, errors)
+		return
+	}
+
+	result, err := h.service.Invite(c.Request.Context(), userID, organizationID, &req)
+	if err != nil {
+		response.HandleError(c, "Failed to create organization invitation", err)
+		return
+	}
+	response.Created(c, &CreateOrganizationInvitationResponse{
+		Invitation:      toInvitationResponse(result.Invitation, time.Now().UTC()),
+		EmailSendStatus: result.EmailSendStatus,
+	})
+}
+
+// ListInvitations returns token-free invitation history for organization managers.
+func (h *Handler) ListInvitations(c *gin.Context) {
+	userID, ok := handler.GetUserID(c)
+	if !ok {
+		return
+	}
+	organizationID, ok := handler.ParseID(c, "id")
+	if !ok {
+		return
+	}
+
+	page := pagination.FromContext(c)
+	invitations, total, err := h.service.ListInvitations(
+		c.Request.Context(),
+		userID,
+		organizationID,
+		page.GetPage(),
+		page.GetPerPage(),
+	)
+	if err != nil {
+		response.HandleError(c, "Failed to list organization invitations", err)
+		return
+	}
+
+	now := time.Now().UTC()
+	items := make([]*OrganizationInvitationResponse, len(invitations))
+	for index, invitation := range invitations {
+		items[index] = toInvitationResponse(invitation, now)
+	}
+	paginator := pagination.NewPaginator(items, total, page.GetPage(), page.GetPerPage())
+	paginator.SetPath(c.Request.URL.Path)
+	response.Success(c, paginator)
+}
+
+// RevokeInvitation consumes one pending invitation without deleting its history.
+func (h *Handler) RevokeInvitation(c *gin.Context) {
+	userID, ok := handler.GetUserID(c)
+	if !ok {
+		return
+	}
+	organizationID, ok := handler.ParseID(c, "id")
+	if !ok {
+		return
+	}
+	invitationID, ok := handler.ParseID(c, "invitation_id")
+	if !ok {
+		return
+	}
+
+	if err := h.service.RevokeInvitation(c.Request.Context(), userID, organizationID, invitationID); err != nil {
+		response.HandleError(c, "Failed to revoke organization invitation", err)
+		return
+	}
+	response.NoContent(c)
+}
+
+// AcceptInvitation creates membership and consumes a one-time invitation token atomically.
+func (h *Handler) AcceptInvitation(c *gin.Context) {
+	userID, ok := handler.GetUserID(c)
+	if !ok {
+		return
+	}
+
+	var req AcceptOrganizationInvitationRequest
+	if !handler.BindJSON(c, &req) {
+		return
+	}
+	if errors := req.validationErrors(); len(errors) > 0 {
+		response.ValidationFailed(c, errors)
+		return
+	}
+	membership, err := h.service.AcceptInvitation(c.Request.Context(), userID, &req)
+	if err != nil {
+		response.HandleError(c, "Failed to accept organization invitation", err)
 		return
 	}
 	response.Success(c, toResponse(membership))

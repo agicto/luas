@@ -185,6 +185,35 @@ def main() -> int:
     if not re.fullmatch(r"pnpm@\d+\.\d+\.\d+", package_manager):
         failures.append("web/package.json must pin an exact pnpm packageManager version")
 
+    container_workflow = (WORKFLOW_ROOT / "container.yml").read_text(encoding="utf-8")
+    container_check_at = container_workflow.find(
+        "bash scripts/verify-container.sh luas-api:ci"
+    )
+    compose_check_at = container_workflow.find(
+        "bash scripts/verify-compose.sh luas-api:ci"
+    )
+    if (
+        container_check_at < 0
+        or compose_check_at < 0
+        or container_check_at > compose_check_at
+    ):
+        failures.append(
+            "container.yml must verify luas-api:ci before reusing it for Compose"
+        )
+
+    compose_verifier = (ROOT / "api/scripts/verify-compose.sh").read_text(
+        encoding="utf-8"
+    )
+    for marker in (
+        "if (( $# == 0 )); then",
+        'docker build --progress=plain --tag "${IMAGE_TAG}" "${ROOT_DIR}"',
+        "explicit image ${IMAGE_TAG} does not exist",
+    ):
+        if marker not in compose_verifier:
+            failures.append(
+                f"api/scripts/verify-compose.sh must contain {marker!r}"
+            )
+
     ci_doc = (ROOT / "docs/CI.md").read_text(encoding="utf-8")
     for marker in (
         "full-length commit SHA",
@@ -192,6 +221,7 @@ def main() -> int:
         "v2.327.1",
         "packageManager",
         "pull_request_target",
+        "false green",
     ):
         if marker not in ci_doc:
             failures.append(f"docs/CI.md must contain {marker!r}")

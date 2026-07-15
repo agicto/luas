@@ -62,6 +62,42 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeOrganizationOwnershipTransferRequired,
 		},
 		{
+			name:       "organization invitation is not visible",
+			err:        domain.ErrOrganizationInvitationNotFound,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeOrganizationInvitationNotFound,
+		},
+		{
+			name:       "organization invitation token is invalid",
+			err:        domain.ErrOrganizationInvitationInvalid,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeOrganizationInvitationInvalid,
+		},
+		{
+			name:       "organization invitation expired",
+			err:        domain.ErrOrganizationInvitationExpired,
+			statusCode: http.StatusGone,
+			errorCode:  domain.CodeOrganizationInvitationExpired,
+		},
+		{
+			name:       "organization invitation email mismatch",
+			err:        domain.ErrOrganizationInvitationEmailMismatch,
+			statusCode: http.StatusForbidden,
+			errorCode:  domain.CodeOrganizationInvitationEmailMismatch,
+		},
+		{
+			name:       "organization invitation already pending",
+			err:        domain.ErrOrganizationInvitationAlreadyPending,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeOrganizationInvitationAlreadyPending,
+		},
+		{
+			name:       "organization member already exists",
+			err:        domain.ErrOrganizationMemberAlreadyExists,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeOrganizationMemberAlreadyExists,
+		},
+		{
 			name:       "wrapped service unavailable",
 			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
 			statusCode: http.StatusServiceUnavailable,

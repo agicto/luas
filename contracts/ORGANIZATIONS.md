@@ -47,8 +47,8 @@ An organization membership view contains:
   `^[a-z0-9][a-z0-9-]*[a-z0-9]$`. If omitted, the API generates an opaque `org-...` slug.
 - Creating an organization and its `owner` membership is one database transaction.
 - Roles are organization-scoped values: `owner`, `admin`, and `member`. They are not global RBAC
-  roles. This kernel creates only the owner membership; invitations and membership mutation are a
-  later contract.
+  roles. Direct creation grants only the owner membership; the invitation lifecycle may add
+  `admin` or `member` memberships, while later membership mutation remains deliberately deferred.
 - Listing and lookup are always scoped by the authenticated user's membership. A non-member gets
   the same `404 ORGANIZATION.NOT_FOUND` response as an absent organization, preventing existence
   disclosure.
@@ -58,13 +58,68 @@ An organization membership view contains:
   added, deletion returns `409 ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` instead of orphaning a
   tenant.
 
+## Invitation Lifecycle
+
+Invitation endpoints also require the standard Go API bearer token. Invitation management is
+organization-scoped; acceptance is top-level because the opaque token identifies the organization.
+
+| Operation | Endpoint | Request | Successful `data` |
+|---|---|---|---|
+| Invite | `POST /v1/organizations/:id/invitations` | `{ email, role }` | `{ invitation, email_send_status }` |
+| List invitations | `GET /v1/organizations/:id/invitations` | Pagination query | Paginated invitation views |
+| Revoke | `DELETE /v1/organizations/:id/invitations/:invitation_id` | none | `204 No Content` |
+| Accept | `POST /v1/organization-invitations/accept` | `{ token }` | Organization membership view |
+
+An invitation view contains no plaintext token:
+
+```json
+{
+  "id": 73,
+  "organization_id": 42,
+  "email": "member@example.com",
+  "role": "member",
+  "status": "pending",
+  "expires_at": "2026-07-22T20:00:00Z",
+  "created_at": "2026-07-15T20:00:00Z",
+  "updated_at": "2026-07-15T20:00:00Z"
+}
+```
+
+- `owner` and `admin` may invite, list, and revoke. A non-member gets
+  `404 ORGANIZATION.NOT_FOUND`; a known `member` gets `403 PERMISSION.DENIED`.
+- Invitation roles are only `admin` and `member`. Ownership is never granted through an
+  invitation.
+- Invitation email is trimmed and lower-cased. An existing member or a second unexpired pending
+  invitation for the same organization and email is rejected. Expired invitations remain immutable
+  history while releasing the active-invitation uniqueness slot for a replacement.
+- Invitation tokens are high-entropy bearer secrets. Luas returns them only to the organization
+  mail adapter in process, stores only their SHA-256 hash, and never places them in URLs, API
+  responses, audit metadata, or logs.
+- `ORGANIZATION_INVITATION_TTL` defaults to `168h` (7 days) and must be positive. A token is
+  one-time use and must belong to the authenticated user's email, compared case-insensitively.
+- Accepting an invitation and creating the membership is one database transaction. Revoked,
+  accepted, unknown, or malformed tokens share the invalid-token branch; expiry and wrong-account
+  failures remain separately actionable.
+- Invitation persistence commits before email is attempted. The invite call still returns `201`
+  when email is unavailable or rejected so retrying the HTTP request cannot accidentally create a
+  second business record. `email_send_status` is one of `accepted_by_provider`, `failed`, or
+  `not_configured`; it describes only this synchronous send attempt and is not a delivery receipt.
+- Invitation create, revoke, and accept transitions emit audit changes using internal invitation,
+  organization, and user IDs. Email addresses and tokens are not audit metadata.
+
 ## Stable Errors
 
 | HTTP status | `error_code` | Meaning |
 |---|---|---|
 | 404 | `ORGANIZATION.NOT_FOUND` | The caller has no visible membership for the organization |
+| 404 | `ORGANIZATION.INVITATION.NOT_FOUND` | The invitation is not visible in the managed organization |
+| 404 | `ORGANIZATION.INVITATION.INVALID` | The acceptance token is malformed, unknown, revoked, or already consumed |
+| 410 | `ORGANIZATION.INVITATION.EXPIRED` | The acceptance token is valid but past its configured lifetime |
 | 409 | `ORGANIZATION.SLUG_ALREADY_EXISTS` | The requested immutable slug is already allocated |
+| 409 | `ORGANIZATION.INVITATION.ALREADY_PENDING` | An unexpired invitation already exists for this email |
+| 409 | `ORGANIZATION.MEMBER_ALREADY_EXISTS` | The invited email already belongs to an organization member |
 | 409 | `ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` | Account deletion would leave an owned organization without an owner |
+| 403 | `ORGANIZATION.INVITATION.EMAIL_MISMATCH` | The token belongs to a different account email |
 | 403 | `PERMISSION.DENIED` | The caller is a member but the role cannot perform the mutation |
 | 422 | `COMMON.VALIDATION_FAILED` | A request field fails the documented shape |
 | 503 | `COMMON.SERVICE_UNAVAILABLE` | Organization persistence is unavailable |
@@ -73,8 +128,8 @@ All failures use the global error envelope and `request_id` rules in [`README.md
 
 ## Deliberate Deferrals
 
-This is a backend ownership kernel, not yet a complete business-ready organization starter.
-Invitations, membership lifecycle, ownership transfer, organization deletion, active organization
-context, permission policies, Web UI, and mock BFF parity remain explicit follow-up work. The
-starter must not be marked ready in the starter roadmap until those surfaces and extraction rules
-exist.
+This remains a backend foundation, not yet a complete business-ready organization starter.
+Member role changes, member removal and leave flows, ownership transfer, organization deletion,
+active organization context, durable invitation delivery retries, permission policies, Web UI, and
+mock BFF parity remain explicit follow-up work. The starter must not be marked ready in the starter
+roadmap until those surfaces and extraction rules exist.

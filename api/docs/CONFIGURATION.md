@@ -65,6 +65,7 @@ is `organization`:
 
 ```dotenv
 OPTIONAL_STARTERS=organization
+ORGANIZATION_INVITATION_TTL=168h
 ```
 
 Selection is resolved through `internal/starter` from the same typed configuration snapshot used by
@@ -75,6 +76,11 @@ selection; do not maintain a second starter list in a command or deployment scri
 All API replicas, migration jobs, and seeder jobs for one environment must receive the same value.
 Changing it requires a deployment and, when enabling a persistence-owning starter, its pre-deploy
 migration. It is not a per-request flag and must not be toggled independently across replicas.
+
+`ORGANIZATION_INVITATION_TTL` controls the lifetime of one-time invitation tokens and defaults to
+`168h` (7 days). It must be positive when `organization` is selected. Invitation expiry is evaluated
+against this immutable startup policy; changing the value affects newly created invitations only and
+requires a process restart like every other configuration change.
 
 ## Email Provider Configuration
 

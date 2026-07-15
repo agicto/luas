@@ -406,23 +406,46 @@ HTTP.
 
 The first optional entry is an `organization` ownership kernel: atomic organization/owner creation,
 membership-scoped list/get, owner/admin rename, stable organization errors, audit changes, and an
-active-only account-deletion guard that prevents orphaned tenants. `organization` means the tenant
-boundary; it is not interchangeable with a future workspace concept. The starter remains
-foundation-only until invitation, member lifecycle, ownership transfer, active organization, Web,
-mock, and extraction surfaces are complete.
+active-only account-deletion guard that prevents orphaned tenants. Its invitation lifecycle adds
+manager-scoped create/list/revoke, transactional acceptance, immutable token hashes, explicit email
+attempt semantics, stable errors, and audit changes. `organization` means the tenant boundary; it is
+not interchangeable with a future workspace concept. The starter remains foundation-only until
+member lifecycle, ownership transfer, active organization, Web, mock, and extraction surfaces are
+complete.
 
-Against baseline commit `98865a7`, default assembly stays at 14 routes and seven migrations while
-`OPTIONAL_STARTERS=organization` exposes exactly four additional routes and one migration. The
-Darwin/arm64 stripped server moves from 34,445,106 to 34,544,338 bytes (+99,232 bytes, 0.29%); the
+At the initial ownership-kernel delivery against baseline commit `98865a7`, default assembly stayed
+at 14 routes and seven migrations while the optional starter exposed four additional routes and one
+migration. The Darwin/arm64 stripped server moved from 34,445,106 to 34,544,338 bytes (+99,232 bytes,
+0.29%); the
 module graph remains at 276 and `go.mod` / `go.sum` are unchanged. Five-run HTTP middleware medians
 remain effectively flat at 1,207 versus 1,186 ns/request with metrics disabled and 1,432 versus
 1,410 ns/request with metrics enabled; all runs retain 18 allocations/request. These host-local
 timings are regression evidence, not an SLO. A real PostgreSQL run exercised the full ownership
 flow and an 8 -> 7 -> 8 migration rollback/reapply cycle.
 
+The invitation slice keeps the default at 14 routes and seven migrations and raises
+`OPTIONAL_STARTERS=organization` to eight additional routes and two migrations. It adds no Go module
+dependency; token storage, active-invitation uniqueness, and membership creation are database-owned
+transactional invariants rather than process-local checks.
+
+Against the immediate pre-slice commit `33de03e`, the stripped `CGO_ENABLED=0` Darwin/arm64 server
+moves from 35,265,602 to 35,350,818 bytes (+85,216 bytes, 0.24%). The module graph remains at 276,
+and `go.mod` / `go.sum` remain unchanged. Five-run HTTP middleware medians move from 1,246 to 1,238
+ns/request with metrics disabled and from 1,461 to 1,465 ns/request with metrics enabled; both retain
+18 allocations/request. These are host-local regression baselines, not an SLO; the invitation path
+is intentionally off the default request hot path.
+
+Container verification now preserves artifact identity: standalone `make compose-check` rebuilds the
+current worktree, while CI may explicitly reuse only the image verified by the preceding container
+step. An `OPTIONAL_STARTERS=organization` PostgreSQL run exercises organization/invitation statuses
+`201/201/409/200/204/201` for create, invite, duplicate, list, revoke, and replacement, respectively.
+This closes the prior false-green path where a stale local `luas-api:compose-check` tag could bypass
+the current source tree.
+
 Verification:
 
 - `cd api && go test ./internal/starter/... ./internal/modules/organization ./tests/feature -run 'TestOrganization'`
+- `cd api && go test ./database/migrations ./internal/infra/config`
 - Disabled/enabled `go run ./cmd/luas route:list` comparison
 - Real PostgreSQL migration and ownership HTTP flow
 - `make governance` and `make check`
@@ -434,7 +457,7 @@ Problem: the current default starter set is useful for auth, API keys, and audit
 Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
-2. Finish invitations, membership lifecycle, ownership transfer, active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
+2. Finish membership lifecycle, ownership transfer, active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
 3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
 4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 

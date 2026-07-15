@@ -50,10 +50,13 @@ func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 
 	migrations, err := ConfiguredMigrations(cfg)
 	require.NoError(t, err)
-	assert.Len(t, migrations, 8)
+	assert.Len(t, migrations, 9)
 	organizationMigration, exists := migrations["2026_07_14_000000_create_organizations_tables"]
 	require.True(t, exists)
 	assert.True(t, organizationMigration.WithinTransaction())
+	invitationMigration, exists := migrations["2026_07_15_000000_create_organization_invitations_table"]
+	require.True(t, exists)
+	assert.True(t, invitationMigration.WithinTransaction())
 }
 
 func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {

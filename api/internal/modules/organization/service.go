@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/domain"
@@ -18,10 +19,18 @@ type Service interface {
 	List(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
 	Get(ctx context.Context, userID, organizationID uint) (*domain.OrganizationMembership, error)
 	Update(ctx context.Context, userID, organizationID uint, req *UpdateOrganizationRequest) (*domain.OrganizationMembership, error)
+	Invite(ctx context.Context, userID, organizationID uint, req *CreateOrganizationInvitationRequest) (*OrganizationInvitationResult, error)
+	ListInvitations(ctx context.Context, userID, organizationID uint, page, pageSize int) ([]*domain.OrganizationInvitation, int64, error)
+	RevokeInvitation(ctx context.Context, userID, organizationID, invitationID uint) error
+	AcceptInvitation(ctx context.Context, userID uint, req *AcceptOrganizationInvitationRequest) (*domain.OrganizationMembership, error)
 }
 
 type service struct {
-	repo domain.OrganizationRepository
+	repo             domain.OrganizationRepository
+	invitationRepo   domain.OrganizationInvitationRepository
+	invitationMailer InvitationMailer
+	invitationPolicy InvitationPolicy
+	now              func() time.Time
 }
 
 var (
@@ -29,9 +38,25 @@ var (
 	_ user.AccountDeletionGuard = (*service)(nil)
 )
 
-// NewService creates the organization service.
-func NewService(repo domain.OrganizationRepository) *service {
-	return &service{repo: repo}
+// NewService creates the organization service and its invitation workflow.
+func NewService(
+	repo domain.OrganizationRepository,
+	invitationRepo domain.OrganizationInvitationRepository,
+	invitationMailer InvitationMailer,
+	invitationPolicy InvitationPolicy,
+) *service {
+	if invitationPolicy.TTL <= 0 {
+		invitationPolicy = NewInvitationPolicy(nil)
+	}
+	return &service{
+		repo:             repo,
+		invitationRepo:   invitationRepo,
+		invitationMailer: invitationMailer,
+		invitationPolicy: invitationPolicy,
+		now: func() time.Time {
+			return time.Now().UTC()
+		},
+	}
 }
 
 func (s *service) Create(ctx context.Context, userID uint, req *CreateOrganizationRequest) (*domain.OrganizationMembership, error) {

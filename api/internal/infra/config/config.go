@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"net/mail"
+	"slices"
 	"strings"
 	"time"
 
@@ -29,27 +30,30 @@ const (
 	DefaultMiddlewareRequestTimeoutSeconds = 180
 	// DefaultEmailRequestTimeout caps one outbound provider call.
 	DefaultEmailRequestTimeout = 10 * time.Second
+	// DefaultOrganizationInvitationTTL bounds one organization invitation token.
+	DefaultOrganizationInvitationTTL = 7 * 24 * time.Hour
 )
 
 // Config holds all application configuration
 type Config struct {
-	App        AppConfig
-	Starters   StarterConfig
-	Server     ServerConfig
-	Database   DatabaseConfig
-	Redis      RedisConfig
-	Queue      QueueConfig
-	Scheduler  SchedulerConfig
-	JWT        JWTConfig
-	Log        LogConfig
-	Sentry     SentryConfig
-	CORS       CORSConfig
-	Email      EmailConfig
-	AI         AIConfig
-	R2         R2Config
-	Middleware MiddlewareConfig
-	Metrics    MetricsConfig
-	Tracing    TracingConfig
+	App          AppConfig
+	Starters     StarterConfig
+	Server       ServerConfig
+	Database     DatabaseConfig
+	Redis        RedisConfig
+	Queue        QueueConfig
+	Scheduler    SchedulerConfig
+	JWT          JWTConfig
+	Log          LogConfig
+	Sentry       SentryConfig
+	CORS         CORSConfig
+	Email        EmailConfig
+	Organization OrganizationConfig
+	AI           AIConfig
+	R2           R2Config
+	Middleware   MiddlewareConfig
+	Metrics      MetricsConfig
+	Tracing      TracingConfig
 }
 
 // StarterConfig controls additive activation of starters that are not part of the defaults.
@@ -208,6 +212,11 @@ type EmailConfig struct {
 	RequestTimeout time.Duration
 }
 
+// OrganizationConfig holds optional organization starter policy.
+type OrganizationConfig struct {
+	InvitationTTL time.Duration
+}
+
 type AIProviderConfig struct {
 	APIKey  string
 	BaseURL string
@@ -336,6 +345,9 @@ func Load() (*Config, error) {
 			From:           env.Get("MAIL_FROM", ""),
 			ResendAPIKey:   env.Get("RESEND_API_KEY", ""),
 			RequestTimeout: env.GetDuration("MAIL_REQUEST_TIMEOUT", DefaultEmailRequestTimeout),
+		},
+		Organization: OrganizationConfig{
+			InvitationTTL: env.GetDuration("ORGANIZATION_INVITATION_TTL", DefaultOrganizationInvitationTTL),
 		},
 		AI: loadAIConfig(),
 		R2: R2Config{
@@ -507,6 +519,10 @@ func validate(cfg *Config) error {
 
 	if err := validateEmailConfig(cfg.Email); err != nil {
 		return err
+	}
+	if cfg.Organization.InvitationTTL < 0 ||
+		(slices.Contains(cfg.Starters.Optional, "organization") && cfg.Organization.InvitationTTL == 0) {
+		return fmt.Errorf("ORGANIZATION_INVITATION_TTL must be greater than 0 when the organization starter is selected")
 	}
 
 	// CORS: wildcard origin + credentials is rejected by browsers anyway.

@@ -59,7 +59,8 @@ JWT_SECRET=replace-me
 OPTIONAL_STARTERS=organization
 ```
 
-具体契约与尚未交付的邀请、成员、所有权转移和 Web 边界见
+该 starter 已包含持久化邀请、邮件适配、接受与撤销闭环；尚未交付的成员变更、所有权转移、
+活跃组织上下文和 Web 边界见
 [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)。
 
 ### 3. 生成依赖注入代码

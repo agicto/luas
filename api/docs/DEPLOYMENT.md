@@ -10,6 +10,7 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 | `Dockerfile` | API core | Builds the production image and defines runtime-safe defaults. |
 | `docker-compose.yml` | Local development | Runs the API and PostgreSQL on loopback with replaceable local credentials. |
 | `scripts/verify-container.sh` | Verification | Builds and exercises the production image contract. |
+| `scripts/verify-compose.sh` | Verification | Rebuilds the local worktree or reuses one explicitly verified image, then exercises PostgreSQL and startup. |
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
 | Production deployment manifests | Downstream app | Own secrets, network policy, replicas, migrations, rollout, and rollback. |
 
@@ -45,8 +46,14 @@ make compose-check
 
 The verifier checks the non-root user, image health configuration, liveness, database-disabled
 readiness, JSON request logs on stdout, absence of `/app/.env`, and a zero exit code after SIGTERM.
-The Compose verifier reuses that image, starts PostgreSQL on random loopback ports, runs the explicit
-local migration opt-in, waits for readiness, and completes a real starter registration.
+Standalone `make compose-check` always rebuilds the current worktree so a stale local tag cannot
+produce a false green result. In CI, the Compose verifier receives the explicit image tag built and
+checked by the immediately preceding container step; a missing explicit image fails instead of
+silently building a different artifact. It then starts PostgreSQL on random loopback ports, runs the
+explicit local migration opt-in, waits for readiness, and completes a real starter registration.
+When `OPTIONAL_STARTERS` contains `organization`, the same check also exercises PostgreSQL-backed
+organization creation plus invitation create, duplicate conflict, list, revoke, and replacement
+semantics without requiring an external email provider.
 
 ## Local Compose
 
@@ -63,6 +70,7 @@ docker compose down
 Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
 `JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
 ownership kernel; the API process and its local startup migration receive the same value.
+`ORGANIZATION_INVITATION_TTL` is forwarded to the API container and defaults to `168h`.
 `docker compose down --volumes` also deletes local database data.
 
 ## Production Inputs

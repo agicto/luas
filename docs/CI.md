@@ -27,6 +27,11 @@ Actions Runner `v2.327.1` or newer. `actions/checkout` intentionally remains on 
 v5 patch because v6 raises the runner requirement to `v2.329.0` for its credential-storage change.
 The container workflow additionally requires a working Docker daemon with Compose v2.
 
+The container job verifies one artifact identity. `verify-container.sh` builds and checks
+`luas-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
+Standalone `make compose-check` has no explicit tag and therefore rebuilds the current worktree,
+preventing a stale local image from producing a false green result.
+
 The action runtime is separate from the Web project runtime: CI currently tests the Web application
 on Node 22. The pnpm version comes only from `web/package.json` `packageManager`; the setup action
 receives `package_json_file: web/package.json` instead of duplicating that version in workflow YAML.

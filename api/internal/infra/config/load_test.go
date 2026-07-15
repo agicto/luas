@@ -125,6 +125,31 @@ func TestLoad_EmailRequestTimeout(t *testing.T) {
 	}
 }
 
+func TestLoad_OrganizationInvitationTTL(t *testing.T) {
+	withoutEnv(t, "ORGANIZATION_INVITATION_TTL")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Organization.InvitationTTL != DefaultOrganizationInvitationTTL {
+		t.Fatalf("default invitation TTL = %s, want %s", cfg.Organization.InvitationTTL, DefaultOrganizationInvitationTTL)
+	}
+
+	t.Setenv("ORGANIZATION_INVITATION_TTL", "72h")
+	cfg, err = LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() with invitation TTL error = %v", err)
+	}
+	if cfg.Organization.InvitationTTL != 72*time.Hour {
+		t.Fatalf("invitation TTL = %s, want 72h", cfg.Organization.InvitationTTL)
+	}
+}
+
 func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	withoutEnv(
 		t,

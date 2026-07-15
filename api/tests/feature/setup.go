@@ -20,6 +20,10 @@ func SetupApp() *gin.Engine {
 
 // SetupAppWithOptionalStarters reuses production assembly with an explicit additive selection.
 func SetupAppWithOptionalStarters(optionalStarters ...string) *gin.Engine {
+	return setupApp(nil, optionalStarters...)
+}
+
+func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.Engine {
 	cfg := &config.Config{}
 	cfg.App.Name = "Luas Test"
 	cfg.App.Env = "test"
@@ -42,6 +46,10 @@ func SetupAppWithOptionalStarters(optionalStarters ...string) *gin.Engine {
 	cfg.CORS.AllowCredentials = true
 	cfg.AI.DefaultProvider = "openai"
 	cfg.AI.DefaultModel = "gpt-5"
+	cfg.Organization.InvitationTTL = config.DefaultOrganizationInvitationTTL
+	if configure != nil {
+		configure(cfg)
+	}
 
 	if _, err := config.Use(cfg); err != nil {
 		panic("failed to register test config: " + err.Error())

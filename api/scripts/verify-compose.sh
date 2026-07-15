@@ -26,8 +26,10 @@ command -v docker >/dev/null 2>&1 || fail "docker is not installed"
 command -v curl >/dev/null 2>&1 || fail "curl is not installed"
 docker info >/dev/null 2>&1 || fail "docker daemon is unavailable"
 
-if ! docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
+if (( $# == 0 )); then
   docker build --progress=plain --tag "${IMAGE_TAG}" "${ROOT_DIR}"
+elif ! docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
+  fail "explicit image ${IMAGE_TAG} does not exist; verify it before the Compose lifecycle"
 fi
 
 export LUAS_API_IMAGE="${IMAGE_TAG}"
@@ -57,6 +59,94 @@ register_status="$(curl --noproxy '*' --silent --show-error \
   "http://127.0.0.1:${published_port}/v1/register")"
 [[ "${register_status}" == "201" ]] || fail "post-migration registration returned HTTP ${register_status}"
 
+organization_flow="skipped"
+case ",${OPTIONAL_STARTERS:-}," in
+  *,organization,*)
+    command -v python3 >/dev/null 2>&1 || fail "python3 is required for optional starter response checks"
+
+    login_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/login.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --data '{"username":"compose-check@example.com","password":"secret12"}' \
+      "http://127.0.0.1:${published_port}/v1/login")"
+    [[ "${login_status}" == "200" ]] || fail "organization owner login returned HTTP ${login_status}"
+    if ! owner_token="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["access_token"])' "${TMP_DIR}/login.json")"; then
+      fail "organization owner login response has no access token"
+    fi
+
+    organization_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/organization.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"name":"Compose Check Organization","slug":"compose-check-organization"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations")"
+    [[ "${organization_status}" == "201" ]] || fail "organization creation returned HTTP ${organization_status}"
+    if ! organization_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "${TMP_DIR}/organization.json")"; then
+      fail "organization creation response has no ID"
+    fi
+
+    invitation_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/invitation.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"email":"compose-invitee@example.com","role":"member"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations")"
+    [[ "${invitation_status}" == "201" ]] || fail "organization invitation returned HTTP ${invitation_status}"
+    if ! invitation_id="$(python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+if payload["email_send_status"] != "not_configured":
+    raise SystemExit(1)
+if "token" in payload["invitation"] or "token_hash" in payload["invitation"]:
+    raise SystemExit(1)
+print(payload["invitation"]["id"])
+' "${TMP_DIR}/invitation.json")"; then
+      fail "organization invitation response violates the token or email-status contract"
+    fi
+
+    duplicate_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/invitation-duplicate.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"email":"compose-invitee@example.com","role":"member"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations")"
+    [[ "${duplicate_status}" == "409" ]] || fail "duplicate invitation returned HTTP ${duplicate_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "ORGANIZATION.INVITATION.ALREADY_PENDING" else 1)' "${TMP_DIR}/invitation-duplicate.json"; then
+      fail "duplicate invitation returned the wrong error_code"
+    fi
+
+    invitation_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/invitation-list.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations")"
+    [[ "${invitation_list_status}" == "200" ]] || fail "invitation list returned HTTP ${invitation_list_status}"
+
+    revoke_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --request DELETE \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations/${invitation_id}")"
+    [[ "${revoke_status}" == "204" ]] || fail "invitation revoke returned HTTP ${revoke_status}"
+
+    replacement_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/invitation-replacement.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --data '{"email":"compose-invitee@example.com","role":"admin"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations/${organization_id}/invitations")"
+    [[ "${replacement_status}" == "201" ]] || fail "replacement invitation returned HTTP ${replacement_status}"
+    organization_flow="${organization_status}/${invitation_status}/${duplicate_status}/${invitation_list_status}/${revoke_status}/${replacement_status}"
+    ;;
+esac
+
 printf 'compose API health: %s\n' "${api_health}"
 printf 'compose loopback address: %s\n' "${published_address}"
 printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_status}"
+printf 'compose organization/invitation flow: %s\n' "${organization_flow}"

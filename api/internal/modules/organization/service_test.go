@@ -19,6 +19,10 @@ type fakeRepository struct {
 	countFn  func(context.Context, uint) (int64, error)
 }
 
+func newOrganizationService(repo domain.OrganizationRepository) *service {
+	return NewService(repo, nil, nil, InvitationPolicy{TTL: 7 * 24 * time.Hour})
+}
+
 func (r *fakeRepository) CreateWithOwner(ctx context.Context, organization *domain.Organization, owner *domain.OrganizationMembership) error {
 	return r.createFn(ctx, organization, owner)
 }
@@ -59,7 +63,7 @@ func TestServiceCreateBuildsOwnerMembership(t *testing.T) {
 		},
 	}
 
-	membership, err := NewService(repo).Create(context.Background(), 17, &CreateOrganizationRequest{
+	membership, err := newOrganizationService(repo).Create(context.Background(), 17, &CreateOrganizationRequest{
 		Name: "  Acme Europe  ",
 		Slug: "acme-europe",
 	})
@@ -78,7 +82,7 @@ func TestServiceCreateRejectsInvalidSlugBeforePersistence(t *testing.T) {
 		},
 	}
 
-	_, err := NewService(repo).Create(context.Background(), 17, &CreateOrganizationRequest{
+	_, err := newOrganizationService(repo).Create(context.Background(), 17, &CreateOrganizationRequest{
 		Name: "Acme",
 		Slug: "Not Valid",
 	})
@@ -102,7 +106,7 @@ func TestServiceUpdateRequiresOrganizationManagerRole(t *testing.T) {
 		},
 	}
 
-	_, err := NewService(repo).Update(context.Background(), 17, 42, &UpdateOrganizationRequest{Name: "After"})
+	_, err := newOrganizationService(repo).Update(context.Background(), 17, 42, &UpdateOrganizationRequest{Name: "After"})
 	require.ErrorIs(t, err, domain.ErrPermissionDenied)
 }
 
@@ -124,7 +128,7 @@ func TestServiceUpdateAllowsOwnerAndReturnsMembershipView(t *testing.T) {
 		},
 	}
 
-	updated, err := NewService(repo).Update(context.Background(), 17, 42, &UpdateOrganizationRequest{Name: " After "})
+	updated, err := newOrganizationService(repo).Update(context.Background(), 17, 42, &UpdateOrganizationRequest{Name: " After "})
 	require.NoError(t, err)
 	assert.Same(t, membership, updated)
 	assert.Equal(t, "After", updated.Organization.Name)
@@ -137,7 +141,7 @@ func TestServiceAccountDeletionGuardProtectsOwnedOrganizations(t *testing.T) {
 			return 2, nil
 		},
 	}
-	svc := NewService(repo)
+	svc := newOrganizationService(repo)
 
 	assert.Equal(t, "organization", svc.AccountDeletionGuardName())
 	err := svc.CheckAccountDeletion(context.Background(), 17)

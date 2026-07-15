@@ -319,6 +319,33 @@ func TestValidate_EmailConfigurationIsCompleteAndBounded(t *testing.T) {
 	}
 }
 
+func TestValidate_OrganizationInvitationTTLWhenStarterIsSelected(t *testing.T) {
+	tests := []struct {
+		name    string
+		ttl     time.Duration
+		wantErr bool
+	}{
+		{name: "positive", ttl: 7 * 24 * time.Hour},
+		{name: "zero", wantErr: true},
+		{name: "negative", ttl: -time.Hour, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			cfg.Starters.Optional = []string{"organization"}
+			cfg.Organization.InvitationTTL = tt.ttl
+			err := validate(cfg)
+			if tt.wantErr && (err == nil || !strings.Contains(err.Error(), "ORGANIZATION_INVITATION_TTL")) {
+				t.Fatalf("validate() error = %v, want invitation TTL error", err)
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("validate() error = %v", err)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsInvalidServerTransportBudgets(t *testing.T) {
 	tests := []struct {
 		name string
