@@ -50,6 +50,7 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
    - `src/features/auth/server/go-api-auth-adapter.ts`
    - `src/features/organization/server/mock-organization-store.ts`
    - `src/features/organization/server/organization-route.ts`
+   - `src/features/organization/server/organization-lifecycle-route.ts`
    - `src/features/example/server/mock-example-store.ts`
    - `src/features/auth/server/mock-identity.ts`
    - `src/config/mock-session.ts`

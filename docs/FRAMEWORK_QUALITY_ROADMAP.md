@@ -103,7 +103,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` starter now includes ownership, invitation, member lifecycle, verified request-scoped active context, and a browser list/create/select/rename workflow. It remains explicitly foundation-only until the remaining invitation/member/ownership browser flows and downstream production integration are complete; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` starter includes ownership, invitation and member lifecycles, verified request-scoped active context, fixed production/mock browser adapters, and role-aware organization/member/invitation/ownership UI. It is ready when explicitly enabled in both halves; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -441,9 +441,8 @@ membership-scoped list/get, owner/admin rename, stable organization errors, audi
 membership-aware account-deletion guard that prevents orphaned tenants. Its invitation lifecycle adds
 manager-scoped create/list/revoke, transactional acceptance, immutable token hashes, explicit email
 attempt semantics, stable errors, and audit changes. `organization` means the tenant boundary; it is
-not interchangeable with a future workspace concept. The starter remains foundation-only until its
-remaining browser lifecycle and downstream integration surfaces are complete. Its member lifecycle now
-adds a PII-minimized directory, owner-only role changes, manager removal and self-leave policy,
+not interchangeable with a future workspace concept. Its member lifecycle adds a PII-minimized
+directory, owner-only role changes, manager removal and self-leave policy,
 transactional ownership transfer, membership audit changes, and account-deletion guards that stop
 soft-deleted users from leaving stale membership rows.
 
@@ -545,13 +544,35 @@ Production-browser runs completed the
 create, URL selection, context verification, rename, and reload flow at 1280 px and 390 px with no
 console warnings/errors and no page-width overflow.
 
+The completed browser lifecycle adds member directory/role/remove/leave controls, atomic ownership
+transfer, invitation create/list/revoke, and manually entered token acceptance through explicit
+same-origin allowlist handlers. Member and invitation success schemas are strict, so an accidental
+member email or invitation token fails as `CLIENT.INVALID_RESPONSE` before cache or render. The
+mock store now carries an authenticated actor and the production role matrix instead of a global
+implicit owner; its injectable token seam exists only in store tests and no route response or log
+reveals the secret. Forty-six focused contract, route, static-boundary, and UI tests cover the Web
+lifecycle. A local standalone production run returned `200` for login, the organization page, and
+the PII-minimized three-member directory, `201` for token-free invitation creation, and `204` for
+revoke. Desktop and 390 px browser runs exercised the profile/member/invitation tabs and invitation
+dialog with no page-level horizontal overflow; the only console warning was the expected missing
+development `SESSION_SECRET` warning, while the production replay used an explicit secret.
+
+Against immediate baseline commit `784d008`, an organization-enabled Next.js 16.2.9 production
+build moves the complete static JavaScript inventory from 40 chunks / 1,575,734 raw / 487,993 gzip
+bytes to 42 chunks / 1,635,047 raw / 503,624 gzip bytes (+59,313 / +15,631, or 3.76% / 3.20%). The
+organization-detail client-reference set moves from 16 chunks / 494,643 raw / 155,304 gzip bytes to
+17 chunks / 550,102 raw / 169,996 gzip bytes (+55,459 / +14,692, or 11.21% / 9.46%). Gzip values
+use Node zlib level 9. No package or lockfile dependency changed. These are local build-manifest
+measurements, not network transfer or field Core Web Vitals.
+
 Verification:
 
 - `cd api && go test ./...`
 - Targeted race-enabled user, organization, bootstrap, and feature tests
 - Targeted Web adapter, body-boundary, optional-feature, organization-contract, route, and UI tests
 - Web production builds with the optional organization feature enabled and disabled
-- Production-browser organization create/select/context/rename/reload flows at desktop and mobile widths
+- Browser organization create/select/context/rename/member/invitation flows at desktop and mobile widths
+- Standalone production login, member-directory, invitation-create, and invitation-revoke HTTP flow
 - Disabled/enabled `go run ./cmd/luas route:list` comparison
 - Real PostgreSQL invitation/member HTTP flows plus ownership-transfer and account-deletion races
 - `make governance` and `make check`
@@ -563,7 +584,7 @@ Problem: the current default starter set is useful for auth, API keys, and audit
 Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
-2. Finish invitation, member, and ownership-transfer Web flows plus downstream production integration for the foundation-only `organization` starter.
+2. Keep the complete optional `organization` lifecycle and its production/mock adapter parity under executable contract and browser regression coverage.
 3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
 4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 

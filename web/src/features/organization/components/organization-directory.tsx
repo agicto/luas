@@ -16,6 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getOrganizationRoute } from '@/constants/routes';
+import { AcceptOrganizationInvitationDialog } from '@/features/organization/components/accept-organization-invitation-dialog';
 import { CreateOrganizationDialog } from '@/features/organization/components/create-organization-dialog';
 import { useOrganizations } from '@/features/organization/hooks/use-organizations';
 import type { OrganizationRole } from '@/features/organization/types';
@@ -33,7 +34,10 @@ export function OrganizationDirectory() {
           <h1 className="text-2xl font-semibold text-foreground">{t('title')}</h1>
           <p className="max-w-2xl text-sm text-muted-foreground">{t('description')}</p>
         </div>
-        <CreateOrganizationDialog />
+        <div className="flex flex-wrap items-center gap-2">
+          <AcceptOrganizationInvitationDialog />
+          <CreateOrganizationDialog />
+        </div>
       </div>
 
       <section className="pt-6" aria-labelledby="organization-list-heading">

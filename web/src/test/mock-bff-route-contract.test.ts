@@ -11,6 +11,10 @@ const organizationRouteModule = resolve(
   process.cwd(),
   'src/features/organization/server/organization-route.ts'
 );
+const organizationLifecycleRouteModule = resolve(
+  process.cwd(),
+  'src/features/organization/server/organization-lifecycle-route.ts'
+);
 
 const forbiddenRoutePatterns = [
   {
@@ -57,8 +61,14 @@ function productionGuard(path: string): string {
 function delegatesOrganizationGuard(path: string, handler: RouteHandlerSource): boolean {
   const route = relativeRoute(path);
   return (
-    (route === 'organization-context/route.ts' || route.startsWith('organizations/')) &&
-    /\b(?:create|get|list|resolve|update)Organizations?(?:Context)?Route\b/.test(handler.source)
+    (
+      route === 'organization-context/route.ts' ||
+      route.startsWith('organization-invitations/') ||
+      route.startsWith('organizations/')
+    ) &&
+    /\b(?:accept|create|get|list|remove|resolve|revoke|transfer|update)Organization[A-Za-z]*Route\b/.test(
+      handler.source
+    )
   );
 }
 
@@ -145,7 +155,11 @@ describe('mock BFF route contract', () => {
     const offenders = routeFiles
       .filter((path) => {
         const route = relativeRoute(path);
-        return route === 'organization-context/route.ts' || route.startsWith('organizations/');
+        return (
+          route === 'organization-context/route.ts' ||
+          route.startsWith('organization-invitations/') ||
+          route.startsWith('organizations/')
+        );
       })
       .flatMap((path) =>
         routeHandlers(path)
@@ -177,6 +191,29 @@ describe('mock BFF route contract', () => {
       expect(originGuard).toBeGreaterThan(availabilityGuard);
       expect(bodyRead).toBeGreaterThan(originGuard);
     }
+
+    const lifecycleSource = readFileSync(organizationLifecycleRouteModule, 'utf8');
+    for (const name of [
+      'updateOrganizationMemberRoute',
+      'removeOrganizationMemberRoute',
+      'transferOrganizationOwnershipRoute',
+      'createOrganizationInvitationRoute',
+      'revokeOrganizationInvitationRoute',
+      'acceptOrganizationInvitationRoute',
+    ]) {
+      const handler = exportedFunction(lifecycleSource, name);
+      const availabilityGuard = handler.indexOf('resolveOrganizationRoute(');
+      const originGuard = handler.indexOf('guardSameOriginMutation(');
+      const authentication = handler.indexOf('authenticateOrganizationBackend(');
+      const bodyRead = handler.indexOf('readJsonBody(');
+
+      expect(availabilityGuard, name).toBeGreaterThanOrEqual(0);
+      expect(originGuard, name).toBeGreaterThan(availabilityGuard);
+      expect(authentication, name).toBeGreaterThan(originGuard);
+      if (bodyRead >= 0) {
+        expect(bodyRead, name).toBeGreaterThan(authentication);
+      }
+    }
   });
 
   it('keeps mock route JSON envelopes behind shared response helpers', () => {
@@ -199,3 +236,11 @@ describe('mock BFF route contract', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+function exportedFunction(source: string, name: string): string {
+  const marker = `export async function ${name}`;
+  const start = source.indexOf(marker);
+  if (start < 0) return '';
+  const next = source.indexOf('export async function ', start + marker.length);
+  return source.slice(start, next < 0 ? source.length : next);
+}

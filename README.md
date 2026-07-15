@@ -47,7 +47,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — deployable-unit boundaries and vertical change flow.
 - [docs/CI.md](docs/CI.md) — workflow roles, runner compatibility, immutable action pins, and update procedure.
 - [contracts/README.md](contracts/README.md) — shared HTTP response, error, pagination, and request ID contracts.
-- [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — additive optional organization ownership foundation and its explicit deferrals.
+- [contracts/ORGANIZATIONS.md](contracts/ORGANIZATIONS.md) — additive optional organization lifecycle and its explicit deferrals.
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — what to keep, delete, or replace when turning Luas into a downstream app.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — ready-to-use starter review and prioritized reusable business starter roadmap.

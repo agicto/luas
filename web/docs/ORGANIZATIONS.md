@@ -41,8 +41,15 @@ from the console shell.
   Zustand store, a cookie, or a persisted current-organization field.
 - Owners and administrators can rename. Members receive a read-only profile; the Go API remains the
   authorization boundary for every write.
-- Successful payloads are validated before entering TanStack Query. Paginated organization lists
-  preserve `meta` and `links` through the explicit `getEnvelope()` HTTP mode.
+- Every member can view the PII-minimized member directory. Owners can change `admin`/`member`
+  roles and transfer ownership; owners and administrators can remove roles permitted by the API,
+  while non-owners can leave through their own member resource.
+- Owners and administrators can create, list, and revoke invitations. Authenticated users accept a
+  token through a password input and same-origin POST body; the token is never put in a URL,
+  browser storage, invitation response, or rendered history.
+- Successful payloads are validated before entering TanStack Query. Paginated organization,
+  member, and invitation lists preserve `meta` and `links` through the explicit `getEnvelope()`
+  HTTP mode. Strict member and invitation objects reject accidental PII or token fields.
 
 ## Adapter Boundary
 
@@ -52,22 +59,26 @@ IP, applies a timeout, bounds upstream response bytes, and forwards only reviewe
 Browser cookies, browser authorization, arbitrary paths, `Set-Cookie`, and arbitrary request headers
 never cross the boundary.
 
-`src/app/api/organizations/**` and `src/app/api/organization-context/` are explicit allowlist Route
-Handlers. Unsafe operations reject cross-origin requests before reading bounded JSON. The adapter
-preserves stable status, `error_code`, field ownership, `request_id`, rate-limit headers, and `Vary`,
-but does not render upstream copy. Every organization Route Handler also applies
+`src/app/api/organizations/**`, `src/app/api/organization-context/`, and
+`src/app/api/organization-invitations/accept/` are explicit allowlist Route Handlers. Unsafe
+operations reject cross-origin requests before authentication or bounded JSON reads. The adapter
+preserves stable status, `error_code`, field ownership, `request_id`, rate-limit headers, and
+`Vary`, but does not render upstream copy. Every organization Route Handler also applies
 `Cache-Control: private, no-store` and merges `Vary: Cookie`; context responses retain
 `Organization-Id` as an additional cache dimension.
 
 ## Development Mock
 
 Outside production, or with an explicit demo deployment, the same routes use an in-memory mock
-store after verifying the mock session. It starts with one `Luas Demo` owner organization and
-supports list, create, get, rename, and context resolution. It is development state only and resets
-with the Web process.
+store after verifying the mock session. It starts with one `Luas Demo` organization and seeded
+owner, administrator, and member roles. It implements organization, context, member, ownership,
+invitation, and acceptance transitions with the production role matrix. It is development state
+only and resets with the Web process.
 
-The mock and production route shapes are tested together. Do not add mock-only response fields or
-return invitation bearer tokens through future mock routes.
+The mock and production route shapes are tested together. Invitation token generation is injectable
+only at the store test seam; the singleton route store never returns or logs bearer tokens. Local
+acceptance therefore still requires a token delivered out of band, matching the production trust
+boundary instead of adding a mock-only secret response.
 
 ## Downstream Replacement
 
@@ -81,7 +92,7 @@ return invitation bearer tokens through future mock routes.
 
 ## Deliberate Deferrals
 
-Member administration, invitations, ownership transfer, and invitation acceptance remain the next
-browser slice. Organization deletion and arbitrary product resource routes remain deferred by the
-API contract. The starter stays `Foundation only` until those browser workflows and production
-integration checks are complete.
+Organization deletion, durable invitation delivery retries, generalized permission policies, and
+arbitrary product resource routes remain deferred by the API contract. They belong to separate
+business decisions or starters; the organization feature does not pretend that its three scoped
+roles are a general RBAC system.

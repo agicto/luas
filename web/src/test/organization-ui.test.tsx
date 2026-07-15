@@ -21,6 +21,18 @@ const state = vi.hoisted(() => ({
     isPending: false,
     refetch: vi.fn(),
   },
+  members: {
+    data: undefined as unknown,
+    error: null as unknown,
+    isPending: false,
+    refetch: vi.fn(),
+  },
+  invitations: {
+    data: undefined as unknown,
+    error: null as unknown,
+    isPending: false,
+    refetch: vi.fn(),
+  },
   create: {
     error: null as unknown,
     isPending: false,
@@ -33,13 +45,27 @@ const state = vi.hoisted(() => ({
     mutate: vi.fn(),
     reset: vi.fn(),
   },
+  accept: mutationState(),
+  invite: mutationState(),
+  removeMember: mutationState(),
+  revokeInvitation: mutationState(),
+  transferOwnership: mutationState(),
+  updateMember: mutationState(),
 }));
 
 vi.mock('@/features/organization/hooks/use-organizations', () => ({
   useOrganizations: () => state.organizations,
   useOrganizationContext: () => state.context,
+  useOrganizationInvitations: () => state.invitations,
+  useOrganizationMembers: () => state.members,
+  useAcceptOrganizationInvitation: () => state.accept,
   useCreateOrganization: () => state.create,
+  useCreateOrganizationInvitation: () => state.invite,
+  useRemoveOrganizationMember: () => state.removeMember,
+  useRevokeOrganizationInvitation: () => state.revokeInvitation,
+  useTransferOrganizationOwnership: () => state.transferOwnership,
   useUpdateOrganization: () => state.update,
+  useUpdateOrganizationMember: () => state.updateMember,
 }));
 
 function withMessages(children: React.ReactNode) {
@@ -64,6 +90,14 @@ describe('organization browser workflow', () => {
     state.context.error = null;
     state.context.isPending = false;
     state.context.refetch.mockReset();
+    state.members.data = undefined;
+    state.members.error = null;
+    state.members.isPending = false;
+    state.members.refetch.mockReset();
+    state.invitations.data = undefined;
+    state.invitations.error = null;
+    state.invitations.isPending = false;
+    state.invitations.refetch.mockReset();
     state.create.error = null;
     state.create.isPending = false;
     state.create.mutate.mockReset();
@@ -72,6 +106,20 @@ describe('organization browser workflow', () => {
     state.update.isPending = false;
     state.update.mutate.mockReset();
     state.update.reset.mockReset();
+    for (const mutation of [
+      state.accept,
+      state.invite,
+      state.removeMember,
+      state.revokeInvitation,
+      state.transferOwnership,
+      state.updateMember,
+    ]) {
+      mutation.error = null;
+      mutation.isPending = false;
+      mutation.variables = undefined;
+      mutation.mutate.mockReset();
+      mutation.reset.mockReset();
+    }
   });
 
   it('renders organization identity, immutable slug, and role from the validated page', () => {
@@ -185,4 +233,107 @@ describe('organization browser workflow', () => {
     fireEvent.change(name, { target: { value: 'Acme Global' } });
     expect(state.update.reset).toHaveBeenCalledTimes(1);
   });
+
+  it('submits a trimmed invitation token without placing it in a URL', () => {
+    state.organizations.data = { items: [], meta: { total: 0 } };
+    renderWithMessages(<OrganizationDirectory />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Accept invitation' }));
+    const token = screen.getByLabelText('One-time token');
+    expect(token).toHaveAttribute('type', 'password');
+    fireEvent.change(token, { target: { value: '  oinv_secret.value  ' } });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Accept invitation' }).at(-1)!);
+
+    expect(state.accept.mutate).toHaveBeenCalledWith(
+      { token: 'oinv_secret.value' },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    );
+  });
+
+  it('renders the PII-minimized member directory and owner controls', () => {
+    state.context.data = organizationContext('owner');
+    state.members.data = {
+      items: [
+        memberView({ id: 91, user_id: 17, username: 'owner', role: 'owner' }),
+        memberView({ id: 92, user_id: 18, username: 'alex', role: 'member' }),
+      ],
+      meta: { total: 2 },
+    };
+
+    renderWithMessages(<OrganizationOverview organizationId={42} />);
+    activateTab('Members');
+
+    expect(screen.getByText('@alex')).toBeInTheDocument();
+    expect(screen.queryByText('alex@example.com')).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Change role: alex' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Actions: alex' })).toBeInTheDocument();
+  });
+
+  it('shows token-free invitation history only to organization managers', () => {
+    state.context.data = organizationContext('admin');
+    state.invitations.data = {
+      items: [
+        {
+          id: 73,
+          organization_id: 42,
+          email: 'new.member@example.com',
+          role: 'member',
+          status: 'pending',
+          expires_at: '2026-07-22T10:00:00Z',
+          created_at: '2026-07-15T10:00:00Z',
+          updated_at: '2026-07-15T10:00:00Z',
+        },
+      ],
+      meta: { total: 1 },
+    };
+
+    const view = renderWithMessages(<OrganizationOverview organizationId={42} />);
+    activateTab('Invitations');
+    expect(screen.getByText('new.member@example.com')).toBeInTheDocument();
+    expect(screen.queryByText(/oinv_/)).not.toBeInTheDocument();
+
+    state.context.data = organizationContext('member');
+    view.rerender(withMessages(<OrganizationOverview organizationId={42} />));
+    expect(screen.queryByRole('tab', { name: 'Invitations' })).not.toBeInTheDocument();
+  });
 });
+
+function mutationState() {
+  return {
+    error: null as unknown,
+    isPending: false,
+    variables: undefined as unknown,
+    mutate: vi.fn(),
+    reset: vi.fn(),
+  };
+}
+
+function organizationContext(role: 'admin' | 'member' | 'owner') {
+  return {
+    organization_id: 42,
+    organization_name: 'Acme Europe',
+    organization_slug: 'acme-europe',
+    membership_id: 91,
+    user_id: 17,
+    role,
+  };
+}
+
+function memberView(overrides: Record<string, unknown>) {
+  return {
+    id: 92,
+    user_id: 18,
+    username: 'alex',
+    nickname: 'Alex',
+    role: 'member',
+    joined_at: '2026-07-15T10:00:00Z',
+    updated_at: '2026-07-15T10:00:00Z',
+    ...overrides,
+  };
+}
+
+function activateTab(name: string) {
+  const tab = screen.getByRole('tab', { name });
+  fireEvent.mouseDown(tab, { button: 0, ctrlKey: false });
+  fireEvent.click(tab);
+}

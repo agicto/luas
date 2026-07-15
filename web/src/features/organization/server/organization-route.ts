@@ -19,12 +19,16 @@ import { isMockBffEnabled } from '@/config/mock-bff';
 import { serverEnv } from '@/config/server-env';
 import { getApiSessionToken } from '@/features/auth/server/api-session';
 import { getSessionUser } from '@/features/auth/server/session';
+import type { AuthUser } from '@/features/auth/types';
 import {
   createOrganizationSchema,
   organizationRouteIdSchema,
   updateOrganizationSchema,
 } from '@/features/organization/schemas';
-import { mockOrganizationStore } from './mock-organization-store';
+import {
+  mockOrganizationStore,
+  type MockOrganizationStoreError,
+} from './mock-organization-store';
 import { ApiErrorCode } from '@/http/codes';
 import { forwardAuthenticatedGoApi } from '@/server/api-adapter/authenticated-route';
 import {
@@ -34,9 +38,9 @@ import {
 
 type OrganizationBackend = 'go-api' | 'mock';
 
-type AuthenticatedOrganizationBackend =
+export type AuthenticatedOrganizationBackend =
   | { backend: 'go-api'; accessToken: string }
-  | { backend: 'mock' };
+  | { backend: 'mock'; user: AuthUser };
 
 interface OrganizationRouteEnvironment {
   adapterEnabled: boolean;
@@ -89,7 +93,7 @@ export async function listOrganizationsRoute(request: Request): Promise<NextResp
     });
   }
 
-  const result = mockOrganizationStore.list(page, perPage);
+  const result = mockOrganizationStore.list(authentication.user, page, perPage);
   return apiPaginatedResponse(result.items, result.meta, result.links, noStoreHeaders());
 }
 
@@ -117,7 +121,7 @@ export async function createOrganizationRoute(request: Request): Promise<NextRes
       fieldMap: { name: 'name', slug: 'slug' },
     });
   }
-  const organization = mockOrganizationStore.create(parsed.data);
+  const organization = mockOrganizationStore.create(authentication.user, parsed.data);
   if (organization === 'slug_conflict') {
     return apiErrorResponse({
       status: 409,
@@ -152,7 +156,7 @@ export async function getOrganizationRoute(
     });
   }
 
-  const organization = mockOrganizationStore.get(organizationId);
+  const organization = mockOrganizationStore.get(authentication.user, organizationId);
   return organization
     ? apiSuccessResponse(organization, { headers: noStoreHeaders() })
     : organizationNotFound();
@@ -187,10 +191,14 @@ export async function updateOrganizationRoute(
       fieldMap: { name: 'name' },
     });
   }
-  const organization = mockOrganizationStore.update(organizationId, parsed.data);
-  return organization
-    ? apiSuccessResponse(organization, { headers: noStoreHeaders() })
-    : organizationNotFound();
+  const organization = mockOrganizationStore.update(
+    authentication.user,
+    organizationId,
+    parsed.data
+  );
+  return typeof organization === 'string'
+    ? mockOrganizationErrorResponse(organization)
+    : apiSuccessResponse(organization, { headers: noStoreHeaders() });
 }
 
 export async function resolveOrganizationContextRoute(
@@ -228,7 +236,10 @@ export async function resolveOrganizationContextRoute(
     });
   }
 
-  const context = mockOrganizationStore.resolveContext(organizationId);
+  const context = mockOrganizationStore.resolveContext(
+    authentication.user,
+    organizationId
+  );
   return context
     ? apiSuccessResponse(context, { headers: contextHeaders() })
     : organizationNotFound(contextHeaders());
@@ -243,7 +254,7 @@ function currentEnvironment(): OrganizationRouteEnvironment {
   };
 }
 
-async function authenticateOrganizationBackend(
+export async function authenticateOrganizationBackend(
   backend: OrganizationBackend
 ): Promise<
   | ({ authenticated: true } & AuthenticatedOrganizationBackend)
@@ -256,12 +267,13 @@ async function authenticateOrganizationBackend(
       : { authenticated: false, response: unauthenticated() };
   }
 
-  return await getSessionUser()
-    ? { authenticated: true, backend }
+  const user = await getSessionUser();
+  return user
+    ? { authenticated: true, backend, user }
     : { authenticated: false, response: unauthenticated() };
 }
 
-function paginationFromRequest(request: Request) {
+export function paginationFromRequest(request: Request) {
   const input = new URL(request.url).searchParams;
   const page = positiveInteger(input.get('page'), 1);
   const perPage = Math.min(positiveInteger(input.get('per_page'), 15), 100);
@@ -281,7 +293,7 @@ function positiveInteger(value: string | null, fallback: number): number {
   return Number.isSafeInteger(parsed) ? parsed : fallback;
 }
 
-function parseOrganizationId(value: string): number | null {
+export function parseOrganizationId(value: string): number | null {
   const result = organizationRouteIdSchema.safeParse(value);
   return result.success ? result.data : null;
 }
@@ -306,7 +318,9 @@ function unauthenticated(headers: HeadersInit = noStoreHeaders()): NextResponse 
   });
 }
 
-function organizationNotFound(headers: HeadersInit = noStoreHeaders()): NextResponse {
+export function organizationNotFound(
+  headers: HeadersInit = noStoreHeaders()
+): NextResponse {
   return apiErrorResponse({
     status: 404,
     errorCode: ApiErrorCode.ORGANIZATION_NOT_FOUND,
@@ -315,10 +329,98 @@ function organizationNotFound(headers: HeadersInit = noStoreHeaders()): NextResp
   });
 }
 
-function noStoreHeaders(): Headers {
+export function noStoreHeaders(): Headers {
   return privateNoStoreHeaders(undefined, ['Cookie']);
 }
 
 function contextHeaders(): Headers {
   return privateNoStoreHeaders(undefined, ['Cookie', 'Organization-Id']);
+}
+
+export function mockOrganizationErrorResponse(
+  error: MockOrganizationStoreError
+): NextResponse {
+  const response = mockOrganizationError(error);
+  return apiErrorResponse({ ...response, headers: noStoreHeaders() });
+}
+
+function mockOrganizationError(error: MockOrganizationStoreError): {
+  status: number;
+  errorCode: (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
+  message: string;
+} {
+  switch (error) {
+    case 'organization_not_found':
+      return {
+        status: 404,
+        errorCode: ApiErrorCode.ORGANIZATION_NOT_FOUND,
+        message: 'Organization not found',
+      };
+    case 'member_not_found':
+      return {
+        status: 404,
+        errorCode: ApiErrorCode.ORGANIZATION_MEMBER_NOT_FOUND,
+        message: 'Organization member not found',
+      };
+    case 'invitation_not_found':
+      return {
+        status: 404,
+        errorCode: ApiErrorCode.ORGANIZATION_INVITATION_NOT_FOUND,
+        message: 'Organization invitation not found',
+      };
+    case 'invitation_invalid':
+      return {
+        status: 404,
+        errorCode: ApiErrorCode.ORGANIZATION_INVITATION_INVALID,
+        message: 'Organization invitation is invalid',
+      };
+    case 'invitation_expired':
+      return {
+        status: 410,
+        errorCode: ApiErrorCode.ORGANIZATION_INVITATION_EXPIRED,
+        message: 'Organization invitation has expired',
+      };
+    case 'invitation_email_mismatch':
+      return {
+        status: 403,
+        errorCode: ApiErrorCode.ORGANIZATION_INVITATION_EMAIL_MISMATCH,
+        message: 'Organization invitation belongs to another account',
+      };
+    case 'permission_denied':
+      return {
+        status: 403,
+        errorCode: ApiErrorCode.PERMISSION_DENIED,
+        message: 'Operation forbidden',
+      };
+    case 'slug_conflict':
+      return {
+        status: 409,
+        errorCode: ApiErrorCode.ORGANIZATION_SLUG_ALREADY_EXISTS,
+        message: 'Organization slug already exists',
+      };
+    case 'invitation_already_pending':
+      return {
+        status: 409,
+        errorCode: ApiErrorCode.ORGANIZATION_INVITATION_ALREADY_PENDING,
+        message: 'Organization invitation is already pending',
+      };
+    case 'member_already_exists':
+      return {
+        status: 409,
+        errorCode: ApiErrorCode.ORGANIZATION_MEMBER_ALREADY_EXISTS,
+        message: 'Organization member already exists',
+      };
+    case 'ownership_transfer_required':
+      return {
+        status: 409,
+        errorCode: ApiErrorCode.ORGANIZATION_OWNERSHIP_TRANSFER_REQUIRED,
+        message: 'Organization ownership transfer is required',
+      };
+    case 'ownership_transfer_target_invalid':
+      return {
+        status: 409,
+        errorCode: ApiErrorCode.ORGANIZATION_OWNERSHIP_TRANSFER_TARGET_INVALID,
+        message: 'Organization ownership transfer target is invalid',
+      };
+  }
 }

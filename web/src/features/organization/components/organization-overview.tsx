@@ -2,7 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, ArrowLeft, Building2, CheckCircle2, RefreshCw } from 'lucide-react';
+import {
+  AlertCircle,
+  ArrowLeft,
+  Building2,
+  CheckCircle2,
+  Mail,
+  RefreshCw,
+  Settings2,
+  Users,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -10,8 +19,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ROUTES } from '@/constants/routes';
 import { RoleBadge } from '@/features/organization/components/organization-directory';
+import { OrganizationInvitations } from '@/features/organization/components/organization-invitations';
+import { OrganizationMembers } from '@/features/organization/components/organization-members';
 import {
   useOrganizationContext,
   useUpdateOrganization,
@@ -67,7 +79,8 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
   const mutation = useUpdateOrganization(context.organization_id);
   const [name, setName] = useState(context.organization_name);
   const [clientError, setClientError] = useState<string>();
-  const canRename = context.role === 'owner' || context.role === 'admin';
+  const canManageOrganization =
+    context.role === 'owner' || context.role === 'admin';
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -121,60 +134,99 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
         </div>
       </div>
 
-      <section className="py-6" aria-labelledby="organization-profile-heading">
-        <div className="mb-5">
-          <h2 id="organization-profile-heading" className="text-base font-semibold">
-            {t('profile')}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t('profileDescription')}</p>
-        </div>
+      <Tabs defaultValue="profile" className="pt-5">
+        <TabsList className="max-w-full overflow-x-auto">
+          <TabsTrigger value="profile">
+            <Settings2 aria-hidden="true" />
+            {t('tabs.profile')}
+          </TabsTrigger>
+          <TabsTrigger value="members">
+            <Users aria-hidden="true" />
+            {t('tabs.members')}
+          </TabsTrigger>
+          {canManageOrganization ? (
+            <TabsTrigger value="invitations">
+              <Mail aria-hidden="true" />
+              {t('tabs.invitations')}
+            </TabsTrigger>
+          ) : null}
+        </TabsList>
 
-        <form onSubmit={handleSubmit} className="max-w-xl space-y-5" aria-busy={mutation.isPending}>
-          {mutation.error ? (
-            <Alert variant="destructive">
-              <AlertCircle aria-hidden="true" className="size-4" />
-              <AlertDescription>{t(resolveOrganizationErrorKey(mutation.error))}</AlertDescription>
-            </Alert>
-          ) : null}
-          <div className="space-y-2">
-            <Label htmlFor="organization-profile-name">{t('name')}</Label>
-            <Input
-              id="organization-profile-name"
-              name="name"
-              autoComplete="organization"
-              required
-              minLength={2}
-              maxLength={200}
-              value={name}
-              errorText={nameError}
-              disabled={!canRename || mutation.isPending}
-              onChange={(event) => {
-                setName(event.target.value);
-                setClientError(undefined);
-                mutation.reset();
-              }}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="organization-profile-slug">{t('slug')}</Label>
-            <Input
-              id="organization-profile-slug"
-              value={context.organization_slug}
-              disabled
-              readOnly
-            />
-          </div>
-          {canRename ? (
-            <Button
-              type="submit"
-              loading={mutation.isPending}
-              disabled={name.trim() === context.organization_name}
+        <TabsContent value="profile">
+          <section className="py-6" aria-labelledby="organization-profile-heading">
+            <div className="mb-5">
+              <h2 id="organization-profile-heading" className="text-base font-semibold">
+                {t('profile')}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {t('profileDescription')}
+              </p>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              className="max-w-xl space-y-5"
+              aria-busy={mutation.isPending}
             >
-              {common('save')}
-            </Button>
-          ) : null}
-        </form>
-      </section>
+              {mutation.error ? (
+                <Alert variant="destructive">
+                  <AlertCircle aria-hidden="true" className="size-4" />
+                  <AlertDescription>
+                    {t(resolveOrganizationErrorKey(mutation.error))}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+              <div className="space-y-2">
+                <Label htmlFor="organization-profile-name">{t('name')}</Label>
+                <Input
+                  id="organization-profile-name"
+                  name="name"
+                  autoComplete="organization"
+                  required
+                  minLength={2}
+                  maxLength={200}
+                  value={name}
+                  errorText={nameError}
+                  disabled={!canManageOrganization || mutation.isPending}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setClientError(undefined);
+                    mutation.reset();
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="organization-profile-slug">{t('slug')}</Label>
+                <Input
+                  id="organization-profile-slug"
+                  value={context.organization_slug}
+                  disabled
+                  readOnly
+                />
+              </div>
+              {canManageOrganization ? (
+                <Button
+                  type="submit"
+                  loading={mutation.isPending}
+                  disabled={name.trim() === context.organization_name}
+                >
+                  {common('save')}
+                </Button>
+              ) : null}
+            </form>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="members">
+          <OrganizationMembers context={context} />
+        </TabsContent>
+
+        {canManageOrganization ? (
+          <TabsContent value="invitations">
+            <OrganizationInvitations organizationId={context.organization_id} />
+          </TabsContent>
+        ) : null}
+      </Tabs>
     </div>
   );
 }

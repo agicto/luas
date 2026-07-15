@@ -115,7 +115,7 @@ paths to the corresponding `/v1` operations and supplies the bearer token from i
 HttpOnly cookie. The adapter is an allowlist of route handlers, not an arbitrary proxy: browser
 cookies, browser authorization headers, and caller-selected upstream paths are never forwarded.
 
-The first browser workflow owns these paths:
+The browser feature owns these fixed same-origin paths:
 
 | Browser operation | Browser endpoint | Upstream operation |
 |---|---|---|
@@ -124,11 +124,21 @@ The first browser workflow owns these paths:
 | Get organization | `GET /api/organizations/:id` | `GET /v1/organizations/:id` |
 | Rename organization | `PATCH /api/organizations/:id` | `PATCH /v1/organizations/:id` |
 | Verify active context | `GET /api/organization-context` plus `Organization-Id` | `GET /v1/organization-context` plus `Organization-Id` |
+| List members | `GET /api/organizations/:id/members` | `GET /v1/organizations/:id/members` |
+| Change member role | `PATCH /api/organizations/:id/members/:member_id` | `PATCH /v1/organizations/:id/members/:member_id` |
+| Remove member or leave | `DELETE /api/organizations/:id/members/:member_id` | `DELETE /v1/organizations/:id/members/:member_id` |
+| Transfer ownership | `POST /api/organizations/:id/ownership-transfer` | `POST /v1/organizations/:id/ownership-transfer` |
+| List invitations | `GET /api/organizations/:id/invitations` | `GET /v1/organizations/:id/invitations` |
+| Create invitation | `POST /api/organizations/:id/invitations` | `POST /v1/organizations/:id/invitations` |
+| Revoke invitation | `DELETE /api/organizations/:id/invitations/:invitation_id` | `DELETE /v1/organizations/:id/invitations/:invitation_id` |
+| Accept invitation | `POST /api/organization-invitations/accept` | `POST /v1/organization-invitations/accept` |
 
 - The selected organization is represented by `/console/organizations/:id`. It is derived from the
   current URL and is not written to a global cookie, `localStorage`, or a module-level store.
-- The browser service validates successful organization payloads before caching them. Invalid
-  successful JSON is a client-owned `CLIENT.INVALID_RESPONSE`, not an authenticated or empty state.
+- The browser service validates every successful organization, member, invitation, and ownership
+  payload before caching it. Public member and invitation objects are strict: unexpected fields
+  such as member email or invitation token produce client-owned `CLIENT.INVALID_RESPONSE` instead
+  of entering the UI cache.
 - Paginated calls explicitly preserve and validate the global `meta` and `links` envelope fields;
   the default Web response interceptor continues to extract `data` for non-paginated callers.
 - Unsafe same-origin routes reject cross-origin requests before reading the body. Both incoming
@@ -138,6 +148,9 @@ The first browser workflow owns these paths:
 - Development mock routes implement the same browser envelope and authorization shape only when
   the mock BFF and organization Web feature are enabled. They are replaceable development state,
   not production persistence.
+- Invitation acceptance reads a manually entered bearer token from a password input and sends it
+  only in the same-origin POST body. The Web feature never stores the token, adds it to a URL, or
+  renders it from invitation-management responses.
 
 ## Member Lifecycle
 
@@ -262,7 +275,11 @@ All failures use the global error envelope and `request_id` rules in [`README.md
 
 ## Deliberate Deferrals
 
-This remains a backend foundation, not yet a complete business-ready organization starter.
-Organization deletion, durable invitation delivery retries, permission policies, Web UI, and mock
-BFF parity remain explicit follow-up work. The starter must not be marked ready in the starter
-roadmap until those surfaces and extraction rules exist.
+The optional starter now owns the reusable organization lifecycle across API, fixed browser
+adapter, development mock, UI, contracts, tests, and downstream extraction guidance. It remains
+optional and must be enabled in both deployable halves.
+
+Organization deletion, durable invitation delivery retries, generalized permission policies, and
+arbitrary product resources remain deliberate follow-up work. Those concerns require separate
+domain decisions and must not be inferred from the organization-scoped `owner`, `admin`, and
+`member` lifecycle delivered here.

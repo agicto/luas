@@ -51,3 +51,7 @@ export function apiPaginatedResponse<T>(
     links,
   }, { headers });
 }
+
+export function apiNoContentResponse(headers?: HeadersInit): NextResponse {
+  return new NextResponse(null, { status: 204, headers });
+}

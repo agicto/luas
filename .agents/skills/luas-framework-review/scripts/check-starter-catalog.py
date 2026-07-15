@@ -151,6 +151,14 @@ def main() -> int:
             "NEXT_PUBLIC_OPTIONAL_FEATURES=organization",
             "GET /v1/organization-context",
             "GET /api/organization-context",
+            "GET /api/organizations/:id/members",
+            "PATCH /api/organizations/:id/members/:member_id",
+            "DELETE /api/organizations/:id/members/:member_id",
+            "POST /api/organizations/:id/ownership-transfer",
+            "GET /api/organizations/:id/invitations",
+            "POST /api/organizations/:id/invitations",
+            "DELETE /api/organizations/:id/invitations/:invitation_id",
+            "POST /api/organization-invitations/accept",
             "Organization-Id",
             "POST /v1/organizations/:id/invitations",
             "POST /v1/organization-invitations/accept",
@@ -208,6 +216,18 @@ def main() -> int:
             "getEnvelope<unknown>('/organizations'",
             "organizationPageEnvelopeSchema.safeParse",
             "'Organization-Id': String(organizationId)",
+            "async listMembers(",
+            "async changeMemberRole(",
+            "async removeMember(",
+            "async transferOwnership(",
+            "async listInvitations(",
+            "async invite(",
+            "async revokeInvitation(",
+            "async acceptInvitation(",
+            "organizationMemberPageEnvelopeSchema.safeParse",
+            "organizationInvitationPageEnvelopeSchema.safeParse",
+            "organizationInvitationCreateResultSchema.safeParse",
+            "organizationOwnershipTransferSchema.safeParse",
             "ClientErrorCode.INVALID_RESPONSE",
         ),
     )
@@ -219,6 +239,40 @@ def main() -> int:
             "iso.datetime({ offset: true })",
             "maximum(Number.MAX_SAFE_INTEGER)",
             "Array.from(value).length",
+            "organizationMemberSchema = strictObject",
+            "organizationInvitationSchema = strictObject",
+            "acceptOrganizationInvitationSchema = strictObject",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/server/organization-lifecycle-route.ts",
+        (
+            "listOrganizationMembersRoute(",
+            "updateOrganizationMemberRoute(",
+            "removeOrganizationMemberRoute(",
+            "transferOrganizationOwnershipRoute(",
+            "listOrganizationInvitationsRoute(",
+            "createOrganizationInvitationRoute(",
+            "revokeOrganizationInvitationRoute(",
+            "acceptOrganizationInvitationRoute(",
+            "guardSameOriginMutation(request)",
+            "path: 'organization-invitations/accept'",
+        ),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/server/mock-organization-store.ts",
+        (
+            "listMembers(",
+            "changeMemberRole(",
+            "removeMember(",
+            "transferOwnership(",
+            "listInvitations(",
+            "invite(",
+            "revokeInvitation(",
+            "acceptInvitation(",
+            "invitationToken:",
         ),
     )
     require_all(
@@ -261,12 +315,24 @@ def main() -> int:
     )
     require_all(
         failures,
+        "web/src/features/organization/components/organization-overview.tsx",
+        ("OrganizationMembers", "OrganizationInvitations", "TabsContent"),
+    )
+    require_all(
+        failures,
+        "web/src/features/organization/components/accept-organization-invitation-dialog.tsx",
+        ('type="password"', "acceptOrganizationInvitationSchema.safeParse"),
+    )
+    require_all(
+        failures,
         "web/docs/ORGANIZATIONS.md",
         (
             "OPTIONAL_STARTERS=organization",
             "NEXT_PUBLIC_OPTIONAL_FEATURES=organization",
             "API_ADAPTER_ENABLED=true",
             "selected organization URL",
+            "PII-minimized member directory",
+            "same-origin POST body",
             "Deliberate Deferrals",
         ),
     )
@@ -641,7 +707,7 @@ def main() -> int:
         "docs/STARTER_BUSINESS_ROADMAP.md",
         (
             "`organization` optional starter",
-            "Foundation only",
+            "Yes, when enabled",
             "request-scoped active context",
         ),
     )
