@@ -31,6 +31,9 @@ The container job verifies one artifact identity. `verify-container.sh` builds a
 `luas-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
 The typed-setting Compose step reuses the same immutable image with
 `OPTIONAL_STARTERS=organization,setting` and exercises its PostgreSQL/API/CLI lifecycle.
+The usage-metering Compose step reuses that image with `OPTIONAL_STARTERS=organization,usage` and
+proves exact replay, conflicting idempotency rejection, concurrent quota serialization, durable
+denials, private user/organization reads, account cleanup, pruning, and migration rollback/reapply.
 Standalone `make compose-check` has no explicit tag and therefore rebuilds the current worktree,
 preventing a stale local image from producing a false green result.
 

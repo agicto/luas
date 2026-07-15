@@ -22,6 +22,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/setting"
+	"github.com/zgiai/luas/api/internal/modules/usage"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter"
 )
@@ -94,7 +95,14 @@ func InitApplication() (*app.Application, error) {
 	settingRepository := setting.NewRepository(db)
 	settingService := setting.NewService(settingCatalog, settingRepository, configConfig)
 	settingHandler := setting.NewHandler(settingService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler)
+	usageCatalog, err := usage.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	usageRepository := usage.NewRepository(db)
+	usageService := usage.NewService(usageCatalog, usageRepository, configConfig)
+	usageHandler := usage.NewHandler(usageService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -112,6 +120,11 @@ func InitApplication() (*app.Application, error) {
 		AssetMaintainer:        assetService,
 		SettingReader:          settingService,
 		AppSettingWriter:       settingService,
+		UsageReader:            usageService,
+		UsageRecorder:          usageService,
+		UsageConsumer:          usageService,
+		UsageQuotaWriter:       usageService,
+		UsageMaintainer:        usageService,
 	}
 	return application, nil
 }
@@ -179,7 +192,14 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	settingRepository := setting.NewRepository(db)
 	settingService := setting.NewService(settingCatalog, settingRepository, cfg)
 	settingHandler := setting.NewHandler(settingService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler)
+	usageCatalog, err := usage.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	usageRepository := usage.NewRepository(db)
+	usageService := usage.NewService(usageCatalog, usageRepository, cfg)
+	usageHandler := usage.NewHandler(usageService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -197,6 +217,11 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		AssetMaintainer:        assetService,
 		SettingReader:          settingService,
 		AppSettingWriter:       settingService,
+		UsageReader:            usageService,
+		UsageRecorder:          usageService,
+		UsageConsumer:          usageService,
+		UsageQuotaWriter:       usageService,
+		UsageMaintainer:        usageService,
 	}
 	return application, nil
 }

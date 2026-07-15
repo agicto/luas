@@ -8,6 +8,7 @@ import {
   Building2,
   CheckCircle2,
   Mail,
+  Gauge,
   RefreshCw,
   Settings2,
   ShieldCheck,
@@ -47,6 +48,11 @@ const PermissionManagement = lazy(async () => {
 const OrganizationSettingPanel = lazy(async () => {
   const feature = await import('@/features/setting/components/organization-setting-panel');
   return { default: feature.OrganizationSettingPanel };
+});
+
+const OrganizationUsagePanel = lazy(async () => {
+  const feature = await import('@/features/usage/components/usage-panel');
+  return { default: feature.OrganizationUsagePanel };
 });
 
 export function OrganizationOverview({ organizationId }: { organizationId: number }) {
@@ -90,6 +96,7 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
   const canManageOrganization = context.role === 'owner' || context.role === 'admin';
   const permissionEnabled = isWebFeatureEnabled('permission');
   const settingEnabled = isWebFeatureEnabled('setting');
+  const usageEnabled = isWebFeatureEnabled('usage');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -169,6 +176,12 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
             <TabsTrigger value="settings">
               <SlidersHorizontal aria-hidden="true" />
               {t('tabs.settings')}
+            </TabsTrigger>
+          ) : null}
+          {usageEnabled && canManageOrganization ? (
+            <TabsTrigger value="usage">
+              <Gauge aria-hidden="true" />
+              {t('tabs.usage')}
             </TabsTrigger>
           ) : null}
         </TabsList>
@@ -261,6 +274,14 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
                 organizationId={context.organization_id}
                 canManage={canManageOrganization}
               />
+            </Suspense>
+          </TabsContent>
+        ) : null}
+
+        {usageEnabled && canManageOrganization ? (
+          <TabsContent value="usage">
+            <Suspense fallback={<OrganizationOverviewSkeleton />}>
+              <OrganizationUsagePanel organizationId={context.organization_id} />
             </Suspense>
           </TabsContent>
         ) : null}

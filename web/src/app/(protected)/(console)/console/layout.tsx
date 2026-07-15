@@ -13,6 +13,7 @@ import {
   Palette,
   Building2,
   FolderOpen,
+  Gauge,
 } from 'lucide-react';
 
 import { cn } from '@/utils';
@@ -58,6 +59,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
   const organizationEnabled = isWebFeatureEnabled('organization');
   const notificationEnabled = isWebFeatureEnabled('notification');
   const assetEnabled = isWebFeatureEnabled('asset');
+  const usageEnabled = isWebFeatureEnabled('usage');
 
   const mainNavItems: NavItem[] = [
     {
@@ -80,6 +82,15 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
             titleKey: 'nav.assets' as const,
             href: ROUTES.CONSOLE.ASSETS,
             icon: FolderOpen,
+          },
+        ]
+      : []),
+    ...(usageEnabled
+      ? [
+          {
+            titleKey: 'nav.usage' as const,
+            href: ROUTES.CONSOLE.USAGE,
+            icon: Gauge,
           },
         ]
       : []),

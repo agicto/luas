@@ -27,4 +27,9 @@ type Application struct {
 	AssetMaintainer        domain.AssetMaintainer
 	SettingReader          domain.SettingReader
 	AppSettingWriter       domain.AppSettingWriter
+	UsageReader            domain.UsageReader
+	UsageRecorder          domain.UsageRecorder
+	UsageConsumer          domain.UsageConsumer
+	UsageQuotaWriter       domain.UsageQuotaWriter
+	UsageMaintainer        domain.UsageMaintainer
 }

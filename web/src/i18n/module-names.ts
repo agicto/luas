@@ -9,6 +9,7 @@ export const AVAILABLE_MODULES = [
   'notification',
   'asset',
   'setting',
+  'usage',
   'settings',
   'errors',
   'metadata',

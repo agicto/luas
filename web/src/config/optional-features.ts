@@ -4,6 +4,7 @@ export const OPTIONAL_WEB_FEATURES = [
   'notification',
   'asset',
   'setting',
+  'usage',
 ] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
@@ -12,6 +13,7 @@ const knownFeatures = new Set<string>(OPTIONAL_WEB_FEATURES);
 const featureDependencies: Partial<Record<OptionalWebFeature, readonly OptionalWebFeature[]>> = {
   permission: ['organization'],
   setting: ['organization'],
+  usage: ['organization'],
 };
 
 export function parseOptionalWebFeatures(value: string): readonly OptionalWebFeature[] {

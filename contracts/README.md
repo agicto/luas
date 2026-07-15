@@ -25,6 +25,9 @@ and deletion semantics are defined in [`ASSETS.md`](ASSETS.md).
 Code-owned app, organization, and user setting definitions, optimistic concurrency, public ETag
 caching, private responses, and reset history are defined in [`SETTINGS.md`](SETTINGS.md).
 
+Trusted code-owned usage events, finite UTC counters, exact idempotency, atomic quota decisions,
+private current-period summaries, and retention are defined in [`USAGE.md`](USAGE.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

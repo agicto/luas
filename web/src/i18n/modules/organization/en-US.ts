@@ -34,6 +34,7 @@ const messages = {
     invitations: 'Invitations',
     permissions: 'Permissions',
     settings: 'Preferences',
+    usage: 'Usage',
   },
   membersTitle: 'Organization members',
   membersDescription: 'Review member identity and manage organization access within your role.',

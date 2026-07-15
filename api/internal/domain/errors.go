@@ -66,6 +66,15 @@ var (
 	ErrSettingVersionConflict      = errors.New("setting version conflict")
 	ErrSettingPreconditionRequired = errors.New("setting version precondition is required")
 
+	// Usage errors
+	ErrUsageMetricNotFound       = errors.New("usage metric not found")
+	ErrUsageInvalidEvent         = errors.New("usage event is invalid")
+	ErrUsageEventOutsideWindow   = errors.New("usage event is outside the accepted time window")
+	ErrUsageIdempotencyConflict  = errors.New("usage event idempotency conflict")
+	ErrUsageQuotaExceeded        = errors.New("usage quota exceeded")
+	ErrUsageQuotaVersionConflict = errors.New("usage quota version conflict")
+	ErrUsagePreconditionRequired = errors.New("usage quota version precondition is required")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

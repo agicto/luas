@@ -389,7 +389,7 @@ def main() -> int:
             "`asset` optional starter",
             "`setting` optional starter",
             "Yes, when enabled",
-            "Build `usage` next",
+            "`usage` optional starter",
         ),
     )
     require_all(

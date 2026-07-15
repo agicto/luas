@@ -44,3 +44,8 @@ jobs:
         env:
           OPTIONAL_STARTERS: organization,setting
         run: bash scripts/verify-compose.sh luas-api:ci
+
+      - name: Verify usage metering Compose lifecycle
+        env:
+          OPTIONAL_STARTERS: organization,usage
+        run: bash scripts/verify-compose.sh luas-api:ci

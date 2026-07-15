@@ -33,6 +33,7 @@ describe('client i18n message boundaries', () => {
       notification: ['notification'],
       asset: ['asset'],
       setting: ['setting'],
+      usage: ['usage'],
       i18nTest: ['test'],
     });
   });
@@ -72,6 +73,7 @@ describe('client i18n message boundaries', () => {
       'app/(protected)/(console)/console/organizations/layout.tsx'
     );
     const settingsLayout = readSource('app/(protected)/(console)/console/settings/layout.tsx');
+    const usageLayout = readSource('app/(protected)/(console)/console/usage/layout.tsx');
     const i18nTestLayout = readSource('app/(protected)/(devtools)/i18n-test/layout.tsx');
 
     expect(rootLayout).toContain('CLIENT_MESSAGE_NAMESPACES.global');
@@ -84,6 +86,8 @@ describe('client i18n message boundaries', () => {
     expect(settingsLayout).toContain('CLIENT_MESSAGE_NAMESPACES.setting');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.organization');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.setting');
+    expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.usage');
+    expect(usageLayout).toContain('CLIENT_MESSAGE_NAMESPACES.usage');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');
   });
 });

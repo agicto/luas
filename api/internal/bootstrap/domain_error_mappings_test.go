@@ -218,6 +218,48 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeSettingInvalidValue,
 		},
 		{
+			name:       "usage metric is not registered",
+			err:        domain.ErrUsageMetricNotFound,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeUsageMetricNotFound,
+		},
+		{
+			name:       "usage idempotency conflicts",
+			err:        domain.ErrUsageIdempotencyConflict,
+			statusCode: http.StatusConflict,
+			errorCode:  domain.CodeUsageIdempotencyConflict,
+		},
+		{
+			name:       "usage quota version is stale",
+			err:        domain.ErrUsageQuotaVersionConflict,
+			statusCode: http.StatusPreconditionFailed,
+			errorCode:  domain.CodeUsageQuotaVersionConflict,
+		},
+		{
+			name:       "usage event is invalid",
+			err:        domain.ErrUsageInvalidEvent,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodeUsageInvalidEvent,
+		},
+		{
+			name:       "usage event is outside the accepted window",
+			err:        domain.ErrUsageEventOutsideWindow,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodeUsageEventOutsideWindow,
+		},
+		{
+			name:       "usage quota precondition is required",
+			err:        domain.ErrUsagePreconditionRequired,
+			statusCode: http.StatusPreconditionRequired,
+			errorCode:  domain.CodeUsagePreconditionRequired,
+		},
+		{
+			name:       "usage quota is exceeded",
+			err:        domain.ErrUsageQuotaExceeded,
+			statusCode: http.StatusTooManyRequests,
+			errorCode:  domain.CodeUsageQuotaExceeded,
+		},
+		{
 			name:       "setting version is stale",
 			err:        domain.ErrSettingVersionConflict,
 			statusCode: http.StatusPreconditionFailed,

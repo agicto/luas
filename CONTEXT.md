@@ -124,6 +124,27 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : The value returned by combining a setting definition with its current override or code default.
   It carries source and monotonic version metadata so clients can cache and mutate it safely.
 
+**Usage metric**
+: A code-owned additive measure such as `api.requests` or `ai.input_tokens`. A metric owns its
+  semantic key, unit, UTC aggregation period, optional default hard limit, and finite dimension
+  schema. It is not an observability metric name, price, invoice item, or runtime-created meter.
+
+**Usage event**
+: One immutable, internally reported usage fact or correction for a metric and a user or
+  organization subject. The pair of source and event ID owns retry idempotency. Arbitrary browser
+  ingestion, payload JSON, identifiers in dimensions, and provider billing events are outside this
+  meaning.
+
+**Usage counter**
+: The durable non-negative aggregate for one usage metric, subject, and UTC calendar period. A
+  counter is updated atomically with its receipt and survives receipt pruning; it is not an HTTP
+  rate-limit bucket or an analytics time series.
+
+**Usage quota**
+: The optional hard integer cap resolved from a metric default and a monotonic subject override.
+  Atomic consumption may reject work that would cross the cap. A quota is not a plan, grant,
+  entitlement, balance, price, or payment-provider object.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -160,6 +181,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   operations. Signed transfer URLs are short-lived bearer credentials, not durable asset identity.
 - A setting definition owns type/default/visibility in code; a setting override owns one durable
   scoped choice; an effective setting exposes the resolved value and version.
+- A usage metric defines what can be counted; a usage event records one idempotent fact; a usage
+  counter aggregates one subject period; a usage quota optionally gates atomic consumption.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -185,3 +208,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   override. Process configuration is restart-scoped typed infrastructure authority; secrets stay in
   environment/provider stores; permissions, entitlements, usage limits, and notification channel
   preferences remain with their owning starters.
+- **usage vs telemetry/rate limit/billing**: Usage is durable business accounting for a code-owned
+  metric and subject. Telemetry explains system operation, HTTP rate limits protect transport,
+  quotas gate a usage counter, and billing converts reviewed usage into provider-specific money.
+  Do not use these terms interchangeably.

@@ -9,13 +9,14 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | Surface | Current state | Ready for a new project? | Notes |
 |---|---|---|---|
 | `user` default starter | API registration, login, JWT auth, profile, password change, account deletion, password reset, auth abuse guard, seed user; Web mock auth plus same-origin production adapter | Yes | The adapter maps the browser contract to Go, keeps JWTs HttpOnly, preserves auth errors and rate-limit identity, and server-resolves protected sessions. Stateless logout cannot revoke an already issued JWT; see [`contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md). |
-| `apikey` default starter | User-owned API key create/list/revoke, atomic hash-only persistence, exact scope guard, one-time plaintext, fixed production browser adapter, strict Web management UI, development mock | Yes | Good for developer tools, integrations, and AI/API products. Scopes attenuate the owner and do not replace RBAC. Usage metering is not included yet; see [`contracts/API_KEYS.md`](../contracts/API_KEYS.md). |
+| `apikey` default starter | User-owned API key create/list/revoke, atomic hash-only persistence, exact scope guard, one-time plaintext, fixed production browser adapter, strict Web management UI, development mock | Yes | Good for developer tools, integrations, and AI/API products. Scopes attenuate the owner and do not replace RBAC. The optional usage starter supplies owner-level metering and quota seams; API-key attribution remains an explicit producer decision. See [`contracts/API_KEYS.md`](../contracts/API_KEYS.md). |
 | `audit` default starter | Write-request audit middleware, route metadata, user-facing audit history, change metadata seam | Yes | Strong compliance baseline. It becomes more valuable once organization, permission, and resource ownership starters exist. |
 | `organization` optional starter | Additive activation, organization/owner transaction, membership-scoped reads, request-scoped active context, owner/admin rename, invitation lifecycle, PII-minimized member directory, role/removal/leave policy, atomic ownership transfer, audit metadata, account-deletion membership guards; optional Web directory/create/URL switcher/context/profile/member/invitation/ownership workflow | Yes, when enabled | API, strict Web services, fixed production adapters, development mock state, role-aware UI, contracts, tests, and extraction guidance cover the reusable organization lifecycle. It remains opt-in and deliberately excludes organization deletion, durable email retries, and generalized RBAC. See [`contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md). |
 | `permission` optional starter | Organization-scoped access roles, code-owned exact permission catalog, current-persistence authorizer, owner bypass, delegated-management dominance checks, transactional assignment replacement, route guard, audit metadata; optional strict Web role/member management and mock parity | Yes, when enabled with `organization` | It is allow-only and default-deny, with no direct user grants, wildcards, role hierarchy, explicit deny, or resource-instance policy language. Product modules extend the catalog at assembly time and keep ownership checks local. See [`contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md). |
 | `notification` optional starter | Idempotent internal publication, user preferences, in-app records/read state, durable email delivery ledger, lease worker, stable failure codes; optional strict Web notification center and mock parity | Yes, when enabled | It is user-scoped and independent of organization. Required channels can override future-delivery preferences, email retries use stable provider idempotency, and no public publish endpoint or recipient/provider detail enters the browser contract. See [`contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md). |
 | `asset` optional starter | User-owned private metadata, idempotent upload intents, staging-to-final promotion, bounded content inspection, short-lived transfer grants, lifecycle leases, deletion/account guard, cleanup command; optional strict Web console and bounded mock parity | Yes, when enabled | It is user-scoped and independent of organization. Local rooted storage is development-only; production requires explicit R2. It deliberately excludes public/sharing semantics, transformations, antivirus claims, multipart upload, and usage quotas. See [`contracts/ASSETS.md`](../contracts/ASSETS.md). |
 | `setting` optional starter | Finite code-owned scalar catalog, app/organization/user overrides, default resolution, monotonic CAS versions, public app ETag caching, private scope isolation, value-free audit metadata, operator CLI, and transactional account cleanup; optional strict Web preferences and bounded mock parity | Yes, when enabled with `organization` | It deliberately excludes runtime definition creation, arbitrary JSON, secrets, remote feature-flag rollout, entitlements, usage limits, and notification preferences. See [`contracts/SETTINGS.md`](../contracts/SETTINGS.md). |
+| `usage` optional starter | Finite code-owned user/organization metrics, exact event idempotency, UTC counters, trusted record and atomic consume seams, versioned quota overrides, retention pruning, operator CLI, account cleanup, and private read-only Web summaries | Yes, when enabled with `organization` | Safe defaults are unlimited. It rejects arbitrary metrics and dimensions, has no public ingestion endpoint, and deliberately excludes billing, plans, entitlements, provider events, and browser quota administration. See [`contracts/USAGE.md`](../contracts/USAGE.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email has typed all-or-none config, cancellation, a provider budget, bounded responses, and PII-safe errors; notification adds durable delivery ownership. Storage now has a provider-neutral object seam, rooted private local adapter, and AWS SDK Go v2 R2 adapter; asset adds business ownership. The memory workflow queue remains process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -24,15 +25,15 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P2 | API keys exist without usage metering, quota, billing, or plan limits. | Developer/API products need usage visibility and limits before production launch. | Build `usage` first, then keep `billing` optional and provider-adapted. |
 | P2 | Event and workflow capabilities exist, but no webhook delivery starter owns subscriptions, signing, retry, and delivery logs. | Integration-heavy apps need outbound webhooks early. | Build a `webhook` optional starter using workflow retry primitives and audit logs. |
 | P3 | AI capability exists, but no starter owns conversations, prompts, runs, evaluations, or cost tracking. | AI-first apps still need repeated product scaffolding. | Build an `ai-workspace` optional starter only after organization and usage seams are settled. |
+| P3 | Usage is intentionally provider-neutral and has no pricing, invoice, tax, subscription, or payment lifecycle. | Monetized products still need product-specific commercial policy before launch. | Keep `billing` optional and provider-adapted after pricing and entitlement semantics are explicit. |
 
 ## Recommended Starter Sequence
 
-The production auth adapter plus the organization, permission, notification, asset, and setting
-optional starters are complete. Keep the sequence below as an ownership map; the next undelivered
-boundary is usage metering and quota decisions.
+The production auth adapter plus the organization, permission, notification, asset, setting, and
+usage optional starters are complete. Keep the sequence below as an ownership map; the next
+undelivered boundary is outbound webhook delivery.
 
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
@@ -67,9 +68,13 @@ boundary is usage metering and quota decisions.
      rollout deliberately outside the starter.
 
 6. `usage` optional starter before `billing`
-   - Owns usage events, counters, quotas, and limit decisions.
-   - Billing providers can be added later as adapters around a stable usage seam.
-   - API keys, AI calls, storage, and workflows can all emit usage.
+   - Delivered across a finite API catalog, exact retained idempotency, transactional counters,
+     atomic consume decisions, quota CAS/tombstones, retention, operator CLI, account cleanup,
+     strict private Web adapters/mock/UI, tests, docs, and governance.
+   - Owns trusted user/organization facts and hard-limit decisions. API keys, AI calls, storage, and
+     workflows can emit through domain seams without importing the module.
+   - Keeps arbitrary analytics, browser ingestion, entitlements, prices, plans, invoices, and
+     payment-provider vocabulary outside the starter.
 
 7. `webhook` optional starter
    - Owns endpoint subscriptions, signing secrets, delivery attempts, retry policy, and delivery logs.
@@ -116,8 +121,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Build `usage` next, before billing. Setting now settles finite app/organization/user schemas,
-public-versus-private visibility, optimistic concurrency, cache revalidation, value-free audit
-metadata, and account deletion behavior without creating an arbitrary JSON store. Usage should next
-define idempotent event ingestion, dimensions, aggregation windows, late-event policy, quotas,
-atomic limit decisions, retention, and privacy before payment-provider vocabulary enters core code.
+Build `webhook` next. Usage now settles finite metric identity, trusted idempotent events, UTC
+aggregation, bounded late facts, atomic hard-limit decisions, quota concurrency, retention, privacy,
+and account deletion without importing billing vocabulary. Webhook should next define endpoint
+ownership, secret handling and rotation, canonical signing, durable delivery attempts, retry and
+lease semantics, response-size limits, redaction, disable policy, and operator replay behavior.

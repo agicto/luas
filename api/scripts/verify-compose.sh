@@ -101,6 +101,9 @@ asset_account_race_flow="skipped"
 setting_flow="skipped"
 setting_migration_flow="skipped"
 setting_account_cleanup_flow="skipped"
+usage_flow="skipped"
+usage_migration_flow="skipped"
+usage_account_cleanup_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,notification,*)
@@ -557,6 +560,174 @@ raise SystemExit(0 if item["scope"] == "organization" and item["value"] == "zh-H
       "http://127.0.0.1:${published_port}/v1/settings/user")"
     [[ "${setting_post_migrate_status}" == "200" ]] || fail "setting list after migration re-apply returned HTTP ${setting_post_migrate_status}"
     setting_migration_flow="down:${setting_tables_down}/up:${setting_tables_up}/http:${setting_post_migrate_status}"
+    ;;
+esac
+
+case ",${OPTIONAL_STARTERS:-}," in
+  *,usage,*)
+    command -v python3 >/dev/null 2>&1 || fail "python3 is required for usage response checks"
+
+    read -r usage_user_id usage_user_token < <(
+      register_and_login_user "compose_usage_user" "compose-usage-user@example.com" "usage-user"
+    )
+    [[ -n "${usage_user_id}" && -n "${usage_user_token}" ]] || fail "usage user login response is incomplete"
+
+    if ! compose exec -T api /app/luas usage:quota:set \
+      --scope=user \
+      --subject-id="${usage_user_id}" \
+      --metric=api.requests \
+      --limit=3 \
+      --expected-version=0 >"${TMP_DIR}/usage-quota-set.log" 2>&1; then
+      fail "usage:quota:set failed"
+    fi
+    grep -q 'version 1' "${TMP_DIR}/usage-quota-set.log" || fail "usage:quota:set did not report version 1"
+
+    for replay in 1 2; do
+      (
+        set +e
+        compose exec -T api /app/luas usage:consume \
+          --scope=user \
+          --subject-id="${usage_user_id}" \
+          --metric=api.requests \
+          --quantity=2 \
+          --source=compose.concurrent \
+          --event-id=exact-replay >"${TMP_DIR}/usage-replay-${replay}.log" 2>&1
+        printf '%s\n' "$?" >"${TMP_DIR}/usage-replay-${replay}.status"
+      ) &
+    done
+    wait
+    usage_replay_successes="$(awk '$1 == 0 { count++ } END { print count + 0 }' "${TMP_DIR}"/usage-replay-*.status)"
+    [[ "${usage_replay_successes}" == "2" ]] || fail "concurrent exact usage replay returned ${usage_replay_successes}/2 successes"
+    usage_exact_receipts="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
+    usage_counter_after_replay="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    [[ "${usage_exact_receipts}" == "1" && "${usage_counter_after_replay}" == "2" ]] ||
+      fail "exact usage replay produced ${usage_exact_receipts} receipt(s) and counter ${usage_counter_after_replay}"
+
+    set +e
+    compose exec -T api /app/luas usage:consume \
+      --scope=user \
+      --subject-id="${usage_user_id}" \
+      --metric=api.requests \
+      --quantity=1 \
+      --source=compose.concurrent \
+      --event-id=exact-replay >"${TMP_DIR}/usage-conflict.log" 2>&1
+    usage_conflict_status="$?"
+    set -e
+    [[ "${usage_conflict_status}" != "0" ]] || fail "usage idempotency conflict unexpectedly succeeded"
+    grep -qi 'usage event idempotency conflict' "${TMP_DIR}/usage-conflict.log" || fail "usage idempotency conflict returned the wrong error"
+    usage_receipts_after_conflict="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
+    usage_counter_after_conflict="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    [[ "${usage_receipts_after_conflict}" == "1" && "${usage_counter_after_conflict}" == "2" ]] ||
+      fail "usage idempotency conflict changed receipt count or counter"
+
+    for consumer in 1 2 3 4; do
+      (
+        set +e
+        compose exec -T api /app/luas usage:consume \
+          --scope=user \
+          --subject-id="${usage_user_id}" \
+          --metric=api.requests \
+          --quantity=1 \
+          --source=compose.quota \
+          --event-id="consumer-${consumer}" >"${TMP_DIR}/usage-consumer-${consumer}.log" 2>&1
+        printf '%s\n' "$?" >"${TMP_DIR}/usage-consumer-${consumer}.status"
+      ) &
+    done
+    wait
+    usage_consume_successes="$(awk '$1 == 0 { count++ } END { print count + 0 }' "${TMP_DIR}"/usage-consumer-*.status)"
+    usage_consume_denials="$(grep -il 'usage quota exceeded' "${TMP_DIR}"/usage-consumer-*.log | wc -l | tr -d ' ')"
+    [[ "${usage_consume_successes}" == "1" && "${usage_consume_denials}" == "3" ]] ||
+      fail "concurrent usage quota expected one success and three denials"
+    usage_final_counter="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    usage_denied_receipts="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE scope = 'user' AND subject_id = ${usage_user_id} AND decision = 'denied';")"
+    [[ "${usage_final_counter}" == "3" && "${usage_denied_receipts}" == "3" ]] ||
+      fail "usage quota ended at counter ${usage_final_counter} with ${usage_denied_receipts} denied receipt(s)"
+
+    usage_user_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/usage-user.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${usage_user_token}" \
+      "http://127.0.0.1:${published_port}/v1/usage/user")"
+    [[ "${usage_user_status}" == "200" ]] || fail "user usage list returned HTTP ${usage_user_status}"
+    if ! python3 -c '
+import json, sys
+values = json.load(open(sys.argv[1]))["data"]
+expected = {"api.requests", "ai.input_tokens", "ai.output_tokens", "asset.transfer_bytes", "workflow.runs"}
+item = next(value for value in values if value["metric"] == "api.requests")
+forbidden = {"event_id", "source", "fingerprint", "dimensions"}
+valid = (
+    len(values) == 5
+    and {value["metric"] for value in values} == expected
+    and item["used"] == 3
+    and item["limit"] == 3
+    and item["remaining"] == 0
+    and item["quota_source"] == "override"
+    and not any(forbidden.intersection(value) for value in values)
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/usage-user.json"; then
+      fail "user usage summary violates finite catalog, quota, or privacy semantics"
+    fi
+
+    read -r usage_owner_id usage_owner_token < <(
+      register_and_login_user "compose_usage_owner" "compose-usage-owner@example.com" "usage-owner"
+    )
+    usage_organization_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/usage-organization-create.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${usage_owner_token}" \
+      --data '{"name":"Compose Usage Organization","slug":"compose-usage-organization"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations")"
+    [[ "${usage_organization_status}" == "201" ]] || fail "usage organization creation returned HTTP ${usage_organization_status}"
+    usage_organization_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "${TMP_DIR}/usage-organization-create.json")"
+    usage_organization_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/usage-organization.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${usage_owner_token}" \
+      --header "Organization-Id: ${usage_organization_id}" \
+      "http://127.0.0.1:${published_port}/v1/organization-usage")"
+    [[ "${usage_organization_list_status}" == "200" ]] || fail "organization usage list returned HTTP ${usage_organization_list_status}"
+    if ! python3 -c 'import json, sys; values = json.load(open(sys.argv[1]))["data"]; raise SystemExit(0 if len(values) == 5 and all(value["scope"] == "organization" and value["used"] == 0 for value in values) else 1)' "${TMP_DIR}/usage-organization.json"; then
+      fail "organization usage defaults violate scope or finite catalog semantics"
+    fi
+
+    usage_rows_before_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
+    [[ "${usage_rows_before_delete}" -gt "0" ]] || fail "usage account cleanup fixture has no owned rows"
+    usage_account_delete_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --request DELETE \
+      --header "Authorization: Bearer ${usage_user_token}" \
+      "http://127.0.0.1:${published_port}/v1/users/account")"
+    [[ "${usage_account_delete_status}" == "204" ]] || fail "usage user account deletion returned HTTP ${usage_account_delete_status}"
+    usage_rows_after_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
+    [[ "${usage_rows_after_delete}" == "0" ]] || fail "account deletion left ${usage_rows_after_delete} user usage row(s)"
+    usage_account_cleanup_flow="before:${usage_rows_before_delete}/delete:${usage_account_delete_status}/after:${usage_rows_after_delete}"
+
+    if ! compose exec -T api /app/luas usage:prune \
+      --before=2000-01-01T00:00:00Z >"${TMP_DIR}/usage-prune.log" 2>&1; then
+      fail "usage:prune failed"
+    fi
+    usage_flow="replay:${usage_replay_successes}/receipts:${usage_exact_receipts}/conflict:${usage_conflict_status}/quota:${usage_consume_successes}/${usage_consume_denials}/counter:${usage_final_counter}/http:${usage_user_status}/${usage_organization_list_status}"
+
+    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/usage-rollback.log" 2>&1; then
+      fail "usage migration rollback failed"
+    fi
+    usage_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
+    [[ "${usage_tables_down}" == "0" ]] || fail "usage migration rollback left ${usage_tables_down} table(s)"
+    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/usage-migrate.log" 2>&1; then
+      fail "usage migration re-apply failed"
+    fi
+    usage_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
+    [[ "${usage_tables_up}" == "3" ]] || fail "usage migration re-apply created ${usage_tables_up}/3 tables"
+    usage_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/usage-post-migrate.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${usage_owner_token}" \
+      "http://127.0.0.1:${published_port}/v1/usage/user")"
+    [[ "${usage_post_migrate_status}" == "200" ]] || fail "usage list after migration re-apply returned HTTP ${usage_post_migrate_status}"
+    usage_migration_flow="down:${usage_tables_down}/up:${usage_tables_up}/http:${usage_post_migrate_status}"
     ;;
 esac
 
@@ -1265,4 +1436,7 @@ printf 'compose asset/account race: %s\n' "${asset_account_race_flow}"
 printf 'compose setting flow: %s\n' "${setting_flow}"
 printf 'compose setting migration flow: %s\n' "${setting_migration_flow}"
 printf 'compose setting/account cleanup: %s\n' "${setting_account_cleanup_flow}"
+printf 'compose usage flow: %s\n' "${usage_flow}"
+printf 'compose usage migration flow: %s\n' "${usage_migration_flow}"
+printf 'compose usage/account cleanup: %s\n' "${usage_account_cleanup_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

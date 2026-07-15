@@ -21,6 +21,7 @@ export const ROUTES = {
     ORGANIZATIONS: '/console/organizations',
     ORGANIZATION: '/console/organizations/:organizationId',
     ASSETS: '/console/assets',
+    USAGE: '/console/usage',
     SETTINGS: '/console/settings',
   },
 

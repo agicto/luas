@@ -116,7 +116,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles. All four are ready when explicitly enabled in both halves; settings, usage, billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions. All six are ready when explicitly enabled in both halves; billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -698,7 +698,9 @@ Recommended slice:
 3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py`.
 4. Keep the delivered `notification` starter user-scoped, idempotent, lease-driven, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py`.
 5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py`.
-6. Build typed settings next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
+6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py`.
+7. Keep the delivered `usage` starter finite, trusted, idempotent, atomic, retention-bounded, and covered by `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py`.
+8. Build outbound webhook delivery next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 
 Verification:
 

@@ -28,6 +28,7 @@ const messages = {
     invitations: '邀请',
     permissions: '权限',
     settings: '偏好',
+    usage: '用量',
   },
   membersTitle: '组织成员',
   membersDescription: '查看成员身份，并根据你的角色管理组织访问权限。',

@@ -172,6 +172,33 @@ headers, credentials, and redirects. Development uses a bounded per-user mock ob
 production uses fixed same-origin management adapters and direct short-lived R2 grants. See
 [docs/ASSETS.md](docs/ASSETS.md) and [../contracts/ASSETS.md](../contracts/ASSETS.md).
 
+## Setting Feature
+
+Setting depends on organization and must be selected in both deployable halves:
+
+```env
+OPTIONAL_STARTERS=organization,setting
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization,setting
+```
+
+The console validates the finite typed catalog, preserves ETag/version preconditions, and exposes
+only real user and organization preferences. See [docs/SETTINGS.md](docs/SETTINGS.md) and
+[../contracts/SETTINGS.md](../contracts/SETTINGS.md).
+
+## Usage Feature
+
+Usage also depends on organization and is read-only in the browser:
+
+```env
+OPTIONAL_STARTERS=organization,usage
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization,usage
+```
+
+The console validates the complete finite metric catalog and displays private current-period user
+or owner/admin organization summaries. Event recording, atomic consumption, quota writes, receipts,
+and billing semantics remain server-side. See [docs/USAGE.md](docs/USAGE.md) and
+[../contracts/USAGE.md](../contracts/USAGE.md).
+
 ## HTTP Contract
 
 The default request client is configured by `NEXT_PUBLIC_API_URL`. Error handling understands the Go API error shape:

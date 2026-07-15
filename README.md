@@ -51,6 +51,8 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [contracts/PERMISSIONS.md](contracts/PERMISSIONS.md) — organization-scoped exact permission and delegated-management contract.
 - [contracts/NOTIFICATIONS.md](contracts/NOTIFICATIONS.md) — user notification, preference, read-state, and durable delivery contract.
 - [contracts/ASSETS.md](contracts/ASSETS.md) — private user asset lifecycle, secure object transfer, inspection, and deletion contract.
+- [contracts/SETTINGS.md](contracts/SETTINGS.md) — finite typed settings, visibility, optimistic concurrency, and reset contract.
+- [contracts/USAGE.md](contracts/USAGE.md) — trusted usage metering, atomic quota decisions, retention, and read-only browser contract.
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — what to keep, delete, or replace when turning Luas into a downstream app.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — ready-to-use starter review and prioritized reusable business starter roadmap.

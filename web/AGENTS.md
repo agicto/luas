@@ -63,6 +63,7 @@ src/
 │   ├── organization/       # optional browser workflow, fixed adapter routes, mock state
 │   ├── asset/              # optional private upload workflow and ephemeral transfer grants
 │   ├── setting/            # optional typed preferences, conditional writes, fixed adapter/mock
+│   ├── usage/              # optional finite read-only usage summaries and fixed adapter/mock
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
 ├── constants/              # Route constants, enums
@@ -123,6 +124,10 @@ state, uses only fixed management adapters, and validates every transfer URL bef
 The organization-dependent setting workflow validates the finite API catalog at the network
 boundary, preserves ETag/version semantics, and exposes only real user/organization preferences.
 See `docs/SETTINGS.md` and `../contracts/SETTINGS.md`.
+
+The organization-dependent usage workflow validates one finite current-period catalog, keeps event
+ingestion and quota mutation server-side, and exposes only private user or managed-organization
+summaries. See `docs/USAGE.md` and `../contracts/USAGE.md`.
 
 The default API key browser workflow uses the same fixed production adapter and a development mock
 store. Plaintext is returned only by create and kept in dialog-local state; list contracts reject

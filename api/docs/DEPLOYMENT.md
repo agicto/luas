@@ -72,6 +72,11 @@ three notification tables down, reapplies them, and confirms the HTTP surface re
 When `OPTIONAL_STARTERS` contains `asset`, the verifier creates an upload intent, transfers bounded
 bytes through the local token adapter, completes inspection, downloads and compares the attachment,
 deletes it, verifies post-delete non-disclosure, and exercises the asset migration down/up cycle.
+When it contains `organization,setting`, the verifier exercises public ETag revalidation, private
+user/organization reads, strong versioned set/reset behavior, account cleanup, and migration
+rollback/reapply. When it contains `organization,usage`, the verifier races exact replays and
+hard-quota consumers, requires one accepted consume and durable denials at the limit, verifies
+private user/organization summaries, account cleanup, receipt pruning, and migration rollback/reapply.
 
 ## Local Compose
 
@@ -88,7 +93,9 @@ docker compose down
 Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local credentials with
 `JWT_SECRET` and `LUAS_DB_PASSWORD`. Set `OPTIONAL_STARTERS=organization` to exercise the optional
 ownership kernel, `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state, or
-`OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage; the API
+`OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage. Use
+`OPTIONAL_STARTERS=organization,setting` for typed preferences or
+`OPTIONAL_STARTERS=organization,usage` for trusted metering and quota checks; the API
 process and its local startup migration receive the same value.
 `ORGANIZATION_INVITATION_TTL` is forwarded to the API container and defaults to `168h`.
 `docker compose down --volumes` also deletes local database data.

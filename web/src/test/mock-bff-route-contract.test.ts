@@ -26,6 +26,7 @@ const notificationRouteModule = resolve(
 );
 const assetRouteModule = resolve(process.cwd(), 'src/features/asset/server/asset-route.ts');
 const settingRouteModule = resolve(process.cwd(), 'src/features/setting/server/setting-route.ts');
+const usageRouteModule = resolve(process.cwd(), 'src/features/usage/server/usage-route.ts');
 
 const forbiddenRoutePatterns = [
   {
@@ -153,6 +154,18 @@ function delegatesSettingGuard(path: string, handler: RouteHandlerSource): boole
   );
 }
 
+function isUsageRoute(path: string): boolean {
+  const route = relativeRoute(path);
+  return route === 'usage/user/route.ts' || route === 'organization-usage/route.ts';
+}
+
+function delegatesUsageGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    isUsageRoute(path) &&
+    /\b(?:organizationUsage|userUsage)Route\b/.test(handler.source)
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -196,7 +209,8 @@ describe('mock BFF route contract', () => {
             !delegatesPermissionGuard(path, handler) &&
             !delegatesNotificationGuard(path, handler) &&
             !delegatesAssetGuard(path, handler) &&
-            !delegatesSettingGuard(path, handler)
+            !delegatesSettingGuard(path, handler) &&
+            !delegatesUsageGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -214,6 +228,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesNotificationGuard(path, handler))
         .filter(handler => !delegatesAssetGuard(path, handler))
         .filter(handler => !delegatesSettingGuard(path, handler))
+        .filter(handler => !delegatesUsageGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -312,6 +327,29 @@ describe('mock BFF route contract', () => {
       );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every usage route as a private no-store response', () => {
+    const offenders = routeFiles.filter(isUsageRoute).flatMap(path =>
+      routeHandlers(path)
+        .filter(handler => !handler.source.includes('privateUsageResponse('))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps usage reads behind feature availability and authentication', () => {
+    const source = readFileSync(usageRouteModule, 'utf8');
+    const resolver = internalFunction(source, 'resolveAuthenticatedUsageRoute');
+    expect(resolver).toContain('resolveUsageRoute()');
+    expect(resolver).toContain('authenticateUsageBackend(');
+    expect(exportedFunction(source, 'userUsageRoute')).toContain(
+      'resolveAuthenticatedUsageRoute('
+    );
+    expect(exportedFunction(source, 'organizationUsageRoute')).toContain(
+      'resolveOrganizationUsageTarget('
+    );
   });
 
   it('keeps delegated setting writes ordered behind availability and origin guards', () => {

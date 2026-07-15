@@ -38,12 +38,14 @@ Workspace-level architecture docs:
 - [contracts/NOTIFICATIONS.md](contracts/NOTIFICATIONS.md) — optional user notifications, preferences, read state, durable email delivery, and browser adapter
 - [contracts/ASSETS.md](contracts/ASSETS.md) — optional user assets, secure transfer grants, content inspection, cleanup, and browser adapter
 - [contracts/SETTINGS.md](contracts/SETTINGS.md) — optional typed app/organization/user settings, ETags, versions, audit, and deletion
+- [contracts/USAGE.md](contracts/USAGE.md) — optional trusted usage events, atomic quota decisions, private summaries, and retention
 - [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) — backend module checklist
 - [api/docs/CONFIGURATION.md](api/docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets
 - [api/docs/EMAIL.md](api/docs/EMAIL.md) — context-aware provider delivery, timeout, privacy, and best-effort ownership boundary
 - [api/docs/NOTIFICATIONS.md](api/docs/NOTIFICATIONS.md) — notification publication, lease worker, delivery privacy, and replacement boundary
 - [api/docs/ASSETS.md](api/docs/ASSETS.md) — asset/object distinction, secure providers, inspection, cleanup, and replacement boundary
 - [api/docs/SETTINGS.md](api/docs/SETTINGS.md) — typed catalog extension, CAS persistence, CLI, privacy, and account cleanup
+- [api/docs/USAGE.md](api/docs/USAGE.md) — usage catalog extension, record/consume seams, quota CAS, CLI, retention, and replacement
 - [api/docs/OBSERVABILITY.md](api/docs/OBSERVABILITY.md) — request-log minimization, redaction, exception diagnostics, parameterized SQL, and audit privacy
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
@@ -56,6 +58,7 @@ Workspace-level architecture docs:
 - [web/docs/NOTIFICATIONS.md](web/docs/NOTIFICATIONS.md) — optional notification center, adapter/mock ownership, strict parsing, and removal
 - [web/docs/ASSETS.md](web/docs/ASSETS.md) — optional private asset workflow, ephemeral transfer grants, mock parity, and removal
 - [web/docs/SETTINGS.md](web/docs/SETTINGS.md) — optional strict setting adapters, real preferences UI, mock parity, and removal
+- [web/docs/USAGE.md](web/docs/USAGE.md) — optional strict read-only usage adapters, finite catalog UI, mock parity, and removal
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
 
 ## AI Agent Skills
@@ -90,6 +93,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py` — keep asset ownership, storage adapters, transfer grants, inspection, cleanup, and API/Web/contracts aligned.
 - `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py` — keep typed setting definitions finite, scalar, versioned, private where required, and aligned across API/Web/contracts.
+- `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py` — keep usage definitions finite, ingestion trusted, consumption atomic, quota history versioned, and API/Web/contracts aligned.
 - `.agents/skills/luas-framework-review/scripts/check-api-key-boundary.py` — keep API key hash-only persistence, atomic revoke/use writes, scope semantics, one-time plaintext, and Web adapter behavior aligned.
 - `.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py` — keep request logs/traces, exception diagnostics, SQL logs, logger context, and audit metadata behind one minimization/redaction boundary.
 - `.agents/skills/luas-framework-review/scripts/check-config-authority.py` — keep API environment loading behind one typed startup snapshot and block misleading reload/cache surfaces.

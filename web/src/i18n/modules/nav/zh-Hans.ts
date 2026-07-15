@@ -4,6 +4,7 @@ const messages = {
   console: '控制台',
   organizations: '组织',
   assets: '资产',
+  usage: '用量',
   settings: '设置',
   profile: '个人资料',
   analytics: '数据分析',

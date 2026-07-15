@@ -52,7 +52,7 @@ DB_NAME=luas
 JWT_SECRET=replace-me
 ```
 
-`user`、`apikey`、`audit` 默认启用。组织、权限、通知和资产是可选 Starter；需要权限时给 HTTP
+`user`、`apikey`、`audit` 默认启用。组织、权限、通知、资产、设置和用量是可选 Starter；需要权限时给 HTTP
 进程、迁移任务和 seeder 任务统一设置完整依赖：
 
 ```bash
@@ -85,6 +85,18 @@ go run ./cmd/luas asset:prune --batch=100
 开发环境默认使用受根目录约束的本地存储；生产启用资产时必须显式配置 R2，不能回退到容器
 文件系统。见 [`docs/ASSETS.md`](docs/ASSETS.md) 与
 [`../contracts/ASSETS.md`](../contracts/ASSETS.md)。
+
+设置 starter 提供有限、代码定义的 app/组织/用户标量覆盖值；用量 starter 提供可信事件、UTC
+计数器、原子配额决策和只读摘要。二者都依赖组织 starter：
+
+```bash
+OPTIONAL_STARTERS=organization,setting
+# 或：OPTIONAL_STARTERS=organization,usage
+```
+
+用量事件通过 Go domain seam 或运维 CLI 写入，不提供浏览器/公开摄取接口，也不包含计费与套餐
+语义。见 [`docs/SETTINGS.md`](docs/SETTINGS.md)、[`docs/USAGE.md`](docs/USAGE.md) 与
+[`../contracts/USAGE.md`](../contracts/USAGE.md)。
 
 ### 3. 生成依赖注入代码
 

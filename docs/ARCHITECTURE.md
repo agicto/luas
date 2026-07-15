@@ -30,7 +30,9 @@ records, preferences, read state, and a durable channel delivery ledger. `asset`
 user-upload metadata, inspection, lifecycle, and deletion while opaque bytes remain behind the
 storage capability. `setting` depends on `organization` and owns a finite code-defined catalog of
 typed app, organization, and user overrides with versioned reset history; it is not a dynamic
-configuration, secret, permission, entitlement, or notification-preference store.
+configuration, secret, permission, entitlement, or notification-preference store. `usage` also
+depends on `organization` and owns finite user/organization metrics, retained event idempotency, UTC
+counters, and atomic hard-quota decisions; it is not telemetry, billing, or a public event API.
 
 Typical flow:
 
@@ -137,6 +139,13 @@ and account cleanup. The Web feature accepts only the five shipped definitions, 
 same-origin routes, and exposes real user and organization preferences. Unknown definitions fail
 closed instead of becoming an arbitrary settings editor. See
 [`../contracts/SETTINGS.md`](../contracts/SETTINGS.md).
+
+The organization-dependent `usage` starter is selected with `organization,usage` in both halves.
+Trusted application services use framework-free record/consume seams; only the finite current-period
+summary is browser-readable. Exact retained idempotency, safe integers, UTC periods, row locking,
+quota CAS, denied-decision persistence, retention, and account cleanup stay in the API. The Web uses
+two fixed private adapters and strict catalog validation; it cannot ingest events or mutate quota.
+See [`../contracts/USAGE.md`](../contracts/USAGE.md).
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

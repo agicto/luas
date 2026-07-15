@@ -72,4 +72,12 @@ const (
 	CodeSettingInvalidValue         = "SETTING.INVALID_VALUE"
 	CodeSettingVersionConflict      = "SETTING.VERSION_CONFLICT"
 	CodeSettingPreconditionRequired = "SETTING.PRECONDITION_REQUIRED"
+
+	CodeUsageMetricNotFound       = "USAGE.METRIC_NOT_FOUND"
+	CodeUsageInvalidEvent         = "USAGE.INVALID_EVENT"
+	CodeUsageEventOutsideWindow   = "USAGE.EVENT_OUTSIDE_WINDOW"
+	CodeUsageIdempotencyConflict  = "USAGE.IDEMPOTENCY_CONFLICT"
+	CodeUsageQuotaExceeded        = "USAGE.QUOTA_EXCEEDED"
+	CodeUsageQuotaVersionConflict = "USAGE.QUOTA_VERSION_CONFLICT"
+	CodeUsagePreconditionRequired = "USAGE.PRECONDITION_REQUIRED"
 )
