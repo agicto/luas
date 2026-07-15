@@ -40,20 +40,18 @@ describe('i18n type contracts', () => {
   });
 
   it('derives relative leaf keys for a selected scope', () => {
-    type SettingsSystemKey = Parameters<ScopedTranslations<'settings.system'>>[0];
+    type SettingErrorKey = Parameters<ScopedTranslations<'setting.errors'>>[0];
     type TestLevel2Key = Parameters<ScopedTranslations<'test.level1.level2'>>[0];
 
-    expectTypeOf<SettingsSystemKey>().toEqualTypeOf<
-      | 'title'
-      | 'description'
-      | 'companyName'
-      | 'companyPlaceholder'
-      | 'companyDefault'
-      | 'websiteUrl'
-      | 'websitePlaceholder'
-      | 'supportEmail'
-      | 'supportEmailPlaceholder'
-      | 'save'
+    expectTypeOf<SettingErrorKey>().toEqualTypeOf<
+      | 'forbidden'
+      | 'generic'
+      | 'invalidResponse'
+      | 'invalidValue'
+      | 'notFound'
+      | 'preconditionRequired'
+      | 'unavailable'
+      | 'versionConflict'
     >();
     expectTypeOf<TestLevel2Key>().toEqualTypeOf<
       | 'title'

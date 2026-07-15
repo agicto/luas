@@ -110,6 +110,20 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   Staging and final objects are provider details and never become owner or asset identifiers in HTTP
   contracts. Feature code depends on the capability seam rather than an R2/S3 SDK.
 
+**Setting definition**
+: A code-owned schema for one bounded app, organization, or user preference or policy value. It
+  owns the semantic key, scalar kind, visibility, default, options, and validation. Definitions are
+  reviewed code; they are not administrator-created key/value rows.
+
+**Setting override**
+: A durable value selected for one setting definition and one scope subject. Reset keeps version
+  history while returning to the code default. An override is not process configuration, a secret,
+  a permission grant, an entitlement, or a notification channel preference.
+
+**Effective setting**
+: The value returned by combining a setting definition with its current override or code default.
+  It carries source and monotonic version metadata so clients can cache and mutate it safely.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -144,6 +158,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   independently executed channels and retry lifecycle.
 - An asset owns business metadata and lifecycle; a stored object owns provider-neutral byte
   operations. Signed transfer URLs are short-lived bearer credentials, not durable asset identity.
+- A setting definition owns type/default/visibility in code; a setting override owns one durable
+  scoped choice; an effective setting exposes the resolved value and version.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -165,3 +181,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **asset vs file/object**: Use asset for the user-owned workflow record. Use stored object for bytes
   behind the object-storage capability. Use file only for a local operating-system or browser value;
   never expose a provider key or filesystem path as the asset identifier.
+- **setting vs config/secret/policy**: Use setting for a code-defined durable preference or policy
+  override. Process configuration is restart-scoped typed infrastructure authority; secrets stay in
+  environment/provider stores; permissions, entitlements, usage limits, and notification channel
+  preferences remain with their owning starters.

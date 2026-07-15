@@ -20,8 +20,11 @@ type Application struct {
 	EventBus               *events.EventBus
 	Migrator               *migration.Migrator
 	Starters               *starter.Registry
+	AuditRecorder          domain.AuditLogRecorder
 	NotificationPublisher  domain.NotificationPublisher
 	NotificationDispatcher domain.NotificationDispatcher
 	AssetReader            domain.AssetReader
 	AssetMaintainer        domain.AssetMaintainer
+	SettingReader          domain.SettingReader
+	AppSettingWriter       domain.AppSettingWriter
 }

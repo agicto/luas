@@ -4,17 +4,10 @@ import { NextResponse } from 'next/server';
 
 import { apiErrorResponse } from '@/app/api/_shared/error-response';
 import { serverEnv } from '@/config/server-env';
-import {
-  clearApiSessionCookie,
-  getApiSessionToken,
-} from '@/features/auth/server/api-session';
+import { clearApiSessionCookie, getApiSessionToken } from '@/features/auth/server/api-session';
 import { ApiErrorCode } from '@/http/codes';
 import { privateNoStoreHeaders } from '@/server/http/private-response';
-import {
-  GoApiClient,
-  type GoApiError,
-  type GoApiMethod,
-} from './go-api-client';
+import { GoApiClient, type GoApiError, type GoApiMethod } from './go-api-client';
 
 interface AuthenticatedGoApiRequest {
   method: GoApiMethod;
@@ -22,6 +15,8 @@ interface AuthenticatedGoApiRequest {
   accessToken?: string;
   body?: unknown;
   organizationId?: string;
+  ifMatch?: string;
+  ifNoneMatch?: string;
   searchParams?: URLSearchParams;
   fieldMap?: Readonly<Record<string, string>>;
 }
@@ -32,7 +27,7 @@ export async function forwardAuthenticatedGoApi(
   request: Request,
   options: AuthenticatedGoApiRequest
 ): Promise<NextResponse> {
-  const accessToken = options.accessToken ?? await getApiSessionToken();
+  const accessToken = options.accessToken ?? (await getApiSessionToken());
   if (!accessToken) {
     return apiErrorResponse({
       status: 401,
@@ -70,10 +65,7 @@ export async function forwardAuthenticatedGoApi(
     return goApiErrorResponse(result.error);
   }
 
-  const headers = authenticatedResponseHeaders(
-    result.data.responseHeaders,
-    result.data.requestId
-  );
+  const headers = authenticatedResponseHeaders(result.data.responseHeaders, result.data.requestId);
   if (result.data.envelope === null) {
     return new NextResponse(null, { status: result.data.status, headers });
   }
@@ -84,11 +76,12 @@ export async function forwardAuthenticatedGoApi(
 }
 
 function goApiErrorResponse(error: GoApiError): NextResponse {
-  const message = error.cause === 'timeout'
-    ? 'API request timed out'
-    : error.cause === 'unavailable'
-      ? 'API service unavailable'
-      : genericUpstreamMessage(error.status);
+  const message =
+    error.cause === 'timeout'
+      ? 'API request timed out'
+      : error.cause === 'unavailable'
+        ? 'API service unavailable'
+        : genericUpstreamMessage(error.status);
 
   return apiErrorResponse({
     status: error.status,
@@ -96,10 +89,7 @@ function goApiErrorResponse(error: GoApiError): NextResponse {
     message,
     errors: error.fieldErrors,
     requestId: error.requestId,
-    headers: authenticatedResponseHeaders(
-      error.responseHeaders,
-      error.requestId
-    ),
+    headers: authenticatedResponseHeaders(error.responseHeaders, error.requestId),
   });
 }
 
@@ -108,6 +98,8 @@ function genericUpstreamMessage(status: number): string {
   if (status === 403) return 'Operation forbidden';
   if (status === 404) return 'Resource not found';
   if (status === 409) return 'Resource state conflict';
+  if (status === 412) return 'Resource version conflict';
+  if (status === 428) return 'Resource version required';
   if (status === 400 || status === 422) return 'Invalid API input';
   if (status === 429) return 'Too many requests';
   return 'API service unavailable';

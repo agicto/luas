@@ -39,3 +39,8 @@ jobs:
 
       - name: Verify local Compose lifecycle
         run: bash scripts/verify-compose.sh luas-api:ci
+
+      - name: Verify typed setting Compose lifecycle
+        env:
+          OPTIONAL_STARTERS: organization,setting
+        run: bash scripts/verify-compose.sh luas-api:ci

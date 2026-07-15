@@ -29,6 +29,8 @@ The container workflow additionally requires a working Docker daemon with Compos
 
 The container job verifies one artifact identity. `verify-container.sh` builds and checks
 `luas-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
+The typed-setting Compose step reuses the same immutable image with
+`OPTIONAL_STARTERS=organization,setting` and exercises its PostgreSQL/API/CLI lifecycle.
 Standalone `make compose-check` has no explicit tag and therefore rebuilds the current worktree,
 preventing a stale local image from producing a false green result.
 

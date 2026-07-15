@@ -27,6 +27,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrOrganizationInvitationInvalid, http.StatusNotFound, domain.CodeOrganizationInvitationInvalid)
 	mapper.Register(domain.ErrNotificationNotFound, http.StatusNotFound, domain.CodeNotificationNotFound)
 	mapper.Register(domain.ErrAssetNotFound, http.StatusNotFound, domain.CodeAssetNotFound)
+	mapper.Register(domain.ErrSettingNotFound, http.StatusNotFound, domain.CodeSettingNotFound)
 	mapper.Register(domain.ErrOrganizationContextRequired, http.StatusBadRequest, domain.CodeOrganizationContextRequired)
 	mapper.Register(domain.ErrOrganizationContextInvalid, http.StatusBadRequest, domain.CodeOrganizationContextInvalid)
 
@@ -55,6 +56,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrAssetNotReady, http.StatusConflict, domain.CodeAssetNotReady)
 	mapper.Register(domain.ErrAssetIdempotencyConflict, http.StatusConflict, domain.CodeAssetIdempotencyConflict)
 	mapper.Register(domain.ErrAssetCleanupRequired, http.StatusConflict, domain.CodeAssetCleanupRequired)
+	mapper.Register(domain.ErrSettingVersionConflict, http.StatusPreconditionFailed, domain.CodeSettingVersionConflict)
 
 	mapper.Register(domain.ErrOrganizationInvitationExpired, http.StatusGone, domain.CodeOrganizationInvitationExpired)
 	mapper.Register(domain.ErrAssetUploadExpired, http.StatusGone, domain.CodeAssetUploadExpired)
@@ -64,5 +66,7 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrPermissionUnknown, http.StatusUnprocessableEntity, domain.CodePermissionUnknown)
 	mapper.Register(domain.ErrNotificationInvalidChannel, http.StatusUnprocessableEntity, domain.CodeNotificationInvalidChannel)
 	mapper.Register(domain.ErrAssetInvalidMediaType, http.StatusUnprocessableEntity, domain.CodeAssetInvalidMediaType)
+	mapper.Register(domain.ErrSettingInvalidValue, http.StatusUnprocessableEntity, domain.CodeSettingInvalidValue)
+	mapper.Register(domain.ErrSettingPreconditionRequired, http.StatusPreconditionRequired, domain.CodeSettingPreconditionRequired)
 	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

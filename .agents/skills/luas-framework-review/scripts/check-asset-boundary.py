@@ -385,7 +385,12 @@ def main() -> int:
     require_all(
         failures,
         "docs/STARTER_BUSINESS_ROADMAP.md",
-        ("`asset` optional starter", "Yes, when enabled", "Build durable typed `setting` next"),
+        (
+            "`asset` optional starter",
+            "`setting` optional starter",
+            "Yes, when enabled",
+            "Build `usage` next",
+        ),
     )
     require_all(
         failures,

@@ -19,6 +19,14 @@ describe('optional Web feature selection', () => {
     expect(parseOptionalWebFeatures('asset')).toEqual(['asset']);
   });
 
+  it('selects setting only with organization ownership', () => {
+    expect(parseOptionalWebFeatures('organization,setting')).toEqual([
+      'organization',
+      'setting',
+    ]);
+    expect(() => parseOptionalWebFeatures('setting')).toThrow('requires "organization"');
+  });
+
   it.each([
     ' organization',
     'organization ',

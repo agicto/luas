@@ -98,6 +98,9 @@ notification_migration_flow="skipped"
 asset_flow="skipped"
 asset_migration_flow="skipped"
 asset_account_race_flow="skipped"
+setting_flow="skipped"
+setting_migration_flow="skipped"
+setting_account_cleanup_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,notification,*)
@@ -330,6 +333,230 @@ WHERE table_schema = 'public'
       "http://127.0.0.1:${published_port}/v1/notification-status")"
     [[ "${notification_post_migrate_status}" == "200" ]] || fail "notification status after migration re-apply returned HTTP ${notification_post_migrate_status}"
     notification_migration_flow="down:${notification_tables_down}/up:${notification_tables_up}/http:${notification_post_migrate_status}"
+    ;;
+esac
+
+case ",${OPTIONAL_STARTERS:-}," in
+  *,setting,*)
+    command -v python3 >/dev/null 2>&1 || fail "python3 is required for setting response checks"
+
+    setting_public_status="$(curl --noproxy '*' --silent --show-error \
+      --dump-header "${TMP_DIR}/setting-public.headers" \
+      --output "${TMP_DIR}/setting-public.json" \
+      --write-out '%{http_code}' \
+      "http://127.0.0.1:${published_port}/v1/settings/public")"
+    [[ "${setting_public_status}" == "200" ]] || fail "public setting list returned HTTP ${setting_public_status}"
+    if ! python3 -c '
+import json, sys
+values = json.load(open(sys.argv[1]))["data"]
+expected = [
+    ("app", "branding.display_name", "Luas", 0, "default"),
+    ("app", "localization.locale", "en-US", 0, "default"),
+]
+actual = [(item["scope"], item["key"], item["value"], item["version"], item["source"]) for item in values]
+raise SystemExit(0 if actual == expected else 1)
+' "${TMP_DIR}/setting-public.json"; then
+      fail "public setting defaults violate the finite catalog contract"
+    fi
+    setting_public_etag="$(awk 'tolower($1) == "etag:" { gsub("\r", "", $2); print $2; exit }' "${TMP_DIR}/setting-public.headers")"
+    [[ "${setting_public_etag}" =~ ^\"settings-[a-f0-9]{64}\"$ ]] || fail "public setting ETag is invalid: ${setting_public_etag}"
+    setting_revalidate_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --header "If-None-Match: ${setting_public_etag}" \
+      "http://127.0.0.1:${published_port}/v1/settings/public")"
+    [[ "${setting_revalidate_status}" == "304" ]] || fail "public setting revalidation returned HTTP ${setting_revalidate_status}"
+
+    if ! compose exec -T api /app/luas setting:list >"${TMP_DIR}/setting-list.log" 2>&1; then
+      fail "setting:list failed"
+    fi
+    grep -q 'branding.display_name' "${TMP_DIR}/setting-list.log" || fail "setting:list omitted the branding definition"
+    for writer in 1 2; do
+      (
+        set +e
+        compose exec -T api /app/luas setting:set \
+          --key=branding.display_name \
+          '--value="Compose Luas"' \
+          --expected-version=0 >"${TMP_DIR}/setting-set-${writer}.log" 2>&1
+        printf '%s\n' "$?" >"${TMP_DIR}/setting-set-${writer}.status"
+      ) &
+    done
+    wait
+    setting_set_successes="$(awk '$1 == 0 { count++ } END { print count + 0 }' "${TMP_DIR}"/setting-set-*.status)"
+    setting_set_conflicts="$(grep -il 'setting version conflict' "${TMP_DIR}"/setting-set-*.log | wc -l | tr -d ' ')"
+    [[ "${setting_set_successes}" == "1" && "${setting_set_conflicts}" == "1" ]] ||
+      fail "concurrent setting:set expected one success and one version conflict"
+    grep -q 'version 1' "${TMP_DIR}"/setting-set-*.log || fail "setting:set did not report version 1"
+    if grep -q 'Compose Luas' "${TMP_DIR}"/setting-set-*.log; then
+      fail "setting:set output exposed the setting value"
+    fi
+    setting_cli_audit_count="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM audit_logs
+WHERE actor_type = 'system'
+  AND method = 'CLI'
+  AND path = 'setting:set'
+  AND target_id = 'app:0:branding.display_name'
+  AND metadata::jsonb ->> 'key' = 'branding.display_name'
+  AND NOT (metadata::jsonb ? 'value');
+")"
+    [[ "${setting_cli_audit_count}" == "1" ]] || fail "setting:set wrote ${setting_cli_audit_count} valid minimized audit entries"
+    setting_public_after_set_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-public-after-set.json" \
+      --write-out '%{http_code}' \
+      "http://127.0.0.1:${published_port}/v1/settings/public")"
+    [[ "${setting_public_after_set_status}" == "200" ]] || fail "public settings after CLI set returned HTTP ${setting_public_after_set_status}"
+    if ! python3 -c '
+import json, sys
+item = json.load(open(sys.argv[1]))["data"][0]
+raise SystemExit(0 if item["key"] == "branding.display_name" and item["value"] == "Compose Luas" and item["version"] == 1 and item["source"] == "override" else 1)
+' "${TMP_DIR}/setting-public-after-set.json"; then
+      fail "public settings did not expose the committed app override"
+    fi
+
+    read -r setting_user_id setting_user_token < <(
+      register_and_login_user "compose_setting_user" "compose-setting-user@example.com" "setting-user"
+    )
+    setting_user_list_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-user-list.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      "http://127.0.0.1:${published_port}/v1/settings/user")"
+    [[ "${setting_user_list_status}" == "200" ]] || fail "user setting list returned HTTP ${setting_user_list_status}"
+    if ! python3 -c '
+import json, sys
+values = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if [(item["key"], item["value"], item["version"]) for item in values] == [("localization.locale", "en-US", 0), ("localization.timezone", "UTC", 0)] else 1)
+' "${TMP_DIR}/setting-user-list.json"; then
+      fail "user setting defaults violate the finite catalog contract"
+    fi
+    setting_missing_precondition_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-missing-precondition.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      --data '{"value":"zh-Hans"}' \
+      "http://127.0.0.1:${published_port}/v1/settings/user/localization.locale")"
+    [[ "${setting_missing_precondition_status}" == "428" ]] || fail "missing setting precondition returned HTTP ${setting_missing_precondition_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "SETTING.PRECONDITION_REQUIRED" else 1)' "${TMP_DIR}/setting-missing-precondition.json"; then
+      fail "missing setting precondition returned the wrong error_code"
+    fi
+    setting_user_set_status="$(curl --noproxy '*' --silent --show-error \
+      --dump-header "${TMP_DIR}/setting-user-set.headers" \
+      --output "${TMP_DIR}/setting-user-set.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      --header 'If-Match: "setting-v0"' \
+      --data '{"value":"zh-Hans"}' \
+      "http://127.0.0.1:${published_port}/v1/settings/user/localization.locale")"
+    [[ "${setting_user_set_status}" == "200" ]] || fail "user setting update returned HTTP ${setting_user_set_status}"
+    grep -qi '^etag: "setting-v1"' "${TMP_DIR}/setting-user-set.headers" || fail "user setting update omitted version ETag"
+    setting_stale_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-stale.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      --header 'If-Match: "setting-v0"' \
+      --data '{"value":"en-US"}' \
+      "http://127.0.0.1:${published_port}/v1/settings/user/localization.locale")"
+    [[ "${setting_stale_status}" == "412" ]] || fail "stale setting update returned HTTP ${setting_stale_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "SETTING.VERSION_CONFLICT" else 1)' "${TMP_DIR}/setting-stale.json"; then
+      fail "stale setting update returned the wrong error_code"
+    fi
+    setting_user_reset_status="$(curl --noproxy '*' --silent --show-error \
+      --dump-header "${TMP_DIR}/setting-user-reset.headers" \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --request DELETE \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      --header 'If-Match: "setting-v1"' \
+      "http://127.0.0.1:${published_port}/v1/settings/user/localization.locale")"
+    [[ "${setting_user_reset_status}" == "204" ]] || fail "user setting reset returned HTTP ${setting_user_reset_status}"
+    grep -qi '^etag: "setting-v2"' "${TMP_DIR}/setting-user-reset.headers" || fail "user setting reset omitted monotonic ETag"
+
+    setting_timezone_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-timezone.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      --header 'If-Match: "setting-v0"' \
+      --data '{"value":"Europe/Dublin"}' \
+      "http://127.0.0.1:${published_port}/v1/settings/user/localization.timezone")"
+    [[ "${setting_timezone_status}" == "200" ]] || fail "user timezone setting returned HTTP ${setting_timezone_status}"
+    setting_rows_before_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
+    [[ "${setting_rows_before_delete}" == "2" ]] || fail "user setting history has ${setting_rows_before_delete}/2 rows before account deletion"
+    setting_account_delete_status="$(curl --noproxy '*' --silent --show-error \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --request DELETE \
+      --header "Authorization: Bearer ${setting_user_token}" \
+      "http://127.0.0.1:${published_port}/v1/users/account")"
+    [[ "${setting_account_delete_status}" == "204" ]] || fail "setting user account deletion returned HTTP ${setting_account_delete_status}"
+    setting_rows_after_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
+    [[ "${setting_rows_after_delete}" == "0" ]] || fail "account deletion left ${setting_rows_after_delete} user setting row(s)"
+    setting_account_cleanup_flow="before:${setting_rows_before_delete}/delete:${setting_account_delete_status}/after:${setting_rows_after_delete}"
+
+    read -r setting_owner_id setting_owner_token < <(
+      register_and_login_user "compose_setting_owner" "compose-setting-owner@example.com" "setting-owner"
+    )
+    [[ -n "${setting_owner_id}" ]] || fail "setting organization owner ID is missing"
+    setting_organization_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-organization.json" \
+      --write-out '%{http_code}' \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_owner_token}" \
+      --data '{"name":"Compose Setting Organization","slug":"compose-setting-organization"}' \
+      "http://127.0.0.1:${published_port}/v1/organizations")"
+    [[ "${setting_organization_status}" == "201" ]] || fail "setting organization creation returned HTTP ${setting_organization_status}"
+    setting_organization_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "${TMP_DIR}/setting-organization.json")"
+    setting_organization_set_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-organization-set.json" \
+      --write-out '%{http_code}' \
+      --request PATCH \
+      --header 'Content-Type: application/json' \
+      --header "Authorization: Bearer ${setting_owner_token}" \
+      --header "Organization-Id: ${setting_organization_id}" \
+      --header 'If-Match: "setting-v0"' \
+      --data '{"value":"zh-Hans"}' \
+      "http://127.0.0.1:${published_port}/v1/organization-settings/localization.locale")"
+    [[ "${setting_organization_set_status}" == "200" ]] || fail "organization setting update returned HTTP ${setting_organization_set_status}"
+    if ! python3 -c '
+import json, sys
+item = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if item["scope"] == "organization" and item["value"] == "zh-Hans" and item["version"] == 1 else 1)
+' "${TMP_DIR}/setting-organization-set.json"; then
+      fail "organization setting update returned an invalid effective value"
+    fi
+
+    if ! compose exec -T api /app/luas setting:reset \
+      --key=branding.display_name \
+      --expected-version=1 >"${TMP_DIR}/setting-reset.log" 2>&1; then
+      fail "setting:reset failed"
+    fi
+    setting_flow="public:${setting_public_status}/${setting_revalidate_status}/cli-cas:${setting_set_successes}/${setting_set_conflicts}/cli-audit:${setting_cli_audit_count}/user:${setting_user_list_status}/${setting_missing_precondition_status}/${setting_user_set_status}/${setting_stale_status}/${setting_user_reset_status}/organization:${setting_organization_set_status}"
+
+    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/setting-rollback.log" 2>&1; then
+      fail "setting migration rollback failed"
+    fi
+    setting_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
+    [[ "${setting_tables_down}" == "0" ]] || fail "setting migration rollback left ${setting_tables_down} table(s)"
+    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/setting-migrate.log" 2>&1; then
+      fail "setting migration re-apply failed"
+    fi
+    setting_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
+    [[ "${setting_tables_up}" == "1" ]] || fail "setting migration re-apply created ${setting_tables_up}/1 tables"
+    setting_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/setting-post-migrate.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${setting_owner_token}" \
+      "http://127.0.0.1:${published_port}/v1/settings/user")"
+    [[ "${setting_post_migrate_status}" == "200" ]] || fail "setting list after migration re-apply returned HTTP ${setting_post_migrate_status}"
+    setting_migration_flow="down:${setting_tables_down}/up:${setting_tables_up}/http:${setting_post_migrate_status}"
     ;;
 esac
 
@@ -1035,4 +1262,7 @@ printf 'compose notification migration flow: %s\n' "${notification_migration_flo
 printf 'compose asset flow: %s\n' "${asset_flow}"
 printf 'compose asset migration flow: %s\n' "${asset_migration_flow}"
 printf 'compose asset/account race: %s\n' "${asset_account_race_flow}"
+printf 'compose setting flow: %s\n' "${setting_flow}"
+printf 'compose setting migration flow: %s\n' "${setting_migration_flow}"
+printf 'compose setting/account cleanup: %s\n' "${setting_account_cleanup_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

@@ -72,7 +72,7 @@ func (r *repository) Delete(ctx context.Context, id uint) error {
 	return db.Delete(&UserPO{}, id).Error
 }
 
-// DeleteAccount locks the undeleted user row, runs starter policies, and soft-deletes
+// DeleteAccount locks the undeleted user row, runs starter guards and cleanup, and soft-deletes
 // in one transaction shared through the callback context.
 func (r *repository) DeleteAccount(ctx context.Context, id uint, check func(context.Context) error) error {
 	db, err := r.withContext(ctx)

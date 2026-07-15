@@ -2,14 +2,12 @@ import 'server-only';
 
 import { isIP } from 'node:net';
 
-import {
-  ApiErrorCode,
-  HttpStatusErrorCodeMap,
-  type ApiErrorCodeValue,
-} from '@/http/codes';
+import { ApiErrorCode, HttpStatusErrorCodeMap, type ApiErrorCodeValue } from '@/http/codes';
 import { declaredBodyLength, readBoundedBody } from '@/server/http/bounded-body';
 
 const FORWARDED_RESPONSE_HEADERS = [
+  'cache-control',
+  'etag',
   'retry-after',
   'vary',
   'x-ratelimit-limit',
@@ -18,6 +16,8 @@ const FORWARDED_RESPONSE_HEADERS = [
 ] as const;
 const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const SAFE_RELATIVE_PATH = /^[A-Za-z0-9._~!$&'()*+,;=@\/-]+$/;
+const SAFE_IF_MATCH = /^[\x20-\x7E]{1,128}$/;
+const SAFE_IF_NONE_MATCH = /^[\x20-\x7E]{1,1024}$/;
 const knownErrorCodes = new Set<string>(Object.values(ApiErrorCode));
 
 export interface GoApiClientConfig {
@@ -40,6 +40,8 @@ export interface GoApiRequest {
   incomingHeaders: Headers;
   accessToken?: string;
   organizationId?: string;
+  ifMatch?: string;
+  ifNoneMatch?: string;
   body?: unknown;
   searchParams?: URLSearchParams;
   fieldMap?: Readonly<Record<string, string>>;
@@ -71,9 +73,7 @@ export interface GoApiError {
   responseHeaders?: Record<string, string>;
 }
 
-export type GoApiResult =
-  | { ok: true; data: GoApiSuccess }
-  | { ok: false; error: GoApiError };
+export type GoApiResult = { ok: true; data: GoApiSuccess } | { ok: false; error: GoApiError };
 
 export class GoApiClient {
   private readonly baseUrl: URL;
@@ -103,10 +103,7 @@ export class GoApiClient {
   }
 
   private async performRequest(url: URL, options: GoApiRequest): Promise<GoApiResult> {
-    const requestId = resolveRequestId(
-      options.incomingHeaders,
-      this.dependencies.randomUUID
-    );
+    const requestId = resolveRequestId(options.incomingHeaders, this.dependencies.randomUUID);
     const headers = new Headers({
       accept: 'application/json',
       'x-request-id': requestId,
@@ -121,11 +118,20 @@ export class GoApiClient {
     if (options.organizationId) {
       headers.set('organization-id', options.organizationId);
     }
+    if (options.ifMatch !== undefined) {
+      if (!SAFE_IF_MATCH.test(options.ifMatch)) {
+        throw new Error('Go API If-Match must be bounded visible ASCII');
+      }
+      headers.set('if-match', options.ifMatch);
+    }
+    if (options.ifNoneMatch !== undefined) {
+      if (!SAFE_IF_NONE_MATCH.test(options.ifNoneMatch)) {
+        throw new Error('Go API If-None-Match must be bounded visible ASCII');
+      }
+      headers.set('if-none-match', options.ifNoneMatch);
+    }
 
-    const clientIp = resolveClientIp(
-      options.incomingHeaders,
-      this.config.clientIpHeader
-    );
+    const clientIp = resolveClientIp(options.incomingHeaders, this.config.clientIpHeader);
     if (clientIp) {
       headers.set('x-forwarded-for', clientIp);
     }
@@ -154,8 +160,8 @@ export class GoApiClient {
     const responseHeaders = forwardedResponseHeaders(response.headers);
     const responseRequestId = resolveResponseRequestId(response.headers, requestId);
 
-    if (response.status === 204) {
-      if (!response.ok) {
+    if (response.status === 204 || response.status === 304) {
+      if (!response.ok && response.status !== 304) {
         return failure(
           'unavailable',
           ApiErrorCode.COMMON_SERVICE_UNAVAILABLE,
@@ -174,10 +180,7 @@ export class GoApiClient {
       };
     }
 
-    const declaredLength = declaredBodyLength(
-      response.headers,
-      this.config.maxResponseBytes
-    );
+    const declaredLength = declaredBodyLength(response.headers, this.config.maxResponseBytes);
     if (declaredLength !== 'accepted') {
       await response.body?.cancel();
       return failure(
@@ -243,7 +246,7 @@ function isSafeRelativePath(path: string): boolean {
     return false;
   }
 
-  return path.split('/').every((segment) => segment !== '.' && segment !== '..');
+  return path.split('/').every(segment => segment !== '.' && segment !== '..');
 }
 
 function upstreamError(
@@ -254,14 +257,12 @@ function upstreamError(
   fieldMap: Readonly<Record<string, string>> | undefined
 ): GoApiError {
   const body = isRecord(payload) ? payload : {};
-  const status = response.status >= 400 && response.status <= 599
-    ? response.status
-    : 503;
+  const status = response.status >= 400 && response.status <= 599 ? response.status : 503;
   const candidateCode = body.error_code;
   const errorCode =
     typeof candidateCode === 'string' && knownErrorCodes.has(candidateCode)
       ? (candidateCode as ApiErrorCodeValue)
-      : HttpStatusErrorCodeMap[status] ?? ApiErrorCode.COMMON_SERVICE_UNAVAILABLE;
+      : (HttpStatusErrorCodeMap[status] ?? ApiErrorCode.COMMON_SERVICE_UNAVAILABLE);
   const requestId =
     typeof body.request_id === 'string' && SAFE_REQUEST_ID.test(body.request_id)
       ? body.request_id
@@ -325,10 +326,7 @@ function resolveResponseRequestId(headers: Headers, fallback: string): string {
   return candidate && SAFE_REQUEST_ID.test(candidate) ? candidate : fallback;
 }
 
-function resolveClientIp(
-  headers: Headers,
-  sourceHeader: string | undefined
-): string | undefined {
+function resolveClientIp(headers: Headers, sourceHeader: string | undefined): string | undefined {
   if (!sourceHeader) {
     return undefined;
   }
@@ -339,9 +337,7 @@ function resolveClientIp(
   return isIP(candidate) !== 0 ? candidate : undefined;
 }
 
-function forwardedResponseHeaders(
-  headers: Headers
-): Record<string, string> | undefined {
+function forwardedResponseHeaders(headers: Headers): Record<string, string> | undefined {
   const forwarded: Record<string, string> = {};
   for (const name of FORWARDED_RESPONSE_HEADERS) {
     const value = headers.get(name);
@@ -374,8 +370,5 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isAbortError(error: unknown): boolean {
-  return (
-    error instanceof Error &&
-    (error.name === 'AbortError' || error.name === 'TimeoutError')
-  );
+  return error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError');
 }

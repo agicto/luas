@@ -206,6 +206,30 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeAssetInvalidMediaType,
 		},
 		{
+			name:       "setting is not registered",
+			err:        domain.ErrSettingNotFound,
+			statusCode: http.StatusNotFound,
+			errorCode:  domain.CodeSettingNotFound,
+		},
+		{
+			name:       "setting value is invalid",
+			err:        domain.ErrSettingInvalidValue,
+			statusCode: http.StatusUnprocessableEntity,
+			errorCode:  domain.CodeSettingInvalidValue,
+		},
+		{
+			name:       "setting version is stale",
+			err:        domain.ErrSettingVersionConflict,
+			statusCode: http.StatusPreconditionFailed,
+			errorCode:  domain.CodeSettingVersionConflict,
+		},
+		{
+			name:       "setting version is required",
+			err:        domain.ErrSettingPreconditionRequired,
+			statusCode: http.StatusPreconditionRequired,
+			errorCode:  domain.CodeSettingPreconditionRequired,
+		},
+		{
 			name:       "wrapped service unavailable",
 			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
 			statusCode: http.StatusServiceUnavailable,

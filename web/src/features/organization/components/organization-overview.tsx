@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Settings2,
   ShieldCheck,
+  SlidersHorizontal,
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -39,10 +40,13 @@ import { useT } from '@/i18n';
 import { isWebFeatureEnabled } from '@/config/features';
 
 const PermissionManagement = lazy(async () => {
-  const feature = await import(
-    '@/features/permission/components/permission-management'
-  );
+  const feature = await import('@/features/permission/components/permission-management');
   return { default: feature.PermissionManagement };
+});
+
+const OrganizationSettingPanel = lazy(async () => {
+  const feature = await import('@/features/setting/components/organization-setting-panel');
+  return { default: feature.OrganizationSettingPanel };
 });
 
 export function OrganizationOverview({ organizationId }: { organizationId: number }) {
@@ -74,12 +78,7 @@ export function OrganizationOverview({ organizationId }: { organizationId: numbe
     );
   }
 
-  return (
-    <OrganizationSettings
-      key={query.data.organization_id}
-      context={query.data}
-    />
-  );
+  return <OrganizationSettings key={query.data.organization_id} context={query.data} />;
 }
 
 function OrganizationSettings({ context }: { context: OrganizationContext }) {
@@ -88,9 +87,9 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
   const mutation = useUpdateOrganization(context.organization_id);
   const [name, setName] = useState(context.organization_name);
   const [clientError, setClientError] = useState<string>();
-  const canManageOrganization =
-    context.role === 'owner' || context.role === 'admin';
+  const canManageOrganization = context.role === 'owner' || context.role === 'admin';
   const permissionEnabled = isWebFeatureEnabled('permission');
+  const settingEnabled = isWebFeatureEnabled('setting');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -101,16 +100,16 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
     }
     setClientError(undefined);
     mutation.mutate(parsed.data, {
-      onSuccess: (organization) => {
+      onSuccess: organization => {
         setName(organization.name);
         toast.success(t('updateSuccess'));
       },
     });
   };
 
-  const nameError = clientError ?? (
-    hasOrganizationFieldError(mutation.error, 'name') ? t('nameInvalid') : undefined
-  );
+  const nameError =
+    clientError ??
+    (hasOrganizationFieldError(mutation.error, 'name') ? t('nameInvalid') : undefined);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 lg:py-8">
@@ -166,6 +165,12 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
               {t('tabs.permissions')}
             </TabsTrigger>
           ) : null}
+          {settingEnabled ? (
+            <TabsTrigger value="settings">
+              <SlidersHorizontal aria-hidden="true" />
+              {t('tabs.settings')}
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent value="profile">
@@ -174,9 +179,7 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
               <h2 id="organization-profile-heading" className="text-base font-semibold">
                 {t('profile')}
               </h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t('profileDescription')}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t('profileDescription')}</p>
             </div>
 
             <form
@@ -204,7 +207,7 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
                   value={name}
                   errorText={nameError}
                   disabled={!canManageOrganization || mutation.isPending}
-                  onChange={(event) => {
+                  onChange={event => {
                     setName(event.target.value);
                     setClientError(undefined);
                     mutation.reset();
@@ -247,6 +250,17 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
           <TabsContent value="permissions">
             <Suspense fallback={<OrganizationOverviewSkeleton />}>
               <PermissionManagement context={context} />
+            </Suspense>
+          </TabsContent>
+        ) : null}
+
+        {settingEnabled ? (
+          <TabsContent value="settings">
+            <Suspense fallback={<OrganizationOverviewSkeleton />}>
+              <OrganizationSettingPanel
+                organizationId={context.organization_id}
+                canManage={canManageOrganization}
+              />
             </Suspense>
           </TabsContent>
         ) : null}

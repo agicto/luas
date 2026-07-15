@@ -62,6 +62,7 @@ src/
 │   ├── api-key/            # default API key workflow, strict contracts, fixed adapter, mock state
 │   ├── organization/       # optional browser workflow, fixed adapter routes, mock state
 │   ├── asset/              # optional private upload workflow and ephemeral transfer grants
+│   ├── setting/            # optional typed preferences, conditional writes, fixed adapter/mock
 │   └── example/            # hooks, services, server, types
 ├── config/                 # App configuration
 ├── constants/              # Route constants, enums
@@ -118,6 +119,10 @@ in `docs/NOTIFICATIONS.md`; provider delivery details never enter Web code.
 The independent asset workflow keeps provider keys and signed grants out of persistent client
 state, uses only fixed management adapters, and validates every transfer URL before byte I/O. See
 `docs/ASSETS.md` and `../contracts/ASSETS.md`.
+
+The organization-dependent setting workflow validates the finite API catalog at the network
+boundary, preserves ETag/version semantics, and exposes only real user/organization preferences.
+See `docs/SETTINGS.md` and `../contracts/SETTINGS.md`.
 
 The default API key browser workflow uses the same fixed production adapter and a development mock
 store. Plaintext is returned only by create and kept in dialog-local state; list contracts reject

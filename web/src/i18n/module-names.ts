@@ -8,6 +8,7 @@ export const AVAILABLE_MODULES = [
   'permission',
   'notification',
   'asset',
+  'setting',
   'settings',
   'errors',
   'metadata',

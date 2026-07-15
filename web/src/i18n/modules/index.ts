@@ -16,6 +16,8 @@ import notification from './notification/en-US';
 import type { NotificationMessages } from './notification/zh-Hans';
 import asset from './asset/en-US';
 import type { AssetMessages } from './asset/zh-Hans';
+import setting from './setting/en-US';
+import type { SettingMessages } from './setting/zh-Hans';
 import settings from './settings/en-US';
 import type { SettingsMessages } from './settings/zh-Hans';
 import errors from './errors/en-US';
@@ -41,6 +43,7 @@ export const messages = {
   permission,
   notification,
   asset,
+  setting,
   settings,
   errors,
   metadata,
@@ -62,6 +65,7 @@ export interface MessageSchema {
   permission: PermissionMessages;
   notification: NotificationMessages;
   asset: AssetMessages;
+  setting: SettingMessages;
   settings: SettingsMessages;
   errors: ErrorsMessages;
   metadata: MetadataMessages;

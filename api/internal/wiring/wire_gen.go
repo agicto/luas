@@ -21,6 +21,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/notification"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/permission"
+	"github.com/zgiai/luas/api/internal/modules/setting"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter"
 )
@@ -86,7 +87,14 @@ func InitApplication() (*app.Application, error) {
 	}
 	assetService := asset.NewService(configConfig, assetRepository, objectStore, contentInspector, transferSigner)
 	assetHandler := asset.NewHandler(assetService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler)
+	settingCatalog, err := setting.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	settingRepository := setting.NewRepository(db)
+	settingService := setting.NewService(settingCatalog, settingRepository, configConfig)
+	settingHandler := setting.NewHandler(settingService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -97,10 +105,13 @@ func InitApplication() (*app.Application, error) {
 		EventBus:               eventBus,
 		Migrator:               migrator,
 		Starters:               registry,
+		AuditRecorder:          auditService,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
 		AssetReader:            assetService,
 		AssetMaintainer:        assetService,
+		SettingReader:          settingService,
+		AppSettingWriter:       settingService,
 	}
 	return application, nil
 }
@@ -161,7 +172,14 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	}
 	assetService := asset.NewService(cfg, assetRepository, objectStore, contentInspector, transferSigner)
 	assetHandler := asset.NewHandler(assetService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler)
+	settingCatalog, err := setting.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	settingRepository := setting.NewRepository(db)
+	settingService := setting.NewService(settingCatalog, settingRepository, cfg)
+	settingHandler := setting.NewHandler(settingService, accountDeletionPolicy)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -172,10 +190,13 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		EventBus:               eventBus,
 		Migrator:               migrator,
 		Starters:               registry,
+		AuditRecorder:          auditService,
 		NotificationPublisher:  notificationService,
 		NotificationDispatcher: notificationService,
 		AssetReader:            assetService,
 		AssetMaintainer:        assetService,
+		SettingReader:          settingService,
+		AppSettingWriter:       settingService,
 	}
 	return application, nil
 }

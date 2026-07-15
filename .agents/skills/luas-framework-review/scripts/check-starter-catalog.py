@@ -120,9 +120,9 @@ def main() -> int:
     optional_packages = [
         module_imports.get(alias, alias) for alias in optional_aliases
     ]
-    if optional_packages != ["organization", "permission", "notification", "asset"]:
+    if optional_packages != ["organization", "permission", "notification", "asset", "setting"]:
         failures.append(
-            "optional starter catalog must contain organization, permission, notification, and asset in canonical order"
+            "optional starter catalog must contain organization, permission, notification, asset, and setting in canonical order"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
@@ -203,7 +203,9 @@ def main() -> int:
             "'permission'",
             "'notification'",
             "'asset'",
+            "'setting'",
             "permission: ['organization']",
+            "setting: ['organization']",
             "Duplicate optional Web feature",
             "Unknown optional Web feature",
         ),
@@ -530,7 +532,7 @@ def main() -> int:
         "api/internal/modules/user/service.go",
         (
             "s.repo.DeleteAccount(ctx, userID",
-            "s.deletionPolicy.Check(transactionContext, userID)",
+            "s.deletionPolicy.Prepare(transactionContext, userID)",
         ),
     )
     require_all(
@@ -661,8 +663,9 @@ def main() -> int:
         "api/.env.example",
         (
             "OPTIONAL_STARTERS=",
-            "available: organization",
+            "organization, permission, notification, asset, setting",
             "notification",
+            "Permission and setting require organization",
             "Authorization,Organization-Id,X-Request-ID",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
@@ -717,6 +720,7 @@ def main() -> int:
             "OPTIONAL_STARTERS=organization",
             "OPTIONAL_STARTERS=notification",
             "OPTIONAL_STARTERS=asset",
+            "OPTIONAL_STARTERS=organization,setting",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
     )
@@ -727,8 +731,10 @@ def main() -> int:
             "`organization` optional starter",
             "`notification` optional starter",
             "`asset` optional starter",
+            "`setting` optional starter",
             "Yes, when enabled",
             "request-scoped active context",
+            "Build `usage` next",
         ),
     )
     require_all(
@@ -757,7 +763,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization, permission, notification, asset]",),
+        ("module: [user, apikey, audit, organization, permission, notification, asset, setting]",),
     )
 
     if failures:

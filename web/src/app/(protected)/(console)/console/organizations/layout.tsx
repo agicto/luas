@@ -7,19 +7,12 @@ import { RouteMessagesProvider } from '@/i18n/route-messages-provider';
 import { isWebFeatureEnabled } from '@/config/features';
 
 export default async function OrganizationRouteLayout({ children }: PropsWithChildren) {
-  const messages = selectMessageNamespaces(
-    await getMessages(),
-    isWebFeatureEnabled('permission')
-      ? [
-          ...CLIENT_MESSAGE_NAMESPACES.organization,
-          ...CLIENT_MESSAGE_NAMESPACES.permission,
-        ]
-      : CLIENT_MESSAGE_NAMESPACES.organization
-  );
+  const namespaces = [
+    ...CLIENT_MESSAGE_NAMESPACES.organization,
+    ...(isWebFeatureEnabled('permission') ? CLIENT_MESSAGE_NAMESPACES.permission : []),
+    ...(isWebFeatureEnabled('setting') ? CLIENT_MESSAGE_NAMESPACES.setting : []),
+  ];
+  const messages = selectMessageNamespaces(await getMessages(), namespaces);
 
-  return (
-    <RouteMessagesProvider additionalMessages={messages}>
-      {children}
-    </RouteMessagesProvider>
-  );
+  return <RouteMessagesProvider additionalMessages={messages}>{children}</RouteMessagesProvider>;
 }

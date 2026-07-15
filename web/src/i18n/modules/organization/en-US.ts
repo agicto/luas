@@ -6,7 +6,8 @@ const messages = {
   description: 'Manage the organizations you belong to and their core settings.',
   list: 'Organization list',
   create: 'Create organization',
-  createDescription: 'Create a new organization boundary. The name can change; the slug remains fixed.',
+  createDescription:
+    'Create a new organization boundary. The name can change; the slug remains fixed.',
   createSuccess: 'Organization created',
   updateSuccess: 'Organization settings updated',
   name: 'Organization name',
@@ -20,16 +21,19 @@ const messages = {
   open: 'Open',
   retry: 'Retry',
   emptyTitle: 'No organizations yet',
-  emptyDescription: 'Create the first organization to start managing members and organization-owned resources.',
+  emptyDescription:
+    'Create the first organization to start managing members and organization-owned resources.',
   back: 'Back to organizations',
   contextVerified: 'Context verified',
   profile: 'Organization profile',
-  profileDescription: 'The slug is immutable. Owners and administrators can update the display name.',
+  profileDescription:
+    'The slug is immutable. Owners and administrators can update the display name.',
   tabs: {
     profile: 'Profile',
     members: 'Members',
     invitations: 'Invitations',
     permissions: 'Permissions',
+    settings: 'Preferences',
   },
   membersTitle: 'Organization members',
   membersDescription: 'Review member identity and manage organization access within your role.',
@@ -51,13 +55,16 @@ const messages = {
   leaveOrganizationSuccess: 'You left the organization',
   transferOwnership: 'Transfer ownership',
   transferOwnershipTitle: 'Transfer organization ownership',
-  transferOwnershipDescription: 'The selected member becomes owner and your role changes to administrator.',
+  transferOwnershipDescription:
+    'The selected member becomes owner and your role changes to administrator.',
   transferOwnershipSuccess: 'Organization ownership transferred',
   confirm: 'Confirm',
   invitationsTitle: 'Organization invitations',
-  invitationsDescription: 'Invite members and review invitation history without exposing one-time tokens.',
+  invitationsDescription:
+    'Invite members and review invitation history without exposing one-time tokens.',
   invite: 'Invite member',
-  inviteDescription: 'The invitation is bound to the recipient account email and selected organization role.',
+  inviteDescription:
+    'The invitation is bound to the recipient account email and selected organization role.',
   email: 'Email',
   emailPlaceholder: 'member@example.com',
   emailInvalid: 'Enter a valid email address',
@@ -78,11 +85,13 @@ const messages = {
   expiresAt: 'Expires',
   revokeInvitation: 'Revoke invitation',
   revokeInvitationTitle: 'Revoke this invitation',
-  revokeInvitationDescription: 'The one-time token will stop working immediately. Invitation history is retained.',
+  revokeInvitationDescription:
+    'The one-time token will stop working immediately. Invitation history is retained.',
   revokeInvitationSuccess: 'Invitation revoked',
   noInvitations: 'There is no invitation history yet.',
   acceptInvitation: 'Accept invitation',
-  acceptInvitationDescription: 'Join an organization with the one-time token from your invitation email.',
+  acceptInvitationDescription:
+    'Join an organization with the one-time token from your invitation email.',
   invitationToken: 'One-time token',
   invitationTokenPlaceholder: 'Paste invitation token',
   invitationTokenInvalid: 'Enter a valid one-time invitation token',

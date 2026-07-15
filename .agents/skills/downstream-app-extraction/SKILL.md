@@ -91,6 +91,12 @@ Classify each touched surface before changing it.
      promotion, bounded inspection, account-deletion guard, signed-grant privacy, exact R2 CORS, and
      provider lifecycle cleanup. Keep grants out of persistent browser state and never expose object
      keys, local paths, checksums, or a generic bucket API.
+   - When retaining `setting`, retain `organization` in both optional selections and keep the
+     catalog finite, code-owned, scalar, and typed. Extend definitions at assembly time; do not add
+     HTTP definition creation or a generic JSON editor. Preserve strong `If-Match` writes,
+     monotonic reset tombstones, public app ETags, private no-store responses, value-free audit
+     metadata, user cleanup, and strict Web definition validation. Keep secrets, process config,
+     permissions, entitlements, usage limits, and notification preferences with their owning seams.
    - When deleting an optional starter, remove its catalog/provider contribution and owned migration/contract surfaces, then remove its name from every environment.
    - Delete examples and devtools when they no longer teach or support the downstream app.
    - Replace mock BFF routes with production endpoints or a documented same-origin adapter.

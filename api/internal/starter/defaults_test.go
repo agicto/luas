@@ -40,7 +40,7 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "audit", manifests[0].Name())
@@ -62,7 +62,7 @@ func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 func TestConfiguredManifestsEnablePermissionAfterOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission", "organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 5)
 	assert.Equal(t, "organization", manifests[3].Name())
@@ -79,7 +79,7 @@ func TestConfiguredManifestsEnablePermissionAfterOrganization(t *testing.T) {
 func TestConfiguredManifestsRequireOrganizationForPermission(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `optional starter "permission" requires "organization"`)
 }
@@ -87,7 +87,7 @@ func TestConfiguredManifestsRequireOrganizationForPermission(t *testing.T) {
 func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"billing"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown optional starter")
 }
@@ -95,7 +95,7 @@ func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
 func TestConfiguredManifestsEnableNotificationWithoutOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"notification"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "notification", manifests[3].Name())
@@ -111,7 +111,7 @@ func TestConfiguredManifestsEnableNotificationWithoutOrganization(t *testing.T) 
 func TestConfiguredManifestsEnableAssetWithoutOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"asset"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "asset", manifests[3].Name())
@@ -122,4 +122,29 @@ func TestConfiguredManifestsEnableAssetWithoutOrganization(t *testing.T) {
 	assetMigration, exists := migrations["2026_07_15_030000_create_assets_table"]
 	require.True(t, exists)
 	assert.True(t, assetMigration.WithinTransaction())
+}
+
+func TestConfiguredManifestsEnableSettingAfterOrganization(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"setting", "organization"}}}
+
+	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.Len(t, manifests, 5)
+	assert.Equal(t, "organization", manifests[3].Name())
+	assert.Equal(t, "setting", manifests[4].Name())
+
+	migrations, err := ConfiguredMigrations(cfg)
+	require.NoError(t, err)
+	assert.Len(t, migrations, 10)
+	settingMigration, exists := migrations["2026_07_15_040000_create_settings_table"]
+	require.True(t, exists)
+	assert.True(t, settingMigration.WithinTransaction())
+}
+
+func TestConfiguredManifestsRequireOrganizationForSetting(t *testing.T) {
+	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"setting"}}}
+
+	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `optional starter "setting" requires "organization"`)
 }

@@ -45,6 +45,7 @@ REQUIRED_REFERENCES = [
     "check-surface-catalog.py",
     "check-starter-catalog.py",
     "check-permission-boundary.py",
+    "check-setting-boundary.py",
 ]
 TABLE_ROW_RE = re.compile(r"^\|(.+)\|$")
 

@@ -27,7 +27,8 @@ func (m *staticManifest) Registrations() []Registration {
 	return append([]Registration(nil), m.registrations...)
 }
 
-func newManifest(name string, registrations ...Registration) Manifest {
+// NewManifest creates an immutable CLI command manifest for an assembly package.
+func NewManifest(name string, registrations ...Registration) Manifest {
 	return &staticManifest{name: name, registrations: registrations}
 }
 
@@ -58,7 +59,7 @@ func RegisterManifests(app *console.Application, manifests ...Manifest) {
 
 // DefaultManifests returns the built-in CLI command manifests.
 func DefaultManifests(version string) []Manifest {
-	makeManifest := newManifest(
+	makeManifest := NewManifest(
 		"make",
 		Registration{Command: NewMakeModelCommand()},
 		Registration{Command: NewMakeServiceCommand()},
@@ -76,7 +77,7 @@ func DefaultManifests(version string) []Manifest {
 	statusCommand := NewStatusCommand()
 	seedCommand := NewDBSeedCommand()
 
-	databaseManifest := newManifest(
+	databaseManifest := NewManifest(
 		"database",
 		Registration{Command: migrateCommand},
 		Registration{Name: "migrate", Command: migrateCommand},
@@ -92,7 +93,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Name: "seed", Command: seedCommand},
 	)
 
-	coreManifest := newManifest(
+	coreManifest := NewManifest(
 		"core",
 		Registration{Command: NewAIChatCommand()},
 		Registration{Command: NewDoctorCommand()},

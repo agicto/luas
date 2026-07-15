@@ -109,6 +109,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`docs/EMAIL.md`](docs/EMAIL.md) — outbound provider timeout, cancellation, privacy, and best-effort delivery semantics.
 - [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — optional notification publication, durable lease worker, retry/privacy rules, and replacement.
 - [`docs/ASSETS.md`](docs/ASSETS.md) — optional asset ownership, storage capability, inspection, cleanup, and replacement.
+- [`docs/SETTINGS.md`](docs/SETTINGS.md) — optional typed setting catalog, CAS history, CLI, audit privacy, and account cleanup.
 - [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — request-log minimization, automatic credential redaction, safe exception diagnostics, parameterized SQL, and audit privacy.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
@@ -118,6 +119,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md) — optional access roles, exact grants, delegated-management safety, and browser contract.
 - [`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md) — optional user notification, preference, read-state, and delivery contract.
 - [`../contracts/ASSETS.md`](../contracts/ASSETS.md) — optional private asset lifecycle, transfer grant, inspection, and deletion contract.
+- [`../contracts/SETTINGS.md`](../contracts/SETTINGS.md) — optional typed app/organization/user settings and conditional HTTP contract.
 - [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) — permission catalog extension, transactional checks, and authorizer replacement.
 
 ## Directory Structure

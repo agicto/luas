@@ -28,7 +28,9 @@ Optional starter modules are compiled but activated additively. `organization` o
 membership, `permission` adds organization-scoped exact grants, and `notification` owns user-scoped
 records, preferences, read state, and a durable channel delivery ledger. `asset` owns private
 user-upload metadata, inspection, lifecycle, and deletion while opaque bytes remain behind the
-storage capability.
+storage capability. `setting` depends on `organization` and owns a finite code-defined catalog of
+typed app, organization, and user overrides with versioned reset history; it is not a dynamic
+configuration, secret, permission, entitlement, or notification-preference store.
 
 Typical flow:
 
@@ -127,6 +129,14 @@ fixed management adapters, ephemeral transfer execution, bounded mock parity, an
 never receives object keys, local paths, checksums, or durable provider URLs. Production requires an
 explicit R2 adapter while local storage remains a rooted development implementation. See
 [`../contracts/ASSETS.md`](../contracts/ASSETS.md).
+
+The organization-dependent `setting` starter is selected with `organization,setting` in both
+halves. The API owns the finite typed catalog, effective default/override resolution, monotonic
+versions, compare-and-swap writes, public app caching, private scope isolation, audit minimization,
+and account cleanup. The Web feature accepts only the five shipped definitions, uses fixed
+same-origin routes, and exposes real user and organization preferences. Unknown definitions fail
+closed instead of becoming an arbitrary settings editor. See
+[`../contracts/SETTINGS.md`](../contracts/SETTINGS.md).
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

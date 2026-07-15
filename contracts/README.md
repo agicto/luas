@@ -22,6 +22,9 @@ delivery, and the fixed browser notification center are defined in
 User-owned upload intents, immutable object promotion, private download grants, content inspection,
 and deletion semantics are defined in [`ASSETS.md`](ASSETS.md).
 
+Code-owned app, organization, and user setting definitions, optimistic concurrency, public ETag
+caching, private responses, and reset history are defined in [`SETTINGS.md`](SETTINGS.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

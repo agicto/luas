@@ -67,4 +67,9 @@ const (
 	CodeAssetUploadExpired       = "ASSET.UPLOAD_EXPIRED"
 	CodeAssetSizeExceeded        = "ASSET.SIZE_EXCEEDED"
 	CodeAssetInvalidMediaType    = "ASSET.INVALID_MEDIA_TYPE"
+
+	CodeSettingNotFound             = "SETTING.NOT_FOUND"
+	CodeSettingInvalidValue         = "SETTING.INVALID_VALUE"
+	CodeSettingVersionConflict      = "SETTING.VERSION_CONFLICT"
+	CodeSettingPreconditionRequired = "SETTING.PRECONDITION_REQUIRED"
 )

@@ -60,6 +60,12 @@ var (
 	ErrAssetSizeExceeded        = errors.New("asset size exceeds policy")
 	ErrAssetInvalidMediaType    = errors.New("asset media type is invalid")
 
+	// Setting errors
+	ErrSettingNotFound             = errors.New("setting not found")
+	ErrSettingInvalidValue         = errors.New("setting value is invalid")
+	ErrSettingVersionConflict      = errors.New("setting version conflict")
+	ErrSettingPreconditionRequired = errors.New("setting version precondition is required")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

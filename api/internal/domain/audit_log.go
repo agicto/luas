@@ -12,7 +12,7 @@ const (
 	AuditActorSystem    = "system"
 )
 
-// AuditLog captures a durable record of a request-side action in the scaffold.
+// AuditLog captures a durable record of an audited action in the scaffold.
 type AuditLog struct {
 	ID         uint                        `json:"id"`
 	UserID     *uint                       `json:"user_id,omitempty"`
@@ -61,4 +61,9 @@ type AuditLogFilter struct {
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *AuditLog) error
 	FindByUserID(ctx context.Context, userID uint, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
+}
+
+// AuditLogRecorder persists a normalized, redacted audit entry.
+type AuditLogRecorder interface {
+	Record(ctx context.Context, log *AuditLog) error
 }

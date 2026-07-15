@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/zgiai/luas/api/internal/bootstrap/operatorcommands"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/infra/console/commands"
 	"github.com/zgiai/luas/api/internal/infra/plugin"
@@ -30,7 +31,8 @@ func main() {
 	cli := console.New("luas", Version)
 
 	// Register command manifests
-	commands.RegisterManifests(cli, commands.DefaultManifests(Version)...)
+	manifests := append(commands.DefaultManifests(Version), operatorcommands.Manifest())
+	commands.RegisterManifests(cli, manifests...)
 
 	// Check if first argument is a plugin command
 	if len(os.Args) > 1 && isPluginCommand(cli, os.Args[1]) {

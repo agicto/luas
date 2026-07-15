@@ -18,7 +18,10 @@ type service struct {
 	repo domain.AuditLogRepository
 }
 
-var _ Service = (*service)(nil)
+var (
+	_ Service                 = (*service)(nil)
+	_ domain.AuditLogRecorder = (*service)(nil)
+)
 
 // NewService creates a new audit service.
 func NewService(repo domain.AuditLogRepository) *service {

@@ -302,7 +302,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChan
 // DeleteAccount deletes user account
 func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
 	if err := s.repo.DeleteAccount(ctx, userID, func(transactionContext context.Context) error {
-		return s.deletionPolicy.Check(transactionContext, userID)
+		return s.deletionPolicy.Prepare(transactionContext, userID)
 	}); err != nil {
 		return err
 	}

@@ -15,6 +15,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `permission` optional starter | Organization-scoped access roles, code-owned exact permission catalog, current-persistence authorizer, owner bypass, delegated-management dominance checks, transactional assignment replacement, route guard, audit metadata; optional strict Web role/member management and mock parity | Yes, when enabled with `organization` | It is allow-only and default-deny, with no direct user grants, wildcards, role hierarchy, explicit deny, or resource-instance policy language. Product modules extend the catalog at assembly time and keep ownership checks local. See [`contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md). |
 | `notification` optional starter | Idempotent internal publication, user preferences, in-app records/read state, durable email delivery ledger, lease worker, stable failure codes; optional strict Web notification center and mock parity | Yes, when enabled | It is user-scoped and independent of organization. Required channels can override future-delivery preferences, email retries use stable provider idempotency, and no public publish endpoint or recipient/provider detail enters the browser contract. See [`contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md). |
 | `asset` optional starter | User-owned private metadata, idempotent upload intents, staging-to-final promotion, bounded content inspection, short-lived transfer grants, lifecycle leases, deletion/account guard, cleanup command; optional strict Web console and bounded mock parity | Yes, when enabled | It is user-scoped and independent of organization. Local rooted storage is development-only; production requires explicit R2. It deliberately excludes public/sharing semantics, transformations, antivirus claims, multipart upload, and usage quotas. See [`contracts/ASSETS.md`](../contracts/ASSETS.md). |
+| `setting` optional starter | Finite code-owned scalar catalog, app/organization/user overrides, default resolution, monotonic CAS versions, public app ETag caching, private scope isolation, value-free audit metadata, operator CLI, and transactional account cleanup; optional strict Web preferences and bounded mock parity | Yes, when enabled with `organization` | It deliberately excludes runtime definition creation, arbitrary JSON, secrets, remote feature-flag rollout, entitlements, usage limits, and notification preferences. See [`contracts/SETTINGS.md`](../contracts/SETTINGS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email has typed all-or-none config, cancellation, a provider budget, bounded responses, and PII-safe errors; notification adds durable delivery ownership. Storage now has a provider-neutral object seam, rooted private local adapter, and AWS SDK Go v2 R2 adapter; asset adds business ownership. The memory workflow queue remains process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -23,16 +24,15 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P2 | App/workspace settings are represented by a console page, not by API-owned durable settings. | Downstream apps need feature flags, branding, locale, and workspace preferences. | Build a `setting` optional starter after organization ownership is clear. |
 | P2 | API keys exist without usage metering, quota, billing, or plan limits. | Developer/API products need usage visibility and limits before production launch. | Build `usage` first, then keep `billing` optional and provider-adapted. |
 | P2 | Event and workflow capabilities exist, but no webhook delivery starter owns subscriptions, signing, retry, and delivery logs. | Integration-heavy apps need outbound webhooks early. | Build a `webhook` optional starter using workflow retry primitives and audit logs. |
 | P3 | AI capability exists, but no starter owns conversations, prompts, runs, evaluations, or cost tracking. | AI-first apps still need repeated product scaffolding. | Build an `ai-workspace` optional starter only after organization and usage seams are settled. |
 
 ## Recommended Starter Sequence
 
-The production auth adapter plus the organization, permission, notification, and asset optional
-starters are complete. Keep the sequence below as an ownership map; the next undelivered boundary is
-durable typed settings.
+The production auth adapter plus the organization, permission, notification, asset, and setting
+optional starters are complete. Keep the sequence below as an ownership map; the next undelivered
+boundary is usage metering and quota decisions.
 
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
@@ -58,9 +58,13 @@ durable typed settings.
    - Keeps storage SDKs and provider keys outside feature code; local is development-only and production requires explicit R2.
 
 5. `setting` optional starter
-   - Owns typed settings at app, organization, and user scopes.
-   - Useful for branding, locale defaults, workspace policy, and feature flags; notification channel preferences stay with `notification`.
-   - Must define which settings are public, private, cached, or audited.
+   - Delivered across the finite API catalog, CAS persistence, public/private HTTP contracts,
+     operator CLI, audit minimization, account cleanup, strict Web adapters/mock/UI, tests, docs,
+     and governance.
+   - Owns scalar typed overrides at app, organization, and user scopes; notification channel
+     preferences stay with `notification`, and process configuration stays with typed startup config.
+   - Keeps runtime definitions, arbitrary JSON, secrets, entitlement policy, and remote feature-flag
+     rollout deliberately outside the starter.
 
 6. `usage` optional starter before `billing`
    - Owns usage events, counters, quotas, and limit decisions.
@@ -112,8 +116,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Build durable typed `setting` next. Asset now provides private ownership, object-key isolation,
-bounded media/size inspection, short-lived transfers, cleanup, account integrity, and audit without
-making storage a default cost. The settings slice should settle app/organization/user scope,
-code-owned schemas, public-versus-private visibility, optimistic concurrency, cache invalidation,
-audit redaction, and deletion behavior before feature flags or branding become ad hoc JSON blobs.
+Build `usage` next, before billing. Setting now settles finite app/organization/user schemas,
+public-versus-private visibility, optimistic concurrency, cache revalidation, value-free audit
+metadata, and account deletion behavior without creating an arbitrary JSON store. Usage should next
+define idempotent event ingestion, dimensions, aggregation windows, late-event policy, quotas,
+atomic limit decisions, retention, and privacy before payment-provider vocabulary enters core code.

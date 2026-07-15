@@ -25,6 +25,7 @@ const notificationRouteModule = resolve(
   'src/features/notification/server/notification-route.ts'
 );
 const assetRouteModule = resolve(process.cwd(), 'src/features/asset/server/asset-route.ts');
+const settingRouteModule = resolve(process.cwd(), 'src/features/setting/server/setting-route.ts');
 
 const forbiddenRoutePatterns = [
   {
@@ -138,6 +139,20 @@ function delegatesAssetGuard(path: string, handler: RouteHandlerSource): boolean
   );
 }
 
+function isSettingRoute(path: string): boolean {
+  const route = relativeRoute(path);
+  return route.startsWith('settings/') || route.startsWith('organization-settings/');
+}
+
+function delegatesSettingGuard(path: string, handler: RouteHandlerSource): boolean {
+  return (
+    isSettingRoute(path) &&
+    /\b(?:organizationSettings|publicSettings|resetOrganizationSetting|resetUserSetting|setOrganizationSetting|setUserSetting|userSettings)Route\b/.test(
+      handler.source
+    )
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -180,7 +195,8 @@ describe('mock BFF route contract', () => {
             !delegatesApiKeyGuard(path, handler) &&
             !delegatesPermissionGuard(path, handler) &&
             !delegatesNotificationGuard(path, handler) &&
-            !delegatesAssetGuard(path, handler)
+            !delegatesAssetGuard(path, handler) &&
+            !delegatesSettingGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -197,6 +213,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesPermissionGuard(path, handler))
         .filter(handler => !delegatesNotificationGuard(path, handler))
         .filter(handler => !delegatesAssetGuard(path, handler))
+        .filter(handler => !delegatesSettingGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -280,6 +297,49 @@ describe('mock BFF route contract', () => {
     );
 
     expect(offenders).toEqual([]);
+  });
+
+  it('finalizes every private setting route as a private no-store response', () => {
+    const offenders = routeFiles
+      .filter(path => {
+        const route = relativeRoute(path);
+        return route.startsWith('settings/user/') || route.startsWith('organization-settings/');
+      })
+      .flatMap(path =>
+        routeHandlers(path)
+          .filter(handler => !handler.source.includes('privateSettingResponse('))
+          .map(handler => `${relativeRoute(path)}:${handler.method}`)
+      );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps delegated setting writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(settingRouteModule, 'utf8');
+    for (const resolverName of [
+      'resolveSettingMutationRoute',
+      'resolveOrganizationSettingMutationTarget',
+    ]) {
+      const resolver = internalFunction(source, resolverName);
+      const availabilityGuard = resolver.indexOf('resolveSettingRoute(');
+      const originGuard = resolver.indexOf('guardSameOriginMutation(');
+      const authentication = resolver.indexOf('resolveAuthenticatedSettingRoute(');
+
+      expect(availabilityGuard, resolverName).toBeGreaterThanOrEqual(0);
+      expect(originGuard, resolverName).toBeGreaterThan(availabilityGuard);
+      expect(authentication, resolverName).toBeGreaterThan(originGuard);
+    }
+
+    const userMutations = ['setUserSettingRoute', 'resetUserSettingRoute'];
+    const organizationMutations = ['setOrganizationSettingRoute', 'resetOrganizationSettingRoute'];
+    for (const name of userMutations) {
+      expect(exportedFunction(source, name), name).toContain('resolveSettingMutationRoute(');
+    }
+    for (const name of organizationMutations) {
+      expect(exportedFunction(source, name), name).toContain(
+        'resolveOrganizationSettingMutationTarget('
+      );
+    }
   });
 
   it('keeps delegated asset writes ordered behind availability and origin guards', () => {
@@ -454,5 +514,13 @@ function exportedFunction(source: string, name: string): string {
   const start = source.indexOf(marker);
   if (start < 0) return '';
   const next = source.indexOf('export async function ', start + marker.length);
+  return source.slice(start, next < 0 ? source.length : next);
+}
+
+function internalFunction(source: string, name: string): string {
+  const marker = `async function ${name}`;
+  const start = source.indexOf(marker);
+  if (start < 0) return '';
+  const next = source.indexOf('async function ', start + marker.length);
   return source.slice(start, next < 0 ? source.length : next);
 }

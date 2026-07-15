@@ -63,7 +63,7 @@ describe('GoApiClient', () => {
     expect(headers.get('x-request-id')).toBe('req-org-1');
   });
 
-  it('preserves pagination metadata and safe response headers', async () => {
+  it('preserves pagination metadata and allowlisted response headers', async () => {
     fetchMock.mockResolvedValueOnce(
       Response.json(
         {
@@ -82,6 +82,8 @@ describe('GoApiClient', () => {
         },
         {
           headers: {
+            'cache-control': 'public, max-age=60',
+            etag: '"settings-test"',
             vary: 'Organization-Id',
             'x-ratelimit-remaining': '99',
             'set-cookie': 'must-not-pass=1',
@@ -104,6 +106,8 @@ describe('GoApiClient', () => {
           meta: { total: 1 },
         },
         responseHeaders: {
+          'cache-control': 'public, max-age=60',
+          etag: '"settings-test"',
           vary: 'Organization-Id',
           'x-ratelimit-remaining': '99',
         },
@@ -112,6 +116,51 @@ describe('GoApiClient', () => {
     if (result.ok) {
       expect(result.data.responseHeaders).not.toHaveProperty('set-cookie');
     }
+  });
+
+  it('forwards explicit conditional validators and accepts bodyless 304', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(null, {
+        status: 304,
+        headers: {
+          'cache-control': 'public, max-age=60',
+          etag: '"settings-test"',
+        },
+      })
+    );
+
+    const result = await client.request({
+      method: 'GET',
+      path: 'settings/public',
+      ifNoneMatch: '"settings-test"',
+      incomingHeaders: new Headers(),
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      data: {
+        status: 304,
+        envelope: null,
+        responseHeaders: {
+          'cache-control': 'public, max-age=60',
+          etag: '"settings-test"',
+        },
+      },
+    });
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.get('if-none-match')).toBe('"settings-test"');
+  });
+
+  it('rejects unsafe conditional validators before fetch', async () => {
+    await expect(
+      client.request({
+        method: 'PATCH',
+        path: 'settings/user/localization.locale',
+        ifMatch: '"setting-v1"\r\nx-injected: true',
+        incomingHeaders: new Headers(),
+      })
+    ).rejects.toThrow('bounded visible ASCII');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('rejects oversized upstream bodies before parsing JSON', async () => {
