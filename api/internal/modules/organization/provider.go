@@ -16,6 +16,7 @@ var ProviderSet = wire.NewSet(
 	NewInvitationMailer,
 	NewService,
 	wire.Bind(new(Service), new(*service)),
+	NewContextResolver,
 	NewHandler,
 )
 

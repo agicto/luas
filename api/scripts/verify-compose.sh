@@ -89,6 +89,7 @@ register_status="$(curl --noproxy '*' --silent --show-error \
 [[ "${register_status}" == "201" ]] || fail "post-migration registration returned HTTP ${register_status}"
 
 organization_flow="skipped"
+organization_context_flow="skipped"
 membership_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
@@ -119,6 +120,60 @@ case ",${OPTIONAL_STARTERS:-}," in
     [[ "${organization_status}" == "201" ]] || fail "organization creation returned HTTP ${organization_status}"
     if ! organization_id="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "${TMP_DIR}/organization.json")"; then
       fail "organization creation response has no ID"
+    fi
+
+    context_preflight_status="$(curl --noproxy '*' --silent --show-error \
+      --dump-header "${TMP_DIR}/organization-context-preflight.headers" \
+      --output /dev/null \
+      --write-out '%{http_code}' \
+      --request OPTIONS \
+      --header 'Origin: http://localhost:3000' \
+      --header 'Access-Control-Request-Method: GET' \
+      --header 'Access-Control-Request-Headers: Authorization, Organization-Id' \
+      "http://127.0.0.1:${published_port}/v1/organization-context")"
+    [[ "${context_preflight_status}" == "204" ]] || fail "organization context preflight returned HTTP ${context_preflight_status}"
+    if ! python3 -c '
+import sys
+headers = open(sys.argv[1], encoding="utf-8").read().splitlines()
+allowed = ",".join(line.split(":", 1)[1] for line in headers if line.lower().startswith("access-control-allow-headers:"))
+raise SystemExit(0 if "organization-id" in allowed.lower() else 1)
+' "${TMP_DIR}/organization-context-preflight.headers"; then
+      fail "organization context preflight does not allow Organization-Id"
+    fi
+
+    context_required_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/organization-context-required.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      "http://127.0.0.1:${published_port}/v1/organization-context")"
+    [[ "${context_required_status}" == "400" ]] || fail "missing organization context returned HTTP ${context_required_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "ORGANIZATION.CONTEXT_REQUIRED" else 1)' "${TMP_DIR}/organization-context-required.json"; then
+      fail "missing organization context returned the wrong error_code"
+    fi
+
+    context_owner_status="$(curl --noproxy '*' --silent --show-error \
+      --dump-header "${TMP_DIR}/organization-context-owner.headers" \
+      --output "${TMP_DIR}/organization-context-owner.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${owner_token}" \
+      --header "Organization-Id: ${organization_id}" \
+      "http://127.0.0.1:${published_port}/v1/organization-context")"
+    [[ "${context_owner_status}" == "200" ]] || fail "owner organization context returned HTTP ${context_owner_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+headers = open(sys.argv[2], encoding="utf-8").read().splitlines()
+vary = ",".join(line.split(":", 1)[1] for line in headers if line.lower().startswith("vary:"))
+valid = (
+    payload["organization_id"] == int(sys.argv[3])
+    and payload["user_id"] == int(sys.argv[4])
+    and payload["membership_id"] > 0
+    and payload["role"] == "owner"
+    and "organization-id" in vary.lower()
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/organization-context-owner.json" "${TMP_DIR}/organization-context-owner.headers" "${organization_id}" "${owner_user_id}"; then
+      fail "owner organization context violates identity, role, membership, or Vary contract"
     fi
 
     invitation_status="$(curl --noproxy '*' --silent --show-error \
@@ -182,6 +237,17 @@ print(payload["invitation"]["id"])
     read -r member_a_user_id member_a_token < <(register_and_login_user "compose_member_a" "compose-member-a@example.com" "organization-member-a")
     read -r member_b_user_id member_b_token < <(register_and_login_user "compose_member_b" "compose-member-b@example.com" "organization-member-b")
 
+    context_outsider_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/organization-context-outsider.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${admin_token}" \
+      --header "Organization-Id: ${organization_id}" \
+      "http://127.0.0.1:${published_port}/v1/organization-context")"
+    [[ "${context_outsider_status}" == "404" ]] || fail "non-member organization context returned HTTP ${context_outsider_status}"
+    if ! python3 -c 'import json, sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["error_code"] == "ORGANIZATION.NOT_FOUND" else 1)' "${TMP_DIR}/organization-context-outsider.json"; then
+      fail "non-member organization context returned the wrong error_code"
+    fi
+
     if ! compose exec -T postgres psql --username luas --dbname luas --set ON_ERROR_STOP=1 --command "
 INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
 VALUES
@@ -191,6 +257,28 @@ VALUES
 " >/dev/null; then
       fail "organization member fixture insertion failed"
     fi
+
+    context_member_status="$(curl --noproxy '*' --silent --show-error \
+      --output "${TMP_DIR}/organization-context-member.json" \
+      --write-out '%{http_code}' \
+      --header "Authorization: Bearer ${admin_token}" \
+      --header "Organization-Id: ${organization_id}" \
+      "http://127.0.0.1:${published_port}/v1/organization-context")"
+    [[ "${context_member_status}" == "200" ]] || fail "member organization context returned HTTP ${context_member_status}"
+    if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+valid = (
+    payload["organization_id"] == int(sys.argv[2])
+    and payload["user_id"] == int(sys.argv[3])
+    and payload["membership_id"] > 0
+    and payload["role"] == "admin"
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/organization-context-member.json" "${organization_id}" "${admin_user_id}"; then
+      fail "member organization context violates current membership semantics"
+    fi
+    organization_context_flow="${context_preflight_status}/${context_required_status}/${context_owner_status}/${context_outsider_status}/${context_member_status}"
 
     member_list_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/member-list.json" \
@@ -406,5 +494,6 @@ printf 'compose API health: %s\n' "${api_health}"
 printf 'compose loopback address: %s\n' "${published_address}"
 printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_status}"
 printf 'compose organization/invitation flow: %s\n' "${organization_flow}"
+printf 'compose organization/context flow: %s\n' "${organization_context_flow}"
 printf 'compose organization/member flow: %s\n' "${membership_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

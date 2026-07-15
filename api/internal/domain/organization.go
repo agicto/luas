@@ -131,6 +131,7 @@ func (i *OrganizationInvitation) Status(now time.Time) OrganizationInvitationSta
 type OrganizationRepository interface {
 	CreateWithOwner(ctx context.Context, organization *Organization, owner *OrganizationMembership) error
 	FindForUser(ctx context.Context, organizationID, userID uint) (*OrganizationMembership, error)
+	ResolveContext(ctx context.Context, organizationID, userID uint) (*OrganizationContext, error)
 	ListForUser(ctx context.Context, userID uint, page, pageSize int) ([]*OrganizationMembership, int64, error)
 	ListMembers(ctx context.Context, organizationID, userID uint, page, pageSize int) ([]*OrganizationMembership, int64, error)
 	ChangeMemberRole(ctx context.Context, organizationID, userID, memberID uint, role OrganizationRole, now time.Time) (*OrganizationMembershipRoleChange, error)

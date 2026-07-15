@@ -39,6 +39,8 @@ const (
 	CodeAPIKeyRevoked  = "API_KEY.REVOKED"
 
 	CodeOrganizationNotFound                       = "ORGANIZATION.NOT_FOUND"
+	CodeOrganizationContextRequired                = "ORGANIZATION.CONTEXT_REQUIRED"
+	CodeOrganizationContextInvalid                 = "ORGANIZATION.CONTEXT_INVALID"
 	CodeOrganizationSlugAlreadyExists              = "ORGANIZATION.SLUG_ALREADY_EXISTS"
 	CodeOrganizationOwnershipTransferRequired      = "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED"
 	CodeOrganizationOwnershipTransferTargetInvalid = "ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID"

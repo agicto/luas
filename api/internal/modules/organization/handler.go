@@ -14,23 +14,30 @@ import (
 
 // Handler handles organization HTTP requests and active-starter hooks.
 type Handler struct {
-	service        Service
-	deletionGuard  user.AccountDeletionGuard
-	deletionPolicy *user.AccountDeletionPolicy
+	service         Service
+	contextResolver *ContextResolver
+	deletionGuard   user.AccountDeletionGuard
+	deletionPolicy  *user.AccountDeletionPolicy
 }
 
 var (
 	_ assembly.Module           = (*Handler)(nil)
 	_ assembly.RouteModule      = (*Handler)(nil)
+	_ assembly.MiddlewareModule = (*Handler)(nil)
 	_ assembly.ActivationModule = (*Handler)(nil)
 )
 
 // NewHandler creates an organization handler.
-func NewHandler(service *service, deletionPolicy *user.AccountDeletionPolicy) *Handler {
+func NewHandler(
+	service *service,
+	contextResolver *ContextResolver,
+	deletionPolicy *user.AccountDeletionPolicy,
+) *Handler {
 	return &Handler{
-		service:        service,
-		deletionGuard:  service,
-		deletionPolicy: deletionPolicy,
+		service:         service,
+		contextResolver: contextResolver,
+		deletionGuard:   service,
+		deletionPolicy:  deletionPolicy,
 	}
 }
 

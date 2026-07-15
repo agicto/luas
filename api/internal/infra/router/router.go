@@ -375,7 +375,8 @@ func (r *Router) AliasMiddleware(alias string, middleware Middleware) *Router {
 	return r
 }
 
-// WithMiddleware applies middleware by name (group or alias)
+// WithMiddleware applies middleware by name (group or alias).
+// Unknown names panic during route assembly so authorization typos cannot fail open.
 func (r *Router) WithMiddleware(names ...string) *Router {
 	var middlewares []Middleware
 	for _, name := range names {
@@ -383,6 +384,8 @@ func (r *Router) WithMiddleware(names ...string) *Router {
 			middlewares = append(middlewares, group...)
 		} else if alias, ok := r.middlewareAlias[name]; ok {
 			middlewares = append(middlewares, alias)
+		} else {
+			panic(fmt.Sprintf("router: middleware %q is not registered", name))
 		}
 	}
 	if len(middlewares) > 0 {

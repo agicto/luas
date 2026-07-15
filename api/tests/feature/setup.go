@@ -41,7 +41,7 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 	cfg.JWT.ExpireDays = 1
 	cfg.CORS.AllowOrigins = []string{"http://localhost:3000"}
 	cfg.CORS.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-	cfg.CORS.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "X-API-Key", "X-Request-ID"}
+	cfg.CORS.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-API-Key", "X-Request-ID"}
 	cfg.CORS.ExposeHeaders = []string{"Content-Length", "X-Request-ID"}
 	cfg.CORS.AllowCredentials = true
 	cfg.AI.DefaultProvider = "openai"

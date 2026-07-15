@@ -66,6 +66,12 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Starter registry**
 : The assembly point that decides which default and selected optional starters, migrations, seeders, routes, middleware, events, and runtime hooks are active from one configuration snapshot.
 
+**Active organization context**
+: The organization membership explicitly selected and revalidated for one API request. It is
+  request-scoped, not a global user preference or a long-lived JWT claim. Context-protected routes
+  use the canonical organization header and consume the resolved organization ID, membership ID,
+  user ID, and role from typed request context rather than trusting raw transport input.
+
 **Command manifest**
 : The assembly seam that groups CLI commands so registration does not drift across command packages.
 
@@ -86,6 +92,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - A feature is product-facing behavior; a module is the internal implementation shape behind a seam.
 - Core and capabilities are reusable; starters and features express application behavior.
 - Contracts connect deployable units. Source code is not shared across deployable units.
+- Active organization context is selected per request and verified against current membership.
 - The production auth adapter connects the browser auth contract to the Go API contract without making either contract pretend to be the other.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 

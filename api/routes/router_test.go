@@ -8,14 +8,29 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter"
 )
+
+type testAuditMiddlewareModule struct{}
+
+func (testAuditMiddlewareModule) Name() string { return "audit" }
+
+func (testAuditMiddlewareModule) RegisterMiddleware(r *router.Router) {
+	r.AliasMiddleware("audit", func(c *gin.Context) { c.Next() })
+}
+
+func testStarterRegistry() *starter.Registry {
+	registry := starter.NewRegistry()
+	registry.RegisterModule(testAuditMiddlewareModule{})
+	return registry
+}
 
 func TestSetupDoesNotExposeUnwiredOperationalSurfaces(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
 
-	Setup(engine, starter.NewRegistry())
+	Setup(engine, testStarterRegistry())
 
 	for _, route := range engine.Routes() {
 		for _, prefix := range []string{"/monitor", "/swagger"} {
@@ -29,7 +44,7 @@ func TestSetupDoesNotExposeUnwiredOperationalSurfaces(t *testing.T) {
 func TestWelcomeDoesNotLinkUnwiredOperationalSurfaces(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	engine := gin.New()
-	Setup(engine, starter.NewRegistry())
+	Setup(engine, testStarterRegistry())
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	response := httptest.NewRecorder()

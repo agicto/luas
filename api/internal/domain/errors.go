@@ -29,6 +29,8 @@ var (
 
 	// Organization errors
 	ErrOrganizationNotFound                       = errors.New("organization not found")
+	ErrOrganizationContextRequired                = errors.New("organization context is required")
+	ErrOrganizationContextInvalid                 = errors.New("organization context is invalid")
 	ErrOrganizationSlugAlreadyExists              = errors.New("organization slug already exists")
 	ErrOrganizationOwnershipTransferRequired      = errors.New("organization ownership must be transferred first")
 	ErrOrganizationOwnershipTransferTargetInvalid = errors.New("organization ownership transfer target is invalid")

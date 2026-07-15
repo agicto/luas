@@ -148,6 +148,8 @@ def main() -> int:
         "contracts/ORGANIZATIONS.md",
         (
             "OPTIONAL_STARTERS=organization",
+            "GET /v1/organization-context",
+            "Organization-Id",
             "POST /v1/organizations/:id/invitations",
             "POST /v1/organization-invitations/accept",
             "GET /v1/organizations/:id/members",
@@ -157,6 +159,8 @@ def main() -> int:
             "ORGANIZATION_INVITATION_TTL",
             "stores only their SHA-256 hash",
             "ORGANIZATION.NOT_FOUND",
+            "ORGANIZATION.CONTEXT_REQUIRED",
+            "ORGANIZATION.CONTEXT_INVALID",
             "ORGANIZATION.SLUG_ALREADY_EXISTS",
             "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED",
             "ORGANIZATION.INVITATION.INVALID",
@@ -175,6 +179,8 @@ def main() -> int:
         "api/internal/domain/error_codes.go",
         (
             '"ORGANIZATION.NOT_FOUND"',
+            '"ORGANIZATION.CONTEXT_REQUIRED"',
+            '"ORGANIZATION.CONTEXT_INVALID"',
             '"ORGANIZATION.SLUG_ALREADY_EXISTS"',
             '"ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED"',
             '"ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID"',
@@ -191,6 +197,8 @@ def main() -> int:
         failures,
         "api/internal/bootstrap/domain_error_mappings.go",
         (
+            "ErrOrganizationContextRequired, http.StatusBadRequest",
+            "ErrOrganizationContextInvalid, http.StatusBadRequest",
             "ErrOrganizationInvitationInvalid, http.StatusNotFound",
             "ErrOrganizationMemberNotFound, http.StatusNotFound",
             "ErrOrganizationInvitationEmailMismatch, http.StatusForbidden",
@@ -225,6 +233,7 @@ def main() -> int:
         (
             'TokenHash      string           `json:"-"`',
             "type OrganizationInvitationRepository interface",
+            "ResolveContext(ctx context.Context, organizationID, userID uint)",
             "OrganizationInvitationStatusExpired",
             "ListMembers(ctx context.Context",
             "ChangeMemberRole(ctx context.Context",
@@ -245,6 +254,9 @@ def main() -> int:
         failures,
         "api/internal/modules/organization/routes.go",
         (
+            'MiddlewareGroup("organization_context"',
+            'WithMiddleware("organization_context")',
+            'GET("/organization-context"',
             'POST("/organizations/:id/invitations"',
             'GET("/organizations/:id/invitations"',
             'DELETE("/organizations/:id/invitations/:invitation_id"',
@@ -254,6 +266,53 @@ def main() -> int:
             'DELETE("/organizations/:id/members/:member_id"',
             'POST("/organizations/:id/ownership-transfer"',
         ),
+    )
+
+    require_all(
+        failures,
+        "api/internal/domain/organization_context.go",
+        (
+            "type OrganizationContext struct",
+            "func WithOrganizationContext(",
+            "func OrganizationContextFromContext(",
+            "value.IsValid()",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/organization/context_repository.go",
+        (
+            "func (r *repository) ResolveContext(",
+            'Table("organization_memberships AS memberships")',
+            'Joins("JOIN organizations ON organizations.id = memberships.organization_id")',
+            'Where("memberships.organization_id = ? AND memberships.user_id = ?"',
+            "Take(&row)",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/organization/context_resolver.go",
+        (
+            'OrganizationIDHeader = "Organization-Id"',
+            "c.Request.Header.Values(OrganizationIDHeader)",
+            "canonicalOrganizationID.MatchString(value)",
+            "domain.WithOrganizationContext(",
+            "addVary(c.Writer.Header(), OrganizationIDHeader)",
+            "auditstarter.RecordChange(requestContext",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/infra/router/router.go",
+        (
+            'panic(fmt.Sprintf("router: middleware %q is not registered", name))',
+            "authorization typos cannot fail open",
+        ),
+    )
+    require_all(
+        failures,
+        "api/tests/integration/router_test.go",
+        ("TestRouter_WithMiddlewareFailsForUnknownName",),
     )
 
     require_all(
@@ -426,7 +485,22 @@ def main() -> int:
         (
             "OPTIONAL_STARTERS=",
             "available: organization",
+            "Authorization,Organization-Id,X-Request-ID",
             "ORGANIZATION_INVITATION_TTL=168h",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/infra/config/config.go",
+        (
+            'env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"})',
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/bootstrap/http.go",
+        (
+            '[]string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"}',
         ),
     )
     require_all(
@@ -444,6 +518,9 @@ def main() -> int:
             "*,organization,*)",
             "/v1/organizations/${organization_id}/invitations",
             "ORGANIZATION.INVITATION.ALREADY_PENDING",
+            "ORGANIZATION.CONTEXT_REQUIRED",
+            "organization context preflight",
+            "organization_context_flow",
             "email_send_status",
             "replacement invitation",
             "/members",
@@ -469,7 +546,25 @@ def main() -> int:
         (
             "`organization` optional starter",
             "Foundation only",
-            "ownership, invitation, and member-lifecycle kernels",
+            "request-scoped active context",
+        ),
+    )
+    require_all(
+        failures,
+        "docs/ARCHITECTURE.md",
+        (
+            "Organization-Id",
+            "OrganizationContextFromContext",
+            "current membership",
+        ),
+    )
+    require_all(
+        failures,
+        ".agents/skills/downstream-app-extraction/SKILL.md",
+        (
+            "Organization-Id",
+            "active organization selection",
+            "raw header",
         ),
     )
     require_all(

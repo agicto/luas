@@ -55,7 +55,8 @@ func InitApplication() (*app.Application, error) {
 	invitationMailer := organization.NewInvitationMailer(service)
 	invitationPolicy := organization.NewInvitationPolicy(configConfig)
 	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
-	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
+	contextResolver := organization.NewContextResolver(organizationService)
+	organizationHandler := organization.NewHandler(organizationService, contextResolver, accountDeletionPolicy)
 	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {
 		return nil, err
@@ -100,7 +101,8 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	invitationMailer := organization.NewInvitationMailer(service)
 	invitationPolicy := organization.NewInvitationPolicy(cfg)
 	organizationService := organization.NewService(organizationRepository, organizationRepository, invitationMailer, invitationPolicy)
-	organizationHandler := organization.NewHandler(organizationService, accountDeletionPolicy)
+	contextResolver := organization.NewContextResolver(organizationService)
+	organizationHandler := organization.NewHandler(organizationService, contextResolver, accountDeletionPolicy)
 	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler)
 	if err != nil {
 		return nil, err

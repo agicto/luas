@@ -12,11 +12,12 @@ import (
 )
 
 type fakeRepository struct {
-	createFn func(context.Context, *domain.Organization, *domain.OrganizationMembership) error
-	findFn   func(context.Context, uint, uint) (*domain.OrganizationMembership, error)
-	listFn   func(context.Context, uint, int, int) ([]*domain.OrganizationMembership, int64, error)
-	updateFn func(context.Context, *domain.Organization) error
-	countFn  func(context.Context, uint) (int64, int64, error)
+	createFn  func(context.Context, *domain.Organization, *domain.OrganizationMembership) error
+	findFn    func(context.Context, uint, uint) (*domain.OrganizationMembership, error)
+	resolveFn func(context.Context, uint, uint) (*domain.OrganizationContext, error)
+	listFn    func(context.Context, uint, int, int) ([]*domain.OrganizationMembership, int64, error)
+	updateFn  func(context.Context, *domain.Organization) error
+	countFn   func(context.Context, uint) (int64, int64, error)
 }
 
 func newOrganizationService(repo domain.OrganizationRepository) *service {
@@ -29,6 +30,13 @@ func (r *fakeRepository) CreateWithOwner(ctx context.Context, organization *doma
 
 func (r *fakeRepository) FindForUser(ctx context.Context, organizationID, userID uint) (*domain.OrganizationMembership, error) {
 	return r.findFn(ctx, organizationID, userID)
+}
+
+func (r *fakeRepository) ResolveContext(ctx context.Context, organizationID, userID uint) (*domain.OrganizationContext, error) {
+	if r.resolveFn == nil {
+		return nil, nil
+	}
+	return r.resolveFn(ctx, organizationID, userID)
 }
 
 func (r *fakeRepository) ListForUser(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error) {

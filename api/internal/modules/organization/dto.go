@@ -54,6 +54,16 @@ type OrganizationResponse struct {
 	UpdatedAt time.Time               `json:"updated_at"`
 }
 
+// OrganizationContextResponse is the verified request-scoped tenant identity.
+type OrganizationContextResponse struct {
+	OrganizationID   uint                    `json:"organization_id"`
+	OrganizationName string                  `json:"organization_name"`
+	OrganizationSlug string                  `json:"organization_slug"`
+	MembershipID     uint                    `json:"membership_id"`
+	UserID           uint                    `json:"user_id"`
+	Role             domain.OrganizationRole `json:"role"`
+}
+
 // OrganizationMemberResponse is the PII-minimized public member view.
 type OrganizationMemberResponse struct {
 	ID        uint                    `json:"id"`
@@ -197,6 +207,17 @@ func toResponse(membership *domain.OrganizationMembership) *OrganizationResponse
 		Role:      membership.Role,
 		CreatedAt: organization.CreatedAt,
 		UpdatedAt: organization.UpdatedAt,
+	}
+}
+
+func toContextResponse(resolved domain.OrganizationContext) *OrganizationContextResponse {
+	return &OrganizationContextResponse{
+		OrganizationID:   resolved.OrganizationID,
+		OrganizationName: resolved.OrganizationName,
+		OrganizationSlug: resolved.OrganizationSlug,
+		MembershipID:     resolved.MembershipID,
+		UserID:           resolved.UserID,
+		Role:             resolved.Role,
 	}
 }
 

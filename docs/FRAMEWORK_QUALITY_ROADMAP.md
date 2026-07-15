@@ -98,7 +98,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` ownership kernel is runnable but explicitly foundation-only; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). The first optional `organization` backend now includes ownership, invitation, member lifecycle, and verified request-scoped active context, but remains explicitly foundation-only until its browser and downstream integration surfaces are complete; permission, notification, file/asset, settings, usage, billing, webhook, and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -410,7 +410,7 @@ membership-aware account-deletion guard that prevents orphaned tenants. Its invi
 manager-scoped create/list/revoke, transactional acceptance, immutable token hashes, explicit email
 attempt semantics, stable errors, and audit changes. `organization` means the tenant boundary; it is
 not interchangeable with a future workspace concept. The starter remains foundation-only until
-active organization, Web, mock, and extraction surfaces are complete. Its member lifecycle now
+Web, mock, and downstream integration surfaces are complete. Its member lifecycle now
 adds a PII-minimized directory, owner-only role changes, manager removal and self-leave policy,
 transactional ownership transfer, membership audit changes, and account-deletion guards that stop
 soft-deleted users from leaving stale membership rows.
@@ -466,6 +466,28 @@ ns/request with metrics disabled (+0.7%) and from 1,428 to 1,460 ns/request with
 not an SLO or field-performance claim, and the new organization routes remain outside the default
 runtime surface.
 
+The active-context slice adds the named `organization_context` middleware and
+`GET /v1/organization-context`. `Organization-Id` is a request-scoped selection, not an authority:
+the resolver joins the current membership and organization in one indexed query, binds a typed
+value to the request, emits cache-safe `Vary` metadata, and records organization identity for
+mutating-route audits. Missing, malformed, duplicate, or overflowing selections fail before
+persistence; absent and non-member IDs share `404 ORGANIZATION.NOT_FOUND`. Default CORS now permits
+the explicit header, and the Compose gate covers preflight, required selection, owner resolution,
+non-member non-disclosure, and current member role against PostgreSQL. No schema migration or Go
+module dependency was added. Named middleware lookup now fails route assembly on an unknown name,
+preventing an auth or organization-context typo from silently dropping a protection layer.
+
+Against pre-slice commit `c8ef26d`, default assembly remains at 14 routes and seven migrations;
+`OPTIONAL_STARTERS=organization` moves from twelve to thirteen additional routes and remains at two
+migrations. The stripped `CGO_ENABLED=0` Darwin/arm64 server moves from 35,402,146 to 35,419,282
+bytes (+17,136 bytes, 0.048%), and the production image moves from 25,088,293 to 25,097,694 bytes
+(+9,401 bytes, 0.037%). The module graph stays at 276 with no `go.mod` or `go.sum` change. Five
+2-second core HTTP middleware runs move median time from 1,209 to 1,240 ns/request with metrics
+disabled (+2.6%) and from 1,444 to 1,450 ns/request with metrics enabled (+0.4%); all runs retain 18
+allocations/request. These are host-local regression measurements, not an SLO or field-performance
+claim. The active-context database test separately proves one query for both member success and
+non-member denial.
+
 Verification:
 
 - `cd api && go test ./...`
@@ -481,7 +503,7 @@ Problem: the current default starter set is useful for auth, API keys, and audit
 Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
-2. Finish active organization context, Web UI, and extraction guidance for the foundation-only `organization` starter.
+2. Finish Web UI, mock behavior, and downstream production integration for the foundation-only `organization` starter.
 3. Keep `permission` documented as planned optional starter behavior until a runnable module, migrations, contracts, Web feature, and tests exist.
 4. Promote a starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 

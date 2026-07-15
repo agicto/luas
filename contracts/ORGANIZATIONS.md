@@ -60,6 +60,47 @@ An organization membership view contains:
   `409 ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED` instead of retaining memberships for a soft-deleted
   user.
 
+## Active Organization Context
+
+Tenant-scoped product routes use an explicit, request-scoped organization selection. They require
+exactly one `Organization-Id` request header whose value is the canonical positive decimal
+organization ID. Header names are case-insensitive; values containing signs, leading zeroes,
+commas, multiple field lines, whitespace-only content, or values outside the platform `uint` range
+are invalid.
+
+The optional starter exposes one verification endpoint:
+
+| Operation | Endpoint | Request | Successful `data` |
+|---|---|---|---|
+| Resolve active context | `GET /v1/organization-context` | `Organization-Id` header | Organization context view |
+
+```json
+{
+  "organization_id": 42,
+  "organization_name": "Acme Europe",
+  "organization_slug": "acme-europe",
+  "membership_id": 91,
+  "user_id": 17,
+  "role": "admin"
+}
+```
+
+- Authentication establishes the user; the header only selects among that user's current
+  memberships. A syntactically valid ID for an absent organization or non-member returns the same
+  `404 ORGANIZATION.NOT_FOUND` response, preventing existence disclosure.
+- Resolution is performed for every protected request through the existing
+  `(organization_id, user_id)` membership index. Downstream handlers and services consume the
+  typed resolved context, never the raw header.
+- The response varies on `Organization-Id`. Context-protected routes add that field to `Vary` so a
+  compliant cache cannot reuse one organization's representation for another.
+- Existing organization-management routes remain explicitly path-scoped. Do not combine a path
+  organization ID and the context header unless the route rejects mismatches.
+- The API does not persist a current organization and does not put it into Luas JWTs. Browser
+  selection belongs to the active tab or URL, and a production adapter forwards the selected ID on
+  each request. This avoids cross-tab selection races and stale membership claims.
+- Cross-origin browser deployments must include `Organization-Id` in `CORS_ALLOW_HEADERS` when
+  exposing context-protected API routes directly.
+
 ## Member Lifecycle
 
 Member endpoints require the standard Go API bearer token. The public `member` resource represents
@@ -161,6 +202,8 @@ An invitation view contains no plaintext token:
 
 | HTTP status | `error_code` | Meaning |
 |---|---|---|
+| 400 | `ORGANIZATION.CONTEXT_REQUIRED` | A context-protected route received no organization selection |
+| 400 | `ORGANIZATION.CONTEXT_INVALID` | The organization selection is malformed or ambiguous |
 | 404 | `ORGANIZATION.NOT_FOUND` | The caller has no visible membership for the organization |
 | 404 | `ORGANIZATION.INVITATION.NOT_FOUND` | The invitation is not visible in the managed organization |
 | 404 | `ORGANIZATION.INVITATION.INVALID` | The acceptance token is malformed, unknown, revoked, or already consumed |
@@ -182,6 +225,6 @@ All failures use the global error envelope and `request_id` rules in [`README.md
 ## Deliberate Deferrals
 
 This remains a backend foundation, not yet a complete business-ready organization starter.
-Organization deletion, active organization context, durable invitation delivery retries,
-permission policies, Web UI, and mock BFF parity remain explicit follow-up work. The starter must
-not be marked ready in the starter roadmap until those surfaces and extraction rules exist.
+Organization deletion, durable invitation delivery retries, permission policies, Web UI, and mock
+BFF parity remain explicit follow-up work. The starter must not be marked ready in the starter
+roadmap until those surfaces and extraction rules exist.

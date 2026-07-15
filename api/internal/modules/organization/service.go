@@ -18,6 +18,7 @@ type Service interface {
 	Create(ctx context.Context, userID uint, req *CreateOrganizationRequest) (*domain.OrganizationMembership, error)
 	List(ctx context.Context, userID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
 	Get(ctx context.Context, userID, organizationID uint) (*domain.OrganizationMembership, error)
+	ResolveContext(ctx context.Context, userID, organizationID uint) (*domain.OrganizationContext, error)
 	Update(ctx context.Context, userID, organizationID uint, req *UpdateOrganizationRequest) (*domain.OrganizationMembership, error)
 	ListMembers(ctx context.Context, userID, organizationID uint, page, pageSize int) ([]*domain.OrganizationMembership, int64, error)
 	ChangeMemberRole(ctx context.Context, userID, organizationID, memberID uint, req *UpdateOrganizationMemberRequest) (*domain.OrganizationMembership, error)

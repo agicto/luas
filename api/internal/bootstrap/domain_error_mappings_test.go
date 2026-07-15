@@ -68,6 +68,18 @@ func TestRegisterDomainErrorMappings(t *testing.T) {
 			errorCode:  domain.CodeOrganizationOwnershipTransferTargetInvalid,
 		},
 		{
+			name:       "organization context is required",
+			err:        domain.ErrOrganizationContextRequired,
+			statusCode: http.StatusBadRequest,
+			errorCode:  domain.CodeOrganizationContextRequired,
+		},
+		{
+			name:       "organization context is invalid",
+			err:        domain.ErrOrganizationContextInvalid,
+			statusCode: http.StatusBadRequest,
+			errorCode:  domain.CodeOrganizationContextInvalid,
+		},
+		{
 			name:       "organization memberships block account deletion",
 			err:        domain.ErrOrganizationMembershipExitRequired,
 			statusCode: http.StatusConflict,

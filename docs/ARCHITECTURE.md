@@ -50,6 +50,27 @@ repositories resolve that context before falling back to their configured databa
 - Do not use this seam across deployable services or background jobs. Those require an explicit
   event, outbox, or workflow contract instead of an in-process database transaction.
 
+### Active Organization Boundary
+
+When the optional `organization` starter is enabled, tenant-scoped routes use the named
+`organization_context` middleware after `auth`. The client sends one `Organization-Id` selection,
+but the middleware treats that value only as a lookup key: it resolves the authenticated user's
+current membership and organization in one indexed query before the handler runs.
+
+```go
+r.Group("", func(scoped *router.Router) {
+	scoped.WithMiddleware("auth", "organization_context")
+	scoped.GET("/projects", handler.List)
+})
+```
+
+Handlers and services read the verified value with
+`domain.OrganizationContextFromContext(ctx)`. They must not parse the transport header again,
+persist a process-wide current organization, or trust an organization ID copied from a request
+body. Every request therefore observes current membership and role state, including removal,
+leave, and ownership transfer. See [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)
+for the public header, cache, CORS, and non-disclosure contract.
+
 ## Web Shape
 
 The web app uses Next.js App Router and feature-first folders under `web/src/features/`.

@@ -53,7 +53,9 @@ silently building a different artifact. It then starts PostgreSQL on random loop
 explicit local migration opt-in, waits for readiness, and completes a real starter registration.
 When `OPTIONAL_STARTERS` contains `organization`, the same check also exercises PostgreSQL-backed
 organization creation plus invitation create, duplicate conflict, list, revoke, and replacement
-semantics without requiring an external email provider. It then creates registered-user membership
+semantics without requiring an external email provider. It verifies the active organization CORS
+preflight, required-header error, owner resolution, non-member non-disclosure, and current member
+role against PostgreSQL. It then creates registered-user membership
 fixtures and exercises the PII-minimized member directory, owner-only role mutation, account-delete
 guard, admin removal, previous-owner leave, and a concurrent two-request ownership transfer. The
 transfer gate requires exactly one `200`, one `403`, one persisted owner, and the previous owner
@@ -85,6 +87,8 @@ A downstream production deployment must inject at least:
 
 - `JWT_SECRET`: generated secret with at least 32 characters.
 - `CORS_ALLOW_ORIGINS`: explicit production browser origins.
+- `CORS_ALLOW_HEADERS`: retain `Authorization` and `Organization-Id` when a cross-origin browser
+  calls active-organization routes; Luas includes both in its default allow-list.
 - `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD` when the default
   database-backed starters remain installed.
 - `SERVER_TRUSTED_PROXIES`: only exact ingress/load-balancer IPs or CIDRs when forwarding headers are

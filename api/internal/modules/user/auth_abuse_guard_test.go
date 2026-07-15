@@ -56,7 +56,9 @@ func authProtectionTestEngine(t *testing.T, cfg config.AuthenticationRateLimitCo
 	}))
 
 	handler := NewHandler(service, nil, nil, nil, nil, newAuthAbuseGuard(cfg))
-	handler.RegisterRoutes(router.New(engine).Prefix("/v1"))
+	routes := router.New(engine).Prefix("/v1")
+	handler.RegisterMiddleware(routes)
+	handler.RegisterRoutes(routes)
 	return engine
 }
 

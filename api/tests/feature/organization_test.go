@@ -126,6 +126,65 @@ func TestOrganizationOwnershipKernel(t *testing.T) {
 		AssertJSONPath("error_code", "ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED")
 }
 
+func TestOrganizationActiveContextHTTPContract(t *testing.T) {
+	tc := NewTestCaseWithOptionalStarters(t, "organization")
+	owner := registerOrganizationTestUser(t, tc, "context-owner", "context-owner@example.com")
+	outsider := registerOrganizationTestUser(t, tc, "context-outsider", "context-outsider@example.com")
+
+	created := tc.Post("/v1/organizations").
+		WithToken(owner.Token).
+		WithJSON(map[string]any{"name": "Context Org", "slug": "context-org"}).
+		Call().
+		AssertCreated().
+		JSON()["data"].(map[string]interface{})
+	organizationID := fmt.Sprintf("%.0f", created["id"].(float64))
+
+	tc.Get("/v1/organization-context").
+		WithToken(owner.Token).
+		WithHeader("X-Request-ID", "req-organization-context-required").
+		Call().
+		AssertStatus(http.StatusBadRequest).
+		AssertHeader("Vary", "Organization-Id").
+		AssertJSONPath("error_code", "ORGANIZATION.CONTEXT_REQUIRED").
+		AssertJSONPath("request_id", "req-organization-context-required")
+
+	tc.Get("/v1/organization-context").
+		WithToken("not-a-valid-jwt").
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertUnauthorized().
+		AssertJSONPath("error_code", "AUTH.UNAUTHORIZED")
+
+	tc.Get("/v1/organization-context").
+		WithToken(owner.Token).
+		WithHeader("Organization-Id", "0").
+		Call().
+		AssertStatus(http.StatusBadRequest).
+		AssertJSONPath("error_code", "ORGANIZATION.CONTEXT_INVALID")
+
+	tc.Get("/v1/organization-context").
+		WithToken(outsider.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertNotFound().
+		AssertJSONPath("error_code", "ORGANIZATION.NOT_FOUND")
+
+	contextJSON := tc.Get("/v1/organization-context").
+		WithToken(owner.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertOk().
+		AssertHeader("Vary", "Organization-Id").
+		AssertJSONPath("data.organization_id", created["id"]).
+		AssertJSONPath("data.organization_name", "Context Org").
+		AssertJSONPath("data.organization_slug", "context-org").
+		AssertJSONPath("data.user_id", float64(owner.ID)).
+		AssertJSONPath("data.role", "owner").
+		JSON()
+	contextData := contextJSON["data"].(map[string]interface{})
+	require.Greater(t, contextData["membership_id"].(float64), float64(0))
+}
+
 func TestOrganizationInvitationHTTPContract(t *testing.T) {
 	invitationTokens := make(chan string, 4)
 	previousTransport := http.DefaultTransport
@@ -336,9 +395,21 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		Call().
 		AssertOk().
 		AssertJSONPath("data.role", "admin")
+	tc.Get("/v1/organization-context").
+		WithToken(member.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "admin")
 	tc.Patch(fmt.Sprintf("/v1/organizations/%s/members/%d", organizationID, membershipIDs[member.ID])).
 		WithToken(owner.Token).
 		WithJSON(map[string]any{"role": "member"}).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "member")
+	tc.Get("/v1/organization-context").
+		WithToken(member.Token).
+		WithHeader("Organization-Id", organizationID).
 		Call().
 		AssertOk().
 		AssertJSONPath("data.role", "member")
@@ -372,6 +443,12 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		WithToken(admin.Token).
 		Call().
 		AssertNoContent()
+	tc.Get("/v1/organization-context").
+		WithToken(member.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertNotFound().
+		AssertJSONPath("error_code", "ORGANIZATION.NOT_FOUND")
 	removeAudit := tc.Get("/v1/audit-logs?action=remove&resource=organization_members").
 		WithToken(admin.Token).
 		Call().
@@ -395,6 +472,18 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 	transferData := transferJSON["data"].(map[string]interface{})
 	require.NotContains(t, transferData["previous_owner"].(map[string]interface{}), "email")
 	require.NotContains(t, transferData["new_owner"].(map[string]interface{}), "email")
+	tc.Get("/v1/organization-context").
+		WithToken(owner.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "admin")
+	tc.Get("/v1/organization-context").
+		WithToken(admin.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertOk().
+		AssertJSONPath("data.role", "owner")
 	transferAudit := tc.Get("/v1/audit-logs?action=transfer_ownership&resource=organizations").
 		WithToken(owner.Token).
 		Call().
@@ -419,6 +508,12 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		WithToken(owner.Token).
 		Call().
 		AssertNoContent()
+	tc.Get("/v1/organization-context").
+		WithToken(owner.Token).
+		WithHeader("Organization-Id", organizationID).
+		Call().
+		AssertNotFound().
+		AssertJSONPath("error_code", "ORGANIZATION.NOT_FOUND")
 	tc.Delete("/v1/users/account").
 		WithToken(owner.Token).
 		Call().

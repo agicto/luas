@@ -449,6 +449,19 @@ func TestRouter_MiddlewareAlias(t *testing.T) {
 	}
 }
 
+func TestRouter_WithMiddlewareFailsForUnknownName(t *testing.T) {
+	engine := gin.New()
+	r := router.New(engine)
+
+	defer func() {
+		if recovered := recover(); recovered == nil {
+			t.Fatal("WithMiddleware accepted an unknown middleware name")
+		}
+	}()
+
+	r.WithMiddleware("organization_contex")
+}
+
 func TestRoute_WhereNumber(t *testing.T) {
 	engine := gin.New()
 	r := router.New(engine)

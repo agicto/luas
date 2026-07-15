@@ -2,10 +2,19 @@ package organization
 
 import "github.com/zgiai/luas/api/internal/infra/router"
 
+// RegisterMiddleware exposes verified active organization context to downstream modules.
+func (h *Handler) RegisterMiddleware(r *router.Router) {
+	r.MiddlewareGroup("organization_context", h.contextResolver.Middleware())
+}
+
 // RegisterRoutes registers organization ownership routes.
 func (h *Handler) RegisterRoutes(r *router.Router) {
 	r.Group("", func(auth *router.Router) {
 		auth.WithMiddleware("auth")
+		auth.Group("", func(contextual *router.Router) {
+			contextual.WithMiddleware("organization_context")
+			contextual.GET("/organization-context", h.GetActiveContext).Name("organization-context.show")
+		})
 
 		auth.GET("/organizations", h.List).Name("organizations.index")
 		auth.POST("/organizations", h.Create).Name("organizations.store")

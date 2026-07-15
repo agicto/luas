@@ -29,6 +29,10 @@ func (r *invitationRepositoryStub) FindForUser(ctx context.Context, organization
 	return r.findFn(ctx, organizationID, userID)
 }
 
+func (r *invitationRepositoryStub) ResolveContext(context.Context, uint, uint) (*domain.OrganizationContext, error) {
+	return nil, nil
+}
+
 func (r *invitationRepositoryStub) ListForUser(context.Context, uint, int, int) ([]*domain.OrganizationMembership, int64, error) {
 	return nil, 0, nil
 }

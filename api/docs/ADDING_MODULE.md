@@ -53,6 +53,32 @@ The first command must show no optional routes. The second must show exactly the
 and `ConfiguredMigrations` tests must prove the matching migration set. Unknown, duplicate, default,
 or non-canonical starter names must fail rather than being ignored.
 
+## Organization-Scoped Product Modules
+
+When a downstream module stores organization-owned resources, make the dependency explicit: enable
+the optional `organization` starter for the API, migrations, and seeders, then apply its named
+middleware after authentication.
+
+```go
+r.Group("", func(scoped *router.Router) {
+	scoped.WithMiddleware("auth", "organization_context")
+	scoped.GET("/projects", h.List)
+	scoped.POST("/projects", h.Create)
+})
+```
+
+Read `domain.OrganizationContextFromContext(c.Request.Context())` in the handler or service and use
+its verified `OrganizationID`, `MembershipID`, `UserID`, and `Role`. Never authorize from the raw
+`Organization-Id` header or a body/query organization ID. If a route also has an organization path
+parameter, reject any mismatch instead of allowing two competing scopes. Context-protected
+mutations automatically make the verified organization identifiers available to the audit change
+collector. Named middleware must be registered before route assembly; an unknown name stops startup
+instead of silently leaving a route unprotected.
+
+Test at least missing selection, malformed selection, non-member non-disclosure, current role, and
+membership removal. The public behavior is defined in
+[`../../contracts/ORGANIZATIONS.md`](../../contracts/ORGANIZATIONS.md).
+
 ## When Not To Add a Module
 
 Use `internal/capabilities/` for technical adapters that do not own application routes, such as ID generation, crypto, AI clients, queues, or storage.

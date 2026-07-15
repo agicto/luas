@@ -13,6 +13,7 @@ import (
 	"github.com/zgiai/luas/api/internal/app"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/pkg/response"
 )
@@ -21,12 +22,26 @@ func init() {
 	gin.SetMode(gin.TestMode)
 }
 
+type testAuditMiddlewareModule struct{}
+
+func (testAuditMiddlewareModule) Name() string { return "audit" }
+
+func (testAuditMiddlewareModule) RegisterMiddleware(r *router.Router) {
+	r.AliasMiddleware("audit", func(c *gin.Context) { c.Next() })
+}
+
+func testHTTPStarterRegistry() *starter.Registry {
+	registry := starter.NewRegistry()
+	registry.RegisterModule(testAuditMiddlewareModule{})
+	return registry
+}
+
 func testHTTPConfig() *config.Config {
 	return &config.Config{
 		CORS: config.CORSConfig{
 			AllowOrigins:     []string{"http://localhost:3000"},
 			AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodOptions},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"},
 			ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},
 			AllowCredentials: true,
 		},
@@ -119,7 +134,7 @@ func TestHTTPKernelDoesNotExposeMetricsByDefaultInProduction(t *testing.T) {
 
 	kernel := NewHttpKernel(&app.Application{
 		Config:   cfg,
-		Starters: starter.NewRegistry(),
+		Starters: testHTTPStarterRegistry(),
 	})
 
 	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
@@ -142,7 +157,7 @@ func TestHTTPKernelExposesMetricsWhenEnabled(t *testing.T) {
 
 	kernel := NewHttpKernel(&app.Application{
 		Config:   cfg,
-		Starters: starter.NewRegistry(),
+		Starters: testHTTPStarterRegistry(),
 	})
 
 	request := httptest.NewRequest(http.MethodGet, "/metrics", nil)
@@ -322,10 +337,14 @@ func TestApplyGlobalMiddleware_CORSPreflightDoesNotConsumeRateLimit(t *testing.T
 	preflight := httptest.NewRequest(http.MethodOptions, "/limited", nil)
 	preflight.Header.Set("Origin", "http://localhost:3000")
 	preflight.Header.Set("Access-Control-Request-Method", http.MethodGet)
+	preflight.Header.Set("Access-Control-Request-Headers", "Authorization, Organization-Id")
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, preflight)
 	if w.Code != http.StatusNoContent {
 		t.Fatalf("preflight status = %d, want %d; body = %s", w.Code, http.StatusNoContent, w.Body.String())
+	}
+	if allowed := w.Header().Get("Access-Control-Allow-Headers"); !strings.Contains(allowed, "Organization-Id") {
+		t.Fatalf("preflight allowed headers = %q, want Organization-Id", allowed)
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/limited", nil)
