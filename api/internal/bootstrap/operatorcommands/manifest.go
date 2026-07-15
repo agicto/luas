@@ -15,5 +15,9 @@ func Manifest() infracommands.Manifest {
 		infracommands.Registration{Command: NewUsageQuotaSetCommand()},
 		infracommands.Registration{Command: NewUsageQuotaResetCommand()},
 		infracommands.Registration{Command: NewUsagePruneCommand()},
+		infracommands.Registration{Command: NewWebhookWorkCommand()},
+		infracommands.Registration{Command: NewWebhookPublishTestCommand()},
+		infracommands.Registration{Command: NewWebhookReplayCommand()},
+		infracommands.Registration{Command: NewWebhookPruneCommand()},
 	)
 }

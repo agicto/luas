@@ -61,9 +61,9 @@ development process, which creates a complete new dependency graph.
 
 `OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
 empty; `audit`, `apikey`, and `user` remain active without being named. Available values are
-`organization`, `permission`, `notification`, `asset`, `setting`, and `usage`; permission, setting,
-and usage explicitly depend on organization, while notification and asset can be selected
-independently:
+`organization`, `permission`, `notification`, `asset`, `setting`, `usage`, and `webhook`;
+permission, setting, usage, and webhook explicitly depend on organization, while notification and
+asset can be selected independently:
 
 ```dotenv
 OPTIONAL_STARTERS=organization,permission
@@ -72,6 +72,7 @@ ORGANIZATION_INVITATION_TTL=168h
 # or: OPTIONAL_STARTERS=asset
 # or: OPTIONAL_STARTERS=organization,setting
 # or: OPTIONAL_STARTERS=organization,usage
+# or: OPTIONAL_STARTERS=organization,webhook
 ```
 
 Selection is resolved through `internal/starter` from the same typed configuration snapshot used by
@@ -88,6 +89,24 @@ migration. It is not a per-request flag and must not be toggled independently ac
 `168h` (7 days). It must be positive when `organization` is selected. Invitation expiry is evaluated
 against this immutable startup policy; changing the value affects newly created invitations only and
 requires a process restart like every other configuration change.
+
+## Outbound Webhook Configuration
+
+Selecting `webhook` requires `WEBHOOK_ENCRYPTION_KEY` with at least 32 characters. It protects
+endpoint signing secrets at rest and must be supplied from the deployment secret store. Keep the
+same key available to HTTP replicas, workers, replay/prune jobs, and migration-safe rollback windows;
+changing it without an explicit data-key migration makes existing endpoints unreadable.
+
+`WEBHOOK_REQUEST_TIMEOUT` bounds each receiver call and defaults to `15s` with a hard maximum of
+`30s`. `WEBHOOK_MAX_RESPONSE_BYTES` bounds response draining and defaults to 65,536 bytes. Responses
+are never persisted. `WEBHOOK_SECRET_OVERLAP` controls the previous-secret signing window and
+defaults to `24h`; `WEBHOOK_EVENT_RETENTION` controls terminal replay history and defaults to `720h`
+(30 days). Startup rejects values outside the documented safety bounds.
+
+`WEBHOOK_ALLOW_INSECURE_HTTP` and `WEBHOOK_ALLOW_PRIVATE_TARGETS` exist only for local verification.
+Production rejects either override. Local Compose enables them so its isolated verifier can dispatch
+to the API container itself; downstream production deployments should also enforce outbound network
+policy independently of application validation. See [`WEBHOOKS.md`](WEBHOOKS.md).
 
 ## Object Storage And Asset Configuration
 

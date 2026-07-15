@@ -104,6 +104,8 @@ setting_account_cleanup_flow="skipped"
 usage_flow="skipped"
 usage_migration_flow="skipped"
 usage_account_cleanup_flow="skipped"
+webhook_flow="skipped"
+webhook_migration_flow="skipped"
 account_race_flow="skipped"
 case ",${OPTIONAL_STARTERS:-}," in
   *,notification,*)
@@ -982,6 +984,230 @@ raise SystemExit(0 if valid else 1)
       fail "owner organization context violates identity, role, membership, or Vary contract"
     fi
 
+    case ",${OPTIONAL_STARTERS:-}," in
+      *,webhook,*)
+        webhook_catalog_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-catalog.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/webhook-event-types")"
+        [[ "${webhook_catalog_status}" == "200" ]] || fail "webhook event catalog returned HTTP ${webhook_catalog_status}"
+        if ! python3 -c '
+import json, sys
+items = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if items == ["webhook.test"] else 1)
+' "${TMP_DIR}/webhook-catalog.json"; then
+          fail "webhook event catalog is not finite or contains the wrong starter event"
+        fi
+
+        webhook_create_status="$(curl --noproxy '*' --silent --show-error \
+          --dump-header "${TMP_DIR}/webhook-create.headers" \
+          --output "${TMP_DIR}/webhook-create.json" \
+          --write-out '%{http_code}' \
+          --header 'Content-Type: application/json' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --data '{"name":"Compose local receiver","url":"http://127.0.0.1:8025/health/live","event_types":["webhook.test"]}' \
+          "http://127.0.0.1:${published_port}/v1/webhook-endpoints")"
+        [[ "${webhook_create_status}" == "201" ]] || fail "webhook endpoint creation returned HTTP ${webhook_create_status}"
+        if ! read -r webhook_endpoint_id webhook_secret webhook_version < <(python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))["data"]
+endpoint = payload["endpoint"]
+secret = payload["signing_secret"]
+forbidden = {"secret_ciphertext", "previous_secret_ciphertext"}
+if not secret.startswith("whsec_") or forbidden.intersection(endpoint):
+    raise SystemExit(1)
+print(endpoint["id"], secret, endpoint["version"])
+' "${TMP_DIR}/webhook-create.json"); then
+          fail "webhook endpoint creation violates one-time secret or ciphertext contract"
+        fi
+        if ! grep -qi '^etag: "webhook-endpoint-v1"' "${TMP_DIR}/webhook-create.headers"; then
+          fail "webhook endpoint creation did not return the canonical ETag"
+        fi
+
+        webhook_list_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-list.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/webhook-endpoints")"
+        [[ "${webhook_list_status}" == "200" ]] || fail "webhook endpoint list returned HTTP ${webhook_list_status}"
+        if ! WEBHOOK_SECRET="${webhook_secret}" python3 -c '
+import json, os, sys
+raw = open(sys.argv[1], encoding="utf-8").read()
+payload = json.loads(raw)
+item = payload["data"][0]
+forbidden = {"signing_secret", "secret_ciphertext", "previous_secret_ciphertext"}
+valid = (
+    len(payload["data"]) == 1
+    and item["id"] == int(sys.argv[2])
+    and item["organization_id"] == int(sys.argv[3])
+    and item["event_types"] == ["webhook.test"]
+    and not forbidden.intersection(item)
+    and os.environ["WEBHOOK_SECRET"] not in raw
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/webhook-list.json" "${webhook_endpoint_id}" "${organization_id}"; then
+          fail "webhook endpoint list leaked secret material or crossed organization scope"
+        fi
+
+        webhook_test_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-test.json" \
+          --write-out '%{http_code}' \
+          --request POST \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --header 'Idempotency-Key: compose:webhook:test:1' \
+          "http://127.0.0.1:${published_port}/v1/webhook-endpoints/${webhook_endpoint_id}/tests")"
+        [[ "${webhook_test_status}" == "202" ]] || fail "webhook endpoint test returned HTTP ${webhook_test_status}"
+        if ! read -r webhook_delivery_id webhook_message_id < <(python3 -c '
+import json, sys
+item = json.load(open(sys.argv[1]))["data"]
+if item["status"] != "pending" or item["event_type"] != "webhook.test" or not item["message_id"].startswith("msg_"):
+    raise SystemExit(1)
+print(item["id"], item["message_id"])
+' "${TMP_DIR}/webhook-test.json"); then
+          fail "webhook endpoint test did not return one pending canonical delivery"
+        fi
+
+        webhook_replay_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-test-replay.json" \
+          --write-out '%{http_code}' \
+          --request POST \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          --header 'Idempotency-Key: compose:webhook:test:1' \
+          "http://127.0.0.1:${published_port}/v1/webhook-endpoints/${webhook_endpoint_id}/tests")"
+        [[ "${webhook_replay_status}" == "202" ]] || fail "idempotent webhook endpoint test returned HTTP ${webhook_replay_status}"
+        if ! python3 -c '
+import json, sys
+item = json.load(open(sys.argv[1]))["data"]
+raise SystemExit(0 if item["id"] == int(sys.argv[2]) and item["message_id"] == sys.argv[3] else 1)
+' "${TMP_DIR}/webhook-test-replay.json" "${webhook_delivery_id}" "${webhook_message_id}"; then
+          fail "idempotent webhook endpoint test created a duplicate delivery or message ID"
+        fi
+
+        if ! compose exec -T api /app/luas webhook:work --batch=10 --once >"${TMP_DIR}/webhook-worker.log" 2>&1; then
+          fail "webhook worker batch failed"
+        fi
+        webhook_delivery_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-deliveries.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/webhook-deliveries?endpoint_id=${webhook_endpoint_id}")"
+        [[ "${webhook_delivery_status}" == "200" ]] || fail "webhook delivery list returned HTTP ${webhook_delivery_status}"
+        if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))
+item = payload["data"][0]
+forbidden = {"url", "payload", "payload_json", "signature", "response_body", "error"}
+valid = (
+    len(payload["data"]) == 1
+    and item["id"] == int(sys.argv[2])
+    and item["message_id"] == sys.argv[3]
+    and item["status"] == "failed"
+    and item["attempt_count"] == 1
+    and item["http_status"] == 404
+    and item["failure_code"] == "WEBHOOK.HTTP_404"
+    and not forbidden.intersection(item)
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/webhook-deliveries.json" "${webhook_delivery_id}" "${webhook_message_id}"; then
+          fail "webhook terminal delivery violates status, identity, or privacy contract"
+        fi
+
+        webhook_attempt_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-attempts.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/webhook-deliveries/${webhook_delivery_id}/attempts")"
+        [[ "${webhook_attempt_status}" == "200" ]] || fail "webhook attempt list returned HTTP ${webhook_attempt_status}"
+        if ! python3 -c '
+import json, sys
+payload = json.load(open(sys.argv[1]))
+item = payload["data"][0]
+forbidden = {"url", "payload", "payload_json", "signature", "response_body", "error", "error_message"}
+valid = (
+    len(payload["data"]) == 1
+    and item["delivery_id"] == int(sys.argv[2])
+    and item["number"] == 1
+    and item["outcome"] == "failed"
+    and item["http_status"] == 404
+    and item["failure_code"] == "WEBHOOK.HTTP_404"
+    and not forbidden.intersection(item)
+)
+raise SystemExit(0 if valid else 1)
+' "${TMP_DIR}/webhook-attempts.json" "${webhook_delivery_id}"; then
+          fail "webhook attempt ledger violates minimized outcome contract"
+        fi
+
+        webhook_secret_rows="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*) FROM webhook_endpoints
+WHERE id = ${webhook_endpoint_id}
+  AND secret_ciphertext NOT LIKE 'whsec_%'
+  AND length(secret_ciphertext) > 32;
+")"
+        [[ "${webhook_secret_rows}" == "1" ]] || fail "webhook signing secret is not encrypted at rest"
+        webhook_forbidden_columns="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name IN ('webhook_deliveries', 'webhook_delivery_attempts')
+  AND column_name IN ('url', 'payload', 'payload_json', 'signature', 'response_body', 'error', 'error_message');
+")"
+        [[ "${webhook_forbidden_columns}" == "0" ]] || fail "webhook ledger contains ${webhook_forbidden_columns} forbidden sensitive column(s)"
+        webhook_query_indexes="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM pg_indexes
+WHERE schemaname = 'public'
+  AND (
+    (indexname = 'idx_webhook_endpoints_organization_status' AND indexdef LIKE '%(organization_id, status, id)%')
+    OR (indexname = 'idx_webhook_endpoints_organization_created' AND indexdef LIKE '%(organization_id, created_at, id)%')
+    OR (indexname = 'idx_webhook_events_created' AND indexdef LIKE '%(created_at, id)%')
+    OR (indexname = 'idx_webhook_deliveries_due' AND indexdef LIKE '%(status, available_at, id)%')
+    OR (indexname = 'idx_webhook_deliveries_lease_expiry' AND indexdef LIKE '%(status, lease_expires_at)%')
+    OR (indexname = 'idx_webhook_deliveries_organization_endpoint_created' AND indexdef LIKE '%(organization_id, endpoint_id, created_at, id)%')
+    OR (indexname = 'idx_webhook_deliveries_organization_status_created' AND indexdef LIKE '%(organization_id, status, created_at, id)%')
+  );
+")"
+        [[ "${webhook_query_indexes}" == "7" ]] || fail "webhook schema has ${webhook_query_indexes}/7 query-shaped indexes"
+        webhook_flow="${webhook_catalog_status}/${webhook_create_status}/${webhook_list_status}/${webhook_test_status}/${webhook_replay_status}/${webhook_delivery_status}/${webhook_attempt_status}:failed:404:private:${webhook_forbidden_columns}:indexes:${webhook_query_indexes}"
+
+        if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/webhook-rollback.log" 2>&1; then
+          fail "webhook migration rollback failed"
+        fi
+        webhook_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('webhook_endpoints', 'webhook_subscriptions', 'webhook_events', 'webhook_deliveries', 'webhook_delivery_attempts');
+")"
+        [[ "${webhook_tables_down}" == "0" ]] || fail "webhook migration rollback left ${webhook_tables_down} table(s)"
+        if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/webhook-migrate.log" 2>&1; then
+          fail "webhook migration re-apply failed"
+        fi
+        webhook_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*)
+FROM information_schema.tables
+WHERE table_schema = 'public'
+  AND table_name IN ('webhook_endpoints', 'webhook_subscriptions', 'webhook_events', 'webhook_deliveries', 'webhook_delivery_attempts');
+")"
+        [[ "${webhook_tables_up}" == "5" ]] || fail "webhook migration re-apply created ${webhook_tables_up}/5 tables"
+        webhook_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
+          --output "${TMP_DIR}/webhook-post-migrate.json" \
+          --write-out '%{http_code}' \
+          --header "Authorization: Bearer ${owner_token}" \
+          --header "Organization-Id: ${organization_id}" \
+          "http://127.0.0.1:${published_port}/v1/webhook-endpoints")"
+        [[ "${webhook_post_migrate_status}" == "200" ]] || fail "webhook endpoint list after migration re-apply returned HTTP ${webhook_post_migrate_status}"
+        webhook_migration_flow="down:${webhook_tables_down}/up:${webhook_tables_up}/http:${webhook_post_migrate_status}"
+        ;;
+    esac
+
     invitation_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/invitation.json" \
       --write-out '%{http_code}' \
@@ -1439,4 +1665,6 @@ printf 'compose setting/account cleanup: %s\n' "${setting_account_cleanup_flow}"
 printf 'compose usage flow: %s\n' "${usage_flow}"
 printf 'compose usage migration flow: %s\n' "${usage_migration_flow}"
 printf 'compose usage/account cleanup: %s\n' "${usage_account_cleanup_flow}"
+printf 'compose webhook flow: %s\n' "${webhook_flow}"
+printf 'compose webhook migration flow: %s\n' "${webhook_migration_flow}"
 printf 'compose organization/account race: %s\n' "${account_race_flow}"

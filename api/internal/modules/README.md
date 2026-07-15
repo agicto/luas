@@ -9,7 +9,13 @@ Route-owning starter modules directory, following Domain-Driven Design (DDD) pat
 | `user` | Default auth starter (register/login/JWT/profile) | Default starter |
 | `apikey` | Default API key starter (create/list/revoke + middleware) | Default starter |
 | `audit` | Default audit starter (global write-request logging + history API) | Default starter |
+| `organization` | Organization ownership, membership, invitation, active-context, and transfer lifecycle. | Optional starter |
 | `permission` | Organization-scoped access roles, exact permission keys, member assignments, and fail-closed authorization. Depends on the `organization` starter. | Optional starter |
+| `notification` | User-scoped in-app state and durable email delivery with preferences and leases. | Optional starter |
+| `asset` | User-owned private object lifecycle with bounded transfer grants and inspection. | Optional starter |
+| `setting` | Finite typed app, organization, and user overrides with versioned replacement. Depends on the `organization` starter. | Optional starter |
+| `usage` | Trusted idempotent metering, atomic quota decisions, and private summaries. Depends on the `organization` starter. | Optional starter |
+| `webhook` | Organization-owned outbound endpoints, signed durable delivery, retries, and replay. Depends on the `organization` starter. | Optional starter |
 
 ## Standard Starter Structure (8 files)
 

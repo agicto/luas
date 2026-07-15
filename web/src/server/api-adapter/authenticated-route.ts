@@ -17,6 +17,7 @@ interface AuthenticatedGoApiRequest {
   organizationId?: string;
   ifMatch?: string;
   ifNoneMatch?: string;
+  idempotencyKey?: string;
   searchParams?: URLSearchParams;
   fieldMap?: Readonly<Record<string, string>>;
 }

@@ -27,6 +27,7 @@ const notificationRouteModule = resolve(
 const assetRouteModule = resolve(process.cwd(), 'src/features/asset/server/asset-route.ts');
 const settingRouteModule = resolve(process.cwd(), 'src/features/setting/server/setting-route.ts');
 const usageRouteModule = resolve(process.cwd(), 'src/features/usage/server/usage-route.ts');
+const webhookRouteModule = resolve(process.cwd(), 'src/features/webhook/server/webhook-route.ts');
 
 const forbiddenRoutePatterns = [
   {
@@ -160,9 +161,19 @@ function isUsageRoute(path: string): boolean {
 }
 
 function delegatesUsageGuard(path: string, handler: RouteHandlerSource): boolean {
+  return isUsageRoute(path) && /\b(?:organizationUsage|userUsage)Route\b/.test(handler.source);
+}
+
+function isWebhookRoute(path: string): boolean {
+  return relativeRoute(path).startsWith('webhook-');
+}
+
+function delegatesWebhookGuard(path: string, handler: RouteHandlerSource): boolean {
   return (
-    isUsageRoute(path) &&
-    /\b(?:organizationUsage|userUsage)Route\b/.test(handler.source)
+    isWebhookRoute(path) &&
+    /\b(?:webhookEventTypes|(?:create|delete|list|replace|rotate|test|update)Webhook[A-Za-z]*)Route\b/.test(
+      handler.source
+    )
   );
 }
 
@@ -210,7 +221,8 @@ describe('mock BFF route contract', () => {
             !delegatesNotificationGuard(path, handler) &&
             !delegatesAssetGuard(path, handler) &&
             !delegatesSettingGuard(path, handler) &&
-            !delegatesUsageGuard(path, handler)
+            !delegatesUsageGuard(path, handler) &&
+            !delegatesWebhookGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -229,6 +241,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesAssetGuard(path, handler))
         .filter(handler => !delegatesSettingGuard(path, handler))
         .filter(handler => !delegatesUsageGuard(path, handler))
+        .filter(handler => !delegatesWebhookGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -339,14 +352,22 @@ describe('mock BFF route contract', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('finalizes every webhook route as a private no-store response', () => {
+    const offenders = routeFiles.filter(isWebhookRoute).flatMap(path =>
+      routeHandlers(path)
+        .filter(handler => !handler.source.includes('privateWebhookResponse('))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
   it('keeps usage reads behind feature availability and authentication', () => {
     const source = readFileSync(usageRouteModule, 'utf8');
     const resolver = internalFunction(source, 'resolveAuthenticatedUsageRoute');
     expect(resolver).toContain('resolveUsageRoute()');
     expect(resolver).toContain('authenticateUsageBackend(');
-    expect(exportedFunction(source, 'userUsageRoute')).toContain(
-      'resolveAuthenticatedUsageRoute('
-    );
+    expect(exportedFunction(source, 'userUsageRoute')).toContain('resolveAuthenticatedUsageRoute(');
     expect(exportedFunction(source, 'organizationUsageRoute')).toContain(
       'resolveOrganizationUsageTarget('
     );
@@ -523,6 +544,39 @@ describe('mock BFF route contract', () => {
       expect(originGuard, name).toBeGreaterThan(availabilityGuard);
       expect(authentication, name).toBeGreaterThan(originGuard);
       if (bodyRead >= 0) expect(bodyRead, name).toBeGreaterThan(authentication);
+    }
+  });
+
+  it('keeps delegated webhook writes ordered behind availability and origin guards', () => {
+    const source = readFileSync(webhookRouteModule, 'utf8');
+    const endpointMutation = internalFunction(source, 'resolveEndpointMutation');
+    const availabilityGuard = endpointMutation.indexOf('resolveWebhookRoute(');
+    const originGuard = endpointMutation.indexOf('guardSameOriginMutation(');
+    const authentication = endpointMutation.indexOf('resolveWebhookManager(');
+
+    expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+    expect(originGuard).toBeGreaterThan(availabilityGuard);
+    expect(authentication).toBeGreaterThan(originGuard);
+
+    for (const name of [
+      'updateWebhookEndpointRoute',
+      'deleteWebhookEndpointRoute',
+      'replaceWebhookEndpointStatusRoute',
+      'rotateWebhookEndpointSecretRoute',
+    ]) {
+      expect(exportedFunction(source, name), name).toContain('resolveEndpointMutation(');
+    }
+
+    for (const name of ['createWebhookEndpointRoute', 'testWebhookEndpointRoute']) {
+      const handler = exportedFunction(source, name);
+      const handlerAvailability = handler.indexOf('resolveWebhookRoute(');
+      const handlerOrigin = handler.indexOf('guardSameOriginMutation(');
+      const handlerAuthentication = handler.indexOf('resolveWebhookManager(');
+      expect(handlerAvailability, name).toBeGreaterThanOrEqual(0);
+      expect(handlerOrigin, name).toBeGreaterThan(handlerAvailability);
+      expect(handlerAuthentication, name).toBeGreaterThan(handlerOrigin);
+      const bodyRead = handler.indexOf('endpointInput(');
+      if (bodyRead >= 0) expect(bodyRead, name).toBeGreaterThan(handlerAuthentication);
     }
   });
 

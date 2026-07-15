@@ -12,5 +12,6 @@ export const CLIENT_MESSAGE_NAMESPACES = {
   asset: ['asset'],
   setting: ['setting'],
   usage: ['usage'],
+  webhook: ['webhook'],
   i18nTest: ['test'],
 } as const satisfies Record<string, readonly ModuleName[]>;

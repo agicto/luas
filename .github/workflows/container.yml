@@ -49,3 +49,8 @@ jobs:
         env:
           OPTIONAL_STARTERS: organization,usage
         run: bash scripts/verify-compose.sh luas-api:ci
+
+      - name: Verify webhook delivery Compose lifecycle
+        env:
+          OPTIONAL_STARTERS: organization,webhook
+        run: bash scripts/verify-compose.sh luas-api:ci

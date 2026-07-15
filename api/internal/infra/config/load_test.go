@@ -150,6 +150,50 @@ func TestLoad_OrganizationInvitationTTL(t *testing.T) {
 	}
 }
 
+func TestLoad_WebhookDefaultsAndOverrides(t *testing.T) {
+	withoutEnv(
+		t,
+		"WEBHOOK_ENCRYPTION_KEY",
+		"WEBHOOK_REQUEST_TIMEOUT",
+		"WEBHOOK_MAX_RESPONSE_BYTES",
+		"WEBHOOK_SECRET_OVERLAP",
+		"WEBHOOK_EVENT_RETENTION",
+		"WEBHOOK_ALLOW_INSECURE_HTTP",
+		"WEBHOOK_ALLOW_PRIVATE_TARGETS",
+	)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("JWT_SECRET", strings.Repeat("a", 64))
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Webhook.RequestTimeout != DefaultWebhookRequestTimeout ||
+		cfg.Webhook.MaxResponseBytes != DefaultWebhookMaxResponseBytes ||
+		cfg.Webhook.SecretOverlap != DefaultWebhookSecretOverlap ||
+		cfg.Webhook.EventRetention != DefaultWebhookEventRetention {
+		t.Fatalf("unexpected webhook defaults: %+v", cfg.Webhook)
+	}
+
+	t.Setenv("WEBHOOK_REQUEST_TIMEOUT", "5s")
+	t.Setenv("WEBHOOK_MAX_RESPONSE_BYTES", "8192")
+	t.Setenv("WEBHOOK_SECRET_OVERLAP", "2h")
+	t.Setenv("WEBHOOK_EVENT_RETENTION", "168h")
+	t.Setenv("WEBHOOK_ALLOW_INSECURE_HTTP", "true")
+	t.Setenv("WEBHOOK_ALLOW_PRIVATE_TARGETS", "true")
+	cfg, err = LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() with webhook overrides error = %v", err)
+	}
+	if cfg.Webhook.RequestTimeout != 5*time.Second || cfg.Webhook.MaxResponseBytes != 8192 ||
+		cfg.Webhook.SecretOverlap != 2*time.Hour || cfg.Webhook.EventRetention != 7*24*time.Hour ||
+		!cfg.Webhook.AllowInsecureHTTP || !cfg.Webhook.AllowPrivateTargets {
+		t.Fatalf("unexpected webhook overrides: %+v", cfg.Webhook)
+	}
+}
+
 func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	withoutEnv(
 		t,

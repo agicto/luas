@@ -20,6 +20,8 @@ import setting from './setting/en-US';
 import type { SettingMessages } from './setting/zh-Hans';
 import usage from './usage/en-US';
 import type { UsageMessages } from './usage/zh-Hans';
+import webhook from './webhook/en-US';
+import type { WebhookMessages } from './webhook/zh-Hans';
 import settings from './settings/en-US';
 import type { SettingsMessages } from './settings/zh-Hans';
 import errors from './errors/en-US';
@@ -47,6 +49,7 @@ export const messages = {
   asset,
   setting,
   usage,
+  webhook,
   settings,
   errors,
   metadata,
@@ -70,6 +73,7 @@ export interface MessageSchema {
   asset: AssetMessages;
   setting: SettingMessages;
   usage: UsageMessages;
+  webhook: WebhookMessages;
   settings: SettingsMessages;
   errors: ErrorsMessages;
   metadata: MetadataMessages;

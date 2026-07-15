@@ -268,8 +268,8 @@ func effectiveHTTPConfig(cfg *config.Config) *config.Config {
 		CORS: config.CORSConfig{
 			AllowOrigins:     []string{"http://localhost:3000"},
 			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"},
-			ExposeHeaders:    []string{"Content-Length", "X-Request-ID"},
+			AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "Idempotency-Key", "If-Match", "X-Request-ID"},
+			ExposeHeaders:    []string{"Content-Length", "ETag", "X-Request-ID"},
 			AllowCredentials: true,
 		},
 	}

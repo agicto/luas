@@ -2,7 +2,7 @@
 
 The Web mock BFF is the development-only behavior behind Next.js route handlers under
 `src/app/api/**`. It lets the web shell run before a real backend is available. Auth, default API
-key, optional organization, permission, notification, asset, setting, and usage Route Handlers are
+key, optional organization, permission, notification, asset, setting, usage, and webhook Route Handlers are
 hybrid entry points: they select either this mock
 behavior or the shipped production API adapter. A route location under `/api` does not by itself
 make behavior mock or production.
@@ -64,6 +64,8 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
    - `src/features/setting/server/setting-route.ts`
    - `src/features/usage/server/mock-usage-store.ts`
    - `src/features/usage/server/usage-route.ts`
+   - `src/features/webhook/server/mock-webhook-store.ts`
+   - `src/features/webhook/server/webhook-route.ts`
    - `src/features/example/server/mock-example-store.ts`
    - `src/features/auth/server/mock-identity.ts`
    - `src/config/mock-session.ts`
@@ -98,6 +100,10 @@ Some downstream apps keep mock routes for local or preview development. In that 
   Hybrid usage routes call `resolveUsageRoute()`, require the explicit `organization,usage`
   dependency selection, expose only private finite current-period summaries, and preserve
   owner/admin organization reads. They do not model public event ingestion or quota writes.
+  Hybrid webhook routes call `resolveWebhookRoute()`, require the explicit
+  `organization,webhook` dependency selection, preserve manager-only ownership, endpoint CAS,
+  one-time secret shape, and idempotent test commands. The mock never performs outbound I/O and
+  records tests as `WEBHOOK.MOCK_NOT_DELIVERED` instead of fabricated success.
   Hybrid API key routes call `resolveApiKeyRoute()` and follow the one-time secret contract in
   [`API_KEYS.md`](API_KEYS.md).
 - Every `POST`, `PUT`, `PATCH`, or `DELETE` handler must then call

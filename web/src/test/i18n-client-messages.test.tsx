@@ -34,6 +34,7 @@ describe('client i18n message boundaries', () => {
       asset: ['asset'],
       setting: ['setting'],
       usage: ['usage'],
+      webhook: ['webhook'],
       i18nTest: ['test'],
     });
   });
@@ -87,6 +88,7 @@ describe('client i18n message boundaries', () => {
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.organization');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.setting');
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.usage');
+    expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.webhook');
     expect(usageLayout).toContain('CLIENT_MESSAGE_NAMESPACES.usage');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');
   });

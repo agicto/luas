@@ -10,6 +10,7 @@ export const AVAILABLE_MODULES = [
   'asset',
   'setting',
   'usage',
+  'webhook',
   'settings',
   'errors',
   'metadata',

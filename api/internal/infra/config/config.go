@@ -43,6 +43,14 @@ const (
 	DefaultAssetDownloadGrantTTL = 5 * time.Minute
 	// DefaultAssetPendingTTL bounds incomplete staging-object lifetime.
 	DefaultAssetPendingTTL = time.Hour
+	// DefaultWebhookRequestTimeout bounds one outbound receiver call.
+	DefaultWebhookRequestTimeout = 15 * time.Second
+	// DefaultWebhookMaxResponseBytes bounds receiver response draining.
+	DefaultWebhookMaxResponseBytes int64 = 64 * 1024
+	// DefaultWebhookSecretOverlap permits zero-downtime consumer key rotation.
+	DefaultWebhookSecretOverlap = 24 * time.Hour
+	// DefaultWebhookEventRetention bounds the built-in replay horizon.
+	DefaultWebhookEventRetention = 30 * 24 * time.Hour
 )
 
 // Config holds all application configuration
@@ -63,6 +71,7 @@ type Config struct {
 	AI            AIConfig
 	ObjectStorage ObjectStorageConfig
 	Asset         AssetConfig
+	Webhook       WebhookConfig
 	R2            R2Config
 	Middleware    MiddlewareConfig
 	Metrics       MetricsConfig
@@ -268,6 +277,17 @@ type AssetConfig struct {
 	PendingTTL       time.Duration
 }
 
+// WebhookConfig owns outbound delivery safety and retention policy.
+type WebhookConfig struct {
+	EncryptionKey       string
+	RequestTimeout      time.Duration
+	MaxResponseBytes    int64
+	SecretOverlap       time.Duration
+	EventRetention      time.Duration
+	AllowInsecureHTTP   bool
+	AllowPrivateTargets bool
+}
+
 // TracingConfig holds OpenTelemetry tracing configuration
 type TracingConfig struct {
 	Enabled    bool
@@ -363,8 +383,8 @@ func Load() (*Config, error) {
 			// whenever AllowCredentials is true (browsers reject the combo anyway).
 			AllowOrigins:     env.GetSlice("CORS_ALLOW_ORIGINS", []string{"http://localhost:3000"}),
 			AllowMethods:     env.GetSlice("CORS_ALLOW_METHODS", []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}),
-			AllowHeaders:     env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"}),
-			ExposeHeaders:    env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length", "X-Request-ID"}),
+			AllowHeaders:     env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "Idempotency-Key", "If-Match", "X-Request-ID"}),
+			ExposeHeaders:    env.GetSlice("CORS_EXPOSE_HEADERS", []string{"Content-Length", "ETag", "X-Request-ID"}),
 			AllowCredentials: env.GetBool("CORS_ALLOW_CREDENTIALS", true),
 		},
 		Email: EmailConfig{
@@ -386,6 +406,15 @@ func Load() (*Config, error) {
 			UploadGrantTTL:   env.GetDuration("ASSET_UPLOAD_GRANT_TTL", DefaultAssetUploadGrantTTL),
 			DownloadGrantTTL: env.GetDuration("ASSET_DOWNLOAD_GRANT_TTL", DefaultAssetDownloadGrantTTL),
 			PendingTTL:       env.GetDuration("ASSET_PENDING_TTL", DefaultAssetPendingTTL),
+		},
+		Webhook: WebhookConfig{
+			EncryptionKey:       env.Get("WEBHOOK_ENCRYPTION_KEY", ""),
+			RequestTimeout:      env.GetDuration("WEBHOOK_REQUEST_TIMEOUT", DefaultWebhookRequestTimeout),
+			MaxResponseBytes:    int64(env.GetInt("WEBHOOK_MAX_RESPONSE_BYTES", int(DefaultWebhookMaxResponseBytes))),
+			SecretOverlap:       env.GetDuration("WEBHOOK_SECRET_OVERLAP", DefaultWebhookSecretOverlap),
+			EventRetention:      env.GetDuration("WEBHOOK_EVENT_RETENTION", DefaultWebhookEventRetention),
+			AllowInsecureHTTP:   env.GetBool("WEBHOOK_ALLOW_INSECURE_HTTP", false),
+			AllowPrivateTargets: env.GetBool("WEBHOOK_ALLOW_PRIVATE_TARGETS", false),
 		},
 		R2: R2Config{
 			AccessKeyID:     env.Get("R2_ACCESS_KEY_ID", ""),
@@ -566,6 +595,10 @@ func validate(cfg *Config) error {
 	if err := validateAssetConfig(cfg.Asset, assetSelected); err != nil {
 		return err
 	}
+	webhookSelected := slices.Contains(cfg.Starters.Optional, "webhook")
+	if err := validateWebhookConfig(cfg, webhookSelected); err != nil {
+		return err
+	}
 
 	// CORS: wildcard origin + credentials is rejected by browsers anyway.
 	// Catch the misconfiguration early at startup.
@@ -707,6 +740,35 @@ func validateAssetConfig(asset AssetConfig, selected bool) error {
 	}
 	if asset.PendingTTL < asset.UploadGrantTTL || asset.PendingTTL > 24*time.Hour {
 		return fmt.Errorf("ASSET_PENDING_TTL must be at least ASSET_UPLOAD_GRANT_TTL and no more than 24h")
+	}
+	return nil
+}
+
+func validateWebhookConfig(cfg *Config, selected bool) error {
+	webhook := cfg.Webhook
+	if !selected && webhook == (WebhookConfig{}) {
+		return nil
+	}
+	if selected && len(strings.TrimSpace(webhook.EncryptionKey)) < 32 {
+		return fmt.Errorf("WEBHOOK_ENCRYPTION_KEY must be at least 32 characters when the webhook starter is selected")
+	}
+	if webhook.RequestTimeout <= 0 || webhook.RequestTimeout > 30*time.Second {
+		return fmt.Errorf("WEBHOOK_REQUEST_TIMEOUT must be greater than 0 and no more than 30s")
+	}
+	if webhook.MaxResponseBytes < 1024 || webhook.MaxResponseBytes > 1024*1024 {
+		return fmt.Errorf("WEBHOOK_MAX_RESPONSE_BYTES must be between 1024 and 1048576")
+	}
+	if webhook.SecretOverlap < time.Minute || webhook.SecretOverlap > 7*24*time.Hour {
+		return fmt.Errorf("WEBHOOK_SECRET_OVERLAP must be between 1m and 168h")
+	}
+	if webhook.EventRetention < 24*time.Hour || webhook.EventRetention > 90*24*time.Hour {
+		return fmt.Errorf("WEBHOOK_EVENT_RETENTION must be between 24h and 2160h")
+	}
+	if cfg.IsProduction() && webhook.AllowInsecureHTTP {
+		return fmt.Errorf("WEBHOOK_ALLOW_INSECURE_HTTP cannot be enabled in production")
+	}
+	if cfg.IsProduction() && webhook.AllowPrivateTargets {
+		return fmt.Errorf("WEBHOOK_ALLOW_PRIVATE_TARGETS cannot be enabled in production")
 	}
 	return nil
 }

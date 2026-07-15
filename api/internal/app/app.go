@@ -32,4 +32,8 @@ type Application struct {
 	UsageConsumer          domain.UsageConsumer
 	UsageQuotaWriter       domain.UsageQuotaWriter
 	UsageMaintainer        domain.UsageMaintainer
+	WebhookPublisher       domain.WebhookPublisher
+	WebhookDispatcher      domain.WebhookDispatcher
+	WebhookTester          domain.WebhookTester
+	WebhookMaintainer      domain.WebhookMaintainer
 }

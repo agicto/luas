@@ -419,6 +419,58 @@ func TestValidate_AssetStoragePolicy(t *testing.T) {
 	}
 }
 
+func TestValidate_WebhookPolicy(t *testing.T) {
+	validWebhook := func(environment string) *Config {
+		cfg := baseValidConfig(environment)
+		cfg.Starters.Optional = []string{"organization", "webhook"}
+		cfg.Organization.InvitationTTL = DefaultOrganizationInvitationTTL
+		cfg.Webhook = WebhookConfig{
+			EncryptionKey:    strings.Repeat("w", 32),
+			RequestTimeout:   DefaultWebhookRequestTimeout,
+			MaxResponseBytes: DefaultWebhookMaxResponseBytes,
+			SecretOverlap:    DefaultWebhookSecretOverlap,
+			EventRetention:   DefaultWebhookEventRetention,
+		}
+		return cfg
+	}
+	tests := []struct {
+		name    string
+		edit    func(*Config)
+		wantErr string
+	}{
+		{name: "valid production"},
+		{name: "missing encryption key", edit: func(cfg *Config) { cfg.Webhook.EncryptionKey = "" }, wantErr: "WEBHOOK_ENCRYPTION_KEY"},
+		{name: "request timeout too high", edit: func(cfg *Config) { cfg.Webhook.RequestTimeout = 31 * time.Second }, wantErr: "WEBHOOK_REQUEST_TIMEOUT"},
+		{name: "response limit too high", edit: func(cfg *Config) { cfg.Webhook.MaxResponseBytes = 1024*1024 + 1 }, wantErr: "WEBHOOK_MAX_RESPONSE_BYTES"},
+		{name: "overlap too long", edit: func(cfg *Config) { cfg.Webhook.SecretOverlap = 8 * 24 * time.Hour }, wantErr: "WEBHOOK_SECRET_OVERLAP"},
+		{name: "retention too short", edit: func(cfg *Config) { cfg.Webhook.EventRetention = time.Hour }, wantErr: "WEBHOOK_EVENT_RETENTION"},
+		{name: "production insecure HTTP", edit: func(cfg *Config) { cfg.Webhook.AllowInsecureHTTP = true }, wantErr: "WEBHOOK_ALLOW_INSECURE_HTTP"},
+		{name: "production private target", edit: func(cfg *Config) { cfg.Webhook.AllowPrivateTargets = true }, wantErr: "WEBHOOK_ALLOW_PRIVATE_TARGETS"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := validWebhook("production")
+			if test.edit != nil {
+				test.edit(cfg)
+			}
+			err := validate(cfg)
+			if test.wantErr == "" && err != nil {
+				t.Fatalf("validate() error = %v", err)
+			}
+			if test.wantErr != "" && (err == nil || !strings.Contains(err.Error(), test.wantErr)) {
+				t.Fatalf("validate() error = %v, want %q", err, test.wantErr)
+			}
+		})
+	}
+
+	development := validWebhook("development")
+	development.Webhook.AllowInsecureHTTP = true
+	development.Webhook.AllowPrivateTargets = true
+	if err := validate(development); err != nil {
+		t.Fatalf("development overrides should be explicit but valid: %v", err)
+	}
+}
+
 func TestValidate_RejectsInvalidServerTransportBudgets(t *testing.T) {
 	tests := []struct {
 		name string

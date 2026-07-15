@@ -13,6 +13,7 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 | `scripts/verify-compose.sh` | Verification | Rebuilds the local worktree or reuses one explicitly verified image, then exercises PostgreSQL and startup. |
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
 | `luas notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
+| `luas webhook:work` | Optional webhook starter | Processes signed outbound deliveries with bounded network calls and database leases. |
 | Production deployment manifests | Downstream app | Own secrets, network policy, replicas, migrations, rollout, and rollback. |
 
 ## Production Image
@@ -77,6 +78,11 @@ user/organization reads, strong versioned set/reset behavior, account cleanup, a
 rollback/reapply. When it contains `organization,usage`, the verifier races exact replays and
 hard-quota consumers, requires one accepted consume and durable denials at the limit, verifies
 private user/organization summaries, account cleanup, receipt pruning, and migration rollback/reapply.
+When it contains `organization,webhook`, the verifier creates a secret-bearing endpoint, proves
+subsequent lists are secret-free, queues an idempotent fixed test event, dispatches one real local
+HTTP attempt through the worker, verifies the minimized terminal ledger, and exercises the webhook
+migration rollback/reapply cycle. The local receiver intentionally returns a non-success status; the
+check proves transport and persistence behavior without pretending to validate an external consumer.
 
 ## Local Compose
 
@@ -95,8 +101,10 @@ Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override local cre
 ownership kernel, `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state, or
 `OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage. Use
 `OPTIONAL_STARTERS=organization,setting` for typed preferences or
-`OPTIONAL_STARTERS=organization,usage` for trusted metering and quota checks; the API
-process and its local startup migration receive the same value.
+`OPTIONAL_STARTERS=organization,usage` for trusted metering and quota checks. Use
+`OPTIONAL_STARTERS=organization,webhook` for outbound delivery; Compose supplies a visibly local
+encryption key and enables insecure/private targets only inside this development stack. The API
+process and its local startup migration receive the same starter selection.
 `ORGANIZATION_INVITATION_TTL` is forwarded to the API container and defaults to `168h`.
 `docker compose down --volumes` also deletes local database data.
 
@@ -118,6 +126,9 @@ A downstream production deployment must inject at least:
 - Asset deployments: `OBJECT_STORAGE_DRIVER=r2` plus the complete R2 secret group, exact provider
   CORS rules for browser PUT/GET, and a short lifecycle rule for `asset-uploads/`. Do not use a
   container filesystem as durable production storage.
+- Webhook deployments: a strong `WEBHOOK_ENCRYPTION_KEY`, dedicated worker replicas, restricted
+  outbound egress, DNS/connection monitoring, and terminal-failure alerting. Never enable insecure
+  HTTP or private targets in production.
 
 Keep secrets in the deployment platform's secret store, not in the image, Compose file, repository,
 or command history. Keep `/health/live` as the process liveness signal and `/health/ready` as the
@@ -172,6 +183,31 @@ The job requires the same database, R2 secrets, object-storage policy, and `OPTI
 snapshot as HTTP replicas. Provider lifecycle rules on `asset-uploads/` remain defense in depth.
 Monitor nonzero failed counts and oldest pending age without logging filenames, object keys, signed
 URLs, checksums, or content. See [`ASSETS.md`](ASSETS.md) for lifecycle, recovery, and removal.
+
+## Webhook Worker And Retention
+
+When `webhook` is selected, deploy the same image as a separate long-running worker:
+
+```bash
+/app/luas webhook:work --batch=25 --poll=2s
+```
+
+Workers require the same database, encryption key, delivery policy, and `OPTIONAL_STARTERS` snapshot
+as HTTP replicas. Row leases and lease-token completion allow horizontal scaling, while endpoint DNS
+resolution and bounded receiver calls happen outside claim transactions. Restrict worker egress at
+the deployment boundary and monitor oldest pending age, lease expiry, retry/terminal failure codes,
+and automatic endpoint disables without logging URLs, DNS answers, payloads, secrets, signatures,
+response bodies, or free-form network errors.
+
+Run retention as a bounded scheduled job:
+
+```bash
+/app/luas webhook:prune
+```
+
+Operator replay is explicit through `webhook:replay`; automatic retries and replay preserve the
+original message ID. See [`WEBHOOKS.md`](WEBHOOKS.md) for signing, retry, SSRF, privacy, rotation,
+and removal semantics.
 
 ## Change Checklist
 

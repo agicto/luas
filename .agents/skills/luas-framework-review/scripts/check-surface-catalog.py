@@ -47,6 +47,7 @@ REQUIRED_REFERENCES = [
     "check-permission-boundary.py",
     "check-setting-boundary.py",
     "check-usage-boundary.py",
+    "check-webhook-boundary.py",
 ]
 TABLE_ROW_RE = re.compile(r"^\|(.+)\|$")
 

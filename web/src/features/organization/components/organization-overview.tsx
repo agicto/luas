@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Users,
+  Webhook as WebhookIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -53,6 +54,11 @@ const OrganizationSettingPanel = lazy(async () => {
 const OrganizationUsagePanel = lazy(async () => {
   const feature = await import('@/features/usage/components/usage-panel');
   return { default: feature.OrganizationUsagePanel };
+});
+
+const WebhookManagement = lazy(async () => {
+  const feature = await import('@/features/webhook/components/webhook-management');
+  return { default: feature.WebhookManagement };
 });
 
 export function OrganizationOverview({ organizationId }: { organizationId: number }) {
@@ -97,6 +103,7 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
   const permissionEnabled = isWebFeatureEnabled('permission');
   const settingEnabled = isWebFeatureEnabled('setting');
   const usageEnabled = isWebFeatureEnabled('usage');
+  const webhookEnabled = isWebFeatureEnabled('webhook');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -182,6 +189,12 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
             <TabsTrigger value="usage">
               <Gauge aria-hidden="true" />
               {t('tabs.usage')}
+            </TabsTrigger>
+          ) : null}
+          {webhookEnabled && canManageOrganization ? (
+            <TabsTrigger value="webhooks">
+              <WebhookIcon aria-hidden="true" />
+              {t('tabs.webhooks')}
             </TabsTrigger>
           ) : null}
         </TabsList>
@@ -282,6 +295,14 @@ function OrganizationSettings({ context }: { context: OrganizationContext }) {
           <TabsContent value="usage">
             <Suspense fallback={<OrganizationOverviewSkeleton />}>
               <OrganizationUsagePanel organizationId={context.organization_id} />
+            </Suspense>
+          </TabsContent>
+        ) : null}
+
+        {webhookEnabled && canManageOrganization ? (
+          <TabsContent value="webhooks">
+            <Suspense fallback={<OrganizationOverviewSkeleton />}>
+              <WebhookManagement organizationId={context.organization_id} />
             </Suspense>
           </TabsContent>
         ) : null}

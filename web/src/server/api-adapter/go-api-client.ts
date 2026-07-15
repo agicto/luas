@@ -18,6 +18,7 @@ const SAFE_REQUEST_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const SAFE_RELATIVE_PATH = /^[A-Za-z0-9._~!$&'()*+,;=@\/-]+$/;
 const SAFE_IF_MATCH = /^[\x20-\x7E]{1,128}$/;
 const SAFE_IF_NONE_MATCH = /^[\x20-\x7E]{1,1024}$/;
+const SAFE_IDEMPOTENCY_KEY = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,79}$/;
 const knownErrorCodes = new Set<string>(Object.values(ApiErrorCode));
 
 export interface GoApiClientConfig {
@@ -42,6 +43,7 @@ export interface GoApiRequest {
   organizationId?: string;
   ifMatch?: string;
   ifNoneMatch?: string;
+  idempotencyKey?: string;
   body?: unknown;
   searchParams?: URLSearchParams;
   fieldMap?: Readonly<Record<string, string>>;
@@ -129,6 +131,12 @@ export class GoApiClient {
         throw new Error('Go API If-None-Match must be bounded visible ASCII');
       }
       headers.set('if-none-match', options.ifNoneMatch);
+    }
+    if (options.idempotencyKey !== undefined) {
+      if (!SAFE_IDEMPOTENCY_KEY.test(options.idempotencyKey)) {
+        throw new Error('Go API Idempotency-Key must be canonical bounded ASCII');
+      }
+      headers.set('idempotency-key', options.idempotencyKey);
     }
 
     const clientIp = resolveClientIp(options.incomingHeaders, this.config.clientIpHeader);

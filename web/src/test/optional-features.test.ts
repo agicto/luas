@@ -20,19 +20,18 @@ describe('optional Web feature selection', () => {
   });
 
   it('selects setting only with organization ownership', () => {
-    expect(parseOptionalWebFeatures('organization,setting')).toEqual([
-      'organization',
-      'setting',
-    ]);
+    expect(parseOptionalWebFeatures('organization,setting')).toEqual(['organization', 'setting']);
     expect(() => parseOptionalWebFeatures('setting')).toThrow('requires "organization"');
   });
 
   it('selects usage only with organization ownership', () => {
-    expect(parseOptionalWebFeatures('organization,usage')).toEqual([
-      'organization',
-      'usage',
-    ]);
+    expect(parseOptionalWebFeatures('organization,usage')).toEqual(['organization', 'usage']);
     expect(() => parseOptionalWebFeatures('usage')).toThrow('requires "organization"');
+  });
+
+  it('selects webhook only with organization ownership', () => {
+    expect(parseOptionalWebFeatures('organization,webhook')).toEqual(['organization', 'webhook']);
+    expect(() => parseOptionalWebFeatures('webhook')).toThrow('requires "organization"');
   });
 
   it.each([

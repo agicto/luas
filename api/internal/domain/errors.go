@@ -75,6 +75,16 @@ var (
 	ErrUsageQuotaVersionConflict = errors.New("usage quota version conflict")
 	ErrUsagePreconditionRequired = errors.New("usage quota version precondition is required")
 
+	// Webhook errors
+	ErrWebhookEndpointNotFound        = errors.New("webhook endpoint not found")
+	ErrWebhookDeliveryNotFound        = errors.New("webhook delivery not found")
+	ErrWebhookInvalidEventType        = errors.New("webhook event type is invalid")
+	ErrWebhookInvalidTarget           = errors.New("webhook target is invalid")
+	ErrWebhookIdempotencyConflict     = errors.New("webhook event idempotency conflict")
+	ErrWebhookEndpointVersionConflict = errors.New("webhook endpoint version conflict")
+	ErrWebhookPreconditionRequired    = errors.New("webhook endpoint version precondition is required")
+	ErrWebhookReplayNotAllowed        = errors.New("webhook delivery replay is not allowed")
+
 	// Generic errors
 	ErrNotFound           = errors.New("resource not found")
 	ErrConflict           = errors.New("resource already exists")

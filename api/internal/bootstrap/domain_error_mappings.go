@@ -29,6 +29,8 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrAssetNotFound, http.StatusNotFound, domain.CodeAssetNotFound)
 	mapper.Register(domain.ErrSettingNotFound, http.StatusNotFound, domain.CodeSettingNotFound)
 	mapper.Register(domain.ErrUsageMetricNotFound, http.StatusNotFound, domain.CodeUsageMetricNotFound)
+	mapper.Register(domain.ErrWebhookEndpointNotFound, http.StatusNotFound, domain.CodeWebhookEndpointNotFound)
+	mapper.Register(domain.ErrWebhookDeliveryNotFound, http.StatusNotFound, domain.CodeWebhookDeliveryNotFound)
 	mapper.Register(domain.ErrOrganizationContextRequired, http.StatusBadRequest, domain.CodeOrganizationContextRequired)
 	mapper.Register(domain.ErrOrganizationContextInvalid, http.StatusBadRequest, domain.CodeOrganizationContextInvalid)
 
@@ -58,6 +60,9 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrAssetIdempotencyConflict, http.StatusConflict, domain.CodeAssetIdempotencyConflict)
 	mapper.Register(domain.ErrAssetCleanupRequired, http.StatusConflict, domain.CodeAssetCleanupRequired)
 	mapper.Register(domain.ErrUsageIdempotencyConflict, http.StatusConflict, domain.CodeUsageIdempotencyConflict)
+	mapper.Register(domain.ErrWebhookIdempotencyConflict, http.StatusConflict, domain.CodeWebhookIdempotencyConflict)
+	mapper.Register(domain.ErrWebhookEndpointVersionConflict, http.StatusConflict, domain.CodeWebhookEndpointVersionConflict)
+	mapper.Register(domain.ErrWebhookReplayNotAllowed, http.StatusConflict, domain.CodeWebhookReplayNotAllowed)
 	mapper.Register(domain.ErrSettingVersionConflict, http.StatusPreconditionFailed, domain.CodeSettingVersionConflict)
 	mapper.Register(domain.ErrUsageQuotaVersionConflict, http.StatusPreconditionFailed, domain.CodeUsageQuotaVersionConflict)
 
@@ -72,8 +77,11 @@ func registerDomainErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrSettingInvalidValue, http.StatusUnprocessableEntity, domain.CodeSettingInvalidValue)
 	mapper.Register(domain.ErrUsageInvalidEvent, http.StatusUnprocessableEntity, domain.CodeUsageInvalidEvent)
 	mapper.Register(domain.ErrUsageEventOutsideWindow, http.StatusUnprocessableEntity, domain.CodeUsageEventOutsideWindow)
+	mapper.Register(domain.ErrWebhookInvalidEventType, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidEventType)
+	mapper.Register(domain.ErrWebhookInvalidTarget, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidTarget)
 	mapper.Register(domain.ErrSettingPreconditionRequired, http.StatusPreconditionRequired, domain.CodeSettingPreconditionRequired)
 	mapper.Register(domain.ErrUsagePreconditionRequired, http.StatusPreconditionRequired, domain.CodeUsagePreconditionRequired)
+	mapper.Register(domain.ErrWebhookPreconditionRequired, http.StatusPreconditionRequired, domain.CodeWebhookPreconditionRequired)
 	mapper.Register(domain.ErrUsageQuotaExceeded, http.StatusTooManyRequests, domain.CodeUsageQuotaExceeded)
 	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

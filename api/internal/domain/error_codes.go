@@ -80,4 +80,13 @@ const (
 	CodeUsageQuotaExceeded        = "USAGE.QUOTA_EXCEEDED"
 	CodeUsageQuotaVersionConflict = "USAGE.QUOTA_VERSION_CONFLICT"
 	CodeUsagePreconditionRequired = "USAGE.PRECONDITION_REQUIRED"
+
+	CodeWebhookEndpointNotFound        = "WEBHOOK.ENDPOINT_NOT_FOUND"
+	CodeWebhookDeliveryNotFound        = "WEBHOOK.DELIVERY_NOT_FOUND"
+	CodeWebhookInvalidEventType        = "WEBHOOK.INVALID_EVENT_TYPE"
+	CodeWebhookInvalidTarget           = "WEBHOOK.INVALID_TARGET"
+	CodeWebhookIdempotencyConflict     = "WEBHOOK.IDEMPOTENCY_CONFLICT"
+	CodeWebhookEndpointVersionConflict = "WEBHOOK.ENDPOINT_VERSION_CONFLICT"
+	CodeWebhookPreconditionRequired    = "WEBHOOK.PRECONDITION_REQUIRED"
+	CodeWebhookReplayNotAllowed        = "WEBHOOK.REPLAY_NOT_ALLOWED"
 )

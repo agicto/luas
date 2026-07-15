@@ -24,6 +24,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/setting"
 	"github.com/zgiai/luas/api/internal/modules/usage"
 	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/modules/webhook"
 	"github.com/zgiai/luas/api/internal/starter"
 )
 
@@ -102,7 +103,20 @@ func InitApplication() (*app.Application, error) {
 	usageRepository := usage.NewRepository(db)
 	usageService := usage.NewService(usageCatalog, usageRepository, configConfig)
 	usageHandler := usage.NewHandler(usageService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler)
+	webhookCatalog, err := webhook.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	webhookRepository := webhook.NewRepository(db)
+	secretProtector, err := webhook.NewSecretProtector(configConfig)
+	if err != nil {
+		return nil, err
+	}
+	targetPolicy := webhook.NewTargetPolicy(configConfig)
+	sender := webhook.NewSender(configConfig, targetPolicy)
+	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, configConfig)
+	webhookHandler := webhook.NewHandler(webhookService)
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler, webhookHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -125,6 +139,10 @@ func InitApplication() (*app.Application, error) {
 		UsageConsumer:          usageService,
 		UsageQuotaWriter:       usageService,
 		UsageMaintainer:        usageService,
+		WebhookPublisher:       webhookService,
+		WebhookDispatcher:      webhookService,
+		WebhookTester:          webhookService,
+		WebhookMaintainer:      webhookService,
 	}
 	return application, nil
 }
@@ -199,7 +217,20 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	usageRepository := usage.NewRepository(db)
 	usageService := usage.NewService(usageCatalog, usageRepository, cfg)
 	usageHandler := usage.NewHandler(usageService, accountDeletionPolicy)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler)
+	webhookCatalog, err := webhook.NewDefaultCatalog()
+	if err != nil {
+		return nil, err
+	}
+	webhookRepository := webhook.NewRepository(db)
+	secretProtector, err := webhook.NewSecretProtector(cfg)
+	if err != nil {
+		return nil, err
+	}
+	targetPolicy := webhook.NewTargetPolicy(cfg)
+	sender := webhook.NewSender(cfg, targetPolicy)
+	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, cfg)
+	webhookHandler := webhook.NewHandler(webhookService)
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler, webhookHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -222,6 +253,10 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		UsageConsumer:          usageService,
 		UsageQuotaWriter:       usageService,
 		UsageMaintainer:        usageService,
+		WebhookPublisher:       webhookService,
+		WebhookDispatcher:      webhookService,
+		WebhookTester:          webhookService,
+		WebhookMaintainer:      webhookService,
 	}
 	return application, nil
 }

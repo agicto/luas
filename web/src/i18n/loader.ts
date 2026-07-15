@@ -59,6 +59,10 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/usage/zh-Hans'),
     'en-US': () => import('./modules/usage/en-US'),
   },
+  webhook: {
+    'zh-Hans': () => import('./modules/webhook/zh-Hans'),
+    'en-US': () => import('./modules/webhook/en-US'),
+  },
   settings: {
     'zh-Hans': () => import('./modules/settings/zh-Hans'),
     'en-US': () => import('./modules/settings/en-US'),

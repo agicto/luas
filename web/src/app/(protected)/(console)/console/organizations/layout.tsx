@@ -12,6 +12,7 @@ export default async function OrganizationRouteLayout({ children }: PropsWithChi
     ...(isWebFeatureEnabled('permission') ? CLIENT_MESSAGE_NAMESPACES.permission : []),
     ...(isWebFeatureEnabled('setting') ? CLIENT_MESSAGE_NAMESPACES.setting : []),
     ...(isWebFeatureEnabled('usage') ? CLIENT_MESSAGE_NAMESPACES.usage : []),
+    ...(isWebFeatureEnabled('webhook') ? CLIENT_MESSAGE_NAMESPACES.webhook : []),
   ];
   const messages = selectMessageNamespaces(await getMessages(), namespaces);
 

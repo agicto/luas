@@ -35,6 +35,7 @@ const messages = {
     permissions: 'Permissions',
     settings: 'Preferences',
     usage: 'Usage',
+    webhooks: 'Webhooks',
   },
   membersTitle: 'Organization members',
   membersDescription: 'Review member identity and manage organization access within your role.',

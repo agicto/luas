@@ -120,9 +120,9 @@ def main() -> int:
     optional_packages = [
         module_imports.get(alias, alias) for alias in optional_aliases
     ]
-    if optional_packages != ["organization", "permission", "notification", "asset", "setting", "usage"]:
+    if optional_packages != ["organization", "permission", "notification", "asset", "setting", "usage", "webhook"]:
         failures.append(
-            "optional starter catalog must contain organization, permission, notification, asset, setting, and usage in canonical order"
+            "optional starter catalog must contain organization, permission, notification, asset, setting, usage, and webhook in canonical order"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
@@ -205,9 +205,11 @@ def main() -> int:
             "'asset'",
             "'setting'",
             "'usage'",
+            "'webhook'",
             "permission: ['organization']",
             "setting: ['organization']",
             "usage: ['organization']",
+            "webhook: ['organization']",
             "Duplicate optional Web feature",
             "Unknown optional Web feature",
         ),
@@ -665,10 +667,10 @@ def main() -> int:
         "api/.env.example",
         (
             "OPTIONAL_STARTERS=",
-            "organization, permission, notification, asset, setting, usage",
+            "organization, permission, notification, asset, setting, usage, webhook",
             "notification",
-            "Permission, setting, and usage require organization",
-            "Authorization,Organization-Id,X-Request-ID",
+            "Permission, setting, usage, and webhook require organization",
+            "Authorization,Organization-Id,Idempotency-Key,If-Match,X-Request-ID",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
     )
@@ -676,14 +678,14 @@ def main() -> int:
         failures,
         "api/internal/infra/config/config.go",
         (
-            'env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"})',
+            'env.GetSlice("CORS_ALLOW_HEADERS", []string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "Idempotency-Key", "If-Match", "X-Request-ID"})',
         ),
     )
     require_all(
         failures,
         "api/internal/bootstrap/http.go",
         (
-            '[]string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "X-Request-ID"}',
+            '[]string{"Origin", "Content-Type", "Accept", "Authorization", "Organization-Id", "Idempotency-Key", "If-Match", "X-Request-ID"}',
         ),
     )
     require_all(
@@ -692,6 +694,7 @@ def main() -> int:
         (
             "OPTIONAL_STARTERS: ${OPTIONAL_STARTERS:-}",
             "ORGANIZATION_INVITATION_TTL: ${ORGANIZATION_INVITATION_TTL:-168h}",
+            "WEBHOOK_ENCRYPTION_KEY: ${WEBHOOK_ENCRYPTION_KEY:-luas-local-only-webhook-encryption-key-0123456789}",
         ),
     )
     require_all(
@@ -712,6 +715,8 @@ def main() -> int:
             "concurrent ownership transfer",
             "concurrent account deletion",
             "orphaned_memberships",
+            "webhook worker batch failed",
+            "webhook migration re-apply created",
         ),
     )
     require_all(
@@ -724,6 +729,7 @@ def main() -> int:
             "OPTIONAL_STARTERS=asset",
             "OPTIONAL_STARTERS=organization,setting",
             "OPTIONAL_STARTERS=organization,usage",
+            "OPTIONAL_STARTERS=organization,webhook",
             "ORGANIZATION_INVITATION_TTL=168h",
         ),
     )
@@ -736,9 +742,10 @@ def main() -> int:
             "`asset` optional starter",
             "`setting` optional starter",
             "`usage` optional starter",
+            "`webhook` optional starter",
             "Yes, when enabled",
             "request-scoped active context",
-            "Build `webhook` next",
+            "intentionally product-sensitive AI workspace",
         ),
     )
     require_all(
@@ -767,7 +774,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization, permission, notification, asset, setting, usage]",),
+        ("module: [user, apikey, audit, organization, permission, notification, asset, setting, usage, webhook]",),
     )
 
     if failures:

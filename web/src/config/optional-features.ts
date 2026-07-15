@@ -5,6 +5,7 @@ export const OPTIONAL_WEB_FEATURES = [
   'asset',
   'setting',
   'usage',
+  'webhook',
 ] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
@@ -14,6 +15,7 @@ const featureDependencies: Partial<Record<OptionalWebFeature, readonly OptionalW
   permission: ['organization'],
   setting: ['organization'],
   usage: ['organization'],
+  webhook: ['organization'],
 };
 
 export function parseOptionalWebFeatures(value: string): readonly OptionalWebFeature[] {

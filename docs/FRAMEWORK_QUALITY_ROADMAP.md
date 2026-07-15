@@ -116,7 +116,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions. All six are ready when explicitly enabled in both halves; billing, webhook, and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in both halves; billing and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -673,6 +673,38 @@ route is still compiled into disabled build artifacts, but it is absent from nav
 not-found, and adds no initial console transfer. Gzip values use Node zlib level 9; these are local
 production-manifest measurements, not network traces or field Core Web Vitals.
 
+The organization-dependent webhook slice adds a finite trusted publication seam and an outbound
+integration workflow without turning the browser into an event producer or generic HTTP proxy.
+Endpoint signing secrets are generated once, encrypted with AES-256-GCM, rotated with a bounded
+overlap, and never enter list or delivery DTOs. Target setup and every delivery resolve all addresses,
+reject unsafe networks by default, pin the connection to an approved IP, disable proxies and
+redirects, and retain TLS verification. Standard Webhooks signatures cover the exact sent body.
+Durable events and delivery attempts use idempotency fingerprints, row leases, lease-token CAS,
+bounded retry, auto-disable, replay, and retention while excluding target URLs, payloads, response
+bodies, signatures, DNS answers, and free-form network errors from the operational ledger.
+Worker claims use `FOR UPDATE SKIP LOCKED`, while single-resource CAS and replay paths use blocking
+row locks so temporary contention cannot masquerade as absence. Queue, expired-lease, organization
+list, and retention indexes follow their actual filter/order prefixes and are asserted in SQLite
+unit tests plus the PostgreSQL Compose lifecycle.
+
+The strict Web feature exposes only fixed endpoint/catalog/delivery resources, manager authorization,
+same-origin writes, bounded bodies, CAS versions, canonical idempotency keys, one-time secret custody,
+and a network-free development mock that records test delivery as explicitly canceled. With Next.js
+16.2.9, the organization-detail initial client set remains 17 chunks: 566,244 raw / 172,575 gzip
+bytes with webhook disabled and 566,194 raw / 172,574 gzip with it enabled; the 50 raw / 1 gzip byte
+decrease is build-hash noise. Opening the Webhooks tab loads two async chunks totaling 40,615 raw /
+11,750 gzip bytes. Gzip uses Node zlib level 9; these are local production-manifest measurements, not
+network transfer or field Core Web Vitals.
+
+The verified production API image is 28,324,286 bytes and runs as UID 65532 with healthy liveness,
+database-sensitive readiness, no embedded environment file, and graceful exit. The PostgreSQL
+Compose gate produced webhook statuses `200/201/200/202/202/200/200`, preserved one message across
+the repeated test command, executed a real local HTTP attempt to terminal `404`, found zero forbidden
+ledger columns, verified seven query-shaped PostgreSQL indexes, and completed a `0 -> 5` migration
+rollback/reapply cycle. The local receiver's
+intentional failure proves transport and persistence without claiming an external consumer accepted
+or verified the signature.
+
 Verification:
 
 - `cd api && go test ./...`
@@ -685,6 +717,9 @@ Verification:
 - Disabled/enabled `go run ./cmd/luas route:list` comparison
 - Real PostgreSQL invitation/member HTTP flows plus ownership-transfer and account-deletion races
 - Real PostgreSQL notification HTTP, worker-failure, privacy-schema, and migration rollback/reapply flow
+- Real PostgreSQL webhook create/idempotency/worker/privacy-ledger and migration rollback/reapply flow
+- Default and `organization,webhook` Web production builds plus route-level async chunk measurement
+- Production image runtime contract under the non-root distroless image
 - `make governance` and `make check`
 
 ### P1 — Starter Business Readiness
@@ -700,7 +735,8 @@ Recommended slice:
 5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py`.
 6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py`.
 7. Keep the delivered `usage` starter finite, trusted, idempotent, atomic, retention-bounded, and covered by `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py`.
-8. Build outbound webhook delivery next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
+8. Keep the delivered `webhook` starter organization-owned, finite, signed, SSRF-resistant, lease-safe, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-webhook-boundary.py`.
+9. Run semantic discovery for an optional AI workspace next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 
 Verification:
 

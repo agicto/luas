@@ -419,7 +419,8 @@ def main() -> int:
         (
             "`usage` optional starter",
             "Yes, when enabled with `organization`",
-            "Build `webhook` next",
+            "`webhook` optional starter",
+            "intentionally product-sensitive AI workspace",
         ),
     )
     require_all(

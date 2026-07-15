@@ -79,6 +79,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-asset-boundary.py` checks private asset ownership, bounded object storage, ephemeral grants, inspection, cleanup, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-setting-boundary.py` checks finite typed definitions, strong version preconditions, reset history, cache/privacy behavior, audit minimization, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-usage-boundary.py` checks finite metrics, trusted idempotent events, atomic consumption, quota history, retention, privacy, and API/Web contract alignment.
+- `luas-framework-review/scripts/check-webhook-boundary.py` checks finite trusted events, encrypted endpoint custody, SSRF-safe transport, exact signing, lease-safe retry/replay, private ledgers, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-surface-catalog.py` checks scaffold surface classification alignment across `CONTEXT.md`, `docs/SCAFFOLD_SURFACES.md`, and downstream extraction guidance.
 - `luas-framework-review/scripts/check-branch-governance.sh` checks that branch/release docs stay aligned with CI-managed deployment branch mappings.
 - **`name`** is `kebab-case`, ≤ 64 chars.

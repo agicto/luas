@@ -17,6 +17,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `asset` optional starter | User-owned private metadata, idempotent upload intents, staging-to-final promotion, bounded content inspection, short-lived transfer grants, lifecycle leases, deletion/account guard, cleanup command; optional strict Web console and bounded mock parity | Yes, when enabled | It is user-scoped and independent of organization. Local rooted storage is development-only; production requires explicit R2. It deliberately excludes public/sharing semantics, transformations, antivirus claims, multipart upload, and usage quotas. See [`contracts/ASSETS.md`](../contracts/ASSETS.md). |
 | `setting` optional starter | Finite code-owned scalar catalog, app/organization/user overrides, default resolution, monotonic CAS versions, public app ETag caching, private scope isolation, value-free audit metadata, operator CLI, and transactional account cleanup; optional strict Web preferences and bounded mock parity | Yes, when enabled with `organization` | It deliberately excludes runtime definition creation, arbitrary JSON, secrets, remote feature-flag rollout, entitlements, usage limits, and notification preferences. See [`contracts/SETTINGS.md`](../contracts/SETTINGS.md). |
 | `usage` optional starter | Finite code-owned user/organization metrics, exact event idempotency, UTC counters, trusted record and atomic consume seams, versioned quota overrides, retention pruning, operator CLI, account cleanup, and private read-only Web summaries | Yes, when enabled with `organization` | Safe defaults are unlimited. It rejects arbitrary metrics and dimensions, has no public ingestion endpoint, and deliberately excludes billing, plans, entitlements, provider events, and browser quota administration. See [`contracts/USAGE.md`](../contracts/USAGE.md). |
+| `webhook` optional starter | Organization-owned outbound endpoints, finite event catalog, encrypted rotating secrets, Standard Webhooks signing, SSRF-safe targets, durable outbox/delivery ledger, lease-safe retries, auto-disable, replay/prune CLI, and strict manager Web UI/mock parity | Yes, when enabled with `organization` | The browser can manage and queue only the fixed test event; trusted server modules publish product events. Delivery records exclude URLs, payloads, signatures, bodies, and free-form errors. See [`contracts/WEBHOOKS.md`](../contracts/WEBHOOKS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
 | Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email has typed all-or-none config, cancellation, a provider budget, bounded responses, and PII-safe errors; notification adds durable delivery ownership. Storage now has a provider-neutral object seam, rooted private local adapter, and AWS SDK Go v2 R2 adapter; asset adds business ownership. The memory workflow queue remains process-local and non-durable; capabilities are not business-ready starters by themselves. |
@@ -25,15 +26,14 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 
 | Priority | Finding | Impact | Recommended slice |
 |---|---|---|---|
-| P2 | Event and workflow capabilities exist, but no webhook delivery starter owns subscriptions, signing, retry, and delivery logs. | Integration-heavy apps need outbound webhooks early. | Build a `webhook` optional starter using workflow retry primitives and audit logs. |
 | P3 | AI capability exists, but no starter owns conversations, prompts, runs, evaluations, or cost tracking. | AI-first apps still need repeated product scaffolding. | Build an `ai-workspace` optional starter only after organization and usage seams are settled. |
 | P3 | Usage is intentionally provider-neutral and has no pricing, invoice, tax, subscription, or payment lifecycle. | Monetized products still need product-specific commercial policy before launch. | Keep `billing` optional and provider-adapted after pricing and entitlement semantics are explicit. |
 
 ## Recommended Starter Sequence
 
-The production auth adapter plus the organization, permission, notification, asset, setting, and
-usage optional starters are complete. Keep the sequence below as an ownership map; the next
-undelivered boundary is outbound webhook delivery.
+The production auth adapter plus the organization, permission, notification, asset, setting, usage,
+and webhook optional starters are complete. Keep the sequence below as an ownership map; the next
+undelivered boundary is an intentionally product-sensitive AI workspace.
 
 1. `organization` optional starter
    - Uses organization as the tenant/account boundary. Workspace is a possible future child concept, not a synonym in code or contracts.
@@ -77,9 +77,14 @@ undelivered boundary is outbound webhook delivery.
      payment-provider vocabulary outside the starter.
 
 7. `webhook` optional starter
-   - Owns endpoint subscriptions, signing secrets, delivery attempts, retry policy, and delivery logs.
-   - Uses events and workflow primitives.
-   - Gives integration-heavy downstream apps a production-grade outbound integration path.
+   - Delivered across finite event definitions, encrypted endpoint secrets, SSRF-resistant target
+     resolution, transaction-aware durable publication, Standard Webhooks signatures, lease/token
+     completion, bounded retry and response handling, auto-disable, replay/prune operations, strict
+     manager Web adapters/mock/UI, tests, docs, and governance.
+   - Keeps arbitrary browser publication, inbound callbacks, runtime schemas, response bodies,
+     payload inspection, custom headers/methods, and provider-specific diagnostics outside the starter.
+   - Gives integration-heavy downstream apps a production-oriented outbound path while preserving
+     a small `domain.WebhookPublisher` replacement seam.
 
 8. `ai-workspace` optional starter
    - Owns prompt templates, conversation/session records, run history, cost attribution, and evaluation hooks.
@@ -121,8 +126,8 @@ Promote a starter toward the default scaffold only when:
 
 ## Near-Term Recommendation
 
-Build `webhook` next. Usage now settles finite metric identity, trusted idempotent events, UTC
-aggregation, bounded late facts, atomic hard-limit decisions, quota concurrency, retention, privacy,
-and account deletion without importing billing vocabulary. Webhook should next define endpoint
-ownership, secret handling and rotation, canonical signing, durable delivery attempts, retry and
-lease semantics, response-size limits, redaction, disable policy, and operator replay behavior.
+Run a semantic discovery slice before building `ai-workspace`. Decide whether conversation, prompt,
+run, evaluation, and cost attribution are genuinely reusable starter concepts or product-specific
+examples; keep model-provider SDKs in the AI capability and consume the delivered organization,
+usage, asset, webhook, and workflow seams rather than duplicating their ownership. Billing remains
+separate until pricing, entitlement, invoice, tax, and provider lifecycle semantics are explicit.

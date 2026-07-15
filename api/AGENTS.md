@@ -111,6 +111,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`docs/ASSETS.md`](docs/ASSETS.md) — optional asset ownership, storage capability, inspection, cleanup, and replacement.
 - [`docs/SETTINGS.md`](docs/SETTINGS.md) — optional typed setting catalog, CAS history, CLI, audit privacy, and account cleanup.
 - [`docs/USAGE.md`](docs/USAGE.md) — optional trusted metering, atomic consume decisions, quota CAS, CLI, retention, and replacement.
+- [`docs/WEBHOOKS.md`](docs/WEBHOOKS.md) — optional outbound event catalog, endpoint policy, encrypted secrets, durable delivery worker, and replacement.
 - [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — request-log minimization, automatic credential redaction, safe exception diagnostics, parameterized SQL, and audit privacy.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
@@ -122,6 +123,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`../contracts/ASSETS.md`](../contracts/ASSETS.md) — optional private asset lifecycle, transfer grant, inspection, and deletion contract.
 - [`../contracts/SETTINGS.md`](../contracts/SETTINGS.md) — optional typed app/organization/user settings and conditional HTTP contract.
 - [`../contracts/USAGE.md`](../contracts/USAGE.md) — optional usage event, counter, quota, private summary, and retention contract.
+- [`../contracts/WEBHOOKS.md`](../contracts/WEBHOOKS.md) — optional outbound endpoint, publication, Standard Webhooks delivery, retry, and browser contract.
 - [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) — permission catalog extension, transactional checks, and authorizer replacement.
 
 ## Directory Structure

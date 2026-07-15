@@ -145,6 +145,21 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   Atomic consumption may reject work that would cross the cap. A quota is not a plan, grant,
   entitlement, balance, price, or payment-provider object.
 
+**Webhook endpoint**
+: An organization-owned outbound HTTPS target with a finite event subscription, active/disabled
+  state, monotonic version, and endpoint-unique encrypted signing secret. It is not an inbound
+  callback, arbitrary proxy destination, provider credential, or browser-owned request template.
+
+**Webhook event**
+: One trusted code-owned outbound publication with a finite type, producer idempotency identity,
+  stable `msg_` identifier, occurrence time, and validated payload. Browser clients cannot publish
+  arbitrary webhook events; downstream server modules use the durable publisher seam.
+
+**Webhook delivery**
+: The durable execution ledger entry for one webhook event and endpoint. It owns retry state,
+  lease, attempts, stable local failure identifiers, and replay count without exposing target URLs,
+  payloads, signatures, response bodies, or free-form provider errors.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP
@@ -183,6 +198,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   scoped choice; an effective setting exposes the resolved value and version.
 - A usage metric defines what can be counted; a usage event records one idempotent fact; a usage
   counter aggregates one subject period; a usage quota optionally gates atomic consumption.
+- A webhook event represents one trusted outbound fact; each subscribed webhook endpoint receives
+  a separate durable delivery whose message identity survives retry and replay.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
@@ -212,3 +229,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   metric and subject. Telemetry explains system operation, HTTP rate limits protect transport,
   quotas gate a usage counter, and billing converts reviewed usage into provider-specific money.
   Do not use these terms interchangeably.
+- **webhook vs event bus/workflow/inbound callback**: Webhook means an outbound, signed HTTP
+  delivery owned by the optional starter. The in-process event bus is best-effort process
+  coordination, workflow owns generic execution primitives, and inbound provider callbacks require
+  a separate authenticated contract. Do not use webhook as a synonym for any of them.
