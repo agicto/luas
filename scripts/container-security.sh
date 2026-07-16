@@ -179,33 +179,7 @@ export_sbom() {
     --output "${temporary}" \
     "${image}"
 
-  python3 - "${temporary}" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1], encoding="utf-8") as handle:
-    document = json.load(handle)
-
-if document.get("bomFormat") != "CycloneDX" or document.get("specVersion") != "1.7":
-    raise SystemExit("Trivy did not produce a CycloneDX 1.7 document")
-
-components = document.get("components")
-if not isinstance(components, list) or not components:
-    raise SystemExit("container CycloneDX document contains no components")
-
-subject = document.get("metadata", {}).get("component", {})
-if subject.get("type") != "container" or not subject.get("purl", "").startswith("pkg:oci/"):
-    raise SystemExit("container CycloneDX metadata is missing its OCI subject")
-
-vulnerabilities = document.get("vulnerabilities", [])
-if not isinstance(vulnerabilities, list):
-    raise SystemExit("container CycloneDX vulnerabilities must be a list")
-
-print(
-    f"Validated CycloneDX 1.7 image SBOM with {len(components)} components "
-    f"and {len(vulnerabilities)} recorded vulnerabilities."
-)
-PY
+  python3 "${ROOT_DIR}/scripts/validate-container-sbom.py" "${temporary}" "${image}"
 
   mv -f "${temporary}" "${output}"
   trap - EXIT

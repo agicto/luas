@@ -5,6 +5,7 @@ on:
     paths:
       - "api/**"
       - "scripts/container-security.sh"
+      - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
       - ".agents/skills/luas-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/container.yml"
@@ -16,6 +17,7 @@ on:
     paths:
       - "api/**"
       - "scripts/container-security.sh"
+      - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
       - ".agents/skills/luas-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/container.yml"

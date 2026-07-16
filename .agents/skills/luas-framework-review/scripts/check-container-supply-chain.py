@@ -7,6 +7,7 @@ from __future__ import annotations
 import datetime as dt
 import re
 import stat
+import subprocess
 import sys
 from pathlib import Path
 
@@ -237,12 +238,39 @@ def main() -> int:
             "--exit-on-eol 1",
             "CycloneDX 1.7",
             "checksum-verified archive every run",
+            "validate-container-sbom.py",
         ),
     )
     if "--ignore-unfixed" in scanner_content:
         failures.append("scripts/container-security.sh must not hide unfixed findings")
     if not (scanner.stat().st_mode & stat.S_IXUSR):
         failures.append("scripts/container-security.sh must be executable")
+
+    sbom_validator = ROOT / "scripts/validate-container-sbom.py"
+    require_markers(
+        failures,
+        sbom_validator,
+        (
+            "aquasecurity:trivy:ImageID",
+            "aquasecurity:trivy:Reference",
+            "aquasecurity:trivy:RepoTag",
+            "pkg:oci/",
+            "--self-test",
+        ),
+    )
+    if not (sbom_validator.stat().st_mode & stat.S_IXUSR):
+        failures.append("scripts/validate-container-sbom.py must be executable")
+    validator_test = subprocess.run(
+        [sys.executable, str(sbom_validator), "--self-test"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if validator_test.returncode != 0:
+        failures.append(
+            "scripts/validate-container-sbom.py self-test failed: "
+            f"{validator_test.stderr.strip() or validator_test.stdout.strip()}"
+        )
 
     check_ignore_policy(failures)
 
@@ -251,6 +279,7 @@ def main() -> int:
         ROOT / ".github/workflows/container.yml",
         (
             "scripts/container-security.sh",
+            "scripts/validate-container-sbom.py",
             "BUILD_METADATA_OUTPUT",
             "OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}",
             "luas-api.build-metadata.json",
@@ -265,6 +294,7 @@ def main() -> int:
         (
             "scripts/verify-container.sh luas-web:ci",
             "scripts/container-security.sh verify luas-web:ci",
+            "scripts/validate-container-sbom.py",
             "OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}",
             "luas-web.build-metadata.json",
             "luas-web.cdx.json",

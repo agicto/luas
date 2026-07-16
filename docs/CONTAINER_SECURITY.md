@@ -68,6 +68,11 @@ reviewed platform-specific SHA-256, and re-extracts the executable from that ver
 every run. The vulnerability database remains live by design; do not describe a successful scan as
 permanent evidence against advisories published later.
 
+Image SBOM identity is portable across Docker stores: the validator requires a named container
+subject, the requested image in Trivy `Reference`/`RepoTag`, and a SHA-256 Trivy `ImageID`. An OCI
+`purl` is validated when a registry or containerd store provides one, but it is not fabricated for
+standard daemon-local images.
+
 `make check` runs the deterministic container governance rules, but intentionally does not build or
 network-scan images. The dedicated image workflows own those Docker- and network-backed gates.
 
