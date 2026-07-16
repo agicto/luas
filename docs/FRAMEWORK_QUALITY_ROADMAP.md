@@ -568,6 +568,36 @@ Verification:
 - Three production Lighthouse runs plus desktop and 390 by 844 browser interaction/overflow checks
 - `make governance` and `make check`
 
+### Completed P1 — Shared Button Composition And Interaction Semantics
+
+The shared `Button asChild` path previously gave Radix `Slot` an internal `<span>` instead of the
+caller's link. Styling, focus, padding, and `data-slot` therefore belonged to the wrapper while only
+the link text was navigable; optional icons also sat outside the link hit area. A `disabled` prop was
+forwarded to that wrapper without producing valid link semantics, and loading state had no
+programmatic busy signal.
+
+`Button` now uses Radix `Slottable` to preserve the caller's single semantic host while inserting
+icons or loading feedback inside it. Native buttons retain native `disabled`; composed links use
+`aria-disabled`, `aria-busy`, removal from the tab order, pointer blocking, and capture-phase
+activation suppression without an invalid anchor attribute. The spinner is decorative, and
+icon-only labels remain caller-owned. Conflicting child ARIA, tab, and event props cannot weaken a
+primitive-owned disabled or loading state.
+
+Five public DOM and interaction regressions cover link ownership, full hit-area composition, native
+loading behavior, disabled links, and composed loading. Root governance keeps the implementation,
+tests, Web agent rules, and accessibility/testing skills aligned.
+
+The public `/` route remains 579,149 raw / 168,775 gzip bytes because its buttons stay server
+rendered. Routes whose client graph already hydrates `Button` gained 1,133 raw bytes and roughly
+359-376 gzip bytes (about 0.11-0.13%); all reviewed route budgets retain 32-45 KB of headroom.
+
+Verification:
+
+- `cd web && pnpm vitest run src/test/button-composition.test.tsx`
+- `python3 .agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py`
+- `cd web && pnpm type-check && pnpm lint && pnpm build`
+- `make governance` and `make check`
+
 ### P1 — Measured Performance Baseline
 
 Problem: Luas now guards Web route bundles and has measured HTTP, queue, rate-limit, cache, database,

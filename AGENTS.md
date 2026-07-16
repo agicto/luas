@@ -101,6 +101,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-cache-boundary.py` — keep cache values driver-neutral, memory bounded, atomic operations honest, and client ownership explicit.
 - `.agents/skills/luas-framework-review/scripts/check-database-boundary.py` — keep database settings strict, DSNs encoded, pools bounded, queries deterministic, and PostgreSQL performance evidence reproducible.
 - `.agents/skills/luas-framework-review/scripts/check-web-performance-boundary.py` — keep Web route budgets executable, public controls lean and responsive, and synthetic/field claims distinct.
+- `.agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py` — keep shared composed controls attached to their semantic host with accessible disabled/loading behavior.
 - `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py` — keep asset ownership, storage adapters, transfer grants, inspection, cleanup, and API/Web/contracts aligned.

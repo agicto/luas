@@ -538,6 +538,21 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 - **Image Semantics**: `AvatarImage` requires `alt`; use `alt=""` when the adjacent name already carries the same information.
 - **Heading Ownership**: `AlertTitle` is intentionally a non-heading container. Pages and features own heading levels so shared primitives cannot skip the document hierarchy.
 
+#### Composed Control Contract
+
+- Use a native `Button` for actions. For navigation, use `Button asChild` with exactly one semantic
+  `Link` or `<a>` child; never nest a link inside a native button or place the button hit area on a
+  wrapper around the link.
+- `Button` uses Radix `Slottable` so icons, spinners, classes, focus styles, and `data-slot` belong to
+  the composed semantic host. Do not add an internal wrapper between `Slot` and `Slottable`.
+- A disabled or loading composed link must be inert, leave the tab order, expose `aria-disabled`, and
+  use `aria-busy` while loading. The primitive-owned state overrides conflicting child ARIA, tab,
+  and activation props. Never forward the native `disabled` attribute to an anchor.
+- Icon-only controls require a caller-owned accessible label. Loading spinners are decorative and
+  must not replace that label.
+- Changes to `Button`, `asChild`, or composed activation behavior require
+  `src/test/button-composition.test.tsx`, type-check, lint, and a production build.
+
 #### Form Control Contract
 
 - `Input` preserves native HTML input behavior. `type="date"`, `type="color"`, `name`, `required`, and `aria-*` must reach the underlying `<input>` unchanged.

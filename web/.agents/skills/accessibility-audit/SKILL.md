@@ -92,6 +92,17 @@ Run `pnpm lint:theme-contrast` after changing theme primitives or semantic mappi
 - Icon-only actions must receive caller-owned accessible labels. Do not add an English fallback inside a reusable primitive.
 - `src/test/form-control-accessibility.test.tsx` is the public regression seam for native attributes, error associations, password visibility labels, and color control semantics. `src/test/calendar-date-picker.test.tsx` owns calendar locale, keyboard, dialog, and local form-value contracts.
 
+#### Luas Composed Control Contract
+
+- Use a native `Button` for actions and `Button asChild` with one semantic link for navigation.
+- The composed link itself must own the focus ring, complete pointer hit area, accessible name, and
+  `data-slot`; icons and loading feedback must remain inside it.
+- Disabled composed links use `aria-disabled`, leave the tab order, and suppress pointer and keyboard
+  activation without receiving the invalid native `disabled` attribute. Primitive-owned disabled
+  state must override conflicting child ARIA, tab, and activation props.
+- Loading controls use `aria-busy`; decorative spinners stay hidden from the accessibility tree.
+- `src/test/button-composition.test.tsx` is the public regression seam for these semantics.
+
 ### 8. Internationalization
 
 - [ ] `lang` attribute set on `<html>` for the current locale (this project's `i18n-handler` skill governs locale).

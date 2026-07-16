@@ -79,6 +79,10 @@ describe('useLogin', () => {
 });
 ```
 
+For shared UI primitives, assert the public DOM and interaction contract rather than private helper
+structure. `src/test/button-composition.test.tsx` verifies that a composed link is the semantic host
+for styles, focus, icons, loading state, and disabled activation.
+
 ### 5. Mocking Guidelines
 
 - **Next.js Router**: Already mocked in `setup.ts`

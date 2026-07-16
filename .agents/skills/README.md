@@ -80,6 +80,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-cache-boundary.py` checks driver-neutral bytes, bounded memory, atomic add/take behavior, explicit Redis client ownership, and removed global cache surfaces.
 - `luas-framework-review/scripts/check-database-boundary.py` checks strict database configuration, encoded PostgreSQL DSNs, bounded pool lifecycle, deterministic list queries, and real profile coverage.
 - `luas-framework-review/scripts/check-web-performance-boundary.py` checks executable route budgets, official Next.js diagnostic ownership, lean public controls, and honest synthetic/field performance language.
+- `luas-framework-review/scripts/check-web-ui-primitive-boundary.py` checks composed control semantic ownership, inert disabled/loading behavior, regression coverage, and AI guidance alignment.
 - `luas-framework-review/scripts/check-asset-boundary.py` checks private asset ownership, bounded object storage, ephemeral grants, inspection, cleanup, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-setting-boundary.py` checks finite typed definitions, strong version preconditions, reset history, cache/privacy behavior, audit minimization, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-usage-boundary.py` checks finite metrics, trusted idempotent events, atomic consumption, quota history, retention, privacy, and API/Web contract alignment.
