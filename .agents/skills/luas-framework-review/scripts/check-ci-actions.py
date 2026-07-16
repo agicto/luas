@@ -47,6 +47,11 @@ REVIEWED_ACTIONS = {
         version="v6.4.0",
         runtime="node24",
     ),
+    "actions/upload-artifact": ActionPin(
+        sha="043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+        version="v7.0.1",
+        runtime="node24",
+    ),
     "golangci/golangci-lint-action": ActionPin(
         sha="ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a",
         version="v9.3.0",
@@ -62,6 +67,7 @@ REVIEWED_ACTIONS = {
 REVIEWED_WORKFLOW_PERMISSIONS = {
     "ci.yml": {"contents": "read"},
     "container.yml": {"contents": "read"},
+    "dependency-security.yml": {"contents": "read"},
     "skill-self-test.yml": {"contents": "read"},
     "sync-deploy-branches.yml": {"contents": "write"},
 }
@@ -180,6 +186,13 @@ def main() -> int:
     ci_workflow = (WORKFLOW_ROOT / "ci.yml").read_text(encoding="utf-8")
     if "package_json_file: web/package.json" not in ci_workflow:
         failures.append("ci.yml must source the pnpm version from web/package.json")
+    for marker in (
+        'node-version: ["22", "24"]',
+        "node-version: ${{ matrix.node-version }}",
+        "fail-fast: false",
+    ):
+        if marker not in ci_workflow:
+            failures.append(f"ci.yml must keep the Web Node 22/24 matrix marker {marker!r}")
     package_data = json.loads((ROOT / "web/package.json").read_text(encoding="utf-8"))
     package_manager = package_data.get("packageManager", "")
     if not re.fullmatch(r"pnpm@\d+\.\d+\.\d+", package_manager):

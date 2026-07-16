@@ -35,8 +35,8 @@ See [api/README.md](api/README.md) for the full Go backend guide.
 
 ```bash
 cd web
-pnpm install
-pnpm dev      # start Next.js on :3000
+corepack pnpm install
+corepack pnpm dev      # start Next.js on :3000
 ```
 
 See [web/README.md](web/README.md) for the full frontend guide.
@@ -54,6 +54,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [contracts/SETTINGS.md](contracts/SETTINGS.md) — finite typed settings, visibility, optimistic concurrency, and reset contract.
 - [contracts/USAGE.md](contracts/USAGE.md) — trusted usage metering, atomic quota decisions, retention, and read-only browser contract.
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — what to keep, delete, or replace when turning Luas into a downstream app.
+- [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) — exact package tooling, dependency execution policy, OSV scanning, SBOM, and update governance.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — ready-to-use starter review and prioritized reusable business starter roadmap.
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for skill governance and AI workflow quality.
@@ -66,8 +67,10 @@ Both halves were designed for AI-assisted development. Start with the global [CO
 ## Verification
 
 ```bash
-make governance  # root semantic, contract, docs, CI, surface, branch, package, and skill guardrails
-make check       # governance + API tier 1 + Web tier 2
+make governance       # deterministic semantic, contract, CI, dependency, and skill guardrails
+make dependency-scan  # live OSV scan for Go and Web lock surfaces
+make sbom             # validated CycloneDX 1.5 inventory in $TMPDIR
+make check            # governance + API tier 1 + Web tier 2
 ```
 
 ## History

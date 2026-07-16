@@ -9,6 +9,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 |---|---|---|
 | `ci.yml` | Root governance, API build/lint/test/race gates, and Web type/lint/test/build gates | `contents: read` |
 | `container.yml` | Production image contract and local Compose lifecycle | `contents: read` |
+| `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
 | `sync-deploy-branches.yml` | Mechanical `dev` / `dev-c` deployment-branch synchronization | `contents: write` |
 
@@ -37,9 +38,25 @@ denials, private user/organization reads, account cleanup, pruning, and migratio
 Standalone `make compose-check` has no explicit tag and therefore rebuilds the current worktree,
 preventing a stale local image from producing a false green result.
 
-The action runtime is separate from the Web project runtime: CI currently tests the Web application
-on Node 22. The pnpm version comes only from `web/package.json` `packageManager`; the setup action
-receives `package_json_file: web/package.json` instead of duplicating that version in workflow YAML.
+The action runtime is separate from the Web project runtime: CI tests the Web application on both
+Node 22 and Node 24. Node 22 remains the production image and type-definition baseline. The pnpm
+version comes only from `web/package.json` `packageManager`; the setup action receives
+`package_json_file: web/package.json` instead of duplicating that version in workflow YAML.
+The Web workspace also requires that exact pnpm version, so an older developer-global binary cannot
+silently rewrite or interpret the lockfile.
+
+## Dependency Supply Chain
+
+The Dependency Security workflow calls the same root script available to developers. It downloads
+OSV-Scanner 2.3.8 from the official release, verifies the platform asset by SHA-256, scans only
+`api/go.mod` and `web/pnpm-lock.yaml`, validates a CycloneDX 1.5 inventory, and uploads that inventory
+for 14 days. It uses read-only repository permission and does not depend on private-repository GitHub
+Advanced Security availability.
+
+`make governance` checks the tool/version/digest pins, pnpm resolution and build-script policy,
+lockfile integrity coverage, Dependabot ecosystems, CI trigger, and time-bounded OSV exceptions.
+`make dependency-scan` is the live network-backed vulnerability gate. See
+[`DEPENDENCY_SECURITY.md`](DEPENDENCY_SECURITY.md) for update, privacy, license, and exception rules.
 
 ## Action Supply Chain
 
@@ -71,6 +88,8 @@ explicit review and an allowlist update in `check-ci-actions.py`.
 
 ```bash
 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
+python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
+make dependency-scan
 make governance
 make check
 ```

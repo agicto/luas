@@ -1,4 +1,4 @@
-.PHONY: check governance api-check web-check
+.PHONY: check governance api-check web-check dependency-scan sbom
 
 check: governance api-check web-check
 
@@ -24,6 +24,7 @@ governance:
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-config-authority.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-email-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
+	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-starter-catalog.py
 	bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
@@ -35,3 +36,9 @@ api-check:
 
 web-check:
 	cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
+
+dependency-scan:
+	bash scripts/dependency-security.sh scan
+
+sbom:
+	bash scripts/dependency-security.sh sbom "$${SBOM_OUTPUT:-$${TMPDIR:-/tmp}/luas.cdx.json}"

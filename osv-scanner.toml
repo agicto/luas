@@ -1,0 +1,3 @@
+# OSV exceptions are empty by default. Any future [[IgnoredVulns]] entry must
+# include a non-empty reason and ignoreUntil date. Package overrides must use
+# the equivalent reason and effectiveUntil fields. Root governance enforces it.

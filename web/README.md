@@ -16,9 +16,9 @@ Luas Web is the Next.js half of the Luas scaffold. It provides a feature-first R
 ## Quick Start
 
 ```bash
-pnpm install
+corepack pnpm install
 cp .env.example .env.local
-pnpm dev
+corepack pnpm dev
 ```
 
 The app runs at [http://localhost:3000](http://localhost:3000).
@@ -227,14 +227,17 @@ controls, analytics, large dependencies, or route-level lazy boundaries.
 ## Scripts
 
 ```bash
-pnpm dev
-pnpm type-check
-pnpm lint
-pnpm test -- --run
-pnpm test:coverage
-pnpm build
-pnpm bundle:check
-pnpm bundle:analyze
+corepack pnpm dev
+corepack pnpm type-check
+corepack pnpm lint
+corepack pnpm test -- --run
+corepack pnpm test:coverage
+corepack pnpm build
+corepack pnpm bundle:check
+corepack pnpm bundle:analyze
 ```
 
 Use `make check` from the repository root to run the canonical API and Web verification tiers together.
+Dependency tooling is exact-versioned; use Corepack instead of an unrelated global pnpm. Root
+vulnerability scanning, SBOM, update, and exception policy lives in
+[`../docs/DEPENDENCY_SECURITY.md`](../docs/DEPENDENCY_SECURITY.md).

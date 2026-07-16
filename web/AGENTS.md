@@ -344,7 +344,7 @@ function SettingsPage() {
 
 ### Must Follow
 
-- **Package manager**: `pnpm` only
+- **Package manager**: exact `packageManager` pnpm through Corepack; never use another manager or bypass the workspace dependency policy
 - **Comments**: English only
 - **Tests**: Place in `src/test` directory
 - **Hot reload**: Do NOT restart dev server (auto-updates)
