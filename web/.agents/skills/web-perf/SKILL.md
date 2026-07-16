@@ -1,43 +1,49 @@
 ---
 name: web-perf
-description: Core Web Vitals audit (LCP, INP, CLS) and Next.js perf review. Use when investigating slowness, before shipping perf-sensitive pages, or when LCP/CLS regress.
+description: Audit Next.js route bundles, lab performance, and field Web Vitals. Use for shared client changes, slowness, or LCP/INP/CLS regressions.
 ---
 
 # Web Performance Audit
 
 ## Purpose
 
-Measure before optimizing. This skill structures perf work around the same metrics Google ranks on and users feel: LCP, INP, CLS. Without measurement, optimization is theater.
+Measure before optimizing. This skill keeps three evidence classes explicit: deterministic route
+bundle diagnostics, repeatable synthetic/lab measurements, and production field Web Vitals. Each
+answers a different question and must be reported under its own name.
 
 ## When to Use
 
 - A user reports the app feels slow.
 - A page in the perf-sensitive tier (landing, dashboard, checkout) is being shipped.
-- Lighthouse score regresses in CI.
+- A root provider, shared client control, large dependency, analytics script, or lazy boundary changes.
+- The route bundle budget or a repeated Lighthouse median regresses.
 - LCP / INP / CLS exceed targets in real-user monitoring.
 
-Skip for internal admin pages or B2B back-office views where the perf budget is relaxed.
+Internal and back-office routes may own higher reviewed budgets, but they still require measurement.
 
-## Targets (WCV "Good")
+## Field Targets (Core Web Vitals "Good")
 
-| Metric | Target |
-|---|---|
-| LCP (Largest Contentful Paint) | < 2.5s |
-| INP (Interaction to Next Paint) | < 200ms |
-| CLS (Cumulative Layout Shift) | < 0.1 |
-| FCP (First Contentful Paint) | < 1.8s |
-| TTFB (Time to First Byte) | < 800ms |
+| Metric                          | Target   |
+| ------------------------------- | -------- |
+| LCP (Largest Contentful Paint)  | <= 2.5s  |
+| INP (Interaction to Next Paint) | <= 200ms |
+| CLS (Cumulative Layout Shift)   | <= 0.1   |
 
-Measure at the 75th percentile of real users, not on your laptop.
+Evaluate these at the 75th percentile of real production users under a declared reporting policy.
+FCP, TTFB, TBT, transfer bytes, and main-thread time remain useful diagnostic signals, not Core Web
+Vitals. Local Lighthouse cannot establish field p75.
 
 ## Audit Workflow
 
 ### Phase 1: Measure
 
-- [ ] Run Lighthouse against the page in incognito with throttling on (Slow 4G, 4× CPU slowdown).
-- [ ] Capture the LCP element, INP interaction, and any layout shift sources.
-- [ ] Compare against the targets above.
-- [ ] If you have field data (Vercel Speed Insights, RUM), use that — it's what users experience.
+- [ ] Read [`../../../docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) and identify the route owner.
+- [ ] Run a clean `pnpm build`; record route raw bytes, reported gzip bytes, and chunk count.
+- [ ] Use `pnpm bundle:analyze` when the changed dependency is not obvious from route evidence.
+- [ ] Run Lighthouse against the production server at least three times with identical settings and
+      report the median. Capture the LCP element and layout-shift or long-task sources.
+- [ ] Record field p75 LCP/INP/CLS when a downstream app has production RUM. Otherwise state that
+      field evidence is unavailable.
 
 Do not optimize before you have a number to beat.
 
@@ -95,45 +101,53 @@ Standard fixes for Next.js 16 / React 19:
 
 ### Phase 4: Verify
 
-- [ ] Re-run Lighthouse; record the delta.
+- [ ] Re-run `pnpm build`; the executable route budget must pass.
+- [ ] Re-run the same Lighthouse protocol; record all three runs and the median delta.
 - [ ] Confirm the metric you targeted actually moved (an LCP fix should reduce LCP — not just overall score).
 - [ ] Verify no regression in other metrics. INP fixes sometimes hurt LCP.
-- [ ] If shipping to prod, set up alerting on the metric (Vercel Speed Insights or equivalent).
+- [ ] Verify the changed interaction at desktop and mobile widths, including horizontal overflow.
+- [ ] If the downstream product owns RUM, compare field p75 after rollout and alert through its chosen
+      vendor. Luas itself stays vendor-neutral.
 
 ## Anti-patterns
 
-- "I added `loading=\"lazy\"` to everything" — lazy-loading above the fold *hurts* LCP.
+- "I added `loading=\"lazy\"` to everything" — lazy-loading above the fold _hurts_ LCP.
 - "I added `useMemo` everywhere" — `useMemo` has its own cost; profile before adding.
 - "I shipped `'use client'` for everything because it's simpler" — every client boundary is hydration cost.
+- "I wrapped it in `dynamic()` so it must be smaller" — measure; the wrapper can add runtime/chunk overhead.
+- "I raised the budget because the feature is intentional" — document ownership and before/after evidence first.
 - Optimizing on a M2 with fiber to gigabit — that's not your user.
-- Comparing builds on localhost — real perf wins show up only with realistic network/CPU.
+- Comparing one Lighthouse run — run variance can be larger than the change.
 - Pursuing a Lighthouse score without checking field data — synthetic ≠ real.
 
 ## Tools
 
 - Chrome DevTools → Performance panel (record an interaction).
-- Lighthouse (local + Vercel).
-- `@next/bundle-analyzer` for bundle size.
+- `pnpm build` / `pnpm bundle:check` for official Next.js route diagnostics and budgets.
+- `pnpm bundle:analyze` for Next.js 16 Turbopack analysis output.
+- Lighthouse for controlled synthetic comparisons.
 - React DevTools Profiler for component-level cost.
-- Vercel Speed Insights for field data.
+- A downstream-owned RUM provider for field data.
 
 ## Source Material
 
 Before auditing, read:
 
-1. `vercel-react-best-practices` skill for code patterns (memoization, RSC boundaries).
-2. The page's data-fetching strategy (`async` Server Component vs client-side `useSWR`).
-3. `next.config.js` and any custom webpack config.
-4. `web-design-guidelines` for any global font / image conventions.
+1. [`../../../docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) for Luas terminology, budgets, and commands.
+2. `vercel-react-best-practices` skill for code patterns (memoization, RSC boundaries).
+3. The page's data-fetching strategy (`async` Server Component vs client-side fetching).
+4. `next.config.ts` and the current official analyzer output.
+5. `web-design-guidelines` for global font, image, and responsive conventions.
 
 ## Output
 
 Report:
 
-1. Current numbers (LCP / INP / CLS) at p75.
-2. Biggest single contributor identified.
-3. Fix applied and the delta.
-4. What you did *not* fix and why (out of scope, low impact, tracked separately).
+1. Route, raw/gzip/chunk evidence, configured budget, and headroom.
+2. Lab protocol, all runs, median LCP/CLS/TBT/transfer/main-thread evidence, and biggest contributor.
+3. Field p75 LCP/INP/CLS with source and reporting policy, or an explicit "not available" statement.
+4. Fix applied, attributable delta, responsive/interaction verification, and reverted experiments.
+5. What you did _not_ fix and why (out of scope, low impact, or tracked separately).
 
 ## Pair With
 

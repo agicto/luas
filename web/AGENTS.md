@@ -550,9 +550,22 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 
 #### Performance Optimization Rules
 
-Following [Vercel React Best Practices](./.agents/skills/vercel-react-best-practices/SKILL.md) for optimal performance:
+Use [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for canonical measurement terms and
+[`web-perf`](./.agents/skills/web-perf/SKILL.md) for the audit workflow. Follow
+[`vercel-react-best-practices`](./.agents/skills/vercel-react-best-practices/SKILL.md) for code
+patterns, but verify the generated route graph instead of assuming a pattern is cheaper.
 
-- **Dynamic Imports** (`bundle-dynamic-imports`): Use `next/dynamic` for components > 50KB (charts, editors, rich-text, maps):
+- **Executable route budgets**: `pnpm build` must finish with the route bundle budget gate. Use
+  `pnpm bundle:check` only after a current production build and `pnpm bundle:analyze` for official
+  Turbopack analysis. Do not raise [`performance-budgets.json`](performance-budgets.json) without
+  attributable before/after evidence.
+- **Evidence classes**: Build bytes, synthetic Lighthouse medians, and production field Web Vitals
+  are different signals. Never report a local Lighthouse run as a field p75 result or SLO.
+- **RSC first**: Keep providers route-scoped and interactive code in leaf Client Components. Before
+  moving a shared dependency into root or a shared layout, compare every affected route.
+- **Dynamic imports** (`bundle-dynamic-imports`): Use `next/dynamic` for interaction-loaded heavy UI
+  such as charts, editors, rich text, or maps only after measuring the route. A dynamic wrapper can
+  add runtime and chunk overhead, especially around an existing Server Component.
 
   ```tsx
   const HeavyEditor = dynamic(() => import('./heavy-editor'), {
@@ -560,7 +573,16 @@ Following [Vercel React Best Practices](./.agents/skills/vercel-react-best-pract
   });
   ```
 
-- **React.memo** (`rerender-memo`): Use for expensive child components that receive stable props:
+- **Native controls**: Prefer a native select, checkbox, input, or disclosure when it fully meets
+  the interaction contract. Do not ship a menu/dialog runtime for a small fixed choice without a
+  measured usability need.
+- **Third-party scripts**: Keep optional analytics server-owned and environment-gated. Use
+  `next/script` strategies appropriate to business criticality; `lazyOnload` is for low-priority
+  scripts whose delayed execution is acceptable.
+- **Production image**: Keep `pnpm-workspace.yaml`, the lockfile, and `package.json` together for
+  frozen installs. The Docker builder must run the same budgeted `pnpm build`, preserve an empty
+  optional `public/` seam, and finish as the non-root standalone runtime.
+- **React.memo** (`rerender-memo`): Use for measured expensive child renders with stable props:
 
   ```tsx
   export const ExpensiveList = React.memo(function ExpensiveList({ items }: Props) {
@@ -770,12 +792,15 @@ Legacy frontend-only codes such as `VAL_400` may be normalized for backward comp
 
 ## Quick Reference
 
-| Action           | Command                        |
-| ---------------- | ------------------------------ |
-| Install deps     | `pnpm install`                 |
-| Dev server       | `pnpm dev`                     |
-| Build            | `pnpm build`                   |
-| Type check       | `pnpm type-check`              |
-| Lint             | `pnpm lint`                    |
-| Format           | `pnpm format`                  |
-| Add UI component | `npx shadcn@latest add [name]` |
+| Action           | Command                            |
+| ---------------- | ---------------------------------- |
+| Install deps     | `pnpm install`                     |
+| Dev server       | `pnpm dev`                         |
+| Build            | `pnpm build`                       |
+| Bundle gate      | `pnpm bundle:check`                |
+| Bundle analysis  | `pnpm bundle:analyze`              |
+| Container build  | `docker build -t luas-web:local .` |
+| Type check       | `pnpm type-check`                  |
+| Lint             | `pnpm lint`                        |
+| Format           | `pnpm format`                      |
+| Add UI component | `npx shadcn@latest add [name]`     |

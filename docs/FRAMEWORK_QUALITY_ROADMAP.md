@@ -88,6 +88,16 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web public route hydration boundaries are guarded by `src/test/public-route-boundary.test.ts`, which blocks auth, query, HTTP, mock BFF, mock session, toast, and Zustand runtime dependencies from `(site)` routes.
 - The auth visual shell is now a Server Component, while `LanguageSwitcher`, forms, and `QueryProvider` remain client leaves. Moving Zod validation behind the server-only environment boundary also removed the full validator from browser chunks. On Next.js 16.2.9, the `/login` route client entry set fell from 702,002 to 409,986 raw bytes and from 195,929 to 129,095 gzip bytes (41.60% and 34.11%), and the auth layout itself left the client reference graph. This is build-manifest evidence, not a field Core Web Vitals claim.
 - Root runtime ownership now uses Next.js `error.tsx` / `global-error.tsx`, keeps optional analytics as a Server Component, and scopes Sonner to `(auth)` / `(protected)`. The root client entry fell from 179,070 to 106,547 raw bytes and from 51,479 to 29,335 gzip bytes (40.50% and 43.02%); the public site route entry fell from 271,306 to 232,813 raw bytes and from 82,784 to 71,914 gzip bytes (14.19% and 13.13%). These are build-manifest measurements, not field Core Web Vitals.
+- Web route performance now has an executable boundary around Next.js 16's official
+  `route-bundle-stats.json`: `pnpm build` enforces reviewed uncompressed first-load budgets and
+  reports gzip evidence, while `pnpm bundle:analyze` exposes the Turbopack graph. Replacing the
+  public theme Radix menu with a native three-state selector moved `/` from 696,759 raw / 207,561
+  gzip bytes and 16 chunks to 579,149 raw / 168,775 gzip bytes and 12 chunks. A three-run mobile
+  Lighthouse median moved from 94 to 96, LCP from 3,072 to 2,855 ms, transfer from 289.6 to 248.3
+  kB, and main-thread work from 340.6 to 307.7 ms; TBT moved from 8 to 3.5 ms. The responsive public
+  header now hides its redundant registration action below `sm` and uses link semantics without
+  nested buttons. These are build and local synthetic results, not field p75 evidence; Luas still
+  has no production RUM adapter.
 - Client-side i18n messages are now namespace-scoped: root serializes only `common` / `errors`, while auth, console, and the i18n devtool append their owned namespaces. In production HTML sampling, `/` fell from 69,703 to 64,642 raw bytes and from 14,758 to 12,264 gzip bytes (7.26% and 16.90%); `/login` fell from 42,455 to 40,765 raw bytes and from 9,486 to 8,695 gzip bytes (3.98% and 8.34%). The login client entry increased by 407 raw / 124 gzip bytes for the additive route provider, leaving a net first-load reduction of 1,283 raw / 667 gzip bytes. These are local production-build transfer measurements, not field Core Web Vitals.
 - Web i18n exposes `useT` through the client-safe `@/i18n` entry and `getT` through `@/i18n/server`; `src/test/i18n-runtime-boundary.test.ts` prevents server imports or the full auth shell from leaking back into the client graph.
 - Web i18n scope semantics are now message-tree-derived: the current tree produces 36 valid object scopes and 232 translatable leaf keys, while `ScopedTranslations<P>` accepts only relative leaf keys below `P`. `src/test/i18n-types.test.ts` guards the compile-time contract and runtime prefix composition. The type-system refactor itself kept production manifests byte-identical for root, site, login, and console client entries, with no i18n loader, server entry, or message source added to the browser graph.
@@ -514,9 +524,55 @@ Verification:
 - `cd api && LUAS_TEST_POSTGRES_DSN=... make benchmark-database`
 - `make governance` and `make check`
 
+### Completed P1 — Web Route Bundle Budget And Public Shell
+
+The Web production build now turns route size into a reviewed regression contract. The gate reads
+the official Next.js 16 diagnostics, validates route and chunk evidence, rejects project path
+escapes, enforces named uncompressed first-load limits plus a global maximum, and reports gzip only
+as diagnostic evidence. The policy lives in `web/performance-budgets.json`; intentional increases
+must update the governance expectation and explain route ownership plus before/after measurements.
+
+The first measured reduction removed a custom Radix menu runtime from the globally visible theme
+control while preserving native light, dark, and system selection. The public `/` route moved from
+696,759 raw / 207,561 gzip bytes and 16 first-load chunks to 579,149 raw / 168,775 gzip bytes and 12
+chunks, a 16.9% raw and 18.7% gzip reduction. The selector keeps its server and initial client
+snapshot on `system` so a persisted browser theme cannot cause a hydration mismatch. The
+authenticated console gained about 625 raw bytes and one small split chunk because it still owns
+Radix menus elsewhere; it remains below its reviewed budget and the trade-off is recorded rather
+than hidden.
+
+Optional Google Analytics now uses `lazyOnload`, which defers configured third-party work but does
+not reduce the default environment-gated route bundle. A proposed dynamic wrapper was measured and
+reverted because it added about 1,995 raw / 647 gzip bytes to each route. The mobile public header
+also removed invalid link-wrapped-button markup and hides the redundant registration action below
+`sm`; a 390 by 844 production-browser replay has no horizontal document overflow.
+
+The Web production image now copies `pnpm-workspace.yaml` before its frozen install, so pnpm sees the
+same security overrides that produced the lockfile. Docker's modern `ENV key=value` syntax is used,
+the optional `public/` asset seam is created when empty, and the image builder executes the same
+budgeted `pnpm build` as local and CI verification.
+
+Three comparable local mobile Lighthouse runs on the final build produced a median score of 96, FCP
+of 905 ms, LCP of 2,855 ms, CLS of 0, TBT of 3.5 ms, 248.3 kB transferred, and 307.7 ms of
+main-thread work. The prior three-run median was 94, 906 ms, 3,072 ms, 0, 8 ms, 289.6 kB, and 340.6
+ms respectively. LCP remains above the 2.5-second field-good threshold, INP was not established, and
+Luas has no production RUM adapter. These results are synthetic comparison evidence, not field p75,
+an SLO, or a CI timing budget.
+
+Verification:
+
+- `cd web && pnpm build && pnpm bundle:check`
+- `cd web && pnpm bundle:analyze`
+- `cd web && docker build --tag luas-web:local .`
+- `cd web && pnpm type-check && pnpm lint && pnpm test -- --run`
+- Three production Lighthouse runs plus desktop and 390 by 844 browser interaction/overflow checks
+- `make governance` and `make check`
+
 ### P1 — Measured Performance Baseline
 
-Problem: Luas now has measured HTTP, queue, rate-limit, cache, and database baselines, but it does not yet guard Web route bundles or Core Web Vitals with repeatable budgets.
+Problem: Luas now guards Web route bundles and has measured HTTP, queue, rate-limit, cache, database,
+and local Web baselines. It does not yet own a vendor-neutral production RUM adapter, field p75 Core
+Web Vitals, or a stable cross-runner browser metric suitable for CI.
 
 The core HTTP middleware portion now has a repeatable metrics-off/metrics-on benchmark and a
 steady-state allocation gate. On an Apple M3 Max with Go 1.25.12, the metrics-disabled median moved
@@ -530,15 +586,16 @@ Recommended slice:
 1. Keep dependency and stripped binary measurements comparable when changing runtime dependencies.
 2. Keep the representative API middleware benchmark and allocation budget aligned when the kernel or request metrics change.
 3. Keep the PostgreSQL user list/write profile and exact query-count guards aligned with repository changes.
-4. Record Web build route output and route-level client bundle evidence before changing provider placement, i18n routing, charts, or analytics.
-5. Promote a measurement into CI only after it is stable across runners and has an explicit regression threshold.
+4. Keep the Web route budget gate and route-level evidence aligned before changing provider placement, i18n routing, charts, or analytics.
+5. Define a downstream-owned, privacy-reviewed RUM adapter seam before claiming production p75 LCP, INP, or CLS.
+6. Promote a browser measurement into CI only after it is stable across runners and has an explicit regression threshold.
 
 Verification:
 
 - `cd api && go test -run '^$' -bench . -benchmem ./internal/bootstrap/... ./internal/infra/metrics/...`
 - `cd api && make benchmark-cache`
 - `cd api && go build -trimpath -ldflags='-s -w' -o /tmp/luas-server ./cmd/server`
-- `cd web && pnpm build`
+- `cd web && pnpm build && pnpm bundle:check`
 
 ### P1 — Web Hydration Boundaries
 

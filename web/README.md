@@ -214,6 +214,16 @@ The default request client is configured by `NEXT_PUBLIC_API_URL`. Error handlin
 
 See [../contracts/README.md](../contracts/README.md) for the shared contract.
 
+## Performance
+
+Production builds enforce reviewed first-load JavaScript budgets from
+[`performance-budgets.json`](performance-budgets.json) using Next.js route diagnostics. The raw
+route value is the deterministic gate; gzip output is diagnostic. Synthetic Lighthouse evidence
+and real-user Core Web Vitals remain separate measurement classes.
+
+Read [docs/PERFORMANCE.md](docs/PERFORMANCE.md) before changing root providers, shared client
+controls, analytics, large dependencies, or route-level lazy boundaries.
+
 ## Scripts
 
 ```bash
@@ -223,6 +233,8 @@ pnpm lint
 pnpm test -- --run
 pnpm test:coverage
 pnpm build
+pnpm bundle:check
+pnpm bundle:analyze
 ```
 
 Use `make check` from the repository root to run the canonical API and Web verification tiers together.

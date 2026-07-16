@@ -41,9 +41,11 @@ describe('root runtime boundary', () => {
     expect(protectedLayout).toContain('@/components/ui/sonner');
   });
 
-  it('keeps optional analytics out of a custom client boundary', () => {
+  it('defers optional analytics without a custom root client boundary', () => {
     const analytics = readSource('components/analytics.tsx');
 
     expect(analytics).not.toMatch(/^\s*['"]use client['"];?/);
+    expect(analytics).toContain('if (!GA_MEASUREMENT_ID) return null;');
+    expect(analytics).toContain('strategy="lazyOnload"');
   });
 });

@@ -1,0 +1,12 @@
+{
+  "firstLoadUncompressedJavaScript": {
+    "maximumAnyRouteBytes": 1070000,
+    "routeBudgetsBytes": {
+      "/": 600000,
+      "/login": 900000,
+      "/register": 900000,
+      "/console": 925000,
+      "/console/organizations/[organizationId]": 1070000
+    }
+  }
+}

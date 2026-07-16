@@ -77,6 +77,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-rate-limit-boundary.py` when changing global/auth quotas, limiter algorithms, active-bucket resource policy, shared-store claims, or Redis rate-limit ownership.
    - Run `scripts/check-cache-boundary.py` when changing cache values, TTLs, memory capacity, atomic operations, loaders, Redis adapter ownership, or cache documentation.
    - Run `scripts/check-database-boundary.py` when changing database configuration, DSNs, pool lifecycle, GORM modes, repository query shape, or PostgreSQL performance evidence.
+   - Run `scripts/check-web-performance-boundary.py` when changing root/shared Web client dependencies, route bundle budgets, analytics loading, public header controls, the Web production image, bundle evidence, Lighthouse evidence, or field-performance claims.
    - Run `scripts/check-api-key-boundary.py` when changing API key persistence, scope grammar or guards, management routes, one-time plaintext handling, or the Web API key feature.
    - Run `scripts/check-sensitive-telemetry.py` when changing request logging/tracing, logger context, exception diagnostics, SQL logging, tracing statements, or audit metadata.
    - Run `scripts/check-permission-boundary.py` when changing access-role persistence, permission keys, authorization guards, organization-scoped assignments, permission contracts, or the Web permission feature.
@@ -130,6 +131,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-rate-limit-boundary.py` keeps the built-in limiter atomic and cardinality-bounded, blocks inert Redis activation claims, and makes shared multi-replica enforcement an explicit adapter/deployment decision.
 - `scripts/check-cache-boundary.py` keeps the optional cache byte-oriented, bounded, atomic where named, free of global lifecycle state, and explicit about Redis ownership and non-authority.
 - `scripts/check-database-boundary.py` keeps database settings strict, DSNs encoded, pools bounded and timeout-aware, user pagination deterministic, and PostgreSQL profiling reproducible.
+- `scripts/check-web-performance-boundary.py` keeps route budgets attached to official Next.js diagnostics, public theme/header controls lean and responsive, optional analytics deferred, and synthetic evidence distinct from field Web Vitals.
 - `scripts/check-api-key-boundary.py` keeps hash-only API key persistence, atomic revoke/use writes, structured scopes, route guards, one-time plaintext, fixed Web adapter paths, and mock behavior aligned.
 - `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.
 - `scripts/check-permission-boundary.py` keeps access roles organization-scoped, permission keys exact, authorization fail-closed, delegated administration bounded, and API/Web/contracts aligned.

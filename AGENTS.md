@@ -13,7 +13,7 @@ The two halves are independent deployable units that share contracts, not code.
 
 ## Where to start
 
-Read [CONTEXT.md](CONTEXT.md) first for the global Luas vocabulary. It is the source of truth for terms like `scaffold`, `starter`, `core`, `capability`, `feature`, `module`, `contract`, `mock BFF`, `console`, `error_code`, and `request_id`.
+Read [CONTEXT.md](CONTEXT.md) first for the global Luas vocabulary. It is the source of truth for terms like `scaffold`, `starter`, `core`, `capability`, `feature`, `module`, `contract`, `mock BFF`, `console`, `error_code`, `request_id`, `performance budget`, and `field Web Vital`.
 
 Each half has its own `AGENTS.md` with the detailed rules. Read those before editing:
 
@@ -67,6 +67,7 @@ Workspace-level architecture docs:
 - [web/docs/USAGE.md](web/docs/USAGE.md) — optional strict read-only usage adapters, finite catalog UI, mock parity, and removal
 - [web/docs/WEBHOOKS.md](web/docs/WEBHOOKS.md) — optional manager-only webhook adapters, one-time secrets, delivery UI, mock truthfulness, and removal
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
+- [web/docs/PERFORMANCE.md](web/docs/PERFORMANCE.md) — route bundle budgets, synthetic evidence, field Web Vitals, and change procedure
 
 ## AI Agent Skills
 
@@ -99,6 +100,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-rate-limit-boundary.py` — keep local rate-limit cardinality bounded, Redis claims honest, and multi-replica enforcement explicit.
 - `.agents/skills/luas-framework-review/scripts/check-cache-boundary.py` — keep cache values driver-neutral, memory bounded, atomic operations honest, and client ownership explicit.
 - `.agents/skills/luas-framework-review/scripts/check-database-boundary.py` — keep database settings strict, DSNs encoded, pools bounded, queries deterministic, and PostgreSQL performance evidence reproducible.
+- `.agents/skills/luas-framework-review/scripts/check-web-performance-boundary.py` — keep Web route budgets executable, public controls lean and responsive, and synthetic/field claims distinct.
 - `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py` — keep asset ownership, storage adapters, transfer grants, inspection, cleanup, and API/Web/contracts aligned.
@@ -149,6 +151,9 @@ cd web && pnpm install                  # install
 cd web && pnpm dev                      # dev server with Turbopack
 cd web && pnpm type-check               # TypeScript check
 cd web && pnpm lint                     # ESLint
+cd web && pnpm build                    # production build plus route bundle budget gate
+cd web && pnpm bundle:analyze           # write official Turbopack bundle analysis output
+cd web && docker build -t luas-web:local . # build the non-root standalone production image
 
 # repo root
 make governance                         # root semantic/contract/docs/CI/surface/branch/package/skill guardrails

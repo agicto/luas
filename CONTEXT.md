@@ -193,6 +193,16 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **request_id**
 : The correlation identifier carried through logs and error responses when available. Use it to connect a client-visible failure to server-side diagnostics.
 
+**Performance budget**
+: A reviewed, executable upper bound on one repeatable build or runtime measurement. A budget owns
+  its metric, scope, evidence source, and change procedure. It is a regression guard, not capacity
+  to consume, a field Core Web Vital, or a service-level objective.
+
+**Field Web Vital**
+: A real-user LCP, INP, or CLS measurement from production traffic, evaluated at the 75th
+  percentile under a declared device and reporting policy. Synthetic Lighthouse and build bundle
+  evidence help diagnose performance but do not establish a field Web Vital.
+
 ## Relationships
 
 - Luas produces a downstream app.
@@ -222,6 +232,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - A webhook event represents one trusted outbound fact; each subscribed webhook endpoint receives
   a separate durable delivery whose message identity survives retry and replay.
 - The production API adapter connects explicit browser contracts to fixed Go API operations without making unlike contracts pretend to be interchangeable.
+- A performance budget guards a stable engineering signal; field Web Vitals describe production
+  user outcomes. Neither term substitutes for the other.
 - Examples and devtools are disposable. Default starters are out-of-the-box building blocks; optional starters require explicit activation. Core is long-lived infrastructure.
 
 ## Flagged Ambiguities

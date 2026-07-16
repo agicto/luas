@@ -42,6 +42,14 @@ describe('route accessibility contracts', () => {
     expect(buttonShowcase).toContain('aria-label="Loading information"');
   });
 
+  it('keeps public header links semantic and bounded on narrow screens', () => {
+    const siteHeaderNav = readSource('components/features/site/site-header-nav.tsx');
+
+    expect(siteHeaderNav).toContain("buttonVariants({ variant: 'ghost', size: 'sm' })");
+    expect(siteHeaderNav).toContain("'interactive rounded-md max-sm:hidden'");
+    expect(siteHeaderNav).not.toContain('<Button');
+  });
+
   it('keeps stateful styleguide leaves behind an explicit client boundary', () => {
     const styleguidePage = readSource(
       'app/(protected)/(devtools)/styleguide/page.tsx'
