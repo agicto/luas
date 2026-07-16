@@ -55,6 +55,7 @@ See [web/README.md](web/README.md) for the full frontend guide.
 - [contracts/USAGE.md](contracts/USAGE.md) — trusted usage metering, atomic quota decisions, retention, and read-only browser contract.
 - [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) — what to keep, delete, or replace when turning Luas into a downstream app.
 - [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) — exact package tooling, dependency execution policy, OSV scanning, SBOM, and update governance.
+- [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) — immutable image inputs, BuildKit evidence, image SBOM/scan policy, and downstream signing boundary.
 - [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) — long-running quality roadmap across semantics, security, performance, usability, and AI workflows.
 - [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) — ready-to-use starter review and prioritized reusable business starter roadmap.
 - [docs/SKILL_GOVERNANCE_PLAN.md](docs/SKILL_GOVERNANCE_PLAN.md) — 30/60/90-day plan for skill governance and AI workflow quality.
@@ -70,6 +71,8 @@ Both halves were designed for AI-assisted development. Start with the global [CO
 make governance       # deterministic semantic, contract, CI, dependency, and skill guardrails
 make dependency-scan  # live OSV scan for Go and Web lock surfaces
 make sbom             # validated CycloneDX 1.5 inventory in $TMPDIR
+IMAGE=luas-api:container-check make container-scan # live built-image vulnerability/secret gate
+IMAGE=luas-api:container-check make container-sbom # validated CycloneDX 1.7 image inventory
 make check            # governance + API tier 1 + Web tier 2
 ```
 

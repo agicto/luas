@@ -9,7 +9,7 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 |---|---|---|
 | `Dockerfile` | API core | Builds the production image and defines runtime-safe defaults. |
 | `docker-compose.yml` | Local development | Runs the API and PostgreSQL on loopback with replaceable local credentials. |
-| `scripts/verify-container.sh` | Verification | Builds and exercises the production image contract. |
+| `scripts/verify-container.sh` | Verification | Builds with reviewed material evidence and exercises the production image contract. |
 | `scripts/verify-compose.sh` | Verification | Rebuilds the local worktree or reuses one explicitly verified image, then exercises PostgreSQL and startup. |
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
 | `luas notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
@@ -18,9 +18,11 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 
 ## Production Image
 
-The image uses a multi-stage Go build and the distroless non-root runtime. It deliberately does not
-copy `.env.example` or any `.env` file. Missing production configuration must fail at startup rather
-than silently falling back to development values.
+The image uses a multi-stage Go build and the distroless non-root runtime. The Dockerfile frontend,
+Go builder, and distroless runtime use exact readable versions plus immutable multi-platform digests.
+OCI labels carry the source, exact revision, version, and runtime-base digest. The image deliberately
+does not copy `.env.example` or any `.env` file. Missing production configuration must fail at startup
+rather than silently falling back to development values.
 
 Image defaults:
 
@@ -46,8 +48,11 @@ make container-check
 make compose-check
 ```
 
-The verifier checks the non-root user, image health configuration, liveness, database-disabled
-readiness, JSON request logs on stdout, absence of `/app/.env`, and a zero exit code after SIGTERM.
+The verifier uses Buildx maximal metadata and requires the reviewed Dockerfile, builder, and runtime
+digests in the BuildKit material set. It also checks OCI identity labels, the non-root user, image
+health configuration, liveness, database-disabled readiness, JSON request logs on stdout, absence of
+`/app/.env`, and a zero exit code after SIGTERM. Image-level SBOM, vulnerability, secret, EOL, and
+downstream signing semantics live in [`../../docs/CONTAINER_SECURITY.md`](../../docs/CONTAINER_SECURITY.md).
 Standalone `make compose-check` always rebuilds the current worktree so a stale local tag cannot
 produce a false green result. In CI, the Compose verifier receives the explicit image tag built and
 checked by the immediately preceding container step; a missing explicit image fails instead of
@@ -137,7 +142,8 @@ A downstream production deployment must inject at least:
   HTTP or private targets in production.
 
 Keep secrets in the deployment platform's secret store, not in the image, Compose file, repository,
-or command history. Keep `/health/live` as the process liveness signal and `/health/ready` as the
+command history, build arguments, or BuildKit metadata. Use secret mounts for build-only credentials.
+Keep `/health/live` as the process liveness signal and `/health/ready` as the
 traffic-readiness signal. The Docker image health check intentionally uses liveness so a temporary
 database outage does not create a restart loop; an orchestrator should remove unready replicas from
 traffic based on readiness.
@@ -224,5 +230,7 @@ When changing container behavior:
 2. Do not copy environment files or credentials into the image.
 3. Keep `health:check`, the Docker `HEALTHCHECK`, and actual health routes aligned.
 4. Keep request logs visible through container stdout when file logging is disabled.
-5. Run `make container-check`, `docker compose config --quiet`, and the normal API verification tier.
+5. Run `make container-check`, the root image scan/SBOM commands, `docker compose config --quiet`, and
+   the normal API verification tier.
 6. Run `make compose-check` when Compose, migrations, database startup, or default starters change.
+7. Keep digest, material-expectation, OCI-label, CI evidence, and governance updates in one review.

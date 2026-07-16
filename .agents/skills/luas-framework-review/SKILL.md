@@ -92,6 +92,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-email-boundary.py` when changing outbound email config, provider HTTP behavior, templates, or starter-owned mailer calls.
    - Run `scripts/check-ci-actions.py` when changing GitHub Actions, action versions, runner requirements, permissions, or CI package-manager setup.
    - Run `scripts/check-dependency-supply-chain.py` when changing package-manager versions, lockfiles, dependency resolution/build policy, scanners, SBOMs, dependency update automation, or vulnerability exceptions.
+   - Run `scripts/check-container-supply-chain.py` when changing Dockerfiles, production image contents, image inputs, OCI labels, BuildKit evidence, image SBOM/scanners, image CI, or container exceptions.
    - Run `scripts/check-surface-catalog.py` when changing downstream extraction guidance or scaffold surface classifications.
    - Run `scripts/check-starter-catalog.py` when changing default/optional starter assembly, manifests, migrations, contracts, activation config, or starter guidance.
    - Run `scripts/check-api-boundaries.sh` when changing API package placement or imports.
@@ -148,6 +149,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-email-boundary.py` keeps email configuration, caller cancellation, provider timeout, bounded response reads, privacy rules, and user-starter mailer calls aligned.
 - `scripts/check-ci-actions.py` keeps external actions pinned to reviewed full commit SHAs, blocks unsafe trigger drift, and verifies the Node 24 runner/tooling contract.
 - `scripts/check-dependency-supply-chain.py` keeps exact pnpm tooling, resolution quarantine, dependency-script approvals, lock integrity, OSV asset digests, CycloneDX export, Dependabot coverage, and expiring exceptions aligned.
+- `scripts/check-container-supply-chain.py` keeps Dockerfile inputs digest-pinned, OCI identity and BuildKit materials aligned, API/Web image smoke and scan CI present, and image exceptions exact and expiring.
 - `scripts/check-surface-catalog.py` keeps `docs/SCAFFOLD_SURFACES.md` aligned with `CONTEXT.md` and the `downstream-app-extraction` surface classification table.
 - `scripts/check-starter-catalog.py` keeps additive optional starter config, manifests, migrations, contracts, roadmaps, and module-creation guidance aligned.
 - `scripts/check-api-boundaries.sh` uses `go list` direct imports to block new reverse imports across `pkg/`, `internal/domain/`, `internal/capabilities/`, `internal/infra/`, and `internal/modules/` while reporting current baseline exceptions, if any. It also guards the tiny allowed export surface of `api/pkg/support`.

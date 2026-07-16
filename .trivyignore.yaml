@@ -1,0 +1,7 @@
+# Container scan exceptions are deliberately empty. A future exception must
+# identify one exact finding and include a non-empty statement plus an
+# expired_at date. Never use wildcard IDs or a non-expiring suppression.
+vulnerabilities: []
+secrets: []
+misconfigurations: []
+licenses: []

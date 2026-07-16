@@ -8,10 +8,11 @@ compatible with supported runners, and reviewable without trusting a movable act
 | Workflow | Responsibility | Default token permission |
 |---|---|---|
 | `ci.yml` | Root governance, API build/lint/test/race gates, and Web type/lint/test/build gates | `contents: read` |
-| `container.yml` | Production image contract and local Compose lifecycle | `contents: read` |
+| `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
 | `sync-deploy-branches.yml` | Mechanical `dev` / `dev-c` deployment-branch synchronization | `contents: write` |
+| `web-container.yml` | Web image identity, smoke test, SBOM, and vulnerability gate | `contents: read` |
 
 Only the deployment-branch sync workflow has write access. Do not add write permissions to validation
 workflows. Do not use `pull_request_target` for repository code verification; it combines privileged
@@ -26,7 +27,8 @@ Workflows default to `ubuntu-latest`. An installation may set repository variabl
 The reviewed JavaScript actions use the Node 24 action runtime. Self-hosted runners must run GitHub
 Actions Runner `v2.327.1` or newer. `actions/checkout` intentionally remains on the latest reviewed
 v5 patch because v6 raises the runner requirement to `v2.329.0` for its credential-storage change.
-The container workflow additionally requires a working Docker daemon with Compose v2.
+The API container workflow additionally requires a working Docker daemon with Compose v2. The Web
+container workflow requires the same Docker/buildx contract but does not run Compose.
 
 The container job verifies one artifact identity. `verify-container.sh` builds and checks
 `luas-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
@@ -37,6 +39,12 @@ proves exact replay, conflicting idempotency rejection, concurrent quota seriali
 denials, private user/organization reads, account cleanup, pruning, and migration rollback/reapply.
 Standalone `make compose-check` has no explicit tag and therefore rebuilds the current worktree,
 preventing a stale local image from producing a false green result.
+
+Both image workflows emit maximal BuildKit metadata, validate reviewed material digests, export a
+CycloneDX 1.7 image SBOM, and enforce the Trivy HIGH/CRITICAL, secret, and EOL gate. Their build
+metadata and SBOM artifacts are retained for 14 days. These are unsigned CI evidence; registry
+attestations and Cosign identity remain a downstream publication responsibility. See
+[`CONTAINER_SECURITY.md`](CONTAINER_SECURITY.md).
 
 The action runtime is separate from the Web project runtime: CI tests the Web application on both
 Node 22 and Node 24. Node 22 remains the production image and type-definition baseline. The pnpm
@@ -89,6 +97,7 @@ explicit review and an allowlist update in `check-ci-actions.py`.
 ```bash
 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
 python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
+python3 .agents/skills/luas-framework-review/scripts/check-container-supply-chain.py
 make dependency-scan
 make governance
 make check

@@ -363,13 +363,13 @@ docker compose down
 
 构建配置：
 
-- `Dockerfile`：多阶段构建，runtime 使用 distroless non-root，不内嵌任何 `.env`
+- `Dockerfile`：Dockerfile frontend、Go builder、distroless runtime 均锁定精确版本和 digest，runtime non-root 且不内嵌任何 `.env`
 - `.dockerignore`：排除本地 binary、`*.test`、日志、覆盖率和开发资料
 - `health:check`：镜像内置的 loopback liveness probe，不依赖 shell/curl
 - `LOG_STDOUT=true` + `LOG_FILE_ENABLED=false`：容器请求日志输出 JSON 到 stdout
-- `make container-check`：真实构建、启动、探针、日志、env 泄漏和 SIGTERM 验证
+- `make container-check`：校验 BuildKit materials/OCI identity，并真实验证启动、探针、日志、env 泄漏和 SIGTERM
 - `make compose-check`：真实 PostgreSQL、启动迁移、readiness 和已选择 starter 的端到端验证
-- `.github/workflows/container.yml`：API/container 变更时执行相同 smoke test
+- `.github/workflows/container.yml`：API/container 变更时执行相同 smoke test、Trivy gate，并保留 build metadata 与 image SBOM
 - 可选镜像发布工作流可以使用 buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
 - 可选平台部署需要配置对应平台的 API token Secret
 
@@ -377,6 +377,8 @@ docker compose down
 `87.65 kB`；镜像从 `24,942,104` bytes 变为 `24,944,318` bytes（增加 2,214 bytes，约
 0.009%），换取内置健康检查和安全运行契约。这是本机 build evidence，不是跨平台镜像预算。
 是否公开镜像、使用哪个 registry、如何注入 secrets、是否自动部署，均由具体项目决定。
+镜像输入、CycloneDX 1.7、漏洞门禁和下游 Cosign 边界见
+[../docs/CONTAINER_SECURITY.md](../docs/CONTAINER_SECURITY.md)。
 
 ## 设计原则
 

@@ -284,7 +284,8 @@ Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved t
   write timeout must outlive the cooperative middleware request timeout.
 - **Container Runtime**: Production images must not embed environment files. Keep local Compose
   development-only, liveness separate from readiness, request logs on container stdout, and
-  `make container-check` aligned with Dockerfile behavior.
+  `make container-check` aligned with Dockerfile behavior. Keep external image inputs digest-pinned,
+  BuildKit material expectations and OCI labels aligned, and run the root image scan/SBOM policy.
 - **Disabled Database**: Repositories that receive nil GORM because `DB_ENABLED=false` MUST return
   `domain.ErrServiceUnavailable`; they must never dereference nil or silently turn dependency failure
   into not-found/invalid-credential behavior. Audit persistence remains best-effort.

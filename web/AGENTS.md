@@ -596,7 +596,9 @@ patterns, but verify the generated route graph instead of assuming a pattern is 
   scripts whose delayed execution is acceptable.
 - **Production image**: Keep `pnpm-workspace.yaml`, the lockfile, and `package.json` together for
   frozen installs. The Docker builder must run the same budgeted `pnpm build`, preserve an empty
-  optional `public/` seam, and finish as the non-root standalone runtime.
+  optional `public/` seam, and finish as the non-root standalone runtime. Keep the frontend and Node
+  image digest-pinned, package managers and build headers absent from the final filesystem, BuildKit
+  material evidence aligned, and `scripts/verify-container.sh` plus the root image scan green.
 - **React.memo** (`rerender-memo`): Use for measured expensive child renders with stable props:
 
   ```tsx

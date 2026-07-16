@@ -1,8 +1,10 @@
-# syntax=docker/dockerfile:1
-# Build stage
-FROM golang:1.25.12-alpine AS builder
+# syntax=docker.io/docker/dockerfile:1.24.0@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
+ARG OCI_SOURCE=https://github.com/zgiai/luas
+ARG OCI_REVISION=unknown
+ARG OCI_VERSION=dev
 
-LABEL maintainer="Luas Team <team@luas.dev>"
+# Build stage
+FROM docker.io/library/golang:1.25.12-alpine3.24@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587 AS builder
 
 WORKDIR /app
 
@@ -18,8 +20,20 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
         -o /out/ ./cmd/server ./cmd/luas
 
-# Run stage — distroless static for minimal image size and fast pull
-FROM gcr.io/distroless/static-debian12:nonroot
+# Run stage - distroless static for a shell-free, non-root runtime.
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:aef9602f8710ec12bde19d593fed1f76c708531bb7aba205110f1029786ead7b
+
+ARG OCI_SOURCE
+ARG OCI_REVISION
+ARG OCI_VERSION
+
+LABEL org.opencontainers.image.title="Luas API" \
+    org.opencontainers.image.description="Production runtime for the Luas Go API scaffold" \
+    org.opencontainers.image.source="${OCI_SOURCE}" \
+    org.opencontainers.image.revision="${OCI_REVISION}" \
+    org.opencontainers.image.version="${OCI_VERSION}" \
+    org.opencontainers.image.base.name="gcr.io/distroless/static-debian12:nonroot" \
+    org.opencontainers.image.base.digest="sha256:aef9602f8710ec12bde19d593fed1f76c708531bb7aba205110f1029786ead7b"
 
 WORKDIR /app
 

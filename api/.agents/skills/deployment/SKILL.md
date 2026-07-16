@@ -15,15 +15,18 @@ downstream apps own their cloud, registry, secret store, rollout, and rollback.
 
 1. `../../../../CONTEXT.md` for scaffold and downstream-app vocabulary.
 2. `../../../docs/DEPLOYMENT.md` for the canonical container/deployment contract.
-3. `../../../Dockerfile`, `../../../docker-compose.yml`, and
+3. `../../../../docs/CONTAINER_SECURITY.md` for immutable inputs, image evidence, and signing ownership.
+4. `../../../Dockerfile`, `../../../docker-compose.yml`, and
    `../../../scripts/verify-container.sh` for executable behavior.
-4. `../../../docs/MIDDLEWARE.md` when proxy trust, metrics exposure, or HTTP transport changes.
+5. `../../../docs/MIDDLEWARE.md` when proxy trust, metrics exposure, or HTTP transport changes.
 
 ## Surface Rules
 
 ### Production Image
 
 - Keep the final stage distroless and non-root.
+- Keep every external image and the Dockerfile frontend on a reviewed exact version plus digest.
+- Keep OCI identity labels and verifier BuildKit-material expectations aligned with those inputs.
 - Never copy `.env`, `.env.example`, credentials, private keys, or local configuration into the image.
 - Keep production/release mode, wildcard container bind, JSON stdout logs, and disabled file logging
   explicit in the image.
@@ -52,8 +55,9 @@ downstream apps own their cloud, registry, secret store, rollout, and rollback.
 2. Update the owning runtime seam before documentation.
 3. Add focused Go or shell regression coverage for new behavior.
 4. Run the container verifier locally when Docker is available.
-5. Update `docs/DEPLOYMENT.md`, README, environment examples, and this skill when semantics change.
-6. Run normal API verification and inspect the remote Container workflow after pushing.
+5. Export the image SBOM and run the root Trivy gate when image content changes.
+6. Update `docs/DEPLOYMENT.md`, README, environment examples, and this skill when semantics change.
+7. Run normal API verification and inspect the remote Container workflow evidence after pushing.
 
 ## Commands
 
@@ -65,6 +69,9 @@ docker compose config --quiet
 docker compose up --build --wait
 docker compose down
 go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config
+cd ..
+IMAGE=luas-api:container-check make container-scan
+IMAGE=luas-api:container-check make container-sbom
 ```
 
 `make container-check` must prove all of the following:
@@ -74,6 +81,7 @@ go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config
 - liveness returns 200 and DB-disabled readiness returns 503;
 - request logs reach container stdout as JSON;
 - `/app/.env` is absent;
+- OCI source/revision/version labels and reviewed BuildKit materials are present;
 - SIGTERM produces a zero exit code.
 
 ## Review Checklist
@@ -85,6 +93,7 @@ go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config
 - Are build artifacts, environment files, logs, test binaries, and coverage files excluded from context?
 - Is a migration change paired with the SQL migration review skill and a deployment serialization plan?
 - Are measured image/context claims reported as local evidence rather than universal budgets?
+- Are build metadata and SBOM described as unsigned evidence rather than a downstream registry signature?
 
 ## Pair With
 

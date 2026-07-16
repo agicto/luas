@@ -48,6 +48,9 @@ and `make dependency-scan` own that network-backed gate.
 OSV-Scanner sends package names, versions, ecosystems, and file hashes to OSV/deps.dev as needed; it
 does not upload repository source. Generated SBOMs are build artifacts, not committed source. Review
 their distribution like any dependency inventory, especially for private downstream applications.
+Source-lock scanning does not inspect operating-system packages or the final runtime filesystem. See
+[`CONTAINER_SECURITY.md`](CONTAINER_SECURITY.md) for digest-pinned images, BuildKit evidence,
+image-level CycloneDX inventory, and the separate Trivy gate.
 
 ## Exceptions
 

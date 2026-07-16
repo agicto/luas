@@ -224,6 +224,19 @@ and real-user Core Web Vitals remain separate measurement classes.
 Read [docs/PERFORMANCE.md](docs/PERFORMANCE.md) before changing root providers, shared client
 controls, analytics, large dependencies, or route-level lazy boundaries.
 
+## Production Container
+
+The production Dockerfile pins its frontend and Node base by digest, runs the same budgeted build,
+and materializes a non-root standalone runtime without apk, Node headers, npm, Corepack, pnpm, or
+Yarn. Build, start, health-check, and terminate it with:
+
+```bash
+bash scripts/verify-container.sh luas-web:container-check
+```
+
+The root [container security contract](../docs/CONTAINER_SECURITY.md) defines BuildKit evidence,
+CycloneDX 1.7 inventory, Trivy policy, CI artifacts, and the downstream signing boundary.
+
 ## Scripts
 
 ```bash
@@ -235,6 +248,7 @@ corepack pnpm test:coverage
 corepack pnpm build
 corepack pnpm bundle:check
 corepack pnpm bundle:analyze
+bash scripts/verify-container.sh luas-web:container-check
 ```
 
 Use `make check` from the repository root to run the canonical API and Web verification tiers together.

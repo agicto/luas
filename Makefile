@@ -1,4 +1,4 @@
-.PHONY: check governance api-check web-check dependency-scan sbom
+.PHONY: check governance api-check web-check dependency-scan sbom container-scan container-sbom
 
 check: governance api-check web-check
 
@@ -25,6 +25,7 @@ governance:
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-email-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
+	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-container-supply-chain.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-starter-catalog.py
 	bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
@@ -42,3 +43,11 @@ dependency-scan:
 
 sbom:
 	bash scripts/dependency-security.sh sbom "$${SBOM_OUTPUT:-$${TMPDIR:-/tmp}/luas.cdx.json}"
+
+container-scan:
+	@test -n "$${IMAGE:-}" || { echo "IMAGE is required (for example, IMAGE=luas-api:container-check)" >&2; exit 2; }
+	bash scripts/container-security.sh scan "$${IMAGE}"
+
+container-sbom:
+	@test -n "$${IMAGE:-}" || { echo "IMAGE is required (for example, IMAGE=luas-api:container-check)" >&2; exit 2; }
+	bash scripts/container-security.sh sbom "$${IMAGE}" "$${SBOM_OUTPUT:-$${TMPDIR:-/tmp}/luas-container.cdx.json}"

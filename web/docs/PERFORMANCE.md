@@ -55,10 +55,12 @@ analysis output without starting an analyzer server.
 The production Docker build copies `pnpm-workspace.yaml` with `package.json` and the lockfile so
 frozen installs see the same reviewed security overrides. It also preserves the optional `public/`
 asset seam when a downstream app has no public files yet. Its builder runs `pnpm build`, which means
-the image cannot bypass route budgets:
+the image cannot bypass route budgets. The cleaned final layer removes development package managers;
+digest identity, image inventory, and scan policy are owned by
+[`../../docs/CONTAINER_SECURITY.md`](../../docs/CONTAINER_SECURITY.md):
 
 ```bash
-docker build --tag luas-web:local .
+bash scripts/verify-container.sh luas-web:container-check
 ```
 
 ## Change Procedure

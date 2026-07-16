@@ -87,6 +87,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-webhook-boundary.py` checks finite trusted events, encrypted endpoint custody, SSRF-safe transport, exact signing, lease-safe retry/replay, private ledgers, and API/Web contract alignment.
 - `luas-framework-review/scripts/check-ai-boundary.py` checks the disabled AI default, explicit model selection, bounded provider I/O, redirect and timeout policy, private errors, and capability/product separation.
 - `luas-framework-review/scripts/check-dependency-supply-chain.py` checks exact pnpm tooling, safe resolution/build policy, lock integrity, OSV asset digests, CycloneDX export, Dependabot coverage, and expiring exceptions.
+- `luas-framework-review/scripts/check-container-supply-chain.py` checks immutable image inputs, OCI identity, BuildKit material evidence, dual image CI/SBOM gates, and expiring image exceptions.
 - `luas-framework-review/scripts/check-surface-catalog.py` checks scaffold surface classification alignment across `CONTEXT.md`, `docs/SCAFFOLD_SURFACES.md`, and downstream extraction guidance.
 - `luas-framework-review/scripts/check-branch-governance.sh` checks that branch/release docs stay aligned with CI-managed deployment branch mappings.
 - **`name`** is `kebab-case`, ≤ 64 chars.
