@@ -40,6 +40,11 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	cfg.Database.Enabled = true
 	cfg.Database.Driver = "sqlite"
 	cfg.Database.Memory = true
+	cfg.Database.MaxIdleConns = 1
+	cfg.Database.MaxOpenConns = 1
+	cfg.Database.ConnMaxIdleTime = config.DefaultDatabaseConnMaxIdleTime
+	cfg.Database.ConnMaxLifetime = config.DefaultDatabaseConnMaxLifetime
+	cfg.Database.ConnectTimeout = config.DefaultDatabaseConnectTimeout
 	cfg.Database.SlowThreshold = time.Second
 	cfg.Database.IgnoreRecordNotFound = true
 

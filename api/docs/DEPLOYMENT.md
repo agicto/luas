@@ -116,8 +116,10 @@ A downstream production deployment must inject at least:
 - `CORS_ALLOW_ORIGINS`: explicit production browser origins.
 - `CORS_ALLOW_HEADERS`: retain `Authorization` and `Organization-Id` when a cross-origin browser
   calls active-organization routes; Luas includes both in its default allow-list.
-- `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, and `DB_PASSWORD` when the default
-  database-backed starters remain installed.
+- `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, and a TLS-requiring
+  `DB_SSLMODE` when the default database-backed starters remain installed. Budget
+  `DB_MAX_OPEN_CONNS` per API, worker, and command replica against PostgreSQL or pooler capacity;
+  see [`DATABASE.md`](DATABASE.md).
 - `SERVER_TRUSTED_PROXIES`: only exact ingress/load-balancer IPs or CIDRs when forwarding headers are
   trusted.
 - `OPTIONAL_STARTERS`: one identical additive selection for every API replica, migration job, and
@@ -142,7 +144,8 @@ traffic based on readiness.
 
 Production logs belong on structured stdout. Collection, retention, rotation, compression, and
 external storage are deployment responsibilities; the local file handler is not a production log
-shipping system. See [`CONFIGURATION.md`](CONFIGURATION.md) for the typed configuration lifecycle.
+shipping system. See [`CONFIGURATION.md`](CONFIGURATION.md) for the typed configuration lifecycle
+and [`DATABASE.md`](DATABASE.md) for database startup, pool, TLS, and query measurement ownership.
 
 Run schema migration as an explicit pre-deploy job using the same image and production environment:
 

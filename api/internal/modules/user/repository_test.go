@@ -3,14 +3,50 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
+	"github.com/zgiai/luas/api/internal/domain"
 	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
 )
+
+func TestRepositoryFindAllUsesStableOrderAndPreservesEmptyPageTotal(t *testing.T) {
+	db, err := infradatabase.NewTestDB()
+	require.NoError(t, err)
+	require.NoError(t, db.AutoMigrate(&UserPO{}))
+	repo := NewRepository(db)
+	for index := 1; index <= 3; index++ {
+		candidate := &domain.User{
+			Username: fmt.Sprintf("list-user-%d", index),
+			Email:    fmt.Sprintf("list-user-%d@example.com", index),
+			Password: "not-used",
+			Status:   1,
+		}
+		require.NoError(t, repo.Create(context.Background(), candidate))
+	}
+
+	countedRepo := NewRepository(db.Session(&gorm.Session{Logger: statementCountingLogger{}}))
+	firstPageCtx, firstPageStatements := contextWithStatementCounter(context.Background())
+	firstPage, total, err := countedRepo.FindAll(firstPageCtx, 1, 2)
+	require.NoError(t, err)
+	require.Len(t, firstPage, 2)
+	assert.Equal(t, int64(3), total)
+	assert.Greater(t, firstPage[0].ID, firstPage[1].ID)
+	assert.Empty(t, firstPage[0].Password)
+	assert.Equal(t, int64(1), firstPageStatements.Load())
+
+	emptyPageCtx, emptyPageStatements := contextWithStatementCounter(context.Background())
+	emptyPage, total, err := countedRepo.FindAll(emptyPageCtx, 3, 2)
+	require.NoError(t, err)
+	assert.Empty(t, emptyPage)
+	assert.NotNil(t, emptyPage)
+	assert.Equal(t, int64(3), total)
+	assert.Equal(t, int64(2), emptyPageStatements.Load())
+}
 
 func TestRepositoryDeleteAccountRunsPolicyAndSoftDeleteAtomically(t *testing.T) {
 	db, err := infradatabase.NewTestDB()

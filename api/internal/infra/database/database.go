@@ -1,9 +1,14 @@
 package database
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
+	"net"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +23,9 @@ import (
 // NewDB creates a new database connection via Wire DI.
 // Returns nil only when database support is explicitly disabled in config.
 func NewDB(cfg *config.Config) (*gorm.DB, error) {
+	if err := cfg.ValidateDatabase(); err != nil {
+		return nil, err
+	}
 	if !cfg.Database.Enabled {
 		log.Println("Database initialization skipped (DB_ENABLED=false)")
 		return nil, nil
@@ -42,31 +50,29 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 	newLogger = wrapObservedLogger(newLogger)
 
 	var dialector gorm.Dialector
-
-	if dbCfg.Driver == "sqlite" {
+	switch dbCfg.Driver {
+	case "sqlite":
 		dsn := dbCfg.Name
 		if dbCfg.Memory {
 			dsn = ":memory:"
 		}
 		dialector = sqlite.Open(dsn)
-	} else {
-		dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s timezone=%s",
-			dbCfg.Host,
-			dbCfg.Username,
-			dbCfg.Password,
-			dbCfg.Name,
-			dbCfg.Port,
-			dbCfg.SSLMode,
-			dbCfg.Timezone,
-		)
+	case "postgres":
+		dsn, dsnErr := postgresDSN(cfg)
+		if dsnErr != nil {
+			return nil, dsnErr
+		}
 		dialector = postgres.New(postgres.Config{
 			DSN:                  dsn,
 			PreferSimpleProtocol: true,
 		})
+	default:
+		return nil, fmt.Errorf("DB_DRIVER must be one of postgres or sqlite")
 	}
 
 	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: newLogger,
+		Logger:               newLogger,
+		DisableAutomaticPing: true,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
@@ -77,14 +83,20 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to get database instance: %w", err)
 	}
 
-	// Set connection pool
-	sqlDB.SetMaxIdleConns(dbCfg.MaxIdleConns)
+	// Bound the pool before retaining idle connections. database/sql otherwise
+	// defaults to unlimited open connections.
 	sqlDB.SetMaxOpenConns(dbCfg.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(dbCfg.MaxIdleConns)
+	sqlDB.SetConnMaxIdleTime(dbCfg.ConnMaxIdleTime)
 	sqlDB.SetConnMaxLifetime(dbCfg.ConnMaxLifetime)
 
-	// Check if we can connect to the database
-	if err := sqlDB.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	pingCtx, cancel := context.WithTimeout(context.Background(), dbCfg.ConnectTimeout)
+	defer cancel()
+	if pingErr := sqlDB.PingContext(pingCtx); pingErr != nil {
+		if closeErr := sqlDB.Close(); closeErr != nil {
+			pingErr = errors.Join(pingErr, fmt.Errorf("close failed database pool: %w", closeErr))
+		}
+		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
 	}
 
 	return db, nil
@@ -103,10 +115,48 @@ func NewTestDB() (*gorm.DB, error) {
 			Memory:               true,
 			MaxIdleConns:         1,
 			MaxOpenConns:         1,
+			ConnMaxIdleTime:      config.DefaultDatabaseConnMaxIdleTime,
+			ConnMaxLifetime:      config.DefaultDatabaseConnMaxLifetime,
+			ConnectTimeout:       config.DefaultDatabaseConnectTimeout,
 			SlowThreshold:        time.Second,
 			IgnoreRecordNotFound: true,
 		},
 	})
+}
+
+func postgresDSN(cfg *config.Config) (string, error) {
+	if err := cfg.ValidateDatabase(); err != nil {
+		return "", err
+	}
+	dbCfg := cfg.Database
+	host := strings.TrimSuffix(strings.TrimPrefix(dbCfg.Host, "["), "]")
+	applicationName := strings.TrimSpace(cfg.App.Name)
+	if applicationName == "" {
+		applicationName = "luas"
+	}
+
+	dsn := &url.URL{
+		Scheme:  "postgres",
+		User:    url.UserPassword(dbCfg.Username, dbCfg.Password),
+		Host:    net.JoinHostPort(host, strconv.Itoa(dbCfg.Port)),
+		Path:    "/" + dbCfg.Name,
+		RawPath: "/" + url.PathEscape(dbCfg.Name),
+	}
+	parameters := url.Values{}
+	parameters.Set("application_name", applicationName)
+	parameters.Set("connect_timeout", strconv.FormatInt(timeoutSeconds(dbCfg.ConnectTimeout), 10))
+	parameters.Set("sslmode", dbCfg.SSLMode)
+	parameters.Set("timezone", dbCfg.Timezone)
+	dsn.RawQuery = parameters.Encode()
+	return dsn.String(), nil
+}
+
+func timeoutSeconds(timeout time.Duration) int64 {
+	seconds := int64(timeout / time.Second)
+	if timeout%time.Second != 0 {
+		seconds++
+	}
+	return seconds
 }
 
 func buildLoggerConfig(cfg *config.Config) logger.Config {

@@ -6,6 +6,7 @@ import (
 	"net/mail"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 	"unicode"
@@ -33,6 +34,16 @@ const (
 	DefaultMiddlewareRequestTimeoutSeconds = 180
 	// DefaultEmailRequestTimeout caps one outbound provider call.
 	DefaultEmailRequestTimeout = 10 * time.Second
+	// DefaultDatabaseMaxIdleConns bounds idle PostgreSQL connections per process.
+	DefaultDatabaseMaxIdleConns = 10
+	// DefaultDatabaseMaxOpenConns bounds total PostgreSQL connections per process.
+	DefaultDatabaseMaxOpenConns = 100
+	// DefaultDatabaseConnMaxIdleTime retires unused connections before infrastructure changes make them stale.
+	DefaultDatabaseConnMaxIdleTime = 15 * time.Minute
+	// DefaultDatabaseConnMaxLifetime rotates every connection even when continuously reused.
+	DefaultDatabaseConnMaxLifetime = time.Hour
+	// DefaultDatabaseConnectTimeout bounds startup connection establishment and ping.
+	DefaultDatabaseConnectTimeout = 5 * time.Second
 	// DefaultAIRequestTimeout caps one complete provider call or streaming session.
 	DefaultAIRequestTimeout = 120 * time.Second
 	// DefaultAIMaxInputBytes bounds input plus instructions before provider serialization.
@@ -104,6 +115,25 @@ type StarterConfig struct {
 // alias. Keep production-sensitive defaults and validation on this method.
 func (c *Config) IsProduction() bool {
 	return c != nil && isProductionEnvironment(c.App.Env)
+}
+
+// ValidateDatabase applies the database policy shared by configuration loading
+// and alternate bootstraps that construct the database directly.
+func (c *Config) ValidateDatabase() error {
+	if c == nil {
+		return fmt.Errorf("database configuration is required")
+	}
+	if err := c.Database.Validate(); err != nil {
+		return err
+	}
+	if c.IsProduction() && c.Database.Enabled && c.Database.Driver == "postgres" {
+		switch c.Database.SSLMode {
+		case "require", "verify-ca", "verify-full":
+		default:
+			return fmt.Errorf("DB_SSLMODE must require TLS in production; use require, verify-ca, or verify-full")
+		}
+	}
+	return nil
 }
 
 type AppConfig struct {
@@ -187,7 +217,9 @@ type DatabaseConfig struct {
 	Timezone             string
 	MaxIdleConns         int
 	MaxOpenConns         int
+	ConnMaxIdleTime      time.Duration
 	ConnMaxLifetime      time.Duration
+	ConnectTimeout       time.Duration
 	Memory               bool
 	LogLevel             string
 	SlowThreshold        time.Duration
@@ -197,6 +229,78 @@ type DatabaseConfig struct {
 // DBName returns the database name (alias for Name)
 func (d DatabaseConfig) DBName() string {
 	return d.Name
+}
+
+// Validate rejects ambiguous drivers, unbounded pools, inert lifetime policy,
+// and incomplete connection settings before any database resource is created.
+func (d DatabaseConfig) Validate() error {
+	if !d.Enabled {
+		return nil
+	}
+	if d.Driver != "postgres" && d.Driver != "sqlite" {
+		return fmt.Errorf("DB_DRIVER must be one of postgres or sqlite")
+	}
+	if d.MaxOpenConns <= 0 {
+		return fmt.Errorf("DB_MAX_OPEN_CONNS must be greater than 0 to keep the pool bounded")
+	}
+	if d.MaxIdleConns < 0 || d.MaxIdleConns > d.MaxOpenConns {
+		return fmt.Errorf("DB_MAX_IDLE_CONNS must be between 0 and DB_MAX_OPEN_CONNS")
+	}
+	if d.ConnMaxIdleTime <= 0 {
+		return fmt.Errorf("DB_CONN_MAX_IDLE_TIME must be greater than 0")
+	}
+	if d.ConnMaxLifetime <= 0 {
+		return fmt.Errorf("DB_CONN_MAX_LIFETIME must be greater than 0")
+	}
+	if d.ConnMaxIdleTime > d.ConnMaxLifetime {
+		return fmt.Errorf("DB_CONN_MAX_IDLE_TIME must not exceed DB_CONN_MAX_LIFETIME")
+	}
+	if d.ConnectTimeout <= 0 {
+		return fmt.Errorf("DB_CONNECT_TIMEOUT must be greater than 0")
+	}
+	if d.SlowThreshold <= 0 {
+		return fmt.Errorf("DB_SLOW_THRESHOLD must be greater than 0")
+	}
+	switch strings.ToLower(strings.TrimSpace(d.LogLevel)) {
+	case "", "silent", "error", "warn", "warning", "info":
+	default:
+		return fmt.Errorf("DB_LOG_LEVEL must be one of silent, error, warn, or info")
+	}
+
+	if d.Driver == "sqlite" {
+		if !d.Memory && strings.TrimSpace(d.Name) == "" {
+			return fmt.Errorf("DB_NAME is required for a file-backed sqlite database")
+		}
+		if d.Memory && d.MaxOpenConns != 1 {
+			return fmt.Errorf("DB_MAX_OPEN_CONNS must be 1 for an in-memory sqlite database")
+		}
+		return nil
+	}
+
+	if strings.TrimSpace(d.Host) == "" {
+		return fmt.Errorf("DB_HOST is required for postgres")
+	}
+	if d.Port < 1 || d.Port > 65_535 {
+		return fmt.Errorf("DB_PORT must be between 1 and 65535")
+	}
+	if strings.TrimSpace(d.Name) == "" {
+		return fmt.Errorf("DB_NAME is required for postgres")
+	}
+	if strings.TrimSpace(d.Username) == "" {
+		return fmt.Errorf("DB_USERNAME is required for postgres")
+	}
+	if d.Password == "" {
+		return fmt.Errorf("DB_PASSWORD is required for postgres")
+	}
+	if strings.TrimSpace(d.Timezone) == "" {
+		return fmt.Errorf("DB_TIMEZONE is required for postgres")
+	}
+	switch d.SSLMode {
+	case "disable", "allow", "prefer", "require", "verify-ca", "verify-full":
+	default:
+		return fmt.Errorf("DB_SSLMODE must be a supported PostgreSQL SSL mode")
+	}
+	return nil
 }
 
 type QueueConfig struct {
@@ -324,6 +428,10 @@ func Load() (*Config, error) {
 	if legacy := configuredLegacyJWTKey(); legacy != "" {
 		return nil, fmt.Errorf("%s is no longer supported; Luas user authentication now uses opaque server-side sessions", legacy)
 	}
+	databaseConfig, err := loadDatabaseConfig()
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := &Config{
 		App: AppConfig{
@@ -346,23 +454,7 @@ func Load() (*Config, error) {
 			MaxHeaderBytes:    env.GetInt("SERVER_MAX_HEADER_BYTES", defaultServerMaxHeaderBytes),
 			TrustedProxies:    env.GetSlice("SERVER_TRUSTED_PROXIES", []string{}),
 		},
-		Database: DatabaseConfig{
-			Enabled:              env.GetBool("DB_ENABLED", true),
-			Driver:               env.Get("DB_DRIVER", "postgres"),
-			Host:                 env.Get("DB_HOST", "localhost"),
-			Port:                 env.GetInt("DB_PORT", 5432),
-			Name:                 env.Get("DB_NAME", ""),
-			Username:             env.Get("DB_USERNAME", ""),
-			Password:             env.Get("DB_PASSWORD", ""),
-			SSLMode:              env.Get("DB_SSLMODE", "disable"),
-			Timezone:             env.Get("DB_TIMEZONE", "UTC"),
-			MaxIdleConns:         env.GetInt("DB_MAX_IDLE_CONNS", 10),
-			MaxOpenConns:         env.GetInt("DB_MAX_OPEN_CONNS", 100),
-			ConnMaxLifetime:      time.Duration(env.GetInt("DB_CONN_MAX_LIFETIME", 3600)) * time.Second,
-			LogLevel:             env.Get("DB_LOG_LEVEL", ""),
-			SlowThreshold:        env.GetDuration("DB_SLOW_THRESHOLD", time.Second),
-			IgnoreRecordNotFound: env.GetBool("DB_LOG_IGNORE_NOT_FOUND", true),
-		},
+		Database: databaseConfig,
 		Queue: QueueConfig{
 			Driver:            env.Get("QUEUE_DRIVER", "sync"),
 			DefaultQueue:      env.Get("QUEUE_DEFAULT", "default"),
@@ -518,6 +610,114 @@ func Load() (*Config, error) {
 	return cfg, nil
 }
 
+func loadDatabaseConfig() (DatabaseConfig, error) {
+	enabled, err := strictDatabaseBool("DB_ENABLED", true)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	port, err := strictDatabaseInt("DB_PORT", 5432)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	maxIdle, err := strictDatabaseInt("DB_MAX_IDLE_CONNS", DefaultDatabaseMaxIdleConns)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	maxOpen, err := strictDatabaseInt("DB_MAX_OPEN_CONNS", DefaultDatabaseMaxOpenConns)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	maxIdleTime, err := strictDatabaseDuration(
+		"DB_CONN_MAX_IDLE_TIME",
+		DefaultDatabaseConnMaxIdleTime,
+	)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	maxLifetime, err := strictDatabaseDuration(
+		"DB_CONN_MAX_LIFETIME",
+		DefaultDatabaseConnMaxLifetime,
+	)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	connectTimeout, err := strictDatabaseDuration(
+		"DB_CONNECT_TIMEOUT",
+		DefaultDatabaseConnectTimeout,
+	)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	slowThreshold, err := strictDatabaseDuration("DB_SLOW_THRESHOLD", time.Second)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	ignoreNotFound, err := strictDatabaseBool("DB_LOG_IGNORE_NOT_FOUND", true)
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+
+	return DatabaseConfig{
+		Enabled:              enabled,
+		Driver:               strings.TrimSpace(env.Get("DB_DRIVER", "postgres")),
+		Host:                 strings.TrimSpace(env.Get("DB_HOST", "localhost")),
+		Port:                 port,
+		Name:                 strings.TrimSpace(env.Get("DB_NAME", "")),
+		Username:             strings.TrimSpace(env.Get("DB_USERNAME", "")),
+		Password:             env.Get("DB_PASSWORD", ""),
+		SSLMode:              strings.TrimSpace(env.Get("DB_SSLMODE", "disable")),
+		Timezone:             strings.TrimSpace(env.Get("DB_TIMEZONE", "UTC")),
+		MaxIdleConns:         maxIdle,
+		MaxOpenConns:         maxOpen,
+		ConnMaxIdleTime:      maxIdleTime,
+		ConnMaxLifetime:      maxLifetime,
+		ConnectTimeout:       connectTimeout,
+		LogLevel:             strings.TrimSpace(env.Get("DB_LOG_LEVEL", "")),
+		SlowThreshold:        slowThreshold,
+		IgnoreRecordNotFound: ignoreNotFound,
+	}, nil
+}
+
+func strictDatabaseInt(key string, defaultValue int) (int, error) {
+	raw := strings.TrimSpace(env.Get(key, strconv.Itoa(defaultValue)))
+	value, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, fmt.Errorf("%s must be an integer: %w", key, err)
+	}
+	return value, nil
+}
+
+func strictDatabaseBool(key string, defaultValue bool) (bool, error) {
+	raw := strings.ToLower(strings.TrimSpace(env.Get(key, strconv.FormatBool(defaultValue))))
+	switch raw {
+	case "true", "1", "yes", "on":
+		return true, nil
+	case "false", "0", "no", "off":
+		return false, nil
+	default:
+		return false, fmt.Errorf("%s must be a boolean", key)
+	}
+}
+
+func strictDatabaseDuration(key string, defaultValue time.Duration) (time.Duration, error) {
+	raw := strings.TrimSpace(env.Get(key, defaultValue.String()))
+	if value, err := time.ParseDuration(raw); err == nil {
+		return value, nil
+	}
+	seconds, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s must be a duration such as 15m or legacy integer seconds", key)
+	}
+	const (
+		maxDurationSeconds = int64(1<<63-1) / int64(time.Second)
+		minDurationSeconds = int64(-1<<63) / int64(time.Second)
+	)
+	if seconds > maxDurationSeconds || seconds < minDurationSeconds {
+		return 0, fmt.Errorf("%s duration is out of range", key)
+	}
+	return time.Duration(seconds) * time.Second, nil
+}
+
 // LoadAIConfig loads only the typed AI capability settings. It is used by
 // provider utilities that do not assemble the HTTP/database runtime.
 func LoadAIConfig() (AIConfig, error) {
@@ -580,8 +780,8 @@ func MustLoad() *Config {
 }
 
 func validate(cfg *Config) error {
-	if cfg.Database.Enabled && cfg.Database.Driver != "sqlite" && cfg.Database.Password == "" {
-		return fmt.Errorf("DB_PASSWORD is required when database is enabled")
+	if err := cfg.ValidateDatabase(); err != nil {
+		return err
 	}
 
 	isProd := cfg.IsProduction()

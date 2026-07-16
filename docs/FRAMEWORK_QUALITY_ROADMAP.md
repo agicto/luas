@@ -478,9 +478,45 @@ Verification:
 - Real Redis contract run through `LUAS_TEST_REDIS_ADDR`.
 - `make governance` and `make check`
 
+### Completed P0 — Database Runtime And Query Budget
+
+The previous database startup accepted every non-SQLite driver name as PostgreSQL, interpolated
+unescaped credentials into a keyword DSN, let GORM perform an implicit connection check before an
+unbounded explicit `Ping`, and leaked the new pool when that ping failed. Pool configuration could
+also become unlimited or internally contradictory because typed validation did not own its
+invariants, and idle connections had no independent maximum idle time.
+
+The core database runtime now validates exact drivers, required connection fields, finite open/idle
+limits, idle/lifetime policy, startup timeout, logging policy, and production TLS before creating
+resources. PostgreSQL uses a percent-encoded URI with application identity and a server connection
+timeout. Luas disables GORM automatic ping, applies all four `database/sql` pool controls, performs
+one deadline-bound `PingContext`, and closes a failed startup pool. A real PostgreSQL test observes
+the configured application name, timezone, open-connection ceiling, and idle-time closure.
+
+The default user list now selects only response-owned columns, excluding password hashes and
+soft-delete metadata. A window count and descending primary-key order return a normal page plus total
+in one application SQL statement; an empty page deliberately uses a fallback count to preserve the
+existing total contract. SQLite CI tests enforce one statement for a normal page and two for an
+empty page, while the environment-gated PostgreSQL profile proves the same common-path shape.
+
+On an Apple M3 Max with Go 1.25.12 and a warm PostgreSQL 14 Docker database, the comparable five-run
+list median moved from about `765.5 us/op`, `31,784 B/op`, `751 allocs/op`, and two application SQL
+statements to `643.4 us/op`, `38,972 B/op`, `689 allocs/op`, and one statement. That is about 16%
+lower median latency and 8% fewer allocations, with a disclosed 23% increase in allocated bytes from
+the window-count projection. A 200-sample profile moved from roughly `1.01 ms` p95 and 752
+allocations to roughly `0.74 ms` p95 and 739 allocations. Create remained one application SQL
+statement and serves as a control; Docker filesystem timing varied too much to claim a write-latency
+change. These are host-local comparison measurements, not an SLO or CI timing budget.
+
+Verification:
+
+- `cd api && go test ./internal/infra/config ./internal/infra/database ./internal/modules/user`
+- `cd api && LUAS_TEST_POSTGRES_DSN=... make benchmark-database`
+- `make governance` and `make check`
+
 ### P1 — Measured Performance Baseline
 
-Problem: Luas now has measured HTTP, queue, rate-limit, and cache baselines, but it does not yet guard database query behavior, Web route bundles, or Core Web Vitals with repeatable budgets.
+Problem: Luas now has measured HTTP, queue, rate-limit, cache, and database baselines, but it does not yet guard Web route bundles or Core Web Vitals with repeatable budgets.
 
 The core HTTP middleware portion now has a repeatable metrics-off/metrics-on benchmark and a
 steady-state allocation gate. On an Apple M3 Max with Go 1.25.12, the metrics-disabled median moved
@@ -493,7 +529,7 @@ Recommended slice:
 
 1. Keep dependency and stripped binary measurements comparable when changing runtime dependencies.
 2. Keep the representative API middleware benchmark and allocation budget aligned when the kernel or request metrics change.
-3. Add Postgres-backed measurements for query count, allocation, and p95 latency on starter list/write flows before claiming database improvements.
+3. Keep the PostgreSQL user list/write profile and exact query-count guards aligned with repository changes.
 4. Record Web build route output and route-level client bundle evidence before changing provider placement, i18n routing, charts, or analytics.
 5. Promote a measurement into CI only after it is stable across runners and has an explicit regression threshold.
 

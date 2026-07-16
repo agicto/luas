@@ -18,6 +18,37 @@ type repository struct {
 	db *gorm.DB
 }
 
+type userListRow struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	Username  string
+	Email     string
+	Nickname  string
+	Avatar    string
+	Phone     string
+	Bio       string
+	Status    int
+	LastLogin *time.Time
+	PageTotal int64 `gorm:"column:page_total"`
+}
+
+func (row userListRow) toDomain() *domain.User {
+	return &domain.User{
+		ID:        row.ID,
+		Username:  row.Username,
+		Email:     row.Email,
+		Nickname:  row.Nickname,
+		Avatar:    row.Avatar,
+		Phone:     row.Phone,
+		Bio:       row.Bio,
+		Status:    row.Status,
+		LastLogin: row.LastLogin,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+	}
+}
+
 // NewRepository creates a new repository instance that implements domain.UserRepository
 func NewRepository(db *gorm.DB) *repository {
 	return &repository{
@@ -169,19 +200,34 @@ func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain
 	if err != nil {
 		return nil, 0, err
 	}
-	var poList []*UserPO
-	var total int64
-
+	var rows []userListRow
 	offset := (page - 1) * pageSize
-	if err := db.Model(&UserPO{}).Count(&total).Error; err != nil {
+	if err := db.Model(&UserPO{}).
+		Select(`
+			users.id, users.created_at, users.updated_at,
+			users.username, users.email, users.nickname, users.avatar,
+			users.phone, users.bio, users.status, users.last_login,
+			COUNT(*) OVER() AS page_total
+		`).
+		Order("users.id DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&rows).Error; err != nil {
 		return nil, 0, err
 	}
-
-	if err := db.Offset(offset).Limit(pageSize).Find(&poList).Error; err != nil {
-		return nil, 0, err
+	if len(rows) == 0 {
+		var total int64
+		if err := db.Model(&UserPO{}).Count(&total).Error; err != nil {
+			return nil, 0, err
+		}
+		return []*domain.User{}, total, nil
 	}
 
-	return toDomainList(poList), total, nil
+	users := make([]*domain.User, len(rows))
+	for index := range rows {
+		users[index] = rows[index].toDomain()
+	}
+	return users, rows[0].PageTotal, nil
 }
 
 // FindByUsername retrieves a user by username

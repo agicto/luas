@@ -157,6 +157,48 @@ func TestLoad_EmailRequestTimeout(t *testing.T) {
 	}
 }
 
+func TestLoad_DatabaseRuntimeDurationsAndLegacySeconds(t *testing.T) {
+	withoutEnv(t,
+		"DB_ENABLED",
+		"DB_CONN_MAX_IDLE_TIME",
+		"DB_CONN_MAX_LIFETIME",
+		"DB_CONNECT_TIMEOUT",
+	)
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+	t.Setenv("DB_CONN_MAX_IDLE_TIME", "20m")
+	t.Setenv("DB_CONN_MAX_LIFETIME", "7200")
+	t.Setenv("DB_CONNECT_TIMEOUT", "7s")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Database.ConnMaxIdleTime != 20*time.Minute {
+		t.Fatalf("ConnMaxIdleTime = %s, want 20m", cfg.Database.ConnMaxIdleTime)
+	}
+	if cfg.Database.ConnMaxLifetime != 2*time.Hour {
+		t.Fatalf("ConnMaxLifetime = %s, want 2h", cfg.Database.ConnMaxLifetime)
+	}
+	if cfg.Database.ConnectTimeout != 7*time.Second {
+		t.Fatalf("ConnectTimeout = %s, want 7s", cfg.Database.ConnectTimeout)
+	}
+}
+
+func TestLoad_RejectsMalformedDatabaseRuntimeValue(t *testing.T) {
+	withoutEnv(t, "DB_ENABLED", "DB_MAX_OPEN_CONNS")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("CORS_ALLOW_ORIGINS", "https://app.example.com")
+	t.Setenv("DB_MAX_OPEN_CONNS", "many")
+
+	_, err := LoadFresh()
+	if err == nil || !strings.Contains(err.Error(), "DB_MAX_OPEN_CONNS") {
+		t.Fatalf("LoadFresh() error = %v, want malformed DB_MAX_OPEN_CONNS rejection", err)
+	}
+}
+
 func TestLoad_OrganizationInvitationTTL(t *testing.T) {
 	withoutEnv(t, "ORGANIZATION_INVITATION_TTL")
 	t.Setenv("APP_ENV", "development")

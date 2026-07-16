@@ -5,7 +5,7 @@ version: 1.0.0
 category: architecture
 tags: [database, sql, gorm, migration, optimization]
 author: Luas Team
-updated: 2026-04-26
+updated: 2026-07-16
 ---
 
 # Database Design Standards
@@ -116,6 +116,17 @@ db.Preload("Profile").Find(&users) // 2 queries total
 ### 3. Explain Analyze
 Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check for sequential scans vs. index hits.
 
+### 4. Measure The Repository Seam
+
+- Count application SQL statements for representative success and empty-page paths.
+- Use deterministic ordering for offset or cursor pagination.
+- Record allocations and host-local p95 against PostgreSQL before claiming a query improvement.
+- Run `LUAS_TEST_POSTGRES_DSN=... make benchmark-database` for the default user list/write profile.
+- Do not enable `SkipDefaultTransaction`, `PrepareStmt`, or implicit prepared statements globally
+  without auditing transaction correctness and the deployment pooler mode.
+- Treat latency as comparison evidence until repeated runner data supports a portable threshold;
+  exact query count is the first stable regression budget.
+
 ---
 
 ## ✅ Verification Checklist
@@ -127,6 +138,8 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 - [ ] Pointer types are used for optional/nullable fields in POs.
 - [ ] `TableName()` is explicitly defined in `model.go`.
 - [ ] No DB-level logic (triggers/stored procs) - keep logic in Go.
+- [ ] List queries have deterministic ordering and preserve total semantics on empty pages.
+- [ ] Query count, allocations, and p95 evidence accompany database performance claims.
 
 ---
 

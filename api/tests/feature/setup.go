@@ -2,6 +2,7 @@ package feature
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -35,6 +36,10 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 	cfg.Database.Memory = true
 	cfg.Database.MaxIdleConns = 1
 	cfg.Database.MaxOpenConns = 1
+	cfg.Database.ConnMaxIdleTime = config.DefaultDatabaseConnMaxIdleTime
+	cfg.Database.ConnMaxLifetime = config.DefaultDatabaseConnMaxLifetime
+	cfg.Database.ConnectTimeout = config.DefaultDatabaseConnectTimeout
+	cfg.Database.SlowThreshold = time.Second
 	cfg.Authentication.SessionTTL = config.DefaultAuthenticationSessionTTL
 	cfg.Authentication.SessionIdleTimeout = config.DefaultAuthenticationSessionIdleTimeout
 	cfg.Authentication.SessionTouchInterval = config.DefaultAuthenticationSessionTouchInterval

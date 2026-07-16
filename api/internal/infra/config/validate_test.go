@@ -38,6 +38,84 @@ func TestValidate_AcceptsValidConfig(t *testing.T) {
 	}
 }
 
+func TestValidate_RejectsInvalidDatabaseRuntimePolicy(t *testing.T) {
+	valid := DatabaseConfig{
+		Enabled:              true,
+		Driver:               "postgres",
+		Host:                 "db.internal",
+		Port:                 5432,
+		Name:                 "luas",
+		Username:             "luas",
+		Password:             "secret",
+		SSLMode:              "require",
+		Timezone:             "UTC",
+		MaxIdleConns:         10,
+		MaxOpenConns:         20,
+		ConnMaxIdleTime:      15 * time.Minute,
+		ConnMaxLifetime:      time.Hour,
+		ConnectTimeout:       5 * time.Second,
+		SlowThreshold:        time.Second,
+		IgnoreRecordNotFound: true,
+	}
+	tests := []struct {
+		name   string
+		mutate func(*DatabaseConfig)
+		want   string
+	}{
+		{name: "unknown driver", mutate: func(cfg *DatabaseConfig) { cfg.Driver = "mysql" }, want: "DB_DRIVER"},
+		{name: "missing host", mutate: func(cfg *DatabaseConfig) { cfg.Host = "" }, want: "DB_HOST"},
+		{name: "invalid port", mutate: func(cfg *DatabaseConfig) { cfg.Port = 70_000 }, want: "DB_PORT"},
+		{name: "invalid SSL mode", mutate: func(cfg *DatabaseConfig) { cfg.SSLMode = "sometimes" }, want: "DB_SSLMODE"},
+		{name: "unbounded open pool", mutate: func(cfg *DatabaseConfig) { cfg.MaxOpenConns = 0 }, want: "DB_MAX_OPEN_CONNS"},
+		{name: "negative idle pool", mutate: func(cfg *DatabaseConfig) { cfg.MaxIdleConns = -1 }, want: "DB_MAX_IDLE_CONNS"},
+		{name: "idle exceeds open", mutate: func(cfg *DatabaseConfig) { cfg.MaxIdleConns = 21 }, want: "DB_MAX_IDLE_CONNS"},
+		{name: "idle time disabled", mutate: func(cfg *DatabaseConfig) { cfg.ConnMaxIdleTime = 0 }, want: "DB_CONN_MAX_IDLE_TIME"},
+		{name: "lifetime disabled", mutate: func(cfg *DatabaseConfig) { cfg.ConnMaxLifetime = 0 }, want: "DB_CONN_MAX_LIFETIME"},
+		{name: "idle time exceeds lifetime", mutate: func(cfg *DatabaseConfig) { cfg.ConnMaxIdleTime = 2 * time.Hour }, want: "DB_CONN_MAX_IDLE_TIME"},
+		{name: "connect timeout disabled", mutate: func(cfg *DatabaseConfig) { cfg.ConnectTimeout = 0 }, want: "DB_CONNECT_TIMEOUT"},
+		{name: "slow threshold disabled", mutate: func(cfg *DatabaseConfig) { cfg.SlowThreshold = 0 }, want: "DB_SLOW_THRESHOLD"},
+		{name: "unknown log level", mutate: func(cfg *DatabaseConfig) { cfg.LogLevel = "verbose" }, want: "DB_LOG_LEVEL"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := baseValidConfig("production")
+			cfg.Database = valid
+			test.mutate(&cfg.Database)
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("validate() error = %v, want %s rejection", err, test.want)
+			}
+		})
+	}
+}
+
+func TestValidate_AcceptsBoundedDatabaseRuntimePolicy(t *testing.T) {
+	cfg := baseValidConfig("production")
+	cfg.Database = DatabaseConfig{
+		Enabled:              true,
+		Driver:               "postgres",
+		Host:                 "db.internal",
+		Port:                 5432,
+		Name:                 "luas",
+		Username:             "luas",
+		Password:             "secret",
+		SSLMode:              "verify-full",
+		Timezone:             "UTC",
+		MaxIdleConns:         10,
+		MaxOpenConns:         20,
+		ConnMaxIdleTime:      15 * time.Minute,
+		ConnMaxLifetime:      time.Hour,
+		ConnectTimeout:       5 * time.Second,
+		LogLevel:             "warn",
+		SlowThreshold:        time.Second,
+		IgnoreRecordNotFound: true,
+	}
+	if err := validate(cfg); err != nil {
+		t.Fatalf("validate() error = %v, want nil", err)
+	}
+}
+
 func TestValidate_RejectsUnsafeAuthenticationSessionPolicy(t *testing.T) {
 	tests := []struct {
 		name   string

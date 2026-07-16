@@ -110,12 +110,3 @@ func newUserPO(u *domain.User) *UserPO {
 		LastLogin: u.LastLogin,
 	}
 }
-
-// toDomainList converts a slice of UserPO to domain.User slice
-func toDomainList(poList []*UserPO) []*domain.User {
-	result := make([]*domain.User, len(poList))
-	for i, po := range poList {
-		result[i] = po.toDomain()
-	}
-	return result
-}

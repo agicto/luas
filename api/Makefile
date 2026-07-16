@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -147,6 +147,12 @@ benchmark-rate-limit:
 benchmark-cache:
 	@echo "Benchmarking bounded process-local cache..."
 	go test ./internal/infra/cache -run '^$$' -bench '^BenchmarkMemory(Get|GetParallel|BoundedChurn)$$' -benchmem -count=5
+
+# Profile default user repository paths against an isolated PostgreSQL schema.
+benchmark-database:
+	@test -n "$$LUAS_TEST_POSTGRES_DSN" || (echo "LUAS_TEST_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
+	go test ./internal/infra/database ./internal/modules/user -run 'TestNewDB_PostgresAppliesRuntimeConnectionPolicy|TestPostgresUserRepository(QueryShape|PerformanceProfile)' -v -count=1
+	go test ./internal/modules/user -run '^$$' -bench '^BenchmarkPostgresUserRepository(List|Create)$$' -benchmem -benchtime=2s -count=5
 
 # Run tests with coverage
 cover:
@@ -287,6 +293,7 @@ help:
 	@echo "  make test-race-critical - Run CI queue lifecycle race tests"
 	@echo "  make benchmark-http     - Benchmark core HTTP middleware with metrics off/on"
 	@echo "  make benchmark-cache    - Benchmark bounded memory-cache reads and churn"
+	@echo "  make benchmark-database - Profile user repository paths on disposable PostgreSQL"
 	@echo "  make benchmark-workflow - Benchmark memory queue round trips"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

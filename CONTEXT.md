@@ -21,6 +21,12 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Core**
 : Reusable runtime and infrastructure that every Luas app depends on. Core owns cross-cutting concerns such as bootstrapping, configuration, HTTP plumbing, error handling, logging, testing helpers, routing, and design-system primitives.
 
+**Database runtime**
+: The core, process-owned GORM and `database/sql` connection boundary. It owns typed connection
+  settings, safe DSN construction, bounded pool policy, startup readiness, diagnostics, and
+  shutdown. Starters own their schemas and query semantics; the database runtime does not turn
+  persistence into a cross-starter business module.
+
 **Starter**
 : A business-ready building block that ships with the default scaffold. A starter owns a coherent workflow and may include domain rules, persistence, HTTP routes, contracts, mock flows, UI, tests, and docs.
 
@@ -191,6 +197,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 - Luas produces a downstream app.
 - A scaffold contains core, starters, capabilities, examples, contracts, and agent guidance.
+- The database runtime owns connections and pool lifecycle; each starter keeps schema, transaction,
+  query, ordering, and pagination behavior local to its repository.
 - The cache capability may accelerate an owning starter or downstream feature, but the caller keeps
   authoritative reads, invalidation, staleness, tenant key scope, and failure behavior local.
 - A starter may span persistence, HTTP routes, contracts, mock BFF behavior, UI, tests, and docs.
