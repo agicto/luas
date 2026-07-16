@@ -46,6 +46,10 @@ metadata and SBOM artifacts are retained for 14 days. These are unsigned CI evid
 attestations and Cosign identity remain a downstream publication responsibility. See
 [`CONTAINER_SECURITY.md`](CONTAINER_SECURITY.md).
 
+The Web image smoke check also requests `/login` from the running standalone server and validates
+the centralized production browser-security response policy. This proves image/runtime wiring; the
+unit test and root governance check separately own policy semantics and Next.js Proxy conventions.
+
 The action runtime is separate from the Web project runtime: CI tests the Web application on both
 Node 22 and Node 24. Node 22 remains the production image and type-definition baseline. The pnpm
 version comes only from `web/package.json` `packageManager`; the setup action receives

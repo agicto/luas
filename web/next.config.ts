@@ -1,5 +1,7 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+
+import { getBrowserSecurityHeaders } from './security-headers';
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -25,17 +27,14 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   turbopack: {},
 
-  // Security headers only (no caching headers)
+  // Browser response policy only. Cache ownership remains route-specific.
   async headers() {
     return [
       {
         source: '/:path*',
-        headers: [
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-        ],
+        headers: getBrowserSecurityHeaders({
+          production: process.env.NODE_ENV === 'production',
+        }),
       },
     ];
   },

@@ -158,7 +158,7 @@ BFF opt-in.
 **Route Groups:**
 
 - `(auth)/*` - Public auth pages (login, register)
-- `(protected)/*` - Protected routes (mock sessions are verified by `middleware.ts`; every mode uses `AuthGuard` for navigation UX)
+- `(protected)/*` - Protected routes (mock sessions are verified by `src/proxy.ts`; every mode uses `AuthGuard` for navigation UX)
 - `(protected)/(console)/*` - Business console pages
 - `(protected)/(devtools)/*` - Internal playground/demo pages
 - `(site)/*` - Public pages
@@ -166,7 +166,7 @@ BFF opt-in.
 **Protecting Routes:**
 
 ```typescript
-// middleware.ts
+// src/proxy.ts
 // Verifies and redirects only for the Luas mock-session mode.
 
 // app/(protected)/layout.tsx
@@ -184,7 +184,7 @@ export default async function ProtectedLayout({ children }) {
 }
 ```
 
-`middleware.ts` and `AuthGuard` are not authorization boundaries for real business operations.
+`src/proxy.ts` and `AuthGuard` are not authorization boundaries for real business operations.
 Every API endpoint, Route Handler, and Server Action must enforce its own authentication and
 authorization.
 
@@ -562,6 +562,25 @@ To ensure engineering rigor and performance, all components MUST follow these ru
 - `errorText` must produce a stable error id, set `aria-invalid`, merge rather than replace an existing `aria-describedby`, and use a polite live region.
 - Icon-only control labels belong to callers so formal surfaces can translate them. `PasswordInput` therefore requires `showPasswordLabel` and `hidePasswordLabel`.
 - Changes to shared form primitives require the relevant `src/test/form-control-accessibility.test.tsx` or `src/test/calendar-date-picker.test.tsx` contract suite plus type-check, lint, and a production build.
+
+#### Browser Security Response Rules
+
+Use [docs/SECURITY.md](docs/SECURITY.md) as the source of truth for application-owned response
+headers, deployment-owned TLS/HSTS decisions, downstream CSP fetch origins, and the narrow Next.js
+Proxy role.
+
+- Keep response headers in [`security-headers.ts`](security-headers.ts) and wire them once through
+  `next.config.ts`; do not scatter security policy across layouts or Route Handlers.
+- Keep the structural CSP free of broad fetch directives until a downstream app owns every browser
+  destination. Do not add `'unsafe-inline'` and describe the policy as strict.
+- Keep `frame-ancestors 'none'` and `X-Frame-Options: DENY` aligned. An embedding product changes
+  both deliberately and tests the complete ancestor policy.
+- Keep HSTS production-only and host-scoped in Luas. `includeSubDomains` and `preload` are deployment
+  commitments, not scaffold defaults.
+- Use the Next.js 16 `proxy.ts` convention only for early mock-session navigation. Proxy and
+  `AuthGuard` are UX boundaries; every operation still authenticates and authorizes at its owner.
+- Run `src/test/security-headers.test.ts`, a production build, and the real container verifier after
+  changing the policy, Proxy, or `next.config.ts`.
 
 #### Performance Optimization Rules
 

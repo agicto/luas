@@ -11,23 +11,18 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 }
 
 function isProtectedPath(pathname: string): boolean {
-  return authConfig.protectedRoutes.some((route) => matchesPrefix(pathname, route));
+  return authConfig.protectedRoutes.some(route => matchesPrefix(pathname, route));
 }
 
 function isPublicOnlyPath(pathname: string): boolean {
-  return authConfig.publicOnlyRoutes.some((route) => matchesPrefix(pathname, route));
+  return authConfig.publicOnlyRoutes.some(route => matchesPrefix(pathname, route));
 }
 
 /**
- * Verify the session cookie cryptographically — defense in depth.
+ * Verify the mock session before protected render work begins.
  *
- * Without this check, a client could forge a cookie just to bypass
- * middleware and reach the protected page (the RSC layout would still
- * reject them, but the request would land on app code). By verifying
- * the HMAC here we short-circuit invalid sessions at the edge.
- *
- * Returns true only when the cookie is present AND signed correctly
- * AND not expired.
+ * This is navigation defense in depth for mock-session mode. Route Handlers,
+ * Server Actions, and the Go API remain the authorization boundaries.
  */
 async function hasValidSession(request: NextRequest): Promise<boolean> {
   const raw = request.cookies.get(getMockSessionCookieName())?.value;
@@ -42,7 +37,7 @@ async function hasValidSession(request: NextRequest): Promise<boolean> {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (getAuthRuntimeMode() !== 'mock-session') {
     return NextResponse.next();
   }
@@ -64,11 +59,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/console/:path*',
-    '/styleguide/:path*',
-    '/i18n-test/:path*',
-    '/login',
-    '/register',
-  ],
+  matcher: ['/console/:path*', '/styleguide/:path*', '/i18n-test/:path*', '/login', '/register'],
 };

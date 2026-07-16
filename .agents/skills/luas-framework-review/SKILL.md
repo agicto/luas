@@ -78,6 +78,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-cache-boundary.py` when changing cache values, TTLs, memory capacity, atomic operations, loaders, Redis adapter ownership, or cache documentation.
    - Run `scripts/check-database-boundary.py` when changing database configuration, DSNs, pool lifecycle, GORM modes, repository query shape, or PostgreSQL performance evidence.
    - Run `scripts/check-web-performance-boundary.py` when changing root/shared Web client dependencies, route bundle budgets, analytics loading, public header controls, the Web production image, bundle evidence, Lighthouse evidence, or field-performance claims.
+   - Run `scripts/check-web-security-boundary.py` when changing Web response headers, CSP, HSTS, browser capability policy, `next.config.ts`, the Next.js Proxy, auth navigation interception, or Web container HTTP smoke checks.
    - Run `scripts/check-web-ui-primitive-boundary.py` when changing shared Web controls, `Button asChild`, semantic hosts, loading/disabled interaction, or primitive accessibility guidance.
    - Run `scripts/check-api-key-boundary.py` when changing API key persistence, scope grammar or guards, management routes, one-time plaintext handling, or the Web API key feature.
    - Run `scripts/check-sensitive-telemetry.py` when changing request logging/tracing, logger context, exception diagnostics, SQL logging, tracing statements, or audit metadata.
@@ -135,6 +136,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-cache-boundary.py` keeps the optional cache byte-oriented, bounded, atomic where named, free of global lifecycle state, and explicit about Redis ownership and non-authority.
 - `scripts/check-database-boundary.py` keeps database settings strict, DSNs encoded, pools bounded and timeout-aware, user pagination deterministic, and PostgreSQL profiling reproducible.
 - `scripts/check-web-performance-boundary.py` keeps route budgets attached to official Next.js diagnostics, public theme/header controls lean and responsive, optional analytics deferred, and synthetic evidence distinct from field Web Vitals.
+- `scripts/check-web-security-boundary.py` keeps browser response headers centralized, structural CSP and production HSTS honest, the Next.js Proxy convention current, and real Web container responses verified.
 - `scripts/check-web-ui-primitive-boundary.py` keeps composed controls attached to their semantic host, disabled/loading behavior accessible, and implementation, tests, and agent guidance aligned.
 - `scripts/check-api-key-boundary.py` keeps hash-only API key persistence, atomic revoke/use writes, structured scopes, route guards, one-time plaintext, fixed Web adapter paths, and mock behavior aligned.
 - `scripts/check-sensitive-telemetry.py` keeps route-template request logs, credential redaction, escaped exception diagnostics, parameterized SQL, and audit metadata privacy aligned.

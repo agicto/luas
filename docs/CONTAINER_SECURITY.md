@@ -51,7 +51,11 @@ The verifiers use `docker buildx build --load`, write OCI source/revision/versio
 maximal BuildKit metadata, and check that provenance contains every reviewed material digest. They
 then verify non-root execution, health behavior, absence of embedded environment files, and bounded
 SIGTERM termination. The Web verifier additionally checks the exact Node version and confirms that
-development tooling and every `.env*` file are absent.
+development tooling and every `.env*` file are absent. It also requests the real `/login` page and
+requires all nine production browser-security headers exactly once; policy ownership and downstream
+extension rules live in [`../web/docs/SECURITY.md`](../web/docs/SECURITY.md). A second run enables
+the production mock mode explicitly and proves the assembled Next.js Proxy redirects an
+unauthenticated protected route before render work.
 
 Scan an already-built image and export its image-level SBOM:
 

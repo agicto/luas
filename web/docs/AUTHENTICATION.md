@@ -119,7 +119,7 @@ success payloads remain failures.
 - Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component
   passes the preset to the Client Component only in `mock-session` mode. Production adapter and
   client-owned modes stay blank; an explicit production mock opt-in is visibly demo-only.
-- `middleware.ts` verifies only the Luas mock session. It deliberately passes through in
+- `src/proxy.ts` verifies only the Luas mock session. It deliberately passes through in
   `api-session` and `client-session` modes because only the protected Server Component or downstream
   identity provider can authoritatively resolve those credentials.
 - `AuthGuard` is navigation and rendering UX, not an authorization boundary.

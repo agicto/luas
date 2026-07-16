@@ -20,17 +20,18 @@ describe('protected auth runtime boundary', () => {
     const provider = source('providers/auth-provider.tsx');
     const authenticatedProviders = source('providers/authenticated-providers.tsx');
 
-    expect(provider).not.toContain("@/features/auth/server/");
+    expect(provider).not.toContain('@/features/auth/server/');
     expect(provider).not.toContain('next/headers');
-    expect(authenticatedProviders).not.toContain("@/features/auth/server/");
+    expect(authenticatedProviders).not.toContain('@/features/auth/server/');
     expect(authenticatedProviders).not.toContain('next/headers');
   });
 
-  it('makes middleware enforcement conditional on the auth runtime mode', () => {
-    const middleware = readFileSync(resolve(process.cwd(), 'middleware.ts'), 'utf8');
+  it('makes proxy enforcement conditional on the auth runtime mode', () => {
+    const proxy = source('proxy.ts');
 
-    expect(middleware).toContain('getAuthRuntimeMode');
-    expect(middleware).toContain("!== 'mock-session'");
+    expect(proxy).toContain('getAuthRuntimeMode');
+    expect(proxy).toContain("!== 'mock-session'");
+    expect(proxy).toContain('export async function proxy(');
   });
 
   it('keeps mock credentials in a server-only module', () => {
@@ -48,11 +49,11 @@ describe('protected auth runtime boundary', () => {
     expect(mockIdentity).toContain('admin123');
   });
 
-  it('uses the shared mock cookie policy in middleware and exact-scope logout', () => {
-    const middleware = readFileSync(resolve(process.cwd(), 'middleware.ts'), 'utf8');
+  it('uses the shared mock cookie policy in proxy and exact-scope logout', () => {
+    const proxy = source('proxy.ts');
     const session = source('features/auth/server/session.ts');
 
-    expect(middleware).toContain('getMockSessionCookieName()');
+    expect(proxy).toContain('getMockSessionCookieName()');
     expect(session).toContain('createMockSessionCookie(signed)');
     expect(session).toContain('cookieStore.set(createExpiredMockSessionCookie())');
     expect(session).not.toContain('cookieStore.delete(');

@@ -162,6 +162,49 @@ published_port="$(docker port "${CONTAINER_NAME}" 3000/tcp | awk -F: 'NR == 1 { 
 robots_status="$(curl --noproxy '*' --silent --show-error --output "${TMP_DIR}/robots.txt" --write-out '%{http_code}' "http://127.0.0.1:${published_port}/robots.txt")"
 [[ "${robots_status}" == "200" ]] || fail "robots endpoint returned HTTP ${robots_status}"
 
+login_status="$(curl --noproxy '*' --silent --show-error \
+  --dump-header "${TMP_DIR}/login.headers" \
+  --output "${TMP_DIR}/login.html" \
+  --write-out '%{http_code}' \
+  "http://127.0.0.1:${published_port}/login")"
+[[ "${login_status}" == "200" ]] || fail "login page returned HTTP ${login_status}"
+
+python3 - "${TMP_DIR}/login.headers" <<'PY'
+import sys
+
+expected = {
+    "content-security-policy": "base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+    "permissions-policy": "browsing-topics=(), camera=(), geolocation=(), microphone=(), payment=(), usb=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "strict-transport-security": "max-age=31536000",
+    "x-content-type-options": "nosniff",
+    "x-dns-prefetch-control": "on",
+    "x-frame-options": "DENY",
+    "x-permitted-cross-domain-policies": "none",
+    "x-xss-protection": "0",
+}
+
+observed: dict[str, list[str]] = {}
+with open(sys.argv[1], encoding="utf-8") as handle:
+    for raw_line in handle:
+        line = raw_line.rstrip("\r\n")
+        if not line or line.startswith("HTTP/") or ":" not in line:
+            continue
+        name, value = line.split(":", 1)
+        observed.setdefault(name.lower(), []).append(value.strip())
+
+failures = []
+for name, value in expected.items():
+    values = observed.get(name, [])
+    if values != [value]:
+        failures.append(f"{name}={values!r}, expected {[value]!r}")
+
+if failures:
+    raise SystemExit("browser security response mismatch: " + "; ".join(failures))
+
+print(f"validated {len(expected)} browser security response headers")
+PY
+
 docker stop --time 15 "${CONTAINER_NAME}" >/dev/null
 exit_code="$(docker inspect "${CONTAINER_NAME}" --format '{{.State.ExitCode}}')"
 oom_killed="$(docker inspect "${CONTAINER_NAME}" --format '{{.State.OOMKilled}}')"
@@ -171,12 +214,57 @@ case "${exit_code}" in
   *) fail "container exited with code ${exit_code} after SIGTERM" ;;
 esac
 
+docker rm "${CONTAINER_NAME}" >/dev/null
+docker run --detach \
+  --name "${CONTAINER_NAME}" \
+  --env MOCK_BFF_ENABLED=true \
+  --env SESSION_SECRET=luas-container-mock-session-secret-32-bytes \
+  --publish 127.0.0.1::3000 \
+  "${IMAGE_TAG}" >/dev/null
+
+deadline=$((SECONDS + 60))
+while (( SECONDS < deadline )); do
+  mock_container_health="$(docker inspect "${CONTAINER_NAME}" --format '{{.State.Health.Status}}')"
+  case "${mock_container_health}" in
+    healthy) break ;;
+    unhealthy) fail "mock-enabled container became unhealthy" ;;
+  esac
+  sleep 1
+done
+[[ "${mock_container_health:-}" == "healthy" ]] || fail "mock-enabled container did not become healthy within 60 seconds"
+
+mock_port="$(docker port "${CONTAINER_NAME}" 3000/tcp | awk -F: 'NR == 1 { print $NF }')"
+[[ -n "${mock_port}" ]] || fail "mock-enabled container port 3000 was not published"
+
+proxy_status="$(curl --noproxy '*' --silent --show-error \
+  --dump-header "${TMP_DIR}/proxy.headers" \
+  --output /dev/null \
+  --write-out '%{http_code}' \
+  "http://127.0.0.1:${mock_port}/console?tab=security")"
+[[ "${proxy_status}" == "307" ]] || fail "mock-session Proxy returned HTTP ${proxy_status}, expected 307"
+
+proxy_location="$(awk 'tolower($1) == "location:" { sub(/\r$/, "", $2); print $2; exit }' "${TMP_DIR}/proxy.headers")"
+expected_proxy_location='/login?returnUrl=%2Fconsole%3Ftab%3Dsecurity'
+[[ "${proxy_location}" == "${expected_proxy_location}" ]] || fail "mock-session Proxy location is '${proxy_location}', expected '${expected_proxy_location}'"
+
+docker stop --time 15 "${CONTAINER_NAME}" >/dev/null
+mock_exit_code="$(docker inspect "${CONTAINER_NAME}" --format '{{.State.ExitCode}}')"
+mock_oom_killed="$(docker inspect "${CONTAINER_NAME}" --format '{{.State.OOMKilled}}')"
+[[ "${mock_oom_killed}" == "false" ]] || fail "mock-enabled container was OOM-killed"
+case "${mock_exit_code}" in
+  0|143) ;;
+  *) fail "mock-enabled container exited with code ${mock_exit_code} after SIGTERM" ;;
+esac
+
 image_size="$(docker image inspect "${IMAGE_TAG}" --format '{{.Size}}')"
 printf 'web container image: %s bytes\n' "${image_size}"
 printf 'web container user: %s\n' "${image_user}"
 printf 'web container Node: %s\n' "${node_version}"
 printf 'web container health: %s\n' "${container_health}"
 printf 'robots status: %s\n' "${robots_status}"
+printf 'login status: %s\n' "${login_status}"
+printf 'browser security headers: 9 verified\n'
+printf 'mock-session Proxy: %s -> %s\n' "${proxy_status}" "${proxy_location}"
 printf 'development tooling/env: absent\n'
 printf 'bounded SIGTERM exit code: %s\n' "${exit_code}"
 printf 'build metadata SHA-256: %s\n' "$(sha256_file "${BUILD_METADATA_OUTPUT}")"

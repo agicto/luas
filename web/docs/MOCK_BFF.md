@@ -32,7 +32,7 @@ existing auth service directly at Go.
 
 Authentication mode is derived from adapter ownership, mock availability, and the browser target.
 The production adapter selects `api-session`; local/demo mock behavior selects `mock-session`;
-external identity systems select `client-session`. Middleware interprets only the signed mock
+external identity systems select `client-session`. Proxy interprets only the signed mock
 cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
 
 ## Replacement Checklist

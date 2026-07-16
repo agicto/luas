@@ -95,7 +95,7 @@ preset without placing it in client static chunks. Mock session cookies use the 
 and secure attributes in production, and unsafe mock BFF routes require an exact same-origin
 browser request.
 
-`middleware.ts` and `AuthGuard` provide protected-route navigation UX. Go endpoints remain the
+`src/proxy.ts` and `AuthGuard` provide protected-route navigation UX. Go endpoints remain the
 authorization boundary for production operations.
 
 For the Luas Go API, enable the shipped production adapter while keeping browser requests on `/api`:
@@ -213,6 +213,15 @@ The default request client is configured by `NEXT_PUBLIC_API_URL`. Error handlin
 ```
 
 See [../contracts/README.md](../contracts/README.md) for the shared contract.
+
+## Browser Security
+
+Production responses use a centralized, executable browser security policy with deny-by-default
+framing, a structural CSP floor, disabled unused browser capabilities, MIME protection, referrer
+minimization, and host-only HSTS. The policy deliberately leaves provider-specific CSP fetch
+origins and TLS/subdomain ownership to the downstream product and deployment. See
+[docs/SECURITY.md](docs/SECURITY.md) before adding embeds, external browser integrations, camera or
+payment capabilities, a nonce/hash CSP, or ingress-owned security headers.
 
 ## Performance
 

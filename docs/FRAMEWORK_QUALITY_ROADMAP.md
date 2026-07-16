@@ -64,6 +64,12 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - API middleware ownership is now cataloged in [`../api/docs/MIDDLEWARE.md`](../api/docs/MIDDLEWARE.md).
 - Web error-code vocabulary is contract-tested so `ApiErrorCode` remains server-scoped, `ClientErrorCode` remains frontend-only, and legacy underscore codes stay normalization input only.
 - Web mock BFF routes are disabled in production runtime by default through `guardMockBffRoute()` and require explicit `MOCK_BFF_ENABLED=true` opt-in for demo-only deployments.
+- Web browser responses now use one centralized policy with nine exact production response headers:
+  a structural CSP floor, deny-by-default framing, disabled unused browser capabilities, MIME and
+  referrer hardening, explicit legacy-filter disablement, and host-only HSTS. The policy deliberately does
+  not claim complete script CSP, subdomain TLS, or preload ownership. Next.js 16 `proxy.ts` replaces
+  the deprecated middleware file convention for narrow mock-session navigation checks, while real
+  operations continue to authorize at their owning Route Handler, Server Action, or API boundary.
 - Authenticated Web Route Handlers now declare their intermediary-cache boundary explicitly. Every
   auth success/failure and organization response uses `Cache-Control: private, no-store`; auth and
   organization routes vary on `Cookie`, while organization context also retains `Organization-Id`.
@@ -598,6 +604,51 @@ Verification:
 - `cd web && pnpm vitest run src/test/button-composition.test.tsx`
 - `python3 .agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py`
 - `cd web && pnpm type-check && pnpm lint && pnpm build`
+- `make governance` and `make check`
+
+### Completed P1 — Web Browser Security Response Boundary
+
+The Web response policy previously lived as four inline `next.config.ts` entries. It allowed
+same-origin framing, had no CSP framing/navigation floor, no browser capability policy, no explicit
+legacy XSS-filter behavior, and no production transport-memory header. The auth interception file
+also retained Next.js 16's deprecated `middleware.ts` convention.
+
+`security-headers.ts` now owns a typed response policy. All environments receive structural CSP
+directives for base URLs, form targets, frame ancestors, and legacy objects; exact permissions,
+referrer, MIME, frame, cross-domain-policy, legacy-filter, and DNS-prefetch values are reviewed in
+one place. Production adds one-year host-only HSTS without claiming `includeSubDomains` or preload
+readiness. Fetch directives remain intentionally absent so the scaffold does not add
+`'unsafe-inline'`, force nonce-driven dynamic rendering, or silently block downstream API, asset,
+identity, analytics, image, or font origins.
+
+The auth navigation interceptor is now `proxy.ts` with the Next.js 16 named `proxy` export. It keeps
+the existing narrow matcher and only interprets signed Luas mock sessions; authorization remains at
+the operation owner. Every build now validates `.next/server/functions-config-manifest.json` so a
+misplaced convention or matcher drift fails instead of shipping an inert Proxy. Unit tests enforce
+unique injection-safe values, exact structural CSP, the production-only HSTS boundary, and removal
+of the deprecated file. The real standalone container requests `/login` and requires all nine
+production headers exactly once, then enables mock mode and requires the exact protected-route login
+redirect before the image passes.
+
+The first root-level Proxy migration still produced a green TypeScript/build result but no
+`/_middleware` entry and returned `200` for an unauthenticated mock `/console` request. Moving the
+convention beside `src/app` and adding the manifest gate changed the same request to the expected
+`307` with five exact compiled matchers. Locally, `/login` moved from four to nine reviewed security
+headers; its HTTP/1.1 header block grew from 487 to 795 bytes (+308), while the 41,866-byte body and
+all reviewed first-load JavaScript route measurements remained unchanged. This is local
+Next.js 16.2.9 response/build evidence, not a cross-protocol wire-size claim.
+
+The local arm64 production image is effectively flat at 65,944,285 bytes versus the preceding
+65,949,553-byte container baseline (-5,268 bytes, -0.008%). Trivy 0.72.0 still inventories 39
+components with zero recorded vulnerabilities, and the live image gate reports zero vulnerabilities
+and zero secrets. The tiny image delta is build noise, not a performance improvement claim.
+
+Verification:
+
+- `cd web && pnpm vitest run src/test/security-headers.test.ts src/test/auth-runtime-boundary.test.ts`
+- `cd web && pnpm type-check && pnpm lint && pnpm build`
+- `cd web && bash scripts/verify-container.sh luas-web:container-check`
+- `python3 .agents/skills/luas-framework-review/scripts/check-web-security-boundary.py`
 - `make governance` and `make check`
 
 ### P1 — Measured Performance Baseline

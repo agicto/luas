@@ -69,6 +69,7 @@ Workspace-level architecture docs:
 - [web/docs/USAGE.md](web/docs/USAGE.md) — optional strict read-only usage adapters, finite catalog UI, mock parity, and removal
 - [web/docs/WEBHOOKS.md](web/docs/WEBHOOKS.md) — optional manager-only webhook adapters, one-time secrets, delivery UI, mock truthfulness, and removal
 - [web/docs/MOCK_BFF.md](web/docs/MOCK_BFF.md) — replacing or deleting the development mock BFF in downstream apps
+- [web/docs/SECURITY.md](web/docs/SECURITY.md) — browser response headers, structural CSP, HSTS ownership, and Next.js Proxy boundaries
 - [web/docs/PERFORMANCE.md](web/docs/PERFORMANCE.md) — route bundle budgets, synthetic evidence, field Web Vitals, and change procedure
 
 ## AI Agent Skills
@@ -103,6 +104,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/check-cache-boundary.py` — keep cache values driver-neutral, memory bounded, atomic operations honest, and client ownership explicit.
 - `.agents/skills/luas-framework-review/scripts/check-database-boundary.py` — keep database settings strict, DSNs encoded, pools bounded, queries deterministic, and PostgreSQL performance evidence reproducible.
 - `.agents/skills/luas-framework-review/scripts/check-web-performance-boundary.py` — keep Web route budgets executable, public controls lean and responsive, and synthetic/field claims distinct.
+- `.agents/skills/luas-framework-review/scripts/check-web-security-boundary.py` — keep browser response headers, structural CSP, production HSTS, runtime verification, and the Next.js Proxy convention aligned.
 - `.agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py` — keep shared composed controls attached to their semantic host with accessible disabled/loading behavior.
 - `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py` — keep access roles exact, organization-scoped, fail-closed, and aligned across API/Web/contracts.
 - `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py` — keep notification publication idempotent, delivery lease-safe, private, and aligned across API/Web/contracts.

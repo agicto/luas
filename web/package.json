@@ -6,10 +6,11 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:custom": "node ./scripts/next-runner.mjs dev --turbopack",
-    "build": "cross-env BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true next build && node ./scripts/check-route-bundle-budget.mjs",
-    "build:quiet": "cross-env BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true next build && node ./scripts/check-route-bundle-budget.mjs",
+    "build": "cross-env BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true next build && node ./scripts/check-proxy-manifest.mjs && node ./scripts/check-route-bundle-budget.mjs",
+    "build:quiet": "cross-env BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true next build && node ./scripts/check-proxy-manifest.mjs && node ./scripts/check-route-bundle-budget.mjs",
     "bundle:analyze": "cross-env BASELINE_BROWSER_MAPPING_IGNORE_OLD_DATA=true next experimental-analyze --output",
     "bundle:check": "node ./scripts/check-route-bundle-budget.mjs",
+    "proxy:check": "node ./scripts/check-proxy-manifest.mjs",
     "start": "pnpm exec next start",
     "start:custom": "node ./scripts/next-runner.mjs start",
     "lint": "eslint . && node ./scripts/check-i18n-copy.mjs && node ./scripts/check-theme-contrast.mjs",
