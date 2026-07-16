@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:luas:schema:route-catalog:v1",
+  "title": "Luas registered route catalog",
+  "description": "Deterministic inventory emitted by `luas route:list --format=json`. It describes active route topology, not HTTP payload or authorization semantics.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schema_version",
+    "active_starters",
+    "routes"
+  ],
+  "properties": {
+    "kind": {
+      "const": "luas.route_catalog"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "active_starters": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      }
+    },
+    "routes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "method",
+          "path"
+        ],
+        "properties": {
+          "method": {
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "HEAD",
+              "OPTIONS",
+              "CONNECT",
+              "TRACE"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        }
+      }
+    }
+  }
+}

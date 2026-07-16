@@ -119,6 +119,7 @@ See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed docume
 - [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — request-log minimization, automatic credential redaction, safe exception diagnostics, parameterized SQL, and audit privacy.
 - [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
 - [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
+- [`docs/ROUTE_DISCOVERY.md`](docs/ROUTE_DISCOVERY.md) — shared runtime route assembly, deterministic JSON catalog, validation, and OpenAPI boundary.
 - [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
 - [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) — API key lifecycle, scope grammar, one-time plaintext, and route authorization contract.
 - [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) — optional organization activation, verified active context, ownership, invitation, member lifecycle, and transfer contract.
@@ -169,6 +170,7 @@ make benchmark-http # Measure the core HTTP middleware chain with metrics off/on
 make benchmark-cache # Measure bounded memory-cache reads and unique-key churn
 make benchmark-database # Profile default user list/write paths on disposable PostgreSQL
 make container-check # Build and exercise the production image contract
+make route-catalog-check # Validate the configured runtime route catalog
 make benchmark-workflow # Measure the memory queue round trip
 make lint          # Code linting
 make wire          # Generate DI

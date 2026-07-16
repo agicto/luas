@@ -12,13 +12,12 @@ const messages = {
   home: {
     defaultUser: '朋友',
     welcomeDescription: '这是可替换的 Luas 控制台起始页，请用你的业务工作区替换它。',
-    openSettings: '打开设置',
     open: '打开',
     nextSteps: '后续步骤',
     quickLinks: {
-      apiDocs: {
-        title: 'API 文档',
-        description: '查看 Luas Go 后端的 OpenAPI 规范。',
+      apiAccess: {
+        title: 'API 访问',
+        description: '管理用户 API 密钥和 Starter 偏好设置。',
       },
       styleguide: {
         title: '设计规范',

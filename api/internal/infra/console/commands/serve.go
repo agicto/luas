@@ -5,14 +5,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gin-gonic/gin"
-
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/internal/wiring"
-	"github.com/zgiai/luas/api/routes"
 )
 
 // ServeCommand starts the HTTP server
@@ -180,43 +177,5 @@ func (c *VersionCommand) Usage() string       { return "version" }
 
 func (c *VersionCommand) Run(args []string) error {
 	c.output.Info("Luas v%s", c.version)
-	return nil
-}
-
-// RouteListCommand lists all registered routes
-type RouteListCommand struct {
-	output *console.Output
-}
-
-func NewRouteListCommand() *RouteListCommand {
-	return &RouteListCommand{output: console.NewOutput()}
-}
-
-func (c *RouteListCommand) Name() string        { return "route:list" }
-func (c *RouteListCommand) Description() string { return "List all registered routes" }
-func (c *RouteListCommand) Usage() string       { return "route:list" }
-
-func (c *RouteListCommand) Run(args []string) error {
-	gin.SetMode(gin.ReleaseMode)
-
-	// Initialize application via Wire DI
-	application, err := wiring.InitApplication()
-	if err != nil {
-		return fmt.Errorf("failed to init application: %w", err)
-	}
-
-	r := gin.New()
-	routes.Setup(r, application.Starters)
-
-	c.output.Title("Registered Routes")
-
-	headers := []string{"Method", "Path", "Handler"}
-	rows := make([][]string, 0)
-
-	for _, route := range r.Routes() {
-		rows = append(rows, []string{route.Method, route.Path, route.Handler})
-	}
-
-	c.output.Table(headers, rows)
 	return nil
 }

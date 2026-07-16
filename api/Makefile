@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check route-catalog-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -51,6 +51,10 @@ container-check:
 # Exercise the local Compose database, migration, readiness, and starter flow.
 compose-check:
 	@bash scripts/verify-compose.sh
+
+# Exercise and validate the deterministic runtime route catalog.
+route-catalog-check:
+	@bash scripts/verify-route-catalog.sh
 
 # Build Windows binaries
 build-windows: $(OUTPUT_DIR)

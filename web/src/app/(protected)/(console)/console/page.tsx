@@ -1,19 +1,13 @@
-import Link from "next/link";
-import { Activity, ArrowUpRight, BookOpen, Code2, Rocket } from "lucide-react";
+import Link from 'next/link';
+import { Activity, ArrowUpRight, Code2, KeyRound, Rocket } from 'lucide-react';
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ROUTES } from "@/constants/routes";
-import { getSessionUser } from "@/features/auth/server/session";
-import { getT } from "@/i18n/server";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ROUTES } from '@/constants/routes';
+import { getSessionUser } from '@/features/auth/server/session';
+import { getT } from '@/i18n/server';
 
-import { GreetingClock } from "./_components/greeting-clock";
+import { GreetingClock } from './_components/greeting-clock';
 
 /**
  * Console home (RSC).
@@ -30,10 +24,10 @@ export default async function ConsoleHomePage() {
 
   const quickLinks = [
     {
-      title: t('home.quickLinks.apiDocs.title'),
-      description: t('home.quickLinks.apiDocs.description'),
+      title: t('home.quickLinks.apiAccess.title'),
+      description: t('home.quickLinks.apiAccess.description'),
       href: ROUTES.CONSOLE.SETTINGS,
-      icon: BookOpen,
+      icon: KeyRound,
     },
     {
       title: t('home.quickLinks.styleguide.title'),
@@ -54,13 +48,11 @@ export default async function ConsoleHomePage() {
       <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <GreetingClock name={user?.name ?? user?.email ?? t('home.defaultUser')} />
-          <p className="mt-1 text-sm text-text-muted">
-            {t('home.welcomeDescription')}
-          </p>
+          <p className="mt-1 text-sm text-text-muted">{t('home.welcomeDescription')}</p>
         </div>
         <Button asChild>
-          <Link href={ROUTES.CONSOLE.SETTINGS}>
-            {t('home.openSettings')}
+          <Link href={ROUTES.SITE.HOME}>
+            {t('returnToSite')}
             <ArrowUpRight className="ml-1.5 h-4 w-4" />
           </Link>
         </Button>
@@ -80,7 +72,7 @@ export default async function ConsoleHomePage() {
             </CardHeader>
             <CardContent>
               <Button asChild variant="ghost" size="sm" className="-ml-2">
-                <Link href={href}>
+                <Link href={href} aria-label={`${t('home.open')} ${title}`}>
                   {t('home.open')}
                   <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
                 </Link>

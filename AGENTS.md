@@ -57,6 +57,7 @@ Workspace-level architecture docs:
 - [api/docs/OBSERVABILITY.md](api/docs/OBSERVABILITY.md) — request-log minimization, redaction, exception diagnostics, parameterized SQL, and audit privacy
 - [api/docs/WORKFLOW.md](api/docs/WORKFLOW.md) — queue driver semantics, lifecycle, and production replacement boundary
 - [api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md) — production image, local Compose, health, logs, and deployment ownership
+- [api/docs/ROUTE_DISCOVERY.md](api/docs/ROUTE_DISCOVERY.md) — runtime route catalog ownership, JSON schema, CI validation, and OpenAPI boundary
 - [api/docs/PERMISSIONS.md](api/docs/PERMISSIONS.md) — catalog extension, transactional authorizer semantics, and replacement boundary
 - [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) — frontend feature checklist
 - [web/docs/AUTHENTICATION.md](web/docs/AUTHENTICATION.md) — auth resolution modes, store isolation, and security boundaries
@@ -99,6 +100,7 @@ Helper scripts shipped with skills:
 - `.agents/skills/luas-framework-review/scripts/scaffold-architecture-report.py` — generate an optional HTML architecture review report in `$TMPDIR`.
 - `.agents/skills/luas-framework-review/scripts/check-doc-links.py` — verify local Markdown links across docs and agent guidance.
 - `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` — verify scaffold-level HTTP status and `error_code` alignment across contracts, API, and Web.
+- `.agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py` — keep route inventory attached to runtime assembly, schema-versioned, CI-verified, and distinct from OpenAPI.
 - `.agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` — keep Web/API auth ownership, public failure semantics, abuse controls, proxy trust, and adapter readiness explicit.
 - `.agents/skills/luas-framework-review/scripts/check-rate-limit-boundary.py` — keep local rate-limit cardinality bounded, Redis claims honest, and multi-replica enforcement explicit.
 - `.agents/skills/luas-framework-review/scripts/check-cache-boundary.py` — keep cache values driver-neutral, memory bounded, atomic operations honest, and client ownership explicit.
@@ -141,7 +143,7 @@ CI enforces the canonical references via [.github/workflows/skill-self-test.yml]
 
 ```bash
 # api/
-cd api && make wire && make run         # generate DI + start server
+cd api && make wire && make dev         # generate DI + start server
 cd api && go vet ./...                  # quick correctness check
 cd api && make test                     # run Go tests
 cd api && make test-race-critical       # queue/worker lifecycle race gate
@@ -153,6 +155,7 @@ cd api && make container-check          # build and exercise the production imag
 cd web && bash scripts/verify-container.sh luas-web:container-check # build and exercise Web image
 IMAGE=luas-api:container-check make container-scan # scan one built production image
 cd api && make compose-check            # verify local DB, migration, readiness, and starter flow
+cd api && make route-catalog-check       # validate runtime route inventory and JSON contract
 cd api && make vuln                     # pinned reachable-vulnerability scan
 
 # web/

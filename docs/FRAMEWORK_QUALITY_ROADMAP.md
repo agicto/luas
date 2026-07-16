@@ -748,6 +748,53 @@ Verification:
 - `cd web && pnpm vitest run src/test/error-code-vocabulary.test.ts src/test/api-error-contract.test.ts`
 - `make check`
 
+### Completed P1 — Runtime Route And Contract Discovery
+
+Route inventory previously had three conflicting meanings. The canonical CLI registered only
+starter/application routes and omitted core health and metrics endpoints; two separate source-parser
+tools targeted a deleted route file, and one could print an error while exiting successfully. The
+console also claimed an OpenAPI description existed even though Luas intentionally ships reviewed
+Markdown contracts rather than a generated specification.
+
+The server and `route:list` now share `bootstrap.RegisterHTTPRoutes`, so core operational routes,
+conditional metrics, default starters, and selected optional starters come from one resolved runtime
+assembly. `route:list --format=json` emits a deterministic, pipe-safe `luas.route_catalog` version 1
+document with closed objects, canonical starter names, unique method/path pairs, and stable ordering.
+The JSON Schema, strict dependency-free validator, real CLI verifier, unit tests, root governance,
+and CI step make the boundary executable. The 1,509 lines of inactive route/API-doc parser tooling
+were removed rather than modernized into a second authority.
+
+Contract Markdown remains the semantic source of truth. The route catalog explicitly does not claim
+request/response schemas, authentication, authorization, status codes, or middleware, so a future
+OpenAPI Description must be delivered as its own complete and validated slice.
+
+Verification:
+
+- `python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py`
+- `cd api && make route-catalog-check`
+- `cd api && go test ./internal/bootstrap ./internal/infra/console ./internal/infra/console/commands`
+- `cd web && pnpm vitest run src/test/console-public-boundary.test.ts`
+
+### Completed P1 — Open-Source Project Entry Point
+
+The root README previously described Luas through repository-merger history, retired brands, module
+renames, and inherited licensing. That information did not help a new adopter understand the
+scaffold and made the project look like an internal migration artifact rather than an independent
+open-source starter kit.
+
+The public entry point now starts with Luas's purpose, included foundations, executable quick start,
+starter selection, architecture, contract discovery, production ownership, agent workflow,
+downstream extraction, and curated documentation. A root MIT license, contribution guide, and
+project-wide security policy replace directory-local placeholders, while Web governance files point
+back to those canonical policies. Vocabulary governance blocks the retired origin narrative from
+returning to the public README.
+
+Verification:
+
+- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py`
+- `git diff --check`
+
 ### P1 — Branch and Release Discipline
 
 Problem: shared testing branches are useful for many teams, but they become unsafe when unfinished work and release-ready work are mixed and then merged wholesale into `main`.

@@ -91,30 +91,10 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	// starter-owned and route-scoped.
 	applyGlobalMiddleware(r, application.Config)
 
-	// Initialize Health Checks. Always expose database state, even when the
-	// DB is disabled, so readiness never reports a full scaffold as healthy
-	// while DB-backed starter routes would fail.
-	h := health.New()
-	h.Register("database", health.DatabaseChecker(application.DB))
-
-	// Health probes remain available for deployment orchestration. Metrics are
-	// exposed only when explicitly enabled by the resolved configuration.
-	h.RegisterRoutes(r)
-	if application.Config.Metrics.Enabled {
-		r.GET("/metrics", metrics.Handler())
-	}
-
 	// Let event-aware starters attach subscribers without exposing that dispatch to callers.
 	application.Starters.RegisterEvents(application.EventBus)
 
-	// Register Routes
-	// We temporarily silence Gin's default route logging to keep console clean
-	gin.SetMode(gin.ReleaseMode) // Temporarily set to release to silence route logs
-	routes.Setup(r, application.Starters)
-	setGinMode(application.Config.Server.Mode) // Restore correct mode
-
-	// Print Professional Banner
-	printBanner("1.0.0")
+	h := RegisterHTTPRoutes(r, application)
 
 	return &HttpKernel{
 		App:            application,
@@ -124,8 +104,28 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	}
 }
 
+// RegisterHTTPRoutes assembles every core and starter-owned HTTP route from one
+// application snapshot. Operator discovery uses this same seam as the server so
+// route inventory cannot silently omit operational endpoints.
+func RegisterHTTPRoutes(engine *gin.Engine, application *app.Application) *health.Health {
+	previousMode := gin.Mode()
+	gin.SetMode(gin.ReleaseMode)
+	defer gin.SetMode(previousMode)
+
+	h := health.New()
+	h.Register("database", health.DatabaseChecker(application.DB))
+	h.RegisterRoutes(engine)
+	if application.Config.Metrics.Enabled {
+		engine.GET("/metrics", metrics.Handler())
+	}
+	routes.Setup(engine, application.Starters)
+	return h
+}
+
 // Handle starts the HTTP server with graceful shutdown
 func (k *HttpKernel) Handle() {
+	printBanner("1.0.0")
+
 	cfg := k.App.Config
 	srv := newHTTPServer(cfg, k.Engine)
 

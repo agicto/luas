@@ -73,6 +73,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
    - Run `scripts/check-vocabulary.sh` when editing high-signal vocabulary or agent-facing docs.
    - Run `scripts/check-doc-links.py` when editing Markdown docs, skill bodies, AGENTS files, or README navigation.
    - Run `scripts/check-error-contracts.py` when changing scaffold-level HTTP status or `error_code` behavior.
+   - Run `scripts/check-route-contract-discovery.py` when changing route registration, `route:list`, route inventory schema, contract discovery UI/docs, or CI route checks.
    - Run `scripts/check-auth-contract-boundary.py` when changing auth paths, DTOs, session ownership, public failure semantics, abuse controls, proxy trust, adapter status, or starter readiness.
    - Run `scripts/check-rate-limit-boundary.py` when changing global/auth quotas, limiter algorithms, active-bucket resource policy, shared-store claims, or Redis rate-limit ownership.
    - Run `scripts/check-cache-boundary.py` when changing cache values, TTLs, memory capacity, atomic operations, loaders, Redis adapter ownership, or cache documentation.
@@ -131,6 +132,7 @@ Score each axis with `Strong`, `Adequate`, or `Needs work`.
 - `scripts/check-vocabulary.sh` scans high-signal docs and every non-template `SKILL.md` for known terminology drift from `CONTEXT.md`, including legacy mock/API naming, loose feature/module wording, starter/capability ambiguity, and console/dashboard ambiguity.
 - `scripts/check-doc-links.py` scans local Markdown links in docs and agent guidance so navigation does not point at deleted files, renamed skills, or stale examples.
 - `scripts/check-error-contracts.py` keeps `contracts/README.md`, `api/pkg/response/error_codes.go`, and `web/src/http/codes.ts` aligned for scaffold-level HTTP status and `error_code` behavior.
+- `scripts/check-route-contract-discovery.py` keeps configured route inventory on the server's runtime registration seam, schema-versioned, pipe-safe, CI-verified, and distinct from OpenAPI semantics.
 - `scripts/check-auth-contract-boundary.py` keeps browser session endpoints, Go opaque authentication sessions, revocation, public login failure semantics, auth abuse controls, proxy trust, the production adapter status, and starter readiness explicit.
 - `scripts/check-rate-limit-boundary.py` keeps the built-in limiter atomic and cardinality-bounded, blocks inert Redis activation claims, and makes shared multi-replica enforcement an explicit adapter/deployment decision.
 - `scripts/check-cache-boundary.py` keeps the optional cache byte-oriented, bounded, atomic where named, free of global lifecycle state, and explicit about Redis ownership and non-authority.

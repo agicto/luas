@@ -61,6 +61,15 @@ FORBIDDEN_PATTERNS=(
   "product dashboard"
 )
 
+PUBLIC_README_FORBIDDEN_PATTERNS=(
+  "This repo merges two previous projects"
+  "zgiai/zgo"
+  "zgiai/zweb"
+  "LlamaFront"
+  "Hypership"
+  "inherited from both source repos"
+)
+
 FAILED=0
 TMP_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-vocabulary-grep.XXXXXX")
 trap 'rm -f "$TMP_FILE"' EXIT
@@ -80,8 +89,17 @@ for file in "${FILES[@]}"; do
   done
 done
 
+for pattern in "${PUBLIC_README_FORBIDDEN_PATTERNS[@]}"; do
+  if grep -nF "$pattern" README.md >"$TMP_FILE"; then
+    while IFS= read -r match; do
+      printf 'Public README origin drift: README.md:%s (%s)\n' "$match" "$pattern"
+    done <"$TMP_FILE"
+    FAILED=1
+  fi
+done
+
 if [ "$FAILED" -ne 0 ]; then
-  echo "Use CONTEXT.md vocabulary: scaffold/starter/feature/module/mock BFF/API/console/error_code." >&2
+  echo "Use CONTEXT.md vocabulary and present Luas as the independent open-source scaffold." >&2
   exit 1
 fi
 

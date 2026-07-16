@@ -50,6 +50,9 @@ jobs:
         # debt anywhere blocks CI here.
         run: bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
 
+      - name: Verify runtime route catalog
+        run: make route-catalog-check
+
       - name: Concurrency-critical queue lifecycle race tests
         run: make test-race-critical
 

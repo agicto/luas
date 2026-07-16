@@ -108,6 +108,7 @@ optional `RealIP` middleware follows the same deny-by-default rule when used by 
 - `/health/live` and `/health/ready` are always registered for deployment orchestration.
 - `/metrics` is registered only when `METRICS_ENABLED=true`. Production deployments must restrict it with network policy, a gateway, or a private listener.
 - The previous `/monitor` dashboard and `/swagger` route are not default surfaces. They were removed because the monitor depended on an unassembled global container and no generated Swagger contract existed.
+- `luas route:list --format=json` inventories core and starter routes through the server's real registration seam; see [ROUTE_DISCOVERY.md](ROUTE_DISCOVERY.md). It is a topology catalog, not an inferred OpenAPI contract.
 - A future machine-readable OpenAPI contract or dedicated management listener should be added as a separate verified slice instead of restoring placeholder routes.
 
 ## Starter-Owned Middleware

@@ -7,7 +7,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 
 | Workflow | Responsibility | Default token permission |
 |---|---|---|
-| `ci.yml` | Root governance, API build/lint/test/race gates, and Web type/lint/test/build gates | `contents: read` |
+| `ci.yml` | Root governance, API build/lint/test/runtime-route/race gates, and Web type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
@@ -57,6 +57,11 @@ version comes only from `web/package.json` `packageManager`; the setup action re
 The Web workspace also requires that exact pnpm version, so an older developer-global binary cannot
 silently rewrite or interpret the lockfile.
 
+The API job runs `make route-catalog-check` after its build/lint/test tier. That command assembles
+the real configured runtime, emits schema-versioned JSON, validates its closed shape and ordering,
+and requires core plus default-starter routes. Route inventory therefore cannot pass CI from a
+parallel source parser that omits health, conditional metrics, or optional starter registration.
+
 ## Dependency Supply Chain
 
 The Dependency Security workflow calls the same root script available to developers. It downloads
@@ -102,6 +107,8 @@ explicit review and an allowlist update in `check-ci-actions.py`.
 python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
 python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
 python3 .agents/skills/luas-framework-review/scripts/check-container-supply-chain.py
+python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py
+cd api && make route-catalog-check
 make dependency-scan
 make governance
 make check

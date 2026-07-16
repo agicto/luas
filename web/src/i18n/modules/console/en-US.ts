@@ -16,13 +16,12 @@ const messages = {
     defaultUser: 'there',
     welcomeDescription:
       'This is the replaceable Luas console starter. Replace it with your business workspace.',
-    openSettings: 'Open settings',
     open: 'Open',
     nextSteps: 'Next steps',
     quickLinks: {
-      apiDocs: {
-        title: 'API docs',
-        description: 'Read the OpenAPI specification for the Luas Go backend.',
+      apiAccess: {
+        title: 'API access',
+        description: 'Manage user-owned API keys and starter preferences.',
       },
       styleguide: {
         title: 'Styleguide',

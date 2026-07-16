@@ -76,6 +76,7 @@ In a codex session, ask: *"List the skills loaded in this session with their des
 - `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and every non-template `SKILL.md` for vocabulary drift from `CONTEXT.md`.
 - `luas-framework-review/scripts/check-doc-links.py` checks local Markdown links across docs and agent guidance.
 - `luas-framework-review/scripts/check-error-contracts.py` checks scaffold-level HTTP status and `error_code` alignment across contracts, API response constants, and Web fallbacks.
+- `luas-framework-review/scripts/check-route-contract-discovery.py` checks that route inventory reuses runtime assembly, emits a strict versioned schema, runs in CI, and stays distinct from OpenAPI semantics.
 - `luas-framework-review/scripts/check-rate-limit-boundary.py` checks bounded process-local limiter semantics, active-bucket configuration, removed inert Redis settings, and explicit multi-replica ownership.
 - `luas-framework-review/scripts/check-cache-boundary.py` checks driver-neutral bytes, bounded memory, atomic add/take behavior, explicit Redis client ownership, and removed global cache surfaces.
 - `luas-framework-review/scripts/check-database-boundary.py` checks strict database configuration, encoded PostgreSQL DSNs, bounded pool lifecycle, deterministic list queries, and real profile coverage.

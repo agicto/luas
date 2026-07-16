@@ -6,6 +6,7 @@ governance:
 	bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py
+	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-rate-limit-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-cache-boundary.py
@@ -35,6 +36,7 @@ governance:
 
 api-check:
 	cd api && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
+	cd api && make route-catalog-check
 
 web-check:
 	cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2

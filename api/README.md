@@ -389,4 +389,4 @@ docker compose down
 
 ## License
 
-MIT
+[MIT](../LICENSE)

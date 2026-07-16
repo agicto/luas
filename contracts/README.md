@@ -35,6 +35,22 @@ secret rotation, durable retry/replay, and the privacy-minimized delivery ledger
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 
+## Contract Discovery
+
+These reviewed Markdown contracts own HTTP semantics. The API's runtime route catalog complements
+them by showing which method/path pairs are assembled for one resolved configuration:
+
+```bash
+cd api
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
+```
+
+The catalog is deterministic, schema-versioned, and generated through the same core and starter
+route registration seam used by the server. It is not an OpenAPI Description and does not infer
+payloads, responses, authentication, authorization, or middleware. See
+[`../api/docs/ROUTE_DISCOVERY.md`](../api/docs/ROUTE_DISCOVERY.md) for its ownership and validation
+contract.
+
 ## Success Responses
 
 Non-paginated API success responses use:
