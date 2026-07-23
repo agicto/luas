@@ -1,6 +1,6 @@
 ---
 name: api-error-handling
-description: Standardized error format, error code clusters, and API client usage for consistent error handling.
+description: Implement Web API error parsing and user-facing mappings. Use for ApiErrorCode, ClientErrorCode, request_id, field errors, or network failure behavior.
 ---
 
 # api-error-handling
@@ -101,7 +101,8 @@ malformed `2xx` JSON resolves as `unavailable`, never `authenticated`.
 
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`data-state-management`](../data-state-management/): Error states in queries / mutations.
 - [`i18n-handler`](../i18n-handler/): Error message translation.
 - [`environment-config`](../environment-config/): What error detail is safe in prod vs dev.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Test at least one error path before claiming done.

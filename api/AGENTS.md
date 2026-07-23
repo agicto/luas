@@ -1,347 +1,163 @@
-# AGENTS.md — Luas API
+# AGENTS.md - Luas API
 
-Instructions for AI coding agents working on the Luas API half.
+Rules for the Go backend under `api/`.
 
-## Project Overview
+## Scope
 
-The API half is the Go backend of the Luas scaffold. It uses Gin + Wire DI + GORM, DDD-flavored starter modules, and layered architecture.
+The API uses Gin, Wire, GORM, and DDD-flavored starter modules. Preserve the
+module identity `github.com/zgiai/luas/api`.
 
-## 📖 AGENTS.md vs Skills - Positioning
+For a routine change, inspect the owning package and tests first. Read only the
+document or skill that owns the active concern; do not load this entire
+architecture catalog plus every linked skill.
 
-### AGENTS.md (This Document) - Quick Reference Manual
+## Skill Routing
 
-**Purpose**: One-stop quick reference for most common commands, standards, and patterns.
+Root skills remain available. API-specific skills are:
 
-**Content**:
-- ✅ Project structure and common commands
-- ✅ **Coding standards and best practices** (mandatory)
-- ✅ Quick examples and common tools
-- ✅ Development guidelines and notes
+| Skill | Select when |
+|---|---|
+| `architecture-principles` | Deciding an API seam, layer, or starter/capability boundary |
+| `module-creation` | Creating a route-owning default or optional starter |
+| `api-development` | Adding or changing HTTP handlers, routes, validation, pagination, or response behavior |
+| `database-design` | Designing persistence, indexes, query shape, or table lifecycle |
+| `logging-standards` | Changing structured events, request correlation, or redaction |
+| `testing-strategy` | Choosing test boundaries, doubles, or integration coverage |
+| `kest-flow` | Writing Markdown API flow scenarios |
+| `deployment` | Building or verifying the API runtime image and deployment |
+| `sql-migration-review` | Writing or reviewing a SQL/GORM migration |
 
-**Use Cases**:
-- Quick lookup for commands and tools
-- Verify coding standards
-- Daily development reference
+Choose one primary skill. Add another only when the change genuinely crosses
+its owning boundary. Root `luas-code-review` is the review workflow; API rules
+below and the owning docs supply the backend-specific standard.
 
-**Characteristics**: Concise, fast, at-a-glance
-
----
-
-### Skills System - Complete Workflow Guides
-
-**Purpose**: In-depth workflow documentation with complete steps, scripts, and examples.
-
-**Content**:
-- ✅ Complete workflows (15+ steps)
-- ✅ Full code examples
-- ✅ Automation scripts
-- ✅ Troubleshooting guides
-
-**Use Cases**:
-- Create new route-owning starter-style modules (complete process)
-- Learn best practices (deep understanding)
-- Execute complex tasks (step-by-step)
-
-**Characteristics**: Detailed, complete, executable
-
----
-
-**Relationship**: Complementary, not replacement
-- 📖 **AGENTS.md**: "How to use this command?" "What's this standard?"
-- 🎯 **Skills**: "How to create a starter-style module from scratch?" "What's the complete workflow?"
-
----
-
-## AI Agent Skills
-
-This project includes a **Skills System** in `.agents/skills/` that provides modular workflows and best practices for AI agents.
-
-### What are Skills?
-
-Skills are self-contained packages of instructions, scripts, and examples that guide AI agents through complex tasks. They use a **Progressive Disclosure Architecture**:
-
-- **Level 1 (Metadata)**: Lightweight skill descriptions loaded at startup
-- **Level 2 (Instructions)**: Detailed SKILL.md content loaded when relevant
-- **Level 3 (Resources)**: Scripts and examples loaded on demand
-
-### Available Skills
-
-| Skill | Description | When to Use |
-|-------|-------------|-------------|
-| [`architecture-principles`](./.agents/skills/architecture-principles/) | Shared vocabulary for seams, depth, locality, and starter boundaries | Designing or refactoring architecture |
-| [`module-creation`](./.agents/skills/module-creation/) | Create starter-style DDD modules | Creating route-owning starters or optional starters |
-| [`coding-standards`](./.agents/skills/coding-standards/) | Verify code follows Luas standards | Code review, PR submission |
-| [`api-development`](./.agents/skills/api-development/) | API standards: pagination, errors, REST | Developing REST APIs |
-| [`logging-standards`](./.agents/skills/logging-standards/) | Structured logging, levels, context | Implementing logging, debugging |
-| [`code-review-guide`](./.agents/skills/code-review-guide/) | Review process, checklists, feedback | Code review, PR submission |
-| [`testing-strategy`](./.agents/skills/testing-strategy/) | Test patterns (unit, integration), mocking, table-driven tests | Writing and organizing tests |
-| [`database-design`](./.agents/skills/database-design/) | Schema standards, indexing, migration, SQL optimization | Designing tables and improving DB performance |
-| [`deployment`](./.agents/skills/deployment/) | Deployment workflows and checklists | Shipping to staging/production |
-| [`sql-migration-review`](./.agents/skills/sql-migration-review/) | Backward compat, lock duration, index, rollback review for migrations | Reviewing or writing any DB migration |
-
-### How AI Agents Use Skills
-
-1. **Startup**: Scan `.agents/skills/` and load metadata (name, description)
-2. **Intent Analysis**: Match user request to relevant skills
-3. **Dynamic Loading**: Read full SKILL.md when needed
-4. **Execution**: Follow skill workflow steps
-5. **Resource Access**: Load scripts/examples as required
-
-### For Developers
-
-```bash
-# View available skills
-ls .agents/skills/
-
-# Read a skill
-cat .agents/skills/module-creation/SKILL.md
-
-# Run validation script
-.agents/skills/module-creation/scripts/validate-module.sh blog
-```
-
-See [`.agents/skills/README.md`](./.agents/skills/README.md) for detailed documentation.
-
-## Architecture References
-
-- [`../CONTEXT.md`](../CONTEXT.md) — global Luas vocabulary and boundary terms.
-- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — typed configuration authority, precedence, restart lifecycle, and secrets.
-- [`docs/DATABASE.md`](docs/DATABASE.md) — strict PostgreSQL configuration, bounded pool ownership, query budgets, and real performance profiling.
-- [`docs/CACHE.md`](docs/CACHE.md) — bounded byte semantics, memory/Redis adapter ownership, cache-aside loading, and invalidation policy.
-- [`docs/AUTHENTICATION.md`](docs/AUTHENTICATION.md) — opaque session lifecycle, revocation, retention, deployment, and replacement.
-- [`docs/AI.md`](docs/AI.md) — bounded provider execution, streaming, error privacy, and AI product boundary.
-- [`docs/EMAIL.md`](docs/EMAIL.md) — outbound provider timeout, cancellation, privacy, and best-effort delivery semantics.
-- [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) — optional notification publication, durable lease worker, retry/privacy rules, and replacement.
-- [`docs/ASSETS.md`](docs/ASSETS.md) — optional asset ownership, storage capability, inspection, cleanup, and replacement.
-- [`docs/SETTINGS.md`](docs/SETTINGS.md) — optional typed setting catalog, CAS history, CLI, audit privacy, and account cleanup.
-- [`docs/USAGE.md`](docs/USAGE.md) — optional trusted metering, atomic consume decisions, quota CAS, CLI, retention, and replacement.
-- [`docs/WEBHOOKS.md`](docs/WEBHOOKS.md) — optional outbound event catalog, endpoint policy, encrypted secrets, durable delivery worker, and replacement.
-- [`docs/OBSERVABILITY.md`](docs/OBSERVABILITY.md) — request-log minimization, automatic credential redaction, safe exception diagnostics, parameterized SQL, and audit privacy.
-- [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md) — default, starter-owned, opt-in, and deployment-owned HTTP middleware.
-- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) — production image, local Compose, probes, logs, migrations, and container verification.
-- [`docs/ROUTE_DISCOVERY.md`](docs/ROUTE_DISCOVERY.md) — shared runtime route assembly, deterministic JSON catalog, validation, and OpenAPI boundary.
-- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) — queue ownership, cancellation, shutdown, and durable-driver replacement rules.
-- [`../contracts/API_KEYS.md`](../contracts/API_KEYS.md) — API key lifecycle, scope grammar, one-time plaintext, and route authorization contract.
-- [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) — optional organization activation, verified active context, ownership, invitation, member lifecycle, and transfer contract.
-- [`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md) — optional access roles, exact grants, delegated-management safety, and browser contract.
-- [`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md) — optional user notification, preference, read-state, and delivery contract.
-- [`../contracts/ASSETS.md`](../contracts/ASSETS.md) — optional private asset lifecycle, transfer grant, inspection, and deletion contract.
-- [`../contracts/SETTINGS.md`](../contracts/SETTINGS.md) — optional typed app/organization/user settings and conditional HTTP contract.
-- [`../contracts/USAGE.md`](../contracts/USAGE.md) — optional usage event, counter, quota, private summary, and retention contract.
-- [`../contracts/WEBHOOKS.md`](../contracts/WEBHOOKS.md) — optional outbound endpoint, publication, Standard Webhooks delivery, retry, and browser contract.
-- [`docs/PERMISSIONS.md`](docs/PERMISSIONS.md) — permission catalog extension, transactional checks, and authorizer replacement.
-
-## Directory Structure
+## Architecture
 
 ```text
-luas/
-├── cmd/
-│   ├── luas/              # CLI tool
-│   └── server/            # HTTP server entry
-├── internal/
-│   ├── bootstrap/         # Application startup
-│   ├── domain/            # Framework-free domain vocabulary and seams
-│   ├── modules/           # Route-owning starter modules
-│   │   └── user/          # Example: 8 files
-│   │       ├── model.go       # Database entity (UserPO)
-│   │       ├── dto.go         # DTO + Mapper functions
-│   │       ├── repository.go  # Data access layer
-│   │       ├── service.go     # Business logic layer
-│   │       ├── handler.go     # HTTP handlers
-│   │       ├── routes.go      # Route registration
-│   │       ├── provider.go    # Wire DI
-│   │       └── service_test.go
-│   ├── capabilities/      # Technical capabilities (idgen, crypto)
-│   ├── infra/             # Infrastructure (33+ components)
-│   ├── starter/           # Starter registry and assembly seams
-│   └── wiring/            # Wire dependency injection
-├── pkg/                   # Public libraries
-├── routes/                # Global routes
-└── tests/                 # Tests
+cmd/                  CLI and server entry points
+internal/bootstrap/   startup and lifecycle
+internal/domain/      framework-free entities, errors, and seams
+internal/modules/     route-owning default and optional starters
+internal/capabilities technical capabilities without product ownership
+internal/infra/       provider implementations
+internal/starter/     starter registry and assembly
+internal/wiring/      Wire provider composition
+pkg/                  deliberately public libraries
+routes/               global route assembly
+tests/                cross-package and integration tests
 ```
 
-## Common Commands
+Default route-owning starter flow:
+
+```text
+handler DTO -> service domain -> repository PO -> database
+```
+
+A starter module normally has `model.go`, `dto.go`, `repository.go`,
+`service.go`, `handler.go`, `routes.go`, `provider.go`, and focused tests.
+Capabilities should not gain HTTP files merely to match that template.
+
+### Layer Rules
+
+- `internal/domain/` stays framework-free and standard-library-only.
+- Handlers own transport concerns; services own business rules; repositories
+  own persistence translation.
+- Business logic uses domain values, not GORM persistence objects.
+- DTO/domain/PO conversion stays explicit, normally beside DTOs or persistence.
+- Prefer concrete implementations and constructors. Add interfaces only at
+  real replacement or test seams.
+- Keep Wire provider sets near the implementation they assemble and regenerate
+  Wire output when provider graphs change.
+- Never introduce reverse imports from domain/core layers into modules.
+
+## Naming
+
+- Packages: singular lowercase.
+- Files and JSON fields: `snake_case`.
+- Persistence models: `{Name}PO`.
+- Requests/responses: `{Action}{Name}Request`, `{Name}Response`.
+- Constructors: `New{Name}`.
+- Implementations are unexported unless they are a deliberate public seam.
+- Sensitive fields always use `json:"-"`.
+- Code and comments are English.
+
+## HTTP Contracts
+
+- Use the response and handler helpers; do not hand-roll envelopes.
+- Non-2xx responses expose stable dotted `error_code` values and, when
+  available, `request_id`. Clients never branch on message text.
+- Wrap sentinel errors with `%w` so central mapping remains reliable.
+- Use `handler.BindJSON()` and validation tags for request bodies.
+- Paginate unbounded lists. A finite code-owned catalog needs the reviewed
+  `// luas:bounded-list max=<n> reason=<reason>` marker.
+- Resource URLs use plural nouns, not action verbs.
+- Use `200` for reads/updates, `201` for creation, and `204` for successful
+  bodyless deletion.
+- Update the owning file under `../contracts/` before changing a shared public
+  shape or behavior.
+
+## Security And Runtime
+
+- Public authentication failures stay enumeration-safe. Unknown identities
+  still perform password-hash work.
+- Keep independent per-IP and per-subject auth limits; do not combine them
+  into one `IP+subject` key.
+- `SERVER_TRUSTED_PROXIES` defaults to trust-none; trust-all CIDRs are invalid.
+- A disabled database returns `domain.ErrServiceUnavailable`; it must not
+  panic or masquerade as not-found/invalid-credentials.
+- Read configuration through the typed startup snapshot, not scattered
+  environment reads.
+- Bound server/provider timeouts, body sizes, response reads, pools, queues,
+  caches, and identity cardinality.
+- Production images contain no environment files and run with separate
+  liveness/readiness semantics.
+
+## Authority Map
+
+| Concern | Read |
+|---|---|
+| Adding a module | [docs/ADDING_MODULE.md](docs/ADDING_MODULE.md) |
+| Configuration | [docs/CONFIGURATION.md](docs/CONFIGURATION.md) |
+| Database and profiling | [docs/DATABASE.md](docs/DATABASE.md) |
+| Cache capability | [docs/CACHE.md](docs/CACHE.md) |
+| Authentication | [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) |
+| Observability/privacy | [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| Middleware | [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md) |
+| Workflow lifecycle | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
+| Deployment | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
+| Route discovery | [docs/ROUTE_DISCOVERY.md](docs/ROUTE_DISCOVERY.md) |
+| Capability behavior | The matching file under `docs/` and `../contracts/` |
+
+Open the matching capability document only when changing that capability.
+
+## Verification
+
+Start focused, then widen once:
 
 ```bash
-make build         # Build CLI
-make test          # Run tests
-make test-race-critical # Run queue/worker lifecycle race tests required by CI
-make benchmark-http # Measure the core HTTP middleware chain with metrics off/on
-make benchmark-cache # Measure bounded memory-cache reads and unique-key churn
-make benchmark-database # Profile default user list/write paths on disposable PostgreSQL
-make container-check # Build and exercise the production image contract
-make route-catalog-check # Validate the configured runtime route catalog
-make benchmark-workflow # Measure the memory queue round trip
-make lint          # Code linting
-make wire          # Generate DI
-make vuln          # Reachable vulnerability scan with the pinned Go tool
-make air           # Rebuild and restart the development server
-```
+# Focused package proof
+go test ./internal/modules/<module>/...
 
-## Starter-Style Module Structure
+# Static + focused tests (scope is optional)
+bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 ./internal/modules/<module>/...
 
-| File | Responsibility |
-|------|----------------|
-| `model.go` | Database entity `UserPO` (GORM) |
-| `dto.go` | Request/Response DTO + `toDomain()`/`toUserPO()` mappers |
-| `repository.go` | Data access, returns `domain.User` |
-| `service.go` | Business logic, uses `domain.User` |
-| `handler.go` | HTTP handlers |
-| `routes.go` | Route registration |
-| `provider.go` | Wire ProviderSet |
+# Generated dependency graph
+make wire
 
-## Capabilities Layer
+# Runtime route assembly
+make route-catalog-check
 
-`internal/capabilities/` provides technical helpers (e.g., `idgen`, `crypto`).
-
-Workflow queue changes must preserve the lifecycle contract in [`docs/WORKFLOW.md`](docs/WORKFLOW.md):
-memory delivery is process-local and volatile, payload ownership transfers on successful dispatch,
-delayed work follows its context, and `Close` must remain idempotent and race-free.
-
-> **📚 Full Guide**: See [`testing-strategy` skill - Mocks](./.agents/skills/testing-strategy/) for dependency patterns.
-
-```go
-id := idgen.UUID()
-hash, _ := crypto.HashPassword("password")
-```
-
----
-
-## Domain Layer
-
-`internal/domain/` contains framework-free domain entities, value objects, errors, `error_code`
-constants, and repository seams. It must stay standard-library-only. Sensitive fields MUST use
-`json:"-"`.
-
----
-
-## 📋 Coding Standards (Mandatory)
-
-> **📚 Full Guide**: See [`coding-standards` skill](./.agents/skills/coding-standards/)
-
-### 1. Naming Quick Reference
-
-- **Packages**: `singular`, lowercase (`package user`)
-- **Files**: `snake_case` (`user_handler.go`)
-- **DB Entities**: `{Name}PO` (`UserPO`)
-- **DTOs**: `{Action}{Name}Request` / `{Name}Response`
-- **Interfaces**: explicit seam names (`UserRepository`, `AuthService`) only when justified
-- **Private Impl**: lowercase (`repository`)
-- **Constructor**: `New{TypeName}` returning the concrete implementation by default
-- **JSON Tags**: `snake_case` (`json:"user_id"`)
-
-### 2. Architecture Standards
-
-#### 8-File Starter Structure (Recommended Default)
-
-Route-owning starter modules usually include the following 8 files:
-
-```
-internal/modules/user/
-├── model.go              # 1. Database entity (UserPO)
-├── dto.go                # 2. DTOs + Mapper functions
-├── repository.go         # 3. Data access layer
-├── service.go            # 4. Business logic layer
-├── handler.go            # 5. HTTP handlers
-├── routes.go             # 6. Route registration
-├── provider.go           # 7. Wire DI configuration
-└── service_test.go       # 8. Unit tests
-```
-
-Capabilities may intentionally omit HTTP-oriented files such as `handler.go` and `routes.go`.
-
-**Validation**:
-```bash
-.agents/skills/module-creation/scripts/validate-module.sh user
-```
-
-### 2. Architecture Standards
-
-> **📚 Full Guide**: See [`coding-standards` skill - Architecture](./.agents/skills/coding-standards/)
-
-- **Layered Flow**: `Handler` (DTO) → `Service` (Domain) → `Repository` (PO) → `Database`.
-- **8-File Starter Template**: Recommended for route-owning starter modules.
-  > **🚀 Create Module**: Use [`module-creation` skill](./.agents/skills/module-creation/)
-
----
-
-### 3. File Organization & Coding Patterns
-
-Detailed requirements for each file (`model.go`, `dto.go`, etc.) are now moved to the **Skills System**:
-
-- **Model Design**: See [`database-design` skill](./.agents/skills/database-design/)
-- **API & Handlers**: See [`api-development` skill](./.agents/skills/api-development/)
-- **Business Logic**: See [`coding-standards` skill](./.agents/skills/coding-standards/)
-- **Testing**: See [`testing-strategy` skill](./.agents/skills/testing-strategy/)
-
----
-
-### 4. Error & Security Standards
-
-- **Errors**: Use `response.HandleError`, wrap with `fmt.Errorf("%w")`, and define package-level `Err...`.
-- **Error Contract**: Non-2xx responses MUST expose stable `error_code`; do not make clients branch on message text.
-- **Request Correlation**: Error responses SHOULD include `request_id`, and request logs SHOULD carry the same value.
-- **HTTP Transport**: `SERVER_HOST` must control the real socket bind address. Keep read-header,
-  read, write, idle, and header-size defaults wired through `config.ServerConfig`; a positive server
-  write timeout must outlive the cooperative middleware request timeout.
-- **Container Runtime**: Production images must not embed environment files. Keep local Compose
-  development-only, liveness separate from readiness, request logs on container stdout, and
-  `make container-check` aligned with Dockerfile behavior. Keep external image inputs digest-pinned,
-  BuildKit material expectations and OCI labels aligned, and run the root image scan/SBOM policy.
-- **Disabled Database**: Repositories that receive nil GORM because `DB_ENABLED=false` MUST return
-  `domain.ErrServiceUnavailable`; they must never dereference nil or silently turn dependency failure
-  into not-found/invalid-credential behavior. Audit persistence remains best-effort.
-- **Security**: Hide sensitive fields (`json:"-"`), validate inputs (`binding`), and use `crypto` capability.
-- **Authentication Enumeration**: Public login/recovery failures MUST stay generic. Unknown-login paths must still perform password-hash work; never reveal disabled/existing accounts through status or `error_code`.
-- **Authentication Abuse**: Keep public auth quotas starter-owned and use independent per-IP and per-subject buckets. Do not key a single bucket by `IP+subject`.
-- **Proxy Trust**: Client-IP security controls depend on `SERVER_TRUSTED_PROXIES`; the default must remain trust-none, and trust-all CIDRs are forbidden.
-
----
-
-### 5. API Development Quick Reference
-
-> **📚 Full Details**: See [`api-development` skill](./.agents/skills/api-development/)
-
-- **Pagination**: REQUIRED for unbounded list endpoints. A finite code-owned catalog may use a
-  reviewed `// luas:bounded-list max=<n> reason=<reason>` exception.
-- **Unified Errors**: REQUIRED `response.HandleError`.
-- **Success**: 200 (Success), 201 (Created), 204 (NoContent).
-- **URLs**: Plural nouns, NO verbs (`/api/users`).
-- **Validation**: REQUIRED `handler.BindJSON()` with tags.
-
-#### Quick Verification
-
-Run the validation script:
-```bash
-.agents/skills/api-development/scripts/validate-api.sh <module_name>
-```
-
-#### Complete Example
-
-See [`.agents/skills/api-development/examples/complete-crud-handler.go`](./.agents/skills/api-development/examples/complete-crud-handler.go)
-
----
-
-## Development Guidelines
-
-1. **DTO includes Mapper** - Mapper functions go in `dto.go`
-2. **Use Domain Layer** - Business logic uses `domain.User`
-3. **Private implementations** - Struct names are unexported
-4. **Constructors return concrete types by default** - expose interfaces only when a real seam exists
-5. **snake_case JSON** - `json:"user_id"`
-6. **English comments** - All code and comments in English
-7. **Use handler package** - For ParseID, GetUserID, BindJSON
-8. **Domain has JSON tags** - Sensitive fields use `json:"-"`
-
-## Testing
-
-```bash
-# Unit tests
-go test ./internal/modules/user/...
-
-# Integration tests
-go test ./tests/integration/...
-
-# All tests
+# Full API tests
 make test
+
+# Performance claims only
+make benchmark-cache
+make benchmark-database
+
+# Wide-impact lifecycle changes
+make test-race-critical
 ```
+
+Run migration, benchmark, vulnerability, Compose, and container checks when
+their corresponding boundary changes. The repository release gate is
+`cd .. && make check`; do not run it repeatedly during local iteration.

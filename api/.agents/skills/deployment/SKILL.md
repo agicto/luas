@@ -95,9 +95,9 @@ IMAGE=luas-api:container-check make container-sbom
 - Are measured image/context claims reported as local evidence rather than universal budgets?
 - Are build metadata and SBOM described as unsigned evidence rather than a downstream registry signature?
 
-## Pair With
+## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - `sql-migration-review` for schema rollout safety.
 - `logging-standards` for log schema or handler changes.
-- `verification-before-completion` before reporting the slice complete.
-- Root `luas-framework-review` when deployment ownership or scaffold semantics change.

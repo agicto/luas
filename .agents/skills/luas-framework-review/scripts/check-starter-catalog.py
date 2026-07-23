@@ -769,7 +769,7 @@ def main() -> int:
     require_all(
         failures,
         "api/.agents/skills/module-creation/SKILL.md",
-        ("OptionalManifests", "OPTIONAL_STARTERS=blog"),
+        ("OptionalManifests", "OPTIONAL_STARTERS=<name>"),
     )
     require_all(
         failures,

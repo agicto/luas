@@ -4,9 +4,9 @@ Luas is an open-source application scaffold. Contributions are welcome when they
 
 ## Before You Start
 
-1. Read [CONTEXT.md](CONTEXT.md) for the canonical vocabulary.
-2. Read [AGENTS.md](AGENTS.md) and the `AGENTS.md` inside the area you will change.
-3. Check [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) and existing contracts for related decisions.
+1. Read [AGENTS.md](AGENTS.md) and the `AGENTS.md` inside the area you will change.
+2. Read [CONTEXT.md](CONTEXT.md) when global vocabulary or ownership is active.
+3. Check the quality roadmap only for framework-wide prioritization and open only the contract that owns changed public behavior.
 4. For a cross-deployable change, update or add the contract before implementing API and Web behavior.
 
 Security vulnerabilities must follow [SECURITY.md](SECURITY.md) and must not be reported in a public issue.
@@ -42,9 +42,11 @@ Use `api/docker-compose.yml` for the local PostgreSQL-backed API flow. The Web a
 Run the smallest relevant checks while developing, then the root gate before submitting:
 
 ```bash
-make governance
+make agent-check # when agent guidance or skills changed
 make check
 ```
+
+`make check` includes governance; do not run both full commands back-to-back.
 
 Useful focused commands:
 

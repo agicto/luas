@@ -162,10 +162,9 @@ Pass the product-specific identifiers from the current task. The script intentio
 - Deleting contracts because codegen or shared source feels faster.
 - Leaving demo credentials, old routes, content jobs, or product remotes in Luas.
 
-## Pair With
+## Related Skills
 
-- `luas-framework-review` when choosing the next scaffold governance slice.
+Select another skill only when its distinct concern is active.
+
 - `domain-modeling` when a surface needs a new canonical classification.
 - `contract-evolution` when replacing mock BFF behavior changes HTTP contracts.
-- `luas-code-review` before merging extraction diffs.
-- `verification-before-completion` before reporting extraction complete.

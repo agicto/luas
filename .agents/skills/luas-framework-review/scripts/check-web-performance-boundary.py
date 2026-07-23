@@ -240,22 +240,12 @@ def main() -> int:
     require_all(
         failures,
         "web/AGENTS.md",
-        ("docs/PERFORMANCE.md", "Executable route budgets", "field p75 result"),
-    )
-    require_all(
-        failures,
-        "AGENTS.md",
-        ("web/docs/PERFORMANCE.md", "check-web-performance-boundary.py"),
+        ("docs/PERFORMANCE.md", "route budgets", "Web Vitals"),
     )
     require_all(
         failures,
         "web/.agents/skills/web-perf/SKILL.md",
         ("deterministic route", "pnpm bundle:check", "field p75"),
-    )
-    require_all(
-        failures,
-        ".agents/skills/luas-framework-review/SKILL.md",
-        ("scripts/check-web-performance-boundary.py",),
     )
     require_all(
         failures,

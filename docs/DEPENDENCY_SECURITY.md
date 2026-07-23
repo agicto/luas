@@ -82,7 +82,7 @@ organization-owned policy before release. A scanner allowlist must not be presen
 4. For OSV-Scanner, resolve every supported release asset and digest from the official release, then
    update the script and governance constants together.
 5. Run a mismatched-pnpm negative test, a clean frozen install, `make dependency-scan`, `make sbom`,
-   `make governance`, and `make check`.
+   and `make check` (`make check` includes governance).
 6. Push the exact commit and inspect the Dependency Security workflow artifact and annotations.
 
 Primary references: [pnpm 10 settings](https://pnpm.io/10.x/settings),

@@ -47,6 +47,14 @@ if [ -z "$KIND" ]; then
 fi
 
 cd "$ROOT"
+if [ "$KIND" = "go" ] && [ -n "${CODEX_SANDBOX:-}" ] && [ -z "${GOCACHE:-}" ]; then
+    export GOCACHE="${TMPDIR:-/tmp}/luas-go-build-cache"
+    mkdir -p "$GOCACHE"
+    if [ -z "${GOLANGCI_LINT_CACHE:-}" ]; then
+        export GOLANGCI_LINT_CACHE="${TMPDIR:-/tmp}/luas-golangci-lint-cache"
+        mkdir -p "$GOLANGCI_LINT_CACHE"
+    fi
+fi
 if [ "$KIND" = "node" ] && [ -z "${CI:-}" ] && [ ! -t 0 ]; then
     export CI=true
 fi

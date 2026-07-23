@@ -1,6 +1,6 @@
 ---
 name: contract-evolution
-description: Guide HTTP contract changes across contracts/, api/, Web services, and mock BFF. Use for endpoints, envelopes, error_code, request_id, pagination, validation, or mock production guardrails.
+description: Evolve shared Luas HTTP behavior across contracts, API, Web, and mock BFF. Use for endpoint, envelope, error_code, request_id, pagination, or validation changes.
 ---
 
 # Contract Evolution
@@ -11,12 +11,13 @@ Keep Luas HTTP behavior aligned across `contracts/`, `api/`, Web services, and t
 
 ## Source Material
 
-Read these before changing behavior:
+Read only the authorities touched by the change:
 
-1. `CONTEXT.md` for `contract`, `mock BFF`, `error_code`, `request_id`, `starter`, and `feature` vocabulary.
-2. `contracts/README.md` for the canonical HTTP envelope, errors, pagination, and compatibility checklist.
-3. `AGENTS.md`, plus `api/AGENTS.md` and `web/AGENTS.md` when both halves are touched.
-4. Relevant API module docs, Web feature docs, and `web/docs/MOCK_BFF.md` when mock route handlers are involved.
+1. `contracts/README.md` and the owning capability contract.
+2. The affected half's `AGENTS.md`; read both only when both change.
+3. Relevant API module or Web feature docs.
+4. `web/docs/MOCK_BFF.md` only when mock route handlers are involved.
+5. `CONTEXT.md` only when vocabulary or ownership changes.
 
 ## Workflow
 
@@ -25,7 +26,7 @@ Read these before changing behavior:
    - Behavioral: status code, validation, pagination, auth, rate-limit, or timeout behavior changes.
    - Breaking: renamed or removed field, changed meaning, changed required field, changed response envelope.
    - Mock-only: development behavior that must still preserve the real API contract shape.
-   - If the change touches persistence, permissions, deployment, or user workflows, use `grill-before-build` first.
+   - Use `grill-before-build` only when a high-impact contract decision remains unresolved after repository discovery.
 
 2. **Update the contract first**
    - Document request and response shape in `contracts/README.md` or the owning contract doc before changing both halves.
@@ -75,7 +76,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
   - `cd api && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1`
 - Web behavior or mock BFF:
   - `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`
-  - `cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2`
+  - `cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
 - Cross-boundary change:
   - `make check`
   - targeted `rg` scans for old paths, fields, and error codes
@@ -89,11 +90,11 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 - Treating generated examples, devtools, or mock flows as production API behavior.
 - Sharing source code between `api/` and `web/` to avoid writing down the contract.
 
-## Pair With
+## Related Skills
 
-- `luas-framework-review` for global scaffold impact and ranking.
-- `downstream-app-extraction` when replacing mock BFF behavior while turning Luas into a product app.
-- `tdd-regression` when the contract change fixes or prevents a known regression.
-- `api-development` when implementing API handlers or response behavior.
-- `api-error-handling` when updating Web error parsing and user-facing surfaces.
-- `verification-before-completion` before reporting the contract change complete.
+Select one only when its distinct concern is active:
+
+- `downstream-app-extraction` for converting the scaffold into a product app.
+- `tdd-regression` for a known contract regression.
+- `api-development` for API handlers and routes.
+- `api-error-handling` for Web error parsing and user-facing mappings.

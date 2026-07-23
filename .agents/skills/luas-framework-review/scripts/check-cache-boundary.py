@@ -192,8 +192,13 @@ def main() -> int:
     )
     require_all(
         failures,
-        "AGENTS.md",
-        ("api/docs/CACHE.md", "scripts/check-cache-boundary.py", "make benchmark-cache"),
+        "api/AGENTS.md",
+        ("docs/CACHE.md", "make benchmark-cache"),
+    )
+    require_all(
+        failures,
+        ".agents/skills/README.md",
+        ("check-cache-boundary.py",),
     )
     require_all(
         failures,

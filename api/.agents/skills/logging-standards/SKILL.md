@@ -217,11 +217,12 @@ When reviewing a PR that adds logs:
 - [ ] Level matches criteria above (no INFO for routine cache hits; no ERROR for expected 404s).
 - [ ] One log per logical operation, not per micro-step.
 
-## Pair With
+## Related Skills
 
-- `code-review-guide` — log review is part of the review checklist.
-- `systematic-debugging` — debug logs should match the events you grep for later.
-- `verification-before-completion` — confirm logs render correctly (`go run ./cmd/api` and trigger the path; inspect JSON output).
+Select another skill only when its distinct concern is active.
+
+- Root `luas-code-review` when the user explicitly requests a diff review.
+- `systematic-debugging` when an unclear failure requires temporary diagnostic evidence.
 
 ## Reference: Project Files
 

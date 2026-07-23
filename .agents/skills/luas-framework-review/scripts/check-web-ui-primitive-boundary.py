@@ -88,10 +88,9 @@ def main() -> int:
         failures,
         "web/AGENTS.md",
         (
-            "#### Composed Control Contract",
-            "`Button asChild`",
-            "`Slottable`",
-            "`src/test/button-composition.test.tsx`",
+            "Shared composed controls must preserve their semantic host",
+            "disabled state",
+            "loading state",
         ),
     )
     require_all(

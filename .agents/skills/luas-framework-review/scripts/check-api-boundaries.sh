@@ -7,7 +7,15 @@ API_ROOT="$ROOT/api"
 
 cd "$API_ROOT"
 
-MODULE=$(go list -m)
+if [ -n "${CODEX_SANDBOX:-}" ] && [ -z "${GOCACHE:-}" ]; then
+  export GOCACHE="${TMPDIR:-/tmp}/luas-go-build-cache"
+  mkdir -p "$GOCACHE"
+fi
+
+if ! MODULE=$(go list -m); then
+  echo "Unable to resolve the API module; package boundaries were not checked." >&2
+  exit 1
+fi
 
 assert_absent_path() {
   local relative_path=$1
@@ -29,7 +37,10 @@ assert_absent_path "pkg/support/str.go" "broad string formatting and random stri
 assert_absent_path "pkg/support/arr.go" "broad collection helpers should live at their owning seam, not in generic pkg/support."
 assert_absent_path "pkg/support/map.go" "broad map helpers should live at their owning seam, not in generic pkg/support."
 
-support_doc=$(go doc -all ./pkg/support)
+if ! support_doc=$(go doc -all ./pkg/support); then
+  echo "Unable to inspect api/pkg/support exports; package boundaries were not checked." >&2
+  exit 1
+fi
 support_exports=$(printf '%s\n' "$support_doc" | grep -E '^(func|type|var|const) [A-Z][A-Za-z0-9_]*' || true)
 unexpected_support_exports=$(printf '%s\n' "$support_exports" | grep -E -v '^func (Blank|Filled|DataGet|DataHas)\(' || true)
 if [ -n "$unexpected_support_exports" ]; then
@@ -59,12 +70,18 @@ append_violation() {
 scan_imports() {
   local package_pattern=$1
   local rule=$2
+  local listing
 
-  for pkg in $(go list "$package_pattern"); do
-    while IFS= read -r imported; do
-      if [ -z "$imported" ]; then
-        continue
-      fi
+  if ! listing=$(go list -f '{{.ImportPath}}{{range .Imports}}{{"\t"}}{{.}}{{end}}' "$package_pattern"); then
+    echo "Unable to list $package_pattern; package boundaries were not checked." >&2
+    exit 1
+  fi
+
+  while IFS=$'\t' read -r -a fields; do
+    local pkg=${fields[0]}
+    local index
+    for ((index = 1; index < ${#fields[@]}; index++)); do
+      local imported=${fields[$index]}
 
       case "$rule" in
         pkg)
@@ -98,8 +115,8 @@ scan_imports() {
           exit 2
           ;;
       esac
-    done < <(go list -f '{{range .Imports}}{{.}}{{"\n"}}{{end}}' "$pkg")
-  done
+    done
+  done <<<"$listing"
 }
 
 is_known_violation() {

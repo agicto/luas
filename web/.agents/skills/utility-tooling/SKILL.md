@@ -1,6 +1,6 @@
 ---
 name: utility-tooling
-description: The "Search First" rule and standards for creating pure utility functions and hooks with discovery tags.
+description: Add a reusable Web utility or hook after repository search. Use for genuinely shared pure helpers, not feature-owned behavior or one-off wrappers.
 ---
 
 # utility-tooling
@@ -47,6 +47,8 @@ export function formatCurrency(value: number) { ... }
 > **Minimalism**: Favor native Web APIs over external libraries whenever possible.
 
 ## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - [`environment-config`](../environment-config/): Config-aware utilities.
 - [`data-state-management`](../data-state-management/): State helpers often live here.

@@ -1,99 +1,137 @@
 # Luas Skill Index
 
-This is the top-level index of all skills in the Luas scaffold. Codex CLI (and any tool following the `.agents/skills/` convention) auto-discovers skills from three roots based on the current working directory:
+Luas keeps repeatable task workflows in `.agents/skills/`. Codex discovers
+skill metadata first and loads a full `SKILL.md` only after selecting it.
 
-| When cwd is under | Skills loaded |
+## Discovery Scope
+
+| Working directory | Repository skills available |
 |---|---|
-| Root (`/`) | this directory only |
-| `api/` (any depth) | this directory + `api/.agents/skills/` |
-| `web/` (any depth) | this directory + `web/.agents/skills/` |
+| Repository root | 10 root skills |
+| `api/` | 10 root + 9 API skills |
+| `web/` | 10 root + 13 Web skills |
 
-Codex loads only **metadata** (name + description) into the system prompt at startup — the SKILL.md body is read on demand when the model decides to use a skill.
+The repository ships 32 skills in total. User, system, and plugin skills may
+also appear in Codex; do not add a repository skill with the same name as a
+known built-in skill.
 
-## Root Skills (apply everywhere)
+## Routing Policy
 
-| Skill | When to Use |
+1. Select one primary skill from the user intent.
+2. Load another only when the task crosses its distinct ownership boundary.
+3. Treat `Related Skills`/`Pair With` as navigation, not automatic chaining.
+4. Keep mandatory everyday rules in the nearest `AGENTS.md`.
+5. Keep detailed examples and variant references outside `SKILL.md` and load
+   them only when needed.
+6. Use focused checks while iterating and one full release gate at the end.
+
+Avoid descriptions such as "use for all development" or "use when adding or
+reviewing any UI." Descriptions should include positive triggers and important
+negative boundaries so implicit selection remains precise.
+
+## Root Skills
+
+| Skill | Job |
 |---|---|
-| [`contract-evolution`](./contract-evolution/) | Changing HTTP contracts across `contracts/`, `api/`, Web services, or mock BFF behavior |
-| [`downstream-app-extraction`](./downstream-app-extraction/) | Converting Luas into a downstream app without leaking product behavior back into the scaffold |
-| [`domain-modeling`](./domain-modeling/) | Resolving vocabulary, naming, or `starter` / `feature` / `capability` / `module` boundaries |
-| [`grill-before-build`](./grill-before-build/) | Interview the user before underspecified or wide-impact changes |
-| [`luas-code-review`](./luas-code-review/) | Reviewing a Luas diff against both standards and the originating request/spec |
-| [`luas-framework-review`](./luas-framework-review/) | Review Luas as a global scaffold across security, performance, semantics, architecture, and AI workflows |
-| [`systematic-debugging`](./systematic-debugging/) | Bug or flaky test with unclear cause — 4-phase reproduce → isolate → identify → verify |
-| [`tdd-regression`](./tdd-regression/) | Fixing bugs, regressions, or contract drift with a failing test first |
-| [`verification-before-completion`](./verification-before-completion/) | End-of-turn check that the change actually runs / tests pass / lint clean |
-| [`pr-description-writer`](./pr-description-writer/) | Drafting a PR body or commit summary |
+| `contract-evolution` | Evolve shared HTTP behavior |
+| `domain-modeling` | Resolve global vocabulary/ownership |
+| `downstream-app-extraction` | Separate product behavior from the scaffold |
+| `grill-before-build` | Resolve a genuinely blocking high-impact decision |
+| `luas-code-review` | Review a concrete diff or PR |
+| `luas-framework-review` | Run an explicit framework-wide audit |
+| `systematic-debugging` | Isolate an unclear failure |
+| `tdd-regression` | Fix a regression red/green |
+| `verification-before-completion` | Select proportionate proof |
+| `pr-description-writer` | Draft commit/PR communication |
 
-## API Skills (Go backend)
+## API Skills
 
-See [`../api/.agents/skills/`](../../api/.agents/skills/) — full table in [`api/AGENTS.md`](../../api/AGENTS.md#available-skills).
+| Skill | Job |
+|---|---|
+| `architecture-principles` | Decide API seams and structural ownership |
+| `module-creation` | Create a route-owning starter module |
+| `api-development` | Implement handlers, routes, and HTTP semantics |
+| `database-design` | Design persistence and bounded queries |
+| `logging-standards` | Design structured private telemetry |
+| `testing-strategy` | Choose API test seams and doubles |
+| `kest-flow` | Build running-API Markdown scenarios |
+| `deployment` | Verify API image/runtime deployment |
+| `sql-migration-review` | Review migration rollout safety |
 
-Quick map:
+Routine coding standards live in `api/AGENTS.md`; explicit diff review uses the
+root `luas-code-review`. Separate duplicate skills for those concerns were
+removed so API tasks do not load overlapping rulebooks.
 
-- **Structure**: `architecture-principles`, `module-creation`, `coding-standards`
-- **Implementation**: `api-development`, `database-design`, `logging-standards`, `kest-flow`
-- **Quality**: `testing-strategy`, `code-review-guide`
-- **Operations**: `deployment`, `sql-migration-review`
+## Web Skills
 
-## Web Skills (Next.js frontend)
+| Skill | Job |
+|---|---|
+| `frontend-design` | Establish substantial visual direction |
+| `web-design-guidelines` | Review UI/UX quality |
+| `ui-styling-guide` | Apply Luas tokens and primitives |
+| `data-state-management` | Implement Query/Zustand state flow |
+| `api-error-handling` | Implement client error semantics |
+| `environment-config` | Change validated environment boundaries |
+| `i18n-handler` | Change next-intl messages or routing |
+| `utility-tooling` | Add a truly shared utility or hook |
+| `testing-standards` | Write unit/component/integration tests |
+| `webapp-testing` | Verify a running UI in a browser |
+| `accessibility-audit` | Run a dedicated WCAG review |
+| `web-perf` | Measure route and Web Vital performance |
+| `vercel-react-best-practices` | Apply performance-sensitive React rules |
 
-See [`../web/.agents/skills/`](../../web/.agents/skills/) — full table in [`web/AGENTS.md`](../../web/AGENTS.md#ai-agent-skills).
+Codex provides the canonical `skill-creator`; Luas does not duplicate it inside
+the Web scope.
 
-Quick map:
+## Skill Size And Metadata
 
-- **Design**: `frontend-design`, `web-design-guidelines`, `ui-styling-guide`
-- **Code patterns**: `vercel-react-best-practices`, `data-state-management`, `api-error-handling`
-- **Infrastructure**: `environment-config`, `i18n-handler`, `utility-tooling`
-- **Quality**: `webapp-testing`, `testing-standards`, `accessibility-audit`, `web-perf`
-- **Strategy**: `project-strategy`, `skill-creator`
+- `name`: unique kebab-case, at most 64 characters.
+- `description`: at most 1024 bytes and preferably at most 200 bytes.
+- `SKILL.md`: at most 500 lines.
+- Frontmatter: `name` and `description`; UI/policy metadata belongs in
+  `agents/openai.yaml`.
+- Detailed examples belong in `examples/` or `references/`.
+- Deterministic repeated checks belong in `scripts/`.
 
-## How to Add a New Skill
-
-1. Decide the scope: root (cross-cutting) → here; backend-specific → `api/.agents/skills/`; frontend-specific → `web/.agents/skills/`.
-2. Run the `skill-creator` skill or copy the structure of `grill-before-build` for root skills.
-3. Required: `SKILL.md` with YAML frontmatter (`name` + `description` ≤ 150 chars).
-4. Optional: `scripts/` (executable helpers), `references/` (loaded on demand), `examples/`.
-5. Add the new skill to the relevant table in this README and in the corresponding `AGENTS.md`.
-
-## How to Verify Skills Are Loaded
+Run:
 
 ```bash
-# count discoverable skills (should be 36)
-find . -maxdepth 5 -name "SKILL.md" -not -path "*/.template/*" | wc -l
-
-# count what loads in api/ context (root + api = 21)
-( cd api && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
-
-# count what loads in web/ context (root + web = 25)
-( cd web && find ../.agents/skills .agents/skills -name "SKILL.md" -not -path "*/.template/*" | wc -l )
+make agent-check
+bash .agents/skills/scripts/list-skills.sh
+SKILL_VALIDATION_VERBOSE=1 bash .agents/skills/scripts/validate-skill.sh --all
 ```
 
-In a codex session, ask: *"List the skills loaded in this session with their descriptions"* — the model should enumerate exactly the skills above.
+`make agent-check` is the fast loop for agent guidance. `make governance`
+executes all semantic/contract/supply-chain guards. `make check` already
+includes governance and should be the single final release gate.
 
-## Conventions
+## Framework Guard Map
 
-- `luas-framework-review/scripts/check-vocabulary.sh` checks high-signal docs and every non-template `SKILL.md` for vocabulary drift from `CONTEXT.md`.
-- `luas-framework-review/scripts/check-doc-links.py` checks local Markdown links across docs and agent guidance.
-- `luas-framework-review/scripts/check-error-contracts.py` checks scaffold-level HTTP status and `error_code` alignment across contracts, API response constants, and Web fallbacks.
-- `luas-framework-review/scripts/check-route-contract-discovery.py` checks that route inventory reuses runtime assembly, emits a strict versioned schema, runs in CI, and stays distinct from OpenAPI semantics.
-- `luas-framework-review/scripts/check-rate-limit-boundary.py` checks bounded process-local limiter semantics, active-bucket configuration, removed inert Redis settings, and explicit multi-replica ownership.
-- `luas-framework-review/scripts/check-cache-boundary.py` checks driver-neutral bytes, bounded memory, atomic add/take behavior, explicit Redis client ownership, and removed global cache surfaces.
-- `luas-framework-review/scripts/check-database-boundary.py` checks strict database configuration, encoded PostgreSQL DSNs, bounded pool lifecycle, deterministic list queries, and real profile coverage.
-- `luas-framework-review/scripts/check-web-performance-boundary.py` checks executable route budgets, official Next.js diagnostic ownership, lean public controls, and honest synthetic/field performance language.
-- `luas-framework-review/scripts/check-web-security-boundary.py` checks centralized browser response policy, structural CSP, production HSTS, real container headers, and the Next.js Proxy convention.
-- `luas-framework-review/scripts/check-web-ui-primitive-boundary.py` checks composed control semantic ownership, inert disabled/loading behavior, regression coverage, and AI guidance alignment.
-- `luas-framework-review/scripts/check-asset-boundary.py` checks private asset ownership, bounded object storage, ephemeral grants, inspection, cleanup, and API/Web contract alignment.
-- `luas-framework-review/scripts/check-setting-boundary.py` checks finite typed definitions, strong version preconditions, reset history, cache/privacy behavior, audit minimization, and API/Web contract alignment.
-- `luas-framework-review/scripts/check-usage-boundary.py` checks finite metrics, trusted idempotent events, atomic consumption, quota history, retention, privacy, and API/Web contract alignment.
-- `luas-framework-review/scripts/check-webhook-boundary.py` checks finite trusted events, encrypted endpoint custody, SSRF-safe transport, exact signing, lease-safe retry/replay, private ledgers, and API/Web contract alignment.
-- `luas-framework-review/scripts/check-ai-boundary.py` checks the disabled AI default, explicit model selection, bounded provider I/O, redirect and timeout policy, private errors, and capability/product separation.
-- `luas-framework-review/scripts/check-dependency-supply-chain.py` checks exact pnpm tooling, safe resolution/build policy, lock integrity, OSV asset digests, CycloneDX export, Dependabot coverage, and expiring exceptions.
-- `luas-framework-review/scripts/check-container-supply-chain.py` checks immutable image inputs, OCI identity, BuildKit material evidence, dual image CI/SBOM gates, and expiring image exceptions.
-- `luas-framework-review/scripts/check-surface-catalog.py` checks scaffold surface classification alignment across `CONTEXT.md`, `docs/SCAFFOLD_SURFACES.md`, and downstream extraction guidance.
-- `luas-framework-review/scripts/check-branch-governance.sh` checks that branch/release docs stay aligned with CI-managed deployment branch mappings.
-- **`name`** is `kebab-case`, ≤ 64 chars.
-- **`description`** is the trigger condition, ≤ 150 chars in practice (codex hard limit is 1024 bytes). Lead with the *when*, not the *what*.
-- **Directory name** matches the skill name. Skills starting with `.` or `_` are intentionally hidden from the loader (used for templates).
-- **Body sections** follow: `Purpose / When to Use / Workflow / Anti-patterns / Pair With`.
-- **`Pair With`** lets one skill point at adjacent skills so the model can chain them naturally.
+All guards live under `luas-framework-review/scripts/`.
+
+| Changed surface | Guard |
+|---|---|
+| Vocabulary and local links | `check-vocabulary.sh`, `check-doc-links.py` |
+| Shared errors and route discovery | `check-error-contracts.py`, `check-route-contract-discovery.py` |
+| Auth/API keys/permissions | `check-auth-contract-boundary.py`, `check-api-key-boundary.py`, `check-permission-boundary.py` |
+| Notifications/assets/settings/usage/webhooks | `check-notification-boundary.py`, `check-asset-boundary.py`, `check-setting-boundary.py`, `check-usage-boundary.py`, `check-webhook-boundary.py` |
+| AI/email | `check-ai-boundary.py`, `check-email-boundary.py` |
+| Rate limits/cache/database/config/telemetry | `check-rate-limit-boundary.py`, `check-cache-boundary.py`, `check-database-boundary.py`, `check-config-authority.py`, `check-sensitive-telemetry.py` |
+| Web performance/security/primitives | `check-web-performance-boundary.py`, `check-web-security-boundary.py`, `check-web-ui-primitive-boundary.py` |
+| CI/dependencies/containers | `check-ci-actions.py`, `check-dependency-supply-chain.py`, `check-container-supply-chain.py` |
+| Scaffold surfaces/starters | `check-surface-catalog.py`, `check-starter-catalog.py` |
+| API imports and branch policy | `check-api-boundaries.sh`, `check-branch-governance.sh` |
+
+Run only the owning guard during iteration. CI and the final repository gate
+run the complete set.
+
+## Adding Or Updating A Skill
+
+Use the built-in `skill-creator`, then:
+
+1. Put the skill at root, API, or Web scope according to its real owner.
+2. Write concrete trigger and non-trigger examples.
+3. Keep the core workflow concise; link optional resources conditionally.
+4. Test representative prompts and any bundled scripts.
+5. Run `make agent-check`.
+6. Update this index and the nearest `AGENTS.md`.

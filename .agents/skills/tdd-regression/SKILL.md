@@ -114,10 +114,10 @@ make check
 - Updating mock BFF behavior without proving the owning browser contract and any API adapter mapping still match.
 - Claiming a flaky failure is fixed without repeating the targeted test enough to build confidence.
 
-## Pair With
+## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - `systematic-debugging` when reproduction or root cause is unclear.
 - `contract-evolution` when the expected HTTP contract changes.
-- `luas-code-review` to verify the fix against both Standards and Spec axes.
-- `verification-before-completion` before reporting the fix complete.
 - API `testing-strategy` or Web `testing-standards` for test style in the affected half.

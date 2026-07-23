@@ -11,19 +11,45 @@ and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-
 
 - **Small and composable**: each skill owns one repeatable discipline. Avoid one large process
   skill that tries to own every decision.
-- **Router plus discipline**: user-facing router skills choose the workflow; model-invoked skills
-  encode reusable engineering habits.
-- **Vocabulary is active**: `CONTEXT.md` is not just read at startup. When a term changes or a new
-  scaffold concept appears, the skill workflow must challenge it, resolve it, and update the
-  glossary or an ADR.
+- **One primary skill**: select one workflow from the request. Related-skill links are navigation,
+  not automatic chaining.
+- **Progressive disclosure**: keep `AGENTS.md` small, keep `SKILL.md` below 500 lines, and load
+  contracts, ADRs, examples, and references only when their boundary is active.
+- **Vocabulary is active, not automatic**: read `CONTEXT.md` when a global term or owner changes.
+  Routine local edits should follow nearby code and the nearest `AGENTS.md`.
 - **Deep modules over busy templates**: skills should push code toward small interfaces, clear
   seams, locality, leverage, and testability.
-- **Verification is part of the skill**: every implementation skill must name the command or guard
-  that proves its work.
+- **Verification is proportionate**: every implementation skill names focused proof. Run the full
+  repository gate once at the release boundary, not after every local edit.
 - **One local governance entry point**: stable root guardrails should be reachable through
   `make governance`, and `make check` should include them before API/Web verification.
 - **Scaffold-first**: skills must preserve Luas as a starter kit. They should not turn examples,
   mock BFF routes, devtools, or console pages into product behavior.
+
+## 2026-07-23 Performance Reset
+
+The official Codex model is progressive disclosure: skill metadata is present for routing, while
+the full `SKILL.md` loads only after selection. The practical bottlenecks were oversized automatic
+`AGENTS.md` context, broad trigger descriptions, overlapping skills, and repeated full checks.
+
+Measured repository changes:
+
+| Surface | Before | After | Reduction |
+|---|---:|---:|---:|
+| Root + API `AGENTS.md` | 37,071 bytes | 11,384 bytes | 69.3% |
+| Root + Web `AGENTS.md` | 66,650 bytes | 12,901 bytes | 80.6% |
+| Active repository `SKILL.md` bodies | 289,993 bytes | 164,138 bytes | 43.4% |
+| Repository skills | 36 | 32 | 11.1% |
+| Full governance command | `make governance`, 8.64 s | `make governance`, 4.57 s | 47.1% |
+| Agent-guidance feedback command | `make governance`, 8.64 s | `make agent-check`, 0.85 s | 90.2% |
+
+Both root-plus-half guidance paths now stay well below Codex's current default 32,768-byte project
+instruction budget. The removed skills were duplicate generic standards/review workflows, the
+Web-local copy of Codex's built-in `skill-creator`, and a project overview better owned by
+`web/AGENTS.md`.
+
+The fast agent-guidance loop is `make agent-check`. `make governance` remains the complete semantic
+and architecture gate, and `make check` remains the single release gate.
 
 ## Skill Taxonomy
 
@@ -33,8 +59,8 @@ These are high-level entry points. They orchestrate, ask questions, and select l
 
 | Skill | Role | Status |
 |---|---|---|
-| `luas-framework-review` | Global scaffold review and long-running optimization router. | Existing |
-| `grill-before-build` | Clarifies wide-impact or underspecified changes before implementation. | Existing |
+| `luas-framework-review` | Explicit global scaffold review and long-running optimization router. | Existing |
+| `grill-before-build` | Resolves a blocking high-impact choice after local discovery. | Existing |
 | `pr-description-writer` | Packages a completed diff into reviewable context. | Existing |
 | `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Existing |
 | `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Existing |
@@ -45,7 +71,7 @@ These are reusable habits the agent can reach for automatically.
 
 | Skill | Role | Status |
 |---|---|---|
-| `verification-before-completion` | Runs static checks, tests, builds, and relevant guard scripts. | Existing |
+| `verification-before-completion` | Chooses proportionate static, test, build, and guard evidence. | Existing |
 | `systematic-debugging` | Reproduce, isolate, identify, verify. | Existing |
 | `architecture-principles` | API-side seam, depth, starter, and locality rules. | Existing |
 | `api-error-handling` | Web/API error response contract and code vocabulary. | Existing |
@@ -198,13 +224,13 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Operating Cadence
 
-- **Every implementation turn**: run the relevant verification tier and keep changes scoped.
+- **Every implementation turn**: run focused proof for changed behavior and keep changes scoped.
 - **Every 3-5 framework iterations**: run `luas-framework-review` and update this plan if priorities changed.
-- **Every release candidate**: run the full roadmap audit and record unresolved risks.
+- **Every release candidate**: run `make check` once and record unresolved risks.
 - **Whenever a new term appears**: decide whether it belongs in `CONTEXT.md`, an ADR, a local doc, or nowhere.
 
 ## Next Recommended Slice
 
-Continue with the next high-leverage framework review slice: keep API package boundaries at zero
-baseline exceptions, keep mock BFF success/error envelopes contract-tested, then move to security
-defaults or performance evidence based on the next concrete review finding.
+Forward-test representative prompts against the 32 skill descriptions and record false-positive or
+false-negative selections. Keep API package boundaries at zero baseline exceptions and preserve
+mock BFF contract tests while future skills are added.

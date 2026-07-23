@@ -49,18 +49,8 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
-      # Install only; the skill validator scripts own the lint invocation.
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
-        with:
-          version: v2.12.2
-          install-only: true
-
-      - name: Install goimports
-        run: go install golang.org/x/tools/cmd/goimports@v0.48.0
-
-      - name: coding-standards self-test (${{ matrix.module }})
-        run: bash .agents/skills/coding-standards/scripts/verify-standards.sh ${{ matrix.module }}
+      - name: module-creation self-test (${{ matrix.module }})
+        run: bash .agents/skills/module-creation/scripts/validate-module.sh ${{ matrix.module }}
 
       - name: api-development self-test (${{ matrix.module }})
         run: bash .agents/skills/api-development/scripts/validate-api.sh ${{ matrix.module }}

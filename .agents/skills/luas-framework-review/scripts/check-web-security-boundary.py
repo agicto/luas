@@ -224,20 +224,15 @@ def main() -> int:
         failures,
         "web/AGENTS.md",
         (
-            "#### Browser Security Response Rules",
+            "## Environment And Security",
             "docs/SECURITY.md",
             "Next.js 16 `proxy.ts` convention",
         ),
     )
     require_all(
         failures,
-        "AGENTS.md",
-        ("web/docs/SECURITY.md", "check-web-security-boundary.py"),
-    )
-    require_all(
-        failures,
-        ".agents/skills/luas-framework-review/SKILL.md",
-        ("scripts/check-web-security-boundary.py",),
+        ".agents/skills/README.md",
+        ("check-web-security-boundary.py",),
     )
     require_all(
         failures,

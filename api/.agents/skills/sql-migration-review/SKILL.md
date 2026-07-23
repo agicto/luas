@@ -117,8 +117,9 @@ bash api/.agents/skills/sql-migration-review/scripts/check-migration.sh \
     api/internal/modules/user/migrations/202604_add_email_verified.sql
 ```
 
-## Pair With
+## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - `database-design` for steady-state schema standards.
-- `verification-before-completion` for the up-and-down execution check.
-- `pr-description-writer` — the PR should include a Migration Notes section.
+- `pr-description-writer` when the user asks for release or PR communication.

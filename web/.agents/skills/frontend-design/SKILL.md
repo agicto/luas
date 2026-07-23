@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Build distinctive web UIs (components, pages, dashboards, landing pages). Use when designing or styling any frontend that should avoid generic AI aesthetics.
+description: Design or substantially restyle a Luas page or component. Use for visual-direction work, not small copy, state, data, or bug-only edits.
 ---
 
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
@@ -41,6 +41,9 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
 
 ## Related Skills
+
+These are navigation only; select another skill when the request explicitly
+activates its separate review or measurement concern.
 
 - [`web-design-guidelines`](../web-design-guidelines/): Project design tokens to apply.
 - [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics.

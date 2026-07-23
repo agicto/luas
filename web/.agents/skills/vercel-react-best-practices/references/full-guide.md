@@ -1,4 +1,4 @@
-# React Best Practices
+# Full React Best Practices Reference
 
 **Version 1.0.0**  
 Vercel Engineering  

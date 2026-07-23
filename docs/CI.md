@@ -97,7 +97,7 @@ explicit review and an allowlist update in `check-ci-actions.py`.
 3. Resolve the release tag to the commit in the action's own repository; peel annotated tags.
 4. Update every occurrence to the same full SHA and exact release comment.
 5. Update the allowlist in `check-ci-actions.py` and this runner contract when requirements change.
-6. Run `make governance` and `make check`, then verify the pushed workflow itself on GitHub.
+6. Run `make check`, then verify the pushed workflow itself on GitHub.
 7. Inspect annotations as well as pass/fail status; a successful run with a deprecation warning is not
    considered a clean upgrade.
 
@@ -110,7 +110,6 @@ python3 .agents/skills/luas-framework-review/scripts/check-container-supply-chai
 python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py
 cd api && make route-catalog-check
 make dependency-scan
-make governance
 make check
 ```
 

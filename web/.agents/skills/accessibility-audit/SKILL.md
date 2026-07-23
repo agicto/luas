@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: WCAG 2.2 AA accessibility audit pass for React components (focus order, ARIA, contrast, keyboard nav, semantics). Use when adding or reviewing UI.
+description: Audit a completed Luas UI against WCAG 2.2 AA. Use when the user requests accessibility, a11y, or WCAG review, not for routine UI implementation.
 ---
 
 # Accessibility Audit
@@ -13,14 +13,16 @@ Target: WCAG 2.2 AA. Use the WAI-ARIA Authoring Practices for component patterns
 
 ## When to Use
 
-Before merging any change that:
+Use for a dedicated accessibility pass over a completed surface, especially one
+that:
 
 - adds or restructures a component
 - adds an interactive widget (modal, dropdown, tabs, accordion, toast, popover)
 - changes navigation, focus flow, or page structure
 - changes color, typography, or layout in a way that affects readability
 
-Skip for pure logic / data-layer changes with no rendered output.
+Baseline accessibility remains mandatory through `web/AGENTS.md`; loading this
+full audit is unnecessary for routine implementation or pure data-layer work.
 
 ## Audit Checklist
 
@@ -146,8 +148,9 @@ If clean: "Audited `<component>`. No findings."
 - `aria-label` on a button that already has visible text — usually wrong.
 - "We'll add a11y later" — retrofit is 10× the cost of doing it right the first time.
 
-## Pair With
+## Related Skills
 
-- `frontend-design` and `ui-styling-guide` for the visual side.
-- `web-perf` — accessibility and perf often interact (lazy-loading, focus management).
-- `verification-before-completion` — accessibility checks belong in Tier 2.
+Select another skill only when its separate concern is active:
+
+- `frontend-design` for a substantial visual redesign.
+- `web-perf` when the task also includes a measured performance claim.

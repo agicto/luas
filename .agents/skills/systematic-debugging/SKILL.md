@@ -99,8 +99,9 @@ When done, summarize in this shape:
 3. The fix and why it addresses the cause (not just the symptom)
 4. The regression test added
 
-## Pair With
+## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - `tdd-regression` after the failure is reproducible and the fix needs a permanent regression guard.
-- `verification-before-completion` to confirm the fix actually holds.
-- `code-review-guide` for what defensible code looks like once fixed.
+- `luas-code-review` only when the user explicitly requests review after the fix.

@@ -74,29 +74,34 @@ FAILED=0
 TMP_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-vocabulary-grep.XXXXXX")
 trap 'rm -f "$TMP_FILE"' EXIT
 
+EXISTING_FILES=()
 for file in "${FILES[@]}"; do
-  if [ ! -f "$file" ]; then
-    continue
-  fi
-
-  for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
-    if grep -nF "$pattern" "$file" >"$TMP_FILE"; then
-      while IFS= read -r match; do
-        printf 'Vocabulary drift: %s:%s (%s)\n' "$file" "$match" "$pattern"
-      done <"$TMP_FILE"
-      FAILED=1
-    fi
-  done
+  [ ! -f "$file" ] || EXISTING_FILES+=("$file")
 done
 
+FORBIDDEN_ARGS=()
+for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
+  FORBIDDEN_ARGS+=(-e "$pattern")
+done
+
+if grep -nF "${FORBIDDEN_ARGS[@]}" "${EXISTING_FILES[@]}" >"$TMP_FILE"; then
+  while IFS= read -r match; do
+    printf 'Vocabulary drift: %s\n' "$match"
+  done <"$TMP_FILE"
+  FAILED=1
+fi
+
+PUBLIC_README_ARGS=()
 for pattern in "${PUBLIC_README_FORBIDDEN_PATTERNS[@]}"; do
-  if grep -nF "$pattern" README.md >"$TMP_FILE"; then
-    while IFS= read -r match; do
-      printf 'Public README origin drift: README.md:%s (%s)\n' "$match" "$pattern"
-    done <"$TMP_FILE"
-    FAILED=1
-  fi
+  PUBLIC_README_ARGS+=(-e "$pattern")
 done
+
+if grep -nF "${PUBLIC_README_ARGS[@]}" README.md >"$TMP_FILE"; then
+  while IFS= read -r match; do
+    printf 'Public README origin drift: README.md:%s\n' "$match"
+  done <"$TMP_FILE"
+  FAILED=1
+fi
 
 if [ "$FAILED" -ne 0 ]; then
   echo "Use CONTEXT.md vocabulary and present Luas as the independent open-source scaffold." >&2

@@ -1,6 +1,6 @@
 ---
 name: ui-styling-guide
-description: Guidelines for UI development, including shadcn/ui primitives, feature components, and the OKLCH theme system.
+description: Apply Luas UI primitives, variants, Tailwind, and OKLCH tokens. Use when styling within the existing design system, not for broad visual direction.
 ---
 
 # ui-styling-guide
@@ -64,6 +64,8 @@ For detailed component contracts (Named Exports, RSC First, Props Typing, CAS an
 - Run `pnpm exec vitest run src/test/form-control-accessibility.test.tsx src/test/calendar-date-picker.test.tsx` after changing shared form controls.
 
 ## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - [`frontend-design`](../frontend-design/): Creative direction that styling implements.
 - [`web-design-guidelines`](../web-design-guidelines/): Design tokens this guide consumes.

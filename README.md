@@ -60,11 +60,14 @@ Open `http://localhost:3000`. Development mode can use the bounded mock BFF, so 
 ### 3. Verify the workspace
 
 ```bash
-make governance
+make agent-check
 make check
 ```
 
-`make governance` runs deterministic architecture, contract, security, supply-chain, and agent-guidance checks. `make check` adds the API and Web verification tiers, including the production Web build and route bundle budgets.
+`make agent-check` is the sub-second feedback loop for agent guidance and skills.
+`make check` runs governance plus the API and Web verification tiers, including
+the production Web build and route bundle budgets. Do not run `make governance`
+immediately before `make check`; the full gate already includes it.
 
 ## Choose Your Starters
 
@@ -130,10 +133,10 @@ Production deployment still owns secrets, TLS, ingress trust, persistence, scali
 
 Luas treats agent context as maintained architecture rather than an informal prompt:
 
-1. Read [CONTEXT.md](CONTEXT.md) for global terms and boundaries.
-2. Read [AGENTS.md](AGENTS.md), then the matching `api/AGENTS.md` or `web/AGENTS.md` before editing.
-3. Load the task-specific workflow under `.agents/skills/` for contract changes, debugging, reviews, extraction, or verification.
-4. Run `make governance` to detect vocabulary, boundary, contract, and guidance drift.
+1. Start with the nearest implementation, tests, and applicable `AGENTS.md`.
+2. Read [CONTEXT.md](CONTEXT.md) only when global vocabulary or ownership is active.
+3. Load one task-specific workflow under `.agents/skills/`; related-skill links are navigation, not automatic chaining.
+4. Run `make agent-check` for guidance changes and `make check` once at the release boundary.
 
 This guidance is useful to human contributors too: the same terms and checks apply regardless of who writes the change.
 

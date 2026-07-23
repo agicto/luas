@@ -239,11 +239,6 @@ def main() -> int:
     )
     require_all(
         failures,
-        "AGENTS.md",
-        ("api/docs/DATABASE.md", "make benchmark-database", "check-database-boundary.py"),
-    )
-    require_all(
-        failures,
         "api/AGENTS.md",
         ("docs/DATABASE.md", "make benchmark-database"),
     )
@@ -263,8 +258,8 @@ def main() -> int:
     )
     require_all(
         failures,
-        ".agents/skills/luas-framework-review/SKILL.md",
-        ("scripts/check-database-boundary.py",),
+        ".agents/skills/README.md",
+        ("check-database-boundary.py",),
     )
     require_all(
         failures,

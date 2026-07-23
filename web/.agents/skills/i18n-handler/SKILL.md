@@ -1,6 +1,6 @@
 ---
 name: i18n-handler
-description: Guidelines for managing internationalization (i18n) in the project using next-intl and unified translation patterns.
+description: Change Luas next-intl messages or translation boundaries. Use for locale keys, namespaces, server/client translation APIs, or locale routing.
 ---
 
 # i18n-handler
@@ -250,6 +250,8 @@ Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supporte
 > For comprehensive examples and detailed API documentation, refer to `src/i18n/README.md`.
 
 ## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - [`api-error-handling`](../api-error-handling/): Error messages must be localized.
 - [`accessibility-audit`](../accessibility-audit/): `lang` attribute, RTL handling, screen-reader text.

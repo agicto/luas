@@ -128,6 +128,6 @@ runtime secret injection for application credentials.
 2. Update readable versions and digests together; never replace a digest with a movable tag.
 3. Update verifier material expectations and `check-container-supply-chain.py` in the same change.
 4. Build and run both affected images, export their SBOMs, and enforce the live scan.
-5. Run `make governance` and `make check`.
+5. Run `make check`; it includes deterministic container governance.
 6. Push the exact commit, inspect both workflow logs and artifacts, and confirm no warning was hidden
    behind a successful status.

@@ -1,6 +1,6 @@
 ---
 name: kest-flow
-description: Kest Flow API testing framework. Markdown-based flow files chain Register → Login → Create → Query scenarios end-to-end against running APIs.
+description: Create or run Kest Markdown end-to-end API flows. Use for chained scenarios against a running API, not ordinary Go unit or package tests.
 ---
 
 # Kest Flow Skill
@@ -111,7 +111,8 @@ See `.agents/skills/kest-flow/examples/` for complete flow examples:
 
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`testing-strategy`](../testing-strategy/): Where kest-flow fits in the broader testing layers.
 - [`api-development`](../api-development/): The endpoints these flows exercise.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): End-to-end flows are Tier-2 verification.
-- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a flow fails, the 4-phase debug loop applies.
+- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): Use only when a flow fails for an unclear reason.

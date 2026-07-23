@@ -1,11 +1,6 @@
 ---
 name: architecture-principles
-description: Core Luas architecture vocabulary and decision rules for seams, starter boundaries, depth, and locality
-version: 1.1.0
-category: development
-tags: [architecture, seams, starter, capability, lifecycle, locality, depth]
-author: Luas Team
-updated: 2026-07-13
+description: Decide API seams, starter/capability boundaries, interfaces, and lifecycle ownership. Use for structural design or refactoring, not routine package edits.
 ---
 
 # Architecture Principles
@@ -150,7 +145,6 @@ When architecture changes:
 1. Update [CONTEXT.md](../../../CONTEXT.md) if vocabulary changed.
 2. Update relevant ADRs in [`docs/adr/`](../../../docs/adr/).
 3. Update the specific implementation skill that operationalizes the rule:
-   - [coding-standards](../coding-standards/)
    - [module-creation](../module-creation/)
    - [testing-strategy](../testing-strategy/)
    - [api-development](../api-development/)
@@ -176,8 +170,9 @@ Before finishing an architecture change, ask:
 
 ## Related Skills
 
+Select only when its separate concern is active:
+
 - [`module-creation`](../module-creation/): Translates these principles into the DDD module template.
-- [`coding-standards`](../coding-standards/): Translates these principles into code-level layering rules.
 - [`database-design`](../database-design/): Translates these principles into schema and PO boundaries.
-- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): Forces principle conversations before code.
+- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): Resolves a genuinely blocking high-impact decision.
 - [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): When recording an architecture decision, the PR body is its first home.

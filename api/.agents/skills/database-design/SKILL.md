@@ -1,11 +1,6 @@
 ---
 name: database-design
-description: Database design best practices, indexing strategies, and migration patterns for Luas
-version: 1.0.0
-category: architecture
-tags: [database, sql, gorm, migration, optimization]
-author: Luas Team
-updated: 2026-07-16
+description: Design Luas persistence models, indexes, bounded queries, and table lifecycle. Use for schema or query-shape decisions; use sql-migration-review for rollout safety.
 ---
 
 # Database Design Standards
@@ -151,13 +146,10 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 
 ## 🔗 Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`module-creation`](../module-creation/): Where `model.go` lives.
-- [`coding-standards`](../coding-standards/): General naming and error handling.
+- [`../../../AGENTS.md`](../../../AGENTS.md): Mandatory API naming and layering rules.
 - [`sql-migration-review`](../sql-migration-review/): For reviewing the migrations this schema produces.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): For running migrations up and down on a scratch DB.
 
 ---
-
-**Version**: 1.0.0  
-**Last Updated**: 2026-01-24  
-**Maintainer**: Luas Team

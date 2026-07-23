@@ -98,23 +98,14 @@ if ! grep -q "RegisterRoutes" "${MODULE_DIR}/routes.go"; then
 fi
 echo "✓ RegisterRoutes entry defined"
 
-# Try to build the module
-echo ""
-echo "Building module..."
-if ! go build ./internal/modules/${MODULE_NAME}/...; then
-    echo "❌ Module build failed"
-    exit 1
-fi
-echo "✓ Module builds successfully"
-
-# Run tests
+# Tests compile the package and exercise the generated seam.
 echo ""
 echo "Running tests..."
-if ! go test ./internal/modules/${MODULE_NAME}/... -v; then
-    echo "⚠️  Some tests failed (review output above)"
-else
-    echo "✓ All tests passed"
+if ! go test ./internal/modules/${MODULE_NAME}/...; then
+    echo "❌ Module tests failed"
+    exit 1
 fi
+echo "✓ All tests passed"
 
 echo ""
 echo "======================================="

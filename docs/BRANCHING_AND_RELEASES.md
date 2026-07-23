@@ -82,10 +82,11 @@ Run these before merging `release/*` or `hotfix/*` to `main`:
 
 ```bash
 make check
-bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
-bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
-bash .agents/skills/scripts/validate-skill.sh --all
 ```
+
+`make check` already includes vocabulary, package-boundary, skill, API, and Web
+gates. Run an individual guard only as a focused feedback loop before the final
+gate.
 
 For contract-sensitive changes, also verify the affected API and mock BFF behavior against
 [`../contracts/README.md`](../contracts/README.md).

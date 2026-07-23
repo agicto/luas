@@ -1,6 +1,6 @@
 ---
 name: environment-config
-description: Strict rules for Zod-validated client-safe and server-only environment configuration.
+description: Change validated Web environment configuration. Use for public/server-only variables, runtime versus build-time values, defaults, or secret boundaries.
 ---
 
 # environment-config
@@ -72,6 +72,7 @@ requires a strong `SESSION_SECRET` only for production mock BFF opt-in.
 
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`utility-tooling`](../utility-tooling/): Config helpers and utilities live alongside env handling.
 - [`api-error-handling`](../api-error-handling/): Config errors should surface as proper error UX.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Verify env-dependent paths in dev before claiming done.

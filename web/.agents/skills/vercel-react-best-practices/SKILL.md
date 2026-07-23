@@ -1,6 +1,6 @@
 ---
 name: vercel-react-best-practices
-description: Vercel's React/Next.js performance rules. Use when writing, reviewing, or refactoring React components, Next.js pages, data fetching, or bundle optimization.
+description: Optimize React/Next.js rendering, data flow, or bundles. Use for performance-sensitive changes and regressions, not routine JSX or styling edits.
 ---
 
 # Vercel React Best Practices
@@ -118,9 +118,14 @@ Each rule file contains:
 
 ## Full Compiled Document
 
-For the complete guide with all rules expanded: `AGENTS.md`
+For an audit spanning many categories, read
+[`references/full-guide.md`](references/full-guide.md). Prefer individual rule
+files for focused changes; the compiled guide is intentionally not an
+`AGENTS.md` so it cannot enter automatic project guidance.
 
 ## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - [`data-state-management`](../data-state-management/): State patterns these rules apply to.
 - [`web-perf`](../web-perf/): Measurement that validates these rules made things faster.

@@ -1,11 +1,6 @@
 ---
 name: testing-strategy
-description: Test patterns, mocking strategies, and organization best practices
-version: 1.0.0
-category: development
-tags: [testing, unit-test, integration-test, mock, testify]
-author: Luas Team
-updated: 2026-04-26
+description: Choose Luas API test seams, doubles, and unit/integration coverage. Use when test ownership or strategy is unclear, not merely to run an existing test.
 ---
 
 # Testing Strategy
@@ -245,15 +240,12 @@ mockery --all --dir=internal/modules/user
 
 ## 🔗 Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`module-creation`](../module-creation/): Structure of test files in modules.
-- [`coding-standards`](../coding-standards/): General code quality that affects testability.
+- [`../../../AGENTS.md`](../../../AGENTS.md): Mandatory API layering and code rules.
 - [`api-development`](../api-development/): Testing API responses and pagination.
 - [`kest-flow`](../kest-flow/): HTTP-level scenario test framework.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Running tests at end of turn before claiming done.
 - [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a failing test surfaces a bug that needs a real fix.
 
 ---
-
-**Version**: 1.0.0  
-**Last Updated**: 2026-01-24  
-**Maintainer**: Luas Team

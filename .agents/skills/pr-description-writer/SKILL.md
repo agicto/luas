@@ -76,7 +76,7 @@ Do not invent rationale not present in code, commits, or the user's intent.
 - Use the active voice: "Adds the X handler" not "The X handler has been added".
 - Mention specific file paths when they aid review (`api/internal/modules/user/handler.go`).
 - Keep total length under one screen unless the change is genuinely large.
-- Use the project's PR template if `.github/pull_request_template.md` or `api/.agents/skills/code-review-guide/templates/pull-request-template.md` exists — match that shape.
+- Use the project's PR template if `.github/pull_request_template.md` exists; otherwise use this skill's structure.
 
 ## Anti-patterns
 
@@ -100,7 +100,8 @@ bash .agents/skills/pr-description-writer/scripts/scaffold-pr-body.sh main > /tm
 gh pr create --body-file /tmp/pr.md
 ```
 
-## Pair With
+## Related Skills
 
-- `code-review-guide` for the reviewer's perspective on the same diff.
-- `verification-before-completion` so the Test Plan section reflects what you actually ran.
+Select another skill only when the user also requests its separate job.
+
+- `luas-code-review` when the user also requests a review of the diff.

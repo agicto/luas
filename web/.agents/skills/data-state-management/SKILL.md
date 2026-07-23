@@ -1,6 +1,6 @@
 ---
 name: data-state-management
-description: Specifications for Zustand stores, React Query hooks, and the Service-Hook-Type pattern with optimistic updates.
+description: Implement Luas feature data and client state. Use for TanStack Query, Zustand, service-hook-type flow, cache invalidation, or optimistic updates.
 ---
 
 # data-state-management
@@ -90,7 +90,8 @@ export function useUpdateExample() {
 
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`api-error-handling`](../api-error-handling/): Error surfaces in queries and mutations.
 - [`vercel-react-best-practices`](../vercel-react-best-practices/): Memoization patterns that interact with derived state.
 - [`testing-standards`](../testing-standards/): Mocking and asserting state behavior in tests.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): End-of-turn verification that state flows work in dev.

@@ -1,6 +1,6 @@
 ---
 name: testing-standards
-description: Unit and integration testing standards using Vitest and Testing Library. Use when writing tests, reviewing test coverage, setting up test infrastructure, or asking about testing patterns.
+description: Write or restructure Web unit, component, and integration tests with Vitest and Testing Library. Use for test implementation or test-boundary decisions.
 ---
 
 # testing-standards
@@ -125,7 +125,8 @@ screen.getByTestId('submit-button');
 
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`webapp-testing`](../webapp-testing/): Browser-driven complement to unit/component tests.
 - [`data-state-management`](../data-state-management/): Mocking state in tests.
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Where these tests sit in Tier 1.
 - [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a failing test surfaces a bug needing a real root cause.

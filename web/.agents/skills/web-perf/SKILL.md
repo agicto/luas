@@ -1,6 +1,6 @@
 ---
 name: web-perf
-description: Audit Next.js route bundles, lab performance, and field Web Vitals. Use for shared client changes, slowness, or LCP/INP/CLS regressions.
+description: Measure Next.js route bundles, lab performance, and field Web Vitals. Use for shared-client changes, slowness, budgets, or LCP/INP/CLS regressions.
 ---
 
 # Web Performance Audit
@@ -149,8 +149,9 @@ Report:
 4. Fix applied, attributable delta, responsive/interaction verification, and reverted experiments.
 5. What you did _not_ fix and why (out of scope, low impact, or tracked separately).
 
-## Pair With
+## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - `vercel-react-best-practices` for code-pattern fixes.
-- `accessibility-audit` — perf and a11y often interact (focus management, lazy-loading).
-- `verification-before-completion` so the perf claim is grounded in numbers, not vibes.
+- `accessibility-audit` when the user also requests a dedicated WCAG review.

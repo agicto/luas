@@ -1,10 +1,6 @@
 ---
 name: web-design-guidelines
-description: Review UI code for Web Interface Guidelines compliance. Use when asked to "review my UI", "check accessibility", "audit design", "review UX", or "check my site against best practices".
-metadata:
-  author: vercel
-  version: "1.0.0"
-  argument-hint: <file-or-pattern>
+description: Review Luas UI code against interface guidelines. Use for explicit design, UX, or visual-quality review; use accessibility-audit for a dedicated WCAG pass.
 ---
 
 # Web Interface Guidelines
@@ -39,6 +35,8 @@ When a user provides a file or pattern argument:
 If no files specified, ask the user which files to review.
 
 ## Related Skills
+
+Select another skill only when its distinct concern is active.
 
 - [`frontend-design`](../frontend-design/): Creative direction these tokens serve.
 - [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics that consume these tokens.

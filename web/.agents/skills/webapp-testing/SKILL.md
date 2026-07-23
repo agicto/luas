@@ -1,6 +1,6 @@
 ---
 name: webapp-testing
-description: Playwright-based browser testing toolkit. Use to verify frontend behavior, debug UI, capture screenshots, or inspect browser console logs.
+description: Verify or debug a running Luas UI with Playwright. Use for browser workflows, screenshots, responsive behavior, or console/network inspection.
 ---
 
 # Web Application Testing
@@ -95,7 +95,8 @@ with sync_playwright() as p:
   - `console_logging.py` - Capturing console logs during automation
 ## Related Skills
 
+Select another skill only when its distinct concern is active.
+
 - [`testing-standards`](../testing-standards/): Unit / component layer below browser-driven tests.
 - [`accessibility-audit`](../accessibility-audit/): Assert a11y in E2E flows (axe-core in Playwright).
-- [`verification-before-completion`](../../../../.agents/skills/verification-before-completion/): Browser-driven flows are Tier 2 verification.
 - [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a flaky E2E reveals a real race.

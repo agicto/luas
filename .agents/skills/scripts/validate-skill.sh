@@ -1,108 +1,155 @@
 #!/usr/bin/env bash
 
-# Validate SKILL.md metadata against codex CLI's loader requirements.
+# Validate repository skills against Codex discovery and context-budget rules.
 #
 # Usage:
 #   validate-skill.sh <path/to/SKILL.md>
-#   validate-skill.sh --all          # validate every SKILL.md in the repo
+#   validate-skill.sh --all
 #
-# Checks (codex's core-skills/loader.rs constants):
-#   - Frontmatter wrapped in --- ... --- (MissingFrontmatter is hard fail)
-#   - `name:` field present, ≤ 64 chars
-#   - `description:` field present, ≤ 1024 bytes
-#   - Directory name matches `name:` (warn — not enforced by codex)
-#   - File name is exactly SKILL.md (case sensitive — hard fail otherwise)
-#
-# Exit code: 0 on clean, 1 if any hard fail.
+# Set SKILL_VALIDATION_VERBOSE=1 to print every passing file.
 
 set -u
+export LC_ALL=C
 
 MAX_NAME=64
 MAX_DESC=1024
-MAX_DESC_PRACTICAL=200  # warn above this (codex injects all descs in one prompt)
+MAX_DESC_PRACTICAL=200
+MAX_LINES=500
 
 ERRORS=0
 WARNINGS=0
 FILES=0
+SEEN_NAMES="|"
+RESERVED_NAMES="|imagegen|openai-docs|plugin-creator|skill-creator|skill-installer|"
+CURRENT_FILE=""
+VERBOSE=${SKILL_VALIDATION_VERBOSE:-0}
 
-err()  { echo "  ❌ $1"; ERRORS=$((ERRORS + 1)); }
-warn() { echo "  ⚠️  $1"; WARNINGS=$((WARNINGS + 1)); }
-ok()   { :; }  # silent on per-check success to keep the report short
+err() {
+    printf '%s: error: %s\n' "$CURRENT_FILE" "$1"
+    ERRORS=$((ERRORS + 1))
+}
 
-field() {
-    awk -v k="$1" '
-        /^---$/ { state++; next }
-        state == 1 && index($0, k ":") == 1 {
-            sub("^" k ":[[:space:]]*", "")
-            print
-            exit
-        }
-    ' "$2"
+warn() {
+    printf '%s: warning: %s\n' "$CURRENT_FILE" "$1"
+    WARNINGS=$((WARNINGS + 1))
 }
 
 validate_one() {
-    local file=$1
+    CURRENT_FILE=$1
     FILES=$((FILES + 1))
-    local pre=$ERRORS
+    local before_errors=$ERRORS
+    local before_warnings=$WARNINGS
+    local first_line=""
+    local line=""
+    local line_count=0
+    local section=0
+    local name=""
+    local description=""
+    local extra_frontmatter=""
 
-    echo ""
-    echo "📄 $file"
-
-    # 1. Filename
-    if [ "$(basename "$file")" != "SKILL.md" ]; then
-        err "Filename must be exactly 'SKILL.md' (case sensitive)"
+    local filename=${CURRENT_FILE##*/}
+    if [ "$filename" != "SKILL.md" ]; then
+        err "filename must be exactly SKILL.md"
         return
     fi
 
-    # 2. Frontmatter delimiters
-    if ! head -1 "$file" | grep -q '^---$'; then
-        err "First line must be '---' (no frontmatter)"
-        return
-    fi
-    if ! awk 'NR > 1 && /^---$/ { found=1; exit } END { exit !found }' "$file"; then
-        err "No closing '---' delimiter found for frontmatter"
+    while IFS= read -r line || [ -n "$line" ]; do
+        line_count=$((line_count + 1))
+        [ "$line_count" -ne 1 ] || first_line=$line
+
+        if [ "$line" = "---" ]; then
+            section=$((section + 1))
+            continue
+        fi
+
+        if [ "$section" -eq 1 ]; then
+            case "$line" in
+                "name:"*)
+                    name=${line#name:}
+                    name=${name#"${name%%[![:space:]]*}"}
+                    ;;
+                "description:"*)
+                    description=${line#description:}
+                    description=${description#"${description%%[![:space:]]*}"}
+                    ;;
+                "")
+                    ;;
+                *)
+                    [ -n "$extra_frontmatter" ] || extra_frontmatter=$line
+                    ;;
+            esac
+        fi
+    done < "$CURRENT_FILE"
+
+    if [ "$first_line" != "---" ]; then
+        err "missing opening YAML frontmatter delimiter"
         return
     fi
 
-    # 3. name
-    local name
-    name=$(field name "$file")
+    if [ "$section" -lt 2 ]; then
+        err "missing closing YAML frontmatter delimiter"
+        return
+    fi
+
     if [ -z "$name" ]; then
-        err "Missing 'name:' field in frontmatter"
+        err "missing name"
     elif [ ${#name} -gt $MAX_NAME ]; then
-        err "name is ${#name} chars; codex max is $MAX_NAME"
+        err "name exceeds $MAX_NAME characters"
+    elif [[ ! "$name" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+        err "name must be kebab-case"
+    else
+        case "$RESERVED_NAMES" in
+            *"|$name|"*) err "repository skill name '$name' collides with a Codex built-in" ;;
+        esac
+        case "$SEEN_NAMES" in
+            *"|$name|"*) err "duplicate repository skill name '$name'" ;;
+            *) SEEN_NAMES="${SEEN_NAMES}${name}|" ;;
+        esac
     fi
 
-    # 4. description
-    local desc
-    desc=$(field description "$file")
-    local desc_bytes=${#desc}
-    if [ -z "$desc" ]; then
-        err "Missing 'description:' field in frontmatter"
-    elif [ $desc_bytes -gt $MAX_DESC ]; then
-        err "description is $desc_bytes bytes; codex max is $MAX_DESC"
-    elif [ $desc_bytes -gt $MAX_DESC_PRACTICAL ]; then
-        warn "description is $desc_bytes bytes; recommended ≤ $MAX_DESC_PRACTICAL to stay within the 2% context budget"
+    local description_bytes=${#description}
+    if [ -z "$description" ]; then
+        err "missing description"
+    elif [ "$description_bytes" -gt $MAX_DESC ]; then
+        err "description is $description_bytes bytes; maximum is $MAX_DESC"
+    elif [ "$description_bytes" -gt $MAX_DESC_PRACTICAL ]; then
+        warn "description is $description_bytes bytes; prefer at most $MAX_DESC_PRACTICAL"
     fi
 
-    # 5. Directory name matches name (informational only)
-    local dir_name
-    dir_name=$(basename "$(dirname "$file")")
-    if [ -n "$name" ] && [ "$dir_name" != "$name" ]; then
-        warn "directory '$dir_name' differs from frontmatter name '$name' (codex uses frontmatter)"
+    if [ "$line_count" -gt $MAX_LINES ]; then
+        err "SKILL.md is $line_count lines; split optional detail and keep at most $MAX_LINES"
     fi
 
-    if [ $ERRORS -eq $pre ]; then
-        echo "  ✅ ok ($desc_bytes byte description)"
+    local parent=${CURRENT_FILE%/*}
+    local directory=${parent##*/}
+    if [ -n "$name" ] && [ "$directory" != "$name" ]; then
+        warn "directory '$directory' differs from skill name '$name'"
+    fi
+
+    if [ -n "$extra_frontmatter" ]; then
+        warn "move optional UI/policy metadata to agents/openai.yaml"
+    fi
+
+    if [ "$VERBOSE" = "1" ] &&
+       [ "$ERRORS" -eq "$before_errors" ] &&
+       [ "$WARNINGS" -eq "$before_warnings" ]; then
+        printf '%s: ok (%s lines, %s-byte description)\n' \
+            "$CURRENT_FILE" "$line_count" "$description_bytes"
     fi
 }
 
 if [ "${1:-}" = "--all" ]; then
     REPO_ROOT=${REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
-    while IFS= read -r f; do
-        validate_one "$f"
-    done < <(find "$REPO_ROOT/.agents/skills" "$REPO_ROOT/api/.agents/skills" "$REPO_ROOT/web/.agents/skills" \
-        -name SKILL.md -not -path '*/.template/*' 2>/dev/null | sort)
+    while IFS= read -r file; do
+        validate_one "$file"
+    done < <(
+        find \
+            "$REPO_ROOT/.agents/skills" \
+            "$REPO_ROOT/api/.agents/skills" \
+            "$REPO_ROOT/web/.agents/skills" \
+            -name SKILL.md -not -path '*/.template/*' 2>/dev/null |
+            sort
+    )
 elif [ -n "${1:-}" ]; then
     validate_one "$1"
 else
@@ -110,16 +157,9 @@ else
     exit 2
 fi
 
-echo ""
-echo "================================================"
-echo "Validated $FILES SKILL.md file(s)"
-if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-    echo "✅ All clean"
-    exit 0
-elif [ $ERRORS -eq 0 ]; then
-    echo "⚠️  $WARNINGS warning(s)"
-    exit 0
-else
-    echo "❌ $ERRORS error(s), $WARNINGS warning(s)"
+printf 'Skill validation: %s files, %s errors, %s warnings\n' \
+    "$FILES" "$ERRORS" "$WARNINGS"
+
+if [ "$ERRORS" -gt 0 ]; then
     exit 1
 fi

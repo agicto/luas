@@ -1,10 +1,14 @@
-.PHONY: check governance api-check web-check dependency-scan sbom container-scan container-sbom
+.PHONY: check agent-check governance api-check web-check dependency-scan sbom container-scan container-sbom
 
 check: governance api-check web-check
 
-governance:
-	bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
-	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
+agent-check:
+	@bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
+	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
+	@bash .agents/skills/scripts/validate-skill.sh --all
+	@git diff --check
+
+governance: agent-check
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py
@@ -32,7 +36,6 @@ governance:
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-starter-catalog.py
 	bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
 	bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh
-	bash .agents/skills/scripts/validate-skill.sh --all
 
 api-check:
 	cd api && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
