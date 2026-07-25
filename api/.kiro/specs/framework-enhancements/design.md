@@ -2,13 +2,13 @@
 
 ## Overview
 
-本设计文档描述了 Luas 框架三个核心增强模块的技术架构：事件系统、模块化组织和测试工具。这些模块遵循 Go 语言最佳实践，与现有框架架构无缝集成。
+This document describes the technical architecture of three Luas framework enhancements: the event system, modular organization, and testing utilities. These modules follow Go best practices and integrate with the existing framework architecture.
 
 ### Design Goals
 
-1. **可观测性**: 通过事件系统提供业务流程的完整可见性
-2. **模块化**: 通过清晰的边界和依赖管理提升代码组织
-3. **可测试性**: 通过丰富的测试工具提升开发体验
+1. **Observability**: Provide complete visibility into business flows through the event system
+2. **Modularity**: Improve code organization through explicit boundaries and dependency management
+3. **Testability**: Improve developer experience through comprehensive testing utilities
 
 ## Architecture
 
@@ -853,4 +853,3 @@ tests/
 - Mock configuration and verification
 - Assertion accuracy
 - Test isolation
-

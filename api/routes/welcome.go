@@ -639,25 +639,25 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 		<section class="section reveal reveal-delay-1">
 			<div class="section-header">
 				<h2>Get productive in three moves</h2>
-				<p>首页不该把所有能力平铺出来。对新启动的项目，最关键的是确认服务、探索接口、然后开始改代码。</p>
+				<p>A starter home page should prioritize the next useful actions: verify the service, inspect the active interface, and start changing code.</p>
 			</div>
 			<div class="grid-three">
 				<article class="surface">
 					<div class="step-kicker">Step 01</div>
 					<h3>Verify the service</h3>
-					<p>先确认服务真的在跑，环境值加载正常，数据库和中间件链没有阻断启动。</p>
+					<p>Confirm that the service is running, configuration loaded correctly, and database or middleware setup did not block startup.</p>
 					<div class="command-snippet">GET {{APP_URL}}/v1/health</div>
 				</article>
 				<article class="surface">
 					<div class="step-kicker">Step 02</div>
 					<h3>Explore the default API</h3>
-					<p>默认 scaffold 已经带了认证、API key 管理和全局审计。先列出当前实际注册的路由，再决定增加什么 starter。</p>
+					<p>The default scaffold includes authentication, API key management, and global audit logging. Inspect the registered routes before adding another starter.</p>
 					<div class="command-snippet">go run ./cmd/luas route:list</div>
 				</article>
 				<article class="surface">
 					<div class="step-kicker">Step 03</div>
 					<h3>Generate the next module</h3>
-					<p>从完整模块脚手架起步，而不是零散补文件。单文件生成命令只用来修复现有模块，不用来起新模块。</p>
+					<p>Start with a complete module scaffold instead of assembling unrelated files. Use single-file generators only to extend an existing module.</p>
 					<div class="command-snippet">go run ./cmd/luas make:module Invoice</div>
 				</article>
 			</div>
@@ -666,23 +666,23 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 		<section class="section reveal reveal-delay-2">
 			<div class="section-header">
 				<h2>What ships in the default scaffold</h2>
-				<p>这里展示的是现在真正可用的 product surface，不再混入已经被移除的部署平台或控制面业务。</p>
+				<p>These are the product-neutral surfaces that are active now, without retired deployment-platform or control-plane behavior.</p>
 			</div>
 			<div class="starter-grid">
 				<article class="surface">
 					<div class="card-kicker">Starter</div>
 					<h3>User auth</h3>
-					<p>注册、登录、可撤销认证会话、当前用户资料和密码相关流程。适合作为几乎所有后台项目的最小业务起点。</p>
+					<p>Registration, login, revocable sessions, current-user profile, and password flows provide a practical baseline for most backend projects.</p>
 				</article>
 				<article class="surface">
 					<div class="card-kicker">Starter</div>
 					<h3>API key access</h3>
-					<p>机器访问场景的 key 创建、列表、撤销和中间件组。默认 scaffold 已经能服务自动化调用和服务到服务请求。</p>
+					<p>Key creation, listing, revocation, and middleware groups support automation and service-to-service access from the default scaffold.</p>
 				</article>
 				<article class="surface">
 					<div class="card-kicker">Starter</div>
 					<h3>Audit logging</h3>
-					<p>默认对写请求做全局审计，并给当前用户提供历史查询接口。这样安全回溯不再是业务项目后补的一层。</p>
+					<p>Write requests are audited globally and users can query their own history, making traceability part of the baseline instead of a downstream patch.</p>
 				</article>
 			</div>
 		</section>
@@ -690,28 +690,28 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 		<section class="section reveal reveal-delay-3">
 			<div class="section-header">
 				<h2>Know the shape of the app</h2>
-				<p>这是给 PM、Tech Lead 和新开发者的架构地图。首页应该帮助人形成 mental model，而不是只堆 feature badge。</p>
+				<p>This architecture map helps product managers, technical leads, and new developers build an accurate mental model instead of scanning feature badges.</p>
 			</div>
 			<div class="arch-grid">
 				<article class="arch-card">
 					<div class="arch-kicker">Core</div>
 					<h3>Runtime and infra</h3>
-					<p>Bootstrap、router、response、migration、testing 和 shared packages. 这些是每个 Luas 应用都会用到的底层能力。</p>
+					<p>Bootstrap, routing, responses, migrations, testing, and shared packages form the foundation used by every Luas application.</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Starter</div>
 					<h3>Business-ready defaults</h3>
-					<p><code>user</code>、<code>apikey</code> 和 <code>audit</code> 默认装配到新应用。它们通过 starter manifest 贡献模块、迁移和 seed。</p>
+					<p><code>user</code>, <code>apikey</code>, and <code>audit</code> are assembled by default. Their starter manifests contribute modules, migrations, and seeders.</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Capability</div>
 					<h3>Reusable technical seams</h3>
-					<p>像 AI 这种技术能力留在 capability 层，避免把外部集成和业务对象混成一个宽模块。</p>
+					<p>Technical capabilities such as AI stay in the capability layer so external integrations do not become broad business modules.</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Optional starter</div>
 					<h3>Keep expansion explicit</h3>
-					<p>RBAC 一类增强模块可以保留，但不会默认侵入 scaffold 主链。这样主仓库保持纯净，扩展也更诚实。</p>
+					<p>Enhancements such as RBAC remain available without entering the default scaffold path, keeping both the baseline and optional extensions honest.</p>
 				</article>
 			</div>
 		</section>
@@ -721,7 +721,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="route-card">
 					<div class="card-kicker">Default endpoints</div>
 					<h3>Ready-to-call routes</h3>
-					<p>这些是启动后最值得先验证的接口，能快速确认默认 starter 的行为面是否健康。</p>
+					<p>Verify these interfaces first after startup to confirm that the default starter behavior is healthy.</p>
 					<ul class="endpoint-list">
 						<li><span class="method">POST</span><code>/v1/register</code></li>
 						<li><span class="method">POST</span><code>/v1/login</code></li>
@@ -734,7 +734,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="route-card">
 					<div class="card-kicker">Direct links</div>
 					<h3>Fast paths for the next click</h3>
-					<p>把真正有决策价值的入口放在这里。不是所有链接都要上首页，只有最可能成为下一步动作的才应该出现。</p>
+					<p>Only decision-relevant destinations belong here. The home page should expose likely next actions, not every available link.</p>
 					<ul class="bullet-list">
 						<li><a href="/v1/health">Health endpoint</a><code>/v1/health</code></li>
 						<li><a href="/health/ready">Readiness probe</a><code>/health/ready</code></li>

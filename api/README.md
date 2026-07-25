@@ -1,40 +1,43 @@
-# Luas
+# Luas API
 
-> 面向模块化 Go API 的纯脚手架
+> A product-neutral scaffold for modular Go APIs
 
-Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定的项目结构、依赖注入、模块边界、统一响应、分页、迁移、测试工具和常用基础设施集成。
+Luas provides a stable backend project structure, dependency injection, explicit module boundaries,
+shared HTTP responses, pagination, migrations, testing utilities, and replaceable infrastructure.
+It is a framework and starter template, not a product application. The default assembly contains
+only the minimum useful authentication, API key, and audit starters; additional business starters
+must be enabled explicitly.
 
-这个仓库的定位是“框架与模板”，不是某个具体业务系统。默认只保留最小可用的认证、API key 和审计 starter，增强型业务模块和示例能力不再自动挂载到主应用。
+## Core Capabilities
 
-## 核心能力
+- DDD-friendly modular package structure and layered request flow.
+- Gin HTTP kernel with centralized route registration.
+- Wire dependency injection.
+- GORM persistence and versioned migrations.
+- Default `user`, `apikey`, and `audit` starters.
+- Provider-neutral AI capability with the `ai:chat` operator command.
+- Cancellable workflow queue capability with graceful worker shutdown.
+- Canonical API envelopes, dotted error codes, and request IDs.
+- Bounded pagination, validation, logging, revocable sessions, and middleware.
+- Test helpers and integration-test foundations.
+- Optional Redis cache adapter, email, OpenTelemetry, R2, and Sentry integrations.
 
-- 模块化目录结构，适合 DDD + 分层架构
-- Gin HTTP 服务入口与统一路由注册
-- Wire 依赖注入
-- GORM 数据访问与迁移体系
-- 内置 starter：`user`, `apikey`, `audit`
-- Provider-neutral AI capability 与内置 CLI `ai:chat`
-- 可取消、可安全关闭的 workflow queue capability 与 worker CLI
-- 统一 API 响应与错误处理
-- 分页、验证、日志、可撤销认证会话、中间件
-- 测试辅助工具与集成测试基线
-- 可选集成：需显式组装的 Redis cache adapter、邮件、OpenTelemetry、R2、Sentry
+## Quick Start
 
-## 快速开始
+### 1. Prerequisites
 
-### 1. 环境准备
+- Go 1.25.12 or later
+- PostgreSQL 12 or later
+- Redis only when a downstream application explicitly assembles the cache adapter or other shared
+  infrastructure
 
-- Go 1.25.12+
-- PostgreSQL 12+
-- Redis（仅在下游显式组装 cache adapter 或共享基础设施时需要）
-
-### 2. 初始化配置
+### 2. Configure The Process
 
 ```bash
 cp .env.example .env
 ```
 
-最少需要确认以下配置：
+Review at least these values:
 
 ```bash
 APP_NAME=Luas
@@ -50,30 +53,35 @@ DB_PASSWORD=postgres
 DB_NAME=luas
 ```
 
-`user`、`apikey`、`audit` 默认启用。组织、权限、通知、资产、设置和用量是可选 Starter；需要权限时给 HTTP
-进程、迁移任务和 seeder 任务统一设置完整依赖：
+`user`, `apikey`, and `audit` are enabled by default. Organization, permission, notification,
+asset, setting, usage, and webhook are optional starters. Every process that owns routes,
+migrations, seeders, or workers must use the same complete dependency set.
+
+Organization and permission:
 
 ```bash
 OPTIONAL_STARTERS=organization,permission
 ```
 
-组织 starter 已包含邀请、成员、所有权转移和活跃上下文闭环；权限 starter 提供组织范围的
-访问角色、精确授权、事务化分配和可替换 authorizer。见
-[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) 与
-[`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md)。
+The organization starter owns invitations, membership, ownership transfer, and active context.
+The permission starter adds organization-scoped access roles, exact grants, transactional
+assignments, and a replaceable authorizer. See
+[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) and
+[`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md).
 
-通知 starter 独立于组织边界，提供幂等发布、用户偏好、站内已读状态和租约驱动的邮件投递：
+Notifications:
 
 ```bash
 OPTIONAL_STARTERS=notification
 go run ./cmd/luas notification:work --batch=25 --poll=2s
 ```
 
-HTTP 进程、迁移任务和 worker 必须使用同一份 `OPTIONAL_STARTERS` 与邮件配置。见
-[`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) 与
-[`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md)。
+The notification starter owns idempotent publication, user preferences, in-app read state, and
+lease-driven email delivery. The HTTP process, migrations, and worker must use the same starter and
+email configuration. See [`docs/NOTIFICATIONS.md`](docs/NOTIFICATIONS.md) and
+[`../contracts/NOTIFICATIONS.md`](../contracts/NOTIFICATIONS.md).
 
-资产 starter 提供用户私有上传、内容基线检查、短期传输凭证、删除和清理闭环：
+Private assets:
 
 ```bash
 OPTIONAL_STARTERS=asset
@@ -81,42 +89,44 @@ ASSET_TRANSFER_SIGNING_KEY=replace-with-openssl-rand-hex-32
 go run ./cmd/luas asset:prune --batch=100
 ```
 
-开发环境默认使用受根目录约束的本地存储；生产启用资产时必须显式配置 R2，不能回退到容器
-文件系统。见 [`docs/ASSETS.md`](docs/ASSETS.md) 与
-[`../contracts/ASSETS.md`](../contracts/ASSETS.md)。
+Development uses root-confined local storage. Production deployments that enable assets must
+configure R2 explicitly and never fall back to the container filesystem. See
+[`docs/ASSETS.md`](docs/ASSETS.md) and [`../contracts/ASSETS.md`](../contracts/ASSETS.md).
 
-设置 starter 提供有限、代码定义的 app/组织/用户标量覆盖值；用量 starter 提供可信事件、UTC
-计数器、原子配额决策和只读摘要。二者都依赖组织 starter：
+Settings and usage:
 
 ```bash
 OPTIONAL_STARTERS=organization,setting
-# 或：OPTIONAL_STARTERS=organization,usage
+# Or: OPTIONAL_STARTERS=organization,usage
 ```
 
-用量事件通过 Go domain seam 或运维 CLI 写入，不提供浏览器/公开摄取接口，也不包含计费与套餐
-语义。见 [`docs/SETTINGS.md`](docs/SETTINGS.md)、[`docs/USAGE.md`](docs/USAGE.md) 与
-[`../contracts/USAGE.md`](../contracts/USAGE.md)。
+Settings provide a finite, code-defined catalog of app, organization, and user scalar overrides.
+Usage provides trusted events, UTC counters, atomic quota decisions, and read-only summaries.
+Usage events enter through a Go domain interface or operator command; no public browser ingestion,
+billing, plan, or pricing semantics are included. See [`docs/SETTINGS.md`](docs/SETTINGS.md),
+[`docs/USAGE.md`](docs/USAGE.md), and [`../contracts/USAGE.md`](../contracts/USAGE.md).
 
-### 3. 生成依赖注入代码
+### 3. Generate Dependency Injection
 
 ```bash
 make wire
 ```
 
-### 4. 启动 HTTP 服务
+### 4. Start The HTTP Server
 
 ```bash
 go run ./cmd/server
 ```
 
-默认监听地址是仅本机可访问的 `127.0.0.1:8025`：
+The default loopback listener is `127.0.0.1:8025`:
 
-- 应用首页：`http://127.0.0.1:8025/`
-- 健康检查：`http://127.0.0.1:8025/v1/health`
-- Readiness：`http://127.0.0.1:8025/health/ready`
-- Prometheus metrics：开发环境默认 `http://127.0.0.1:8025/metrics`；生产环境需显式设置 `METRICS_ENABLED=true` 并通过网络策略限制访问
+- Home: `http://127.0.0.1:8025/`
+- Health: `http://127.0.0.1:8025/v1/health`
+- Readiness: `http://127.0.0.1:8025/health/ready`
+- Prometheus metrics: `http://127.0.0.1:8025/metrics` in development. Production requires
+  `METRICS_ENABLED=true` and network-level access controls.
 
-### 5. 使用 CLI
+### 5. Use The Operator CLI
 
 ```bash
 go run ./cmd/luas version
@@ -128,7 +138,7 @@ go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
 go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
 
-## 常用命令
+## Common Commands
 
 ```bash
 make build
@@ -144,24 +154,28 @@ make vuln
 make air
 ```
 
-## 默认 HTTP 防护
+## Default HTTP Guardrails
 
-API HTTP kernel 默认启用以下 core guardrails：
+The API kernel enables these core protections by default:
 
-- `ListenAddress`：默认只绑定 `127.0.0.1`；容器镜像显式设置 `SERVER_HOST=0.0.0.0`
-- `TransportTimeouts`：header 读取 10 秒、完整请求读取 60 秒、响应写入 190 秒、keep-alive idle 120 秒
-- `HeaderLimit`：默认最多读取 64 KiB request headers
+- `ListenAddress`: binds to `127.0.0.1`; the container explicitly sets `SERVER_HOST=0.0.0.0`.
+- `TransportTimeouts`: 10-second header read, 60-second request read, 190-second response write,
+  and 120-second keep-alive idle timeout.
+- `HeaderLimit`: reads at most 64 KiB of request headers.
+- `RequestID`: returns `X-Request-ID` and the canonical `request_id` envelope field.
+- `Helmet`: emits baseline security response headers.
+- `BodyLimit`: defaults to 10 MB and returns `413 COMMON.REQUEST_TOO_LARGE` when exceeded.
+- `Timeout`: uses a 180-second cooperative request deadline and returns `503 COMMON.TIMEOUT` when
+  the handler respects its context and has not started a response.
+- `RateLimit`: enabled by default in production at `600/min` per client IP and returns
+  `429 COMMON.RATE_LIMITED` when exceeded.
+- `AuthAbuseGuard`: production login and password-reset paths use separate per-IP and per-subject
+  budgets.
+- `TrustedProxies`: forwarding headers are ignored unless the upstream appears in
+  `SERVER_TRUSTED_PROXIES`.
+- `CORS`: permits local browser shells by default; production must configure trusted origins.
 
-- `RequestID`：为响应和错误输出提供 `X-Request-ID` / `request_id`
-- `Helmet`：发送基础安全响应头
-- `BodyLimit`：默认 10MB，请求过大返回 `413` + `COMMON.REQUEST_TOO_LARGE`
-- `Timeout`：默认 180 秒 cooperative request timeout；handler 尊重 `context` 且未写响应时返回 `503` + `COMMON.TIMEOUT`
-- `RateLimit`：`APP_ENV=production` 时默认启用，每个 client IP 默认 `600/min`，超限返回 `429` + `COMMON.RATE_LIMITED`
-- `AuthAbuseGuard`：生产环境默认启用；登录和密码重置同时使用独立的 per-IP 与 per-subject 配额
-- `TrustedProxies`：默认不信任转发头，只有 `SERVER_TRUSTED_PROXIES` 明确列出的上游才能提供 client IP
-- `CORS`：默认只允许本地 Web shell，生产环境必须显式配置可信 origin
-
-可通过 `.env` 调整：
+Override the budgets through `.env`:
 
 ```bash
 SERVER_HOST=127.0.0.1
@@ -184,102 +198,113 @@ SERVER_TRUSTED_PROXIES=10.20.0.0/16
 CORS_ALLOW_ORIGINS=https://app.example.com
 ```
 
-`SERVER_HOST` 是真实 socket bind 地址，不只是 banner 文本。`SERVER_WRITE_TIMEOUT` 必须大于
-`MIDDLEWARE_REQUEST_TIMEOUT`，确保 cooperative timeout 有机会写出标准错误响应；只有明确由网关或
-流式端点拥有写入期限时才应设为 `0`。负数 transport 预算和矛盾的超时关系会在启动时失败。
+`SERVER_HOST` is the socket bind address, not banner text. `SERVER_WRITE_TIMEOUT` must exceed
+`MIDDLEWARE_REQUEST_TIMEOUT` so a cooperative timeout can write the standard error envelope. Set a
+write timeout of `0` only when a gateway or streaming endpoint explicitly owns that deadline.
+Negative transport budgets and contradictory timeout relationships fail startup validation.
 
-Timeout 不会在 goroutine 中抢占 Gin handler；它通过 request context deadline 让数据库、HTTP client、AI provider 等下游调用安全取消。全局与认证限流都使用有容量上限、无后台清理 goroutine 的进程内 fixed-window store，适合作为 scaffold 的单实例安全默认；多实例生产环境应在网关、WAF 或显式共享 adapter 中补充分布式限流，且不得在共享依赖故障时静默退回各实例独立计数。认证限流不会返回桶类型或剩余额度，且不能替代 MFA、风险识别和渐进式挑战。Compression 保留给部署/CDN 层或显式 middleware，不在默认 kernel 中重复压缩响应。
+Request timeouts do not preempt Gin handlers in another goroutine. They propagate a context
+deadline so database, HTTP client, and AI provider calls can cancel safely. Global and auth rate
+limits use bounded in-process fixed-window stores. Multi-instance deployments must enforce shared
+limits at a gateway, WAF, or explicit shared adapter and must not silently fall back to independent
+instance counters when that dependency fails. Auth limits do not expose bucket details and do not
+replace MFA, risk detection, or progressive challenges. Compression belongs to the deployment/CDN
+layer or an explicitly assembled middleware. See [`docs/MIDDLEWARE.md`](docs/MIDDLEWARE.md).
 
-完整 middleware 分类见 [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md)。
+## Database-Disabled Mode
 
-## 数据库禁用模式
+`DB_ENABLED=false` starts the API without opening a database connection. This mode supports checks
+of root, health, metrics, route assembly, and downstream extraction. Default starter routes remain
+registered, so authentication and validation may return their own errors first; any operation that
+reaches persistence returns `503 COMMON.SERVICE_UNAVAILABLE` instead of panicking on a nil GORM
+connection. Audit writes remain best-effort and cannot replace an already-generated primary
+response.
 
-`DB_ENABLED=false` 允许 API 在不创建数据库连接时启动，便于检查 root、health、metrics、
-路由装配和下游抽取结果。默认 starter 路由仍然注册；认证、参数约束和输入校验可以先返回
-各自的错误，但任何真正触达持久化的操作都会返回 `503` +
-`COMMON.SERVICE_UNAVAILABLE`，不会因为 nil GORM 连接 panic。audit 写入保持 best-effort，
-失败只记录告警，不得覆盖已经生成的主响应。
+This mode represents dependency degradation, not starter readiness. `/health/live` remains live,
+while `/health/ready` reports the database as down with `503`. Production deployments that retain
+database-backed starters must enable PostgreSQL. Only a downstream application that removes every
+database-backed starter may treat database-disabled execution as complete operation.
 
-该模式表示依赖降级，不表示默认 starter 可用。`/health/live` 继续存活，
-`/health/ready` 会因 database 状态为 down 而返回 `503`。保留默认 starter 的生产部署应启用
-并连接数据库；只有已经删除所有 DB-backed starter 的下游应用才应把无数据库运行视为完整模式。
+Workflow driver ownership, payload rules, shutdown behavior, and production replacement guidance
+are documented in [`docs/WORKFLOW.md`](docs/WORKFLOW.md). The `memory` driver is a bounded,
+in-process, non-durable queue and cannot move work between replicas.
 
-Workflow 的 `sync` / `memory` 驱动定位、payload 所有权、关闭语义和生产替换边界见
-[docs/WORKFLOW.md](docs/WORKFLOW.md)。`memory` 驱动是有界、进程内、非持久队列，不支持多副本之间的任务传递。
-
-## 项目结构
+## Project Structure
 
 ```text
 luas/api/
-├── cmd/
-│   ├── server/               # HTTP 服务入口
-│   └── luas/                  # CLI 入口
-├── internal/
-│   ├── app/                  # 应用聚合对象
-│   ├── bootstrap/            # 启动与生命周期
-│   ├── domain/               # 领域对象与领域错误
-│   ├── infra/                # 通用基础设施
-│   ├── modules/              # 业务模块
-│   └── wiring/               # Wire DI
-├── pkg/                      # 通用公共包
-├── routes/                   # 全局路由入口
-├── database/
-│   ├── migrations/           # 数据迁移
-│   └── seeders/              # 数据初始化
-└── tests/
-    ├── feature/
-    ├── integration/
-    └── unit/
+|-- cmd/
+|   |-- server/               # HTTP server entry point
+|   `-- luas/                 # Operator CLI entry point
+|-- internal/
+|   |-- app/                  # Application aggregate
+|   |-- bootstrap/            # Startup and lifecycle
+|   |-- domain/               # Domain objects and errors
+|   |-- infra/                # Shared infrastructure
+|   |-- modules/              # Business starters
+|   `-- wiring/               # Wire dependency injection
+|-- pkg/                      # Public reusable packages
+|-- routes/                   # Global route entry point
+|-- database/
+|   |-- migrations/           # Database migrations
+|   `-- seeders/              # Data initialization
+`-- tests/
+    |-- feature/
+    |-- integration/
+    `-- unit/
 ```
 
-## 模块约定
+## Module Conventions
 
-默认模块边界：
+Default and optional ownership boundaries:
 
-- `internal/modules/user` 是默认认证 starter，会参与默认路由、迁移和数据初始化
-- `internal/modules/apikey` 是默认 API key starter，会参与默认路由和迁移，并提供 `api_key` 中间件组
-- `internal/modules/audit` 是默认审计 starter，会记录全局写请求，并提供当前用户的审计历史查询
-- `internal/modules/asset` 是可选用户资产 starter，负责所有权、元数据、检查、生命周期和删除；对象字节通过 storage capability 管理
+- `internal/modules/user`: default authentication starter with routes, migrations, and seeders.
+- `internal/modules/apikey`: default API key starter with routes, migrations, and the `api_key`
+  middleware group.
+- `internal/modules/audit`: default audit starter for global write capture and current-user history.
+- `internal/modules/asset`: optional private asset starter for ownership, metadata, inspection,
+  lifecycle, and deletion; object bytes remain owned by the storage capability.
 
-业务模块建议遵循 8 文件结构：
+A business starter normally follows this eight-file structure:
 
 ```text
 internal/modules/<module>/
-├── model.go
-├── dto.go
-├── repository.go
-├── service.go
-├── handler.go
-├── routes.go
-├── provider.go
-└── service_test.go
+|-- model.go
+|-- dto.go
+|-- repository.go
+|-- service.go
+|-- handler.go
+|-- routes.go
+|-- provider.go
+`-- service_test.go
 ```
 
-分层流向：
+Layer flow:
 
 ```text
 Handler -> Service -> Repository -> Database
 DTO -> Domain -> PO
 ```
 
-约束建议：
+- Handlers own parameter binding, authorization context, and response output.
+- Services own business rules and error semantics.
+- Repositories own conversion between persistence objects and domain objects.
+- HTTP responses use `pkg/response`.
+- List endpoints use the shared pagination contract.
 
-- `handler` 负责参数绑定、鉴权上下文和响应输出
-- `service` 负责业务规则和错误语义
-- `repository` 负责 PO 与 domain 的边界转换
-- API 统一走 `pkg/response`
-- 列表接口统一使用分页
+## Configuration Lifecycle
 
-## 配置生命周期
+`internal/infra/config.Config` is the API's only typed configuration authority. Startup loads and
+validates one immutable snapshot in this order: process environment, `LUAS_ENV_FILE`,
+environment-local file, local file, environment file, base `.env`, then code defaults.
+Configuration changes require a process restart; `make air` rebuilds and restarts during local
+development.
 
-`internal/infra/config.Config` 是 API 唯一的强类型配置权威。进程启动时按“系统环境变量、
-`LUAS_ENV_FILE`、环境本地文件、本地文件、环境文件、基础 `.env`、代码默认值”的顺序
-生成并校验一次配置快照；配置变化需要重启进程，开发时 `make air` 会完成重建和重启。
+Luas does not expose a secret-bearing configuration cache or runtime `.env` reload that cannot
+atomically rebuild the dependency graph. See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for
+the complete precedence rules, extension guidance, and `doctor` diagnostics.
 
-Luas 不提供会泄露密钥的配置缓存，也不提供无法原子重建依赖图的 `.env` 运行时热更新。
-完整优先级、扩展规范和 `doctor` 诊断方式见 [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md)。
-
-## 测试
+## Testing
 
 ```bash
 make test
@@ -289,12 +314,12 @@ go test ./tests/feature/...
 go test ./tests/integration/...
 ```
 
-Kest flow 入口：
+Kest flow entry points:
 
 - `tests/kest/auth.flow.md`
 - `tests/kest/api_keys.flow.md`
 
-本地一键运行：
+Run locally:
 
 ```bash
 make test-kest
@@ -303,9 +328,9 @@ make test-kest
 
 ## AI Capability
 
-脚手架内置了 provider-neutral 的 `internal/capabilities/ai` 技术能力层，当前提供 OpenAI Responses API 适配器。该能力默认关闭，不拥有 Prompt、会话、run、计费等产品语义。
-
-最小配置：
+`internal/capabilities/ai` is a provider-neutral technical capability with an OpenAI Responses API
+adapter. It is disabled by default and does not own prompts, conversations, runs, billing, or other
+product semantics.
 
 ```bash
 AI_ENABLED=true
@@ -314,24 +339,23 @@ AI_DEFAULT_MODEL=provider-model
 OPENAI_API_KEY=replace-me
 ```
 
-命令示例：
-
 ```bash
 go run ./cmd/luas ai:chat "Write a short project summary"
 go run ./cmd/luas ai:chat --system="Answer in JSON" --model=provider-model "List 3 scaffold priorities"
 ```
 
-完整的超时、输入/响应上限、错误隐私、streaming 与下游 AI workspace 边界见 [`docs/AI.md`](docs/AI.md)。
+Timeouts, input and output bounds, private errors, streaming behavior, and the downstream AI
+workspace boundary are documented in [`docs/AI.md`](docs/AI.md).
 
 ## API Key Starter
 
-脚手架默认内置 API key 管理模块，提供：
+The default API key starter exposes:
 
 - `GET /v1/api-keys`
 - `POST /v1/api-keys`
 - `DELETE /v1/api-keys/:id`
 
-并自动注册 `api_key` 中间件组与 `key` alias，业务模块可以直接使用：
+It registers the `api_key` middleware group and `key` alias:
 
 ```go
 r.Group("/v1", func(api *router.Router) {
@@ -340,53 +364,55 @@ r.Group("/v1", func(api *router.Router) {
 })
 ```
 
-## 可选集成
+## Optional Integrations
 
-这些能力保留在仓库中，但都应该被视为可选基础设施，而不是脚手架默认业务身份：
+These packages are optional infrastructure, not the scaffold's business identity:
 
-- Redis cache adapter：只提供 `cache.Store` 实现，需要下游显式创建 client 并注入；仓库没有会自动生效的 `REDIS_*` 配置，也不包含 Redis 限流 driver
-- `Sentry`
-- `OpenTelemetry`
-- `Resend` 邮件 capability：10 秒默认 provider timeout、64 KiB 响应上限和 context 取消；边界见 [docs/EMAIL.md](docs/EMAIL.md)
-- `R2` 对象存储 capability：AWS SDK for Go v2、短期签名传输和私密错误边界；由可选 asset starter 赋予业务生命周期，见 [docs/ASSETS.md](docs/ASSETS.md)
+- Redis cache adapter: implements `cache.Store`; downstream assembly owns the client and injection.
+  No `REDIS_*` configuration silently activates it, and it is not a rate-limit driver.
+- Sentry.
+- OpenTelemetry.
+- Resend email capability: 10-second provider timeout, 64 KiB response limit, and context
+  cancellation. See [`docs/EMAIL.md`](docs/EMAIL.md).
+- R2 object storage capability: AWS SDK for Go v2, short-lived signed transfers, and private error
+  boundaries. The optional asset starter adds business lifecycle. See
+  [`docs/ASSETS.md`](docs/ASSETS.md).
 
-如果你的项目不需要这些能力，可以只保留核心 HTTP、配置、数据库、路由和模块层。
+Downstream applications that do not need these integrations can retain only the core HTTP,
+configuration, database, routing, and module layers.
 
-## 部署
+## Deployment
 
-仓库提供 production-oriented API image、本地开发 Compose 和独立容器 smoke CI。完整契约见
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。`docker-compose.yml` 只用于本地开发，不是生产部署清单：
+The repository provides a production-oriented API image, local development Compose, and dedicated
+container smoke CI. See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md). `docker-compose.yml` is a local
+development topology, not a production manifest:
 
 ```bash
 docker compose up --build --wait
 docker compose down
 ```
 
-构建配置：
+- `Dockerfile`: pins frontend, Go builder, and distroless runtime images by version and digest;
+  the runtime is non-root and contains no `.env` file.
+- `.dockerignore`: excludes local binaries, test binaries, logs, coverage, and development artifacts.
+- `health:check`: provides a loopback liveness probe without shell or curl dependencies.
+- `LOG_STDOUT=true` and `LOG_FILE_ENABLED=false`: emit JSON request logs to stdout.
+- `make container-check`: verifies BuildKit materials, OCI identity, startup, probes, logs,
+  environment leakage, and SIGTERM handling.
+- `make compose-check`: verifies PostgreSQL, startup migrations, readiness, and selected starters.
+- `.github/workflows/container.yml`: runs the smoke test and Trivy gate and retains build metadata
+  and the image SBOM.
 
-- `Dockerfile`：Dockerfile frontend、Go builder、distroless runtime 均锁定精确版本和 digest，runtime non-root 且不内嵌任何 `.env`
-- `.dockerignore`：排除本地 binary、`*.test`、日志、覆盖率和开发资料
-- `health:check`：镜像内置的 loopback liveness probe，不依赖 shell/curl
-- `LOG_STDOUT=true` + `LOG_FILE_ENABLED=false`：容器请求日志输出 JSON 到 stdout
-- `make container-check`：校验 BuildKit materials/OCI identity，并真实验证启动、探针、日志、env 泄漏和 SIGTERM
-- `make compose-check`：真实 PostgreSQL、启动迁移、readiness 和已选择 starter 的端到端验证
-- `.github/workflows/container.yml`：API/container 变更时执行相同 smoke test、Trivy gate，并保留 build metadata 与 image SBOM
-- 可选镜像发布工作流可以使用 buildx + `cache-from/to: type=gha` 共享 Docker 层缓存
-- 可选平台部署需要配置对应平台的 API token Secret
+Image publication, registry ownership, secret injection, and deployment automation remain
+downstream decisions. Build inputs, CycloneDX 1.7, vulnerability gates, and the downstream Cosign
+boundary are documented in [`../docs/CONTAINER_SECURITY.md`](../docs/CONTAINER_SECURITY.md).
 
-本轮本地 Docker Desktop 基线中，修复前构建上下文为 `40.99 MB`，修复后首次完整传输为
-`87.65 kB`；镜像从 `24,942,104` bytes 变为 `24,944,318` bytes（增加 2,214 bytes，约
-0.009%），换取内置健康检查和安全运行契约。这是本机 build evidence，不是跨平台镜像预算。
-是否公开镜像、使用哪个 registry、如何注入 secrets、是否自动部署，均由具体项目决定。
-镜像输入、CycloneDX 1.7、漏洞门禁和下游 Cosign 边界见
-[../docs/CONTAINER_SECURITY.md](../docs/CONTAINER_SECURITY.md)。
+## Design Principles
 
-## 设计原则
-
-- 根仓库只表达脚手架能力，不表达具体业务产品
-- 模块边界清晰，优先保证可替换和可测试
-- 默认配置最小化，额外能力显式开启
-- 框架自身必须遵守自己定义的模块规范
+- The root repository describes scaffold capabilities, not a specific product.
+- Module boundaries optimize for replacement and focused testing.
+- Defaults remain minimal; additional capabilities require explicit assembly.
+- The framework follows the same module rules it asks downstream applications to follow.
 
 ## License
 

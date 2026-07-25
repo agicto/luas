@@ -58,8 +58,8 @@ Each module contains:
 ```typescript
 // modules/common/zh-Hans.ts
 const messages = {
-  loading: '加载中...',
-  newKey: '新的键', // Add here
+  loading: 'Loading...',
+  newKey: 'New key', // Add here
 } as const;
 ```
 
@@ -80,8 +80,8 @@ const messages = {
 2. Create `zh-Hans.ts`:
 ```typescript
 const messages = {
-  key1: '键1',
-  key2: '键2',
+  key1: 'Key 1',
+  key2: 'Key 2',
 } as const;
 export default messages;
 export type ModuleNameMessages = typeof messages;
@@ -126,7 +126,7 @@ export const locales = ['zh-Hans', 'en-US', 'ja-JP'] as const;
 
 export const localeNames: Record<Locale, string> = {
   // ...existing
-  'ja-JP': '日本語',
+  'ja-JP': 'Japanese',
 };
 
 export const localeMapping: Record<string, Locale> = {
@@ -271,17 +271,17 @@ Run `pnpm lint:i18n-copy`. The standard `pnpm lint` command includes this guard.
 
 ```tsx
 // If you add a key with variables in zh-Hans.ts:
-// greeting: '你好，{name}！欢迎回来。'
+// greeting: 'Hello, {name}! Welcome back.'
 
 const t = useT();
-t('common.greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+t('common.greeting', { name: 'Alex' }); // -> "Hello, Alex! Welcome back."
 // or
-t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+t.common('greeting', { name: 'Alex' }); // -> "Hello, Alex! Welcome back."
 
 // Compile-time errors: missing, misspelled, or extra variables.
 t('common.greeting');
-t('common.greeting', { user: '张三' });
-t('common.greeting', { name: '张三', tenant: 'Luas' });
+t('common.greeting', { user: 'Alex' });
+t('common.greeting', { name: 'Alex', tenant: 'Luas' });
 ```
 
 ### Switching Locale Programmatically

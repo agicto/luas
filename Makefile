@@ -5,6 +5,7 @@ check: governance api-check web-check web-spa-check
 agent-check:
 	@bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
+	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-english-source.py
 	@bash .agents/skills/scripts/validate-skill.sh --all
 	@git diff --check
 

@@ -115,7 +115,7 @@ All guards live under `luas-framework-review/scripts/`.
 
 | Changed surface | Guard |
 |---|---|
-| Vocabulary and local links | `check-vocabulary.sh`, `check-doc-links.py` |
+| Vocabulary, English source, and local links | `check-vocabulary.sh`, `check-english-source.py`, `check-doc-links.py` |
 | Shared errors and route discovery | `check-error-contracts.py`, `check-route-contract-discovery.py` |
 | Auth/API keys/permissions | `check-auth-contract-boundary.py`, `check-api-key-boundary.py`, `check-permission-boundary.py` |
 | Audit/notifications/assets/settings/usage/webhooks | `check-audit-boundary.py`, `check-notification-boundary.py`, `check-asset-boundary.py`, `check-setting-boundary.py`, `check-usage-boundary.py`, `check-webhook-boundary.py` |

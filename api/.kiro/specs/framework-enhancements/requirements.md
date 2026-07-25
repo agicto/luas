@@ -2,20 +2,20 @@
 
 ## Introduction
 
-本文档定义了 Luas 框架三个核心增强模块的需求：事件系统（Event System）、模块化组织（Modular Organization）和测试工具（Testing Utilities）。这些增强旨在提升框架的可观测性、代码边界清晰度和测试体验。
+This document defines the requirements for three Luas framework enhancements: the Event System, Modular Organization, and Testing Utilities. These enhancements improve observability, architectural boundaries, and the testing experience.
 
 ## Glossary
 
-- **Event_System**: 领域事件的发布-订阅系统，支持同步和异步事件分发
-- **Event_Bus**: 事件总线，负责事件的路由和分发
-- **Event_Handler**: 事件处理器，响应特定事件的回调函数
-- **Event_Subscriber**: 事件订阅者，注册监听特定事件类型的组件
-- **Module_Registry**: 模块注册表，管理所有已注册模块的元数据
-- **Module_Boundary**: 模块边界，定义模块的公开接口和内部实现
-- **Test_Suite**: 测试套件，组织和运行相关测试的容器
-- **Test_Fixture**: 测试夹具，提供测试所需的预配置环境
-- **Mock_Builder**: Mock 构建器，用于创建测试替身的工具
-- **Assertion_Helper**: 断言助手，提供丰富的测试断言方法
+- **Event_System**: A publish-subscribe system for domain events with synchronous and asynchronous dispatch
+- **Event_Bus**: The event router and dispatcher
+- **Event_Handler**: A callback that responds to a specific event
+- **Event_Subscriber**: A component that registers handlers for specific event types
+- **Module_Registry**: The central store for registered module metadata
+- **Module_Boundary**: The public interface and hidden implementation boundary of a module
+- **Test_Suite**: A container that organizes and runs related tests
+- **Test_Fixture**: A preconfigured environment required by a test
+- **Mock_Builder**: A utility for creating test doubles
+- **Assertion_Helper**: A collection of expressive test assertions
 
 ## Requirements
 
@@ -129,7 +129,7 @@
 
 #### Acceptance Criteria
 
-1. THE Test_Fixture SHALL support creating pre-configured database connections (in-memory SQLite)
+1. THE Test_Fixture SHALL support creating preconfigured connections to an isolated PostgreSQL test database
 2. THE Test_Fixture SHALL support creating pre-configured HTTP test servers
 3. THE Test_Fixture SHALL support automatic cleanup after test completion
 4. THE Test_Fixture SHALL support fixture composition for complex test scenarios
@@ -182,4 +182,3 @@
 3. THE Test_Suite SHALL support cleaning up test data between tests
 4. THE Test_Suite SHALL support parallel test execution with isolated databases
 5. WHEN running integration tests, THE Test_Suite SHALL provide transaction rollback support
-

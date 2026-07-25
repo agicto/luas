@@ -388,7 +388,7 @@ def main() -> int:
     require_all(
         failures,
         "web/src/i18n/modules/console/zh-Hans.ts",
-        ("契约兼容的生产端点或适配器",),
+        ("apiBefore:", "apiAfter:", "next-intl"),
     )
     require_all(
         failures,

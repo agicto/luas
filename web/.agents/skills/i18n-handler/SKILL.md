@@ -141,10 +141,10 @@ src/i18n/modules/[module]/
 
 ```typescript
 const messages = {
-  title: '标题',
-  description: '描述',
+  title: 'Title',
+  description: 'Description',
   nested: {
-    item: '嵌套项目',
+    item: 'Nested item',
   },
 } as const;
 
@@ -192,12 +192,12 @@ When adding a new page or feature:
 
 ```tsx
 // In zh-Hans.ts:
-// greeting: '你好，{name}！欢迎回来。'
+// greeting: 'Hello, {name}! Welcome back.'
 
 const t = useT();
-t('common.greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+t('common.greeting', { name: 'Alex' }); // -> "Hello, Alex! Welcome back."
 // or
-t.common('greeting', { name: '张三' }); // -> "你好，张三！欢迎回来。"
+t.common('greeting', { name: 'Alex' }); // -> "Hello, Alex! Welcome back."
 ```
 
 The values object is key-specific. Missing, misspelled, or extra variables fail type checking, including extra properties passed through a previously declared object. Keys without ICU variables do not accept a values object.

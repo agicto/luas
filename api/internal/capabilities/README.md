@@ -1,87 +1,77 @@
 # Capabilities
 
-> **Capabilities Layer - 技术能力层**
+> **Technical capability layer**
 
-`capabilities` 提供**可复用、与业务工作流无关的技术处理能力**。它们是 Luas 的 technical
-capabilities: 可被 modules、infra 或 assembly 代码调用，但自身不拥有 HTTP 路由、产品流程或持久化工作流。
+`capabilities` provides reusable technical processing that is independent of business workflows.
+Modules, infrastructure, and assembly code may call these capabilities, but a capability does not
+own HTTP routes, product flows, or persistent workflows.
 
----
+## Architecture Position
 
-## 架构位置
-
-```
-internal/modules ───────┐
+```text
+internal/modules -------+
                         v
-internal/infra    → internal/capabilities → pkg
+internal/infra --> internal/capabilities --> pkg
 ```
 
 Import direction follows [`../../docs/PACKAGE_BOUNDARIES.md`](../../docs/PACKAGE_BOUNDARIES.md):
-capabilities may depend on `pkg/` and standard libraries, but must not depend on `internal/infra/`
-or `internal/modules/`.
+capabilities may depend on `pkg/` and the standard library, but must not depend on
+`internal/infra/` or `internal/modules/`.
 
----
+## Available Capabilities
 
-## 可用能力
+| Capability | Package | Description |
+| --- | --- | --- |
+| **idgen** | `capabilities/idgen` | UUID, Snowflake, and NanoID generation |
+| **crypto** | `capabilities/crypto` | Encryption, decryption, hashing, and password utilities |
+| **ai** | `capabilities/ai` | Provider-neutral, bounded AI execution with an OpenAI Responses API adapter |
 
-| 能力 | 包路径 | 说明 |
-|------|--------|------|
-| **idgen** | `capabilities/idgen` | ID 生成（UUID、Snowflake、NanoID） |
-| **crypto** | `capabilities/crypto` | 加密解密、哈希、密码 |
-| **ai** | `capabilities/ai` | Provider-neutral、有界的 AI 执行能力，内置 OpenAI Responses API 适配器 |
-
----
-
-## 使用示例
+## Example
 
 ```go
 import (
-    "github.com/zgiai/luas/api/internal/capabilities/idgen"
     "github.com/zgiai/luas/api/internal/capabilities/crypto"
+    "github.com/zgiai/luas/api/internal/capabilities/idgen"
 )
 
-// ID 生成
-id := idgen.UUID()        // UUID v4
-id := idgen.Snowflake()   // 雪花算法
-id := idgen.NanoID()      // NanoID
-id := idgen.ShortID()     // 短 ID
+// ID generation
+uuid := idgen.UUID()             // UUID v4
+snowflake := idgen.Snowflake()   // Snowflake ID
+nanoID := idgen.NanoID()         // NanoID
+shortID := idgen.ShortID()       // Short ID
 
-// 加密解密
+// Encryption and decryption
 enc := crypto.NewAESEncryptorFromString("secret-key")
-ciphertext, _ := enc.EncryptString("敏感数据")
+ciphertext, _ := enc.EncryptString("sensitive data")
 plaintext, _ := enc.DecryptString(ciphertext)
 
-// 密码哈希
+// Password hashing
 hash, _ := crypto.HashPassword("password")
 ok := crypto.VerifyPassword("password", hash)
 
-// HMAC 签名
-sig := crypto.HMACSHA256Hex("data", "key")
+// HMAC signing
+signature := crypto.HMACSHA256Hex("data", "key")
 ```
 
----
+## Design Rules
 
-## 设计原则
+### Do
 
-### ✅ 应该做的
+- Provide one explicit technical capability.
+- Name interfaces with a verb and object, such as `Encrypt()` or `Generate()`.
+- Hide implementation details from callers.
+- Depend only on the standard library, `pkg/`, or subpackages of the same capability.
 
-- 提供**单一、明确的技术能力**
-- 接口命名用**动词 + 对象**（如 `Encrypt()`, `Generate()`）
-- 向上层隐藏实现细节
-- 只依赖标准库、`pkg/` 或本 capability 自己的子包
+### Do Not
 
-### ❌ 不允许做的
+- Add business decisions or workflow rules.
+- Own HTTP routes, product flows, or starter registration.
+- Depend on `internal/infra/` or `internal/modules/`.
+- Become an undifferentiated `utils`, `helpers`, or `common` package.
 
-- 包含业务逻辑或业务判断
-- 拥有 HTTP 路由、产品流程或 starter 注册
-- 依赖 `infra` 层
-- 依赖 `modules` 层
-- 成为 utils/helpers/common
+## Adding A Capability
 
----
-
-## 添加新能力
-
-1. 在 `capabilities/` 下创建新目录
-2. 定义接口 + 实现
-3. 添加测试
-4. 更新本 README
+1. Create a focused directory under `capabilities/`.
+2. Define the interface and implementation.
+3. Add focused tests.
+4. Update this README.
