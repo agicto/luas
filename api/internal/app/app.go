@@ -21,6 +21,7 @@ type Application struct {
 	Migrator               *migration.Migrator
 	Starters               *starter.Registry
 	AuditRecorder          domain.AuditLogRecorder
+	AuditMaintainer        domain.AuditLogMaintainer
 	AuthenticationSessions domain.AuthenticationSessionMaintainer
 	NotificationPublisher  domain.NotificationPublisher
 	NotificationDispatcher domain.NotificationDispatcher

@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,6 +28,11 @@ func (m *mockRepository) FindByUserID(ctx context.Context, userID uint, filter d
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
 	return args.Get(0).([]*domain.AuditLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *mockRepository) PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error) {
+	args := m.Called(ctx, before, batch)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 func TestServiceRecordDerivesActionAndActor(t *testing.T) {
@@ -71,6 +77,34 @@ func TestServiceListForUser(t *testing.T) {
 	assert.Len(t, items, 1)
 	assert.Equal(t, int64(1), total)
 	repo.AssertExpectations(t)
+}
+
+func TestServicePruneAuditLogsUsesBoundedPastCutoff(t *testing.T) {
+	repo := new(mockRepository)
+	svc := NewService(repo)
+	ctx := context.Background()
+	before := time.Now().UTC().Add(-90 * 24 * time.Hour).Truncate(time.Second)
+
+	repo.On("PruneBefore", ctx, before, 500).Return(int64(37), nil)
+
+	count, err := svc.PruneAuditLogs(ctx, before, 500)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(37), count)
+	repo.AssertExpectations(t)
+
+	for _, invalid := range []struct {
+		before time.Time
+		batch  int
+	}{
+		{before: time.Time{}, batch: 500},
+		{before: time.Now().UTC().Add(time.Hour), batch: 500},
+		{before: before, batch: 0},
+		{before: before, batch: maxAuditPruneBatch + 1},
+	} {
+		_, err = svc.PruneAuditLogs(ctx, invalid.before, invalid.batch)
+		assert.ErrorIs(t, err, domain.ErrInvalidInput)
+	}
 }
 
 func TestServiceRecordMergesBusinessChangeFromContext(t *testing.T) {

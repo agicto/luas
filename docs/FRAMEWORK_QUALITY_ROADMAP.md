@@ -1112,7 +1112,7 @@ Recommended slice:
 3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py`.
 4. Keep the delivered `notification` starter user-scoped, idempotent, lease-driven, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py`.
 5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py`.
-6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py`.
+6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py`; split the app/user base from its organization extension and converge integration tests on PostgreSQL before considering default promotion.
 7. Keep the delivered `usage` starter finite, trusted, idempotent, atomic, retention-bounded, and covered by `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py`.
 8. Keep the delivered `webhook` starter organization-owned, finite, signed, SSRF-resistant, lease-safe, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-webhook-boundary.py`.
 9. Run semantic discovery for an optional AI workspace next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.

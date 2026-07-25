@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -91,4 +92,27 @@ func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domai
 		items[i] = rows[i].toDomain()
 	}
 	return items, total, nil
+}
+
+// PruneBefore deletes one deterministic PostgreSQL batch without holding an unbounded transaction.
+func (r *repository) PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	result := db.Exec(`
+		WITH candidates AS (
+			SELECT id
+			FROM audit_logs
+			WHERE created_at < ?
+			ORDER BY created_at ASC, id ASC
+			LIMIT ?
+			FOR UPDATE SKIP LOCKED
+		)
+		DELETE FROM audit_logs
+		USING candidates
+		WHERE audit_logs.id = candidates.id
+	`, before.UTC(), batch)
+	return result.RowsAffected, result.Error
 }

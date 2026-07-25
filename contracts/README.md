@@ -36,6 +36,9 @@ secret rotation, durable retry/replay, and the privacy-minimized delivery ledger
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 
+The default user-scoped mutation history, privacy-minimized audit metadata, bounded filters, and
+explicit retention command are defined in [`AUDIT.md`](AUDIT.md).
+
 ## Contract Discovery
 
 These reviewed Markdown contracts own HTTP semantics. The API's runtime route catalog complements

@@ -118,7 +118,7 @@ All guards live under `luas-framework-review/scripts/`.
 | Vocabulary and local links | `check-vocabulary.sh`, `check-doc-links.py` |
 | Shared errors and route discovery | `check-error-contracts.py`, `check-route-contract-discovery.py` |
 | Auth/API keys/permissions | `check-auth-contract-boundary.py`, `check-api-key-boundary.py`, `check-permission-boundary.py` |
-| Notifications/assets/settings/usage/webhooks | `check-notification-boundary.py`, `check-asset-boundary.py`, `check-setting-boundary.py`, `check-usage-boundary.py`, `check-webhook-boundary.py` |
+| Audit/notifications/assets/settings/usage/webhooks | `check-audit-boundary.py`, `check-notification-boundary.py`, `check-asset-boundary.py`, `check-setting-boundary.py`, `check-usage-boundary.py`, `check-webhook-boundary.py` |
 | AI/email | `check-ai-boundary.py`, `check-email-boundary.py` |
 | Rate limits/cache/PostgreSQL-only database policy/config/telemetry | `check-rate-limit-boundary.py`, `check-cache-boundary.py`, `check-database-boundary.py`, `check-config-authority.py`, `check-sensitive-telemetry.py` |
 | Web performance/security/primitives | `check-web-performance-boundary.py`, `check-web-security-boundary.py`, `check-web-ui-primitive-boundary.py` |

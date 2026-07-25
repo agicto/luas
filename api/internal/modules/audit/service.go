@@ -3,6 +3,7 @@ package audit
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/pkg/redact"
@@ -12,6 +13,7 @@ import (
 type Service interface {
 	Record(ctx context.Context, entry *domain.AuditLog) error
 	ListForUser(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error)
+	PruneAuditLogs(ctx context.Context, before time.Time, batch int) (int64, error)
 }
 
 type service struct {
@@ -19,9 +21,12 @@ type service struct {
 }
 
 var (
-	_ Service                 = (*service)(nil)
-	_ domain.AuditLogRecorder = (*service)(nil)
+	_ Service                   = (*service)(nil)
+	_ domain.AuditLogRecorder   = (*service)(nil)
+	_ domain.AuditLogMaintainer = (*service)(nil)
 )
+
+const maxAuditPruneBatch = 10_000
 
 // NewService creates a new audit service.
 func NewService(repo domain.AuditLogRepository) *service {
@@ -79,6 +84,14 @@ func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
 	}
 
 	return s.repo.Create(ctx, entry)
+}
+
+// PruneAuditLogs removes one bounded batch strictly older than the reviewed cutoff.
+func (s *service) PruneAuditLogs(ctx context.Context, before time.Time, batch int) (int64, error) {
+	if before.IsZero() || !before.Before(time.Now().UTC()) || batch < 1 || batch > maxAuditPruneBatch {
+		return 0, domain.ErrInvalidInput
+	}
+	return s.repo.PruneBefore(ctx, before.UTC(), batch)
 }
 
 func (s *service) ListForUser(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {

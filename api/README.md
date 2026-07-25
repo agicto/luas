@@ -124,6 +124,7 @@ DB_ENABLED=false go run ./cmd/luas route:list
 go run ./cmd/luas migrate
 go run ./cmd/luas seed
 go run ./cmd/luas auth-session:prune --batch=500
+go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
 go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
 

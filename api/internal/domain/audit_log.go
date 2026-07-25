@@ -61,9 +61,15 @@ type AuditLogFilter struct {
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *AuditLog) error
 	FindByUserID(ctx context.Context, userID uint, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
+	PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error)
 }
 
 // AuditLogRecorder persists a normalized, redacted audit entry.
 type AuditLogRecorder interface {
 	Record(ctx context.Context, log *AuditLog) error
+}
+
+// AuditLogMaintainer owns bounded retention operations for durable audit records.
+type AuditLogMaintainer interface {
+	PruneAuditLogs(ctx context.Context, before time.Time, batch int) (int64, error)
 }

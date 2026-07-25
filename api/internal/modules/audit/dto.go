@@ -8,11 +8,11 @@ import (
 
 // AuditLogListRequest filters audit log queries.
 type AuditLogListRequest struct {
-	Action     string `form:"action"`
-	Resource   string `form:"resource"`
-	Method     string `form:"method"`
-	RequestID  string `form:"request_id"`
-	StatusCode int    `form:"status_code"`
+	Action     string `form:"action" binding:"omitempty,max=120"`
+	Resource   string `form:"resource" binding:"omitempty,max=180"`
+	Method     string `form:"method" binding:"omitempty,max=10"`
+	RequestID  string `form:"request_id" binding:"omitempty,max=80"`
+	StatusCode int    `form:"status_code" binding:"omitempty,gte=100,lte=599"`
 }
 
 // AuditLogResponse is the API response shape for audit entries.

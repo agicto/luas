@@ -25,6 +25,20 @@ jobs:
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    services:
+      postgres:
+        image: postgres@sha256:e013e867e712fec275706a6c51c966f0bb0c93cfa8f51000f85a15f9865a28cb # 16-alpine
+        env:
+          POSTGRES_DB: luas_test
+          POSTGRES_USER: luas
+          POSTGRES_PASSWORD: luas_test
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U luas -d luas_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: api
@@ -52,6 +66,14 @@ jobs:
 
       - name: Verify runtime route catalog
         run: make route-catalog-check
+
+      - name: PostgreSQL audit retention evidence
+        env:
+          LUAS_TEST_POSTGRES_DSN: postgres://luas:luas_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_test?sslmode=disable
+        run: >-
+          go test ./internal/modules/audit ./database/migrations
+          -run 'TestRepositoryPruneBeforePostgres|TestAddAuditRetentionIndexPostgres'
+          -count=1
 
       - name: Concurrency-critical queue lifecycle race tests
         run: make test-race-critical

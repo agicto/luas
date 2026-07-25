@@ -14,6 +14,7 @@ var ProviderSet = wire.NewSet(
 	NewService,
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(domain.AuditLogRecorder), new(*service)),
+	wire.Bind(new(domain.AuditLogMaintainer), new(*service)),
 	NewHandler,
 )
 
@@ -24,5 +25,6 @@ func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_04_26_000000_create_audit_logs_table"),
 		assembly.WithStarterMigrationNames("2026_04_27_000002_add_business_fields_to_audit_logs"),
+		assembly.WithStarterMigrationNames("2026_07_25_000000_add_audit_retention_index"),
 	)
 }

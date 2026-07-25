@@ -134,6 +134,9 @@ A downstream production deployment must inject at least:
   `AUTH_SESSION_TTL`, `AUTH_SESSION_IDLE_TIMEOUT`, `AUTH_SESSION_TOUCH_INTERVAL`, and
   `AUTH_SESSION_RETENTION`. Schedule `luas auth-session:prune --batch=500`; no authentication signing
   secret exists.
+- Audit retention policy: choose a reviewed cutoff from legal, privacy, security, and storage
+  requirements, then schedule bounded `luas audit:prune --before=<RFC3339> --batch=500` runs. Luas
+  never selects or applies a universal audit retention period automatically.
 - Asset deployments: `OBJECT_STORAGE_DRIVER=r2` plus the complete R2 secret group, exact provider
   CORS rules for browser PUT/GET, and a short lifecycle rule for `asset-uploads/`. Do not use a
   container filesystem as durable production storage.
