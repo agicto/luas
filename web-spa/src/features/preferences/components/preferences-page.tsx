@@ -47,7 +47,7 @@ export function PreferencesPage() {
                   key={value}
                   className={cn('flex-1', theme === value && 'bg-brand text-white hover:bg-brand')}
                   variant="ghost"
-                  size="small"
+                  size="sm"
                   aria-pressed={theme === value}
                   onClick={() => setTheme(value)}
                 >

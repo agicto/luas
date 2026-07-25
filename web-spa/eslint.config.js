@@ -35,6 +35,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
     files: ['vite.config.ts', '*.config.{js,mjs}', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: {

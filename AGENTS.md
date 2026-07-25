@@ -11,7 +11,7 @@ Luas is an AI-era scaffold, not a product application:
 - `web/`: Next.js 16, React 19, TypeScript, Tailwind 4, and shadcn, organized
   by feature under `src/features/`.
 - `web-spa/`: Vite 8, React 19, TanStack Router, TanStack Query, TypeScript,
-  Tailwind 4, and shadcn-style primitives, built as static OSS/CDN assets.
+  Tailwind 4, and shadcn/ui, built as static OSS/CDN assets.
 
 All deployable units are independent and share HTTP contracts, never source
 code. Downstream applications normally choose either `web/` or `web-spa/`.

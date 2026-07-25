@@ -8,6 +8,11 @@ export const resources = {
       navigation: {
         overview: 'Overview',
         preferences: 'Preferences',
+        console: 'Console',
+        section: 'Workspace',
+        breadcrumb: 'Breadcrumb',
+        toggle: 'Toggle sidebar',
+        mobileDescription: 'Navigate the static console.',
         open: 'Open navigation',
         close: 'Close navigation',
       },
@@ -78,6 +83,11 @@ export const resources = {
       navigation: {
         overview: '概览',
         preferences: '偏好设置',
+        console: '控制台',
+        section: '工作区',
+        breadcrumb: '面包屑导航',
+        toggle: '切换侧栏',
+        mobileDescription: '浏览静态控制台功能。',
         open: '打开导航',
         close: '关闭导航',
       },

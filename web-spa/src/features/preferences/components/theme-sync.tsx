@@ -1,25 +1,16 @@
 import { useEffect } from 'react';
-import { usePreferencesStore } from '@/features/preferences/store/preferences-store';
+import { useResolvedTheme } from '@/features/preferences/hooks/use-resolved-theme';
 
 export function ThemeSync() {
-  const theme = usePreferencesStore((state) => state.theme);
+  const dark = useResolvedTheme();
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-
-    const apply = () => {
-      const dark = theme === 'dark' || (theme === 'system' && media.matches);
-      document.documentElement.classList.toggle('dark', dark);
-      document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
-      document
-        .querySelector('meta[name="theme-color"]')
-        ?.setAttribute('content', dark ? '#171918' : '#0f766e');
-    };
-
-    apply();
-    media.addEventListener('change', apply);
-    return () => media.removeEventListener('change', apply);
-  }, [theme]);
+    document.documentElement.classList.toggle('dark', dark);
+    document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', dark ? '#171717' : '#fafafa');
+  }, [dark]);
 
   return null;
 }

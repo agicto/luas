@@ -5,7 +5,7 @@ Rules for the static React application under `web-spa/`.
 ## Scope
 
 The SPA uses Vite, React 19, TypeScript, TanStack Router, TanStack Query,
-Zustand, Tailwind 4, shadcn-style primitives, i18next, Zod, and Vitest. It
+Zustand, Tailwind 4, shadcn/ui, i18next, Zod, and Vitest. It
 builds browser-only assets under `dist/`; no Node.js runtime or server function
 may be required in production.
 
@@ -19,7 +19,7 @@ duplicate the Next-specific skills under `web/.agents/skills/`.
 src/app/                 provider, query client, and router composition
 src/routes/              thin TanStack file-route entries
 src/features/<feature>/  components, hooks, services, store, and types
-src/components/ui/       shadcn-style primitives
+src/components/ui/       shadcn/ui primitives owned by this deployable unit
 src/components/layout/   shared route layouts
 src/config/              validated public environment and feature catalog
 src/http/                transport, envelopes, errors, and response bounds
@@ -94,8 +94,11 @@ This is a static browser client, not a BFF:
 
 ## UI And Internationalization
 
-- Use existing semantic tokens and shadcn-style variants before adding a new
-  visual system.
+- Use the configured shadcn/ui New York primitives and semantic tokens before
+  adding a new visual system.
+- Compose the console shell from `SidebarProvider`, `Sidebar`, and
+  `SidebarInset`. Keep its open state in the display-preference store so the
+  static client does not emit framework-owned UI cookies.
 - Keep the console quiet, dense, responsive, and work-focused.
 - Preserve visible focus, keyboard operation, accessible names, and stable
   loading/error/empty layouts.

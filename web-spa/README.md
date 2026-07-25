@@ -19,7 +19,7 @@ keeping independent source, dependencies, builds, and deployment policy.
 | Server state     | TanStack Query                                                     |
 | Browser UI state | Zustand                                                            |
 | Validation       | Zod                                                                |
-| Styling          | Tailwind CSS 4 + shadcn-style primitives + Lucide                  |
+| Styling          | Tailwind CSS 4 + shadcn/ui New York theme + Lucide                 |
 | Localization     | i18next + react-i18next                                            |
 | Tests            | Vitest + Testing Library                                           |
 | Transport        | Native Fetch with Luas envelope/error normalization                |
@@ -73,6 +73,11 @@ and Zod validates important successful responses before caching.
 The initial shell includes `system` and `preferences` core features. Additional
 default or optional starter UI should be ported contract by contract rather
 than copied mechanically from Next.js.
+
+The console uses the official shadcn/ui Sidebar composition with an inset
+content surface, icon-collapse mode on desktop, and a Sheet-backed navigation
+drawer on mobile. Theme and sidebar preferences remain browser-only UI state,
+so the static shell does not require cookies or a frontend server.
 
 ## Authentication Boundary
 

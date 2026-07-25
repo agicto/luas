@@ -3,12 +3,18 @@ import { usePreferencesStore } from '@/features/preferences/store/preferences-st
 
 describe('preferences store', () => {
   beforeEach(() => {
-    usePreferencesStore.setState({ theme: 'system' });
+    usePreferencesStore.setState({ sidebarOpen: true, theme: 'system' });
   });
 
   it('updates the browser-only theme preference', () => {
     act(() => usePreferencesStore.getState().setTheme('dark'));
 
     expect(usePreferencesStore.getState().theme).toBe('dark');
+  });
+
+  it('updates the browser-only sidebar preference', () => {
+    act(() => usePreferencesStore.getState().setSidebarOpen(false));
+
+    expect(usePreferencesStore.getState().sidebarOpen).toBe(false);
   });
 });

@@ -58,7 +58,10 @@ src/app/
   owns application-wide provider and router composition
 
 src/components/ui/
-  owns feature-neutral controls and variants
+  owns the locally generated shadcn/ui primitives and variants
+
+src/components/layout/
+  owns the shared shadcn/ui Sidebar and console-header composition
 
 src/config/
   owns validated browser-visible build configuration
@@ -82,6 +85,22 @@ TanStack Query is authoritative for remote cache state. Zustand is restricted
 to shared browser UI state such as display preferences. Server records,
 permissions, sessions, quotas, and remote resources do not become Zustand
 persistence.
+
+## UI Shell
+
+The console uses the official shadcn/ui New York theme and Sidebar composition:
+
+- `SidebarProvider` owns responsive desktop and mobile behavior;
+- `Sidebar` owns navigation, grouped actions, collapse mode, and the mobile
+  Sheet;
+- `SidebarInset` owns the route header and page content surface;
+- semantic theme variables in `src/styles/globals.css` are the visual contract;
+- Zustand persists only the selected theme, locale, and desktop sidebar state.
+
+The generated Sidebar is adapted for a pure static client. Its controlled open
+state is persisted with the existing display preferences instead of writing
+the framework example cookie on every toggle. Authentication and server state
+remain outside browser persistence.
 
 ## Contract Parity
 
