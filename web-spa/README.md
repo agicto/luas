@@ -79,6 +79,16 @@ content surface, icon-collapse mode on desktop, and a Sheet-backed navigation
 drawer on mobile. Theme and sidebar preferences remain browser-only UI state,
 so the static shell does not require cookies or a frontend server.
 
+## Internationalization
+
+The SPA uses the same public locale identifiers as Web and the settings
+contract: `en-US` and `zh-Hans`. i18next resolves a stored display preference,
+browser language preferences, then `VITE_DEFAULT_LOCALE`. Locale choice is
+browser-only display state and contains no account or credential data.
+
+Read [docs/INTERNATIONALIZATION.md](docs/INTERNATIONALIZATION.md) before adding
+messages, locales, localized formatting, or locale persistence.
+
 ## Authentication Boundary
 
 Static hosting removes the Next.js BFF. It does not make browser credential

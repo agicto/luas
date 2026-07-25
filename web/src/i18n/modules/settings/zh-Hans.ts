@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { SettingsMessages } from './en-US';
+
 const messages = {
   title: '设置',
   tabs: {
@@ -54,7 +57,6 @@ const messages = {
     revokedSuccess: 'API 密钥已撤销',
     revokeError: 'API 密钥撤销失败，请稍后重试。',
   },
-} as const;
+} as const satisfies LocaleMessageShape<SettingsMessages>;
 
 export default messages;
-export type SettingsMessages = typeof messages;

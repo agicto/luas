@@ -7,7 +7,8 @@ description: Change Luas next-intl messages or translation boundaries. Use for l
 
 ## Overview
 
-This skill provides comprehensive instructions for implementing and maintaining internationalization (i18n) within the Luas. It covers client and server component usage, type-safe translation keys, module organization, and scoped translations.
+This skill covers client and server translation APIs, type-safe message keys,
+module ownership, ICU parity, and bounded client message delivery in Luas Web.
 
 ## Key Concepts
 
@@ -16,7 +17,7 @@ This skill provides comprehensive instructions for implementing and maintaining 
 The i18n system derives key and scope safety from the message tree through:
 
 - **`AllTranslationKeys`**: Union type of all valid dot-notation keys (e.g., `'common.save' | 'auth.login' | ...`)
-- **`MessageSchema`**: Literal root schema derived from the `zh-Hans` base locale
+- **`MessageSchema`**: Literal root schema derived from the `en-US` source locale
 - **`AllScopePaths`**: Union of object paths that can be passed to `useT` / `getT`
 - **`ScopedTranslationKeys<P>`**: Relative translatable leaf keys below scope `P`
 - **`ScopedTranslations<P>`**: Translator constrained to `ScopedTranslationKeys<P>`
@@ -45,7 +46,7 @@ function MyComponent() {
     <div>
       {/* Dot notation (recommended) */}
       <button>{t('common.save')}</button>
-      
+
       {/* Namespace-based (backward compatible) */}
       <button>{t.common('save')}</button>
     </div>
@@ -79,8 +80,8 @@ function SettingsPage() {
   const t = useT('settings');
   return (
     <div>
-      <h1>{t('title')}</h1>        {/* settings.title */}
-      <p>{t('description')}</p>    {/* settings.description */}
+      <h1>{t('title')}</h1> {/* settings.title */}
+      <p>{t('description')}</p> {/* settings.description */}
     </div>
   );
 }
@@ -105,22 +106,19 @@ Translations are organized into functional modules located in `src/i18n/modules/
 
 #### Available Modules
 
-| Module | Description |
-|--------|-------------|
-| `common` | Common UI text (buttons, labels, messages) |
-| `auth` | Authentication-related text |
-| `nav` | Navigation labels |
-| `site` | Public scaffold site copy |
-| `console` | Replaceable authenticated console copy |
-| `settings` | Settings page translations |
-| `errors` | Error messages |
-| `metadata` | Page titles and SEO metadata |
-| `test` | Testing translations |
+| Module                                                 | Ownership                                                   |
+| ------------------------------------------------------ | ----------------------------------------------------------- |
+| `common`, `nav`, `metadata`                            | Shared shell controls, navigation, and document metadata    |
+| `site`, `auth`, `console`, `settings`                  | Core public, authentication, console, and settings surfaces |
+| `organization`, `permission`                           | Organization and access-control starters                    |
+| `notification`, `asset`, `setting`, `usage`, `webhook` | Optional business-capability starters                       |
+| `errors`                                               | Stable user-facing error mappings                           |
+| `test`                                                 | Development-only type and nesting fixtures                  |
 
 #### Supported Locales
 
-- `zh-Hans` (Simplified Chinese) - **Base locale, defines types**
-- `en-US` (English US) - Implements base type
+- `en-US` (English US) - **Canonical source locale and schema**
+- `zh-Hans` (Simplified Chinese) - Structurally checked translation locale
 
 Configuration in `src/i18n/config.ts`.
 
@@ -132,12 +130,12 @@ Each module contains three files:
 
 ```
 src/i18n/modules/[module]/
-├── zh-Hans.ts    # Base file (defines types)
-├── en-US.ts      # English translations (implements type)
+├── en-US.ts      # Source messages (defines types)
+├── zh-Hans.ts    # Translation (implements source shape)
 └── index.ts      # Barrel export
 ```
 
-#### Base File (`zh-Hans.ts`)
+#### Source File (`en-US.ts`)
 
 ```typescript
 const messages = {
@@ -152,10 +150,10 @@ export default messages;
 export type ModuleNameMessages = typeof messages;
 ```
 
-#### Translation File (`en-US.ts`)
+#### Translation File (`zh-Hans.ts`)
 
 ```typescript
-import type { ModuleNameMessages } from './zh-Hans';
+import type { ModuleNameMessages } from './en-US';
 import type { LocaleMessageShape } from '../../locale-message-shape';
 
 const messages = {
@@ -174,15 +172,15 @@ export default messages;
 When adding a new page or feature:
 
 1. Identify the relevant module in `src/i18n/modules/`.
-2. Add the translation key and its values to `zh-Hans.ts` first (this defines the type).
-3. Add the same key to `en-US.ts`; `LocaleMessageShape` enforces the structure without widening translated literals.
+2. Add the key and source copy to `en-US.ts` first; it defines the schema.
+3. Add the same key to `zh-Hans.ts`; `LocaleMessageShape` enforces the structure without widening translated literals.
 4. Preserve the same ICU variable names in every locale; `modules/index.ts` enforces locale coverage and placeholder parity.
 
 ### 5. Adding a New Module
 
 1. Create folder: `modules/[module-name]/`
-2. Create `zh-Hans.ts` with type export
-3. Create `en-US.ts` implementing the type
+2. Create `en-US.ts` with the source type export
+3. Create `zh-Hans.ts` implementing the source shape
 4. Create `index.ts` barrel export
 5. Register in `modules/index.ts`
 6. Add to `AVAILABLE_MODULES` in `src/i18n/module-names.ts`
@@ -191,7 +189,7 @@ When adding a new page or feature:
 ### 6. Using Variables (ICU Format)
 
 ```tsx
-// In zh-Hans.ts:
+// In en-US.ts:
 // greeting: 'Hello, {name}! Welcome back.'
 
 const t = useT();
@@ -204,42 +202,42 @@ The values object is key-specific. Missing, misspelled, or extra variables fail 
 
 ## Usage Scenarios
 
-| Task | Action |
-|------|--------|
-| New Page | Add translations to `src/i18n/modules/[module]/[locale].ts` and update `src/constants/routes.ts`. |
-| New Component | Use `useT` from `@/i18n` (Client) or `getT` from `@/i18n/server` (Server) for all user-facing text. |
-| Error Messages | Use the `errors` namespace and follow the standardized error handling patterns. |
-| Scoped Component | Use `useT('namespace')` to get type-safe scoped translations. |
+| Task             | Action                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------- |
+| New Page         | Add translations to `src/i18n/modules/[module]/[locale].ts` and update `src/constants/routes.ts`.   |
+| New Component    | Use `useT` from `@/i18n` (Client) or `getT` from `@/i18n/server` (Server) for all user-facing text. |
+| Error Messages   | Use the `errors` namespace and follow the standardized error handling patterns.                     |
+| Scoped Component | Use `useT('namespace')` to get type-safe scoped translations.                                       |
 
 ## File Reference
 
-| File | Purpose |
-|------|---------|
-| `src/i18n/config.ts` | Locale configuration and settings |
-| `src/i18n/locales.ts` | Supported locale constants, names, and Accept-Language mapping |
-| `src/i18n/locale-resolution.ts` | Cookie/header/default request locale resolution seam |
-| `src/i18n/index.ts` | Client-safe barrel exports for locale config and `useT` |
-| `src/i18n/translations.ts` | Client-only `useT` implementation |
-| `src/i18n/server.ts` | Server-only `getT` implementation |
-| `src/i18n/translation-shared.ts` | Message-tree-derived key/scope types and facade construction |
-| `src/i18n/locale-message-shape.ts` | Locale structure and ICU variable-parity type guards |
-| `src/i18n/module-names.ts` | Canonical `AVAILABLE_MODULES` declaration |
-| `src/i18n/loader.ts` | Dynamic module loading |
-| `src/i18n/client-message-namespaces.ts` | Canonical client namespace ownership |
-| `src/i18n/message-selection.ts` | Type-safe namespace selection |
-| `src/i18n/route-messages-provider.tsx` | Additive route-level client messages |
-| `src/i18n/modules/index.ts` | Static type generation from modules |
-| `src/i18n/README.md` | Detailed documentation with examples |
-| `src/test/i18n-types.test.ts` | Compile-time locale/key/variable contract and runtime composition |
+| File                                    | Purpose                                                           |
+| --------------------------------------- | ----------------------------------------------------------------- |
+| `src/i18n/config.ts`                    | Locale configuration and settings                                 |
+| `src/i18n/locales.ts`                   | Supported locale constants, names, and Accept-Language mapping    |
+| `src/i18n/locale-resolution.ts`         | Cookie/header/default request locale resolution seam              |
+| `src/i18n/index.ts`                     | Client-safe barrel exports for locale config and `useT`           |
+| `src/i18n/translations.ts`              | Client-only `useT` implementation                                 |
+| `src/i18n/server.ts`                    | Server-only `getT` implementation                                 |
+| `src/i18n/translation-shared.ts`        | Message-tree-derived key/scope types and facade construction      |
+| `src/i18n/locale-message-shape.ts`      | Locale structure and ICU variable-parity type guards              |
+| `src/i18n/module-names.ts`              | Canonical `AVAILABLE_MODULES` declaration                         |
+| `src/i18n/loader.ts`                    | Dynamic module loading                                            |
+| `src/i18n/client-message-namespaces.ts` | Canonical client namespace ownership                              |
+| `src/i18n/message-selection.ts`         | Type-safe namespace selection                                     |
+| `src/i18n/route-messages-provider.tsx`  | Additive route-level client messages                              |
+| `src/i18n/modules/index.ts`             | Static type generation from modules                               |
+| `src/i18n/README.md`                    | Detailed documentation with examples                              |
+| `src/test/i18n-types.test.ts`           | Compile-time locale/key/variable contract and runtime composition |
 
 ## Environment Variables
 
 The source of truth is `src/config/env.ts`; locale values are constrained by `src/i18n/locales.ts`.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_DEFAULT_LOCALE` | Default locale | `zh-Hans` |
-| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | Show language switcher | `true` |
+| Variable                              | Description            | Default   |
+| ------------------------------------- | ---------------------- | --------- |
+| `NEXT_PUBLIC_DEFAULT_LOCALE`          | Default locale         | `zh-Hans` |
+| `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | Show language switcher | `true`    |
 
 Request-time locale detection lives in `src/i18n/locale-resolution.ts`: supported `locale` cookie values win, then `Accept-Language`, then the configured default.
 

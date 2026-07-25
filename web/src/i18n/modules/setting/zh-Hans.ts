@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { SettingMessages } from './en-US';
+
 const messages = {
   user: {
     title: '个人偏好',
@@ -38,7 +41,6 @@ const messages = {
     unavailable: '设置服务暂时不可用。',
     versionConflict: '此设置已在其他位置更新，现已载入最新值。',
   },
-} as const;
+} as const satisfies LocaleMessageShape<SettingMessages>;
 
-export type SettingMessages = typeof messages;
 export default messages;

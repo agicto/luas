@@ -1,4 +1,7 @@
 // Auth translations - Simplified Chinese
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { AuthMessages } from './en-US';
+
 const messages = {
   // Page titles
   welcomeBack: '欢迎回来',
@@ -98,8 +101,6 @@ const messages = {
 
   // Footer
   copyright: '© {year} Luas。保留所有权利。',
-} as const;
+} as const satisfies LocaleMessageShape<AuthMessages>;
 
 export default messages;
-
-export type AuthMessages = typeof messages;

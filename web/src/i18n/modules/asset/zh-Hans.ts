@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { AssetMessages } from './en-US';
+
 const messages = {
   title: '资产',
   count: '共 {count} 项',
@@ -39,7 +42,6 @@ const messages = {
     created: '创建时间',
     actions: '操作',
   },
-} as const;
+} as const satisfies LocaleMessageShape<AssetMessages>;
 
 export default messages;
-export type AssetMessages = typeof messages;

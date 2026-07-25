@@ -74,6 +74,17 @@ src/
 └── utils/                  # Pure utilities
 ```
 
+## Internationalization
+
+Web uses `next-intl` with `en-US` as the canonical message schema and
+`zh-Hans` as a fully checked translation locale. Request resolution follows a
+valid locale cookie, weighted `Accept-Language`, then the configured default.
+Client routes receive only their owned message namespaces to avoid shipping the
+entire catalog.
+
+Read [src/i18n/README.md](src/i18n/README.md) before adding a locale,
+namespace, translated error, or client-side message dependency.
+
 ## Auth
 
 The Web browser auth contract is implemented under `src/app/api/auth/`:

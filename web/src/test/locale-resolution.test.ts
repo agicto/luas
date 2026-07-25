@@ -28,6 +28,13 @@ describe('locale resolution', () => {
     expect(resolveAcceptLanguageLocale('en-US,en;q=0.9')).toBe('en-US');
     expect(resolveAcceptLanguageLocale('zh-CN,zh;q=0.9')).toBe('zh-Hans');
     expect(resolveAcceptLanguageLocale('en-GB,en;q=0.9')).toBe('en-US');
+    expect(resolveAcceptLanguageLocale('EN-us')).toBe('en-US');
+  });
+
+  it('honors quality weights and ignores explicitly rejected languages', () => {
+    expect(resolveAcceptLanguageLocale('zh-CN;q=0.4, en-US;q=0.9')).toBe('en-US');
+    expect(resolveAcceptLanguageLocale('en-US;q=0, zh-CN;q=0.5')).toBe('zh-Hans');
+    expect(resolveAcceptLanguageLocale('en-US;q=0')).toBeUndefined();
   });
 
   it('uses the configured default when no request locale matches', () => {

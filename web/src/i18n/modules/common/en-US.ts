@@ -1,7 +1,4 @@
 // Common translations - English (US)
-import type { CommonMessages } from './zh-Hans';
-import type { LocaleMessageShape } from '../../locale-message-shape';
-
 const messages = {
   loading: 'Loading...',
   error: 'An error occurred',
@@ -17,7 +14,7 @@ const messages = {
   noData: 'No data available',
   success: 'Success',
   failed: 'Failed',
-  
+
   // User CRUD messages
   userCreateSuccess: 'User created successfully',
   userCreateFailed: 'Failed to create user',
@@ -27,7 +24,7 @@ const messages = {
   userDeleteFailed: 'Failed to delete user',
   userCreated: 'User {name} has been created',
   userUpdated: 'User {name} has been updated',
-  
+
   // Date Picker
   year: 'Year',
   month: 'Month',
@@ -46,6 +43,7 @@ const messages = {
   themeLight: 'Light',
   themeDark: 'Dark',
   themeSystem: 'System',
-} as const satisfies LocaleMessageShape<CommonMessages>;
+} as const;
 
 export default messages;
+export type CommonMessages = typeof messages;

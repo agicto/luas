@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { PermissionMessages } from './en-US';
+
 const messages = {
   tab: '权限',
   title: '访问角色与权限',
@@ -36,7 +39,6 @@ const messages = {
   saveError: '无法保存访问角色。',
   deleteError: '无法删除访问角色。',
   assignmentError: '无法读取或保存成员访问角色。',
-} as const;
+} as const satisfies LocaleMessageShape<PermissionMessages>;
 
 export default messages;
-export type PermissionMessages = typeof messages;

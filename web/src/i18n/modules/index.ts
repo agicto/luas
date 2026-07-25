@@ -1,41 +1,24 @@
-import common from './common/en-US';
-import type { CommonMessages } from './common/zh-Hans';
-import auth from './auth/en-US';
-import type { AuthMessages } from './auth/zh-Hans';
-import nav from './nav/en-US';
-import type { NavMessages } from './nav/zh-Hans';
-import site from './site/en-US';
-import type { SiteMessages } from './site/zh-Hans';
-import console from './console/en-US';
-import type { ConsoleMessages } from './console/zh-Hans';
-import organization from './organization/en-US';
-import type { OrganizationMessages } from './organization/zh-Hans';
-import permission from './permission/en-US';
-import type { PermissionMessages } from './permission/zh-Hans';
-import notification from './notification/en-US';
-import type { NotificationMessages } from './notification/zh-Hans';
-import asset from './asset/en-US';
-import type { AssetMessages } from './asset/zh-Hans';
-import setting from './setting/en-US';
-import type { SettingMessages } from './setting/zh-Hans';
-import usage from './usage/en-US';
-import type { UsageMessages } from './usage/zh-Hans';
-import webhook from './webhook/en-US';
-import type { WebhookMessages } from './webhook/zh-Hans';
-import settings from './settings/en-US';
-import type { SettingsMessages } from './settings/zh-Hans';
-import errors from './errors/en-US';
-import type { ErrorsMessages } from './errors/zh-Hans';
-import metadata from './metadata/en-US';
-import type { MetadataMessages } from './metadata/zh-Hans';
-import test from './test/en-US';
-import type { TestMessages } from './test/zh-Hans';
+import common, { type CommonMessages } from './common/en-US';
+import auth, { type AuthMessages } from './auth/en-US';
+import nav, { type NavMessages } from './nav/en-US';
+import site, { type SiteMessages } from './site/en-US';
+import console, { type ConsoleMessages } from './console/en-US';
+import organization, { type OrganizationMessages } from './organization/en-US';
+import permission, { type PermissionMessages } from './permission/en-US';
+import notification, { type NotificationMessages } from './notification/en-US';
+import asset, { type AssetMessages } from './asset/en-US';
+import setting, { type SettingMessages } from './setting/en-US';
+import usage, { type UsageMessages } from './usage/en-US';
+import webhook, { type WebhookMessages } from './webhook/en-US';
+import settings, { type SettingsMessages } from './settings/en-US';
+import errors, { type ErrorsMessages } from './errors/en-US';
+import metadata, { type MetadataMessages } from './metadata/en-US';
+import test, { type TestMessages } from './test/en-US';
 import type { LocaleMessageVariableParity } from '../locale-message-shape';
 import type { Locale } from '../locales';
 
 /**
- * Static messages type derived from English (en-US) files.
- * This is used for IDE auto-completion and type checking.
+ * Canonical source messages used for IDE completion and locale parity checks.
  */
 export const messages = {
   common,
@@ -59,7 +42,7 @@ export const messages = {
 export type Messages = typeof messages;
 
 /**
- * Canonical message schema. Literal base-locale strings retain ICU variable names.
+ * Canonical message schema. Source-locale literals retain ICU variable names.
  */
 export interface MessageSchema {
   common: CommonMessages;
@@ -80,11 +63,30 @@ export interface MessageSchema {
   test: TestMessages;
 }
 
+interface ZhHansMessageSchema {
+  common: typeof import('./common/zh-Hans').default;
+  auth: typeof import('./auth/zh-Hans').default;
+  nav: typeof import('./nav/zh-Hans').default;
+  site: typeof import('./site/zh-Hans').default;
+  console: typeof import('./console/zh-Hans').default;
+  organization: typeof import('./organization/zh-Hans').default;
+  permission: typeof import('./permission/zh-Hans').default;
+  notification: typeof import('./notification/zh-Hans').default;
+  asset: typeof import('./asset/zh-Hans').default;
+  setting: typeof import('./setting/zh-Hans').default;
+  usage: typeof import('./usage/zh-Hans').default;
+  webhook: typeof import('./webhook/zh-Hans').default;
+  settings: typeof import('./settings/zh-Hans').default;
+  errors: typeof import('./errors/zh-Hans').default;
+  metadata: typeof import('./metadata/zh-Hans').default;
+  test: typeof import('./test/zh-Hans').default;
+}
+
 type Assert<T extends true> = T;
 
 interface LocaleMessageSchemas {
-  'zh-Hans': MessageSchema;
   'en-US': Messages;
+  'zh-Hans': ZhHansMessageSchema;
 }
 
 type ConfiguredLocalesMatchSchemas = [Locale] extends [keyof LocaleMessageSchemas]
@@ -106,6 +108,6 @@ type EveryLocaleMatchesBaseVariables = false extends {
 export type LocaleMessageSchemaCoverageCheck = Assert<ConfiguredLocalesMatchSchemas>;
 
 /**
- * Compile-time guard: every locale must preserve the base locale's ICU names.
+ * Compile-time guard: every locale must preserve the source locale's ICU names.
  */
 export type LocaleMessageVariableParityCheck = Assert<EveryLocaleMatchesBaseVariables>;

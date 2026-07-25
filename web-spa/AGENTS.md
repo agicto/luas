@@ -108,21 +108,22 @@ This is a static browser client, not a BFF:
 - Use Lucide icons for familiar actions. Icon-only buttons require an
   accessible label and tooltip/title.
 - Keep cards for repeated records, metrics, and genuinely framed tools.
-- All formal user-facing copy uses i18next resources. Keep English and Chinese
-  trees structurally aligned.
+- All formal user-facing copy uses i18next resources. `en-US` defines the
+  source schema; every locale preserves its structure and interpolation names.
 - Display preferences may use browser storage; credentials and server-owned
   state may not.
 
 ## Authority Map
 
-| Concern                             | Read                                             |
-| ----------------------------------- | ------------------------------------------------ |
-| Architecture and stack decision     | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)     |
-| Adding a feature                    | [docs/ADDING_FEATURE.md](docs/ADDING_FEATURE.md) |
-| OSS/CDN deployment                  | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)         |
-| Browser security and authentication | [docs/SECURITY.md](docs/SECURITY.md)             |
-| Bundle and runtime performance      | [docs/PERFORMANCE.md](docs/PERFORMANCE.md)       |
-| Shared HTTP behavior                | The matching file under `../contracts/`          |
+| Concern                             | Read                                                         |
+| ----------------------------------- | ------------------------------------------------------------ |
+| Architecture and stack decision     | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                 |
+| Adding a feature                    | [docs/ADDING_FEATURE.md](docs/ADDING_FEATURE.md)             |
+| OSS/CDN deployment                  | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)                     |
+| Browser security and authentication | [docs/SECURITY.md](docs/SECURITY.md)                         |
+| Internationalization                | [docs/INTERNATIONALIZATION.md](docs/INTERNATIONALIZATION.md) |
+| Bundle and runtime performance      | [docs/PERFORMANCE.md](docs/PERFORMANCE.md)                   |
+| Shared HTTP behavior                | The matching file under `../contracts/`                      |
 
 ## Verification
 

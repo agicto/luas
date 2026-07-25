@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { UsageMessages } from './en-US';
+
 const messages = {
   title: '用量',
   description: '查看当前 UTC 周期内的业务用量和有效限额。',
@@ -39,7 +42,6 @@ const messages = {
     invalidResponse: '用量服务返回了无效数据。',
     unavailable: '用量服务暂时不可用。',
   },
-} as const;
+} as const satisfies LocaleMessageShape<UsageMessages>;
 
 export default messages;
-export type UsageMessages = typeof messages;

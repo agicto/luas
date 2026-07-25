@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { ConsoleMessages } from './en-US';
+
 const messages = {
   notifications: '通知',
   profile: '个人资料',
@@ -38,7 +41,6 @@ const messages = {
       featuresAfter: '下的新路由公开它们。',
     },
   },
-} as const;
+} as const satisfies LocaleMessageShape<ConsoleMessages>;
 
 export default messages;
-export type ConsoleMessages = typeof messages;

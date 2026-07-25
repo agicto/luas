@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { NotificationMessages } from './zh-Hans';
-
 const messages = {
   open: 'Open notification center',
   title: 'Notifications',
@@ -23,6 +20,7 @@ const messages = {
   saveError: 'Notification preferences could not be saved.',
   readError: 'The notification read state could not be updated.',
   markAllError: 'Notifications could not be marked as read.',
-} as const satisfies LocaleMessageShape<NotificationMessages>;
+} as const;
 
 export default messages;
+export type NotificationMessages = typeof messages;

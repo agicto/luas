@@ -10,7 +10,8 @@ export const localeNames: Record<Locale, string> = {
 
 export const localeMapping: Record<string, Locale> = {
   zh: 'zh-Hans',
-  'zh-CN': 'zh-Hans',
+  'zh-cn': 'zh-Hans',
+  'zh-hans': 'zh-Hans',
   en: 'en-US',
-  'en-US': 'en-US',
+  'en-us': 'en-US',
 };

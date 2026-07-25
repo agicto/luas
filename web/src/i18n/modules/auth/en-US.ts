@@ -1,7 +1,4 @@
 // Auth translations - English (US)
-import type { AuthMessages } from './zh-Hans';
-import type { LocaleMessageShape } from '../../locale-message-shape';
-
 const messages = {
   // Page titles
   welcomeBack: 'Welcome back',
@@ -102,6 +99,7 @@ const messages = {
 
   // Footer
   copyright: '© {year} Luas. All rights reserved.',
-} as const satisfies LocaleMessageShape<AuthMessages>;
+} as const;
 
 export default messages;
+export type AuthMessages = typeof messages;

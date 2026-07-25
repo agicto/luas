@@ -86,8 +86,8 @@ export function PreferencesPage() {
               value={i18n.language}
               onChange={(event) => void changeLocale(event.target.value as SupportedLocale)}
             >
-              <option value="en">{t('preferences.english')}</option>
-              <option value="zh-CN">{t('preferences.chinese')}</option>
+              <option value="en-US">{t('preferences.english')}</option>
+              <option value="zh-Hans">{t('preferences.chinese')}</option>
             </select>
             <p className="mt-3 text-xs text-subtle">{t('preferences.storageNote')}</p>
           </div>

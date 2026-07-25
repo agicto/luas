@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { SettingMessages } from './zh-Hans';
-
 const messages = {
   user: {
     title: 'Personal preferences',
@@ -41,6 +38,7 @@ const messages = {
     unavailable: 'The setting service is temporarily unavailable.',
     versionConflict: 'This setting changed elsewhere. The latest value has been loaded.',
   },
-} as const satisfies LocaleMessageShape<SettingMessages>;
+} as const;
 
 export default messages;
+export type SettingMessages = typeof messages;

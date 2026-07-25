@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { WebhookMessages } from './zh-Hans';
-
 const messages = {
   title: 'Outbound webhooks',
   description:
@@ -124,6 +121,7 @@ const messages = {
     replayNotAllowed: 'The current endpoint or delivery state does not allow this operation.',
     invalidResponse: 'The webhook service returned data this client cannot recognize.',
   },
-} as const satisfies LocaleMessageShape<WebhookMessages>;
+} as const;
 
 export default messages;
+export type WebhookMessages = typeof messages;

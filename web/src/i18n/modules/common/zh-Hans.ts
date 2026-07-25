@@ -1,4 +1,7 @@
 // Common translations - Simplified Chinese
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { CommonMessages } from './en-US';
+
 const messages = {
   loading: '加载中...',
   error: '发生错误',
@@ -14,7 +17,7 @@ const messages = {
   noData: '暂无数据',
   success: '成功',
   failed: '失败',
-  
+
   // User CRUD messages
   userCreateSuccess: '用户创建成功',
   userCreateFailed: '创建用户失败',
@@ -24,7 +27,7 @@ const messages = {
   userDeleteFailed: '删除用户失败',
   userCreated: '用户 {name} 已创建',
   userUpdated: '用户 {name} 已更新',
-  
+
   // Date Picker
   year: '年',
   month: '月',
@@ -43,9 +46,6 @@ const messages = {
   themeLight: '浅色',
   themeDark: '深色',
   themeSystem: '跟随系统',
-} as const;
+} as const satisfies LocaleMessageShape<CommonMessages>;
 
 export default messages;
-
-// Export type for other locales to implement
-export type CommonMessages = typeof messages;

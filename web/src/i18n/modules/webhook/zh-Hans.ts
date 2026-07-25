@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { WebhookMessages } from './en-US';
+
 const messages = {
   title: '出站 Webhook',
   description: '管理组织级订阅、签名密钥和最小化投递记录。',
@@ -116,7 +119,6 @@ const messages = {
     replayNotAllowed: '当前端点或投递状态不允许此操作。',
     invalidResponse: 'Webhook 服务返回了无法识别的数据。',
   },
-} as const;
+} as const satisfies LocaleMessageShape<WebhookMessages>;
 
 export default messages;
-export type WebhookMessages = typeof messages;

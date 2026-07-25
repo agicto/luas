@@ -1,5 +1,5 @@
 /**
- * Preserve a base locale's object structure while allowing translated strings.
+ * Preserve the source locale's object structure while allowing translated strings.
  */
 export type LocaleMessageShape<T> = T extends string
   ? string
@@ -32,7 +32,7 @@ type SameVariables<Base extends string, Candidate extends string> = [
   : false;
 
 /**
- * Confirm every translated leaf uses exactly the base locale's ICU variables.
+ * Confirm every translated leaf uses exactly the source locale's ICU variables.
  */
 export type LocaleMessageVariableParity<Base, Candidate> = Base extends string
   ? Candidate extends string

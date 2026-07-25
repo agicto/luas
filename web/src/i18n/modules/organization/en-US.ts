@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { OrganizationMessages } from './zh-Hans';
-
 const messages = {
   title: 'Organizations',
   description: 'Manage the organizations you belong to and their core settings.',
@@ -120,6 +117,7 @@ const messages = {
     invalidResponse: 'The organization service returned data this client cannot recognize.',
     generic: 'The organization operation failed. Try again.',
   },
-} as const satisfies LocaleMessageShape<OrganizationMessages>;
+} as const;
 
 export default messages;
+export type OrganizationMessages = typeof messages;

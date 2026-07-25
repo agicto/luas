@@ -1,16 +1,16 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { PermissionMessages } from './zh-Hans';
-
 const messages = {
   tab: 'Permissions',
   title: 'Access roles and permissions',
-  description: 'Compose granular permissions with organization-scoped access roles. Membership roles and ownership rules remain separate.',
+  description:
+    'Compose granular permissions with organization-scoped access roles. Membership roles and ownership rules remain separate.',
   readDenied: 'You do not have permission to view access roles.',
   createRole: 'Create access role',
   editRole: 'Edit access role',
   deleteRole: 'Delete access role',
-  deleteRoleDescription: 'Deleting “{name}” also removes every member assignment. This cannot be undone.',
-  roleDialogDescription: 'The role slug is immutable after creation. Only application-registered permissions can be selected.',
+  deleteRoleDescription:
+    'Deleting “{name}” also removes every member assignment. This cannot be undone.',
+  roleDialogDescription:
+    'The role slug is immutable after creation. Only application-registered permissions can be selected.',
   role: 'Access role',
   name: 'Role name',
   slug: 'Role slug',
@@ -19,7 +19,8 @@ const messages = {
   noPermissions: 'No permissions',
   emptyRoles: 'This organization has no access roles yet.',
   memberAssignments: 'Member role assignments',
-  memberAssignmentsDescription: 'Assign access roles to organization members. Organization owners always have every registered permission.',
+  memberAssignmentsDescription:
+    'Assign access roles to organization members. Organization owners always have every registered permission.',
   member: 'Member',
   organizationRole: 'Membership role',
   accessRoles: 'Access roles',
@@ -39,6 +40,7 @@ const messages = {
   saveError: 'The access role could not be saved.',
   deleteError: 'The access role could not be deleted.',
   assignmentError: 'Member access roles could not be read or saved.',
-} as const satisfies LocaleMessageShape<PermissionMessages>;
+} as const;
 
 export default messages;
+export type PermissionMessages = typeof messages;

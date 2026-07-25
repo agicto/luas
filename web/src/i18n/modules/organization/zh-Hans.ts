@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { OrganizationMessages } from './en-US';
+
 const messages = {
   title: '组织',
   description: '管理你所属的组织及其基础设置。',
@@ -109,7 +112,6 @@ const messages = {
     invalidResponse: '组织服务返回了无法识别的数据。',
     generic: '组织操作失败，请重试。',
   },
-} as const;
+} as const satisfies LocaleMessageShape<OrganizationMessages>;
 
 export default messages;
-export type OrganizationMessages = typeof messages;

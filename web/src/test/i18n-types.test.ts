@@ -13,7 +13,7 @@ import { createTranslator, type BaseTranslator } from '@/i18n/translation-shared
 import type { LocaleMessageVariableParity } from '@/i18n/locale-message-shape';
 
 describe('i18n type contracts', () => {
-  it('keeps locale ICU variables aligned with the base locale', () => {
+  it('keeps locale ICU variables aligned with the source locale', () => {
     expectTypeOf<LocaleMessageSchemaCoverageCheck>().toEqualTypeOf<true>();
     expectTypeOf<LocaleMessageVariableParityCheck>().toEqualTypeOf<true>();
     expectTypeOf<

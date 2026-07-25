@@ -24,7 +24,7 @@ Create only the directories the feature owns. Route entries belong under
 3. Add TanStack Query hooks for remote reads and mutations.
 4. Add Zustand state only for genuinely shared browser UI state.
 5. Add the route entry and keep it free of business logic.
-6. Add English and Chinese i18next keys.
+6. Add `en-US` source messages and structurally aligned `zh-Hans` translations.
 7. Add loading, empty, error, disabled, and responsive UI states.
 8. Test services/hooks/components at their narrowest useful boundary.
 9. Run the focused checks and production build.

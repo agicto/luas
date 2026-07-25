@@ -1,4 +1,7 @@
 // Test translations with deep nesting - Simplified Chinese
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { TestMessages } from './en-US';
+
 const messages = {
   title: 'i18n 多层嵌套测试',
   level1: {
@@ -13,12 +16,10 @@ const messages = {
           title: '第四层',
           message: '这是来自第四层的信息',
           deepValue: '深度值: {value}',
-        }
-      }
-    }
-  }
-} as const;
+        },
+      },
+    },
+  },
+} as const satisfies LocaleMessageShape<TestMessages>;
 
 export default messages;
-
-export type TestMessages = typeof messages;

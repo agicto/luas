@@ -1,35 +1,23 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { env } from '@/config/env';
+import { resolvePreferredLocale, supportedLocales } from './locale';
 import { resources, type SupportedLocale } from './resources';
 
 const localeStorageKey = 'luas-spa-locale';
-const supportedLocales = Object.keys(resources) as SupportedLocale[];
-
-function isSupportedLocale(value: string | null | undefined): value is SupportedLocale {
-  return supportedLocales.includes(value as SupportedLocale);
-}
 
 function resolveInitialLocale(): SupportedLocale {
   const stored = window.localStorage.getItem(localeStorageKey);
-  if (isSupportedLocale(stored)) {
-    return stored;
-  }
-
-  const browserLocale = window.navigator.language;
-  if (isSupportedLocale(browserLocale)) {
-    return browserLocale;
-  }
-  if (browserLocale.toLowerCase().startsWith('zh')) {
-    return 'zh-CN';
-  }
-  return env.DEFAULT_LOCALE;
+  const browserLocales = window.navigator.languages.length
+    ? window.navigator.languages
+    : [window.navigator.language];
+  return resolvePreferredLocale([stored, ...browserLocales], env.DEFAULT_LOCALE);
 }
 
 void i18n.use(initReactI18next).init({
   resources,
   lng: resolveInitialLocale(),
-  fallbackLng: 'en',
+  fallbackLng: 'en-US',
   supportedLngs: supportedLocales,
   interpolation: {
     escapeValue: false,
@@ -40,7 +28,7 @@ void i18n.use(initReactI18next).init({
 document.documentElement.lang = i18n.language;
 
 i18n.on('languageChanged', (locale) => {
-  if (isSupportedLocale(locale)) {
+  if (supportedLocales.includes(locale as SupportedLocale)) {
     window.localStorage.setItem(localeStorageKey, locale);
     document.documentElement.lang = locale;
   }

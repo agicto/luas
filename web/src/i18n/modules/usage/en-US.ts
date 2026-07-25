@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { UsageMessages } from './zh-Hans';
-
 const messages = {
   title: 'Usage',
   description: 'Review business usage and effective limits for the current UTC period.',
@@ -42,6 +39,7 @@ const messages = {
     invalidResponse: 'The usage service returned invalid data.',
     unavailable: 'The usage service is temporarily unavailable.',
   },
-} as const satisfies LocaleMessageShape<UsageMessages>;
+} as const;
 
 export default messages;
+export type UsageMessages = typeof messages;

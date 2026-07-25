@@ -1,7 +1,4 @@
 // Test translations with deep nesting - English (US)
-import type { TestMessages } from './zh-Hans';
-import type { LocaleMessageShape } from '../../locale-message-shape';
-
 const messages = {
   title: 'i18n Multi-layer Nesting Test',
   level1: {
@@ -16,10 +13,11 @@ const messages = {
           title: 'Level 4',
           message: 'This is a message from Level 4',
           deepValue: 'Deep Value: {value}',
-        }
-      }
-    }
-  }
-} as const satisfies LocaleMessageShape<TestMessages>;
+        },
+      },
+    },
+  },
+} as const;
 
 export default messages;
+export type TestMessages = typeof messages;

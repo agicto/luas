@@ -1,8 +1,4 @@
-import {
-  locales,
-  localeMapping,
-  type Locale,
-} from './locales';
+import { locales, localeMapping, type Locale } from './locales';
 
 interface ResolveRequestLocaleOptions {
   cookieLocale?: string | null;
@@ -33,17 +29,27 @@ export function resolveAcceptLanguageLocale(acceptLanguage?: string | null): Loc
 
   const languages = acceptLanguage
     .split(',')
-    .map((entry) => entry.split(';')[0]?.trim())
-    .filter((entry): entry is string => Boolean(entry));
+    .map((entry, order) => {
+      const [tag, ...parameters] = entry.split(';');
+      const qualityParameter = parameters.find(parameter => parameter.trim().startsWith('q='));
+      const quality = qualityParameter ? Number.parseFloat(qualityParameter.trim().slice(2)) : 1;
 
-  for (const language of languages) {
-    const exactMatch = localeMapping[language];
+      return { tag: tag?.trim().toLowerCase(), quality, order };
+    })
+    .filter(
+      (entry): entry is { tag: string; quality: number; order: number } =>
+        Boolean(entry.tag) && Number.isFinite(entry.quality) && entry.quality > 0
+    )
+    .sort((left, right) => right.quality - left.quality || left.order - right.order);
+
+  for (const { tag } of languages) {
+    const exactMatch = localeMapping[tag];
 
     if (exactMatch) {
       return exactMatch;
     }
 
-    const languageOnly = language.split('-')[0];
+    const languageOnly = tag.split('-')[0];
     const languageMatch = localeMapping[languageOnly];
 
     if (languageMatch) {

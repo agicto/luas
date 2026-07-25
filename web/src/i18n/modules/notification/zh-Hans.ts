@@ -1,3 +1,6 @@
+import type { LocaleMessageShape } from '../../locale-message-shape';
+import type { NotificationMessages } from './en-US';
+
 const messages = {
   open: '打开通知中心',
   title: '通知',
@@ -20,7 +23,6 @@ const messages = {
   saveError: '无法保存通知偏好。',
   readError: '无法更新通知已读状态。',
   markAllError: '无法将通知全部标为已读。',
-} as const;
+} as const satisfies LocaleMessageShape<NotificationMessages>;
 
 export default messages;
-export type NotificationMessages = typeof messages;

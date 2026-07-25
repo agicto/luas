@@ -1,6 +1,3 @@
-import type { SettingsMessages } from './zh-Hans';
-import type { LocaleMessageShape } from '../../locale-message-shape';
-
 const messages = {
   title: 'Settings',
   tabs: {
@@ -57,6 +54,7 @@ const messages = {
     revokedSuccess: 'API key revoked',
     revokeError: 'The API key could not be revoked. Try again.',
   },
-} as const satisfies LocaleMessageShape<SettingsMessages>;
+} as const;
 
 export default messages;
+export type SettingsMessages = typeof messages;

@@ -1,6 +1,3 @@
-import type { LocaleMessageShape } from '../../locale-message-shape';
-import type { AssetMessages } from './zh-Hans';
-
 const messages = {
   title: 'Assets',
   count: '{count} items',
@@ -42,6 +39,7 @@ const messages = {
     created: 'Created',
     actions: 'Actions',
   },
-} as const satisfies LocaleMessageShape<AssetMessages>;
+} as const;
 
 export default messages;
+export type AssetMessages = typeof messages;

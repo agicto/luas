@@ -33,7 +33,7 @@ const envSchema = z.object({
   API_BASE_URL: publicPathOrUrl,
   API_TIMEOUT_MS: integerFromString(8_000, 1_000, 30_000),
   API_MAX_RESPONSE_BYTES: integerFromString(1_048_576, 16_384, 5_242_880),
-  DEFAULT_LOCALE: z.enum(['en', 'zh-CN']),
+  DEFAULT_LOCALE: z.enum(['en-US', 'zh-Hans']),
 });
 
 const parsed = envSchema.safeParse({
@@ -41,7 +41,7 @@ const parsed = envSchema.safeParse({
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api',
   API_TIMEOUT_MS: import.meta.env.VITE_API_TIMEOUT_MS,
   API_MAX_RESPONSE_BYTES: import.meta.env.VITE_API_MAX_RESPONSE_BYTES,
-  DEFAULT_LOCALE: import.meta.env.VITE_DEFAULT_LOCALE || 'en',
+  DEFAULT_LOCALE: import.meta.env.VITE_DEFAULT_LOCALE || 'en-US',
 });
 
 if (!parsed.success) {
