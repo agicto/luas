@@ -39,10 +39,11 @@ export function AppSidebar() {
     <Sidebar
       variant="inset"
       collapsible="icon"
+      className="console-sidebar-material"
       mobileTitle={t('navigation.console')}
       mobileDescription={t('navigation.mobileDescription')}
     >
-      <SidebarHeader className="border-b border-sidebar-border">
+      <SidebarHeader className="border-b border-sidebar-border/70 pb-3 pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
@@ -50,7 +51,6 @@ export function AppSidebar() {
               size="lg"
               tooltip={env.APP_NAME}
               className="h-12 data-[active=true]:bg-transparent"
-              isActive={pathname === '/console'}
             >
               <Link to="/console" onClick={() => setOpenMobile(false)}>
                 <span className="brand-mark" aria-hidden="true">
@@ -76,7 +76,12 @@ export function AppSidebar() {
                 const label = t(item.labelKey);
                 return (
                   <SidebarMenuItem key={item.to}>
-                    <SidebarMenuButton asChild isActive={pathname === item.to} tooltip={label}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.to}
+                      tooltip={label}
+                      className="h-9"
+                    >
                       <Link to={item.to} onClick={() => setOpenMobile(false)}>
                         <Icon aria-hidden="true" />
                         <span>{label}</span>

@@ -48,7 +48,7 @@ export function PreferencesPage() {
                   className={cn(
                     'flex-1',
                     theme === value &&
-                      'bg-brand text-brand-foreground hover:bg-brand hover:text-brand-foreground',
+                      'bg-background text-brand-strong shadow-sm hover:bg-background hover:text-brand-strong',
                   )}
                   variant="ghost"
                   size="sm"
