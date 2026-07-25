@@ -25,7 +25,7 @@ Luas 是一个用于搭建 Go 后端项目的脚手架，目标是提供稳定�
 ### 1. 环境准备
 
 - Go 1.25.12+
-- PostgreSQL 12+ 或 SQLite
+- PostgreSQL 12+
 - Redis（仅在下游显式组装 cache adapter 或共享基础设施时需要）
 
 ### 2. 初始化配置

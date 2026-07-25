@@ -57,6 +57,17 @@ func (UserPO) TableName() string {
 - **Enums**: Use `int` or `string` with validation in the Service layer. Do not rely solely on DB-level enums.
 - **JSON**: Use `datatypes.JSON` or `string` for flexible data blobs.
 
+### 4. Dialect Authority
+
+- PostgreSQL is the only SQL compatibility target.
+- Never add SQLite drivers, dependencies, DSNs, dialect branches, migrations,
+  fixtures, or repository tests.
+- GORM portability is not evidence of PostgreSQL compatibility. Verify SQL,
+  constraints, transactions, locks, indexes, and migrations against disposable
+  PostgreSQL.
+- Keep pure service tests database-free by using an existing repository seam
+  or test double.
+
 ---
 
 ## 🚀 Indexing Strategies
@@ -133,6 +144,8 @@ Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check f
 - [ ] Pointer types are used for optional/nullable fields in POs.
 - [ ] `TableName()` is explicitly defined in `model.go`.
 - [ ] No DB-level logic (triggers/stored procs) - keep logic in Go.
+- [ ] No SQLite runtime, dependency, fixture, migration, or test was added.
+- [ ] SQL-sensitive behavior was verified against disposable PostgreSQL.
 - [ ] List queries have deterministic ordering and preserve total semantics on empty pages.
 - [ ] Query count, allocations, and p95 evidence accompany database performance claims.
 

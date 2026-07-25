@@ -1065,6 +1065,42 @@ Verification:
 - Production image runtime contract under the non-root distroless image
 - `make governance` and `make check`
 
+### P1 — PostgreSQL-Only Database Convergence
+
+Problem: PostgreSQL is Luas's production compatibility authority, but the repository still contains
+a SQLite runtime branch, migration grammar, direct dependencies, and fast database-backed tests.
+Those tests can pass while PostgreSQL rejects the real query, constraint, transaction, locking,
+index, or migration behavior.
+
+Current enforcement:
+
+- Root and API agent rules prohibit new or expanded SQLite work.
+- Database design, testing, and debugging skills route unit tests to existing
+  seams and SQL-sensitive tests to disposable PostgreSQL.
+- `check-database-boundary.py` owns an exact legacy SQLite reference ledger.
+  Any new file, dependency, or reference fails governance; reductions require
+  the ledger to be reduced in the same change.
+
+Recommended slice:
+
+1. Replace service-level SQLite tests with existing repository test doubles.
+2. Provide one shared disposable-PostgreSQL schema harness for repository,
+   migration, and HTTP integration tests.
+3. Move SQL-sensitive CI coverage onto that harness with an explicit
+   `LUAS_TEST_POSTGRES_DSN`.
+4. Remove the SQLite runtime/config branch, migration grammar, test fixtures,
+   direct dependencies, and legacy ledger once no callers remain.
+5. Keep the fast default test loop by separating database-free unit tests from
+   the PostgreSQL integration tier instead of replacing SQLite with an implicit
+   local service requirement.
+
+Verification:
+
+- `python3 .agents/skills/luas-framework-review/scripts/check-database-boundary.py`
+- `cd api && go test ./...`
+- PostgreSQL integration tier against a disposable database
+- `make check`
+
 ### P1 — Starter Business Readiness
 
 Problem: the current default starter set is useful for auth, API keys, and audit, but most new SaaS, internal-tool, and developer-product projects also need reusable multi-user ownership, authorization, invitations, notification preferences, files, settings, usage, and integration flows.

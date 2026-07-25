@@ -47,7 +47,10 @@ Strategies:
 - **Binary search the diff**: `git bisect` between a known-good commit and the failing one.
 - **Binary search the input**: remove half the input and see if the bug persists.
 - **Binary search the code path**: comment out branches; comment out half the module imports.
-- **Strip dependencies**: replace HTTP calls with mocks, DB with sqlite, OS with stub.
+- **Strip dependencies**: replace HTTP calls with mocks, database access with
+  an existing repository test double, and OS access with a stub. When SQL
+  behavior is part of the failure, reproduce it against disposable PostgreSQL;
+  never substitute SQLite.
 
 Output: the smallest reproducer — ideally a failing unit test or a single curl command.
 

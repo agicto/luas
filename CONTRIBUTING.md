@@ -35,6 +35,9 @@ Use `api/docker-compose.yml` for the local PostgreSQL-backed API flow. The Web a
 - Put reusable runtime infrastructure in core or capabilities, coherent business workflows in starters, and downstream product behavior outside the scaffold.
 - Keep optional starters additive and disabled by default.
 - Do not add a framework abstraction until it removes demonstrated complexity or matches an established local seam.
+- Treat PostgreSQL as the only relational database compatibility target. Do not
+  add SQLite code or tests; mock existing seams for unit tests and use
+  disposable PostgreSQL for SQL behavior.
 - Preserve stable `error_code`, `request_id`, pagination, authentication, and production mock-guard semantics.
 - Update documentation, tests, and agent guidance when a public boundary changes.
 

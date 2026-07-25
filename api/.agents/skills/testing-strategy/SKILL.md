@@ -29,7 +29,12 @@ Use [`architecture-principles`](../architecture-principles/) for the higher-leve
 
 - **The interface is the test surface**: prefer testing through the same seam callers use.
 - **Do not create an interface just to satisfy a mock framework**.
-- **Use real local substitutes when practical**: SQLite, in-memory stores, or test helpers are often better than expanding a seam.
+- **Keep unit tests database-free when practical**: use existing repository
+  seams, in-memory domain stores, or focused test doubles without introducing a
+  new interface solely for testing.
+- **PostgreSQL is the only SQL test dialect**: never use SQLite as a database
+  substitute because it cannot prove PostgreSQL query, constraint,
+  transaction, locking, index, or migration behavior.
 - **Mock cross-process or non-deterministic dependencies**: external HTTP, queues, cloud SDKs, time-sensitive adapters.
 
 ---
@@ -45,7 +50,8 @@ Use [`architecture-principles`](../architecture-principles/) for the higher-leve
 ### 2. Integration Tests (Level 2)
 - **Scope**: Interaction between multiple components or layers.
 - **Speed**: Moderate.
-- **Dependencies**: May use real lightweight dependencies (e.g., SQLite/PostgreSQL in Docker) or high-fidelity mocks.
+- **Dependencies**: Use disposable PostgreSQL when SQL behavior is active, or
+  high-fidelity mocks at an existing seam when it is not.
 - **Location**: Often in `tests/integration/` or package-specific integration subdirectories.
 
 ### 3. E2E / API Tests (Level 3)
@@ -145,11 +151,14 @@ func TestService_GetByID(t *testing.T) {
 Integration tests verify that components work together.
 
 ### 1. Database Integration
-Use a test database (SQLite in-memory or a dedicated PostgreSQL container).
+Use a caller-supplied disposable PostgreSQL database. Repository and migration
+tests must use an isolated schema and clean it through `t.Cleanup`; they must
+never point at a shared or production database. Use `LUAS_TEST_POSTGRES_DSN`
+and the existing PostgreSQL profiling pattern when adding the harness.
 
 ```go
 func TestRepository_Create(t *testing.T) {
-    db := setupTestDB() // Helper to get a clean DB
+    db := setupPostgresTestDB(t) // Isolated schema in a disposable PostgreSQL DB
     repo := NewRepository(db)
     
     user := &domain.User{Username: "testuser", Email: "test@example.com"}
@@ -226,6 +235,8 @@ mockery --all --dir=internal/modules/user
 - [ ] Dependencies are mocked only where the seam is real and useful.
 - [ ] Mock expectations are verified (`AssertExpectations`).
 - [ ] Integration tests use a clean database state.
+- [ ] No SQLite dependency, driver, fixture, DSN, or dialect branch was added.
+- [ ] SQL-sensitive behavior runs against disposable PostgreSQL.
 - [ ] No hardcoded configuration in tests.
 - [ ] Sensitive data is not hardcoded in test files.
 

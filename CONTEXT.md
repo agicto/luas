@@ -25,8 +25,10 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Database runtime**
 : The core, process-owned GORM and `database/sql` connection boundary. It owns typed connection
   settings, safe DSN construction, bounded pool policy, startup readiness, diagnostics, and
-  shutdown. Starters own their schemas and query semantics; the database runtime does not turn
-  persistence into a cross-starter business module.
+  shutdown. PostgreSQL is the only relational database compatibility authority; SQLite is not a
+  valid substitute for migration, repository, or integration evidence. Starters own their schemas
+  and query semantics; the database runtime does not turn persistence into a cross-starter business
+  module.
 
 **Starter**
 : A business-ready building block that ships with the default scaffold. A starter owns a coherent workflow and may include domain rules, persistence, HTTP routes, contracts, mock flows, UI, tests, and docs.

@@ -60,11 +60,14 @@ development process, which creates a complete new dependency graph.
 
 ## Database Runtime Policy
 
-Database configuration is a strict subsection of the startup snapshot. `DB_DRIVER` must name an
-implemented adapter, pool limits must remain finite and internally coherent, and connection idle,
-lifetime, startup timeout, and slow-query durations must be positive. Database durations prefer
-unit-bearing values such as `15m` and `1h`; legacy integer seconds remain accepted for compatibility.
-Malformed values fail instead of silently selecting defaults.
+Database configuration is a strict subsection of the startup snapshot. PostgreSQL is the only
+relational database compatibility target for new runtime, migration, repository, and integration
+work. Do not add or expand SQLite code or tests; its existing adapter and fixtures are frozen
+migration debt. `DB_DRIVER` must name an implemented adapter, pool limits must remain finite and
+internally coherent, and connection idle, lifetime, startup timeout, and slow-query durations must
+be positive. Database durations prefer unit-bearing values such as `15m` and `1h`; legacy integer
+seconds remain accepted for compatibility. Malformed values fail instead of silently selecting
+defaults.
 
 Production PostgreSQL requires `DB_SSLMODE=require`, `verify-ca`, or `verify-full`. The runtime
 percent-encodes credentials into a URI, applies the pool policy before a single deadline-bound ping,
