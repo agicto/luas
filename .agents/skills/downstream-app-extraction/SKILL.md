@@ -24,10 +24,11 @@ Read these before extraction work:
 
 1. `CONTEXT.md` for `scaffold`, `downstream app`, `starter`, `mock BFF`, `console`, `devtools`, and `example`.
 2. `docs/SCAFFOLD_SURFACES.md` for the current surface catalog, downstream actions, and verification matrix.
-3. `AGENTS.md`, plus `api/AGENTS.md` or `web/AGENTS.md` when touching a half.
+3. `AGENTS.md`, plus the nearest deployable unit's `AGENTS.md`.
 4. `web/docs/MOCK_BFF.md` when deleting or replacing mock route handlers.
 5. `api/docs/ADDING_MODULE.md` when keeping or adding backend starter-style behavior.
-6. `web/docs/ADDING_FEATURE.md` when keeping or adding Web feature behavior.
+6. `web/docs/ADDING_FEATURE.md` or `web-spa/docs/ADDING_FEATURE.md` for the
+   selected browser shell.
 7. `contracts/README.md` when real API behavior or HTTP client behavior changes.
 8. `contracts/ASSETS.md`, `api/docs/ASSETS.md`, and `web/docs/ASSETS.md` when retaining or removing
    uploaded-object behavior.
@@ -117,7 +118,10 @@ Classify each touched surface before changing it.
 4. **Preserve contracts**
    - Update `contracts/README.md` first if request or response behavior changes.
    - Keep `error_code`, `request_id`, validation errors, and pagination stable across API, Web services, and any retained mock BFF.
-   - Do not share source between `api/` and `web/`; share documented contracts.
+   - Do not share source between `api/`, `web/`, and `web-spa/`; share
+     documented contracts.
+   - Select the Next.js Web shell or static SPA shell and remove the alternative
+     the downstream app will not maintain.
 
 5. **Clean product leakage**
    - Search for downstream product names, old product names, deployment names, job names, remote URLs, demo credentials, and content pipeline terms.
@@ -135,7 +139,7 @@ Use `scripts/check-downstream-contamination.sh` to scan the current repository f
 
 ```bash
 bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh \
-  --expected-origin git@github.com:zgiai/luas.git \
+  --expected-origin git@github.com:agicto/luas.git \
   --pattern "product-name" \
   --pattern "deployment-job-name"
 ```

@@ -31,6 +31,12 @@ FILES=(
   web/README.md
   web/docs/ADDING_FEATURE.md
   web/docs/MOCK_BFF.md
+  web-spa/AGENTS.md
+  web-spa/README.md
+  web-spa/docs/ADDING_FEATURE.md
+  web-spa/docs/ARCHITECTURE.md
+  web-spa/docs/DEPLOYMENT.md
+  web-spa/docs/SECURITY.md
 )
 
 while IFS= read -r skill_file; do

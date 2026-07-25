@@ -11,7 +11,7 @@ Scans the current git repository for task-specific downstream product leakage.
 Patterns are fixed strings. The script intentionally ships with no baked-in product names.
 
 Examples:
-  check-downstream-contamination.sh --expected-origin git@github.com:zgiai/luas.git --pattern "product-name"
+  check-downstream-contamination.sh --expected-origin git@github.com:agicto/luas.git --pattern "product-name"
   check-downstream-contamination.sh --ignore-case --pattern "legacy-brand" --pattern "deployment-job"
 USAGE
 }
@@ -89,6 +89,8 @@ RG_FLAGS=(
     --glob '!node_modules'
     --glob '!web/node_modules'
     --glob '!web/.next'
+    --glob '!web-spa/node_modules'
+    --glob '!web-spa/dist'
     --glob '!api/tmp'
     --glob '!dist'
     --glob '!coverage'

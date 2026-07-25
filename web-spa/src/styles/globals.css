@@ -1,0 +1,287 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.982 0.004 160);
+  --surface: oklch(1 0 0);
+  --muted: oklch(0.955 0.006 160);
+  --foreground: oklch(0.205 0.013 165);
+  --subtle: oklch(0.49 0.014 165);
+  --border: oklch(0.89 0.008 165);
+  --brand: oklch(0.49 0.105 178);
+  --brand-strong: oklch(0.39 0.095 178);
+  --brand-subtle: oklch(0.94 0.035 178);
+  --success: oklch(0.54 0.13 150);
+  --success-strong: oklch(0.4 0.115 150);
+  --success-subtle: oklch(0.95 0.04 150);
+  --warning: oklch(0.68 0.14 78);
+  --warning-strong: oklch(0.46 0.12 70);
+  --warning-subtle: oklch(0.96 0.04 82);
+  --danger: oklch(0.56 0.2 27);
+  --danger-strong: oklch(0.46 0.18 27);
+  --danger-subtle: oklch(0.95 0.035 25);
+  --sidebar: oklch(0.225 0.012 165);
+  --sidebar-foreground: oklch(0.94 0.008 165);
+  --sidebar-muted: oklch(0.72 0.012 165);
+  --radius: 0.375rem;
+}
+
+.dark {
+  --background: oklch(0.18 0.008 165);
+  --surface: oklch(0.225 0.009 165);
+  --muted: oklch(0.275 0.01 165);
+  --foreground: oklch(0.93 0.006 165);
+  --subtle: oklch(0.7 0.01 165);
+  --border: oklch(0.33 0.012 165);
+  --brand: oklch(0.68 0.11 178);
+  --brand-strong: oklch(0.77 0.1 178);
+  --brand-subtle: oklch(0.29 0.04 178);
+  --success: oklch(0.7 0.13 150);
+  --success-strong: oklch(0.75 0.12 150);
+  --success-subtle: oklch(0.27 0.04 150);
+  --warning: oklch(0.77 0.13 78);
+  --warning-strong: oklch(0.8 0.12 78);
+  --warning-subtle: oklch(0.29 0.04 78);
+  --danger: oklch(0.7 0.17 27);
+  --danger-strong: oklch(0.75 0.16 27);
+  --danger-subtle: oklch(0.29 0.05 27);
+  --sidebar: oklch(0.145 0.008 165);
+  --sidebar-foreground: oklch(0.93 0.006 165);
+  --sidebar-muted: oklch(0.65 0.012 165);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-foreground: var(--foreground);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-subtle: var(--brand-subtle);
+  --color-success: var(--success);
+  --color-success-strong: var(--success-strong);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-strong: var(--danger-strong);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply bg-background;
+  }
+
+  body {
+    @apply m-0 min-w-80 bg-background font-sans text-foreground antialiased;
+  }
+
+  button,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    @apply bg-brand-subtle text-foreground;
+  }
+}
+
+@layer components {
+  .app-frame {
+    @apply min-h-dvh lg:grid lg:grid-cols-[240px_minmax(0,1fr)];
+  }
+
+  .sidebar {
+    @apply fixed inset-y-0 left-0 z-50 flex w-60 -translate-x-full flex-col border-r border-white/8 bg-sidebar text-sidebar-foreground transition-transform duration-200 lg:sticky lg:top-0 lg:h-dvh lg:translate-x-0;
+  }
+
+  .sidebar-open {
+    @apply translate-x-0;
+  }
+
+  .navigation-backdrop {
+    @apply fixed inset-0 z-40 bg-black/45 lg:hidden;
+  }
+
+  .sidebar-brand {
+    @apply flex h-17 items-center gap-3 border-b border-white/8 px-4;
+  }
+
+  .sidebar-brand strong,
+  .sidebar-brand span {
+    @apply block truncate;
+  }
+
+  .sidebar-brand strong {
+    @apply text-sm;
+  }
+
+  .sidebar-brand span {
+    @apply mt-0.5 text-xs text-sidebar-muted;
+  }
+
+  .brand-mark {
+    @apply grid size-8 shrink-0 place-items-center rounded-md bg-brand text-sm font-bold text-white;
+  }
+
+  .sidebar-nav {
+    @apply flex flex-1 flex-col gap-1 overflow-y-auto p-3;
+  }
+
+  .navigation-link {
+    @apply flex h-10 items-center gap-3 rounded-md px-3 text-sm text-sidebar-muted transition-colors hover:bg-white/6 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
+
+  .navigation-link-active {
+    @apply bg-white/9 text-sidebar-foreground;
+  }
+
+  .sidebar-footer {
+    @apply flex items-center justify-between border-t border-white/8 p-4 text-xs text-sidebar-muted;
+  }
+
+  .app-main {
+    @apply min-w-0;
+  }
+
+  .mobile-header {
+    @apply sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-surface/95 px-3 backdrop-blur lg:hidden;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
+  }
+
+  .page-stack {
+    @apply space-y-6;
+  }
+
+  .page-header {
+    @apply max-w-2xl;
+  }
+
+  .page-header h1 {
+    @apply mt-1 text-2xl font-semibold tracking-normal sm:text-3xl;
+  }
+
+  .page-header > p:last-child {
+    @apply mt-2 text-sm leading-6 text-subtle;
+  }
+
+  .page-eyebrow {
+    @apply text-xs font-semibold uppercase tracking-normal text-brand-strong;
+  }
+
+  .metric-grid {
+    @apply grid gap-3 sm:grid-cols-3;
+  }
+
+  .metric-card {
+    @apply grid min-h-29 grid-cols-[auto_1fr] items-start gap-x-3 rounded-md border bg-surface p-4 shadow-sm;
+  }
+
+  .metric-card p {
+    @apply text-xs font-medium text-subtle;
+  }
+
+  .metric-card strong {
+    @apply col-span-2 mt-5 text-lg font-semibold;
+  }
+
+  .content-grid {
+    @apply grid gap-4 xl:grid-cols-2;
+  }
+
+  .panel {
+    @apply overflow-hidden rounded-md border bg-surface shadow-sm;
+  }
+
+  .panel-header {
+    @apply flex min-h-18 items-start justify-between gap-4 border-b px-5 py-4;
+  }
+
+  .panel-title {
+    @apply text-sm font-semibold;
+  }
+
+  .panel-description {
+    @apply mt-1 text-xs leading-5 text-subtle;
+  }
+
+  .panel-body {
+    @apply p-5;
+  }
+
+  .icon-surface {
+    @apply grid size-8 shrink-0 place-items-center rounded-md bg-brand-subtle text-brand-strong;
+  }
+
+  .definition-row {
+    @apply grid grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-4 px-5 py-3.5 text-sm;
+  }
+
+  .definition-row dt {
+    @apply text-subtle;
+  }
+
+  .definition-row dd {
+    @apply m-0 truncate text-right font-mono text-xs font-medium;
+  }
+
+  .field-label {
+    @apply mb-2 block text-xs font-medium text-subtle;
+  }
+
+  .segmented-control {
+    @apply flex w-full gap-1 rounded-md border bg-muted p-1;
+  }
+
+  .select-input {
+    @apply h-9 w-full rounded-md border bg-surface px-3 text-sm outline-none transition-shadow focus:border-brand focus:ring-2 focus:ring-brand/20;
+  }
+
+  .not-found {
+    @apply grid min-h-dvh place-content-center justify-items-start px-6;
+  }
+
+  .not-found-code {
+    @apply font-mono text-sm font-semibold text-brand-strong;
+  }
+
+  .not-found h1 {
+    @apply mt-3 text-2xl font-semibold;
+  }
+
+  .not-found p {
+    @apply mb-6 mt-2 max-w-md text-sm text-subtle;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

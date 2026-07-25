@@ -1,6 +1,6 @@
-.PHONY: check agent-check governance api-check web-check dependency-scan sbom container-scan container-sbom
+.PHONY: check agent-check governance api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom
 
-check: governance api-check web-check
+check: governance api-check web-check web-spa-check
 
 agent-check:
 	@bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh
@@ -18,6 +18,7 @@ governance: agent-check
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-performance-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-security-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py
+	node web-spa/scripts/check-architecture.mjs
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-api-key-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-permission-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-notification-boundary.py
@@ -43,6 +44,9 @@ api-check:
 
 web-check:
 	cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
+
+web-spa-check:
+	cd web-spa && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 
 dependency-scan:
 	bash scripts/dependency-security.sh scan

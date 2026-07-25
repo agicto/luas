@@ -260,7 +260,8 @@ corepack pnpm bundle:analyze
 bash scripts/verify-container.sh luas-web:container-check
 ```
 
-Use `make check` from the repository root to run the canonical API and Web verification tiers together.
+Use `make check` from the repository root to run the canonical API, Next.js Web, and static SPA
+verification tiers together.
 Dependency tooling is exact-versioned; use Corepack instead of an unrelated global pnpm. Root
 vulnerability scanning, SBOM, update, and exception policy lives in
 [`../docs/DEPENDENCY_SECURITY.md`](../docs/DEPENDENCY_SECURITY.md).

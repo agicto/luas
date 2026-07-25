@@ -12,9 +12,9 @@
 #
 # Scope (optional): one or more Go packages or test path patterns.
 #   Defaults to ./... — i.e. the whole tree.
-#   Web side: scope is ignored; the Node toolchain uses its own scripts.
+#   Node side: scope is ignored; each browser project uses its own scripts.
 #
-# Detects whether you're in api/ or web/ by walking up for go.mod or
+# Detects whether you're in api/, web/, or web-spa/ by walking up for go.mod or
 # package.json and runs the appropriate toolchain.
 #
 # Exit code is 0 iff every chosen tier passes within the chosen scope.

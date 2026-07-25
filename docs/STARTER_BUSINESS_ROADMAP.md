@@ -106,7 +106,7 @@ A starter is not ready-to-use until it has all of these:
 | Mock BFF behavior | Development-only mock route handlers selected through a feature resolver or guarded by `guardMockBffRoute()` when Web needs backend-free local development |
 | Audit behavior | Mutating operations emit audit metadata or explicitly document why audit does not apply |
 | Downstream extraction | Keep/delete/replace guidance is clear in docs and does not leak downstream product assumptions |
-| Verification | Targeted API/Web tests plus `make governance`; use `make check` when both halves move |
+| Verification | Targeted API/selected-browser tests plus `make governance`; use `make check` when multiple deployable units move |
 
 ## Default vs Optional Decision Rule
 

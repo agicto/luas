@@ -4,6 +4,10 @@ Luas currently ships two authentication boundaries. They share the global HTTP e
 `error_code` vocabulary, but their paths, credentials, user DTOs, and session ownership are not
 interchangeable.
 
+The static SPA is a client of the browser auth contract only when a same-origin browser gateway or
+explicit Go browser-session adapter implements that contract. Static JavaScript is not a third
+credential authority.
+
 ## Browser Auth Contract
 
 The Web feature service and development mock BFF use a browser-oriented, same-origin contract:
@@ -195,3 +199,24 @@ issuance should add that capability to the API contract instead of hiding compen
 - A missing, revoked, idle-expired, absolute-expired, or rejected token becomes
   `401 AUTH.UNAUTHORIZED`. A disabled API user becomes
   `403 AUTH.ACCOUNT_DISABLED`. Availability failures remain retryable and do not redirect to login.
+
+## Static SPA Authentication Boundary
+
+`web-spa/` has no server runtime, private environment, or Route Handler. A protected production SPA
+therefore requires a same-origin `/api` origin that implements the Browser Auth Contract while
+keeping the opaque Go API session credential outside browser JavaScript.
+
+The gateway or Go browser adapter owns:
+
+- an HttpOnly, Secure, appropriately scoped browser cookie;
+- exact Origin and CSRF enforcement for unsafe methods;
+- fixed operation-to-upstream mappings rather than a caller-controlled proxy;
+- bounded timeouts, request/response bodies, and safe header forwarding;
+- canonical status, `error_code`, field ownership, and `request_id` mapping;
+- logout/revocation behavior that removes both upstream and browser credential custody.
+
+The Go `/v1/login` `access_token` must not be stored in `localStorage`, `sessionStorage`, IndexedDB,
+Zustand persistence, TanStack Query persistence, a URL, or an analytics/logging surface. A
+client-side route guard is UX only and does not replace API authorization. Until the browser
+gateway exists, protected SPA authentication is deliberately incomplete rather than silently
+weaker.

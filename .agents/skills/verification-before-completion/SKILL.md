@@ -29,13 +29,14 @@ Skip this skill for read-only research and prose-only responses.
 |---|---|---|
 | Agent docs or skills | `make agent-check` | `make governance` only when a governance surface changed |
 | API package | focused `go test` | API tier 1; race/container checks only for their owning boundary |
-| Web feature | focused Vitest plus type/lint as relevant | Web tier 2 when production output can change |
-| Shared HTTP contract | owning guard plus focused API/Web tests | `make check` |
+| Next.js Web feature | focused Vitest plus type/lint as relevant | Web tier 2 when production output can change |
+| Static SPA feature | focused Vitest plus type/lint as relevant | SPA tier 2 when routes or static output can change |
+| Shared HTTP contract | owning guard plus focused API/browser tests | `make check` |
 | Cross-cutting/release | focused checks first | `make check` once |
 
-`make check` already runs `make governance`, API checks, and Web checks. Never
-run `make governance` immediately before it. Do not rerun an unchanged
-successful command in the same turn.
+`make check` already runs `make governance`, API checks, and both browser-shell
+checks. Never run `make governance` immediately before it. Do not rerun an
+unchanged successful command in the same turn.
 
 ## Tier Helper
 
@@ -47,6 +48,8 @@ successful command in the same turn.
 - Web tier 0: type check and lint.
 - Web tier 1: tier 0 plus Vitest.
 - Web tier 2: tier 1 plus production build and route budgets.
+- Static SPA uses the same Node tiers; tier 2 also proves no server bundle or
+  source maps and enforces compressed asset budgets.
 
 Examples:
 
@@ -57,6 +60,10 @@ bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 ./i
 cd web
 corepack pnpm vitest run src/features/auth/auth.test.ts
 bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0
+
+cd web-spa
+corepack pnpm vitest run src/http/client.test.ts
+bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 ```
 
 The helper logs full output to a temporary directory and prints a short failure

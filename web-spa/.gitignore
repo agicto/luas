@@ -1,0 +1,16 @@
+/node_modules/
+/dist/
+/coverage/
+/.eslintcache
+/*.tsbuildinfo
+
+.env*
+!.env.example
+
+.DS_Store
+*.log
+*.pem
+package-lock.json
+yarn.lock
+bun.lock
+bun.lockb

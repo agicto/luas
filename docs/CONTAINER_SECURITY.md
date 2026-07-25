@@ -5,6 +5,10 @@ build inputs, runtime verification, image inventory and vulnerability policy, an
 publication identity. These controls complement the source dependency policy in
 [`DEPENDENCY_SECURITY.md`](DEPENDENCY_SECURITY.md); one must not be presented as another.
 
+This policy applies to the API and Next.js Web images. `web-spa/` intentionally emits static
+OSS/CDN assets and has no runtime container; its artifact, cache, and header contract lives in
+[`../web-spa/docs/DEPLOYMENT.md`](../web-spa/docs/DEPLOYMENT.md).
+
 ## Semantic Model
 
 | Term | Repository evidence | Guarantee |

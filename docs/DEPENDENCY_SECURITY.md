@@ -1,24 +1,26 @@
 # Dependency Supply-Chain Security
 
-Luas treats dependency resolution as a repository-wide operational boundary. The API and Web keep
-their own module systems, while one root workflow inventories and scans both lock surfaces.
+Luas treats dependency resolution as a repository-wide operational boundary. The API, Next.js Web,
+and static SPA keep independent module systems, while one root workflow inventories and scans all
+three lock surfaces.
 
 ## Control Model
 
 | Control | Repository authority | Guarantee |
 |---|---|---|
-| Web runtime | `web/package.json` | Only maintained Node 22/24 LTS lines are accepted; Node types stay at the deployed Node 22 baseline. |
-| Web package manager | `web/package.json` | pnpm is pinned to exact version `10.34.5`; mismatched pnpm and competing lockfiles fail governance. |
-| Web resolution policy | `web/pnpm-workspace.yaml` | New versions wait 24 hours, recent trust evidence cannot downgrade, and transitive exotic sources are blocked. |
-| Dependency scripts | `web/pnpm-workspace.yaml` | Unreviewed install scripts fail; only five exact native/build package versions may execute them. |
-| Locked content | `web/pnpm-lock.yaml` | Every registry package carries integrity evidence and frozen installs are required in CI/images. |
+| Browser runtimes | `web/package.json`, `web-spa/package.json` | Only maintained Node 22.12+/24 LTS lines are accepted; Node types stay at the deployed Node 22 baseline. |
+| Browser package manager | Both browser `package.json` files | pnpm is pinned to exact version `10.34.5`; mismatched pnpm and competing lockfiles fail governance. |
+| Browser resolution policy | Both `pnpm-workspace.yaml` files | New versions wait 24 hours, recent trust evidence cannot downgrade, and transitive exotic sources are blocked. |
+| Dependency scripts | Both `pnpm-workspace.yaml` files | Unreviewed install scripts fail; only five exact native/build package versions may execute them. |
+| Locked content | `web/pnpm-lock.yaml`, `web-spa/pnpm-lock.yaml` | Every registry package carries integrity evidence and frozen installs are required in CI. |
 | Vulnerability source | `scripts/dependency-security.sh` | OSV-Scanner 2.3.8 binaries are selected per platform and verified against reviewed SHA-256 digests. |
 | Inventory | `make sbom` | A validated CycloneDX 1.5 document contains both Go modules and npm packages. |
 | Continuous review | `.github/workflows/dependency-security.yml` | Dependency changes, weekly schedules, and manual runs scan both lock surfaces and retain the SBOM for 14 days. |
-| Update discovery | `.github/dependabot.yml` | Weekly grouped updates cover Go, pnpm, GitHub Actions, and both Dockerfiles; major updates remain separate review units. |
+| Update discovery | `.github/dependabot.yml` | Weekly grouped updates cover Go, both pnpm projects, GitHub Actions, and both Dockerfiles; major updates remain separate review units. |
 
 Node 20 is intentionally absent because it is end-of-life and no longer receives security fixes.
-Node 22 is the image and type-definition baseline; CI verifies both Node 22 and Node 24. The 90-day
+Node 22.12 is the minimum browser-tooling runtime and Node 22 remains the image/type-definition
+baseline; CI verifies both Node 22 and Node 24. The 90-day
 `trustPolicyIgnoreAfter` window is deliberate. Newer releases must not downgrade known
 registry trust evidence; old packages without historical provenance remain installable and are
 still covered by integrity checks and vulnerability scanning. The 24-hour release-age rule applies
@@ -28,7 +30,7 @@ diffs.
 ## Commands
 
 ```bash
-# Network-backed vulnerability gate for api/go.mod and web/pnpm-lock.yaml
+# Network-backed vulnerability gate for api/go.mod and both browser lockfiles
 make dependency-scan
 
 # Write a CycloneDX 1.5 inventory outside the repository by default
@@ -70,8 +72,9 @@ advisory is proven unreachable and remediation cannot land immediately.
 
 Luas inventories dependencies but does not impose a universal commercial license allowlist. License
 compatibility depends on downstream distribution, linking, and legal policy. Review production
-licenses with `cd web && corepack pnpm licenses list --prod`, inspect the SBOM, and apply an
-organization-owned policy before release. A scanner allowlist must not be presented as legal advice.
+licenses with `corepack pnpm licenses list --prod` in each retained browser shell, inspect the SBOM,
+and apply an organization-owned policy before release. A scanner allowlist must not be presented as
+legal advice.
 
 ## Updating The Toolchain
 

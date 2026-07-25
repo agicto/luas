@@ -13,7 +13,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : An application created from Luas. A downstream app replaces examples, keeps or removes starters, and adds product-specific behavior.
 
 **Scaffold**
-: The assembled starting point shipped by this repository: core runtime, default starters, web shell, mock development flows, contracts, docs, and agent guidance.
+: The assembled starting point shipped by this repository: core runtime, default starters, browser
+  shell alternatives, mock development flows, contracts, docs, and agent guidance.
 
 **Starter kit**
 : The product category Luas belongs to. Use this term in public positioning. Avoid describing Luas as only a framework unless talking specifically about reusable runtime internals.
@@ -58,7 +59,11 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : Stable HTTP behavior shared across the scaffold. A contract includes request shape, response shape, status code, `error_code`, `request_id`, pagination, and compatibility expectations.
 
 **Mock BFF**
-: Development-only route handlers that let the web shell run without a real backend. A mock BFF must preserve the browser-facing contract of the production endpoint or adapter it substitutes, including the shared envelope and error semantics. It is not automatically a mock of every backend endpoint, it is not the production API, and production runtime must require explicit opt-in before serving mock routes.
+: Development-only Next.js route handlers that let the Web shell run without a real backend. A
+  mock BFF must preserve the browser-facing contract of the production endpoint or adapter it
+  substitutes, including the shared envelope and error semantics. It is not automatically a mock
+  of every backend endpoint, it is not the production API, and production runtime must require
+  explicit opt-in before serving mock routes.
 
 **Production auth adapter**
 : The server-only Web seam that maps the browser auth contract to the Go `user` starter over HTTP. It owns the same-origin HttpOnly authentication-session cookie, fixed upstream paths and DTO mappings, timeout/error translation, remote logout, and trusted client-IP forwarding. It is not a generic reverse proxy and never exposes the API bearer credential to browser JavaScript.
@@ -66,8 +71,26 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Authentication session**
 : One signed-in user's server-side, revocable login state. Its bearer credential is opaque and stored only by hash; identity, account status, absolute expiry, idle expiry, and revocation are resolved from current persistence. It is not an API key, authorization claim container, browser-visible token, or global user preference.
 
+**Browser shell**
+: A browser-facing application implementation that consumes Luas HTTP contracts. Luas ships the
+  Next.js Web shell and the static SPA shell as independent alternatives; downstream apps normally
+  select one rather than maintain both.
+
 **Web shell**
-: The default browser-facing application surface. It includes route groups, providers, layout, design-system integration, i18n, mock auth, and starter/example UI.
+: The Next.js browser-shell implementation under `web/`. It includes route groups, providers,
+  layout, design-system integration, i18n, mock auth, server-only production adapters, and
+  starter/example UI.
+
+**Static SPA shell**
+: The Vite and TanStack Router browser-shell implementation under `web-spa/`. It preserves the
+  feature-first, contract, error, state, i18n, and design-system architecture while emitting only
+  static OSS/CDN assets. It has no BFF, server function, secret environment, or production Node.js
+  runtime.
+
+**Browser gateway**
+: A same-origin server or ingress boundary used by a static browser shell for fixed API operations,
+  HttpOnly credential custody, Origin/CSRF enforcement, and bounded upstream mapping. It is not an
+  arbitrary reverse proxy and is not implemented by static JavaScript.
 
 **Console**
 : The authenticated scaffold workspace area. Console pages are replaceable starter surfaces, not a finished product dashboard.
@@ -185,7 +208,9 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : The assembly seam that groups CLI commands so registration does not drift across command packages.
 
 **Default scaffold**
-: The out-of-the-box Luas app assembled from core plus the default starter set, web shell, mock BFF, contracts, docs, and verification tooling.
+: The out-of-the-box Luas source assembled from core plus the default starter set, browser-shell
+  alternatives, contracts, docs, and verification tooling. A downstream app selects the Next.js
+  Web shell or static SPA shell and removes the alternative it will not maintain.
 
 **error_code**
 : The canonical machine-readable branch field for non-2xx HTTP responses. Format is uppercase dot-separated scopes such as `COMMON.NOT_FOUND` or `AUTH.INVALID_CREDENTIALS`.
@@ -214,7 +239,13 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - A starter may span persistence, HTTP routes, contracts, mock BFF behavior, UI, tests, and docs.
 - A feature is product-facing behavior; a module is the internal implementation shape behind a seam.
 - Core and capabilities are reusable; starters and features express application behavior.
-- Contracts connect deployable units. Source code is not shared across deployable units.
+- Contracts connect deployable units. Source code is not shared across the API, Web shell, or
+  static SPA shell.
+- The Web shell and static SPA shell are alternative browser implementations. Behavioral parity
+  comes from contracts and tests, not source imports.
+- The static SPA shell requires a browser gateway or explicit browser-session API before protected
+  authentication is production-complete; browser storage never replaces HttpOnly credential
+  custody.
 - Active organization context is selected per request and verified against current membership.
 - API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
 - Authentication sessions identify current signed-in users; API keys identify machine/API access.
@@ -243,6 +274,12 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
 - **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's opaque authentication-session endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
+- **Web shell vs static SPA shell**: Web means the Next.js implementation with server-owned
+  adapters and mock BFF routes. Static SPA means the Vite/TanStack implementation deployed as
+  browser assets. They share contracts and vocabulary, not source or server capabilities.
+- **static SPA vs browser gateway**: The SPA owns browser UI and public build configuration. A
+  browser gateway owns HttpOnly credentials, unsafe-request protection, and fixed server mappings;
+  CDN fallback routing or browser storage is not a gateway.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.
 - **code vs error_code**: `code` is the transport or success status in the response envelope. `error_code` is the stable machine-readable branch field.
 - **API key scope vs role/permission**: API key scopes constrain one credential. Organization roles

@@ -7,7 +7,8 @@ Luas is an open-source application scaffold. Contributions are welcome when they
 1. Read [AGENTS.md](AGENTS.md) and the `AGENTS.md` inside the area you will change.
 2. Read [CONTEXT.md](CONTEXT.md) when global vocabulary or ownership is active.
 3. Check the quality roadmap only for framework-wide prioritization and open only the contract that owns changed public behavior.
-4. For a cross-deployable change, update or add the contract before implementing API and Web behavior.
+4. For a cross-deployable change, update or add the contract before implementing API and each
+   affected browser-shell behavior.
 
 Security vulnerabilities must follow [SECURITY.md](SECURITY.md) and must not be reported in a public issue.
 

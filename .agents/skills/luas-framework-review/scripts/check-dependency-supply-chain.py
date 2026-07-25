@@ -14,7 +14,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 PNPM_VERSION = "10.34.5"
-NODE_ENGINES = "^22.0.0 || ^24.0.0"
+NODE_ENGINES = "^22.12.0 || ^24.0.0"
+BROWSER_PROJECTS = ("web", "web-spa")
 OSV_VERSION = "2.3.8"
 OSV_CHECKSUMS = {
     "osv-scanner_darwin_amd64": (
@@ -45,6 +46,7 @@ ALLOWED_BUILDS = {
 }
 DEPENDABOT_TARGETS = {
     ("npm", "/web"),
+    ("npm", "/web-spa"),
     ("gomod", "/api"),
     ("github-actions", "/"),
     ("docker", "/api"),
@@ -53,6 +55,8 @@ DEPENDABOT_TARGETS = {
 DEPENDABOT_GROUPS = {
     "web-production-minor-patch",
     "web-development-minor-patch",
+    "web-spa-production-minor-patch",
+    "web-spa-development-minor-patch",
     "go-minor-patch",
     "actions",
     "api-images",
@@ -122,32 +126,7 @@ def exception_date(value: object) -> dt.date | None:
 def main() -> int:
     failures: list[str] = []
 
-    package_path = ROOT / "web/package.json"
-    package = json.loads(package_path.read_text(encoding="utf-8"))
     expected_manager = f"pnpm@{PNPM_VERSION}"
-    if package.get("packageManager") != expected_manager:
-        failures.append(f"web/package.json packageManager must be {expected_manager}")
-    if package.get("engines", {}).get("node") != NODE_ENGINES:
-        failures.append(
-            f"web/package.json engines.node must select supported LTS lines: {NODE_ENGINES}"
-        )
-    if package.get("engines", {}).get("pnpm") != PNPM_VERSION:
-        failures.append(f"web/package.json engines.pnpm must be {PNPM_VERSION}")
-    node_types = package.get("devDependencies", {}).get("@types/node", "")
-    if not re.fullmatch(r"\^22\.\d+\.\d+", node_types):
-        failures.append("web/package.json @types/node must stay on the Node 22 baseline")
-    for forbidden_lock in (
-        "web/package-lock.json",
-        "web/npm-shrinkwrap.json",
-        "web/yarn.lock",
-        "web/bun.lock",
-        "web/bun.lockb",
-    ):
-        if (ROOT / forbidden_lock).exists():
-            failures.append(f"{forbidden_lock} must not coexist with web/pnpm-lock.yaml")
-
-    workspace_path = ROOT / "web/pnpm-workspace.yaml"
-    workspace = workspace_path.read_text(encoding="utf-8")
     expected_scalars = {
         "packageManagerStrictVersion": "true",
         "minimumReleaseAge": "1440",
@@ -156,48 +135,103 @@ def main() -> int:
         "blockExoticSubdeps": "true",
         "strictDepBuilds": "true",
     }
-    for key, expected in expected_scalars.items():
-        actual = top_level_scalar(workspace, key)
-        if actual != expected:
+    package_counts: dict[str, int] = {}
+
+    for project in BROWSER_PROJECTS:
+        package_path = ROOT / project / "package.json"
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        if package.get("packageManager") != expected_manager:
             failures.append(
-                f"web/pnpm-workspace.yaml {key} must be {expected}, got {actual!r}"
+                f"{project}/package.json packageManager must be {expected_manager}"
+            )
+        if package.get("engines", {}).get("node") != NODE_ENGINES:
+            failures.append(
+                f"{project}/package.json engines.node must select supported LTS lines: "
+                f"{NODE_ENGINES}"
+            )
+        if package.get("engines", {}).get("pnpm") != PNPM_VERSION:
+            failures.append(
+                f"{project}/package.json engines.pnpm must be {PNPM_VERSION}"
+            )
+        node_types = package.get("devDependencies", {}).get("@types/node", "")
+        if not re.fullmatch(r"\^22\.\d+\.\d+", node_types):
+            failures.append(
+                f"{project}/package.json @types/node must stay on the Node 22 baseline"
             )
 
-    builds = parse_allow_builds(workspace)
-    if set(builds) != ALLOWED_BUILDS or not all(builds.values()):
-        failures.append(
-            "web/pnpm-workspace.yaml allowBuilds must be the reviewed five-version allowlist"
-        )
-    for forbidden in (
-        "onlyBuiltDependencies:",
-        "ignoredBuiltDependencies:",
-        "dangerouslyAllowAllBuilds:",
-    ):
-        if forbidden in workspace:
-            failures.append(f"web/pnpm-workspace.yaml must not use {forbidden}")
-
-    lockfile = (ROOT / "web/pnpm-lock.yaml").read_text(encoding="utf-8")
-    if "lockfileVersion: '9.0'" not in lockfile:
-        failures.append("web/pnpm-lock.yaml must use the reviewed v9 lockfile format")
-    packages_match = re.search(r"(?ms)^packages:\n(?P<body>.*?)^snapshots:\n", lockfile)
-    package_count = 0
-    integrity_count = 0
-    if packages_match is None:
-        failures.append("web/pnpm-lock.yaml must contain packages and snapshots sections")
-    else:
-        package_body = packages_match.group("body")
-        package_count = len(re.findall(r"(?m)^  \S.*:\s*$", package_body))
-        integrity_count = len(re.findall(r"(?m)^    resolution: \{integrity:", package_body))
-        if package_count == 0 or integrity_count != package_count:
-            failures.append(
-                "every Web lockfile package must carry registry integrity evidence "
-                f"({integrity_count}/{package_count})"
-            )
-        for forbidden_source in ("git+", "http://", "tarball:"):
-            if forbidden_source in package_body:
+        for lock_name in (
+            "package-lock.json",
+            "npm-shrinkwrap.json",
+            "yarn.lock",
+            "bun.lock",
+            "bun.lockb",
+        ):
+            forbidden_lock = f"{project}/{lock_name}"
+            if (ROOT / forbidden_lock).exists():
                 failures.append(
-                    f"web/pnpm-lock.yaml contains forbidden source {forbidden_source!r}"
+                    f"{forbidden_lock} must not coexist with "
+                    f"{project}/pnpm-lock.yaml"
                 )
+
+        workspace_path = ROOT / project / "pnpm-workspace.yaml"
+        workspace = workspace_path.read_text(encoding="utf-8")
+        for key, expected in expected_scalars.items():
+            actual = top_level_scalar(workspace, key)
+            if actual != expected:
+                failures.append(
+                    f"{project}/pnpm-workspace.yaml {key} must be {expected}, "
+                    f"got {actual!r}"
+                )
+
+        builds = parse_allow_builds(workspace)
+        if set(builds) != ALLOWED_BUILDS or not all(builds.values()):
+            failures.append(
+                f"{project}/pnpm-workspace.yaml allowBuilds must be the reviewed "
+                "five-version allowlist"
+            )
+        for forbidden in (
+            "onlyBuiltDependencies:",
+            "ignoredBuiltDependencies:",
+            "dangerouslyAllowAllBuilds:",
+        ):
+            if forbidden in workspace:
+                failures.append(
+                    f"{project}/pnpm-workspace.yaml must not use {forbidden}"
+                )
+
+        lock_path = ROOT / project / "pnpm-lock.yaml"
+        lockfile = lock_path.read_text(encoding="utf-8")
+        if "lockfileVersion: '9.0'" not in lockfile:
+            failures.append(
+                f"{project}/pnpm-lock.yaml must use the reviewed v9 lockfile format"
+            )
+        packages_match = re.search(
+            r"(?ms)^packages:\n(?P<body>.*?)^snapshots:\n", lockfile
+        )
+        package_count = 0
+        integrity_count = 0
+        if packages_match is None:
+            failures.append(
+                f"{project}/pnpm-lock.yaml must contain packages and snapshots sections"
+            )
+        else:
+            package_body = packages_match.group("body")
+            package_count = len(re.findall(r"(?m)^  \S.*:\s*$", package_body))
+            integrity_count = len(
+                re.findall(r"(?m)^    resolution: \{integrity:", package_body)
+            )
+            if package_count == 0 or integrity_count != package_count:
+                failures.append(
+                    f"every {project} lockfile package must carry registry integrity "
+                    f"evidence ({integrity_count}/{package_count})"
+                )
+            for forbidden_source in ("git+", "http://", "tarball:"):
+                if forbidden_source in package_body:
+                    failures.append(
+                        f"{project}/pnpm-lock.yaml contains forbidden source "
+                        f"{forbidden_source!r}"
+                    )
+        package_counts[project] = package_count
 
     scanner_path = ROOT / "scripts/dependency-security.sh"
     scanner = scanner_path.read_text(encoding="utf-8")
@@ -207,6 +241,7 @@ def main() -> int:
         '"--config=${ROOT_DIR}/osv-scanner.toml"',
         '"--lockfile=${ROOT_DIR}/api/go.mod"',
         '"--lockfile=${ROOT_DIR}/web/pnpm-lock.yaml"',
+        '"--lockfile=${ROOT_DIR}/web-spa/pnpm-lock.yaml"',
         "--format=cyclonedx-1-5",
         'document.get("bomFormat") != "CycloneDX"',
         'document.get("specVersion") != "1.5"',
@@ -250,14 +285,14 @@ def main() -> int:
     actual_targets = parse_dependabot_targets(dependabot)
     if actual_targets != DEPENDABOT_TARGETS:
         failures.append(
-            ".github/dependabot.yml targets must be npm/web, gomod/api, "
+            ".github/dependabot.yml targets must be npm/web+web-spa, gomod/api, "
             "GitHub Actions/root, and Docker/api+web"
         )
     if dependabot.count("interval: weekly") != len(DEPENDABOT_TARGETS):
         failures.append("every Dependabot target must run weekly")
     groups = parse_dependabot_groups(dependabot)
     if set(groups) != DEPENDABOT_GROUPS:
-        failures.append("Dependabot must keep the six reviewed minor/patch update groups")
+        failures.append("Dependabot must keep the eight reviewed minor/patch update groups")
     for name, body in groups.items():
         if "update-types: [minor, patch]" not in body:
             failures.append(
@@ -312,7 +347,7 @@ def main() -> int:
     print(
         "Dependency supply-chain check passed "
         f"(Node 22/24 LTS, pnpm {PNPM_VERSION}, "
-        f"{package_count} integrity-pinned Web packages, "
+        f"{sum(package_counts.values())} integrity-pinned browser packages, "
         f"OSV-Scanner {OSV_VERSION}, {len(ignored) + len(overrides)} exceptions)."
     )
     return 0

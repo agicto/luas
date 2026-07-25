@@ -107,6 +107,17 @@ def main() -> int:
     )
     require_all(
         failures,
+        "contracts/AUTHENTICATION.md",
+        (
+            "## Static SPA Authentication Boundary",
+            "`web-spa/` has no server runtime",
+            "same-origin browser gateway",
+            "must not be stored in `localStorage`, `sessionStorage`, IndexedDB",
+            "protected SPA authentication is deliberately incomplete",
+        ),
+    )
+    require_all(
+        failures,
         "api/internal/modules/user/routes.go",
         (
             'r.POST("/login"',
@@ -378,6 +389,28 @@ def main() -> int:
         failures,
         "web/src/i18n/modules/console/zh-Hans.ts",
         ("契约兼容的生产端点或适配器",),
+    )
+    require_all(
+        failures,
+        "web-spa/docs/SECURITY.md",
+        (
+            "Every byte under `dist/` is public",
+            "reviewed browser gateway or Go adapter",
+            "HttpOnly session cookie",
+            "Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB",
+            "protected SPA auth is not",
+            "A client-side route guard",
+        ),
+    )
+    require_all(
+        failures,
+        "web-spa/src/http/client.ts",
+        (
+            "credentials: 'include'",
+            "HttpStatusErrorCodeMap[response.status]",
+            "ClientErrorCode.TIMEOUT",
+            "ClientErrorCode.NETWORK_ERROR",
+        ),
     )
 
     roadmap = read("docs/STARTER_BUSINESS_ROADMAP.md")

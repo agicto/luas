@@ -20,7 +20,12 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 ## Current Baseline
 
 - Global vocabulary now lives in [`../CONTEXT.md`](../CONTEXT.md).
-- API and Web remain independent deployable units and share contracts, not source code.
+- API, Next.js Web, and static SPA remain independent deployable units and share contracts, not
+  source code. Downstream apps normally select one browser shell.
+- The static SPA now provides a Vite 8, React 19, TanStack Router/Query, feature-first alternative
+  for OSS/CDN delivery. Its build emits no server runtime or source maps, enforces compressed
+  JavaScript/CSS budgets, validates public environment and API responses, and keeps protected auth
+  explicitly behind a same-origin browser gateway rather than browser token storage.
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
 - Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures. Process-local rate-limit stores are atomically enforced, cardinality-bounded with configurable LRU eviction, exact at window expiry, and own no cleanup goroutines; the misleading unassembled Redis limiter and inert `REDIS_*` runtime config were removed. Multi-replica enforcement remains an explicit gateway/WAF/shared-adapter responsibility.
@@ -56,8 +61,18 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   [`../api/docs/AUTHENTICATION.md`](../api/docs/AUTHENTICATION.md) and
   [`../contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md).
 - The API minimum toolchain is now Go 1.25.12 and `quic-go` is at 0.59.1, closing the reachable standard-library and HTTP/3 findings reported against Go 1.25.0 / `quic-go` 0.58.0. A full `govulncheck ./...` reports zero reachable vulnerabilities; three advisories remain only in required modules with no called symbols. With both trees built by Go 1.25.12 using `-trimpath -ldflags='-s -w'`, the auth/proxy/tooling slice moves `cmd/server` from 34,412,002 to 34,445,090 bytes (+33,088 bytes, 0.10%) against baseline `fcb58b1`; `x/tools` and `x/vuln` remain absent from the server package dependency graph.
-- Dependency supply-chain policy is now executable across both deployable halves. Web rejects EOL Node lines, supports Node 22/24 LTS with Node 22 type semantics, and uses exact pnpm 10.34.5, a 24-hour resolution quarantine, recent trust non-downgrade, blocked exotic transitive sources, and a strict five-version build-script allowlist. A checksum-pinned OSV-Scanner 2.3.8 scans `api/go.mod` plus `web/pnpm-lock.yaml`, exports a validated CycloneDX 1.5 SBOM, and permits only reasoned, expiring exceptions. Dedicated read-only CI and weekly Dependabot coverage keep scanning separate from deterministic `make check` while preserving one local/remote command path.
-- Container supply-chain policy now covers both deployable images. Dockerfile frontend and every external base use exact versions plus multi-platform digests; Buildx verifiers require OCI source/revision/version labels and maximal BuildKit evidence containing every reviewed material. Checksum-pinned Trivy 0.72.0 exports CycloneDX 1.7 runtime inventories and blocks HIGH/CRITICAL vulnerabilities, secrets, and known EOL bases in dedicated read-only API/Web workflows. The Web final layer removes apk, Node headers/debugger docs, npm/Corepack/pnpm/Yarn, reducing the local arm64 image from 71,307,044 to 65,949,553 bytes (7.51%) and its Trivy 0.72.0 CycloneDX inventory from 237 to 39 components; the seven package-manager-derived advisories, including two HIGH findings, fell to zero. API and Web both scanned with zero HIGH/CRITICAL findings and zero detected secrets. These are local Docker Desktop and live-advisory results from 2026-07-16, not permanent cross-platform guarantees. CI BuildKit metadata and SBOMs are explicitly unsigned evidence; downstream registry publication owns attached attestations and Cosign identity.
+- Dependency supply-chain policy is executable across the API and both browser shells. The browser
+  projects reject unsupported Node lines, use Node 22.12+/24 LTS with Node 22 type semantics, and
+  pin pnpm 10.34.5 with a 24-hour resolution quarantine, trust non-downgrade, blocked exotic
+  transitive sources, and a strict five-version build-script allowlist. A checksum-pinned
+  OSV-Scanner 2.3.8 scans `api/go.mod`, `web/pnpm-lock.yaml`, and `web-spa/pnpm-lock.yaml`, exports a
+  validated CycloneDX 1.5 SBOM, and permits only reasoned, expiring exceptions.
+- Container supply-chain policy covers the API and Next.js Web images. The static SPA deliberately
+  has no runtime image and is governed as a static build artifact. Dockerfile frontend and every
+  external base use exact versions plus multi-platform digests; Buildx verifiers require OCI
+  source/revision/version labels and maximal BuildKit evidence containing every reviewed material.
+  Checksum-pinned Trivy 0.72.0 exports CycloneDX 1.7 runtime inventories and blocks HIGH/CRITICAL
+  vulnerabilities, secrets, and known EOL bases in dedicated read-only API/Web workflows.
 - API operational routes now keep health probes always available while Prometheus instrumentation and `/metrics` follow `METRICS_ENABLED` (enabled outside production, disabled by default in production). Unmatched URLs collapse to one bounded metric label, and the broken default `/monitor` and `/swagger` surfaces have been removed until they have real assembly and contracts.
 - Removing the unwired Swagger runtime dependencies reduced the local Go module graph from 298 to 271 modules and the stripped `cmd/server` binary from 44,835,362 to 34,395,426 bytes (23.29%) on Go 1.25.0 `darwin/arm64`. This is a dependency and binary-footprint baseline measured with `go list -m all` and `go build -trimpath -ldflags='-s -w'`; it is not a throughput claim.
 - Compression is intentionally not part of the default API kernel; prefer deployment/CDN compression or explicit route/starter middleware.
@@ -121,7 +136,10 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web i18n defaults now flow through typed env config and shared locale constants instead of duplicated hardcoded values.
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
 - Web environment access is guarded by `src/test/env-contract.test.ts`: `src/config/env.ts` resolves public values without a schema-library runtime, `src/config/env-validation.ts` keeps Zod validation server-only, `src/config/server-env.ts` owns secrets and mock runtime switches, and production requires `SESSION_SECRET` only when the mock BFF is explicitly enabled. Production browser chunks contain neither server-only names nor Zod.
-- Root verification is split into `make governance` for scaffold guardrails and `make check` for governance plus API/Web verification tiers. CI also calls `make governance` for the root governance job. `run-tiers.sh` prints failing command exit codes, full log paths, and configurable log tails for faster repair loops.
+- Root verification is split into `make governance` for scaffold guardrails and `make check` for
+  governance plus API, Next.js Web, and static SPA verification tiers. CI also calls
+  `make governance` for the root governance job. `run-tiers.sh` prints failing command exit codes,
+  full log paths, and configurable log tails for faster repair loops.
 - External GitHub Actions are pinned to reviewed full commit SHAs, use Node 24-compatible releases,
   and run with explicit token permissions. The runner and update contract lives in [`CI.md`](CI.md),
   while `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` prevents movable refs,
@@ -142,7 +160,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in both halves; billing and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell; static SPA ports require their browser-gateway contract. Billing and AI workspace remain planned.
 
 ## Candidate Queue
 
@@ -1143,7 +1161,7 @@ Recommended slice:
 
 1. Keep `make governance` as the single local entry point for root guardrails.
 2. Keep CI's root governance job calling `make governance` instead of duplicating the command list.
-3. Keep `make check` running `make governance` before API and Web verification tiers.
+3. Keep `make check` running `make governance` before API and both browser-shell verification tiers.
 4. Add new root guard scripts to `make governance` when they become stable enough for CI/local use.
 5. Keep task-specific checks, such as downstream product leakage patterns, outside the default target unless they can run without product-specific input.
 
@@ -1183,7 +1201,7 @@ Verification:
 - `python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py`
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:zgiai/luas.git --pattern "<task-product-identifier>"`
+- `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:agicto/luas.git --pattern "<task-product-identifier>"`
 
 ### P2 — Architecture Review Reports
 

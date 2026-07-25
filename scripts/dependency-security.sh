@@ -13,7 +13,7 @@ usage() {
 Usage: scripts/dependency-security.sh scan
        scripts/dependency-security.sh sbom [output.cdx.json]
 
-scan  Check api/go.mod and web/pnpm-lock.yaml against the OSV database.
+scan  Check api/go.mod and both browser lockfiles against the OSV database.
 sbom  Export a validated CycloneDX 1.5 inventory without suppressing scan policy.
 EOF
 }
@@ -109,6 +109,7 @@ scanner_args() {
     "--config=${ROOT_DIR}/osv-scanner.toml"
     "--lockfile=${ROOT_DIR}/api/go.mod"
     "--lockfile=${ROOT_DIR}/web/pnpm-lock.yaml"
+    "--lockfile=${ROOT_DIR}/web-spa/pnpm-lock.yaml"
     --verbosity=warn
   )
 }

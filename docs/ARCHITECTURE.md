@@ -1,16 +1,19 @@
 # Luas Architecture
 
-Luas is a two-part scaffold:
+Luas is a multi-deployable scaffold:
 
 - `api/` is the Go backend. It owns persistence, domain rules, HTTP routes, migrations, seeders, and operational integrations.
 - `web/` is the Next.js frontend. It owns UI, route groups, client state, mock BFF route handlers, and browser-facing workflows.
+- `web-spa/` is the static Vite/TanStack frontend. It owns a feature-first browser application
+  that builds to OSS/CDN assets with no production Node.js runtime.
 
-The two halves are independent deployable units. They share HTTP contracts, not source code.
+The units are independently deployable. `web/` and `web-spa/` are alternative browser shells;
+downstream applications normally select one. All integration uses HTTP contracts, not shared source.
 
 ## Boundaries
 
-- API code must not import from `web/`.
-- Web code talks to API behavior over HTTP only.
+- API and browser-shell code must not import each other's source.
+- Both browser shells talk to API behavior over HTTP only.
 - Contracts are documented under `contracts/`.
 - The user-facing brand is `Luas`; lowercase `luas` is reserved for identifiers, packages, binaries, and env keys.
 
@@ -81,7 +84,7 @@ body. Every request therefore observes current membership and role state, includ
 leave, and ownership transfer. See [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)
 for the public header, cache, CORS, and non-disclosure contract.
 
-## Web Shape
+## Next.js Web Shape
 
 The web app uses Next.js App Router and feature-first folders under `web/src/features/`.
 
@@ -91,7 +94,9 @@ Typical flow:
 Page or component -> Feature hook -> Feature service -> src/http/request.ts -> HTTP API
 ```
 
-Mock BFF route handlers under `web/src/app/api/` are part of the scaffold so the web half can run without a backend during development. They are replaceable development flows, not the production API; see `web/docs/MOCK_BFF.md` for downstream replacement steps.
+Mock BFF route handlers under `web/src/app/api/` are part of the scaffold so the Next.js shell can
+run without a backend during development. They are replaceable development flows, not the
+production API; see `web/docs/MOCK_BFF.md` for downstream replacement steps.
 
 Production browser calls that use the Luas HttpOnly API session follow a fixed same-origin adapter
 flow:
@@ -109,13 +114,15 @@ member, invitation, ownership-transfer, and token-acceptance handlers map to fix
 the invitation token exists only in a same-origin POST body. The feature does not add selected
 organization or invitation-secret state to Zustand, browser storage, cookies, or URLs.
 
-The dependent `permission` starter is selected with `organization,permission` in both halves. Its
+The dependent `permission` starter is selected with `organization,permission` in the API and
+Next.js Web shell. Its
 access roles group exact code-owned dotted permission keys and attach to organization memberships.
 Organization membership roles continue to own lifecycle and ownership. Effective permission checks
 refresh current persistence, owner bypass is explicit, delegated mutations require dominance over
 both current and requested grants, and resource-instance ownership remains in product policies.
 
-The independent `notification` starter is selected with `notification` in both halves. Downstream
+The independent `notification` starter is selected with `notification` in the API and Next.js Web
+shell. Downstream
 API modules publish immutable user events through `domain.NotificationPublisher`; no public publish
 endpoint exists. The API commits notification and delivery records atomically, while independently
 deployed `luas notification:work` processes email deliveries through bounded database leases and a
@@ -123,7 +130,8 @@ stable provider idempotency key. The Web feature owns strict same-origin adapter
 parity, unread state, preferences, and a lazy notification center; it never receives provider
 responses or recipient routing data.
 
-The independent `asset` starter is selected with `asset` in both halves. API routes own the private
+The independent `asset` starter is selected with `asset` in the API and Next.js Web shell. API
+routes own the private
 metadata lifecycle and issue short-lived upload/download grants through a provider-neutral object
 store. Uploads land on random staging keys and become downloadable only after authoritative metadata
 and bounded content inspection promote bytes to an immutable final key. The Web feature owns strict
@@ -132,20 +140,51 @@ never receives object keys, local paths, checksums, or durable provider URLs. Pr
 explicit R2 adapter while local storage remains a rooted development implementation. See
 [`../contracts/ASSETS.md`](../contracts/ASSETS.md).
 
-The organization-dependent `setting` starter is selected with `organization,setting` in both
-halves. The API owns the finite typed catalog, effective default/override resolution, monotonic
+The organization-dependent `setting` starter is selected with `organization,setting` in the API
+and Next.js Web shell. The API owns the finite typed catalog, effective default/override resolution, monotonic
 versions, compare-and-swap writes, public app caching, private scope isolation, audit minimization,
 and account cleanup. The Web feature accepts only the five shipped definitions, uses fixed
 same-origin routes, and exposes real user and organization preferences. Unknown definitions fail
 closed instead of becoming an arbitrary settings editor. See
 [`../contracts/SETTINGS.md`](../contracts/SETTINGS.md).
 
-The organization-dependent `usage` starter is selected with `organization,usage` in both halves.
+The organization-dependent `usage` starter is selected with `organization,usage` in the API and
+Next.js Web shell.
 Trusted application services use framework-free record/consume seams; only the finite current-period
 summary is browser-readable. Exact retained idempotency, safe integers, UTC periods, row locking,
-quota CAS, denied-decision persistence, retention, and account cleanup stay in the API. The Web uses
-two fixed private adapters and strict catalog validation; it cannot ingest events or mutate quota.
+quota CAS, denied-decision persistence, retention, and account cleanup stay in the API. The Next.js
+Web shell uses two fixed private adapters and strict catalog validation; it cannot ingest events or
+mutate quota.
 See [`../contracts/USAGE.md`](../contracts/USAGE.md).
+
+## Static SPA Shape
+
+The static app uses Vite, TanStack Router, and feature-first folders under
+`web-spa/src/features/`.
+
+Typical flow:
+
+```text
+TanStack route -> Feature component -> Query hook -> Feature service
+  -> src/http/client.ts -> HTTP API
+```
+
+Routes under `web-spa/src/routes/` are generated into one type-safe route tree and split
+automatically. TanStack Query owns remote state, Zustand owns shared browser-only UI state, Zod
+validates important responses, and i18next owns formal user-facing copy.
+
+`web-spa/` emits only `dist/` static assets. It has no Route Handlers, Server Components, server
+functions, private runtime environment, or mock BFF. Production routing serves existing hashed
+assets, routes an allowlisted `/api/*` prefix to a reviewed backend when needed, and rewrites other
+application paths to `index.html`.
+
+Static delivery does not make bearer-token storage safe. Protected workflows require a same-origin
+browser gateway or explicit Go browser-session boundary that owns HttpOnly cookies, Origin/CSRF
+enforcement, and fixed upstream mappings. Client route guards remain UX only. The initial static
+shell includes system/readiness and browser preference features; starter UI is ported against its
+contract when the required browser adapter exists. See
+[`../web-spa/docs/ARCHITECTURE.md`](../web-spa/docs/ARCHITECTURE.md) and
+[`../web-spa/docs/SECURITY.md`](../web-spa/docs/SECURITY.md).
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).
@@ -156,7 +195,7 @@ For a vertical feature:
 
 1. Update or add the HTTP contract under `contracts/`.
 2. Implement the API module or endpoint in `api/`.
-3. Add Web service, hook, UI, and tests in `web/`.
-4. Run API and Web verification from the changed half, or `make check` at the repo root.
+3. Add service, hook, UI, and tests in each browser shell the downstream app supports.
+4. Run verification in each changed deployable unit, or `make check` at the repo root.
 
 For cross-cutting changes, prefer small, explicit changes on each side over a shared source package.

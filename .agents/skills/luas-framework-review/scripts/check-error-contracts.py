@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Check scaffold-level HTTP error_code contracts across docs, API, and Web."""
+"""Check scaffold-level HTTP error_code contracts across docs, API, and browser shells."""
 
 from __future__ import annotations
 
@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[4]
 CONTRACTS_README = ROOT / "contracts" / "README.md"
 API_RESPONSE_CODES = ROOT / "api" / "pkg" / "response" / "error_codes.go"
 API_DOMAIN_CODES = ROOT / "api" / "internal" / "domain" / "error_codes.go"
-WEB_CODES = ROOT / "web" / "src" / "http" / "codes.ts"
+BROWSER_CODE_PATHS = {
+    "web": ROOT / "web" / "src" / "http" / "codes.ts",
+    "web-spa": ROOT / "web-spa" / "src" / "http" / "codes.ts",
+}
 
 
 @dataclass(frozen=True)
@@ -27,7 +30,7 @@ CODE_VALUE = r"[A-Z][A-Z0-9_]*(?:\.[A-Z][A-Z0-9_]*)+"
 CONTRACT_ROW_RE = re.compile(rf"^\|\s*(\d{{3}})\s*\|\s*`({CODE_VALUE})`\s*\|")
 GO_CONST_RE = re.compile(rf"^\s*([A-Za-z][A-Za-z0-9_]+)\s*=\s*\"({CODE_VALUE})\"")
 TS_API_CODE_RE = re.compile(
-    rf"^\s*([A-Z][A-Z0-9_]+):\s*'({CODE_VALUE})',",
+    rf"\b([A-Z][A-Z0-9_]+):\s*'({CODE_VALUE})',",
     re.MULTILINE,
 )
 TS_STATUS_MAP_RE = re.compile(r"^\s*(\d{3}):\s*ApiErrorCode\.([A-Z][A-Z0-9_]+),")
@@ -59,9 +62,9 @@ def parse_go_codes(path: Path) -> dict[str, str]:
     return codes
 
 
-def parse_web_api_codes() -> dict[str, str]:
+def parse_browser_api_codes(path: Path) -> dict[str, str]:
     codes: dict[str, str] = {}
-    source = read(WEB_CODES)
+    source = read(path)
     try:
         block = source.split("export const ApiErrorCode = {", 1)[1].split("} as const;", 1)[0]
     except IndexError:
@@ -73,12 +76,12 @@ def parse_web_api_codes() -> dict[str, str]:
     return codes
 
 
-def parse_web_status_map() -> dict[int, str]:
-    api_codes = parse_web_api_codes()
+def parse_browser_status_map(path: Path) -> dict[int, str]:
+    api_codes = parse_browser_api_codes(path)
     status_map: dict[int, str] = {}
     in_status_map = False
 
-    for line in read(WEB_CODES).splitlines():
+    for line in read(path).splitlines():
         if line.startswith("export const HttpStatusErrorCodeMap"):
             in_status_map = True
             continue
@@ -114,8 +117,14 @@ def main() -> int:
     contract_codes = {error.error_code for error in contract_errors}
     api_response_codes = set(parse_go_codes(API_RESPONSE_CODES).values())
     api_domain_codes = set(parse_go_codes(API_DOMAIN_CODES).values())
-    web_api_codes = set(parse_web_api_codes().values())
-    web_status_map = parse_web_status_map()
+    browser_api_codes = {
+        name: set(parse_browser_api_codes(path).values())
+        for name, path in BROWSER_CODE_PATHS.items()
+    }
+    browser_status_maps = {
+        name: parse_browser_status_map(path)
+        for name, path in BROWSER_CODE_PATHS.items()
+    }
     documented_by_status: dict[int, set[str]] = {}
 
     for error in contract_errors:
@@ -132,35 +141,59 @@ def main() -> int:
     if missing_api:
         failures.append(f"api/pkg/response/error_codes.go is missing contract error_code values: {', '.join(missing_api)}")
 
-    missing_web = sorted(contract_codes - web_api_codes)
-    if missing_web:
-        failures.append(f"web/src/http/codes.ts ApiErrorCode is missing contract error_code values: {', '.join(missing_web)}")
+    for name, path in BROWSER_CODE_PATHS.items():
+        relative_path = path.relative_to(ROOT)
+        api_codes = browser_api_codes[name]
+        status_map = browser_status_maps[name]
 
-    missing_domain_web = sorted(api_domain_codes - web_api_codes)
-    if missing_domain_web:
-        failures.append(
-            "web/src/http/codes.ts ApiErrorCode is missing API domain error_code values: "
-            + ", ".join(missing_domain_web)
-        )
-
-    for status, documented_codes in sorted(documented_by_status.items()):
-        mapped_code = web_status_map.get(status)
-        if mapped_code is None:
-            failures.append(f"web/src/http/codes.ts HttpStatusErrorCodeMap is missing HTTP {status}")
-            continue
-
-        if mapped_code not in documented_codes:
+        missing_contract = sorted(contract_codes - api_codes)
+        if missing_contract:
             failures.append(
-                f"web/src/http/codes.ts maps HTTP {status} to {mapped_code}, "
-                f"but contracts/README.md documents {', '.join(sorted(documented_codes))}"
+                f"{relative_path} ApiErrorCode is missing contract error_code values: "
+                + ", ".join(missing_contract)
             )
 
-    undocumented_statuses = sorted(set(web_status_map) - set(documented_by_status))
-    if undocumented_statuses:
-        failures.append(
-            "web/src/http/codes.ts maps undocumented HTTP statuses: "
-            + ", ".join(str(status) for status in undocumented_statuses)
-        )
+        missing_domain = sorted(api_domain_codes - api_codes)
+        if missing_domain:
+            failures.append(
+                f"{relative_path} ApiErrorCode is missing API domain error_code values: "
+                + ", ".join(missing_domain)
+            )
+
+        for status, documented_codes in sorted(documented_by_status.items()):
+            mapped_code = status_map.get(status)
+            if mapped_code is None:
+                failures.append(f"{relative_path} HttpStatusErrorCodeMap is missing HTTP {status}")
+                continue
+
+            if mapped_code not in documented_codes:
+                failures.append(
+                    f"{relative_path} maps HTTP {status} to {mapped_code}, "
+                    f"but contracts/README.md documents {', '.join(sorted(documented_codes))}"
+                )
+
+        undocumented_statuses = sorted(set(status_map) - set(documented_by_status))
+        if undocumented_statuses:
+            failures.append(
+                f"{relative_path} maps undocumented HTTP statuses: "
+                + ", ".join(str(status) for status in undocumented_statuses)
+            )
+
+    next_codes = browser_api_codes["web"]
+    spa_codes = browser_api_codes["web-spa"]
+    if next_codes != spa_codes:
+        only_next = sorted(next_codes - spa_codes)
+        only_spa = sorted(spa_codes - next_codes)
+        if only_next:
+            failures.append(
+                "web-spa/src/http/codes.ts is missing Next.js Web ApiErrorCode values: "
+                + ", ".join(only_next)
+            )
+        if only_spa:
+            failures.append(
+                "web/src/http/codes.ts is missing static SPA ApiErrorCode values: "
+                + ", ".join(only_spa)
+            )
 
     if failures:
         print("Error contract check failed:", file=sys.stderr)
@@ -171,7 +204,11 @@ def main() -> int:
     print(
         "Error contract check passed "
         f"({len(contract_codes)} contract error_code values, {len(api_domain_codes)} API domain values, "
-        f"{len(web_status_map)} Web status fallbacks)."
+        + ", ".join(
+            f"{len(browser_status_maps[name])} {name} status fallbacks"
+            for name in BROWSER_CODE_PATHS
+        )
+        + ")."
     )
     return 0
 

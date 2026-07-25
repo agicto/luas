@@ -22,7 +22,7 @@ and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-
 - **Verification is proportionate**: every implementation skill names focused proof. Run the full
   repository gate once at the release boundary, not after every local edit.
 - **One local governance entry point**: stable root guardrails should be reachable through
-  `make governance`, and `make check` should include them before API/Web verification.
+  `make governance`, and `make check` should include them before API/browser verification.
 - **Scaffold-first**: skills must preserve Luas as a starter kit. They should not turn examples,
   mock BFF routes, devtools, or console pages into product behavior.
 

@@ -1,21 +1,24 @@
 ---
 name: contract-evolution
-description: Evolve shared Luas HTTP behavior across contracts, API, Web, and mock BFF. Use for endpoint, envelope, error_code, request_id, pagination, or validation changes.
+description: Evolve shared Luas HTTP behavior across contracts, API, browser shells, and mock BFF. Use for endpoint, envelope, error_code, request_id, pagination, or validation changes.
 ---
 
 # Contract Evolution
 
 ## Purpose
 
-Keep Luas HTTP behavior aligned across `contracts/`, `api/`, Web services, and the development mock BFF. Use this skill when a change can alter request shape, response shape, HTTP status, `error_code`, `request_id`, pagination, validation errors, or mock production guardrails.
+Keep Luas HTTP behavior aligned across `contracts/`, `api/`, selected browser-shell services, and
+the development mock BFF. Use this skill when a change can alter request shape, response shape,
+HTTP status, `error_code`, `request_id`, pagination, validation errors, or mock production
+guardrails.
 
 ## Source Material
 
 Read only the authorities touched by the change:
 
 1. `contracts/README.md` and the owning capability contract.
-2. The affected half's `AGENTS.md`; read both only when both change.
-3. Relevant API module or Web feature docs.
+2. Each affected deployable unit's `AGENTS.md`.
+3. Relevant API module or browser feature docs.
 4. `web/docs/MOCK_BFF.md` only when mock route handlers are involved.
 5. `CONTEXT.md` only when vocabulary or ownership changes.
 
@@ -29,25 +32,26 @@ Read only the authorities touched by the change:
    - Use `grill-before-build` only when a high-impact contract decision remains unresolved after repository discovery.
 
 2. **Update the contract first**
-   - Document request and response shape in `contracts/README.md` or the owning contract doc before changing both halves.
+   - Document request and response shape in `contracts/README.md` or the owning contract doc before changing multiple deployable units.
    - Keep JSON fields `snake_case`.
    - Use `code` only for transport/success status and `error_code` for client branching.
    - Include `request_id` when the API can carry one.
    - For validation, keep malformed JSON at `400 COMMON.INVALID_INPUT` and schema or field failures at `422 COMMON.VALIDATION_FAILED` with `errors`.
 
 3. **Update the API behavior**
-   - Keep API code inside `api/`; do not import Web code or share source with Web.
+   - Keep API code inside `api/`; do not import either browser shell.
    - Use response helpers and central error mapping instead of ad hoc response shapes.
    - Add or update tests at the handler or public module seam for success and at least one error path.
    - If adding an `error_code`, update the API domain/response mapping and any API contract tests that assert codes.
 
-4. **Update Web client behavior**
+4. **Update browser client behavior**
    - Update feature service types, request/response DTOs, hooks, and UI error handling at the feature seam.
    - Use backend `ApiErrorCode` for server contract values and `ClientErrorCode` only for client-owned failures such as network, timeout, or invalid successful-response data.
    - Validate security- or state-sensitive success payloads at the network boundary; TypeScript DTOs do not validate external JSON.
    - Select user-facing copy from stable local mappings. Use backend field-error keys for control association, not backend messages as display copy.
-   - Keep Web code talking to API behavior over HTTP only.
-   - Add or update Web tests for contract-sensitive parsing, error handling, or route behavior.
+   - Keep both browser shells talking to API behavior over HTTP only; they do not import each other.
+   - In `web-spa/`, keep fixed paths in feature services and validate important responses with Zod.
+   - Add or update tests in every changed browser shell for contract-sensitive parsing, error handling, or route behavior.
 
 5. **Update mock BFF behavior**
    - Mock route handlers must call `guardMockBffRoute()` before reading request bodies or touching mock state.
@@ -64,7 +68,8 @@ Read only the authorities touched by the change:
 
 ## Verification
 
-Pick the narrowest commands that prove the whole changed contract, then run broader checks when both halves move.
+Pick the narrowest commands that prove the whole changed contract, then run broader checks when
+multiple deployable units move.
 
 - Contract/docs only:
   - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
@@ -77,6 +82,9 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 - Web behavior or mock BFF:
   - `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`
   - `cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
+- Static SPA behavior:
+  - `cd web-spa && pnpm vitest run src/http/client.test.ts`
+  - `cd web-spa && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
 - Cross-boundary change:
   - `make check`
   - targeted `rg` scans for old paths, fields, and error codes
@@ -88,7 +96,7 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 - Adding a new `error_code` only in Web or only in API.
 - Branching client behavior on `message` text or numeric `code` alone.
 - Treating generated examples, devtools, or mock flows as production API behavior.
-- Sharing source code between `api/` and `web/` to avoid writing down the contract.
+- Sharing source code between deployable units to avoid writing down the contract.
 
 ## Related Skills
 

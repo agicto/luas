@@ -1,6 +1,7 @@
 # HTTP Contracts
 
-This directory documents the contracts shared by `api/` and `web/`.
+This directory documents the contracts shared by `api/` and its browser-shell alternatives under
+`web/` and `web-spa/`.
 
 The response envelope, validation classes, `error_code`, and `request_id` semantics are global.
 Feature endpoint paths and DTOs are shared only when their owning contract says so. In particular,
@@ -8,9 +9,9 @@ the current browser authentication surface and Go API authentication-session sur
 see [`AUTHENTICATION.md`](AUTHENTICATION.md).
 
 Optional backend starter contracts are documented independently. The first ownership foundation is
-[`ORGANIZATIONS.md`](ORGANIZATIONS.md); API and Web activation are disabled independently by
-default, and each delivered browser operation is listed explicitly rather than implied by the
-backend starter.
+[`ORGANIZATIONS.md`](ORGANIZATIONS.md); API and Next.js Web activation are disabled independently
+by default, and each delivered browser operation is listed explicitly rather than implied by the
+backend starter. Static SPA support is listed only after its browser adapter exists.
 
 Organization-scoped access roles, exact permission checks, delegated-management safety, and the
 replaceable authorization seam are defined in [`PERMISSIONS.md`](PERMISSIONS.md).
@@ -151,10 +152,10 @@ Rate-limited responses must include `Retry-After` when the reset time is known. 
 
 ## Contract Checklist
 
-- Add or update the documented request and response shape before changing both halves.
+- Add or update the documented request and response shape before changing multiple deployable units.
 - Keep JSON fields in `snake_case`.
 - Include stable `error_code` values for non-2xx responses.
 - Include `request_id` when the API has one in context.
-- Add API and Web tests for contract-sensitive changes.
+- Add API and every changed browser-shell test for contract-sensitive changes.
 - Document adapter-owned path or DTO mappings instead of treating unlike endpoints as interchangeable.
 - From the repo root, run `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py` after changing scaffold-level HTTP status or `error_code` behavior.
