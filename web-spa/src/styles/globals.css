@@ -23,7 +23,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -31,17 +31,19 @@
   --chart-5: oklch(0.769 0.188 70.08);
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--brand-subtle);
+  --sidebar-accent-foreground: var(--brand-strong);
   --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-ring: var(--brand);
   --surface: var(--card);
   --subtle: var(--muted-foreground);
-  --brand: oklch(0.52 0.12 178);
-  --brand-strong: oklch(0.41 0.11 178);
-  --brand-subtle: oklch(0.95 0.04 178);
+  /* Luas Rhine blue accent, aligned with the Next.js browser shell. */
+  --brand: oklch(0.5 0.2 250);
+  --brand-foreground: oklch(0.985 0 0);
+  --brand-strong: oklch(0.4 0.18 250);
+  --brand-subtle: oklch(0.97 0.01 250);
   --success: oklch(0.55 0.14 150);
   --success-strong: oklch(0.41 0.12 150);
   --success-subtle: oklch(0.95 0.04 150);
@@ -73,7 +75,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: var(--brand);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -81,17 +83,18 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: var(--brand-subtle);
+  --sidebar-accent-foreground: var(--brand-strong);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-ring: var(--brand);
   --surface: var(--card);
   --subtle: var(--muted-foreground);
-  --brand: oklch(0.68 0.11 178);
-  --brand-strong: oklch(0.77 0.1 178);
-  --brand-subtle: oklch(0.29 0.04 178);
+  --brand: oklch(0.65 0.15 250);
+  --brand-foreground: oklch(0.145 0 0);
+  --brand-strong: oklch(0.85 0.06 250);
+  --brand-subtle: oklch(0.27 0.05 250);
   --success: oklch(0.7 0.13 150);
   --success-strong: oklch(0.75 0.12 150);
   --success-subtle: oklch(0.27 0.04 150);
@@ -140,6 +143,7 @@
   --color-surface: var(--surface);
   --color-subtle: var(--subtle);
   --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-brand-strong: var(--brand-strong);
   --color-brand-subtle: var(--brand-subtle);
   --color-success: var(--success);
@@ -189,7 +193,7 @@
 
 @layer components {
   .brand-mark {
-    @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand text-sm font-semibold text-white shadow-sm;
+    @apply grid size-8 shrink-0 place-items-center rounded-lg bg-brand text-sm font-semibold text-brand-foreground shadow-sm;
   }
 
   .page-container {

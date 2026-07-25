@@ -45,7 +45,11 @@ export function PreferencesPage() {
               {themes.map((value) => (
                 <Button
                   key={value}
-                  className={cn('flex-1', theme === value && 'bg-brand text-white hover:bg-brand')}
+                  className={cn(
+                    'flex-1',
+                    theme === value &&
+                      'bg-brand text-brand-foreground hover:bg-brand hover:text-brand-foreground',
+                  )}
                   variant="ghost"
                   size="sm"
                   aria-pressed={theme === value}

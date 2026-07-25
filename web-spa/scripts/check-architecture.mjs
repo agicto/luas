@@ -145,9 +145,24 @@ if (consoleLayout.includes('<aside')) {
 }
 
 const globalStyles = await read('src/styles/globals.css');
-for (const marker of ["@import 'tw-animate-css'", '--color-primary', '--color-sidebar-accent']) {
+for (const marker of [
+  "@import 'tw-animate-css'",
+  '--color-primary',
+  '--color-sidebar-accent',
+  '--brand: oklch(0.5 0.2 250)',
+  '--brand: oklch(0.65 0.15 250)',
+  '--color-brand-foreground',
+  '--sidebar-accent: var(--brand-subtle)',
+]) {
   if (!globalStyles.includes(marker)) {
     failures.push(`src/styles/globals.css must retain ${marker}`);
+  }
+}
+for (const retiredBrandMarker of ['0.52 0.12 178', '0.68 0.11 178']) {
+  if (globalStyles.includes(retiredBrandMarker)) {
+    failures.push(
+      `src/styles/globals.css must use Rhine blue instead of retired green ${retiredBrandMarker}`,
+    );
   }
 }
 

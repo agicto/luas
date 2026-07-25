@@ -96,6 +96,9 @@ This is a static browser client, not a BFF:
 
 - Use the configured shadcn/ui New York primitives and semantic tokens before
   adding a new visual system.
+- Keep the Luas brand accent Rhine blue. Green is reserved for explicit
+  success state and must not become the logo, navigation, selection, or focus
+  color.
 - Compose the console shell from `SidebarProvider`, `Sidebar`, and
   `SidebarInset`. Keep its open state in the display-preference store so the
   static client does not emit framework-owned UI cookies.
