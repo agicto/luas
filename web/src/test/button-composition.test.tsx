@@ -5,6 +5,23 @@ import { describe, expect, it, vi } from 'vitest';
 import { Button } from '@/components/ui/button';
 
 describe('Button composition contract', () => {
+  it('keeps icon and label content in one horizontal line', () => {
+    render(
+      <Button
+        icon={<ArrowRight aria-hidden="true" />}
+        className="flex-col flex-wrap whitespace-normal"
+      >
+        Open preview
+      </Button>
+    );
+
+    expect(screen.getByRole('button', { name: 'Open preview' })).toHaveClass(
+      'flex-row!',
+      'flex-nowrap!',
+      'whitespace-nowrap!'
+    );
+  });
+
   it('applies the button contract directly to the composed link', () => {
     const { container } = render(
       <Button asChild className="contract-marker">

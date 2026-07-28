@@ -124,6 +124,8 @@ status, error, session, or pagination behavior changes.
 - Keep cards for actual repeated or framed units, not every page section.
 - Use icons from the installed icon library for familiar icon actions and
   provide accessible names/tooltips where needed.
+- Keep standard button icons and labels on one horizontal line. Use a distinct
+  composed control when an interaction genuinely requires a vertical layout.
 - All user-facing copy uses next-intl messages. Reuse the nearest namespace and
   keep locale files structurally aligned.
 - Server code uses server translation APIs; client components use scoped

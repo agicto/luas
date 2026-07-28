@@ -17,7 +17,7 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium focus-ring shrink-0 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
+  'inline-flex flex-row! flex-nowrap! items-center justify-center gap-2 whitespace-nowrap! rounded-md text-sm font-medium focus-ring shrink-0 disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
   {
     variants: {
       variant: {

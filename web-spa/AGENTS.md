@@ -107,6 +107,8 @@ This is a static browser client, not a BFF:
   loading/error/empty layouts.
 - Use Lucide icons for familiar actions. Icon-only buttons require an
   accessible label and tooltip/title.
+- Keep standard button icons and labels on one horizontal line. Use a distinct
+  composed control when an interaction genuinely requires a vertical layout.
 - Keep cards for repeated records, metrics, and genuinely framed tools.
 - All formal user-facing copy uses i18next resources. `en-US` defines the
   source schema; every locale preserves its structure and interpolation names.
