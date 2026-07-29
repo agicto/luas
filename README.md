@@ -201,6 +201,7 @@ Use [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) as the keep, replace,
 | Dependency security | [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) |
 | Container security | [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |
 | CI and release branches | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
+| Agent and Skill performance | [docs/AGENT_SKILL_PERFORMANCE_GUIDE.md](docs/AGENT_SKILL_PERFORMANCE_GUIDE.md) |
 | Long-term quality roadmap | [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) |
 
 ## Contributing

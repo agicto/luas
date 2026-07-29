@@ -11,16 +11,16 @@ and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-
 
 - **Small and composable**: each skill owns one repeatable discipline. Avoid one large process
   skill that tries to own every decision.
-- **One primary skill**: select one workflow from the request. Related-skill links are navigation,
-  not automatic chaining.
-- **Progressive disclosure**: keep `AGENTS.md` small, keep `SKILL.md` below 500 lines, and load
+- **At most one primary skill**: routine local work may need no skill. Select a workflow only when
+  its trigger clearly matches. Related-skill links are navigation, not automatic chaining.
+- **Progressive disclosure**: keep `AGENTS.md` small, keep `SKILL.md` below 200 lines, and load
   contracts, ADRs, examples, and references only when their boundary is active.
 - **Vocabulary is active, not automatic**: read `CONTEXT.md` when a global term or owner changes.
   Routine local edits should follow nearby code and the nearest `AGENTS.md`.
 - **Deep modules over busy templates**: skills should push code toward small interfaces, clear
   seams, locality, leverage, and testability.
 - **Verification is proportionate**: every implementation skill names focused proof. Run the full
-  repository gate once at the release boundary, not after every local edit.
+  repository gate once at an explicit release boundary, not after every local edit, commit, or push.
 - **One local governance entry point**: stable root guardrails should be reachable through
   `make governance`, and `make check` should include them before API/browser verification.
 - **Scaffold-first**: skills must preserve Luas as a starter kit. They should not turn examples,
@@ -51,6 +51,9 @@ Web-local copy of Codex's built-in `skill-creator`, and a project overview bette
 The fast agent-guidance loop is `make agent-check`. `make governance` remains the complete semantic
 and architecture gate, and `make check` remains the single release gate.
 
+The portable lessons and migration recipe for downstream repositories live in
+[`AGENT_SKILL_PERFORMANCE_GUIDE.md`](AGENT_SKILL_PERFORMANCE_GUIDE.md).
+
 ## Skill Taxonomy
 
 ### User-Invoked Router Skills
@@ -71,7 +74,7 @@ These are reusable habits the agent can reach for automatically.
 
 | Skill | Role | Status |
 |---|---|---|
-| `verification-before-completion` | Chooses proportionate static, test, build, and guard evidence. | Existing |
+| `verification-before-completion` | Resolves verification scope when local guidance is insufficient. | Existing |
 | `systematic-debugging` | Reproduce, isolate, identify, verify. | Existing |
 | `architecture-principles` | API-side seam, depth, starter, and locality rules. | Existing |
 | `api-error-handling` | Web/API error response contract and code vocabulary. | Existing |
@@ -130,7 +133,8 @@ Goal: turn skills into cross-boundary governance, not just reminders.
    - Status: implemented as a root skill.
    - Require a reproducible failing test before production changes for bugs, regressions, flaky behavior, and
      contract-sensitive fixes.
-   - Pair with API/Web testing skills for style and `verification-before-completion` for the broader gate.
+   - Load API/Web testing guidance only when local test ownership is unclear. Use
+     `verification-before-completion` only when the nearest verification matrix is insufficient.
 
 ## 90-Day Plan
 
