@@ -1,6 +1,6 @@
 ---
 name: contract-evolution
-description: Evolve shared Luas HTTP behavior across contracts, API, browser shells, and mock BFF. Use for endpoint, envelope, error_code, request_id, pagination, or validation changes.
+description: Evolve public HTTP behavior across a contract and multiple Luas deployable units. Do not use for a local endpoint implementation that preserves its contract.
 ---
 
 # Contract Evolution

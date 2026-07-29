@@ -27,8 +27,9 @@ Start with the smallest context that can answer the task:
    routine local edits.
 4. Open the owning contract or architecture document only when that boundary
    is active.
-5. Load one primary skill. A skill's `Pair With` section is navigation, not an
-   instruction to load every adjacent skill.
+5. Load at most one primary skill when its trigger clearly matches. Routine
+   local work already covered by the nearest `AGENTS.md` and code may load none.
+   A skill's `Pair With` section is navigation, not automatic chaining.
 
 Do not preload document catalogs, all ADRs, both half guides, or all skills.
 Expand context only when the current evidence leaves a real decision open.
@@ -47,7 +48,8 @@ after selecting it.
   not ordinary symbol naming.
 - Use `grill-before-build` only when a high-impact decision remains unresolved
   after local discovery.
-- Use `verification-before-completion` to choose focused proof for the change.
+- Use `verification-before-completion` only when the appropriate proof is
+  genuinely unclear; routine tasks use the verification matrix below.
 
 The complete skill index and helper catalog are in
 [.agents/skills/README.md](.agents/skills/README.md).
@@ -98,8 +100,9 @@ During implementation, run the narrowest check that proves the edited seam:
 - Release or genuinely cross-cutting change: `make check`
 
 `make check` already includes `make governance`; never run both back-to-back.
-Run the full gate once after focused checks pass, immediately before commit or
-release. Do not rerun an unchanged successful gate in the same turn.
+Run the full gate once after focused checks pass, immediately before an
+explicit release. An ordinary commit or push is not a release boundary. Do not
+rerun an unchanged successful gate in the same turn.
 
 ## Common Commands
 

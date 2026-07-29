@@ -31,8 +31,9 @@ src/test/
 
 | Command | Purpose |
 |---------|---------|
-| `pnpm test` | Run tests in watch mode |
-| `pnpm test:coverage` | Run tests with coverage report |
+| `corepack pnpm vitest run <test-file>` | Run the focused non-watch test |
+| `corepack pnpm test -- --run` | Run the complete suite once |
+| `corepack pnpm test:coverage` | Run coverage only when requested or required |
 
 ### 3. Component Testing Pattern
 

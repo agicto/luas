@@ -1,6 +1,6 @@
 ---
 name: tdd-regression
-description: Use red/green/refactor for Luas bugs, regressions, flaky behavior, contract drift, or fixes that need a failing test first.
+description: Add a red/green guard for a reproducible Luas regression with known expected behavior. Use systematic-debugging instead while the cause or reproduction is unclear.
 ---
 
 # TDD Regression
@@ -24,15 +24,10 @@ Skip this skill for pure wording changes, mechanical renames with no behavior, o
 
 ## Source Material
 
-Read the smallest set that defines the failing behavior:
-
-1. The bug report, failing command, PR comment, issue, or user request.
-2. `CONTEXT.md` for vocabulary.
-3. `contracts/README.md` for HTTP contract behavior.
-4. The affected half's `AGENTS.md` and testing skill:
-   - API: `api/.agents/skills/testing-strategy/SKILL.md`.
-   - Web: `web/.agents/skills/testing-standards/SKILL.md`.
-   - Browser flow: `web/.agents/skills/webapp-testing/SKILL.md`.
+Read the bug report/failing command, the nearest implementation/test, and the
+affected half's `AGENTS.md`. Read `CONTEXT.md` only for vocabulary ownership,
+and the owning contract only when public HTTP behavior is active. Load a
+testing skill only when test ownership or browser strategy is itself unclear.
 
 ## Workflow
 
@@ -69,7 +64,7 @@ Use the highest-level test that can reproduce the bug without making the suite b
 |---|---|
 | API response envelope, `error_code`, status, `request_id` | handler or route test through `net/http/httptest`; contract helper if present |
 | Domain rule or starter behavior | service or use-case test through the module's public interface |
-| Persistence query or migration behavior | repository or migration test with a real lightweight database substitute |
+| Persistence query or migration behavior | repository or migration test with disposable PostgreSQL |
 | Web HTTP client/service normalization | `src/test/*.test.ts` around the service or normalizer |
 | Web component interaction | React Testing Library test through accessible roles and labels |
 | Mock BFF route behavior | route contract test plus production and same-origin guard coverage |
@@ -92,7 +87,7 @@ Report these in the final answer:
 
 - red command and failure reason,
 - green targeted command,
-- broader command from `verification-before-completion`,
+- relevant focused or tier command from the nearest `AGENTS.md`,
 - any skipped tier and why.
 
 Typical commands:
@@ -102,8 +97,10 @@ cd api && go test ./internal/modules/<module>/...
 cd api && go test ./internal/interfaces/http/...
 cd web && pnpm vitest run src/test/<file>.test.ts
 cd web && pnpm type-check && pnpm lint
-make check
 ```
+
+Use `make check` only when the fix crosses deployable units/contracts or is an
+explicit release candidate.
 
 ## Anti-patterns
 

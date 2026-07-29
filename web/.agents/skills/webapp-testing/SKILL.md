@@ -1,102 +1,74 @@
 ---
 name: webapp-testing
-description: Verify or debug a running Luas UI with Playwright. Use for browser workflows, screenshots, responsive behavior, or console/network inspection.
+description: Verify a running Luas UI through a real browser. Use for requested workflows, screenshots, responsive checks, or runtime DOM/console inspection, not routine component tests.
 ---
 
 # Web Application Testing
 
-To test local web applications, write native Python Playwright scripts.
+## Purpose
 
-**Helper Scripts Available**:
-- `scripts/with_server.py` - Manages server lifecycle (supports multiple servers)
+Verify behavior that unit/component tests and static builds cannot prove:
+navigation, responsive layout, focus flow, browser APIs, runtime console errors,
+and rendered visual state.
 
-**Always run scripts with `--help` first** to see usage. DO NOT read the source until you try running the script first and find that a customized solution is abslutely necessary. These scripts can be very large and thus pollute your context window. They exist to be called directly as black-box scripts rather than ingested into your context window.
+## Tool Routing
 
-## Decision Tree: Choosing Your Approach
+1. Reuse the browser capability already available in the active agent
+   environment. Do not create a second Playwright process when a connected
+   browser can inspect the target.
+2. Reuse an already running local server when it belongs to the current
+   workspace. Confirm the URL before treating another project as Luas.
+3. Start only the deployable unit needed for the workflow. Keep the process
+   alive while verifying and stop it unless the user needs the URL afterward.
+4. Use `scripts/with_server.py` only for a self-contained headless CLI or CI
+   flow when no managed browser/server lifecycle is available. Run its
+   `--help` output instead of reading the helper source.
 
-```
-User task → Is it static HTML?
-    ├─ Yes → Read HTML file directly to identify selectors
-    │         ├─ Success → Write Playwright script using selectors
-    │         └─ Fails/Incomplete → Treat as dynamic (below)
-    │
-    └─ No (dynamic webapp) → Is the server already running?
-        ├─ No → Run: python scripts/with_server.py --help
-        │        Then use the helper + write simplified Playwright script
-        │
-        └─ Yes → Reconnaissance-then-action:
-            1. Navigate and wait for networkidle
-            2. Take screenshot or inspect DOM
-            3. Identify selectors from rendered state
-            4. Execute actions with discovered selectors
-```
+Do not generate a new Python automation file for a one-off check when direct
+browser inspection can perform it.
 
-## Example: Using with_server.py
+## Workflow
 
-To start a server, run `--help` first, then use the helper:
+1. **Orient**
+   - Confirm the server, URL, viewport, locale, theme, and required auth state.
+   - Inspect a DOM snapshot or screenshot before choosing selectors.
+2. **Exercise**
+   - Prefer accessible roles, names, labels, and stable test attributes.
+   - Perform the shortest workflow that reaches the changed behavior.
+3. **Observe**
+   - Check the authoritative visible state, URL, DOM property, or console entry.
+   - Use screenshots when visual layout is the behavior under test.
+4. **Vary only relevant conditions**
+   - Test desktop/mobile, light/dark, or multiple locales only when the change
+     can differ across that condition.
+5. **Finish**
+   - Report the URL, viewport, workflow, and observed result.
+   - Clean up temporary tabs, processes, screenshots, and generated files.
 
-**Single server:**
+## Evidence Rules
+
+- A screenshot proves appearance, not keyboard behavior or API correctness.
+- A DOM assertion proves structure, not visual spacing or clipping.
+- Browser navigation is UX evidence; API authorization remains server-owned.
+- Do not use fixed sleeps when a visible state or load condition is available.
+- Do not inspect broad page content repeatedly; narrow to the changed surface.
+- Never place credentials or private payloads in automation source or output.
+
+## Headless Helper
+
+For a repeatable CLI-only flow:
+
 ```bash
-python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_automation.py
+python web/.agents/skills/webapp-testing/scripts/with_server.py --help
 ```
 
-**Multiple servers (e.g., backend + frontend):**
-```bash
-python scripts/with_server.py \
-  --server "cd backend && python server.py" --port 3000 \
-  --server "cd frontend && npm run dev" --port 5173 \
-  -- python your_automation.py
-```
+The examples directory contains optional Python references. Load one only when
+building a persistent headless flow, not for ordinary interactive verification.
 
-To create an automation script, include only Playwright logic (servers are managed automatically):
-```python
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True) # Always launch chromium in headless mode
-    page = browser.new_page()
-    page.goto('http://localhost:5173') # Server already running and ready
-    page.wait_for_load_state('networkidle') # CRITICAL: Wait for JS to execute
-    # ... your automation logic
-    browser.close()
-```
-
-## Reconnaissance-Then-Action Pattern
-
-1. **Inspect rendered DOM**:
-   ```python
-   page.screenshot(path='/tmp/inspect.png', full_page=True)
-   content = page.content()
-   page.locator('button').all()
-   ```
-
-2. **Identify selectors** from inspection results
-
-3. **Execute actions** using discovered selectors
-
-## Common Pitfall
-
-❌ **Don't** inspect the DOM before waiting for `networkidle` on dynamic apps
-✅ **Do** wait for `page.wait_for_load_state('networkidle')` before inspection
-
-## Best Practices
-
-- **Use bundled scripts as black boxes** - To accomplish a task, consider whether one of the scripts available in `scripts/` can help. These scripts handle common, complex workflows reliably without cluttering the context window. Use `--help` to see usage, then invoke directly. 
-- Use `sync_playwright()` for synchronous scripts
-- Always close the browser when done
-- Use descriptive selectors: `text=`, `role=`, CSS selectors, or IDs
-- Add appropriate waits: `page.wait_for_selector()` or `page.wait_for_timeout()`
-
-## Reference Files
-
-- **examples/** - Examples showing common patterns:
-  - `element_discovery.py` - Discovering buttons, links, and inputs on a page
-  - `static_html_automation.py` - Using file:// URLs for local HTML
-  - `console_logging.py` - Capturing console logs during automation
 ## Related Skills
 
-Select another skill only when its distinct concern is active.
+Select another skill only when its distinct concern is active:
 
-- [`testing-standards`](../testing-standards/): Unit / component layer below browser-driven tests.
-- [`accessibility-audit`](../accessibility-audit/): Assert a11y in E2E flows (axe-core in Playwright).
-- [`systematic-debugging`](../../../../.agents/skills/systematic-debugging/): When a flaky E2E reveals a real race.
+- `testing-standards`: unit/component test ownership is unclear.
+- `accessibility-audit`: the user requested a dedicated WCAG review.
+- Root `systematic-debugging`: runtime behavior fails for an unknown reason.

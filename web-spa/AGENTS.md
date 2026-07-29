@@ -141,8 +141,8 @@ corepack pnpm build
 
 `pnpm build` verifies that output is static, source maps are absent, and bundle
 budgets pass. Use browser verification for changed workflows and responsive
-layout. The repository release gate is `cd .. && make check`; run it once after
-focused checks pass.
+layout. Use `cd .. && make check` only for a cross-cutting change or explicit
+release, not for every SPA commit or push.
 
 ## Do Not
 

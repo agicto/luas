@@ -116,4 +116,5 @@ Use only when its distinct trigger is active:
 - `contract-evolution`: a public HTTP contract changes.
 - `downstream-app-extraction`: product/scaffold separation.
 - `luas-code-review`: an explicit diff review.
-- `verification-before-completion`: focused proof after implementation.
+- `verification-before-completion`: only when the owning verification scope
+  remains unclear after reading the nearest `AGENTS.md`.

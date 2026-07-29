@@ -30,7 +30,8 @@ guide for an ordinary component edit.
 | `web-perf` | Measuring route bundles, Web Vitals, or a performance regression |
 | `vercel-react-best-practices` | Performance-sensitive React/Next.js implementation |
 
-Choose one primary skill. Baseline accessibility, type safety, and responsive
+Choose at most one primary skill when its trigger clearly matches; routine
+local work may need none. Baseline accessibility, type safety, and responsive
 behavior remain mandatory without loading an audit skill every time.
 
 ## Structure
@@ -179,8 +180,8 @@ bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 
 Use browser verification for changed user workflows and visual behavior. Use
 bundle analysis only for a performance claim or shared client dependency
-change. The repository release gate is `cd .. && make check`; run it once after
-focused checks pass.
+change. Use `cd .. && make check` only for a cross-cutting change or explicit
+release, not for every Web commit or push.
 
 ## Do Not
 

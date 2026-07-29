@@ -23,14 +23,16 @@ workflows during ordinary API implementation.
 
 ## Rules
 
-- Select one primary skill.
+- Select at most one primary skill when its trigger clearly matches; routine
+  local work may need none.
 - Read examples only when nearby production code is insufficient.
-- Keep `SKILL.md` below 500 lines.
+- Keep `SKILL.md` below 200 lines; move optional tutorials and examples out of
+  the automatically loaded file.
 - Put deterministic checks in `scripts/`.
 - Keep frontmatter descriptions precise enough to exclude routine unrelated
   work.
-- Run focused package tests while iterating; run root `make check` once at the
-  release boundary.
+- Run focused package tests while iterating; run root `make check` once at an
+  explicit release boundary. An ordinary commit or push is not a release.
 
 ## Commands
 

@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Choose the narrowest checks that prove changed behavior before completion. Use after implementation; reserve make check for cross-boundary or release gates.
+description: Resolve an unclear Luas verification scope. Use when the nearest AGENTS.md matrix cannot identify sufficient proof, not after every implementation.
 ---
 
 # Verification Before Completion
@@ -11,7 +11,8 @@ Produce concrete evidence without turning every edit into a full repository
 build. Verification should scale with the changed behavior and run from
 focused to broad.
 
-Skip this skill for read-only research and prose-only responses.
+Skip this skill when the nearest `AGENTS.md` already names the focused check,
+and for read-only research or prose-only responses.
 
 ## Workflow
 
@@ -20,7 +21,8 @@ Skip this skill for read-only research and prose-only responses.
 3. Run static checks for each changed language boundary.
 4. Run focused tests for each changed behavior, including a relevant failure
    path.
-5. Widen only when the change crosses a public seam or is ready to commit.
+5. Widen only when the change crosses a public seam or reaches an explicit
+   release boundary. A normal commit or push is not a release.
 6. Report exact commands and outcomes. State any unverified risk.
 
 ## Verification Matrix

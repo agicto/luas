@@ -1,6 +1,6 @@
 ---
 name: web-perf
-description: Measure Next.js route bundles, lab performance, and field Web Vitals. Use for shared-client changes, slowness, budgets, or LCP/INP/CLS regressions.
+description: Measure a reported or suspected Next.js performance regression. Use for bundle budgets, lab evidence, or LCP/INP/CLS analysis, not routine shared-component edits.
 ---
 
 # Web Performance Audit

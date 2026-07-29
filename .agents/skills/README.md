@@ -21,13 +21,15 @@ not duplicate the Next-specific skill set under `web/.agents/skills/`.
 
 ## Routing Policy
 
-1. Select one primary skill from the user intent.
+1. Select at most one primary skill when its trigger clearly matches. Zero is
+   valid for routine local work already covered by the nearest `AGENTS.md`.
 2. Load another only when the task crosses its distinct ownership boundary.
 3. Treat `Related Skills`/`Pair With` as navigation, not automatic chaining.
 4. Keep mandatory everyday rules in the nearest `AGENTS.md`.
 5. Keep detailed examples and variant references outside `SKILL.md` and load
    them only when needed.
-6. Use focused checks while iterating and one full release gate at the end.
+6. Use focused checks while iterating. Run the full gate only for a
+   cross-cutting change or explicit release; an ordinary push is not a release.
 
 Avoid descriptions such as "use for all development" or "use when adding or
 reviewing any UI." Descriptions should include positive triggers and important
@@ -45,7 +47,7 @@ negative boundaries so implicit selection remains precise.
 | `luas-framework-review` | Run an explicit framework-wide audit |
 | `systematic-debugging` | Isolate an unclear failure |
 | `tdd-regression` | Fix a regression red/green |
-| `verification-before-completion` | Select proportionate proof |
+| `verification-before-completion` | Resolve an unclear verification scope |
 | `pr-description-writer` | Draft commit/PR communication |
 
 ## API Skills
@@ -91,7 +93,8 @@ the Web scope.
 
 - `name`: unique kebab-case, at most 64 characters.
 - `description`: at most 1024 bytes and preferably at most 200 bytes.
-- `SKILL.md`: at most 500 lines.
+- `SKILL.md`: at most 200 lines. Move optional tutorials and large examples to
+  `references/` or `examples/`.
 - Frontmatter: `name` and `description`; UI/policy metadata belongs in
   `agents/openai.yaml`.
 - Detailed examples belong in `examples/` or `references/`.

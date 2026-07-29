@@ -31,8 +31,9 @@ Questions to answer:
 
 - What is the exact input that triggers the bug?
 - What is the exact observed output vs expected output?
-- Does the bug reproduce on a clean checkout / fresh DB / cold cache?
-- Does it reproduce in CI as well as locally?
+- When environment state is a plausible cause, does it reproduce with the
+  relevant cache, database, or process state isolated?
+- When the failure is CI-only, what differs from the local environment?
 
 Output: a minimal command or test case that fails 100% of the time.
 
@@ -78,8 +79,9 @@ Prove the fix works and prove it stays fixed.
 Required:
 
 1. The minimal reproducer from Phase 1 now passes.
-2. A new automated test asserts the fixed behavior so regression is caught.
-3. The test fails when the fix is reverted (verify by stashing the fix and re-running).
+2. A new or existing automated test asserts the fixed behavior so regression
+   is caught.
+3. For high-risk fixes, confirm the test fails without the production hunk.
 
 For wide-impact fixes, also verify:
 

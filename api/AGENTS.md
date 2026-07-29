@@ -27,7 +27,8 @@ Root skills remain available. API-specific skills are:
 | `deployment` | Building or verifying the API runtime image and deployment |
 | `sql-migration-review` | Writing or reviewing a SQL/GORM migration |
 
-Choose one primary skill. Add another only when the change genuinely crosses
+Choose at most one primary skill when its trigger clearly matches; routine
+local work may need none. Add another only when the change genuinely crosses
 its owning boundary. Root `luas-code-review` is the review workflow; API rules
 below and the owning docs supply the backend-specific standard.
 
@@ -172,5 +173,5 @@ make test-race-critical
 ```
 
 Run migration, benchmark, vulnerability, Compose, and container checks when
-their corresponding boundary changes. The repository release gate is
-`cd .. && make check`; do not run it repeatedly during local iteration.
+their corresponding boundary changes. Use `cd .. && make check` only for a
+cross-cutting change or explicit release, not for every API commit or push.

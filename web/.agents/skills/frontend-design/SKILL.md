@@ -3,50 +3,64 @@ name: frontend-design
 description: Design or substantially restyle a Luas page or component. Use for visual-direction work, not small copy, state, data, or bug-only edits.
 ---
 
-This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
+# Luas Frontend Design
 
-The user provides frontend requirements: a component, page, application, or interface to build. They may include context about the purpose, audience, or technical constraints.
+## Purpose
 
-## Design Thinking
+Establish a coherent visual direction for a substantial surface while keeping
+Luas a product-neutral enterprise scaffold. This skill is not required for a
+small component fix or an edit that already has a clear local pattern.
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Pick an extreme: brutally minimal, maximalist chaos, retro-futuristic, organic/natural, luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw, art deco/geometric, soft/pastel, industrial/utilitarian, etc. There are so many flavors to choose from. Use these for inspiration but design one that is true to the aesthetic direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+## Start With Context
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+1. Identify the surface: operational console, public site, authentication,
+   devtool, or downstream product page.
+2. Identify the repeated workflow and information density users need.
+3. Inspect the nearest existing layout, primitives, tokens, and responsive
+   behavior before proposing a new direction.
+4. Preserve Rhine blue brand ownership and shadcn semantics unless the user
+   explicitly requests a new downstream brand.
 
-Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+## Direction Rules
 
-## Frontend Aesthetics Guidelines
+For Luas console and operational tools:
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+- prioritize scanning, comparison, repeated action, and predictable hierarchy;
+- use restrained surfaces, compact headings, stable toolbars, and clear state;
+- avoid marketing heroes, decorative card grids, visual noise, and novelty
+  motion;
+- keep icons, labels, controls, tables, and sidebars aligned at every viewport.
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+For public or downstream branded surfaces, visual expression may be stronger,
+but it must follow the actual audience and content. Do not choose an extreme
+aesthetic merely to make the page look distinctive.
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+## Implementation Workflow
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+1. State the audience, surface, and one-sentence visual direction.
+2. Reuse existing tokens and primitives; add a variant only when it expresses
+   a repeatable semantic need.
+3. Build the complete workflow, including loading, empty, error, disabled,
+   focus, and mobile states.
+4. Use real domain content or representative neutral scaffold data.
+5. Verify the changed view at desktop and mobile widths; check long localized
+   labels and keyboard focus.
 
-Remember: Claude is capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+## Quality Bar
+
+- Typography matches the information density and never overflows controls.
+- Color communicates hierarchy and state with accessible contrast.
+- Cards represent real repeated/framed units, not arbitrary page sections.
+- Motion explains state change and respects reduced motion.
+- Familiar actions use familiar icons and accessible labels.
+- Layout dimensions remain stable under loading and translated copy.
+- No new visual dependency is added without a concrete need.
 
 ## Related Skills
 
-These are navigation only; select another skill when the request explicitly
-activates its separate review or measurement concern.
+Select another skill only when its distinct concern is active:
 
-- [`web-design-guidelines`](../web-design-guidelines/): Project design tokens to apply.
-- [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics.
-- [`accessibility-audit`](../accessibility-audit/): A11y is part of "production-grade" — not optional.
-- [`web-perf`](../web-perf/): Animation and effects must not regress Core Web Vitals.
-- [`vercel-react-best-practices`](../vercel-react-best-practices/): Avoid render thrash from creative effects.
+- `ui-styling-guide`: token or primitive implementation details.
+- `web-design-guidelines`: explicit design/UX review.
+- `accessibility-audit`: dedicated WCAG pass.
+- `web-perf`: measured visual/runtime performance concern.

@@ -1,133 +1,66 @@
 ---
 name: vercel-react-best-practices
-description: Optimize React/Next.js rendering, data flow, or bundles. Use for performance-sensitive changes and regressions, not routine JSX or styling edits.
+description: Apply a specific React/Next.js performance pattern to measured or high-risk code. Use after identifying a waterfall, bundle, serialization, or render problem, not for routine JSX.
 ---
 
-# Vercel React Best Practices
+# React And Next.js Performance Patterns
 
-Comprehensive performance optimization guide for React and Next.js applications, maintained by Vercel. Contains 45 rules across 8 categories, prioritized by impact to guide automated refactoring and code generation.
+## Purpose
 
-## When to Apply
+Route an identified performance problem to the smallest relevant rule. This
+skill is a pattern library, not a mandatory checklist for every component.
 
-Reference these guidelines when:
-- Writing new React components or Next.js pages
-- Implementing data fetching (client or server-side)
-- Reviewing code for performance issues
-- Refactoring existing React/Next.js code
-- Optimizing bundle size or load times
+## Trigger Gate
 
-## Rule Categories by Priority
+Use it when evidence or architecture indicates one of these risks:
 
-| Priority | Category | Impact | Prefix |
-|----------|----------|--------|--------|
-| 1 | Eliminating Waterfalls | CRITICAL | `async-` |
-| 2 | Bundle Size Optimization | CRITICAL | `bundle-` |
-| 3 | Server-Side Performance | HIGH | `server-` |
-| 4 | Client-Side Data Fetching | MEDIUM-HIGH | `client-` |
-| 5 | Re-render Optimization | MEDIUM | `rerender-` |
-| 6 | Rendering Performance | MEDIUM | `rendering-` |
-| 7 | JavaScript Performance | LOW-MEDIUM | `js-` |
-| 8 | Advanced Patterns | LOW | `advanced-` |
+- sequential async work on a critical request path;
+- a large dependency or shared client bundle;
+- excessive server-to-client serialization;
+- repeated expensive renders or global event listeners;
+- an explicit React/Next.js performance review.
 
-## Quick Reference
+Do not load it for routine JSX, styling, copy, forms, or a local component with
+no performance signal. Use `web-perf` first when the problem itself has not
+been measured or isolated.
 
-### 1. Eliminating Waterfalls (CRITICAL)
+## Focused Rule Routing
 
-- `async-defer-await` - Move await into branches where actually used
-- `async-parallel` - Use Promise.all() for independent operations
-- `async-dependencies` - Use better-all for partial dependencies
-- `async-api-routes` - Start promises early, await late in API routes
-- `async-suspense-boundaries` - Use Suspense to stream content
+| Problem | Read |
+|---|---|
+| Sequential async work | `rules/async-*.md` |
+| Bundle growth or optional heavy UI | `rules/bundle-*.md` |
+| Server caching or serialized props | `rules/server-*.md` |
+| Client fetching or global listeners | `rules/client-*.md` |
+| Re-render churn | `rules/rerender-*.md` |
+| Long-list or hydration rendering | `rules/rendering-*.md` |
+| Proven hot JavaScript loop | `rules/js-*.md` |
+| Stable callback edge case | `rules/advanced-*.md` |
 
-### 2. Bundle Size Optimization (CRITICAL)
+Read one or two matching rule files. Do not preload the complete rule catalog.
+Use [`references/full-guide.md`](references/full-guide.md) only for an explicit
+multi-category audit.
 
-- `bundle-barrel-imports` - Import directly, avoid barrel files
-- `bundle-dynamic-imports` - Use next/dynamic for heavy components
-- `bundle-defer-third-party` - Load analytics/logging after hydration
-- `bundle-conditional` - Load modules only when feature is activated
-- `bundle-preload` - Preload on hover/focus for perceived speed
+## Workflow
 
-### 3. Server-Side Performance (HIGH)
+1. Name the observed metric, trace, bundle, or code-path risk.
+2. Read the nearest implementation and the smallest matching rule file.
+3. Confirm the rule fits Luas ownership and React 19/Next.js 16 behavior.
+4. Implement the narrow change without speculative memoization or caching.
+5. Re-run the same measurement or deterministic budget that identified the
+   problem.
 
-- `server-cache-react` - Use React.cache() for per-request deduplication
-- `server-cache-lru` - Use LRU cache for cross-request caching
-- `server-serialization` - Minimize data passed to client components
-- `server-parallel-fetching` - Restructure components to parallelize fetches
-- `server-after-nonblocking` - Use after() for non-blocking operations
+## Guardrails
 
-### 4. Client-Side Data Fetching (MEDIUM-HIGH)
-
-- `client-swr-dedup` - Use SWR for automatic request deduplication
-- `client-event-listeners` - Deduplicate global event listeners
-
-### 5. Re-render Optimization (MEDIUM)
-
-- `rerender-defer-reads` - Don't subscribe to state only used in callbacks
-- `rerender-memo` - Extract expensive work into memoized components
-- `rerender-dependencies` - Use primitive dependencies in effects
-- `rerender-derived-state` - Subscribe to derived booleans, not raw values
-- `rerender-functional-setstate` - Use functional setState for stable callbacks
-- `rerender-lazy-state-init` - Pass function to useState for expensive values
-- `rerender-transitions` - Use startTransition for non-urgent updates
-
-### 6. Rendering Performance (MEDIUM)
-
-- `rendering-animate-svg-wrapper` - Animate div wrapper, not SVG element
-- `rendering-content-visibility` - Use content-visibility for long lists
-- `rendering-hoist-jsx` - Extract static JSX outside components
-- `rendering-svg-precision` - Reduce SVG coordinate precision
-- `rendering-hydration-no-flicker` - Use inline script for client-only data
-- `rendering-activity` - Use Activity component for show/hide
-- `rendering-conditional-render` - Use ternary, not && for conditionals
-
-### 7. JavaScript Performance (LOW-MEDIUM)
-
-- `js-batch-dom-css` - Group CSS changes via classes or cssText
-- `js-index-maps` - Build Map for repeated lookups
-- `js-cache-property-access` - Cache object properties in loops
-- `js-cache-function-results` - Cache function results in module-level Map
-- `js-cache-storage` - Cache localStorage/sessionStorage reads
-- `js-combine-iterations` - Combine multiple filter/map into one loop
-- `js-length-check-first` - Check array length before expensive comparison
-- `js-early-exit` - Return early from functions
-- `js-hoist-regexp` - Hoist RegExp creation outside loops
-- `js-min-max-loop` - Use loop for min/max instead of sort
-- `js-set-map-lookups` - Use Set/Map for O(1) lookups
-- `js-tosorted-immutable` - Use toSorted() for immutability
-
-### 8. Advanced Patterns (LOW)
-
-- `advanced-event-handler-refs` - Store event handlers in refs
-- `advanced-use-latest` - useLatest for stable callback refs
-
-## How to Use
-
-Read individual rule files for detailed explanations and code examples:
-
-```
-rules/async-parallel.md
-rules/bundle-barrel-imports.md
-rules/_sections.md
-```
-
-Each rule file contains:
-- Brief explanation of why it matters
-- Incorrect code example with explanation
-- Correct code example with explanation
-- Additional context and references
-
-## Full Compiled Document
-
-For an audit spanning many categories, read
-[`references/full-guide.md`](references/full-guide.md). Prefer individual rule
-files for focused changes; the compiled guide is intentionally not an
-`AGENTS.md` so it cannot enter automatic project guidance.
+- Prefer parallel ownership and smaller client boundaries before memoization.
+- Do not add cross-request caches without lifecycle, privacy, and bounds.
+- Do not replace TanStack Query with another fetching library to follow a
+  generic example.
+- Preserve Server Component, accessibility, error, and loading semantics.
+- A code-pattern change is not a performance improvement until evidence moves.
 
 ## Related Skills
 
-Select another skill only when its distinct concern is active.
-
-- [`data-state-management`](../data-state-management/): State patterns these rules apply to.
-- [`web-perf`](../web-perf/): Measurement that validates these rules made things faster.
-- [`frontend-design`](../frontend-design/): Creative direction that perf rules constrain.
-- [`accessibility-audit`](../accessibility-audit/): A11y patterns interact with rendering optimizations (focus management, suspense).
+- `web-perf`: measurement and route/Web Vital evidence.
+- `data-state-management`: Query/Zustand ownership changes.
+- `frontend-design`: visual direction constrained by a proven budget.
