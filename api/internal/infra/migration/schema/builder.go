@@ -115,28 +115,11 @@ func (b *Builder) GetColumnListing(table string) ([]string, error) {
 // DropAllTables drops all tables in the database.
 // Use with caution - this is destructive!
 func (b *Builder) DropAllTables() error {
-	// Get all tables
 	var tables []string
-
-	switch b.db.Name() {
-	case "mysql":
-		if err := b.db.Raw("SHOW TABLES").Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "postgres":
-		if err := b.db.Raw("SELECT tablename FROM pg_tables WHERE schemaname = 'public'").Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "sqlite", "sqlite3":
-		if err := b.db.Raw("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").Scan(&tables).Error; err != nil {
-			return err
-		}
-	}
-
-	// Disable foreign key checks for MySQL
-	if b.db.Name() == "mysql" {
-		b.db.Exec("SET FOREIGN_KEY_CHECKS = 0")
-		defer b.db.Exec("SET FOREIGN_KEY_CHECKS = 1")
+	if err := b.db.Raw(
+		"SELECT tablename FROM pg_tables WHERE schemaname = current_schema()",
+	).Scan(&tables).Error; err != nil {
+		return err
 	}
 
 	// Drop each table

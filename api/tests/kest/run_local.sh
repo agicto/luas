@@ -4,7 +4,6 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TMP_DIR="${ROOT_DIR}/tmp/kest"
-DB_PATH="${TMP_DIR}/luas-kest.sqlite"
 SERVER_LOG="${TMP_DIR}/server.log"
 KEST_CONFIG_PATH="${ROOT_DIR}/.kest/config.yaml"
 KEST_CONFIG_BACKUP="${TMP_DIR}/config.yaml.bak"
@@ -75,7 +74,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "${TMP_DIR}"
-rm -f "${DB_PATH}" "${SERVER_LOG}"
+rm -f "${SERVER_LOG}"
 
 PORT="$(pick_port)"
 BASE_URL="http://127.0.0.1:${PORT}"
@@ -85,6 +84,31 @@ if ! command -v kest >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -z "${LUAS_TEST_POSTGRES_DSN:-}" ]]; then
+  echo "LUAS_TEST_POSTGRES_DSN must point to a disposable PostgreSQL database" >&2
+  exit 2
+fi
+
+POSTGRES_ENV=()
+while IFS= read -r entry; do
+  POSTGRES_ENV+=("${entry}")
+done < <(python3 - "${LUAS_TEST_POSTGRES_DSN}" <<'PY'
+import sys
+from urllib.parse import parse_qs, unquote, urlparse
+
+value = urlparse(sys.argv[1])
+if value.scheme not in {"postgres", "postgresql"} or not value.hostname or not value.path.strip("/"):
+    raise SystemExit("LUAS_TEST_POSTGRES_DSN must be a PostgreSQL connection URI")
+query = parse_qs(value.query)
+print(f"DB_HOST={value.hostname}")
+print(f"DB_PORT={value.port or 5432}")
+print(f"DB_NAME={value.path.strip('/')}")
+print(f"DB_USERNAME={unquote(value.username or '')}")
+print(f"DB_PASSWORD={unquote(value.password or '')}")
+print(f"DB_SSLMODE={query.get('sslmode', ['disable'])[0]}")
+PY
+)
+
 COMMON_ENV=(
   APP_ENV=test
   APP_DEBUG=false
@@ -92,8 +116,8 @@ COMMON_ENV=(
   SERVER_MODE=release
   SERVER_PORT="${PORT}"
   DB_ENABLED=true
-  DB_DRIVER=sqlite
-  DB_NAME="${DB_PATH}"
+  DB_DRIVER=postgres
+  "${POSTGRES_ENV[@]}"
   AI_ENABLED=false
   TRACING_ENABLED=false
 )

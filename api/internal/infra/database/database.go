@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/glebarez/sqlite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -49,28 +48,14 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 	)
 	newLogger = wrapObservedLogger(newLogger)
 
-	var dialector gorm.Dialector
-	switch dbCfg.Driver {
-	case "sqlite":
-		dsn := dbCfg.Name
-		if dbCfg.Memory {
-			dsn = ":memory:"
-		}
-		dialector = sqlite.Open(dsn)
-	case "postgres":
-		dsn, dsnErr := postgresDSN(cfg)
-		if dsnErr != nil {
-			return nil, dsnErr
-		}
-		dialector = postgres.New(postgres.Config{
-			DSN:                  dsn,
-			PreferSimpleProtocol: true,
-		})
-	default:
-		return nil, fmt.Errorf("DB_DRIVER must be one of postgres or sqlite")
+	dsn, dsnErr := postgresDSN(cfg)
+	if dsnErr != nil {
+		return nil, dsnErr
 	}
-
-	db, err := gorm.Open(dialector, &gorm.Config{
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  dsn,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{
 		Logger:               newLogger,
 		DisableAutomaticPing: true,
 	})
@@ -100,28 +85,6 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 	}
 
 	return db, nil
-}
-
-// NewTestDB creates an in-memory SQLite database for testing.
-// This is a convenience function for tests that need a real database.
-func NewTestDB() (*gorm.DB, error) {
-	return initDB(&config.Config{
-		App: config.AppConfig{
-			Env:   "test",
-			Debug: true,
-		},
-		Database: config.DatabaseConfig{
-			Driver:               "sqlite",
-			Memory:               true,
-			MaxIdleConns:         1,
-			MaxOpenConns:         1,
-			ConnMaxIdleTime:      config.DefaultDatabaseConnMaxIdleTime,
-			ConnMaxLifetime:      config.DefaultDatabaseConnMaxLifetime,
-			ConnectTimeout:       config.DefaultDatabaseConnectTimeout,
-			SlowThreshold:        time.Second,
-			IgnoreRecordNotFound: true,
-		},
-	})
 }
 
 func postgresDSN(cfg *config.Config) (string, error) {

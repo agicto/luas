@@ -11,17 +11,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
@@ -96,7 +95,7 @@ func TestAuthenticationSessionTouchIsWriteThrottled(t *testing.T) {
 
 	var before AuthenticationSessionPO
 	require.NoError(t, db.First(&before).Error)
-	assert.Equal(t, base, before.LastSeenAt)
+	assert.True(t, base.Equal(before.LastSeenAt))
 
 	service.now = func() time.Time { return base.Add(6 * time.Minute) }
 	_, err = service.Authenticate(context.Background(), issued.AccessToken)
@@ -104,8 +103,8 @@ func TestAuthenticationSessionTouchIsWriteThrottled(t *testing.T) {
 
 	var after AuthenticationSessionPO
 	require.NoError(t, db.First(&after).Error)
-	assert.Equal(t, base.Add(6*time.Minute), after.LastSeenAt)
-	assert.Equal(t, base.Add(36*time.Minute), after.IdleExpiresAt)
+	assert.True(t, base.Add(6*time.Minute).Equal(after.LastSeenAt))
+	assert.True(t, base.Add(36*time.Minute).Equal(after.IdleExpiresAt))
 }
 
 func TestAuthenticationSessionLogoutRouteRevokesPresentedCredential(t *testing.T) {
@@ -201,14 +200,13 @@ func TestPasswordSecurityEventsRevokeExistingAuthenticationSessions(t *testing.T
 func newAuthenticationSessionFixture(t *testing.T) (*SessionService, *gorm.DB, *domain.User) {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-	sqlDB.SetMaxOpenConns(1)
-	require.NoError(t, db.AutoMigrate(&UserPO{}, &PasswordResetTokenPO{}, &AuthenticationSessionPO{}))
+	db := testplatform.OpenPostgres(
+		t,
+		nil,
+		&UserPO{},
+		&PasswordResetTokenPO{},
+		&AuthenticationSessionPO{},
+	)
 
 	passwordHash, err := crypto.HashPassword("password123")
 	require.NoError(t, err)

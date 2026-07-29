@@ -62,6 +62,8 @@ jobs:
       - name: Verification — Tier 1 (build + lint + test) on the whole api/ tree
         # The whole tree is now lint clean (golangci-lint run ./...). New
         # debt anywhere blocks CI here.
+        env:
+          LUAS_TEST_POSTGRES_DSN: postgres://luas:luas_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_test?sslmode=disable
         run: bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
 
       - name: Verify runtime route catalog

@@ -8,16 +8,15 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/infra/events"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 // testMigration is a simple migration for testing
@@ -64,16 +63,23 @@ func (m *failingMigration) Down(db *gorm.DB) error {
 
 // setupMigratorTest creates a migrator with fresh database and repository
 func setupMigratorTest(t *testing.T) (*Migrator, *gorm.DB, *events.EventBus) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
+	db := testplatform.OpenPostgres(t, nil)
 
 	repo := NewDatabaseRepository(db, "migrations")
 	eventBus := events.NewEventBus()
 	migrator := NewMigrator(repo, db, eventBus)
 
 	return migrator, db, eventBus
+}
+
+func setupPropertyMigratorTest(
+	t *testing.T,
+) (*Migrator, *gorm.DB, *events.EventBus, func()) {
+	db, cleanup := testplatform.OpenPostgresWithCleanup(t, nil)
+	repo := NewDatabaseRepository(db, "migrations")
+	eventBus := events.NewEventBus()
+	migrator := NewMigrator(repo, db, eventBus)
+	return migrator, db, eventBus, cleanup
 }
 
 // eventCollector collects events for testing
@@ -113,7 +119,8 @@ func TestProperty5_MigratorRunExecutesPending(t *testing.T) {
 	properties.Property("Run executes only pending migrations in order", prop.ForAll(
 		func(allMigrations []string, alreadyRanCount int) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate and sort migration names
 			seen := make(map[string]bool)
@@ -203,7 +210,8 @@ func TestProperty6_MigratorRollbackByBatch(t *testing.T) {
 	properties.Property("Rollback reverts only last batch migrations", prop.ForAll(
 		func(batch1Migrations []string, batch2Migrations []string) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -304,7 +312,8 @@ func TestProperty7_MigratorRollbackBySteps(t *testing.T) {
 	properties.Property("Rollback with steps reverts exactly N migrations", prop.ForAll(
 		func(migrations []string, steps int) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -383,7 +392,8 @@ func TestProperty8_MigratorResetReversesAll(t *testing.T) {
 	properties.Property("Reset reverts all migrations leaving repository empty", prop.ForAll(
 		func(migrations []string) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -448,7 +458,8 @@ func TestProperty9_MigratorStepModeBatchIncrement(t *testing.T) {
 	properties.Property("Step mode assigns unique incrementing batch numbers", prop.ForAll(
 		func(migrations []string) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -522,7 +533,8 @@ func TestProperty10_PretendModeNoSideEffects(t *testing.T) {
 	properties.Property("Pretend mode does not modify database state", prop.ForAll(
 		func(migrations []string) bool {
 			// Setup fresh migrator
-			migrator, db, _ := setupMigratorTest(t)
+			migrator, db, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -608,7 +620,8 @@ func TestProperty11_EventOrdering(t *testing.T) {
 	properties.Property("Events are fired in correct order", prop.ForAll(
 		func(migrations []string) bool {
 			// Setup fresh migrator
-			migrator, _, eventBus := setupMigratorTest(t)
+			migrator, _, eventBus, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Deduplicate migrations
 			seen := make(map[string]bool)
@@ -691,7 +704,8 @@ func TestProperty12_MigrationErrorContainsName(t *testing.T) {
 	properties.Property("Migration errors contain the migration name", prop.ForAll(
 		func(migrationName string, errorMsg string) bool {
 			// Setup fresh migrator
-			migrator, _, _ := setupMigratorTest(t)
+			migrator, _, _, cleanup := setupPropertyMigratorTest(t)
+			defer cleanup()
 
 			// Register a failing migration
 			migrator.Register(migrationName, &failingMigration{
@@ -971,10 +985,7 @@ func TestMigrator_UnregisteredMigration(t *testing.T) {
 }
 
 func TestMigrator_NilEventBus(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
+	db := testplatform.OpenPostgres(t, nil)
 
 	repo := NewDatabaseRepository(db, "migrations")
 	migrator := NewMigrator(repo, db, nil) // nil event bus

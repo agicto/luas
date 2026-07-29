@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
@@ -24,17 +24,14 @@ type usageTestFixture struct {
 
 func newUsageTestFixture(t *testing.T) usageTestFixture {
 	t.Helper()
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.Exec("PRAGMA foreign_keys = ON").Error)
-	require.NoError(t, db.AutoMigrate(
+	db := testplatform.OpenPostgres(t, nil,
 		&user.UserPO{},
 		&user.AuthenticationSessionPO{},
 		&organization.OrganizationPO{},
 		&UsageCounterPO{},
 		&UsageQuotaPO{},
 		&UsageEventPO{},
-	))
+	)
 	owner := &user.UserPO{
 		Username: "usage-owner",
 		Email:    "usage-owner@example.test",

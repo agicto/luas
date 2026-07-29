@@ -221,10 +221,7 @@ func (r *repository) inTransaction(ctx context.Context, operation func(*gorm.DB)
 }
 
 func lockSettingOwner(tx *gorm.DB, target domain.SettingTarget) error {
-	query := tx
-	if tx.Dialector != nil && tx.Name() != "sqlite" {
-		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
-	}
+	query := tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	switch target.Scope {
 	case domain.SettingScopeApp:
 		return nil
@@ -256,10 +253,7 @@ func findSettingForUpdate(
 	target domain.SettingTarget,
 	key string,
 ) (*SettingPO, error) {
-	query := tx
-	if tx.Dialector != nil && tx.Name() != "sqlite" {
-		query = query.Clauses(clause.Locking{Strength: "UPDATE"})
-	}
+	query := tx.Clauses(clause.Locking{Strength: "UPDATE"})
 	var po SettingPO
 	if err := query.
 		Where("scope = ? AND subject_id = ? AND key = ?", target.Scope, target.SubjectID, key).

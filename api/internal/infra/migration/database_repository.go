@@ -140,41 +140,13 @@ func (r *databaseRepository) GetMigrationBatches() (map[string]int, error) {
 	return batches, nil
 }
 
-// CreateRepository creates the migrations table if it doesn't exist.
-// Supports MySQL, PostgreSQL, and SQLite dialects.
+// CreateRepository creates the PostgreSQL migrations table if it does not exist.
 func (r *databaseRepository) CreateRepository() error {
-	dialect := r.db.Name()
-
-	var sql string
-	switch dialect {
-	case "mysql":
-		sql = `CREATE TABLE IF NOT EXISTS ` + r.tableName + ` (
-			id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-			migration VARCHAR(255) NOT NULL,
-			batch INT NOT NULL
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
-	case "postgres":
-		sql = `CREATE TABLE IF NOT EXISTS "` + r.tableName + `" (
-			id SERIAL PRIMARY KEY,
-			migration VARCHAR(255) NOT NULL,
-			batch INTEGER NOT NULL
-		)`
-	case "sqlite":
-		sql = `CREATE TABLE IF NOT EXISTS "` + r.tableName + `" (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			migration VARCHAR(255) NOT NULL,
-			batch INTEGER NOT NULL
-		)`
-	default:
-		// Fallback to SQLite-compatible syntax
-		sql = `CREATE TABLE IF NOT EXISTS "` + r.tableName + `" (
-			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			migration VARCHAR(255) NOT NULL,
-			batch INTEGER NOT NULL
-		)`
-	}
-
-	return r.db.Exec(sql).Error
+	return r.db.Exec(`CREATE TABLE IF NOT EXISTS "` + r.tableName + `" (
+		id SERIAL PRIMARY KEY,
+		migration VARCHAR(255) NOT NULL,
+		batch INTEGER NOT NULL
+	)`).Error
 }
 
 // RepositoryExists checks if the migrations table exists.

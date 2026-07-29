@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -14,9 +13,10 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/database"
+	infraDatabase "github.com/zgiai/luas/api/internal/infra/database"
 	"github.com/zgiai/luas/api/internal/infra/exception"
 	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/infra/tracing"
 	"github.com/zgiai/luas/api/pkg/logger"
 )
@@ -37,19 +37,14 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.App.Debug = true
 	cfg.App.Env = "development"
-	cfg.Database.Enabled = true
-	cfg.Database.Driver = "sqlite"
-	cfg.Database.Memory = true
-	cfg.Database.MaxIdleConns = 1
-	cfg.Database.MaxOpenConns = 1
-	cfg.Database.ConnMaxIdleTime = config.DefaultDatabaseConnMaxIdleTime
-	cfg.Database.ConnMaxLifetime = config.DefaultDatabaseConnMaxLifetime
-	cfg.Database.ConnectTimeout = config.DefaultDatabaseConnectTimeout
-	cfg.Database.SlowThreshold = time.Second
-	cfg.Database.IgnoreRecordNotFound = true
-
-	db, err := database.NewDB(cfg)
+	cfg.Database = testplatform.CreatePostgresDatabase(t)
+	db, err := infraDatabase.NewDB(cfg)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		sqlDB, dbErr := db.DB()
+		require.NoError(t, dbErr)
+		require.NoError(t, sqlDB.Close())
+	})
 
 	engine := gin.New()
 	engine.Use(infraMiddleware.RequestID())

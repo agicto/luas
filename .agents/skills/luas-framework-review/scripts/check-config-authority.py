@@ -88,6 +88,9 @@ def main() -> int:
     allowed_process_reads = {
         api_root / "pkg/env/env.go",
         api_root / "internal/infra/plugin/loader.go",  # operating-system PATH discovery
+        # Test infrastructure is not linked into deployables. Its opt-in DSN
+        # controls integration-test execution, not application configuration.
+        api_root / "internal/infra/testing/postgres.go",
     }
     process_read = re.compile(r"os\.(?:Getenv|LookupEnv)\(")
     runtime_source_roots = (

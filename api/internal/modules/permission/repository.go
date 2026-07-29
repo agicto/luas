@@ -457,9 +457,6 @@ func lockWhenTransactional(ctx context.Context, query *gorm.DB) *gorm.DB {
 	if _, active := infradatabase.TransactionFromContext(ctx); !active {
 		return query
 	}
-	if query.Dialector == nil || query.Name() == "sqlite" {
-		return query
-	}
 	return query.Clauses(clause.Locking{Strength: "UPDATE"})
 }
 

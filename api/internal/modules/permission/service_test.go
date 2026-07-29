@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
@@ -123,18 +123,14 @@ func TestServiceRejectsUnregisteredPermissions(t *testing.T) {
 
 func newPermissionTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.Exec("PRAGMA foreign_keys = ON").Error)
-	require.NoError(t, db.AutoMigrate(
+	return testplatform.OpenPostgres(t, nil,
 		&user.UserPO{},
 		&organization.OrganizationPO{},
 		&organization.OrganizationMembershipPO{},
 		&AccessRolePO{},
 		&AccessRolePermissionPO{},
 		&AccessRoleAssignmentPO{},
-	))
-	return db
+	)
 }
 
 func newPermissionTestCatalog(t *testing.T) *Catalog {

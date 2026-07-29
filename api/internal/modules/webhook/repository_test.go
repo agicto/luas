@@ -9,12 +9,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/zgiai/luas/api/internal/domain"
 	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
@@ -225,9 +225,7 @@ func TestRepositoryPublicationHonorsOuterTransaction(t *testing.T) {
 }
 
 func TestWebhookLockQueriesSkipOnlyContendedClaimRows(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	require.NoError(t, err)
-	db.Dialector = webhookNamedDialector{Dialector: db.Dialector, name: "postgres"}
+	db := testplatform.OpenPostgres(t, nil)
 
 	rowLock, ok := webhookRowLockQuery(db.Model(&DeliveryPO{})).Statement.Clauses["FOR"].Expression.(clause.Locking)
 	require.True(t, ok)
@@ -266,10 +264,7 @@ func TestWebhookIndexesMatchWorkerAndManagementQueries(t *testing.T) {
 
 func newWebhookRepositoryTest(t *testing.T) (*repository, *gorm.DB, uint, uint) {
 	t.Helper()
-	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared&_foreign_keys=1", t.Name())
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{TranslateError: true})
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(
+	db := testplatform.OpenPostgres(t, &gorm.Config{TranslateError: true},
 		&user.UserPO{},
 		&organization.OrganizationPO{},
 		&EndpointPO{},
@@ -277,16 +272,16 @@ func newWebhookRepositoryTest(t *testing.T) (*repository, *gorm.DB, uint, uint) 
 		&EventPO{},
 		&DeliveryPO{},
 		&AttemptPO{},
-	))
+	)
 	actor := user.UserPO{Username: "webhook-owner", Email: "owner@example.com", Password: "unused", Status: 1}
 	require.NoError(t, db.Create(&actor).Error)
 	owner := organization.OrganizationPO{Name: "Webhook Test", Slug: "webhook-test", CreatedBy: actor.ID}
 	require.NoError(t, db.Create(&owner).Error)
 	var foreignKeys []webhookForeignKey
-	require.NoError(t, db.Raw("PRAGMA foreign_key_list('webhook_events')").Scan(&foreignKeys).Error)
+	require.NoError(t, db.Raw(webhookForeignKeyQuery, "webhook_events").Scan(&foreignKeys).Error)
 	assert.Equal(t, []webhookForeignKey{{Table: "organizations", From: "organization_id", To: "id"}}, foreignKeys)
 	foreignKeys = nil
-	require.NoError(t, db.Raw("PRAGMA foreign_key_list('webhook_deliveries')").Scan(&foreignKeys).Error)
+	require.NoError(t, db.Raw(webhookForeignKeyQuery, "webhook_deliveries").Scan(&foreignKeys).Error)
 	assert.ElementsMatch(t, []webhookForeignKey{
 		{Table: "webhook_events", From: "event_id", To: "id"},
 		{Table: "webhook_endpoints", From: "endpoint_id", To: "id"},
@@ -300,12 +295,17 @@ type webhookForeignKey struct {
 	To    string `gorm:"column:to"`
 }
 
-type webhookNamedDialector struct {
-	gorm.Dialector
-	name string
-}
-
-func (d webhookNamedDialector) Name() string { return d.name }
+const webhookForeignKeyQuery = `
+	SELECT ccu.table_name AS "table", kcu.column_name AS "from", ccu.column_name AS "to"
+	FROM information_schema.table_constraints AS tc
+	JOIN information_schema.key_column_usage AS kcu
+	  ON tc.constraint_name = kcu.constraint_name AND tc.constraint_schema = kcu.constraint_schema
+	JOIN information_schema.constraint_column_usage AS ccu
+	  ON tc.constraint_name = ccu.constraint_name AND tc.constraint_schema = ccu.constraint_schema
+	WHERE tc.constraint_type = 'FOREIGN KEY'
+	  AND tc.table_schema = current_schema()
+	  AND tc.table_name = ?
+	ORDER BY kcu.ordinal_position`
 
 func requireWebhookIndexColumns(t *testing.T, db *gorm.DB, index string, expected []string) {
 	t.Helper()
@@ -313,7 +313,18 @@ func requireWebhookIndexColumns(t *testing.T, db *gorm.DB, index string, expecte
 		Sequence int    `gorm:"column:seqno"`
 		Name     string `gorm:"column:name"`
 	}
-	require.NoError(t, db.Raw("PRAGMA index_info('"+index+"')").Scan(&rows).Error)
+	require.NoError(t, db.Raw(`
+		SELECT position.ordinality - 1 AS seqno, attribute.attname AS name
+		FROM pg_class AS index
+		JOIN pg_index AS definition ON definition.indexrelid = index.oid
+		JOIN pg_class AS table_definition ON table_definition.oid = definition.indrelid
+		JOIN LATERAL unnest(definition.indkey) WITH ORDINALITY AS position(attnum, ordinality) ON true
+		JOIN pg_attribute AS attribute
+		  ON attribute.attrelid = table_definition.oid AND attribute.attnum = position.attnum
+		WHERE index.relname = ?
+		  AND table_definition.relnamespace = current_schema()::regnamespace
+		ORDER BY position.ordinality
+	`, index).Scan(&rows).Error)
 	require.Len(t, rows, len(expected), "missing or incomplete index %s", index)
 	actual := make([]string, len(rows))
 	for _, row := range rows {

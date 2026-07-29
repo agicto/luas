@@ -190,7 +190,7 @@ func TestOrganizationInvitationHTTPContract(t *testing.T) {
 	previousTransport := http.DefaultTransport
 	http.DefaultTransport = &organizationEmailTransport{invitationTokens: invitationTokens}
 	t.Cleanup(func() { http.DefaultTransport = previousTransport })
-	engine := setupApp(func(cfg *config.Config) {
+	engine := setupApp(t, func(cfg *config.Config) {
 		cfg.Email.From = "Luas <noreply@example.com>"
 		cfg.Email.ResendAPIKey = "feature-test-key"
 		cfg.Email.RequestTimeout = time.Second
@@ -332,7 +332,7 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 	previousTransport := http.DefaultTransport
 	http.DefaultTransport = &organizationEmailTransport{invitationTokens: invitationTokens}
 	t.Cleanup(func() { http.DefaultTransport = previousTransport })
-	engine := setupApp(func(cfg *config.Config) {
+	engine := setupApp(t, func(cfg *config.Config) {
 		cfg.Email.From = "Luas <noreply@example.com>"
 		cfg.Email.ResendAPIKey = "feature-test-key"
 		cfg.Email.RequestTimeout = time.Second

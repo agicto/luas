@@ -13,7 +13,7 @@ func baseValidConfig(env string) *Config {
 		App: AppConfig{Env: env},
 		Database: DatabaseConfig{
 			Enabled:  false,
-			Driver:   "sqlite",
+			Driver:   "postgres",
 			Password: "",
 		},
 		Authentication: AuthenticationConfig{

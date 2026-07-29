@@ -116,10 +116,7 @@ func (r *repository) DeleteAccount(ctx context.Context, id uint, check func(cont
 
 	return db.Transaction(func(tx *gorm.DB) error {
 		var po UserPO
-		query := tx
-		if tx.Dialector != nil && tx.Name() != "sqlite" {
-			query = query.Clauses(clause.Locking{Strength: "UPDATE"})
-		}
+		query := tx.Clauses(clause.Locking{Strength: "UPDATE"})
 		if findErr := query.First(&po, id).Error; findErr != nil {
 			if errors.Is(findErr, gorm.ErrRecordNotFound) {
 				return domain.ErrUserNotFound

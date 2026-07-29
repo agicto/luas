@@ -233,53 +233,17 @@ func GetMigrationStatus(db *gorm.DB) ([]MigrationStatus, error) {
 func DropAllTables(db *gorm.DB) error {
 	log.Println("Dropping all tables")
 
-	// Get all table names
 	var tables []string
-	dialect := db.Name()
-
-	switch dialect {
-	case "postgres":
-		if err := db.Raw(`
-			SELECT tablename FROM pg_tables
-			WHERE schemaname = 'public'
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "mysql":
-		if err := db.Raw(`
-			SELECT table_name FROM information_schema.tables
-			WHERE table_schema = DATABASE()
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "sqlite":
-		if err := db.Raw(`
-			SELECT name FROM sqlite_master
-			WHERE type='table' AND name NOT LIKE 'sqlite_%'
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
-	default:
-		log.Printf("Unsupported dialect: %s", dialect)
-		return nil
+	if err := db.Raw(`
+		SELECT tablename FROM pg_tables
+		WHERE schemaname = current_schema()
+	`).Scan(&tables).Error; err != nil {
+		return err
 	}
 
-	// Disable foreign key checks for MySQL
-	if dialect == "mysql" {
-		db.Exec("SET FOREIGN_KEY_CHECKS = 0")
-		defer db.Exec("SET FOREIGN_KEY_CHECKS = 1")
-	}
-
-	// Drop each table
 	for _, table := range tables {
-		if dialect == "postgres" {
-			if err := db.Exec("DROP TABLE IF EXISTS \"" + table + "\" CASCADE").Error; err != nil {
-				log.Printf("Failed to drop table %s: %v", table, err)
-			}
-		} else {
-			if err := db.Migrator().DropTable(table); err != nil {
-				log.Printf("Failed to drop table %s: %v", table, err)
-			}
+		if err := db.Exec("DROP TABLE IF EXISTS \"" + table + "\" CASCADE").Error; err != nil {
+			log.Printf("Failed to drop table %s: %v", table, err)
 		}
 	}
 

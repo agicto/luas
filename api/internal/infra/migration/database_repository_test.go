@@ -4,23 +4,23 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
-// setupTestDB creates an in-memory SQLite database for testing
+// setupTestDB creates an isolated PostgreSQL schema for testing.
 func setupTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
-	return db
+	return testplatform.OpenPostgres(t, nil)
+}
+
+func setupPropertyTestDB(t *testing.T) (*gorm.DB, func()) {
+	return testplatform.OpenPostgresWithCleanup(t, nil)
 }
 
 // setupTestRepository creates a repository with a fresh migrations table.
@@ -75,7 +75,8 @@ func TestProperty1_RepositoryGetRanOrdering(t *testing.T) {
 			Batch int
 		}) bool {
 			// Setup fresh repository for each test
-			db := setupTestDB(t)
+			db, cleanup := setupPropertyTestDB(t)
+			defer cleanup()
 			repo := NewDatabaseRepository(db, "migrations")
 			if err := repo.CreateRepository(); err != nil {
 				return false
@@ -152,7 +153,8 @@ func TestProperty2_RepositoryGetLastBatchFiltering(t *testing.T) {
 			Batch int
 		}) bool {
 			// Setup fresh repository
-			db := setupTestDB(t)
+			db, cleanup := setupPropertyTestDB(t)
+			defer cleanup()
 			repo := NewDatabaseRepository(db, "migrations")
 			if err := repo.CreateRepository(); err != nil {
 				return false
@@ -235,7 +237,8 @@ func TestProperty3_RepositoryNextBatchNumber(t *testing.T) {
 			Batch int
 		}) bool {
 			// Setup fresh repository
-			db := setupTestDB(t)
+			db, cleanup := setupPropertyTestDB(t)
+			defer cleanup()
 			repo := NewDatabaseRepository(db, "migrations")
 			if err := repo.CreateRepository(); err != nil {
 				return false
@@ -301,7 +304,8 @@ func TestProperty4_MigrationLogRoundTrip(t *testing.T) {
 	properties.Property("Log then GetRan/GetMigrationBatches returns correct data", prop.ForAll(
 		func(name string, batch int) bool {
 			// Setup fresh repository
-			db := setupTestDB(t)
+			db, cleanup := setupPropertyTestDB(t)
+			defer cleanup()
 			repo := NewDatabaseRepository(db, "migrations")
 			if err := repo.CreateRepository(); err != nil {
 				return false

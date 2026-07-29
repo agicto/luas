@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
@@ -22,14 +22,12 @@ type settingTestFixture struct {
 
 func newSettingTestFixture(t *testing.T) settingTestFixture {
 	t.Helper()
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(
+	db := testplatform.OpenPostgres(t, nil,
 		&user.UserPO{},
 		&user.AuthenticationSessionPO{},
 		&organization.OrganizationPO{},
 		&SettingPO{},
-	))
+	)
 	owner := &user.UserPO{
 		Username: "setting-owner",
 		Email:    "setting-owner@example.test",

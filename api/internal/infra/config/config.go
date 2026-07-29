@@ -220,7 +220,6 @@ type DatabaseConfig struct {
 	ConnMaxIdleTime      time.Duration
 	ConnMaxLifetime      time.Duration
 	ConnectTimeout       time.Duration
-	Memory               bool
 	LogLevel             string
 	SlowThreshold        time.Duration
 	IgnoreRecordNotFound bool
@@ -237,8 +236,8 @@ func (d DatabaseConfig) Validate() error {
 	if !d.Enabled {
 		return nil
 	}
-	if d.Driver != "postgres" && d.Driver != "sqlite" {
-		return fmt.Errorf("DB_DRIVER must be one of postgres or sqlite")
+	if d.Driver != "postgres" {
+		return fmt.Errorf("DB_DRIVER must be postgres")
 	}
 	if d.MaxOpenConns <= 0 {
 		return fmt.Errorf("DB_MAX_OPEN_CONNS must be greater than 0 to keep the pool bounded")
@@ -265,16 +264,6 @@ func (d DatabaseConfig) Validate() error {
 	case "", "silent", "error", "warn", "warning", "info":
 	default:
 		return fmt.Errorf("DB_LOG_LEVEL must be one of silent, error, warn, or info")
-	}
-
-	if d.Driver == "sqlite" {
-		if !d.Memory && strings.TrimSpace(d.Name) == "" {
-			return fmt.Errorf("DB_NAME is required for a file-backed sqlite database")
-		}
-		if d.Memory && d.MaxOpenConns != 1 {
-			return fmt.Errorf("DB_MAX_OPEN_CONNS must be 1 for an in-memory sqlite database")
-		}
-		return nil
 	}
 
 	if strings.TrimSpace(d.Host) == "" {

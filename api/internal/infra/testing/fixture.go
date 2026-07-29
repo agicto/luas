@@ -4,9 +4,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
 
 // Fixture provides test setup and cleanup utilities
@@ -39,58 +37,17 @@ func NewFixture(t *testing.T, opts ...FixtureOption) *Fixture {
 	return f
 }
 
-// WithDatabase configures an in-memory SQLite database
+// WithDatabase configures an isolated PostgreSQL schema.
 func WithDatabase(models ...interface{}) FixtureOption {
 	return func(f *Fixture) {
-		db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
-		})
-		if err != nil {
-			f.t.Fatalf("Failed to open database: %v", err)
-		}
-
-		// Auto-migrate models
-		if len(models) > 0 {
-			if err := db.AutoMigrate(models...); err != nil {
-				f.t.Fatalf("Failed to migrate: %v", err)
-			}
-		}
-
-		f.db = db
-		f.OnCleanup(func() {
-			// db.DB() is documented to error only if the driver hasn't been
-			// initialized; we just opened a sqlite connection above, so the
-			// underlying *sql.DB is always available here.
-			if sqlDB, dbErr := db.DB(); dbErr == nil && sqlDB != nil {
-				_ = sqlDB.Close()
-			}
-		})
+		f.db = OpenPostgres(f.t, nil, models...)
 	}
 }
 
 // WithDatabaseConfig configures database with custom GORM config
 func WithDatabaseConfig(config *gorm.Config, models ...interface{}) FixtureOption {
 	return func(f *Fixture) {
-		db, err := gorm.Open(sqlite.Open(":memory:"), config)
-		if err != nil {
-			f.t.Fatalf("Failed to open database: %v", err)
-		}
-
-		if len(models) > 0 {
-			if err := db.AutoMigrate(models...); err != nil {
-				f.t.Fatalf("Failed to migrate: %v", err)
-			}
-		}
-
-		f.db = db
-		f.OnCleanup(func() {
-			// db.DB() is documented to error only if the driver hasn't been
-			// initialized; we just opened a sqlite connection above, so the
-			// underlying *sql.DB is always available here.
-			if sqlDB, dbErr := db.DB(); dbErr == nil && sqlDB != nil {
-				_ = sqlDB.Close()
-			}
-		})
+		f.db = OpenPostgres(f.t, config, models...)
 	}
 }
 

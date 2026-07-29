@@ -307,7 +307,7 @@ func findUndeletedUserForUpdate(tx *gorm.DB, userID uint) (*user.UserPO, error) 
 }
 
 func forUpdate(tx *gorm.DB) *gorm.DB {
-	if tx == nil || tx.Dialector == nil || tx.Name() == "sqlite" {
+	if tx == nil {
 		return tx
 	}
 	return tx.Clauses(clause.Locking{Strength: "UPDATE"})

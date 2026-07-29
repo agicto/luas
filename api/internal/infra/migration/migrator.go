@@ -444,37 +444,12 @@ func (m *Migrator) Fresh(opts MigratorOptions) ([]string, error) {
 
 // dropAllTables drops all tables in the database.
 func (m *Migrator) dropAllTables() error {
-	// Get all table names
 	var tables []string
-	dialect := m.db.Name()
-
-	switch dialect {
-	case "mysql":
-		if err := m.db.Raw("SHOW TABLES").Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "postgres":
-		if err := m.db.Raw(`
-			SELECT tablename FROM pg_tables
-			WHERE schemaname = 'public'
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
-	case "sqlite":
-		if err := m.db.Raw(`
-			SELECT name FROM sqlite_master
-			WHERE type='table' AND name NOT LIKE 'sqlite_%'
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
-	default:
-		// Try SQLite syntax as fallback
-		if err := m.db.Raw(`
-			SELECT name FROM sqlite_master
-			WHERE type='table' AND name NOT LIKE 'sqlite_%'
-		`).Scan(&tables).Error; err != nil {
-			return err
-		}
+	if err := m.db.Raw(`
+		SELECT tablename FROM pg_tables
+		WHERE schemaname = current_schema()
+	`).Scan(&tables).Error; err != nil {
+		return err
 	}
 
 	// Drop each table

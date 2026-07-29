@@ -532,7 +532,7 @@ the configured application name, timezone, open-connection ceiling, and idle-tim
 The default user list now selects only response-owned columns, excluding password hashes and
 soft-delete metadata. A window count and descending primary-key order return a normal page plus total
 in one application SQL statement; an empty page deliberately uses a fallback count to preserve the
-existing total contract. SQLite CI tests enforce one statement for a normal page and two for an
+existing total contract. PostgreSQL CI tests enforce one statement for a normal page and two for an
 empty page, while the environment-gated PostgreSQL profile proves the same common-path shape.
 
 On an Apple M3 Max with Go 1.25.12 and a warm PostgreSQL 14 Docker database, the comparable five-run
@@ -1065,34 +1065,23 @@ Verification:
 - Production image runtime contract under the non-root distroless image
 - `make governance` and `make check`
 
-### P1 — PostgreSQL-Only Database Convergence
+### Completed P0 — PostgreSQL-Only Database Convergence
 
-Problem: PostgreSQL is Luas's production compatibility authority, but the repository still contains
-a SQLite runtime branch, migration grammar, direct dependencies, and fast database-backed tests.
-Those tests can pass while PostgreSQL rejects the real query, constraint, transaction, locking,
-index, or migration behavior.
+PostgreSQL is now the sole relational database authority across runtime,
+migrations, repositories, and integration tests. The compatibility adapter,
+migration grammar, direct dependencies, fixtures, and database-backed tests
+for the retired dialect have been removed.
 
-Current enforcement:
+Enforcement:
 
-- Root and API agent rules prohibit new or expanded SQLite work.
-- Database design, testing, and debugging skills route unit tests to existing
-  seams and SQL-sensitive tests to disposable PostgreSQL.
-- `check-database-boundary.py` owns an exact legacy SQLite reference ledger.
-  Any new file, dependency, or reference fails governance; reductions require
-  the ledger to be reduced in the same change.
-
-Recommended slice:
-
-1. Replace service-level SQLite tests with existing repository test doubles.
-2. Provide one shared disposable-PostgreSQL schema harness for repository,
-   migration, and HTTP integration tests.
-3. Move SQL-sensitive CI coverage onto that harness with an explicit
-   `LUAS_TEST_POSTGRES_DSN`.
-4. Remove the SQLite runtime/config branch, migration grammar, test fixtures,
-   direct dependencies, and legacy ledger once no callers remain.
-5. Keep the fast default test loop by separating database-free unit tests from
-   the PostgreSQL integration tier instead of replacing SQLite with an implicit
-   local service requirement.
+- Root and API agent rules require SQLite support to remain absent.
+- A shared disposable-PostgreSQL harness isolates repository and migration
+  tests by schema and full application feature tests by database.
+- CI supplies `LUAS_TEST_POSTGRES_DSN` to the complete API verification tier.
+- `check-database-boundary.py` is a zero-reference source guard, so a driver,
+  dependency, dialect branch, fixture, or test cannot silently return.
+- Database-free unit tests continue to use existing seams and test doubles,
+  while SQL-sensitive behavior is proven against PostgreSQL.
 
 Verification:
 

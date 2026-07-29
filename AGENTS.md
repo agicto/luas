@@ -83,10 +83,10 @@ public HTTP behavior. The nearest `AGENTS.md` wins for local implementation.
    outside this scaffold.
 6. Preserve the subtree-derived Git history; do not rewrite it.
 7. Do not revert unrelated worktree changes.
-8. PostgreSQL is the only relational database compatibility target. Do not
-   introduce or expand SQLite runtime code, drivers, dependencies, fixtures,
-   migrations, or tests. Unit tests use existing seams and test doubles; SQL
-   behavior is verified against disposable PostgreSQL.
+8. PostgreSQL is the only relational database compatibility target. SQLite
+   runtime code, drivers, dependencies, fixtures, migrations, and tests must
+   remain absent. Unit tests use existing seams and test doubles; SQL behavior
+   is verified against disposable PostgreSQL.
 
 ## Verification Budget
 

@@ -2,7 +2,6 @@ package feature
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -14,16 +13,19 @@ import (
 
 // SetupApp initializes the feature-test application by reusing the production DI graph
 // and HTTP startup chain with a test-specific config.
-func SetupApp() *gin.Engine {
-	return SetupAppWithOptionalStarters()
+func SetupApp(t *testing.T) *gin.Engine {
+	t.Helper()
+	return SetupAppWithOptionalStarters(t)
 }
 
 // SetupAppWithOptionalStarters reuses production assembly with an explicit additive selection.
-func SetupAppWithOptionalStarters(optionalStarters ...string) *gin.Engine {
-	return setupApp(nil, optionalStarters...)
+func SetupAppWithOptionalStarters(t *testing.T, optionalStarters ...string) *gin.Engine {
+	t.Helper()
+	return setupApp(t, nil, optionalStarters...)
 }
 
-func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.Engine {
+func setupApp(t *testing.T, configure func(*config.Config), optionalStarters ...string) *gin.Engine {
+	t.Helper()
 	cfg := &config.Config{}
 	cfg.App.Name = "Luas Test"
 	cfg.App.Env = "test"
@@ -31,15 +33,7 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 	cfg.App.URL = "http://localhost:0"
 	cfg.Starters.Optional = append([]string(nil), optionalStarters...)
 	cfg.Server.Mode = "test"
-	cfg.Database.Enabled = true
-	cfg.Database.Driver = "sqlite"
-	cfg.Database.Memory = true
-	cfg.Database.MaxIdleConns = 1
-	cfg.Database.MaxOpenConns = 1
-	cfg.Database.ConnMaxIdleTime = config.DefaultDatabaseConnMaxIdleTime
-	cfg.Database.ConnMaxLifetime = config.DefaultDatabaseConnMaxLifetime
-	cfg.Database.ConnectTimeout = config.DefaultDatabaseConnectTimeout
-	cfg.Database.SlowThreshold = time.Second
+	cfg.Database = test_platform.CreatePostgresDatabase(t)
 	cfg.Authentication.SessionTTL = config.DefaultAuthenticationSessionTTL
 	cfg.Authentication.SessionIdleTimeout = config.DefaultAuthenticationSessionIdleTimeout
 	cfg.Authentication.SessionTouchInterval = config.DefaultAuthenticationSessionTouchInterval
@@ -64,6 +58,9 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 	if err != nil {
 		panic("failed to init test application: " + err.Error())
 	}
+	if sqlDB, dbErr := application.DB.DB(); dbErr == nil {
+		t.Cleanup(func() { _ = sqlDB.Close() })
+	}
 
 	if err := bootstrap.RunRegisteredMigrations(application.Migrator); err != nil {
 		panic("failed to run migrations for test db: " + err.Error())
@@ -75,12 +72,12 @@ func setupApp(configure func(*config.Config), optionalStarters ...string) *gin.E
 
 // NewTestCase is a shortcut to create a test case with the setup app
 func NewTestCase(t *testing.T) *test_platform.TestCase {
-	engine := SetupApp()
+	engine := SetupApp(t)
 	return test_platform.NewTestCase(t, engine)
 }
 
 // NewTestCaseWithOptionalStarters creates a feature test with additive starters enabled.
 func NewTestCaseWithOptionalStarters(t *testing.T, optionalStarters ...string) *test_platform.TestCase {
-	engine := SetupAppWithOptionalStarters(optionalStarters...)
+	engine := SetupAppWithOptionalStarters(t, optionalStarters...)
 	return test_platform.NewTestCase(t, engine)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/exception"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 func TestResolveGormLogLevel_DefaultsToInfoForDebugAndTest(t *testing.T) {
@@ -258,8 +258,14 @@ func TestNewDB_ReturnsErrorWhenEnabledDatabaseUnavailable(t *testing.T) {
 		},
 		Database: config.DatabaseConfig{
 			Enabled:              true,
-			Driver:               "sqlite",
-			Name:                 filepath.Join(t.TempDir(), "missing-parent", "luas.sqlite"),
+			Driver:               "postgres",
+			Host:                 "127.0.0.1",
+			Port:                 1,
+			Name:                 "unavailable",
+			Username:             "unavailable",
+			Password:             "unavailable",
+			SSLMode:              "disable",
+			Timezone:             "UTC",
 			MaxIdleConns:         1,
 			MaxOpenConns:         1,
 			ConnMaxIdleTime:      15 * time.Minute,
@@ -276,8 +282,19 @@ func TestNewDB_ReturnsErrorWhenEnabledDatabaseUnavailable(t *testing.T) {
 }
 
 func TestDatabaseDiagnosticsDoNotCaptureBoundValues(t *testing.T) {
-	db, err := NewTestDB()
+	db, err := NewDB(&config.Config{
+		App: config.AppConfig{
+			Env:   "test",
+			Debug: true,
+		},
+		Database: testplatform.CreatePostgresDatabase(t),
+	})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		sqlDB, dbErr := db.DB()
+		require.NoError(t, dbErr)
+		require.NoError(t, sqlDB.Close())
+	})
 	collector := exception.NewCollector(nil)
 	ctx := exception.WithCollector(context.Background(), collector)
 

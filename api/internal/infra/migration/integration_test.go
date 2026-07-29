@@ -5,14 +5,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/migration/schema"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 // Integration test for complete migration workflow:
@@ -52,10 +51,7 @@ func (c *integrationEventCollector) clear() {
 
 // setupIntegrationTest creates a fresh database and migrator for integration testing.
 func setupIntegrationTest(t *testing.T) (*Migrator, *gorm.DB, *integrationEventCollector) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
+	db := testplatform.OpenPostgres(t, nil)
 
 	repo := NewDatabaseRepository(db, "migrations")
 	eventBus := events.NewEventBus()
@@ -427,15 +423,12 @@ func (m *transactionTestMigration) Down(db *gorm.DB) error {
 
 // TestIntegration_SchemaBuilder tests the schema builder integration
 func TestIntegration_SchemaBuilder(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
+	db := testplatform.OpenPostgres(t, nil)
 
 	builder := schema.NewBuilder(db)
 
 	// Create a table with various column types
-	err = builder.Create("test_schema", func(bp *schema.Blueprint) {
+	err := builder.Create("test_schema", func(bp *schema.Blueprint) {
 		bp.ID()
 		bp.String("name")
 		bp.String("email", 100)
@@ -483,10 +476,7 @@ func TestIntegration_SchemaBuilder(t *testing.T) {
 
 // TestIntegration_RepositoryOperations tests repository operations
 func TestIntegration_RepositoryOperations(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
+	db := testplatform.OpenPostgres(t, nil)
 
 	repo := NewDatabaseRepository(db, "migrations")
 
@@ -494,7 +484,7 @@ func TestIntegration_RepositoryOperations(t *testing.T) {
 	assert.False(t, repo.RepositoryExists())
 
 	// Create repository
-	err = repo.CreateRepository()
+	err := repo.CreateRepository()
 	require.NoError(t, err)
 
 	// Repository should exist now

@@ -7,15 +7,14 @@ pagination semantics.
 
 ## Dialect Authority
 
-PostgreSQL is the only relational database compatibility target for new Luas work. Do not add or
-expand SQLite runtime code, drivers, dependencies, DSNs, dialect branches, fixtures, migrations, or
-tests. GORM portability and an in-memory database pass do not prove PostgreSQL query, constraint,
+PostgreSQL is the only relational database compatibility target for Luas. SQLite runtime code,
+drivers, dependencies, DSNs, dialect branches, fixtures, migrations, and tests must remain absent.
+GORM portability and an in-memory database pass do not prove PostgreSQL query, constraint,
 transaction, locking, index, or migration behavior.
 
 Keep pure service tests database-free through existing seams and test doubles. Tests that exercise
 SQL behavior use an isolated schema in a caller-supplied disposable PostgreSQL database, following
-the `LUAS_TEST_POSTGRES_DSN` profile below. The repository still contains frozen SQLite
-compatibility debt; it is a migration backlog, not an approved pattern or compatibility promise.
+the `LUAS_TEST_POSTGRES_DSN` profile below.
 
 ## Typed Configuration
 
@@ -24,7 +23,7 @@ resources:
 
 | Variable | Default | Runtime contract |
 |---|---:|---|
-| `DB_DRIVER` | `postgres` | New work uses exact `postgres`. The existing `sqlite` branch is deprecated, frozen compatibility debt; unknown values fail. |
+| `DB_DRIVER` | `postgres` | Exact `postgres` is required; every other value fails validation. |
 | `DB_MAX_OPEN_CONNS` | `100` | Positive and finite; zero cannot silently enable an unlimited pool. |
 | `DB_MAX_IDLE_CONNS` | `10` | Zero through `DB_MAX_OPEN_CONNS`. |
 | `DB_CONN_MAX_IDLE_TIME` | `15m` | Positive and no longer than connection lifetime. |

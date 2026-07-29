@@ -3,23 +3,15 @@ package migrations
 import (
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func TestCreateAuthenticationSessionsTableUpAndDown(t *testing.T) {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
-	sqlDB, err := db.DB()
-	require.NoError(t, err)
-	sqlDB.SetMaxOpenConns(1)
+	db := testplatform.OpenPostgres(t, nil)
 	migration := &createAuthenticationSessionsTable{}
 
 	require.NoError(t, migration.Up(db))

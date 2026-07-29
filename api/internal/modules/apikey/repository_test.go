@@ -10,15 +10,12 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 func newAPIKeyRepositoryTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&APIKeyPO{}))
-	return db
+	return testplatform.OpenPostgres(t, nil, &APIKeyPO{})
 }
 
 func TestRepositoryStaleUsageWriteCannotClearRevocation(t *testing.T) {
@@ -51,7 +48,7 @@ func TestRepositoryStaleUsageWriteCannotClearRevocation(t *testing.T) {
 	stored, err := repo.FindByHash(context.Background(), key.KeyHash)
 	require.NoError(t, err)
 	require.NotNil(t, stored.RevokedAt)
-	assert.Equal(t, revokedAt, *stored.RevokedAt)
+	assert.True(t, revokedAt.Equal(*stored.RevokedAt))
 	assert.Nil(t, stored.LastUsedAt)
 }
 
@@ -118,7 +115,7 @@ func TestRepositoryRecordUseIsThrottled(t *testing.T) {
 	stored, err := repo.FindByHash(context.Background(), key.KeyHash)
 	require.NoError(t, err)
 	require.NotNil(t, stored.LastUsedAt)
-	assert.Equal(t, firstUse, *stored.LastUsedAt)
+	assert.True(t, firstUse.Equal(*stored.LastUsedAt))
 }
 
 func TestRepositoryRevokeIsOwnedAndIdempotent(t *testing.T) {
@@ -148,5 +145,5 @@ func TestRepositoryRevokeIsOwnedAndIdempotent(t *testing.T) {
 	stored, err := repo.FindByHash(context.Background(), key.KeyHash)
 	require.NoError(t, err)
 	require.NotNil(t, stored.RevokedAt)
-	assert.Equal(t, revokedAt, *stored.RevokedAt)
+	assert.True(t, revokedAt.Equal(*stored.RevokedAt))
 }

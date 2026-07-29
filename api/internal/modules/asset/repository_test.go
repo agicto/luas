@@ -10,13 +10,12 @@ import (
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func TestRepositoryReadsAccountDeletionGuardInsideOwningTransaction(t *testing.T) {
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&user.UserPO{}, &AssetPO{}))
+	db := testplatform.OpenPostgres(t, nil, &user.UserPO{}, &AssetPO{})
 	owner := &user.UserPO{
 		Username: "asset-transaction-owner",
 		Email:    "asset-transaction-owner@example.test",
@@ -28,7 +27,7 @@ func TestRepositoryReadsAccountDeletionGuardInsideOwningTransaction(t *testing.T
 	userRepository := user.NewRepository(db)
 	now := time.Date(2026, 7, 15, 20, 0, 0, 0, time.UTC)
 
-	err = userRepository.DeleteAccount(context.Background(), owner.ID, func(ctx context.Context) error {
+	err := userRepository.DeleteAccount(context.Background(), owner.ID, func(ctx context.Context) error {
 		tx, ok := database.TransactionFromContext(ctx)
 		if !ok {
 			return domain.ErrServiceUnavailable

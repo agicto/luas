@@ -12,12 +12,11 @@ import (
 
 	"github.com/zgiai/luas/api/internal/domain"
 	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 func TestRepositoryFindAllUsesStableOrderAndPreservesEmptyPageTotal(t *testing.T) {
-	db, err := infradatabase.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&UserPO{}))
+	db := testplatform.OpenPostgres(t, nil, &UserPO{})
 	repo := NewRepository(db)
 	for index := 1; index <= 3; index++ {
 		candidate := &domain.User{
@@ -49,9 +48,7 @@ func TestRepositoryFindAllUsesStableOrderAndPreservesEmptyPageTotal(t *testing.T
 }
 
 func TestRepositoryDeleteAccountRunsPolicyAndSoftDeleteAtomically(t *testing.T) {
-	db, err := infradatabase.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&UserPO{}, &AuthenticationSessionPO{}))
+	db := testplatform.OpenPostgres(t, nil, &UserPO{}, &AuthenticationSessionPO{})
 	po := &UserPO{
 		Username: "atomic-delete",
 		Email:    "atomic-delete@example.com",
@@ -63,7 +60,7 @@ func TestRepositoryDeleteAccountRunsPolicyAndSoftDeleteAtomically(t *testing.T) 
 	repo := NewRepository(db)
 	policyErr := errors.New("policy rejected deletion")
 
-	err = repo.DeleteAccount(context.Background(), po.ID, func(ctx context.Context) error {
+	err := repo.DeleteAccount(context.Background(), po.ID, func(ctx context.Context) error {
 		tx, ok := infradatabase.TransactionFromContext(ctx)
 		require.True(t, ok)
 		require.NoError(t, tx.Model(&UserPO{}).

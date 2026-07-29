@@ -75,14 +75,11 @@ Capabilities should not gain HTTP files merely to match that template.
 
 - PostgreSQL is the only relational database compatibility target for runtime,
   migrations, repositories, and integration tests.
-- Never add or expand SQLite drivers, dependencies, DSNs, dialect branches,
-  fixtures, or tests. Existing SQLite references are frozen migration debt,
-  not a pattern to copy.
+- SQLite drivers, dependencies, DSNs, dialect branches, fixtures, migrations,
+  and tests must remain absent.
 - Unit tests that do not need SQL semantics use an existing repository seam or
   test double. Tests that validate SQL, constraints, transactions, locking,
   migrations, or query shape use disposable PostgreSQL.
-- When changing a legacy SQLite-backed test, migrate the touched behavior to a
-  test double or PostgreSQL instead of extending the SQLite path.
 
 ## Naming
 

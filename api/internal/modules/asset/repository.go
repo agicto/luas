@@ -70,10 +70,7 @@ func (r *repository) CreateIntent(ctx context.Context, value *domain.Asset) (*cr
 	result := &createIntentResult{}
 	err = db.Transaction(func(tx *gorm.DB) error {
 		var owner user.UserPO
-		ownerQuery := tx.Select("id")
-		if tx.Dialector != nil && tx.Name() != "sqlite" {
-			ownerQuery = ownerQuery.Clauses(clause.Locking{Strength: "UPDATE"})
-		}
+		ownerQuery := tx.Select("id").Clauses(clause.Locking{Strength: "UPDATE"})
 		if ownerErr := ownerQuery.First(&owner, po.UserID).Error; ownerErr != nil {
 			if errors.Is(ownerErr, gorm.ErrRecordNotFound) {
 				return domain.ErrUserNotFound

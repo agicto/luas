@@ -11,45 +11,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 
-# This ledger freezes the pre-policy SQLite footprint. Lower a count or remove
-# an entry only when the same change removes those legacy references. Never
-# raise a count or add a path.
-LEGACY_SQLITE_REFERENCE_COUNTS = {
-    "api/database/migrations/authentication_sessions_test.go": 2,
-    "api/database/migrations/organization_invitations_test.go": 2,
-    "api/database/migrations/seed_default_users_test.go": 2,
-    "api/go.mod": 5,
-    "api/internal/bootstrap/migrate.go": 3,
-    "api/internal/infra/config/config.go": 5,
-    "api/internal/infra/config/validate_test.go": 1,
-    "api/internal/infra/database/database.go": 6,
-    "api/internal/infra/database/database_test.go": 2,
-    "api/internal/infra/exception/recovery_test.go": 1,
-    "api/internal/infra/migration/database_repository.go": 3,
-    "api/internal/infra/migration/database_repository_test.go": 3,
-    "api/internal/infra/migration/integration_test.go": 4,
-    "api/internal/infra/migration/migrator.go": 6,
-    "api/internal/infra/migration/migrator_test.go": 3,
-    "api/internal/infra/migration/schema/builder.go": 4,
-    "api/internal/infra/migration/schema/builder_test.go": 17,
-    "api/internal/infra/migration/schema/grammar.go": 6,
-    "api/internal/infra/migration/schema/grammar_sqlite.go": 47,
-    "api/internal/infra/testing/fixture.go": 6,
-    "api/internal/modules/asset/repository.go": 1,
-    "api/internal/modules/notification/service_test.go": 2,
-    "api/internal/modules/organization/membership_repository.go": 1,
-    "api/internal/modules/permission/repository.go": 1,
-    "api/internal/modules/setting/repository.go": 2,
-    "api/internal/modules/usage/repository.go": 2,
-    "api/internal/modules/user/repository.go": 1,
-    "api/internal/modules/user/session_service_test.go": 2,
-    "api/internal/modules/webhook/repository_test.go": 3,
-    "api/tests/feature/setup.go": 1,
-    "api/tests/kest/run_local.sh": 2,
-}
-LEGACY_SQLITE_FILE_CEILING = 31
-LEGACY_SQLITE_REFERENCE_CEILING = 146
-
 SQLITE_REFERENCE = re.compile(r"sqlite(?:3)?", re.IGNORECASE)
 SOURCE_SUFFIXES = {
     ".cjs",
@@ -121,21 +82,8 @@ def require_order(
         position = next_position
 
 
-def check_sqlite_reference_ledger(failures: list[str]) -> int:
-    actual: dict[str, int] = {}
-    ledger_references = sum(LEGACY_SQLITE_REFERENCE_COUNTS.values())
-
-    if len(LEGACY_SQLITE_REFERENCE_COUNTS) > LEGACY_SQLITE_FILE_CEILING:
-        failures.append(
-            "legacy SQLite ledger exceeds the frozen 31-file ceiling; remove references instead "
-            "of adding paths"
-        )
-    if ledger_references > LEGACY_SQLITE_REFERENCE_CEILING:
-        failures.append(
-            "legacy SQLite ledger exceeds the frozen 146-reference ceiling; remove references "
-            "instead of raising the baseline"
-        )
-
+def check_sqlite_absent(failures: list[str]) -> int:
+    references = 0
     for path in ROOT.rglob("*"):
         if not path.is_file() or any(part in SKIPPED_PARTS for part in path.parts):
             continue
@@ -145,34 +93,17 @@ def check_sqlite_reference_ledger(failures: list[str]) -> int:
         relative_path = path.relative_to(ROOT).as_posix()
         count = len(SQLITE_REFERENCE.findall(path.read_text(encoding="utf-8")))
         if count:
-            actual[relative_path] = count
-
-    for relative_path, count in sorted(actual.items()):
-        expected = LEGACY_SQLITE_REFERENCE_COUNTS.get(relative_path)
-        if expected is None:
             failures.append(
-                f"{relative_path} introduces {count} SQLite reference(s); PostgreSQL is the only "
+                f"{relative_path} contains {count} SQLite reference(s); PostgreSQL is the only "
                 "approved relational database target"
             )
-        elif count != expected:
-            failures.append(
-                f"{relative_path} has {count} SQLite reference(s), legacy ledger expects "
-                f"{expected}; never raise the ledger and lower it with intentional removals"
-            )
-
-    for relative_path, expected in sorted(LEGACY_SQLITE_REFERENCE_COUNTS.items()):
-        if relative_path not in actual:
-            failures.append(
-                f"{relative_path} no longer has its {expected} legacy SQLite reference(s); "
-                "remove or lower the ledger entry in the same change"
-            )
-
-    return sum(actual.values())
+            references += count
+    return references
 
 
 def main() -> int:
     failures: list[str] = []
-    legacy_sqlite_references = check_sqlite_reference_ledger(failures)
+    sqlite_references = check_sqlite_absent(failures)
 
     require_all(
         failures,
@@ -187,7 +118,7 @@ def main() -> int:
             "ConnectTimeout       time.Duration",
             "func (d DatabaseConfig) Validate() error",
             "func (c *Config) ValidateDatabase() error",
-            'd.Driver != "postgres" && d.Driver != "sqlite"',
+            'd.Driver != "postgres"',
             "DB_MAX_OPEN_CONNS must be greater than 0",
             "DB_MAX_IDLE_CONNS must be between 0 and DB_MAX_OPEN_CONNS",
             "DB_CONN_MAX_IDLE_TIME must not exceed DB_CONN_MAX_LIFETIME",
@@ -220,8 +151,8 @@ def main() -> int:
             "SetConnMaxIdleTime",
             "PingContext",
             "sqlDB.Close()",
-            'case "sqlite":',
-            'case "postgres":',
+            "postgres.New",
+            "PreferSimpleProtocol: true",
         ),
     )
     require_absent(
@@ -322,8 +253,7 @@ def main() -> int:
         (
             "Database Runtime",
             "PostgreSQL is the only relational database compatibility target",
-            "Do not add or",
-            "expand SQLite",
+            "must remain absent",
             "Production rejects `disable`, `allow`, and `prefer`",
             "one application SQL statement",
             "Host, network, PostgreSQL state, and dataset size",
@@ -345,7 +275,7 @@ def main() -> int:
         (
             "Database Runtime Policy",
             "PostgreSQL is the only",
-            "Do not add or expand SQLite",
+            "must remain absent",
             "[`DATABASE.md`](DATABASE.md)",
         ),
     )
@@ -370,7 +300,7 @@ def main() -> int:
             "docs/DATABASE.md",
             "make benchmark-database",
             "PostgreSQL is the only relational database compatibility target",
-            "Never add or expand SQLite",
+            "must remain absent",
         ),
     )
     require_all(
@@ -387,9 +317,9 @@ def main() -> int:
         failures,
         "api/.agents/skills/testing-strategy/SKILL.md",
         (
-            "PostgreSQL is the only SQL test dialect",
-            "never use SQLite as a database",
-            "setupPostgresTestDB",
+            "PostgreSQL is the only SQL compatibility target",
+            "Never add SQLite",
+            "LUAS_TEST_POSTGRES_DSN",
         ),
     )
     require_all(
@@ -405,7 +335,8 @@ def main() -> int:
         "AGENTS.md",
         (
             "PostgreSQL is the only relational database compatibility target",
-            "SQLite runtime code",
+            "migrations, and tests must",
+            "remain absent",
         ),
     )
     require_all(
@@ -421,8 +352,8 @@ def main() -> int:
         "docs/FRAMEWORK_QUALITY_ROADMAP.md",
         (
             "Completed P0 — Database Runtime And Query Budget",
-            "P1 — PostgreSQL-Only Database Convergence",
-            "exact legacy SQLite reference ledger",
+            "Completed P0 — PostgreSQL-Only Database Convergence",
+            "zero-reference source guard",
             "one application SQL statement",
             "not an SLO or CI timing budget",
         ),
@@ -446,8 +377,7 @@ def main() -> int:
 
     print(
         "Database boundary check passed "
-        f"(PostgreSQL-only new work; {len(LEGACY_SQLITE_REFERENCE_COUNTS)} legacy files and "
-        f"{legacy_sqlite_references} SQLite references frozen; "
+        f"(PostgreSQL-only runtime; {sqlite_references} forbidden compatibility references; "
         "strict config, bounded pool, measured queries)."
     )
     return 0

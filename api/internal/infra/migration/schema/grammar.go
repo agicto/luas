@@ -63,19 +63,13 @@ type Grammar interface {
 	GetColumnType(column *ColumnDefinition) string
 }
 
-// NewGrammar creates a Grammar implementation for the specified dialect.
-// Supported dialects: "mysql", "postgres", "sqlite"
+// NewGrammar creates a Grammar implementation for the configured dialect.
 func NewGrammar(dialect string) Grammar {
 	switch strings.ToLower(dialect) {
 	case "mysql":
 		return &MySQLGrammar{}
-	case "postgres", "postgresql":
-		return &PostgresGrammar{}
-	case "sqlite", "sqlite3":
-		return &SQLiteGrammar{}
 	default:
-		// Default to SQLite for unknown dialects
-		return &SQLiteGrammar{}
+		return &PostgresGrammar{}
 	}
 }
 
@@ -89,9 +83,9 @@ func (g *baseGrammar) formatDefault(value interface{}) string {
 		return fmt.Sprintf("'%s'", v)
 	case bool:
 		if v {
-			return "1"
+			return "TRUE"
 		}
-		return "0"
+		return "FALSE"
 	case nil:
 		return "NULL"
 	default:

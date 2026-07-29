@@ -495,19 +495,13 @@ func lockUsageOwner(tx *gorm.DB, target domain.UsageTarget) error {
 }
 
 func ownerLockQuery(tx *gorm.DB) *gorm.DB {
-	if tx.Dialector != nil && tx.Name() != "sqlite" {
-		// Receipt foreign-key checks hold KEY SHARE before owner serialization.
-		// NO KEY UPDATE blocks owner mutation/deletion without a lock-upgrade deadlock.
-		return tx.Clauses(clause.Locking{Strength: "NO KEY UPDATE"})
-	}
-	return tx
+	// Receipt foreign-key checks hold KEY SHARE before owner serialization.
+	// NO KEY UPDATE blocks owner mutation/deletion without a lock-upgrade deadlock.
+	return tx.Clauses(clause.Locking{Strength: "NO KEY UPDATE"})
 }
 
 func lockQuery(tx *gorm.DB) *gorm.DB {
-	if tx.Dialector != nil && tx.Name() != "sqlite" {
-		return tx.Clauses(clause.Locking{Strength: "UPDATE"})
-	}
-	return tx
+	return tx.Clauses(clause.Locking{Strength: "UPDATE"})
 }
 
 func newUsageEventPO(mutation usageMutation) *UsageEventPO {

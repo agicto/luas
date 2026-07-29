@@ -16,16 +16,14 @@ import (
 	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/database"
 	infrastorage "github.com/zgiai/luas/api/internal/infra/storage"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func newAssetServiceTest(t *testing.T) (*service, uint) {
 	t.Helper()
-	db, err := database.NewTestDB()
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&user.UserPO{}, &AssetPO{}))
+	db := testplatform.OpenPostgres(t, nil, &user.UserPO{}, &AssetPO{})
 	owner := &user.UserPO{
 		Username: "asset-owner",
 		Email:    "asset-owner@example.test",

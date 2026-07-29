@@ -145,7 +145,7 @@ func TestRepositoryInvitationRevokeListAndExpiredReplacement(t *testing.T) {
 	assert.Equal(t, domain.OrganizationInvitationStatusExpired, expiredPO.toDomain().Status(now))
 	assert.Nil(t, expiredPO.RevokedAt)
 	assert.Nil(t, expiredPO.PendingKey)
-	assert.Equal(t, expiredUpdatedAt, expiredPO.UpdatedAt)
+	assert.True(t, expiredUpdatedAt.Equal(expiredPO.UpdatedAt))
 
 	_, _, err = repo.AcceptInvitation(context.Background(), expired.TokenHash, ownerID, now)
 	require.ErrorIs(t, err, domain.ErrOrganizationInvitationExpired)

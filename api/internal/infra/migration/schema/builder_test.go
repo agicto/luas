@@ -3,23 +3,19 @@ package schema
 import (
 	"testing"
 
-	"github.com/glebarez/sqlite"
 	"github.com/leanovate/gopter"
 	"github.com/leanovate/gopter/gen"
 	"github.com/leanovate/gopter/prop"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
-// setupTestDB creates an in-memory SQLite database for testing
+// setupTestDB creates an isolated PostgreSQL schema for testing.
 func setupTestDB(t *testing.T) *gorm.DB {
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err)
-	return db
+	return testplatform.OpenPostgres(t, nil)
 }
 
 // tableNameGen generates valid table names
@@ -37,7 +33,8 @@ func TestProperty13_SchemaHasTableReflectsExistence(t *testing.T) {
 	properties.Property("HasTable returns true iff table exists", prop.ForAll(
 		func(tableName string) bool {
 			// Setup fresh database for each test
-			db := setupTestDB(t)
+			db, cleanup := testplatform.OpenPostgresWithCleanup(t, nil)
+			defer cleanup()
 			builder := NewBuilder(db)
 
 			// Initially table should not exist
@@ -391,21 +388,6 @@ func TestPostgresGrammar_CompileCreate(t *testing.T) {
 	assert.Contains(t, sql, "PRIMARY KEY")
 }
 
-func TestSQLiteGrammar_CompileCreate(t *testing.T) {
-	grammar := &SQLiteGrammar{}
-	bp := NewBlueprint("users")
-	bp.Create()
-	bp.ID()
-	bp.String("name")
-
-	sql := grammar.CompileCreate(bp)
-
-	assert.Contains(t, sql, "CREATE TABLE \"users\"")
-	assert.Contains(t, sql, "\"id\" INTEGER")
-	assert.Contains(t, sql, "PRIMARY KEY AUTOINCREMENT")
-	assert.Contains(t, sql, "\"name\" VARCHAR(255)")
-}
-
 func TestNewGrammar_Factory(t *testing.T) {
 	tests := []struct {
 		dialect  string
@@ -414,9 +396,7 @@ func TestNewGrammar_Factory(t *testing.T) {
 		{"mysql", "*schema.MySQLGrammar"},
 		{"postgres", "*schema.PostgresGrammar"},
 		{"postgresql", "*schema.PostgresGrammar"},
-		{"sqlite", "*schema.SQLiteGrammar"},
-		{"sqlite3", "*schema.SQLiteGrammar"},
-		{"unknown", "*schema.SQLiteGrammar"}, // defaults to SQLite
+		{"unknown", "*schema.PostgresGrammar"},
 	}
 
 	for _, tt := range tests {
@@ -435,7 +415,6 @@ func TestGrammar_CompileDrop(t *testing.T) {
 	}{
 		{"MySQL", &MySQLGrammar{}, "DROP TABLE `users`"},
 		{"Postgres", &PostgresGrammar{}, "DROP TABLE \"users\""},
-		{"SQLite", &SQLiteGrammar{}, "DROP TABLE \"users\""},
 	}
 
 	for _, tt := range tests {
@@ -454,7 +433,6 @@ func TestGrammar_CompileDropIfExists(t *testing.T) {
 	}{
 		{"MySQL", &MySQLGrammar{}, "DROP TABLE IF EXISTS `users`"},
 		{"Postgres", &PostgresGrammar{}, "DROP TABLE IF EXISTS \"users\""},
-		{"SQLite", &SQLiteGrammar{}, "DROP TABLE IF EXISTS \"users\""},
 	}
 
 	for _, tt := range tests {
@@ -473,7 +451,6 @@ func TestGrammar_CompileRename(t *testing.T) {
 	}{
 		{"MySQL", &MySQLGrammar{}, "RENAME TABLE `old` TO `new`"},
 		{"Postgres", &PostgresGrammar{}, "ALTER TABLE \"old\" RENAME TO \"new\""},
-		{"SQLite", &SQLiteGrammar{}, "ALTER TABLE \"old\" RENAME TO \"new\""},
 	}
 
 	for _, tt := range tests {

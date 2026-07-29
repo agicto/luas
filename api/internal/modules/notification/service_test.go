@@ -10,12 +10,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/email"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
@@ -314,15 +314,12 @@ func newNotificationTestService(
 	t *testing.T,
 ) (*service, *gorm.DB, *fakeEmailSender, time.Time) {
 	t.Helper()
-	dsn := fmt.Sprintf("file:%s?mode=memory&cache=shared&_foreign_keys=1", t.Name())
-	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{TranslateError: true})
-	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(
+	db := testplatform.OpenPostgres(t, &gorm.Config{TranslateError: true},
 		&user.UserPO{},
 		&NotificationPO{},
 		&NotificationDeliveryPO{},
 		&NotificationPreferencePO{},
-	))
+	)
 	mailer := &fakeEmailSender{configured: true}
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"notification"}}}
 	service := NewService(cfg, NewRepository(db), mailer, nil)
