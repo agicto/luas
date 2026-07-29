@@ -1,45 +1,94 @@
 # Luas
 
-Luas is an open-source full-stack application starter kit for building secure, maintainable
-products with Go and React. It ships two browser-shell options: a production-oriented Next.js app
-and a lightweight static SPA for OSS/CDN delivery. Both use explicit HTTP contracts and the same
-feature-first semantic architecture.
+Luas is an open-source full-stack starter kit for building secure web applications with Go and
+React. It combines a modular PostgreSQL API, production-ready business starters, a Next.js console,
+and a lightweight static SPA in one coherent architecture.
 
-Luas is a scaffold, not a finished product. Keep the capabilities your application needs, remove the examples it does not, and build product behavior inside clear ownership boundaries.
+Start with authentication, API keys, audit history, typed configuration, migrations, testing,
+containers, and CI already working. Enable organizations, permissions, notifications, private
+assets, settings, usage limits, and webhooks when the product needs them.
 
-## Why Luas
+## What You Can Build
 
-- **Start with working foundations.** Authentication sessions, API keys, audit history, configuration, health checks, migrations, a Web console, and verification tooling are already assembled.
-- **Add business capabilities deliberately.** Organizations, permissions, notifications, assets, settings, usage, and webhooks are optional starters with documented dependencies and removal paths.
-- **Choose the browser runtime deliberately.** Use Next.js for server adapters and SSR, or the
-  static SPA when object storage and CDN delivery are enough. Neither imports API source.
-- **Make safety executable.** Typed startup validation, stable error codes, bounded infrastructure, browser security headers, dependency checks, container checks, and performance budgets are enforced by tests and governance scripts.
-- **Give contributors and agents the same map.** Canonical vocabulary, architecture guides, local instructions, and task-specific skills reduce guesswork as the application grows.
+Luas works well for SaaS products, internal platforms, developer tools, AI applications, operations
+consoles, and API-first services. The included foundations remove common setup work without forcing
+product-specific business rules.
 
-## What Is Included
-
-| Area | Included foundation |
+| Capability | What is ready to use |
 |---|---|
-| API core | Go 1.25, Gin, Wire dependency injection, GORM, PostgreSQL, typed configuration, migrations, health checks, metrics, structured logging, and CLI commands |
-| Default starters | User accounts and opaque authentication sessions, user-owned API keys, and audit history |
-| Optional starters | Organizations, exact permissions, notifications, private assets, typed settings, usage and quotas, and outbound webhooks |
-| Web shell | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn primitives, i18n, authenticated console routes, strict API adapters, and a development mock BFF |
-| Static SPA shell | Vite 8, React 19, TanStack Router and Query, TypeScript, Tailwind CSS 4, i18next, validated Fetch contracts, and static OSS/CDN output |
-| Capabilities | Cache, queue and workflow primitives, email, object storage, observability, and a bounded provider-neutral AI execution seam |
-| Delivery | Non-root production containers, local Compose, readiness and liveness probes, SBOM generation, vulnerability gates, and route bundle budgets |
-| Engineering system | Shared contracts, architecture decisions, semantic guardrails, tiered verification, and repository-local agent skills |
+| Accounts and sessions | Registration, login, profile, password change and reset, account deletion, revocable opaque sessions, idle and absolute expiry, and abuse controls |
+| API access | User-owned API keys, one-time plaintext display, hash-only storage, exact scopes, listing, usage tracking, and revocation |
+| Audit history | Write-request auditing, user-facing history, structured change metadata, privacy controls, and bounded retention |
+| Organizations | Tenant creation, membership, invitations, active organization context, roles, member management, ownership transfer, and account-integrity guards |
+| Permissions | Organization-scoped access roles, code-owned permission catalogs, exact grants, default-deny checks, and transactional assignment |
+| Notifications | In-app notifications, read state, user preferences, durable email delivery, idempotent publication, leasing, and retries |
+| Private assets | Upload intents, metadata, bounded validation, short-lived transfer grants, R2 support, lifecycle cleanup, and private downloads |
+| Settings | Typed app, organization, and user settings with defaults, optimistic concurrency, ETags, and operator commands |
+| Usage and quotas | Trusted idempotent events, UTC counters, atomic quota decisions, overrides, retention, and private usage summaries |
+| Outbound webhooks | Encrypted rotating secrets, Standard Webhooks signatures, SSRF-resistant destinations, durable delivery, retries, replay, and auto-disable |
+
+The `user`, `apikey`, and `audit` starters are enabled by default. Other business starters are
+optional, so a small application does not inherit tenancy, RBAC, storage, or integration complexity
+until it needs those capabilities.
+
+## Why Luas Is Convenient
+
+- **One architecture from API to UI.** Contracts, error codes, request IDs, pagination, feature
+  names, and ownership boundaries stay consistent across deployable units.
+- **PostgreSQL everywhere.** Runtime, migrations, repositories, integration tests, and CI use
+  PostgreSQL semantics. SQLite is not used as a compatibility substitute.
+- **Two frontend choices.** Use the complete Next.js console for SSR and secure server adapters, or
+  ship the Vite SPA directly through OSS/S3-compatible storage and a CDN.
+- **A working console.** Authentication, account settings, API keys, audit history, and optional
+  starter workflows already have feature-first UI foundations.
+- **Secure defaults.** Typed startup validation, HttpOnly session custody, stable public errors,
+  bounded requests, rate limits, trusted-proxy policy, private assets, and secret-safe telemetry are
+  built into the foundation.
+- **Replaceable providers.** Email, cache, storage, tracing, error reporting, workflows, and AI
+  execution are explicit infrastructure seams rather than business-layer dependencies.
+- **Operational tooling included.** Migrations, seeders, workers, pruning commands, route discovery,
+  health checks, readiness, metrics, graceful shutdown, and production containers are available
+  from the start.
+- **Fast collaboration.** Local architecture instructions, focused verification commands, and
+  maintained agent context help human and AI contributors make changes with the same vocabulary.
+
+## Technology
+
+| Deployable unit | Stack |
+|---|---|
+| `api/` | Go 1.25, Gin, Wire, GORM, PostgreSQL, typed configuration, versioned migrations, structured logging, OpenTelemetry, and operator CLI |
+| `web/` | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, Zustand, next-intl, and a secure same-origin API adapter |
+| `web-spa/` | Vite 8, React 19, TanStack Router, TanStack Query, Zustand, Zod, Tailwind CSS 4, shadcn/ui, and i18next |
+| Delivery | Docker Compose, non-root production images, GitHub Actions, SBOM generation, dependency scanning, container scanning, and bundle budgets |
+
+Each deployable unit is independent. Browser applications communicate with the API through
+documented HTTP contracts and never import backend source code.
+
+## Choose A Frontend
+
+| Need | Choose `web/` | Choose `web-spa/` |
+|---|---:|---:|
+| Server rendering and Server Components | Yes | No |
+| Same-origin HttpOnly auth adapter | Included | Requires a reviewed gateway or browser adapter |
+| Development mock BFF | Included | No |
+| Full optional-starter console UI | Included | Port features as needed |
+| Static OSS/CDN deployment | No | Yes |
+| Frontend Node.js runtime in production | Yes | No |
+| TanStack type-safe file routing | No | Yes |
+
+Most projects select one browser shell. Choose `web/` for the broadest ready-to-use product surface;
+choose `web-spa/` when static delivery, a smaller runtime, and CDN hosting are more important than
+SSR or frontend server functions.
 
 ## Quick Start
 
-### Prerequisites
+### Requirements
 
-- Docker with Compose v2 for the quickest API setup
+- Docker with Compose v2 for the fastest API setup
 - Go 1.25.12 or newer for native API development
-- Node.js 22.12 or newer on the Node 22/24 LTS lines with Corepack for browser development
+- Node.js 22.12 or newer with Corepack for either browser shell
 
-### 1. Start the API
-
-The local Compose stack builds the API, starts PostgreSQL, applies migrations, and waits for readiness:
+### Start The API
 
 ```bash
 cd api
@@ -47,11 +96,10 @@ docker compose up --build --wait
 curl -fsS http://127.0.0.1:8025/health/ready
 ```
 
-The API is available at `http://127.0.0.1:8025`. See [api/README.md](api/README.md) for native development, CLI, database, worker, and deployment workflows.
+The Compose stack starts PostgreSQL, builds the API, applies migrations, and waits for readiness.
+The API listens on `http://127.0.0.1:8025`.
 
-### 2A. Start the Next.js Web app
-
-In another terminal:
+### Start The Next.js Console
 
 ```bash
 cd web
@@ -60,11 +108,10 @@ cp .env.example .env.local
 corepack pnpm dev
 ```
 
-Open `http://localhost:3000`. Development mode can use the bounded mock BFF, so the Web shell is explorable before a production API adapter is configured. Production does not silently enable mock behavior.
+Open `http://localhost:3000`. The development mock BFF makes the console immediately explorable;
+production requires an explicit API adapter or backend.
 
-### 2B. Or start the static SPA
-
-Choose this browser shell when the application does not need a frontend Node.js runtime:
+### Or Start The Static SPA
 
 ```bash
 cd web-spa
@@ -73,145 +120,177 @@ cp .env.example .env.local
 corepack pnpm dev
 ```
 
-Open `http://127.0.0.1:4173`. `pnpm build` emits only `dist/` static assets for OSS, S3-compatible
-storage, or CDN deployment. Protected authentication still requires a reviewed same-origin browser
-gateway; credentials never belong in browser storage.
+Open `http://127.0.0.1:4173`. Build static deployment assets with:
 
-### 3. Verify the workspace
+```bash
+corepack pnpm build
+```
+
+Upload `web-spa/dist/` to OSS, S3-compatible object storage, or a CDN. The output contains no
+frontend server bundle or production Node.js runtime.
+
+## Enable Business Starters
+
+Optional API starters are additive:
+
+```bash
+cd api
+OPTIONAL_STARTERS=organization,permission,notification docker compose up --build --wait
+```
+
+Enable their matching Next.js features:
+
+```env
+NEXT_PUBLIC_OPTIONAL_FEATURES=organization,permission,notification
+```
+
+Dependencies are explicit:
+
+- `permission`, `setting`, `usage`, and `webhook` require `organization`.
+- `notification` and `asset` can be enabled independently.
+- API servers, migrations, workers, and browser features should use a compatible starter selection.
+
+The [starter readiness matrix](docs/STARTER_BUSINESS_ROADMAP.md) describes every starter's workflow,
+dependencies, security properties, and intentional limits.
+
+## Architecture
+
+```text
+Next.js Console                  Static SPA
+SSR + server adapters            OSS/CDN assets + browser gateway
+         \                       /
+          documented HTTP contracts
+                     |
+            Go API and workers
+                     |
+                 PostgreSQL
+                     |
+       email, R2, Redis, AI, telemetry
+```
+
+- `api/` owns domain rules, persistence, migrations, routes, workers, and provider integrations.
+- `web/` owns Next.js routes, browser workflows, UI state, server adapters, and development mocks.
+- `web-spa/` owns static routes, browser state, validated HTTP clients, and CDN output.
+- `contracts/` owns stable request, response, `error_code`, `request_id`, pagination, and
+  compatibility semantics.
+- `docs/` owns architecture, security, deployment, CI, and extension guidance.
+
+The API uses a simple vertical flow:
+
+```text
+route -> handler -> service -> repository -> PostgreSQL
+```
+
+Handlers own transport concerns, services own business rules, repositories own persistence
+translation, and shared domain code remains independent of Gin and GORM.
+
+## API And Operator Tools
+
+The API includes a `luas` operator command:
+
+```bash
+cd api
+go run ./cmd/luas version
+DB_ENABLED=false go run ./cmd/luas route:list
+DB_ENABLED=false go run ./cmd/luas route:list --format=json
+go run ./cmd/luas migrate
+go run ./cmd/luas seed
+go run ./cmd/luas auth-session:prune --batch=500
+go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
+```
+
+Starter-specific commands manage notification workers, asset cleanup, setting overrides, usage
+retention, webhook delivery, and other operational workflows. See [api/README.md](api/README.md)
+for the complete command reference.
+
+## HTTP Contracts
+
+Public API behavior uses a consistent envelope, stable dotted error codes such as
+`COMMON.NOT_FOUND` and `AUTH.INVALID_CREDENTIALS`, and a request ID on success and failure.
+Contracts under `contracts/` document the shared semantics and each starter workflow.
+
+Runtime route discovery is deterministic and machine-readable:
+
+```bash
+cd api
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
+```
+
+This makes active routes inspectable in local development, CI, and deployment tooling without
+maintaining a second handwritten route inventory.
+
+## Security And Production
+
+Luas includes practical application-security foundations:
+
+- hash-only authentication sessions and API keys;
+- same-origin HttpOnly credential custody in the Next.js adapter;
+- strict input validation and bounded response parsing;
+- body, header, timeout, pagination, queue, cache, and provider limits;
+- production rate limits and separate authentication abuse budgets;
+- explicit trusted-proxy and CORS configuration;
+- TLS-required production PostgreSQL configuration;
+- SSRF-resistant webhook destinations and secret-safe delivery records;
+- non-root containers, health probes, graceful shutdown, SBOMs, and vulnerability gates.
+
+Deployments still own secrets, TLS termination, ingress policy, PostgreSQL backups, provider
+credentials, scaling, monitoring, and release approvals. Start with
+[api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md),
+[web/docs/SECURITY.md](web/docs/SECURITY.md), and
+[docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md).
+
+## Development Workflow
+
+Run focused checks while editing and the complete gate before a release:
 
 ```bash
 make agent-check
 make check
 ```
 
-`make agent-check` is the sub-second feedback loop for agent guidance and skills.
-`make check` runs governance plus the API, Next.js Web, and static SPA verification tiers,
-including both production browser builds and their bundle budgets. Do not run `make governance`
-immediately before `make check`; the full gate already includes it.
+`make check` validates governance, the Go API, both browser shells, production builds, HTTP
+boundaries, and bundle budgets. Each deployable unit also provides narrower test, lint, type-check,
+benchmark, container, and security commands.
 
-## Choose Your Starters
-
-The default API always includes `user`, `apikey`, and `audit`. Optional starters are additive and disabled until selected:
-
-```bash
-cd api
-OPTIONAL_STARTERS=organization,permission docker compose up --build --wait
-```
-
-Enable matching browser features explicitly:
-
-```env
-NEXT_PUBLIC_OPTIONAL_FEATURES=organization,permission
-```
-
-The Next.js shell currently contains the full optional-starter browser adapters. Port an optional
-starter into `web-spa/` only with its contract and secure browser-gateway mapping; do not simulate
-parity by storing API credentials in JavaScript.
-
-`permission`, `setting`, `usage`, and `webhook` require `organization`. `notification` and `asset` can be enabled independently. API processes, migration jobs, workers, and Web features must use a compatible selection. The [starter business roadmap](docs/STARTER_BUSINESS_ROADMAP.md) records readiness, dependencies, and deliberate deferrals for every starter.
-
-## Architecture
+## Project Layout
 
 ```text
-Browser
-  -> Next.js Web (SSR, same-origin adapters, development mock BFF)
-     or Static SPA (OSS/CDN assets, browser gateway)
-  -> documented HTTP contracts
-  -> Go API (core, starters, capabilities)
-  -> PostgreSQL and external providers
+luas/
+|-- api/          # Go API, starters, workers, migrations, and CLI
+|-- web/          # Next.js application and complete console
+|-- web-spa/      # Static Vite and TanStack browser shell
+|-- contracts/    # Shared HTTP and starter contracts
+|-- docs/         # Architecture, security, delivery, and extension guides
+`-- Makefile      # Workspace verification commands
 ```
-
-- `api/` owns domain rules, persistence, migrations, HTTP routes, workers, and provider integrations.
-- `web/` owns browser workflows, route groups, UI state, server adapters, and mock development flows.
-- `web-spa/` owns a type-safe static browser shell, feature state, bounded HTTP client, and OSS/CDN
-  artifact contract without server-side source.
-- `contracts/` owns stable cross-deployable HTTP semantics such as envelopes, `error_code`, `request_id`, pagination, and starter workflows.
-- `docs/` owns workspace architecture, security, delivery, and framework-quality decisions.
-
-Read [CONTEXT.md](CONTEXT.md) for the canonical vocabulary and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for ownership boundaries and vertical change flow.
-
-## Contracts And Route Discovery
-
-Contract Markdown under `contracts/` is the human-reviewed source of truth. The API can also emit the routes assembled by the current configuration directly from the runtime:
-
-```bash
-cd api
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
-```
-
-The JSON form is deterministic and validated against a versioned schema, which makes it suitable for CI and tooling. It is a route catalog, not a generated OpenAPI description. See [api/docs/ROUTE_DISCOVERY.md](api/docs/ROUTE_DISCOVERY.md).
-
-## Production Posture
-
-Luas keeps environment-specific policy explicit:
-
-- configuration is loaded into one typed startup snapshot and invalid combinations fail before serving traffic;
-- browser mocks, AI providers, optional starters, and production metrics require deliberate activation;
-- authentication credentials are opaque and hash-only at rest, while API key scopes only reduce authority;
-- public errors use stable `DOMAIN.REASON` codes without leaking provider, SQL, or internal exception details;
-- request, cache, queue, rate-limit, response, and provider boundaries are bounded rather than unbounded defaults;
-- API and Next.js Web images run as non-root processes; the static SPA has no runtime image;
-- dependency and container inventories are emitted as validated CycloneDX SBOMs.
-
-Production deployment still owns secrets, TLS, ingress trust, persistence, scaling, backups,
-provider credentials, and release policy. Start with
-[api/docs/DEPLOYMENT.md](api/docs/DEPLOYMENT.md),
-[web/docs/SECURITY.md](web/docs/SECURITY.md), or
-[web-spa/docs/DEPLOYMENT.md](web-spa/docs/DEPLOYMENT.md), plus
-[docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) when shipping containers.
-
-## AI-Assisted Development
-
-Luas treats agent context as maintained architecture rather than an informal prompt:
-
-1. Start with the nearest implementation, tests, and applicable `AGENTS.md`.
-2. Read [CONTEXT.md](CONTEXT.md) only when global vocabulary or ownership is active.
-3. Load one task-specific workflow under `.agents/skills/`; related-skill links are navigation, not automatic chaining.
-4. Run `make agent-check` for guidance changes and `make check` once at the release boundary.
-
-This guidance is useful to human contributors too: the same terms and checks apply regardless of who writes the change.
-
-## Create A Downstream App
-
-1. Decide which default and optional starters belong to the product.
-2. Select `web/` or `web-spa/`, remove the unused browser shell, then replace the public brand,
-   environment defaults, and example console content.
-3. Remove unused examples, devtools, mock routes, starters, and capabilities using their documented removal paths.
-4. Configure the selected browser shell's production adapter/gateway and provider implementations.
-5. Add product contracts before cross-deployable behavior, then implement API and selected
-   browser-shell changes against them.
-6. Run `make check` and the relevant container or Compose checks before release.
-
-Use [docs/SCAFFOLD_SURFACES.md](docs/SCAFFOLD_SURFACES.md) as the keep, replace, or remove catalog.
 
 ## Documentation
 
 | Topic | Start here |
 |---|---|
-| Global vocabulary | [CONTEXT.md](CONTEXT.md) |
-| Architecture and extension flow | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| API development and commands | [api/README.md](api/README.md) |
+| Next.js console | [web/README.md](web/README.md) |
+| Static SPA and CDN deployment | [web-spa/README.md](web-spa/README.md) |
+| Architecture and ownership | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | HTTP contracts | [contracts/README.md](contracts/README.md) |
-| API development | [api/README.md](api/README.md) |
-| Next.js Web development | [web/README.md](web/README.md) |
-| Static SPA development | [web-spa/README.md](web-spa/README.md) |
-| Add an API module | [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) |
-| Add a Web feature | [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) |
+| Add an API starter or module | [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) |
+| Add a Next.js feature | [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) |
 | Add a static SPA feature | [web-spa/docs/ADDING_FEATURE.md](web-spa/docs/ADDING_FEATURE.md) |
-| Dependency security | [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) |
-| Container security | [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |
-| CI and release branches | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
-| Agent and Skill performance | [docs/AGENT_SKILL_PERFORMANCE_GUIDE.md](docs/AGENT_SKILL_PERFORMANCE_GUIDE.md) |
-| Long-term quality roadmap | [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md) |
+| Starter capability matrix | [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
+| CI and releases | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
+| Dependency and container security | [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) and [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |
+| AI-assisted development | [docs/AGENT_SKILL_PERFORMANCE_GUIDE.md](docs/AGENT_SKILL_PERFORMANCE_GUIDE.md) |
 
 ## Contributing
 
-Contributions should preserve Luas as a reusable scaffold rather than add product-specific behavior. Read [CONTRIBUTING.md](CONTRIBUTING.md), keep changes scoped, update contracts and documentation with behavior, and run `make check` before opening a pull request.
+Read [CONTRIBUTING.md](CONTRIBUTING.md), keep public behavior documented under `contracts/`, and run
+the relevant verification tier before opening a pull request.
 
 ## Security
 
-Do not report suspected vulnerabilities in a public issue. Follow [SECURITY.md](SECURITY.md) for the private reporting process and supported-version policy.
+Report suspected vulnerabilities privately according to [SECURITY.md](SECURITY.md). Do not include
+sensitive details in a public issue.
 
 ## License
 
-Luas is open-source software licensed under the [MIT License](LICENSE).
+Luas is available under the [MIT License](LICENSE).
