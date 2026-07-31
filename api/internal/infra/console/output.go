@@ -93,7 +93,11 @@ func (o *Output) Table(headers []string, rows [][]string) {
 
 // TwoColumn prints a formatted two-column detail line.
 func (o *Output) TwoColumn(left, right string) {
-	dots := strings.Repeat(".", 60-len(left)-len(right))
+	padding := 60 - len(left) - len(right)
+	if padding < 1 {
+		padding = 1
+	}
+	dots := strings.Repeat(".", padding)
 	fmt.Printf("  %s %s %s\n", left, color.New(color.FgHiBlack).Sprint(dots), right)
 }
 

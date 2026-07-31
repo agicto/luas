@@ -110,5 +110,13 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewAssetPruneCommand()},
 	)
 
-	return []Manifest{makeManifest, databaseManifest, coreManifest}
+	starterManifest := NewManifest(
+		"starter",
+		Registration{Command: NewStarterListCommand()},
+		Registration{Command: NewStarterCheckCommand()},
+		Registration{Command: NewStarterEnableCommand()},
+		Registration{Command: NewStarterDisableCommand()},
+	)
+
+	return []Manifest{makeManifest, databaseManifest, starterManifest, coreManifest}
 }

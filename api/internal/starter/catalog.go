@@ -21,6 +21,16 @@ type Catalog struct {
 	dependencies  map[string][]string
 }
 
+// CatalogEntry is the stable, runtime-independent description of one starter.
+// It intentionally exposes assembly metadata without leaking module implementations.
+type CatalogEntry struct {
+	Name           string
+	Default        bool
+	Dependencies   []string
+	MigrationNames []string
+	SeederNames    []string
+}
+
 // NewCatalog creates and validates one deterministic starter catalog.
 func NewCatalog(defaults, optional []assembly.StarterManifest) (*Catalog, error) {
 	catalog := &Catalog{
@@ -132,6 +142,77 @@ func (c *Catalog) OptionalNames() []string {
 		return nil
 	}
 	return slices.Clone(c.optionalNames)
+}
+
+// Entries returns every starter in deterministic default-then-optional order.
+func (c *Catalog) Entries() []CatalogEntry {
+	if c == nil {
+		return nil
+	}
+
+	entries := make([]CatalogEntry, 0, len(c.defaults)+len(c.optional))
+	appendEntry := func(manifest assembly.StarterManifest, defaultStarter bool) {
+		entries = append(entries, CatalogEntry{
+			Name:           manifest.Name(),
+			Default:        defaultStarter,
+			Dependencies:   manifest.Dependencies(),
+			MigrationNames: manifest.MigrationNames(),
+			SeederNames:    manifest.SeederNames(),
+		})
+	}
+	for _, manifest := range c.defaults {
+		appendEntry(manifest, true)
+	}
+	for _, name := range c.optionalNames {
+		appendEntry(c.optional[name], false)
+	}
+	return entries
+}
+
+// ResolveOptional validates a selection, adds transitive optional dependencies,
+// and returns the deterministic optional activation order.
+func (c *Catalog) ResolveOptional(names []string) ([]string, error) {
+	if c == nil {
+		return nil, fmt.Errorf("starter catalog is required")
+	}
+
+	requested := make(map[string]struct{}, len(names))
+	for _, name := range names {
+		if name == "" || name != strings.TrimSpace(name) || !starterNamePattern.MatchString(name) {
+			return nil, fmt.Errorf("optional starter %q must use a canonical lowercase name", name)
+		}
+		if _, duplicate := requested[name]; duplicate {
+			return nil, fmt.Errorf("duplicate optional starter %q", name)
+		}
+		if _, isDefault := c.defaultNames[name]; isDefault {
+			return nil, fmt.Errorf("%q is a default starter and cannot be configured", name)
+		}
+		if _, exists := c.optional[name]; !exists {
+			available := strings.Join(c.optionalNames, ", ")
+			return nil, fmt.Errorf("unknown optional starter %q (available: %s)", name, available)
+		}
+		requested[name] = struct{}{}
+	}
+
+	resolved := make([]string, 0, len(names))
+	added := make(map[string]struct{}, len(names))
+	var addWithDependencies func(string)
+	addWithDependencies = func(name string) {
+		if _, exists := added[name]; exists {
+			return
+		}
+		for _, dependency := range c.dependencies[name] {
+			if _, optional := c.optional[dependency]; optional {
+				addWithDependencies(dependency)
+			}
+		}
+		added[name] = struct{}{}
+		resolved = append(resolved, name)
+	}
+	for _, name := range names {
+		addWithDependencies(name)
+	}
+	return resolved, nil
 }
 
 func validateCatalogManifest(manifest assembly.StarterManifest) (string, error) {

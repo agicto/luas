@@ -25,6 +25,31 @@ func TestCatalogSelectKeepsDefaultsAndAddsRequestedOptionalStarters(t *testing.T
 	assert.Equal(t, []string{"notification", "organization"}, catalog.OptionalNames())
 }
 
+func TestCatalogEntriesAndResolveOptionalAreDeterministic(t *testing.T) {
+	catalog, err := NewCatalog(
+		[]assembly.StarterManifest{testManifest("user")},
+		[]assembly.StarterManifest{
+			assembly.NewStaticStarterManifest("permission", assembly.WithStarterDependencies("organization")),
+			testManifest("organization"),
+		},
+	)
+	assert.NoError(t, err)
+
+	entries := catalog.Entries()
+	assert.Equal(t, []string{"user", "organization", "permission"}, []string{
+		entries[0].Name,
+		entries[1].Name,
+		entries[2].Name,
+	})
+	assert.True(t, entries[0].Default)
+	assert.False(t, entries[1].Default)
+	assert.Equal(t, []string{"organization"}, entries[2].Dependencies)
+
+	resolved, err := catalog.ResolveOptional([]string{"permission"})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"organization", "permission"}, resolved)
+}
+
 func TestCatalogSelectRequiresAndOrdersOptionalDependencies(t *testing.T) {
 	catalog, err := NewCatalog(
 		[]assembly.StarterManifest{testManifest("user")},

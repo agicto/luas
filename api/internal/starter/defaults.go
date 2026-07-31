@@ -141,6 +141,15 @@ func ValidateConfig(cfg *config.Config) error {
 	return err
 }
 
+// AvailableCatalog returns the complete starter catalog without requiring
+// handlers, infrastructure, or a running application.
+func AvailableCatalog() (*Catalog, error) {
+	return NewCatalog(
+		DefaultManifests(nil, nil, nil),
+		OptionalManifests(nil, nil, nil, nil, nil, nil, nil),
+	)
+}
+
 // DefaultManifests returns the starter manifests enabled in the default scaffold.
 func DefaultManifests(auditHandler *audit.Handler, apiKeyHandler *apikey.Handler, userHandler *user.Handler) []assembly.StarterManifest {
 	return []assembly.StarterManifest{

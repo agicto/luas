@@ -131,10 +131,21 @@ frontend server bundle or production Node.js runtime.
 
 ## Enable Business Starters
 
-Optional API starters are additive:
+Inspect and configure optional API starters with the CLI:
 
 ```bash
 cd api
+go run ./cmd/luas starter:list
+go run ./cmd/luas starter:enable permission
+go run ./cmd/luas starter:check
+```
+
+`starter:enable` adds required dependencies, so enabling `permission` writes
+`OPTIONAL_STARTERS=organization,permission` to `.env`. Use `--dry-run` to preview a change and
+`starter:list --format=json` for tooling. Deployments may still inject the additive selection
+directly:
+
+```bash
 OPTIONAL_STARTERS=organization,permission,notification docker compose up --build --wait
 ```
 
@@ -149,6 +160,10 @@ Dependencies are explicit:
 - `permission`, `setting`, `usage`, and `webhook` require `organization`.
 - `notification` and `asset` can be enabled independently.
 - API servers, migrations, workers, and browser features should use a compatible starter selection.
+
+Disabling a dependency is rejected while another selected starter needs it. Use an explicit
+`starter:disable organization --cascade` when removing the dependency and all selected dependents
+is intended.
 
 The [starter readiness matrix](docs/STARTER_BUSINESS_ROADMAP.md) describes every starter's workflow,
 dependencies, security properties, and intentional limits.
@@ -191,6 +206,8 @@ The API includes a `luas` operator command:
 ```bash
 cd api
 go run ./cmd/luas version
+go run ./cmd/luas starter:list
+go run ./cmd/luas starter:check
 DB_ENABLED=false go run ./cmd/luas route:list
 DB_ENABLED=false go run ./cmd/luas route:list --format=json
 go run ./cmd/luas migrate

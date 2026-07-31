@@ -97,6 +97,23 @@ and dependency cycles fail before server startup or CLI database work. Dependenc
 deterministically. HTTP routes, runtime hooks, migrations, and seeders consume the same selection;
 do not maintain a second starter list in a command or deployment script.
 
+The operator CLI reads the same catalog without initializing the database or HTTP application:
+
+```bash
+go run ./cmd/luas starter:list
+go run ./cmd/luas starter:list --format=json
+go run ./cmd/luas starter:enable permission --dry-run
+go run ./cmd/luas starter:enable permission
+go run ./cmd/luas starter:check
+go run ./cmd/luas starter:disable organization --cascade
+```
+
+`starter:enable` adds transitive dependencies. `starter:disable` protects selected dependents unless
+`--cascade` is explicit. Both commands support `--env-file`, write with an atomic same-directory
+replacement, and refuse to modify `.env.example`. When the target `.env` does not exist, its sibling
+`.env.example` is used as the initial template. The JSON catalog is schema-versioned for external
+project tooling.
+
 All API replicas, migration jobs, and seeder jobs for one environment must receive the same value.
 Changing it requires a deployment and, when enabling a persistence-owning starter, its pre-deploy
 migration. It is not a per-request flag and must not be toggled independently across replicas.

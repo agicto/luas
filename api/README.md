@@ -130,6 +130,12 @@ The default loopback listener is `127.0.0.1:8025`:
 
 ```bash
 go run ./cmd/luas version
+go run ./cmd/luas starter:list
+go run ./cmd/luas starter:list --format=json
+go run ./cmd/luas starter:enable permission --dry-run
+go run ./cmd/luas starter:enable permission
+go run ./cmd/luas starter:check
+go run ./cmd/luas starter:disable organization --cascade
 DB_ENABLED=false go run ./cmd/luas route:list
 go run ./cmd/luas migrate
 go run ./cmd/luas seed
@@ -137,6 +143,11 @@ go run ./cmd/luas auth-session:prune --batch=500
 go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
 go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
 ```
+
+Starter commands edit only the selected runtime `.env` file and never `.env.example`. Enabling a
+starter adds transitive dependencies in deterministic order. Disabling a required dependency fails
+unless `--cascade` is explicit. `--env-file` selects another runtime file, and updates use an atomic
+same-directory replacement.
 
 ## Common Commands
 
