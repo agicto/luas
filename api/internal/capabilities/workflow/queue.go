@@ -10,6 +10,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 // Job represents a queueable job
@@ -36,6 +40,12 @@ type JobWithRetry interface {
 	RetryDelay() time.Duration
 }
 
+// JobWithIdempotencyKey gives durable drivers a stable producer-owned identity.
+type JobWithIdempotencyKey interface {
+	Job
+	IdempotencyKey() string
+}
+
 // Driver defines the queue driver interface
 type Driver interface {
 	// Push adds a job to the queue
@@ -57,20 +67,35 @@ type Driver interface {
 	Close() error
 }
 
+type taskDispatchDriver interface {
+	PushTask(ctx context.Context, queue string, payload []byte) (string, error)
+	PushTaskDelayed(ctx context.Context, queue string, payload []byte, delay time.Duration) (string, error)
+}
+
 var (
 	// ErrQueueEmpty indicates that a non-blocking queue has no jobs available.
 	ErrQueueEmpty = errors.New("queue is empty")
 	// ErrDriverClosed indicates that the queue driver no longer accepts work.
 	ErrDriverClosed = errors.New("queue driver is closed")
+	// ErrIdempotencyConflict indicates reuse of a key with different task content.
+	ErrIdempotencyConflict = errors.New("workflow idempotency key conflicts with existing task")
+	// ErrLeaseLost indicates that a stale worker no longer owns a durable task.
+	ErrLeaseLost = errors.New("workflow task lease was lost")
+	// ErrTaskNotFound indicates that a durable task does not exist.
+	ErrTaskNotFound = errors.New("workflow task not found")
 )
 
 // JobPayload represents the serialized job data
 type JobPayload struct {
-	Type       string          `json:"type"`
-	Data       json.RawMessage `json:"data"`
-	Attempts   int             `json:"attempts"`
-	MaxRetries int             `json:"max_retries"`
-	CreatedAt  time.Time       `json:"created_at"`
+	ID             string          `json:"id"`
+	Type           string          `json:"type"`
+	Data           json.RawMessage `json:"data"`
+	Attempts       int             `json:"attempts"`
+	MaxRetries     int             `json:"max_retries"`
+	IdempotencyKey string          `json:"idempotency_key,omitempty"`
+	TraceParent    string          `json:"traceparent,omitempty"`
+	TraceState     string          `json:"tracestate,omitempty"`
+	CreatedAt      time.Time       `json:"created_at"`
 }
 
 // QueueManager manages workflow queue operations.
@@ -193,31 +218,61 @@ func (m *QueueManager) createJob(typeName string) (Job, error) {
 
 // Dispatch dispatches a job to the queue
 func (m *QueueManager) Dispatch(ctx context.Context, job Job) error {
-	return m.DispatchTo(ctx, m.defaultQueue, job)
+	_, err := m.DispatchTaskTo(ctx, m.defaultQueue, job)
+	return err
 }
 
 // DispatchTo dispatches a job to a specific queue
 func (m *QueueManager) DispatchTo(ctx context.Context, queue string, job Job) error {
+	_, err := m.DispatchTaskTo(ctx, queue, job)
+	return err
+}
+
+// DispatchTask dispatches a job and returns its stable task ID.
+func (m *QueueManager) DispatchTask(ctx context.Context, job Job) (string, error) {
+	return m.DispatchTaskTo(ctx, m.defaultQueue, job)
+}
+
+// DispatchTaskTo dispatches a job to a queue and returns its stable task ID.
+func (m *QueueManager) DispatchTaskTo(ctx context.Context, queue string, job Job) (string, error) {
 	// Check if job specifies its own queue
 	if jq, ok := job.(JobWithQueue); ok {
 		queue = jq.Queue()
 	}
 
-	payload, err := m.serializeJob(job)
+	payload, err := m.serializeJob(ctx, job)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	driver := m.DefaultDriver()
+	id, err := serializedTaskID(payload)
+	if err != nil {
+		return "", err
+	}
 
 	// Check if job has delay
 	if jd, ok := job.(JobWithDelay); ok {
 		if delay := jd.Delay(); delay > 0 {
-			return driver.PushDelayed(ctx, queue, payload, delay)
+			if taskDriver, ok := driver.(taskDispatchDriver); ok {
+				return taskDriver.PushTaskDelayed(ctx, queue, payload, delay)
+			}
+			return id, driver.PushDelayed(ctx, queue, payload, delay)
 		}
 	}
+	if taskDriver, ok := driver.(taskDispatchDriver); ok {
+		return taskDriver.PushTask(ctx, queue, payload)
+	}
 
-	return driver.Push(ctx, queue, payload)
+	return id, driver.Push(ctx, queue, payload)
+}
+
+func serializedTaskID(data []byte) (string, error) {
+	var payload JobPayload
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return "", fmt.Errorf("decode serialized workflow task ID: %w", err)
+	}
+	return payload.ID, nil
 }
 
 // Later dispatches a job with a delay
@@ -227,7 +282,7 @@ func (m *QueueManager) Later(ctx context.Context, delay time.Duration, job Job) 
 
 // LaterTo dispatches a job to a specific queue with a delay
 func (m *QueueManager) LaterTo(ctx context.Context, queue string, delay time.Duration, job Job) error {
-	payload, err := m.serializeJob(job)
+	payload, err := m.serializeJob(ctx, job)
 	if err != nil {
 		return err
 	}
@@ -236,7 +291,7 @@ func (m *QueueManager) LaterTo(ctx context.Context, queue string, delay time.Dur
 }
 
 // serializeJob serializes a job to JSON
-func (m *QueueManager) serializeJob(job Job) ([]byte, error) {
+func (m *QueueManager) serializeJob(ctx context.Context, job Job) ([]byte, error) {
 	t := reflect.TypeOf(job)
 	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
@@ -252,12 +307,20 @@ func (m *QueueManager) serializeJob(job Job) ([]byte, error) {
 		maxRetries = jr.MaxRetries()
 	}
 
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
 	payload := JobPayload{
-		Type:       t.Name(),
-		Data:       data,
-		Attempts:   0,
-		MaxRetries: maxRetries,
-		CreatedAt:  time.Now(),
+		ID:          uuid.NewString(),
+		Type:        t.Name(),
+		Data:        data,
+		Attempts:    0,
+		MaxRetries:  maxRetries,
+		CreatedAt:   time.Now(),
+		TraceParent: carrier.Get("traceparent"),
+		TraceState:  carrier.Get("tracestate"),
+	}
+	if keyed, ok := job.(JobWithIdempotencyKey); ok {
+		payload.IdempotencyKey = strings.TrimSpace(keyed.IdempotencyKey())
 	}
 
 	return json.Marshal(payload)
@@ -292,6 +355,15 @@ func (m *QueueManager) Clear(ctx context.Context, queue string) error {
 	return m.DefaultDriver().Clear(ctx, queue)
 }
 
+// Cancel requests cancellation of a durable task by ID.
+func (m *QueueManager) Cancel(ctx context.Context, taskID string) error {
+	driver, ok := m.DefaultDriver().(DurableDriver)
+	if !ok {
+		return fmt.Errorf("queue driver %q does not support durable cancellation", m.DefaultDriverName())
+	}
+	return driver.Cancel(ctx, strings.TrimSpace(taskID))
+}
+
 // --- Convenience functions ---
 
 // Dispatch dispatches a job using the global manager
@@ -302,6 +374,16 @@ func Dispatch(ctx context.Context, job Job) error {
 // DispatchTo dispatches a job to a specific queue
 func DispatchTo(ctx context.Context, queue string, job Job) error {
 	return GlobalQueue().DispatchTo(ctx, queue, job)
+}
+
+// DispatchTask dispatches a job and returns its stable task ID.
+func DispatchTask(ctx context.Context, job Job) (string, error) {
+	return GlobalQueue().DispatchTask(ctx, job)
+}
+
+// DispatchTaskTo dispatches a job to a queue and returns its stable task ID.
+func DispatchTaskTo(ctx context.Context, queue string, job Job) (string, error) {
+	return GlobalQueue().DispatchTaskTo(ctx, queue, job)
 }
 
 // Later dispatches a job with a delay
@@ -327,6 +409,11 @@ func Size(ctx context.Context, queue string) (int64, error) {
 // Clear clears a queue
 func Clear(ctx context.Context, queue string) error {
 	return GlobalQueue().Clear(ctx, queue)
+}
+
+// Cancel requests cancellation through the global durable driver.
+func Cancel(ctx context.Context, taskID string) error {
+	return GlobalQueue().Cancel(ctx, taskID)
 }
 
 // --- Sync Driver (executes jobs immediately) ---

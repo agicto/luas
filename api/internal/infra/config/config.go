@@ -299,6 +299,8 @@ type QueueConfig struct {
 	WorkerConcurrency int
 	WorkerSleep       time.Duration
 	WorkerTimeout     time.Duration
+	LeaseDuration     time.Duration
+	HeartbeatInterval time.Duration
 }
 
 type SchedulerConfig struct {
@@ -451,6 +453,8 @@ func Load() (*Config, error) {
 			WorkerConcurrency: env.GetInt("QUEUE_WORKER_CONCURRENCY", 1),
 			WorkerSleep:       env.GetDuration("QUEUE_WORKER_SLEEP", time.Second),
 			WorkerTimeout:     env.GetDuration("QUEUE_WORKER_TIMEOUT", 60*time.Second),
+			LeaseDuration:     env.GetDuration("QUEUE_LEASE_DURATION", 90*time.Second),
+			HeartbeatInterval: env.GetDuration("QUEUE_HEARTBEAT_INTERVAL", 20*time.Second),
 		},
 		Scheduler: SchedulerConfig{
 			Enabled: env.GetBool("SCHEDULER_ENABLED", false),
@@ -780,6 +784,9 @@ func validate(cfg *Config) error {
 	if err := validateAuthenticationConfig(cfg.Authentication); err != nil {
 		return err
 	}
+	if err := validateQueueConfig(cfg.Queue, cfg.Database.Enabled); err != nil {
+		return err
+	}
 
 	if err := validateEmailConfig(cfg.Email); err != nil {
 		return err
@@ -867,6 +874,31 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	return nil
+}
+
+func validateQueueConfig(queue QueueConfig, databaseEnabled bool) error {
+	switch strings.ToLower(strings.TrimSpace(queue.Driver)) {
+	case "sync", "memory":
+	case "postgres":
+		if !databaseEnabled {
+			return fmt.Errorf("QUEUE_DRIVER=postgres requires DB_ENABLED=true")
+		}
+	default:
+		return fmt.Errorf("QUEUE_DRIVER must be sync, memory, or postgres")
+	}
+	if strings.TrimSpace(queue.DefaultQueue) == "" || len(queue.DefaultQueue) > 128 {
+		return fmt.Errorf("QUEUE_DEFAULT must contain 1 to 128 characters")
+	}
+	if queue.BufferSize < 1 || queue.WorkerConcurrency < 1 || queue.WorkerSleep <= 0 || queue.WorkerTimeout <= 0 {
+		return fmt.Errorf("queue buffer, concurrency, sleep, and timeout values must be greater than 0")
+	}
+	if queue.LeaseDuration <= queue.WorkerTimeout {
+		return fmt.Errorf("QUEUE_LEASE_DURATION must be greater than QUEUE_WORKER_TIMEOUT")
+	}
+	if queue.HeartbeatInterval <= 0 || queue.HeartbeatInterval >= queue.LeaseDuration {
+		return fmt.Errorf("QUEUE_HEARTBEAT_INTERVAL must be greater than 0 and less than QUEUE_LEASE_DURATION")
+	}
 	return nil
 }
 

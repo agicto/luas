@@ -22,10 +22,38 @@ func baseValidConfig(env string) *Config {
 			SessionTouchInterval: DefaultAuthenticationSessionTouchInterval,
 			SessionRetention:     DefaultAuthenticationSessionRetention,
 		},
+		Queue: QueueConfig{
+			Driver: "sync", DefaultQueue: "default", BufferSize: 256,
+			WorkerConcurrency: 1, WorkerSleep: time.Second, WorkerTimeout: time.Minute,
+			LeaseDuration: 90 * time.Second, HeartbeatInterval: 20 * time.Second,
+		},
 		CORS: CORSConfig{
 			AllowOrigins:     []string{"https://app.example.com"},
 			AllowCredentials: true,
 		},
+	}
+}
+
+func TestValidate_QueuePolicy(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Config)
+		want   string
+	}{
+		{name: "unknown driver", mutate: func(cfg *Config) { cfg.Queue.Driver = "redis" }, want: "QUEUE_DRIVER"},
+		{name: "postgres requires database", mutate: func(cfg *Config) { cfg.Queue.Driver = "postgres" }, want: "DB_ENABLED"},
+		{name: "lease exceeds timeout", mutate: func(cfg *Config) { cfg.Queue.LeaseDuration = cfg.Queue.WorkerTimeout }, want: "QUEUE_LEASE_DURATION"},
+		{name: "heartbeat below lease", mutate: func(cfg *Config) { cfg.Queue.HeartbeatInterval = cfg.Queue.LeaseDuration }, want: "QUEUE_HEARTBEAT_INTERVAL"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := baseValidConfig("development")
+			test.mutate(cfg)
+			err := validate(cfg)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("validate() error = %v, want %s rejection", err, test.want)
+			}
+		})
 	}
 }
 

@@ -33,6 +33,7 @@ x-api-environment: &api-environment
   CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://localhost:3001}
   AI_ENABLED: "false"
   METRICS_ENABLED: "true"
+  QUEUE_DRIVER: postgres
   LOG_LEVEL: debug
   LOG_JSON: "true"
   TZ: UTC
@@ -68,6 +69,25 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  worker:
+    image: ${LUAS_API_IMAGE:-luas-api:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["/app/luas", "workflow:work"]
+    environment: *api-environment
+    depends_on:
+      api:
+        condition: service_healthy
+    # The image health check probes HTTP; this worker probe verifies its runtime binary instead.
+    healthcheck:
+      test: ["CMD", "/app/luas", "version"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    stop_grace_period: 30s
 
 volumes:
   postgres-data:

@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 )
 
 const unmatchedRouteLabel = "unmatched"
@@ -106,6 +108,15 @@ var (
 		},
 		[]string{"cache"},
 	)
+
+	workflowQueueTasks = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{Name: "workflow_queue_tasks", Help: "Workflow tasks by queue and bounded state"},
+		[]string{"queue", "state"},
+	)
+	workflowQueueLag = promauto.NewGaugeVec(
+		prometheus.GaugeOpts{Name: "workflow_queue_lag_seconds", Help: "Age of the oldest available workflow task"},
+		[]string{"queue"},
+	)
 )
 
 // Middleware returns a Gin middleware for HTTP metrics
@@ -190,6 +201,14 @@ func RecordCacheHit(cache string) {
 // RecordCacheMiss records a cache miss
 func RecordCacheMiss(cache string) {
 	cacheMissesTotal.WithLabelValues(cache).Inc()
+}
+
+// SetWorkflowQueueStats publishes one bounded queue snapshot.
+func SetWorkflowQueueStats(queue string, stats workflow.QueueStats) {
+	workflowQueueTasks.WithLabelValues(queue, "pending").Set(float64(stats.Pending))
+	workflowQueueTasks.WithLabelValues(queue, "processing").Set(float64(stats.Processing))
+	workflowQueueTasks.WithLabelValues(queue, "failed").Set(float64(stats.Failed))
+	workflowQueueLag.WithLabelValues(queue).Set(stats.Lag.Seconds())
 }
 
 // --- Custom Metrics ---

@@ -74,6 +74,19 @@ api_container="$(compose ps --quiet api)"
 api_health="$(docker inspect "${api_container}" --format '{{.State.Health.Status}}')"
 [[ "${api_health}" == "healthy" ]] || fail "API container health is ${api_health}"
 
+worker_container="$(compose ps --quiet worker)"
+[[ -n "${worker_container}" ]] || fail "workflow worker container is missing"
+worker_running="$(docker inspect "${worker_container}" --format '{{.State.Running}}')"
+[[ "${worker_running}" == "true" ]] || fail "workflow worker is not running"
+
+workflow_table="$(compose exec -T postgres psql \
+  --username luas \
+  --dbname luas \
+  --tuples-only \
+  --no-align \
+  --command "SELECT to_regclass('public.workflow_tasks');" | tr -d '[:space:]')"
+[[ "${workflow_table}" == "workflow_tasks" ]] || fail "workflow_tasks migration is missing"
+
 published_address="$(docker port "${api_container}" 8025/tcp | awk 'NR == 1 { print }')"
 [[ "${published_address}" == 127.0.0.1:* ]] || fail "API port is not loopback-bound: ${published_address}"
 published_port="${published_address##*:}"
@@ -1697,6 +1710,7 @@ WHERE memberships.user_id = ${race_user_id} AND users.deleted_at IS NOT NULL;
 esac
 
 printf 'compose API health: %s\n' "${api_health}"
+printf 'compose workflow worker/table: %s/%s\n' "${worker_running}" "${workflow_table}"
 printf 'compose loopback address: %s\n' "${published_address}"
 printf 'compose readiness/register: %s/%s\n' "${ready_status}" "${register_status}"
 printf 'compose authentication login/profile/logout/revoked: %s\n' "${authentication_flow}"

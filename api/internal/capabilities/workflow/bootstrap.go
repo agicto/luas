@@ -3,6 +3,8 @@ package workflow
 import (
 	"fmt"
 	"strings"
+
+	"gorm.io/gorm"
 )
 
 // QueueRuntimeConfig is the workflow-owned queue runtime configuration.
@@ -10,6 +12,7 @@ type QueueRuntimeConfig struct {
 	Driver       string
 	DefaultQueue string
 	BufferSize   int
+	Database     *gorm.DB
 }
 
 // Bootstrap applies process-level workflow runtime configuration.
@@ -34,6 +37,12 @@ func Bootstrap(cfg QueueRuntimeConfig) (*Manager, error) {
 			}
 			queueManager.RegisterDriver("memory", NewMemoryDriver(bufferSize))
 		}
+	case "postgres":
+		driver, err := NewPostgresDriver(cfg.Database)
+		if err != nil {
+			return nil, err
+		}
+		queueManager.RegisterDriver("postgres", driver)
 	default:
 		return nil, fmt.Errorf("unsupported queue driver %q", cfg.Driver)
 	}

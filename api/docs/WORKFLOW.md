@@ -1,7 +1,7 @@
 # Workflow Queue Capability
 
-The workflow queue is a reusable technical capability. It is not a durable business starter and it
-does not claim to replace a production message broker.
+The workflow queue is a reusable technical capability. It remains independent of product modules
+and supports both lightweight local execution and PostgreSQL-backed durable workers.
 
 The canonical implementation lives in `internal/capabilities/workflow`. The
 `internal/infra/queue` package is a compatibility wrapper only.
@@ -12,6 +12,7 @@ The canonical implementation lives in `internal/capabilities/workflow`. The
 |---|---|---|---|
 | `sync` | Runs the job in the caller | None | Local development, tests, simple inline work |
 | `memory` | Bounded FIFO consumed by workers | Process memory only | Local async development and single-process prototypes |
+| `postgres` | Leased worker execution | PostgreSQL | Durable production tasks and horizontally scaled workers |
 
 Both drivers honor cancellation while waiting for a delayed dispatch. The memory driver also honors
 context cancellation while blocked on a full or empty queue.
@@ -40,6 +41,38 @@ The memory driver does not provide durability, cross-process coordination, ackno
 visibility timeouts, a dead-letter queue, or recovery after process termination. Delivery is
 at-most-once after `Pop`: a process crash can lose queued or running work.
 
+## PostgreSQL Driver Contract
+
+Set `QUEUE_DRIVER=postgres`, run migrations, and start one or more workers with
+`luas workflow:work`. Producers and workers may run in different replicas.
+
+- Dispatch writes a `workflow_tasks` ledger row before returning.
+- Delayed tasks become claimable at `available_at`.
+- `FOR UPDATE SKIP LOCKED` allows replicas to claim distinct tasks without a coordinator.
+- Every claim receives a random lease token and an increasing fencing token. Completion, retry,
+  failure, and cancellation reject stale ownership.
+- Heartbeats renew active leases and deliver cooperative cancellation through the job context.
+- Expired leases are reclaimed. A final expired attempt moves to `failed` for dead-letter
+  inspection instead of remaining stuck in `processing`.
+- Jobs implementing `JobWithIdempotencyKey` are unique within a queue. Reusing a key with the same
+  semantic payload succeeds; reuse with different content returns `ErrIdempotencyConflict`.
+- OpenTelemetry `traceparent` and `tracestate` values are stored with the serialized job and restored
+  before execution.
+- `workflow_queue_tasks{queue,state}` and `workflow_queue_lag_seconds{queue}` expose bounded queue
+  depth, failure, active-work, and lag signals.
+
+PostgreSQL remains the only relational database target. The durable driver requires neither Redis
+nor a separate broker.
+
+```bash
+QUEUE_DRIVER=postgres ./bin/luas migrate
+QUEUE_DRIVER=postgres ./bin/luas workflow:work --queue=default --concurrency=4
+```
+
+Keep `QUEUE_LEASE_DURATION` greater than `QUEUE_WORKER_TIMEOUT`. The heartbeat interval must be
+shorter than the lease duration. Handler side effects still need their own idempotency key because
+reliable queues provide at-least-once execution around process failure.
+
 ## Worker Lifecycle
 
 `Worker.Stop` interrupts an empty-queue wait and retry sleep, cancels the worker run context, and
@@ -52,10 +85,10 @@ waits for worker goroutines to exit. `Stop` can be called more than once. A typi
 
 The CLI worker already uses a signal-aware parent context for `SIGINT` and `SIGTERM`.
 
-## Production Replacement
+## Custom Drivers
 
-Downstream applications that require durable jobs should implement the `workflow.Driver` interface
-with a broker appropriate to their deployment. Preserve these observable behaviors:
+Downstream applications may implement `workflow.Driver` or `workflow.DurableDriver` for a
+specialized broker. Preserve these observable behaviors:
 
 - context-aware push, delayed push, and pop operations;
 - stable closed-driver errors;
@@ -71,5 +104,6 @@ independent queue, so producers and consumers in different replicas cannot see o
 ```bash
 make test-race-critical
 make benchmark-workflow
+LUAS_TEST_POSTGRES_DSN='postgres://...' go test ./internal/capabilities/workflow -run Postgres
 go test ./...
 ```

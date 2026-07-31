@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/zgiai/luas/api/internal/bootstrap"
+	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
 	"github.com/zgiai/luas/api/internal/starter"
@@ -57,6 +58,12 @@ func (c *ServeCommand) Run(args []string) error {
 		if err := bootstrap.RunRegisteredMigrations(application.Migrator); err != nil {
 			return fmt.Errorf("run startup migrations: %w", err)
 		}
+	}
+	if _, err := workflow.Bootstrap(workflow.QueueRuntimeConfig{
+		Driver: cfg.Queue.Driver, DefaultQueue: cfg.Queue.DefaultQueue,
+		BufferSize: cfg.Queue.BufferSize, Database: application.DB,
+	}); err != nil {
+		return fmt.Errorf("initialize workflow queue: %w", err)
 	}
 
 	kernel := bootstrap.NewHttpKernel(application)

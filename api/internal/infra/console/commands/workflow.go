@@ -10,10 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/zgiai/luas/api/internal/bootstrap"
 	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/zgiai/luas/api/internal/infra/database"
+	"github.com/zgiai/luas/api/internal/infra/metrics"
 )
 
 // WorkflowWorkCommand runs a workflow queue worker.
@@ -66,16 +70,35 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 		return loggerErr
 	}
 
-	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
+	var db *gorm.DB
+	if strings.EqualFold(cfg.Queue.Driver, "postgres") {
+		db, err = database.NewDB(cfg)
+		if err != nil {
+			return err
+		}
+		if db == nil {
+			return fmt.Errorf("QUEUE_DRIVER=postgres requires DB_ENABLED=true")
+		}
+		sqlDB, sqlErr := db.DB()
+		if sqlErr != nil {
+			return sqlErr
+		}
+		defer sqlDB.Close()
+	}
+
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg, db))
 	if err != nil {
 		return err
 	}
 
 	workerCfg := workflow.WorkerConfig{
-		Queue:       cfg.Queue.DefaultQueue,
-		Concurrency: cfg.Queue.WorkerConcurrency,
-		Sleep:       cfg.Queue.WorkerSleep,
-		Timeout:     cfg.Queue.WorkerTimeout,
+		Queue:             cfg.Queue.DefaultQueue,
+		Concurrency:       cfg.Queue.WorkerConcurrency,
+		Sleep:             cfg.Queue.WorkerSleep,
+		Timeout:           cfg.Queue.WorkerTimeout,
+		LeaseDuration:     cfg.Queue.LeaseDuration,
+		HeartbeatInterval: cfg.Queue.HeartbeatInterval,
+		ObserveQueue:      metrics.SetWorkflowQueueStats,
 	}
 	if applyErr := applyWorkflowWorkerArgs(args, &workerCfg); applyErr != nil {
 		return applyErr
@@ -112,7 +135,7 @@ func (c *WorkflowScheduleRunCommand) Run(args []string) error {
 		return loggerErr
 	}
 
-	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg, nil))
 	if err != nil {
 		return err
 	}
@@ -138,7 +161,7 @@ func (c *WorkflowScheduleWorkCommand) Run(args []string) error {
 		return loggerErr
 	}
 
-	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg))
+	manager, err := workflow.Bootstrap(workflowQueueRuntimeConfig(cfg, nil))
 	if err != nil {
 		return err
 	}
@@ -204,7 +227,7 @@ func applyWorkflowWorkerArgs(args []string, cfg *workflow.WorkerConfig) error {
 	return nil
 }
 
-func workflowQueueRuntimeConfig(cfg *config.Config) workflow.QueueRuntimeConfig {
+func workflowQueueRuntimeConfig(cfg *config.Config, db *gorm.DB) workflow.QueueRuntimeConfig {
 	if cfg == nil {
 		return workflow.QueueRuntimeConfig{}
 	}
@@ -213,5 +236,6 @@ func workflowQueueRuntimeConfig(cfg *config.Config) workflow.QueueRuntimeConfig 
 		Driver:       cfg.Queue.Driver,
 		DefaultQueue: cfg.Queue.DefaultQueue,
 		BufferSize:   cfg.Queue.BufferSize,
+		Database:     db,
 	}
 }

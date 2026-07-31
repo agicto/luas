@@ -39,6 +39,9 @@ until it needs those capabilities.
   browser shells, verifies Go route coverage, and blocks accidental breaking changes in CI.
 - **PostgreSQL everywhere.** Runtime, migrations, repositories, integration tests, and CI use
   PostgreSQL semantics. SQLite is not used as a compatibility substitute.
+- **Durable tasks without extra infrastructure.** PostgreSQL-backed jobs include idempotency,
+  delayed execution, fenced leases, retries, cancellation, dead-letter state, trace propagation,
+  queue lag metrics, and multi-replica worker safety without requiring Redis.
 - **Two frontend choices.** Use the complete Next.js console for SSR and secure server adapters, or
   ship the Vite SPA directly through OSS/S3-compatible storage and a CDN.
 - **A working console.** Authentication, account settings, API keys, audit history, and optional

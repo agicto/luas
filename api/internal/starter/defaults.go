@@ -73,6 +73,9 @@ func NewConfiguredRegistry(
 		return nil, err
 	}
 	if migrator != nil {
+		if err := registerCoreMigrations(registry); err != nil {
+			return nil, err
+		}
 		migrator.RegisterMany(registry.Migrations())
 	}
 	return registry, nil
@@ -165,6 +168,9 @@ func DefaultMigrations() (map[string]migration.Migration, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := registerCoreMigrations(registry); err != nil {
+		return nil, err
+	}
 	return registry.Migrations(), nil
 }
 
@@ -178,7 +184,14 @@ func ConfiguredMigrations(cfg *config.Config) (map[string]migration.Migration, e
 	if err != nil {
 		return nil, err
 	}
+	if err := registerCoreMigrations(registry); err != nil {
+		return nil, err
+	}
 	return registry.Migrations(), nil
+}
+
+func registerCoreMigrations(registry *Registry) error {
+	return registry.RegisterMigrationByName("2026_07_31_000000_create_workflow_tasks_table")
 }
 
 // DefaultSeeders returns the seeders enabled by the default starters.
