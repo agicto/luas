@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check route-catalog-check clean test test-kest test-race test-race-critical benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check route-catalog-check clean test test-kest test-race test-race-critical test-postgres-compatibility benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -131,6 +131,18 @@ test-race:
 test-race-critical:
 	@echo "Running concurrency-critical race tests..."
 	go test -race ./tests/unit -run 'TestMemoryDriver|TestWorker_(StopInterruptsEmptyMemoryQueue|ExitsOnDriverCloseAndAcceptsConcurrentStop)' -count=1
+
+# Verify every SQL-owning package against one caller-provided PostgreSQL version.
+test-postgres-compatibility:
+	@test -n "$${LUAS_TEST_POSTGRES_DSN}" || { echo "LUAS_TEST_POSTGRES_DSN is required" >&2; exit 2; }
+	go test -count=1 \
+		./database/migrations \
+		./internal/capabilities/workflow \
+		./internal/infra/database \
+		./internal/infra/migration/... \
+		./internal/modules/... \
+		./tests/feature \
+		./tests/integration
 
 # Measure the in-process memory queue round trip
 benchmark-workflow:

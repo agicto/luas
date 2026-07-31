@@ -16,6 +16,21 @@ Keep pure service tests database-free through existing seams and test doubles. T
 SQL behavior use an isolated schema in a caller-supplied disposable PostgreSQL database, following
 the `LUAS_TEST_POSTGRES_DSN` profile below.
 
+## Supported Versions
+
+Luas 1.0 targets PostgreSQL 15, 16, 17, and 18 on their latest minor releases. PostgreSQL 16 runs
+the complete API CI gate; a focused compatibility matrix runs migrations, repositories,
+transactions, locks, and durable tasks on 15, 17, and 18. PostgreSQL 14 is intentionally outside the
+1.0 support window because its community support ends in November 2026. Support follows upstream
+security maintenance rather than an unbounded "or later" promise. Review the
+[PostgreSQL versioning policy](https://www.postgresql.org/support/versioning/) when updating this
+matrix.
+
+```bash
+LUAS_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/luas_test?sslmode=disable' \
+  make test-postgres-compatibility
+```
+
 ## Typed Configuration
 
 The database settings are parsed once by `internal/infra/config` and validated before GORM creates

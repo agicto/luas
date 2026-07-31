@@ -2,6 +2,7 @@ package feature
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -34,6 +35,11 @@ func setupApp(t *testing.T, configure func(*config.Config), optionalStarters ...
 	cfg.Starters.Optional = append([]string(nil), optionalStarters...)
 	cfg.Server.Mode = "test"
 	cfg.Database = test_platform.CreatePostgresDatabase(t)
+	cfg.Queue = config.QueueConfig{
+		Driver: "sync", DefaultQueue: "default", BufferSize: 256,
+		WorkerConcurrency: 1, WorkerSleep: time.Second, WorkerTimeout: time.Minute,
+		LeaseDuration: 90 * time.Second, HeartbeatInterval: 20 * time.Second,
+	}
 	cfg.Authentication.SessionTTL = config.DefaultAuthenticationSessionTTL
 	cfg.Authentication.SessionIdleTimeout = config.DefaultAuthenticationSessionIdleTimeout
 	cfg.Authentication.SessionTouchInterval = config.DefaultAuthenticationSessionTouchInterval

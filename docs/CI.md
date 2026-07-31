@@ -7,7 +7,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 
 | Workflow | Responsibility | Default token permission |
 |---|---|---|
-| `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, plus Next.js Web and static SPA type/lint/test/build gates | `contents: read` |
+| `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, PostgreSQL 15-18 compatibility, plus Next.js Web and static SPA type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
@@ -61,6 +61,13 @@ The API job runs `make route-catalog-check` after its build/lint/test tier. That
 the real configured runtime, emits schema-versioned JSON, validates its closed shape and ordering,
 and requires core plus default-starter routes. Route inventory therefore cannot pass CI from a
 parallel source parser that omits health, conditional metrics, or optional starter registration.
+
+The complete API gate runs on PostgreSQL 16. A separate compatibility matrix uses immutable images
+for PostgreSQL 15, 17, and 18 and runs `make test-postgres-compatibility`. That focused command owns
+migrations, repositories, transaction and locking behavior, optional starter persistence, and
+PostgreSQL durable tasks without repeating unrelated browser or pure-Go checks. The support window
+is documented in [`../api/docs/DATABASE.md`](../api/docs/DATABASE.md) and must move forward before an
+upstream major version reaches end of life.
 
 The HTTP Contracts job validates OpenAPI 3.1, checks committed TypeScript output in both browser
 shells, and proves every described operation exists in the real Go route assembly. Pull requests
