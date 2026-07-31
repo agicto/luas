@@ -35,6 +35,8 @@ until it needs those capabilities.
 
 - **One architecture from API to UI.** Contracts, error codes, request IDs, pagination, feature
   names, and ownership boundaries stay consistent across deployable units.
+- **Schema-backed HTTP contracts.** OpenAPI 3.1 generates independent TypeScript types for both
+  browser shells, verifies Go route coverage, and blocks accidental breaking changes in CI.
 - **PostgreSQL everywhere.** Runtime, migrations, repositories, integration tests, and CI use
   PostgreSQL semantics. SQLite is not used as a compatibility substitute.
 - **Two frontend choices.** Use the complete Next.js console for SSR and secure server adapters, or
@@ -225,6 +227,14 @@ for the complete command reference.
 Public API behavior uses a consistent envelope, stable dotted error codes such as
 `COMMON.NOT_FOUND` and `AUTH.INVALID_CREDENTIALS`, and a request ID on success and failure.
 Contracts under `contracts/` document the shared semantics and each starter workflow.
+
+Reviewed OpenAPI surfaces are validated and generated with:
+
+```bash
+cd contracts && corepack pnpm install --frozen-lockfile
+make contract-check
+make contract-generate
+```
 
 Runtime route discovery is deterministic and machine-readable:
 

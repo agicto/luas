@@ -1,22 +1,22 @@
 # Dependency Supply-Chain Security
 
-Luas treats dependency resolution as a repository-wide operational boundary. The API, Next.js Web,
-and static SPA keep independent module systems, while one root workflow inventories and scans all
-three lock surfaces.
+Luas treats dependency resolution as a repository-wide operational boundary. The API, contract
+toolchain, Next.js Web, and static SPA keep independent module systems, while one root workflow
+inventories and scans every lock surface.
 
 ## Control Model
 
 | Control | Repository authority | Guarantee |
 |---|---|---|
-| Browser runtimes | `web/package.json`, `web-spa/package.json` | Only maintained Node 22.12+/24 LTS lines are accepted; Node types stay at the deployed Node 22 baseline. |
-| Browser package manager | Both browser `package.json` files | pnpm is pinned to exact version `10.34.5`; mismatched pnpm and competing lockfiles fail governance. |
-| Browser resolution policy | Both `pnpm-workspace.yaml` files | New versions wait 24 hours, recent trust evidence cannot downgrade, and transitive exotic sources are blocked. |
-| Dependency scripts | Both `pnpm-workspace.yaml` files | Unreviewed install scripts fail; only five exact native/build package versions may execute them. |
-| Locked content | `web/pnpm-lock.yaml`, `web-spa/pnpm-lock.yaml` | Every registry package carries integrity evidence and frozen installs are required in CI. |
+| Node runtimes | `contracts/package.json`, `web/package.json`, `web-spa/package.json` | Only maintained Node 22.12+/24 LTS lines are accepted; browser Node types stay at the deployed Node 22 baseline. |
+| pnpm package manager | All three pnpm `package.json` files | pnpm is pinned to exact version `10.34.5`; mismatched pnpm and competing lockfiles fail governance. |
+| pnpm resolution policy | All three `pnpm-workspace.yaml` files | New versions wait 24 hours, recent trust evidence cannot downgrade, and transitive exotic sources are blocked. |
+| Dependency scripts | All three `pnpm-workspace.yaml` files | Unreviewed install scripts fail; only five exact native/build package versions may execute them. |
+| Locked content | `contracts/pnpm-lock.yaml`, `web/pnpm-lock.yaml`, `web-spa/pnpm-lock.yaml` | Every registry package carries integrity evidence and frozen installs are required in CI. |
 | Vulnerability source | `scripts/dependency-security.sh` | OSV-Scanner 2.3.8 binaries are selected per platform and verified against reviewed SHA-256 digests. |
 | Inventory | `make sbom` | A validated CycloneDX 1.5 document contains both Go modules and npm packages. |
-| Continuous review | `.github/workflows/dependency-security.yml` | Dependency changes, weekly schedules, and manual runs scan both lock surfaces and retain the SBOM for 14 days. |
-| Update discovery | `.github/dependabot.yml` | Weekly grouped updates cover Go, both pnpm projects, GitHub Actions, and both Dockerfiles; major updates remain separate review units. |
+| Continuous review | `.github/workflows/dependency-security.yml` | Dependency changes, weekly schedules, and manual runs scan every lock surface and retain the SBOM for 14 days. |
+| Update discovery | `.github/dependabot.yml` | Weekly grouped updates cover Go, all pnpm projects, GitHub Actions, and both Dockerfiles; major updates remain separate review units. |
 
 Node 20 is intentionally absent because it is end-of-life and no longer receives security fixes.
 Node 22.12 is the minimum browser-tooling runtime and Node 22 remains the image/type-definition
@@ -30,7 +30,7 @@ diffs.
 ## Commands
 
 ```bash
-# Network-backed vulnerability gate for api/go.mod and both browser lockfiles
+# Network-backed vulnerability gate for api/go.mod and all pnpm lockfiles
 make dependency-scan
 
 # Write a CycloneDX 1.5 inventory outside the repository by default

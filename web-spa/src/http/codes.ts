@@ -1,3 +1,7 @@
+import type { components } from '@/http/generated/openapi';
+
+type OpenAPIErrorCode = components['schemas']['ErrorCode'];
+
 export const ApiErrorCode = {
   COMMON_INTERNAL: 'COMMON.INTERNAL',
   COMMON_INVALID_INPUT: 'COMMON.INVALID_INPUT',
@@ -79,9 +83,9 @@ export const ApiErrorCode = {
   WEBHOOK_ENDPOINT_VERSION_CONFLICT: 'WEBHOOK.ENDPOINT_VERSION_CONFLICT',
   WEBHOOK_PRECONDITION_REQUIRED: 'WEBHOOK.PRECONDITION_REQUIRED',
   WEBHOOK_REPLAY_NOT_ALLOWED: 'WEBHOOK.REPLAY_NOT_ALLOWED',
-} as const;
+} as const satisfies Readonly<Record<string, OpenAPIErrorCode>>;
 
-export type ApiErrorCodeValue = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];
+export type ApiErrorCodeValue = OpenAPIErrorCode;
 
 export const ClientErrorCode = {
   CANCELLED: 'CLIENT.CANCELLED',

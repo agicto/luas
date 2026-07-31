@@ -1,6 +1,13 @@
-.PHONY: check agent-check governance api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom
+.PHONY: check agent-check governance contract-check contract-generate api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom
 
-check: governance api-check web-check web-spa-check
+check: governance contract-check api-check web-check web-spa-check
+
+contract-check:
+	cd contracts && corepack pnpm check
+	cd contracts && corepack pnpm check:routes
+
+contract-generate:
+	cd contracts && corepack pnpm generate
 
 agent-check:
 	@bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh

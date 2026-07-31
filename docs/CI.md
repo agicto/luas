@@ -7,7 +7,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 
 | Workflow | Responsibility | Default token permission |
 |---|---|---|
-| `ci.yml` | Root governance, API build/lint/test/runtime-route/race gates, plus Next.js Web and static SPA type/lint/test/build gates | `contents: read` |
+| `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, plus Next.js Web and static SPA type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
@@ -62,11 +62,17 @@ the real configured runtime, emits schema-versioned JSON, validates its closed s
 and requires core plus default-starter routes. Route inventory therefore cannot pass CI from a
 parallel source parser that omits health, conditional metrics, or optional starter registration.
 
+The HTTP Contracts job validates OpenAPI 3.1, checks committed TypeScript output in both browser
+shells, and proves every described operation exists in the real Go route assembly. Pull requests
+compare the target-commit schema with the proposed schema using pinned `oasdiff` 1.11.7; breaking
+changes fail instead of silently narrowing downstream clients. Initial OpenAPI adoption is allowed
+when the target commit has no schema.
+
 ## Dependency Supply Chain
 
 The Dependency Security workflow calls the same root script available to developers. It downloads
-OSV-Scanner 2.3.8 from the official release, verifies the platform asset by SHA-256, scans only
-`api/go.mod`, `web/pnpm-lock.yaml`, and `web-spa/pnpm-lock.yaml`, validates a CycloneDX 1.5
+OSV-Scanner 2.3.8 from the official release, verifies the platform asset by SHA-256, scans
+`api/go.mod` plus the contracts, Web, and Web SPA pnpm lockfiles, validates a CycloneDX 1.5
 inventory, and uploads that inventory for 14 days. It uses read-only repository permission and does
 not depend on private-repository GitHub Advanced Security availability.
 

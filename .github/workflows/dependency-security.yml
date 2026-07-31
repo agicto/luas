@@ -5,6 +5,9 @@ on:
     paths:
       - "api/go.mod"
       - "api/go.sum"
+      - "contracts/package.json"
+      - "contracts/pnpm-lock.yaml"
+      - "contracts/pnpm-workspace.yaml"
       - "web/package.json"
       - "web/pnpm-lock.yaml"
       - "web/pnpm-workspace.yaml"
@@ -23,6 +26,9 @@ on:
     paths:
       - "api/go.mod"
       - "api/go.sum"
+      - "contracts/package.json"
+      - "contracts/pnpm-lock.yaml"
+      - "contracts/pnpm-workspace.yaml"
       - "web/package.json"
       - "web/pnpm-lock.yaml"
       - "web/pnpm-workspace.yaml"

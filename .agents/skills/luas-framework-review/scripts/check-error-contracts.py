@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[4]
 CONTRACTS_README = ROOT / "contracts" / "README.md"
 API_RESPONSE_CODES = ROOT / "api" / "pkg" / "response" / "error_codes.go"
 API_DOMAIN_CODES = ROOT / "api" / "internal" / "domain" / "error_codes.go"
+OPENAPI_CONTRACT = ROOT / "contracts" / "openapi.yaml"
 BROWSER_CODE_PATHS = {
     "web": ROOT / "web" / "src" / "http" / "codes.ts",
     "web-spa": ROOT / "web-spa" / "src" / "http" / "codes.ts",
@@ -34,6 +35,7 @@ TS_API_CODE_RE = re.compile(
     re.MULTILINE,
 )
 TS_STATUS_MAP_RE = re.compile(r"^\s*(\d{3}):\s*ApiErrorCode\.([A-Z][A-Z0-9_]+),")
+OPENAPI_ENUM_VALUE_RE = re.compile(rf"^\s{{8}}-\s+({CODE_VALUE})\s*$")
 
 
 def read(path: Path) -> str:
@@ -66,7 +68,9 @@ def parse_browser_api_codes(path: Path) -> dict[str, str]:
     codes: dict[str, str] = {}
     source = read(path)
     try:
-        block = source.split("export const ApiErrorCode = {", 1)[1].split("} as const;", 1)[0]
+        block = source.split("export const ApiErrorCode = {", 1)[1].split(
+            "export type ApiErrorCodeValue", 1
+        )[0]
     except IndexError:
         return codes
 
@@ -99,6 +103,28 @@ def parse_browser_status_map(path: Path) -> dict[int, str]:
     return status_map
 
 
+def parse_openapi_error_codes() -> set[str]:
+    codes: set[str] = set()
+    in_error_code = False
+    in_enum = False
+
+    for line in read(OPENAPI_CONTRACT).splitlines():
+        if line == "    ErrorCode:":
+            in_error_code = True
+            continue
+        if in_error_code and line == "      enum:":
+            in_enum = True
+            continue
+        if in_enum:
+            match = OPENAPI_ENUM_VALUE_RE.match(line)
+            if match:
+                codes.add(match.group(1))
+                continue
+            break
+
+    return codes
+
+
 def duplicate_values(values: list[str]) -> list[str]:
     seen: set[str] = set()
     duplicates: set[str] = set()
@@ -117,6 +143,7 @@ def main() -> int:
     contract_codes = {error.error_code for error in contract_errors}
     api_response_codes = set(parse_go_codes(API_RESPONSE_CODES).values())
     api_domain_codes = set(parse_go_codes(API_DOMAIN_CODES).values())
+    openapi_codes = parse_openapi_error_codes()
     browser_api_codes = {
         name: set(parse_browser_api_codes(path).values())
         for name, path in BROWSER_CODE_PATHS.items()
@@ -126,6 +153,14 @@ def main() -> int:
         for name, path in BROWSER_CODE_PATHS.items()
     }
     documented_by_status: dict[int, set[str]] = {}
+
+    expected_openapi_codes = api_response_codes | api_domain_codes
+    missing_openapi = sorted(expected_openapi_codes - openapi_codes)
+    extra_openapi = sorted(openapi_codes - expected_openapi_codes)
+    if missing_openapi:
+        failures.append("contracts/openapi.yaml ErrorCode is missing API values: " + ", ".join(missing_openapi))
+    if extra_openapi:
+        failures.append("contracts/openapi.yaml ErrorCode has values absent from the API: " + ", ".join(extra_openapi))
 
     for error in contract_errors:
         documented_by_status.setdefault(error.status, set()).add(error.error_code)
@@ -159,6 +194,18 @@ def main() -> int:
                 f"{relative_path} ApiErrorCode is missing API domain error_code values: "
                 + ", ".join(missing_domain)
             )
+
+        if api_codes != openapi_codes:
+            missing_schema = sorted(openapi_codes - api_codes)
+            extra_schema = sorted(api_codes - openapi_codes)
+            if missing_schema:
+                failures.append(
+                    f"{relative_path} ApiErrorCode is missing OpenAPI values: " + ", ".join(missing_schema)
+                )
+            if extra_schema:
+                failures.append(
+                    f"{relative_path} ApiErrorCode has values absent from OpenAPI: " + ", ".join(extra_schema)
+                )
 
         for status, documented_codes in sorted(documented_by_status.items()):
             mapped_code = status_map.get(status)
@@ -203,7 +250,8 @@ def main() -> int:
 
     print(
         "Error contract check passed "
-        f"({len(contract_codes)} contract error_code values, {len(api_domain_codes)} API domain values, "
+        f"({len(contract_codes)} contract error_code values, {len(openapi_codes)} OpenAPI values, "
+        f"{len(api_domain_codes)} API domain values, "
         + ", ".join(
             f"{len(browser_status_maps[name])} {name} status fallbacks"
             for name in BROWSER_CODE_PATHS

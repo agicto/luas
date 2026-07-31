@@ -2,6 +2,21 @@ version: 2
 
 updates:
   - package-ecosystem: npm
+    directory: /contracts
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:05"
+      timezone: Europe/Dublin
+    open-pull-requests-limit: 3
+    groups:
+      contracts-development-minor-patch:
+        dependency-type: development
+        update-types: [minor, patch]
+    commit-message:
+      prefix: deps(contracts)
+
+  - package-ecosystem: npm
     directory: /web
     schedule:
       interval: weekly

@@ -1,0 +1,407 @@
+openapi: 3.1.0
+info:
+  title: Luas HTTP API
+  version: 0.1.0
+  description: >-
+    Machine-readable contracts for reviewed Luas HTTP surfaces. A path is authoritative only after
+    it is included here. Markdown contracts continue to own semantic and security behavior that
+    cannot be represented completely by OpenAPI.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /
+    description: Current Luas API origin
+tags:
+  - name: API Keys
+    description: User-owned API key lifecycle.
+paths:
+  /v1/api-keys:
+    get:
+      operationId: listApiKeys
+      summary: List API keys owned by the authenticated user
+      tags: [API Keys]
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: Paginated API key metadata without plaintext credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIKeyPageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createApiKey
+      summary: Create an API key for the authenticated user
+      tags: [API Keys]
+      security:
+        - bearerSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAPIKeyRequest'
+      responses:
+        '201':
+          description: API key metadata and the one-time plaintext credential.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateAPIKeyResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/api-keys/{api_key_id}:
+    delete:
+      operationId: revokeApiKey
+      summary: Revoke an API key owned by the authenticated user
+      tags: [API Keys]
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/APIKeyID'
+      responses:
+        '204':
+          description: The API key is revoked or was already revoked.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/APIKeyNotFound'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  securitySchemes:
+    bearerSession:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque-session
+      description: Opaque server-side session credential returned by the Luas login API.
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: One-based page number.
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PerPage:
+      name: per_page
+      in: query
+      description: Requested page size, capped by the API.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 15
+    APIKeyID:
+      name: api_key_id
+      in: path
+      required: true
+      description: Positive API key identifier.
+      schema:
+        $ref: '#/components/schemas/PositiveID'
+  responses:
+    InvalidInput:
+      description: The request body or semantic input is invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    APIKeyNotFound:
+      description: The API key is missing or is not owned by the caller.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RequestTooLarge:
+      description: The request body exceeded the configured limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationFailed:
+      description: One or more request fields failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorResponse'
+    ServiceUnavailable:
+      description: Required persistence or another dependency is unavailable.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    PositiveID:
+      type: integer
+      format: int64
+      minimum: 1
+      maximum: 9007199254740991
+    ErrorCode:
+      type: string
+      description: Stable dotted code used for client behavior.
+      enum:
+        - COMMON.INTERNAL
+        - COMMON.NOT_FOUND
+        - COMMON.CONFLICT
+        - COMMON.INVALID_INPUT
+        - COMMON.VALIDATION_FAILED
+        - COMMON.RATE_LIMITED
+        - COMMON.REQUEST_TOO_LARGE
+        - COMMON.TIMEOUT
+        - COMMON.SERVICE_UNAVAILABLE
+        - AUTH.UNAUTHORIZED
+        - AUTH.FORBIDDEN
+        - AUTH.INVALID_CREDENTIALS
+        - AUTH.ACCOUNT_DISABLED
+        - AUTH.PASSWORD_RESET_TOKEN_INVALID
+        - AUTH.PASSWORD_RESET_TOKEN_EXPIRED
+        - USER.NOT_FOUND
+        - USER.EMAIL_ALREADY_EXISTS
+        - USER.USERNAME_ALREADY_EXISTS
+        - API_KEY.NOT_FOUND
+        - API_KEY.INVALID
+        - API_KEY.EXPIRED
+        - API_KEY.REVOKED
+        - ORGANIZATION.NOT_FOUND
+        - ORGANIZATION.CONTEXT_REQUIRED
+        - ORGANIZATION.CONTEXT_INVALID
+        - ORGANIZATION.SLUG_ALREADY_EXISTS
+        - ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED
+        - ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID
+        - ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED
+        - ORGANIZATION.MEMBER_NOT_FOUND
+        - ORGANIZATION.INVITATION.NOT_FOUND
+        - ORGANIZATION.INVITATION.INVALID
+        - ORGANIZATION.INVITATION.EXPIRED
+        - ORGANIZATION.INVITATION.EMAIL_MISMATCH
+        - ORGANIZATION.INVITATION.ALREADY_PENDING
+        - ORGANIZATION.MEMBER_ALREADY_EXISTS
+        - PERMISSION.DENIED
+        - PERMISSION.UNKNOWN
+        - PERMISSION.ROLE_NOT_FOUND
+        - PERMISSION.ROLE_SLUG_ALREADY_EXISTS
+        - ROLE.NOT_FOUND
+        - NOTIFICATION.NOT_FOUND
+        - NOTIFICATION.IDEMPOTENCY_CONFLICT
+        - NOTIFICATION.INVALID_CHANNEL
+        - ASSET.NOT_FOUND
+        - ASSET.NOT_READY
+        - ASSET.IDEMPOTENCY_CONFLICT
+        - ASSET.CLEANUP_REQUIRED
+        - ASSET.UPLOAD_EXPIRED
+        - ASSET.SIZE_EXCEEDED
+        - ASSET.INVALID_MEDIA_TYPE
+        - SETTING.NOT_FOUND
+        - SETTING.INVALID_VALUE
+        - SETTING.VERSION_CONFLICT
+        - SETTING.PRECONDITION_REQUIRED
+        - USAGE.METRIC_NOT_FOUND
+        - USAGE.INVALID_EVENT
+        - USAGE.EVENT_OUTSIDE_WINDOW
+        - USAGE.IDEMPOTENCY_CONFLICT
+        - USAGE.QUOTA_EXCEEDED
+        - USAGE.QUOTA_VERSION_CONFLICT
+        - USAGE.PRECONDITION_REQUIRED
+        - WEBHOOK.ENDPOINT_NOT_FOUND
+        - WEBHOOK.DELIVERY_NOT_FOUND
+        - WEBHOOK.INVALID_EVENT_TYPE
+        - WEBHOOK.INVALID_TARGET
+        - WEBHOOK.IDEMPOTENCY_CONFLICT
+        - WEBHOOK.ENDPOINT_VERSION_CONFLICT
+        - WEBHOOK.PRECONDITION_REQUIRED
+        - WEBHOOK.REPLAY_NOT_ALLOWED
+    FieldErrors:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          type: string
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, error_code, message]
+      properties:
+        code:
+          type: integer
+          minimum: 400
+          maximum: 599
+        error_code:
+          $ref: '#/components/schemas/ErrorCode'
+        message:
+          type: string
+        error:
+          type: string
+        request_id:
+          type: string
+          minLength: 1
+    ValidationErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, error_code, message, errors]
+      properties:
+        code:
+          const: 422
+        error_code:
+          const: COMMON.VALIDATION_FAILED
+        message:
+          type: string
+        errors:
+          $ref: '#/components/schemas/FieldErrors'
+        request_id:
+          type: string
+          minLength: 1
+    PaginationMeta:
+      type: object
+      additionalProperties: false
+      required: [current_page, per_page, total, last_page, from, to]
+      properties:
+        current_page:
+          type: integer
+          minimum: 1
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total:
+          type: integer
+          minimum: 0
+        last_page:
+          type: integer
+          minimum: 1
+        from:
+          type: integer
+          minimum: 0
+        to:
+          type: integer
+          minimum: 0
+    PaginationLinks:
+      type: object
+      additionalProperties: false
+      required: [first, last, prev, next]
+      properties:
+        first:
+          type: string
+        last:
+          type: string
+        prev:
+          type: [string, 'null']
+        next:
+          type: [string, 'null']
+    APIKey:
+      type: object
+      additionalProperties: false
+      required: [id, user_id, name, key_prefix, scopes, created_at, updated_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        user_id:
+          $ref: '#/components/schemas/PositiveID'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        key_prefix:
+          type: string
+          pattern: '^luas_[a-z0-9_-]+$'
+        scopes:
+          type: array
+          maxItems: 32
+          uniqueItems: true
+          items:
+            type: string
+            pattern: '^(?:\*|[a-z][a-z0-9_-]{0,31}:[a-z][a-z0-9_-]{0,31})$'
+        last_used_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    CreateAPIKeyRequest:
+      type: object
+      additionalProperties: false
+      required: [name, scopes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        scopes:
+          type: array
+          maxItems: 32
+          items:
+            type: string
+            maxLength: 65
+        expires_at:
+          type: string
+          format: date-time
+    CreateAPIKeyResult:
+      type: object
+      additionalProperties: false
+      required: [api_key, plaintext_key]
+      properties:
+        api_key:
+          $ref: '#/components/schemas/APIKey'
+        plaintext_key:
+          type: string
+          minLength: 16
+          maxLength: 512
+    CreateAPIKeyResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/CreateAPIKeyResult'
+    APIKeyPageResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data, meta, links]
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/APIKey'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+        links:
+          $ref: '#/components/schemas/PaginationLinks'

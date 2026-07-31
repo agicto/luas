@@ -41,8 +41,13 @@ explicit retention command are defined in [`AUDIT.md`](AUDIT.md).
 
 ## Contract Discovery
 
-These reviewed Markdown contracts own HTTP semantics. The API's runtime route catalog complements
-them by showing which method/path pairs are assembled for one resolved configuration:
+Reviewed Markdown contracts own complete HTTP semantics. [`openapi.yaml`](openapi.yaml) is the
+OpenAPI 3.1 machine contract for the paths already migrated to schema-backed development. It drives
+per-browser TypeScript generation, route drift checks, and pull-request compatibility checks; see
+[`OPENAPI.md`](OPENAPI.md).
+
+The API's runtime route catalog complements both contract forms by showing which method/path pairs
+are assembled for one resolved configuration:
 
 ```bash
 cd api
@@ -50,8 +55,8 @@ DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
 ```
 
 The catalog is deterministic, schema-versioned, and generated through the same core and starter
-route registration seam used by the server. It is not an OpenAPI Description and does not infer
-payloads, responses, authentication, authorization, or middleware. See
+route registration seam used by the server. It does not infer payloads, responses, authentication,
+authorization, or middleware. See
 [`../api/docs/ROUTE_DISCOVERY.md`](../api/docs/ROUTE_DISCOVERY.md) for its ownership and validation
 contract.
 

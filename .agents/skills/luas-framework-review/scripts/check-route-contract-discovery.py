@@ -114,7 +114,12 @@ def main() -> int:
     require_all(
         failures,
         "contracts/README.md",
-        ("## Contract Discovery", "route:list --format=json", "not an OpenAPI"),
+        (
+            "## Contract Discovery",
+            "route:list --format=json",
+            "OpenAPI 3.1 machine contract",
+            "does not infer payloads",
+        ),
     )
     require_all(
         failures,

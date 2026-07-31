@@ -15,8 +15,8 @@ not mistaken for a complete API contract.
 
 The registered route catalog is not an OpenAPI Description. It deliberately contains no inferred
 request bodies, response schemas, status codes, authentication rules, middleware claims, or
-authorization policy. Those semantics remain in the owning HTTP contract and implementation tests.
-Luas currently exposes neither `/swagger` nor `/openapi.json`.
+authorization policy. Those semantics remain in the owning Markdown and OpenAPI contracts plus
+implementation tests. Luas does not expose a runtime `/swagger` or `/openapi.json` endpoint.
 
 ## Commands
 
@@ -80,16 +80,17 @@ omitted runtime-only routes, and have been removed.
 
 ## OpenAPI Boundary
 
-The current contract Markdown is explicit but not yet a complete OpenAPI Description. A future OAS
-slice must model every included operation's parameters, bodies, success/error envelopes, security,
-and optional-starter ownership; validate the description with maintained tooling; and compare path
-coverage against this runtime catalog. Until that exists, UI and docs must say `HTTP contracts` or
-`registered routes`, never claim that Luas ships OpenAPI or Swagger.
+[`../../contracts/openapi.yaml`](../../contracts/openapi.yaml) is the OpenAPI 3.1 machine contract
+for reviewed operations. Its coverage is intentionally incremental and explicit: included paths own
+schemas and generated types, while omitted paths remain governed by their Markdown contracts. The
+contract route check normalizes path parameters and requires every included operation to exist in
+this runtime catalog.
 
-The latest OpenAPI standard is useful precisely because it lets machines understand HTTP semantics,
-not merely path names. Publishing a partial generated file would recreate the ambiguity this boundary
-removes. See the [OpenAPI Specification](https://spec.openapis.org/oas/latest.html) and the official
-[description structure guide](https://learn.openapis.org/specification/structure.html).
+The two machine surfaces remain distinct. OpenAPI owns reviewed HTTP shapes and compatibility;
+`route:list` owns the exact topology assembled by one configuration, including operational and
+optional routes that may not yet have an OpenAPI schema. Neither surface may infer the other's
+missing information. See [`../../contracts/OPENAPI.md`](../../contracts/OPENAPI.md) for generation
+and breaking-change policy.
 
 ## Measured Baseline
 

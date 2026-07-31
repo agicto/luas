@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[4]
 PNPM_VERSION = "10.34.5"
 NODE_ENGINES = "^22.12.0 || ^24.0.0"
 BROWSER_PROJECTS = ("web", "web-spa")
+PNPM_PROJECTS = (*BROWSER_PROJECTS, "contracts")
 OSV_VERSION = "2.3.8"
 OSV_CHECKSUMS = {
     "osv-scanner_darwin_amd64": (
@@ -45,6 +46,7 @@ ALLOWED_BUILDS = {
     "unrs-resolver@1.11.1",
 }
 DEPENDABOT_TARGETS = {
+    ("npm", "/contracts"),
     ("npm", "/web"),
     ("npm", "/web-spa"),
     ("gomod", "/api"),
@@ -53,6 +55,7 @@ DEPENDABOT_TARGETS = {
     ("docker", "/web"),
 }
 DEPENDABOT_GROUPS = {
+    "contracts-development-minor-patch",
     "web-production-minor-patch",
     "web-development-minor-patch",
     "web-spa-production-minor-patch",
@@ -137,7 +140,7 @@ def main() -> int:
     }
     package_counts: dict[str, int] = {}
 
-    for project in BROWSER_PROJECTS:
+    for project in PNPM_PROJECTS:
         package_path = ROOT / project / "package.json"
         package = json.loads(package_path.read_text(encoding="utf-8"))
         if package.get("packageManager") != expected_manager:
@@ -153,11 +156,12 @@ def main() -> int:
             failures.append(
                 f"{project}/package.json engines.pnpm must be {PNPM_VERSION}"
             )
-        node_types = package.get("devDependencies", {}).get("@types/node", "")
-        if not re.fullmatch(r"\^22\.\d+\.\d+", node_types):
-            failures.append(
-                f"{project}/package.json @types/node must stay on the Node 22 baseline"
-            )
+        if project in BROWSER_PROJECTS:
+            node_types = package.get("devDependencies", {}).get("@types/node", "")
+            if not re.fullmatch(r"\^22\.\d+\.\d+", node_types):
+                failures.append(
+                    f"{project}/package.json @types/node must stay on the Node 22 baseline"
+                )
 
         for lock_name in (
             "package-lock.json",
@@ -240,6 +244,7 @@ def main() -> int:
         "--proto '=https' --proto-redir '=https' --tlsv1.2",
         '"--config=${ROOT_DIR}/osv-scanner.toml"',
         '"--lockfile=${ROOT_DIR}/api/go.mod"',
+        '"--lockfile=${ROOT_DIR}/contracts/pnpm-lock.yaml"',
         '"--lockfile=${ROOT_DIR}/web/pnpm-lock.yaml"',
         '"--lockfile=${ROOT_DIR}/web-spa/pnpm-lock.yaml"',
         "--format=cyclonedx-1-5",
@@ -285,14 +290,14 @@ def main() -> int:
     actual_targets = parse_dependabot_targets(dependabot)
     if actual_targets != DEPENDABOT_TARGETS:
         failures.append(
-            ".github/dependabot.yml targets must be npm/web+web-spa, gomod/api, "
+            ".github/dependabot.yml targets must be npm/contracts+web+web-spa, gomod/api, "
             "GitHub Actions/root, and Docker/api+web"
         )
     if dependabot.count("interval: weekly") != len(DEPENDABOT_TARGETS):
         failures.append("every Dependabot target must run weekly")
     groups = parse_dependabot_groups(dependabot)
     if set(groups) != DEPENDABOT_GROUPS:
-        failures.append("Dependabot must keep the eight reviewed minor/patch update groups")
+        failures.append("Dependabot must keep the nine reviewed minor/patch update groups")
     for name, body in groups.items():
         if "update-types: [minor, patch]" not in body:
             failures.append(
@@ -347,7 +352,7 @@ def main() -> int:
     print(
         "Dependency supply-chain check passed "
         f"(Node 22/24 LTS, pnpm {PNPM_VERSION}, "
-        f"{sum(package_counts.values())} integrity-pinned browser packages, "
+        f"{sum(package_counts.values())} integrity-pinned pnpm packages, "
         f"OSV-Scanner {OSV_VERSION}, {len(ignored) + len(overrides)} exceptions)."
     )
     return 0

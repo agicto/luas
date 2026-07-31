@@ -230,9 +230,6 @@ func parseStarterCommandOptions(args []string, allowFormat, requireNames bool) (
 		}
 	}
 
-	if strings.TrimSpace(options.envFile) == "" {
-		options.envFile = os.Getenv("LUAS_ENV_FILE")
-	}
 	if !requireNames && len(options.names) != 0 {
 		return starterCommandOptions{}, fmt.Errorf("this command does not accept starter names")
 	}

@@ -22,6 +22,53 @@ jobs:
       - name: Root governance guardrails
         run: make governance
 
+  contracts:
+    name: HTTP Contracts
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          package_json_file: contracts/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: contracts/pnpm-lock.yaml
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Install contract tooling
+        working-directory: contracts
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate schema, generated types, and Go routes
+        run: make contract-check
+
+      - name: Reject breaking OpenAPI changes
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git cat-file -e "$BASE_SHA:contracts/openapi.yaml"; then
+            git show "$BASE_SHA:contracts/openapi.yaml" > "$RUNNER_TEMP/base-openapi.yaml"
+            GOBIN="$RUNNER_TEMP/bin" go install github.com/oasdiff/oasdiff@v1.11.7
+            "$RUNNER_TEMP/bin/oasdiff" breaking "$RUNNER_TEMP/base-openapi.yaml" contracts/openapi.yaml --fail-on ERR
+          else
+            echo "No target-branch OpenAPI baseline; accepting the initial contract."
+          fi
+
   api:
     name: API
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}

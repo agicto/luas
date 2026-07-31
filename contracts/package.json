@@ -1,0 +1,22 @@
+{
+  "name": "@luas/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "redocly lint openapi.yaml",
+    "generate": "node scripts/generate-types.mjs",
+    "check": "redocly lint openapi.yaml && node scripts/generate-types.mjs --check",
+    "check:routes": "node scripts/check-api-routes.mjs"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.43.2",
+    "openapi-typescript": "7.13.0",
+    "yaml": "2.9.0"
+  },
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0",
+    "pnpm": "10.34.5"
+  },
+  "packageManager": "pnpm@10.34.5"
+}
