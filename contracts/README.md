@@ -1,7 +1,7 @@
 # HTTP Contracts
 
-This directory documents the contracts shared by `api/` and its browser-shell alternatives under
-`web/` and `web-spa/`.
+This directory documents the contracts shared by `api/`, the customer-facing
+`web/` application, and the project `admin/` application.
 
 The response envelope, validation classes, `error_code`, and `request_id` semantics are global.
 Feature endpoint paths and DTOs are shared only when their owning contract says so. In particular,
@@ -11,7 +11,7 @@ see [`AUTHENTICATION.md`](AUTHENTICATION.md).
 Optional backend starter contracts are documented independently. The first ownership foundation is
 [`ORGANIZATIONS.md`](ORGANIZATIONS.md); API and Next.js Web activation are disabled independently
 by default, and each delivered browser operation is listed explicitly rather than implied by the
-backend starter. Static SPA support is listed only after its browser adapter exists.
+backend starter. Admin Console support is listed only after its browser adapter exists.
 
 Organization-scoped access roles, exact permission checks, delegated-management safety, and the
 replaceable authorization seam are defined in [`PERMISSIONS.md`](PERMISSIONS.md).

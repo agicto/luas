@@ -1,7 +1,7 @@
 {
-  "name": "luas-web-spa",
+  "name": "luas-admin",
   "version": "0.1.0",
-  "description": "Luas static SPA shell for OSS and CDN deployment.",
+  "description": "Luas project management console, delivered as a static Vite SPA.",
   "private": true,
   "type": "module",
   "scripts": {

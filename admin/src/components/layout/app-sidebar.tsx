@@ -102,7 +102,7 @@ export function AppSidebar() {
           </span>
           <span className="grid min-w-0 flex-1 text-xs leading-tight group-data-[collapsible=icon]:hidden">
             <span className="truncate font-medium text-sidebar-foreground">
-              {t('common.staticSpa')}
+              {t('common.adminConsole')}
             </span>
             <span className="truncate text-muted-foreground">v0.1</span>
           </span>

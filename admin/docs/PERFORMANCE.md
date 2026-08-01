@@ -1,4 +1,4 @@
-# Web SPA Performance
+# Admin Console Performance
 
 ## Build Budgets
 

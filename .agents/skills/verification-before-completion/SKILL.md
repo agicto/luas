@@ -32,7 +32,7 @@ and for read-only research or prose-only responses.
 | Agent docs or skills | `make agent-check` | `make governance` only when a governance surface changed |
 | API package | focused `go test` | API tier 1; race/container checks only for their owning boundary |
 | Next.js Web feature | focused Vitest plus type/lint as relevant | Web tier 2 when production output can change |
-| Static SPA feature | focused Vitest plus type/lint as relevant | SPA tier 2 when routes or static output can change |
+| Admin Console feature | focused Vitest plus type/lint as relevant | Admin tier 2 when routes or static output can change |
 | Shared HTTP contract | owning guard plus focused API/browser tests | `make check` |
 | Cross-cutting/release | focused checks first | `make check` once |
 
@@ -50,7 +50,7 @@ unchanged successful command in the same turn.
 - Web tier 0: type check and lint.
 - Web tier 1: tier 0 plus Vitest.
 - Web tier 2: tier 1 plus production build and route budgets.
-- Static SPA uses the same Node tiers; tier 2 also proves no server bundle or
+- Admin Console uses the same Node tiers; tier 2 also proves no server bundle or
   source maps and enforces compressed asset budgets.
 
 Examples:
@@ -63,7 +63,7 @@ cd web
 corepack pnpm vitest run src/features/auth/auth.test.ts
 bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0
 
-cd web-spa
+cd admin
 corepack pnpm vitest run src/http/client.test.ts
 bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 ```

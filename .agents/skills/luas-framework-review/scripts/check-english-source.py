@@ -19,7 +19,7 @@ IGNORED_PARTS = {".git", ".next", "coverage", "dist", "node_modules"}
 def is_localization_source(path: Path) -> bool:
     relative = path.relative_to(ROOT).as_posix()
     return (
-        relative == "web-spa/src/i18n/resources.ts"
+        relative == "admin/src/i18n/resources.ts"
         or relative == "web/src/i18n/locales.ts"
         or (relative.startswith("web/src/i18n/modules/") and relative.endswith("/zh-Hans.ts"))
     )

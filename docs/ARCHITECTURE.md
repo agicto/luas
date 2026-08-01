@@ -3,12 +3,14 @@
 Luas is a multi-deployable scaffold:
 
 - `api/` is the Go backend. It owns persistence, domain rules, HTTP routes, migrations, seeders, and operational integrations.
-- `web/` is the Next.js frontend. It owns UI, route groups, client state, mock BFF route handlers, and browser-facing workflows.
-- `web-spa/` is the static Vite/TanStack frontend. It owns a feature-first browser application
-  that builds to OSS/CDN assets with no production Node.js runtime.
+- `web/` is the customer-facing Next.js application. It owns public and account
+  journeys, user workspace UI, SSR, client state, mock BFF route handlers, and
+  server-owned browser adapters.
+- `admin/` is the project management application. It uses Vite and TanStack
+  Router and builds to static OSS/CDN assets with no production Node.js runtime.
 
-The units are independently deployable. `web/` and `web-spa/` are alternative browser shells;
-downstream applications normally select one. All integration uses HTTP contracts, not shared source.
+The units are independently deployable. A downstream application may deploy
+`web/`, `admin/`, or both. All integration uses HTTP contracts, not shared source.
 
 ## Boundaries
 
@@ -84,7 +86,7 @@ body. Every request therefore observes current membership and role state, includ
 leave, and ownership transfer. See [`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md)
 for the public header, cache, CORS, and non-disclosure contract.
 
-## Next.js Web Shape
+## Customer Web Shape
 
 The web app uses Next.js App Router and feature-first folders under `web/src/features/`.
 
@@ -157,10 +159,10 @@ Web shell uses two fixed private adapters and strict catalog validation; it cann
 mutate quota.
 See [`../contracts/USAGE.md`](../contracts/USAGE.md).
 
-## Static SPA Shape
+## Admin Console Shape
 
 The static app uses Vite, TanStack Router, and feature-first folders under
-`web-spa/src/features/`.
+`admin/src/features/`.
 
 Typical flow:
 
@@ -169,11 +171,11 @@ TanStack route -> Feature component -> Query hook -> Feature service
   -> src/http/client.ts -> HTTP API
 ```
 
-Routes under `web-spa/src/routes/` are generated into one type-safe route tree and split
+Routes under `admin/src/routes/` are generated into one type-safe route tree and split
 automatically. TanStack Query owns remote state, Zustand owns shared browser-only UI state, Zod
 validates important responses, and i18next owns formal user-facing copy.
 
-`web-spa/` emits only `dist/` static assets. It has no Route Handlers, Server Components, server
+`admin/` emits only `dist/` static assets. It has no Route Handlers, Server Components, server
 functions, private runtime environment, or mock BFF. Production routing serves existing hashed
 assets, routes an allowlisted `/api/*` prefix to a reviewed backend when needed, and rewrites other
 application paths to `index.html`.
@@ -183,8 +185,8 @@ browser gateway or explicit Go browser-session boundary that owns HttpOnly cooki
 enforcement, and fixed upstream mappings. Client route guards remain UX only. The initial static
 shell includes system/readiness and browser preference features; starter UI is ported against its
 contract when the required browser adapter exists. See
-[`../web-spa/docs/ARCHITECTURE.md`](../web-spa/docs/ARCHITECTURE.md) and
-[`../web-spa/docs/SECURITY.md`](../web-spa/docs/SECURITY.md).
+[`../admin/docs/ARCHITECTURE.md`](../admin/docs/ARCHITECTURE.md) and
+[`../admin/docs/SECURITY.md`](../admin/docs/SECURITY.md).
 
 For the full list of scaffold surfaces and downstream keep/delete/replace rules, see
 [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md).

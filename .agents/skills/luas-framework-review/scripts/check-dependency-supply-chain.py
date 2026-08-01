@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 PNPM_VERSION = "10.34.5"
 NODE_ENGINES = "^22.12.0 || ^24.0.0"
-BROWSER_PROJECTS = ("web", "web-spa")
+BROWSER_PROJECTS = ("web", "admin")
 PNPM_PROJECTS = (*BROWSER_PROJECTS, "contracts")
 OSV_VERSION = "2.3.8"
 OSV_CHECKSUMS = {
@@ -48,7 +48,7 @@ ALLOWED_BUILDS = {
 DEPENDABOT_TARGETS = {
     ("npm", "/contracts"),
     ("npm", "/web"),
-    ("npm", "/web-spa"),
+    ("npm", "/admin"),
     ("gomod", "/api"),
     ("github-actions", "/"),
     ("docker", "/api"),
@@ -58,8 +58,8 @@ DEPENDABOT_GROUPS = {
     "contracts-development-minor-patch",
     "web-production-minor-patch",
     "web-development-minor-patch",
-    "web-spa-production-minor-patch",
-    "web-spa-development-minor-patch",
+    "admin-production-minor-patch",
+    "admin-development-minor-patch",
     "go-minor-patch",
     "actions",
     "api-images",
@@ -246,7 +246,7 @@ def main() -> int:
         '"--lockfile=${ROOT_DIR}/api/go.mod"',
         '"--lockfile=${ROOT_DIR}/contracts/pnpm-lock.yaml"',
         '"--lockfile=${ROOT_DIR}/web/pnpm-lock.yaml"',
-        '"--lockfile=${ROOT_DIR}/web-spa/pnpm-lock.yaml"',
+        '"--lockfile=${ROOT_DIR}/admin/pnpm-lock.yaml"',
         "--format=cyclonedx-1-5",
         'document.get("bomFormat") != "CycloneDX"',
         'document.get("specVersion") != "1.5"',
@@ -290,7 +290,7 @@ def main() -> int:
     actual_targets = parse_dependabot_targets(dependabot)
     if actual_targets != DEPENDABOT_TARGETS:
         failures.append(
-            ".github/dependabot.yml targets must be npm/contracts+web+web-spa, gomod/api, "
+            ".github/dependabot.yml targets must be npm/contracts+web+admin, gomod/api, "
             "GitHub Actions/root, and Docker/api+web"
         )
     if dependabot.count("interval: weekly") != len(DEPENDABOT_TARGETS):

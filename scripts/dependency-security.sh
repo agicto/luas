@@ -110,7 +110,7 @@ scanner_args() {
     "--lockfile=${ROOT_DIR}/api/go.mod"
     "--lockfile=${ROOT_DIR}/contracts/pnpm-lock.yaml"
     "--lockfile=${ROOT_DIR}/web/pnpm-lock.yaml"
-    "--lockfile=${ROOT_DIR}/web-spa/pnpm-lock.yaml"
+    "--lockfile=${ROOT_DIR}/admin/pnpm-lock.yaml"
     --verbosity=warn
   )
 }

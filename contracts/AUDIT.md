@@ -106,7 +106,7 @@ Global envelopes and `request_id` behavior follow [`README.md`](README.md).
 
 ## Browser Support
 
-The Go API contract is available by default. The Next.js and static SPA shells do not yet claim an
+The Go API contract is available by default. The Next.js and Admin Console shells do not yet claim an
 audit-history feature or mock parity. A browser port must use a fixed same-origin adapter, preserve
 pagination and private caching, validate this response before rendering, and keep credentials in
 the existing HttpOnly session boundary.

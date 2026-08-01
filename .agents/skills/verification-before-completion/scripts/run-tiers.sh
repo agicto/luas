@@ -14,7 +14,7 @@
 #   Defaults to ./... — i.e. the whole tree.
 #   Node side: scope is ignored; each browser project uses its own scripts.
 #
-# Detects whether you're in api/, web/, or web-spa/ by walking up for go.mod or
+# Detects whether you're in api/, web/, or admin/ by walking up for go.mod or
 # package.json and runs the appropriate toolchain.
 #
 # Exit code is 0 iff every chosen tier passes within the chosen scope.

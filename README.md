@@ -1,8 +1,9 @@
 # Luas
 
 Luas is an open-source full-stack starter kit for building secure web applications with Go and
-React. It combines a modular PostgreSQL API, production-ready business starters, a Next.js console,
-and a lightweight static SPA in one coherent architecture.
+React. It combines a modular PostgreSQL API, production-ready business starters,
+a customer-facing Next.js application, and a lightweight Admin Console in one
+coherent architecture.
 
 Start with authentication, API keys, audit history, typed configuration, migrations, testing,
 containers, and CI already working. Enable organizations, permissions, notifications, private
@@ -42,8 +43,9 @@ until it needs those capabilities.
 - **Durable tasks without extra infrastructure.** PostgreSQL-backed jobs include idempotency,
   delayed execution, fenced leases, retries, cancellation, dead-letter state, trace propagation,
   queue lag metrics, and multi-replica worker safety without requiring Redis.
-- **Two frontend choices.** Use the complete Next.js console for SSR and secure server adapters, or
-  ship the Vite SPA directly through OSS/S3-compatible storage and a CDN.
+- **Separate customer and management applications.** Use Next.js for customer
+  journeys, SSR, and secure server adapters; deploy the Vite Admin Console
+  through OSS/S3-compatible storage and a CDN. Projects may run either or both.
 - **A working console.** Authentication, account settings, API keys, audit history, and optional
   starter workflows already have feature-first UI foundations.
 - **Secure defaults.** Typed startup validation, HttpOnly session custody, stable public errors,
@@ -62,28 +64,30 @@ until it needs those capabilities.
 | Deployable unit | Stack |
 |---|---|
 | `api/` | Go 1.25, Gin, Wire, GORM, PostgreSQL, typed configuration, versioned migrations, structured logging, OpenTelemetry, and operator CLI |
-| `web/` | Next.js 16, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, Zustand, next-intl, and a secure same-origin API adapter |
-| `web-spa/` | Vite 8, React 19, TanStack Router, TanStack Query, Zustand, Zod, Tailwind CSS 4, shadcn/ui, and i18next |
+| `web/` | Customer-facing Next.js 16 application with React 19, TypeScript, Tailwind CSS 4, shadcn/ui, TanStack Query, Zustand, next-intl, and a secure same-origin API adapter |
+| `admin/` | Project management console built with Vite 8, React 19, TanStack Router, TanStack Query, Zustand, Zod, Tailwind CSS 4, shadcn/ui, and i18next |
 | Delivery | Docker Compose, non-root production images, GitHub Actions, SBOM generation, dependency scanning, container scanning, and bundle budgets |
 
 Each deployable unit is independent. Browser applications communicate with the API through
 documented HTTP contracts and never import backend source code.
 
-## Choose A Frontend
+## Frontend Roles
 
-| Need | Choose `web/` | Choose `web-spa/` |
+| Need | `web/` | `admin/` |
 |---|---:|---:|
 | Server rendering and Server Components | Yes | No |
 | Same-origin HttpOnly auth adapter | Included | Requires a reviewed gateway or browser adapter |
 | Development mock BFF | Included | No |
-| Full optional-starter console UI | Included | Port features as needed |
+| Customer account and workspace journeys | Included | No |
+| Project operations and administration | Limited scaffold surfaces | Primary responsibility |
 | Static OSS/CDN deployment | No | Yes |
 | Frontend Node.js runtime in production | Yes | No |
 | TanStack type-safe file routing | No | Yes |
 
-Most projects select one browser shell. Choose `web/` for the broadest ready-to-use product surface;
-choose `web-spa/` when static delivery, a smaller runtime, and CDN hosting are more important than
-SSR or frontend server functions.
+The applications are independent and can run together. `web/` serves customers;
+`admin/` serves project operators and administrators. The current Admin Console
+is a lightweight foundation, so management workflows are ported contract by
+contract instead of copied from Next.js.
 
 ## Quick Start
 
@@ -116,10 +120,10 @@ corepack pnpm dev
 Open `http://localhost:3000`. The development mock BFF makes the console immediately explorable;
 production requires an explicit API adapter or backend.
 
-### Or Start The Static SPA
+### Start The Admin Console
 
 ```bash
-cd web-spa
+cd admin
 corepack pnpm install
 cp .env.example .env.local
 corepack pnpm dev
@@ -131,7 +135,7 @@ Open `http://127.0.0.1:4173`. Build static deployment assets with:
 corepack pnpm build
 ```
 
-Upload `web-spa/dist/` to OSS, S3-compatible object storage, or a CDN. The output contains no
+Upload `admin/dist/` to OSS, S3-compatible object storage, or a CDN. The output contains no
 frontend server bundle or production Node.js runtime.
 
 ## Enable Business Starters
@@ -176,8 +180,8 @@ dependencies, security properties, and intentional limits.
 ## Architecture
 
 ```text
-Next.js Console                  Static SPA
-SSR + server adapters            OSS/CDN assets + browser gateway
+Customer Web                    Admin Console
+Next.js + server adapters        Vite SPA + browser gateway
          \                       /
           documented HTTP contracts
                      |
@@ -189,8 +193,10 @@ SSR + server adapters            OSS/CDN assets + browser gateway
 ```
 
 - `api/` owns domain rules, persistence, migrations, routes, workers, and provider integrations.
-- `web/` owns Next.js routes, browser workflows, UI state, server adapters, and development mocks.
-- `web-spa/` owns static routes, browser state, validated HTTP clients, and CDN output.
+- `web/` owns customer-facing Next.js routes, account/workspace journeys, UI
+  state, server adapters, and development mocks.
+- `admin/` owns project management routes, operator-facing state, validated
+  HTTP clients, and static CDN output.
 - `contracts/` owns stable request, response, `error_code`, `request_id`, pagination, and
   compatibility semantics.
 - `docs/` owns architecture, security, deployment, CI, and extension guidance.
@@ -287,8 +293,8 @@ benchmark, container, and security commands.
 ```text
 luas/
 |-- api/          # Go API, starters, workers, migrations, and CLI
-|-- web/          # Next.js application and complete console
-|-- web-spa/      # Static Vite and TanStack browser shell
+|-- web/          # Customer-facing Next.js application
+|-- admin/        # Vite and TanStack project management console
 |-- contracts/    # Shared HTTP and starter contracts
 |-- docs/         # Architecture, security, delivery, and extension guides
 `-- Makefile      # Workspace verification commands
@@ -299,13 +305,13 @@ luas/
 | Topic | Start here |
 |---|---|
 | API development and commands | [api/README.md](api/README.md) |
-| Next.js console | [web/README.md](web/README.md) |
-| Static SPA and CDN deployment | [web-spa/README.md](web-spa/README.md) |
+| Customer Web application | [web/README.md](web/README.md) |
+| Admin Console and CDN deployment | [admin/README.md](admin/README.md) |
 | Architecture and ownership | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | HTTP contracts | [contracts/README.md](contracts/README.md) |
 | Add an API starter or module | [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) |
 | Add a Next.js feature | [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) |
-| Add a static SPA feature | [web-spa/docs/ADDING_FEATURE.md](web-spa/docs/ADDING_FEATURE.md) |
+| Add an Admin Console feature | [admin/docs/ADDING_FEATURE.md](admin/docs/ADDING_FEATURE.md) |
 | Starter capability matrix | [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 | CI and releases | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
 | Dependency and container security | [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) and [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |

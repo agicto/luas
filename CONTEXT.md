@@ -14,7 +14,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 **Scaffold**
 : The assembled starting point shipped by this repository: core runtime, default starters, browser
-  shell alternatives, mock development flows, contracts, docs, and agent guidance.
+  applications, mock development flows, contracts, docs, and agent guidance.
 
 **Starter kit**
 : The product category Luas belongs to. Use this term in public positioning. Avoid describing Luas as only a framework unless talking specifically about reusable runtime internals.
@@ -75,19 +75,20 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 **Browser shell**
 : A browser-facing application implementation that consumes Luas HTTP contracts. Luas ships the
-  Next.js Web shell and the static SPA shell as independent alternatives; downstream apps normally
-  select one rather than maintain both.
+  customer-facing Next.js Web application and the project Admin Console as
+  independent deployables; downstream apps may operate either or both.
 
-**Web shell**
-: The Next.js browser-shell implementation under `web/`. It includes route groups, providers,
-  layout, design-system integration, i18n, mock auth, server-only production adapters, and
-  starter/example UI.
+**Web application**
+: The customer-facing Next.js implementation under `web/`. It includes public
+  routes, account journeys, user workspace flows, providers, i18n, mock auth,
+  and server-only production adapters.
 
-**Static SPA shell**
-: The Vite and TanStack Router browser-shell implementation under `web-spa/`. It preserves the
-  feature-first, contract, error, state, i18n, and design-system architecture while emitting only
-  static OSS/CDN assets. It has no BFF, server function, secret environment, or production Node.js
-  runtime.
+**Admin Console**
+: The project management application under `admin/`, implemented as a Vite
+  and TanStack Router SPA. It owns operator and administrative workflows while
+  preserving the shared contract, error, state, i18n, and design-system
+  architecture. It emits static OSS/CDN assets and has no BFF, server function,
+  secret environment, or production Node.js runtime.
 
 **Browser gateway**
 : A same-origin server or ingress boundary used by a static browser shell for fixed API operations,
@@ -211,8 +212,9 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 **Default scaffold**
 : The out-of-the-box Luas source assembled from core plus the default starter set, browser-shell
-  alternatives, contracts, docs, and verification tooling. A downstream app selects the Next.js
-  Web shell or static SPA shell and removes the alternative it will not maintain.
+  applications, contracts, docs, and verification tooling. A downstream app
+  keeps the customer Web application, Admin Console, or both according to its
+  delivery model.
 
 **error_code**
 : The canonical machine-readable branch field for non-2xx HTTP responses. Format is uppercase dot-separated scopes such as `COMMON.NOT_FOUND` or `AUTH.INVALID_CREDENTIALS`.
@@ -241,11 +243,11 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - A starter may span persistence, HTTP routes, contracts, mock BFF behavior, UI, tests, and docs.
 - A feature is product-facing behavior; a module is the internal implementation shape behind a seam.
 - Core and capabilities are reusable; starters and features express application behavior.
-- Contracts connect deployable units. Source code is not shared across the API, Web shell, or
-  static SPA shell.
-- The Web shell and static SPA shell are alternative browser implementations. Behavioral parity
-  comes from contracts and tests, not source imports.
-- The static SPA shell requires a browser gateway or explicit browser-session API before protected
+- Contracts connect deployable units. Source code is not shared across the API,
+  Web application, or Admin Console.
+- The Web application and Admin Console have different audiences and may run
+  together. Shared behavior comes from contracts and tests, not source imports.
+- The Admin Console requires a browser gateway or explicit browser-session API before protected
   authentication is production-complete; browser storage never replaces HttpOnly credential
   custody.
 - Active organization context is selected per request and verified against current membership.
@@ -276,10 +278,11 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
 - **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's opaque authentication-session endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.
-- **Web shell vs static SPA shell**: Web means the Next.js implementation with server-owned
-  adapters and mock BFF routes. Static SPA means the Vite/TanStack implementation deployed as
-  browser assets. They share contracts and vocabulary, not source or server capabilities.
-- **static SPA vs browser gateway**: The SPA owns browser UI and public build configuration. A
+- **Web application vs Admin Console**: Web serves customer-facing journeys
+  through Next.js and server-owned adapters. Admin serves project management
+  workflows through a static Vite/TanStack application. They may coexist and
+  share contracts and vocabulary, never source code.
+- **Admin Console vs browser gateway**: The Admin Console owns browser UI and public build configuration. A
   browser gateway owns HttpOnly credentials, unsafe-request protection, and fixed server mappings;
   CDN fallback routing or browser storage is not a gateway.
 - **console vs product dashboard**: Console is a replaceable scaffold workspace. A downstream app may rename or replace it.

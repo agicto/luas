@@ -62,7 +62,7 @@ for (const dependency of [
   'next',
 ]) {
   if (dependencies[dependency]) {
-    failures.push(`package.json must not add ${dependency} to the static SPA`);
+    failures.push(`package.json must not add ${dependency} to the Admin Console`);
   }
 }
 
@@ -174,7 +174,7 @@ for (const marker of ['check-static-output.mjs', 'check-bundle-budget.mjs']) {
 }
 
 if (failures.length > 0) {
-  console.error('Static SPA architecture check failed:');
+  console.error('Admin Console architecture check failed:');
   for (const failure of failures) {
     console.error(`  ${failure}`);
   }
@@ -182,5 +182,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `Static SPA architecture check passed (${files.length} production source files checked).`,
+  `Admin Console architecture check passed (${files.length} production source files checked).`,
 );

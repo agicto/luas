@@ -1,4 +1,4 @@
-# Adding A Web SPA Feature
+# Adding An Admin Console Feature
 
 ## Placement
 

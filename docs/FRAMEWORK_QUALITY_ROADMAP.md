@@ -20,9 +20,10 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 ## Current Baseline
 
 - Global vocabulary now lives in [`../CONTEXT.md`](../CONTEXT.md).
-- API, Next.js Web, and static SPA remain independent deployable units and share contracts, not
-  source code. Downstream apps normally select one browser shell.
-- The static SPA now provides a Vite 8, React 19, TanStack Router/Query, feature-first alternative
+- API, customer-facing Next.js Web, and the project Admin Console remain
+  independent deployable units and share contracts, not source code.
+  Downstream apps may operate either frontend or both.
+- The Admin Console now provides a Vite 8, React 19, TanStack Router/Query, feature-first management surface
   for OSS/CDN delivery. Its build emits no server runtime or source maps, enforces compressed
   JavaScript/CSS budgets, validates public environment and API responses, and keeps protected auth
   explicitly behind a same-origin browser gateway rather than browser token storage.
@@ -65,9 +66,9 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   projects reject unsupported Node lines, use Node 22.12+/24 LTS with Node 22 type semantics, and
   pin pnpm 10.34.5 with a 24-hour resolution quarantine, trust non-downgrade, blocked exotic
   transitive sources, and a strict five-version build-script allowlist. A checksum-pinned
-  OSV-Scanner 2.3.8 scans `api/go.mod`, `web/pnpm-lock.yaml`, and `web-spa/pnpm-lock.yaml`, exports a
+  OSV-Scanner 2.3.8 scans `api/go.mod`, `web/pnpm-lock.yaml`, and `admin/pnpm-lock.yaml`, exports a
   validated CycloneDX 1.5 SBOM, and permits only reasoned, expiring exceptions.
-- Container supply-chain policy covers the API and Next.js Web images. The static SPA deliberately
+- Container supply-chain policy covers the API and Next.js Web images. The Admin Console deliberately
   has no runtime image and is governed as a static build artifact. Dockerfile frontend and every
   external base use exact versions plus multi-platform digests; Buildx verifiers require OCI
   source/revision/version labels and maximal BuildKit evidence containing every reviewed material.
@@ -137,7 +138,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Web request locale detection is isolated in `src/i18n/locale-resolution.ts` with unit tests for cookie, `Accept-Language`, and default fallback behavior.
 - Web environment access is guarded by `src/test/env-contract.test.ts`: `src/config/env.ts` resolves public values without a schema-library runtime, `src/config/env-validation.ts` keeps Zod validation server-only, `src/config/server-env.ts` owns secrets and mock runtime switches, and production requires `SESSION_SECRET` only when the mock BFF is explicitly enabled. Production browser chunks contain neither server-only names nor Zod.
 - Root verification is split into `make governance` for scaffold guardrails and `make check` for
-  governance plus API, Next.js Web, and static SPA verification tiers. CI also calls
+  governance plus API, Next.js Web, and Admin Console verification tiers. CI also calls
   `make governance` for the root governance job. `run-tiers.sh` prints failing command exit codes,
   full log paths, and configurable log tails for faster repair loops.
 - External GitHub Actions are pinned to reviewed full commit SHAs, use Node 24-compatible releases,
@@ -160,7 +161,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell; static SPA ports require their browser-gateway contract. Billing and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell; Admin Console ports require their browser-gateway contract. Billing and AI workspace remain planned.
 
 ## Candidate Queue
 

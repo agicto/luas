@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { normalizeLocale, resolvePreferredLocale } from './locale';
 
-describe('SPA locale resolution', () => {
+describe('Admin locale resolution', () => {
   it('normalizes supported language and region variants', () => {
     expect(normalizeLocale('en-US')).toBe('en-US');
     expect(normalizeLocale('en-GB')).toBe('en-US');

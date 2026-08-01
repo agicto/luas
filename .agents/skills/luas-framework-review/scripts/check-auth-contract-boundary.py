@@ -109,11 +109,11 @@ def main() -> int:
         failures,
         "contracts/AUTHENTICATION.md",
         (
-            "## Static SPA Authentication Boundary",
-            "`web-spa/` has no server runtime",
+            "## Admin Console Authentication Boundary",
+            "`admin/` has no server runtime",
             "same-origin browser gateway",
             "must not be stored in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected SPA authentication is deliberately incomplete",
+            "protected Admin Console authentication is deliberately incomplete",
         ),
     )
     require_all(
@@ -392,19 +392,19 @@ def main() -> int:
     )
     require_all(
         failures,
-        "web-spa/docs/SECURITY.md",
+        "admin/docs/SECURITY.md",
         (
             "Every byte under `dist/` is public",
             "reviewed browser gateway or Go adapter",
             "HttpOnly session cookie",
             "Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected SPA auth is not",
+            "protected Admin Console auth is not",
             "A client-side route guard",
         ),
     )
     require_all(
         failures,
-        "web-spa/src/http/client.ts",
+        "admin/src/http/client.ts",
         (
             "credentials: 'include'",
             "HttpStatusErrorCodeMap[response.status]",

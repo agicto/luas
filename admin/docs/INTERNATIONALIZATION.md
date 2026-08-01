@@ -1,6 +1,6 @@
 # Internationalization
 
-The static SPA uses `i18next` and `react-i18next`. Its locale contract matches
+The Admin Console uses `i18next` and `react-i18next`. Its locale contract matches
 the Next.js Web shell and shared settings API while remaining fully
 browser-hosted.
 

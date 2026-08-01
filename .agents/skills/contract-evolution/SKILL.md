@@ -50,7 +50,7 @@ Read only the authorities touched by the change:
    - Validate security- or state-sensitive success payloads at the network boundary; TypeScript DTOs do not validate external JSON.
    - Select user-facing copy from stable local mappings. Use backend field-error keys for control association, not backend messages as display copy.
    - Keep both browser shells talking to API behavior over HTTP only; they do not import each other.
-   - In `web-spa/`, keep fixed paths in feature services and validate important responses with Zod.
+   - In `admin/`, keep fixed paths in feature services and validate important responses with Zod.
    - Add or update tests in every changed browser shell for contract-sensitive parsing, error handling, or route behavior.
 
 5. **Update mock BFF behavior**
@@ -82,9 +82,9 @@ multiple deployable units move.
 - Web behavior or mock BFF:
   - `cd web && pnpm vitest run src/test/mock-bff-route-contract.test.ts`
   - `cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
-- Static SPA behavior:
-  - `cd web-spa && pnpm vitest run src/http/client.test.ts`
-  - `cd web-spa && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
+- Admin Console behavior:
+  - `cd admin && pnpm vitest run src/http/client.test.ts`
+  - `cd admin && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 0`
 - Cross-boundary change:
   - `make check`
   - targeted `rg` scans for old paths, fields, and error codes

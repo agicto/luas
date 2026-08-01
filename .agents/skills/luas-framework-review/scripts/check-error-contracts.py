@@ -17,7 +17,7 @@ API_DOMAIN_CODES = ROOT / "api" / "internal" / "domain" / "error_codes.go"
 OPENAPI_CONTRACT = ROOT / "contracts" / "openapi.yaml"
 BROWSER_CODE_PATHS = {
     "web": ROOT / "web" / "src" / "http" / "codes.ts",
-    "web-spa": ROOT / "web-spa" / "src" / "http" / "codes.ts",
+    "admin": ROOT / "admin" / "src" / "http" / "codes.ts",
 }
 
 
@@ -227,19 +227,19 @@ def main() -> int:
             )
 
     next_codes = browser_api_codes["web"]
-    spa_codes = browser_api_codes["web-spa"]
-    if next_codes != spa_codes:
-        only_next = sorted(next_codes - spa_codes)
-        only_spa = sorted(spa_codes - next_codes)
+    admin_codes = browser_api_codes["admin"]
+    if next_codes != admin_codes:
+        only_next = sorted(next_codes - admin_codes)
+        only_admin = sorted(admin_codes - next_codes)
         if only_next:
             failures.append(
-                "web-spa/src/http/codes.ts is missing Next.js Web ApiErrorCode values: "
+                "admin/src/http/codes.ts is missing Next.js Web ApiErrorCode values: "
                 + ", ".join(only_next)
             )
-        if only_spa:
+        if only_admin:
             failures.append(
-                "web/src/http/codes.ts is missing static SPA ApiErrorCode values: "
-                + ", ".join(only_spa)
+                "web/src/http/codes.ts is missing Admin Console ApiErrorCode values: "
+                + ", ".join(only_admin)
             )
 
     if failures:

@@ -1,6 +1,6 @@
-.PHONY: check agent-check governance contract-check contract-generate api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom clean clean-all
+.PHONY: check agent-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
 
-check: governance contract-check api-check web-check web-spa-check
+check: governance contract-check api-check web-check admin-check
 
 contract-check:
 	cd contracts && corepack pnpm check
@@ -26,7 +26,7 @@ governance: agent-check
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-performance-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-security-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py
-	node web-spa/scripts/check-architecture.mjs
+	node admin/scripts/check-architecture.mjs
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-api-key-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-audit-boundary.py
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-permission-boundary.py
@@ -54,8 +54,8 @@ api-check:
 web-check:
 	cd web && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 
-web-spa-check:
-	cd web-spa && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
+admin-check:
+	cd admin && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 2
 
 dependency-scan:
 	bash scripts/dependency-security.sh scan
@@ -79,10 +79,10 @@ clean:
 	find api -type d -path '*/storage/logs' -prune -exec rm -rf {} +
 	cd web && corepack pnpm clean
 	rm -f web/next-env.d.ts
-	cd web-spa && corepack pnpm clean
+	cd admin && corepack pnpm clean
 	rm -rf .ruff_cache .pytest_cache
 	find . \( -path './.git' -o -name node_modules -o -name .next \) -prune -o -type d -name __pycache__ -exec rm -rf {} +
 
 # Also remove installed JavaScript dependencies for a cold workspace reset.
 clean-all: clean
-	rm -rf contracts/node_modules web/node_modules web-spa/node_modules
+	rm -rf contracts/node_modules web/node_modules admin/node_modules

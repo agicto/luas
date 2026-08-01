@@ -50,7 +50,7 @@ updates:
       prefix: deps(api)
 
   - package-ecosystem: npm
-    directory: /web-spa
+    directory: /admin
     schedule:
       interval: weekly
       day: monday
@@ -58,14 +58,14 @@ updates:
       timezone: Europe/Dublin
     open-pull-requests-limit: 5
     groups:
-      web-spa-production-minor-patch:
+      admin-production-minor-patch:
         dependency-type: production
         update-types: [minor, patch]
-      web-spa-development-minor-patch:
+      admin-development-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
     commit-message:
-      prefix: deps(web-spa)
+      prefix: deps(admin)
 
   - package-ecosystem: github-actions
     directory: /

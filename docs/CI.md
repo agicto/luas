@@ -7,7 +7,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 
 | Workflow | Responsibility | Default token permission |
 |---|---|---|
-| `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, PostgreSQL 15-18 compatibility, plus Next.js Web and static SPA type/lint/test/build gates | `contents: read` |
+| `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, PostgreSQL 15-18 compatibility, plus Next.js Web and Admin Console type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module validators and repository Skill metadata | `contents: read` |
@@ -50,7 +50,7 @@ The Web image smoke check also requests `/login` from the running standalone ser
 the centralized production browser-security response policy. This proves image/runtime wiring; the
 unit test and root governance check separately own policy semantics and Next.js Proxy conventions.
 
-The action runtime is separate from browser project runtimes: CI tests both `web/` and `web-spa/`
+The action runtime is separate from browser project runtimes: CI tests both `web/` and `admin/`
 on Node 22 and Node 24. Node 22 remains the production image and type-definition baseline. Each
 pnpm version comes from that project's `packageManager`; the setup action receives its exact
 `package_json_file` instead of duplicating the version in workflow YAML. Both workspaces require
@@ -79,7 +79,7 @@ when the target commit has no schema.
 
 The Dependency Security workflow calls the same root script available to developers. It downloads
 OSV-Scanner 2.3.8 from the official release, verifies the platform asset by SHA-256, scans
-`api/go.mod` plus the contracts, Web, and Web SPA pnpm lockfiles, validates a CycloneDX 1.5
+`api/go.mod` plus the contracts, Web, and Admin Console pnpm lockfiles, validates a CycloneDX 1.5
 inventory, and uploads that inventory for 14 days. It uses read-only repository permission and does
 not depend on private-repository GitHub Advanced Security availability.
 

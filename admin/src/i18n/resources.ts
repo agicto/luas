@@ -71,7 +71,7 @@ const enUS = {
       backToConsole: 'Back to console',
     },
     common: {
-      staticSpa: 'Static SPA',
+      adminConsole: 'Admin Console',
       development: 'Development',
       production: 'Production',
     },
@@ -147,7 +147,7 @@ const zhHans = {
       backToConsole: '返回控制台',
     },
     common: {
-      staticSpa: '静态 SPA',
+      adminConsole: '管理后台',
       development: '开发环境',
       production: '生产环境',
     },

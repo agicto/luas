@@ -1,5 +1,5 @@
 # Top-level Luas monorepo .gitignore
-# Deployable-unit gitignores live under api/, web/, and web-spa/.
+# Deployable-unit gitignores live under api/, web/, and admin/.
 
 # OS / editor cruft
 .DS_Store

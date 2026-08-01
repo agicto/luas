@@ -1,21 +1,21 @@
-# Web SPA Architecture
+# Admin Console Architecture
 
 ## Decision
 
-`web-spa/` is a pure client-rendered application built with Vite and TanStack
+`admin/` is a pure client-rendered application built with Vite and TanStack
 Router. Production consists only of static HTML, JavaScript, CSS, and related
 assets. It requires no Node.js process, edge function, server function, or
 framework runtime.
 
-The downstream application normally chooses one browser shell:
+The downstream application chooses deployables by audience:
 
-- `web/` when it needs SSR, server components, same-origin Route Handlers,
+- `web/` for customer-facing journeys that need SSR, server components,
   metadata rendering, or the shipped Next.js production adapter;
-- `web-spa/` when authenticated/product workflows can use a reviewed API
-  gateway and static OSS/CDN delivery is the better operational fit.
+- `admin/` for project management workflows that can use a reviewed API
+  gateway and benefit from static OSS/CDN delivery.
 
-Keeping both in Luas demonstrates supported architecture alternatives. A
-downstream product should remove the one it does not intend to maintain.
+Projects may deploy either application or both. Each remains independently
+buildable and communicates with the API only through reviewed contracts.
 
 ## Why TanStack Router, Not TanStack Start
 

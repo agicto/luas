@@ -46,7 +46,7 @@ const parsed = envSchema.safeParse({
 
 if (!parsed.success) {
   const fields = parsed.error.issues.map((issue) => issue.path.join('.')).join(', ');
-  throw new Error(`Invalid public SPA environment: ${fields}`);
+  throw new Error(`Invalid public Admin environment: ${fields}`);
 }
 
 export const env = Object.freeze(parsed.data);

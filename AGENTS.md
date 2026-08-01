@@ -8,13 +8,14 @@ Luas is an AI-era scaffold, not a product application:
 
 - `api/`: Go backend (`github.com/zgiai/luas/api`) using Gin, Wire, GORM, and
   DDD-flavored starter modules.
-- `web/`: Next.js 16, React 19, TypeScript, Tailwind 4, and shadcn, organized
-  by feature under `src/features/`.
-- `web-spa/`: Vite 8, React 19, TanStack Router, TanStack Query, TypeScript,
-  Tailwind 4, and shadcn/ui, built as static OSS/CDN assets.
+- `web/`: customer-facing Next.js 16 application with React 19, TypeScript,
+  Tailwind 4, shadcn, SSR, and server-owned browser adapters.
+- `admin/`: project management console built with Vite 8, React 19, TanStack
+  Router, TanStack Query, TypeScript, Tailwind 4, and shadcn/ui. It ships as
+  static OSS/CDN assets.
 
 All deployable units are independent and share HTTP contracts, never source
-code. Downstream applications normally choose either `web/` or `web-spa/`.
+code. Downstream applications may deploy `web/`, `admin/`, or both.
 
 ## Fast Task Routing
 
@@ -22,7 +23,7 @@ Start with the smallest context that can answer the task:
 
 1. Inspect the current diff/status and the nearest implementation and tests.
 2. Read the nearest `api/AGENTS.md`, `web/AGENTS.md`, or
-   `web-spa/AGENTS.md` only when editing that deployable unit.
+   `admin/AGENTS.md` only when editing that deployable unit.
 3. Open `CONTEXT.md` for global vocabulary or ownership decisions, not for
    routine local edits.
 4. Open the owning contract or architecture document only when that boundary
@@ -37,7 +38,7 @@ Expand context only when the current evidence leaves a real decision open.
 ### Skill Selection
 
 Root skills live in `.agents/skills/`; API and Next.js Web add local skills.
-The static SPA uses root skills plus `web-spa/AGENTS.md`.
+The Admin Console uses root skills plus `admin/AGENTS.md`.
 Codex loads skill metadata at discovery time and reads a full `SKILL.md` only
 after selecting it.
 
@@ -66,7 +67,7 @@ The complete skill index and helper catalog are in
 | Capability-specific HTTP behavior | The owning file under `contracts/` |
 | API implementation rules | [api/AGENTS.md](api/AGENTS.md) |
 | Web implementation rules | [web/AGENTS.md](web/AGENTS.md) |
-| Static SPA implementation rules | [web-spa/AGENTS.md](web-spa/AGENTS.md) |
+| Admin Console implementation rules | [admin/AGENTS.md](admin/AGENTS.md) |
 | Long-running priorities | [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md), [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 
 `CONTEXT.md` wins when terminology conflicts. The owning contract wins for
@@ -95,7 +96,7 @@ During implementation, run the narrowest check that proves the edited seam:
 - Agent guidance or skill-only change: `make agent-check`
 - API package change: targeted `go test`, then the relevant API tier
 - Web feature change: targeted Vitest, type check, or lint for that surface
-- Web SPA change: targeted Vitest, type check, lint, or static production build
+- Admin Console change: targeted Vitest, type check, lint, or static production build
 - Contract change: owning contract guard plus tests on each changed side
 - Release or genuinely cross-cutting change: `make check`
 
@@ -123,11 +124,11 @@ cd web && corepack pnpm lint
 cd web && corepack pnpm vitest run <test-file>
 cd web && corepack pnpm build
 
-# Static Web SPA
-cd web-spa && corepack pnpm type-check
-cd web-spa && corepack pnpm lint
-cd web-spa && corepack pnpm vitest run <test-file>
-cd web-spa && corepack pnpm build
+# Admin Console
+cd admin && corepack pnpm type-check
+cd admin && corepack pnpm lint
+cd admin && corepack pnpm vitest run <test-file>
+cd admin && corepack pnpm build
 
 # Release gate
 make check

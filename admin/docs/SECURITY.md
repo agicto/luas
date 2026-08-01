@@ -1,4 +1,4 @@
-# Web SPA Security
+# Admin Console Security
 
 ## Static Trust Boundary
 
@@ -31,7 +31,7 @@ The gateway owns:
 The existing Go `/v1/login` bearer response is server-to-server/API behavior.
 Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB,
 Zustand persistence, query cache, URLs, logs, or analytics. Until a browser
-gateway or explicit browser-session API exists, protected SPA auth is not
+gateway or explicit browser-session API exists, protected Admin Console auth is not
 production-complete.
 
 ## Cross-Origin APIs

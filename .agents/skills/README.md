@@ -10,13 +10,13 @@ skill metadata first and loads a full `SKILL.md` only after selecting it.
 | Repository root | 10 root skills |
 | `api/` | 10 root + 9 API skills |
 | `web/` | 10 root + 13 Web skills |
-| `web-spa/` | 10 root skills + local `AGENTS.md` |
+| `admin/` | 10 root skills + local `AGENTS.md` |
 
 The repository ships 32 skills in total. User, system, and plugin skills may
 also appear in Codex; do not add a repository skill with the same name as a
 known built-in skill.
 
-`web-spa/` uses the root workflows and its focused local instructions. It does
+`admin/` uses the root workflows and its focused local instructions. It does
 not duplicate the Next-specific skill set under `web/.agents/skills/`.
 
 ## Routing Policy
@@ -125,7 +125,7 @@ All guards live under `luas-framework-review/scripts/`.
 | AI/email | `check-ai-boundary.py`, `check-email-boundary.py` |
 | Rate limits/cache/PostgreSQL-only database policy/config/telemetry | `check-rate-limit-boundary.py`, `check-cache-boundary.py`, `check-database-boundary.py`, `check-config-authority.py`, `check-sensitive-telemetry.py` |
 | Web performance/security/primitives | `check-web-performance-boundary.py`, `check-web-security-boundary.py`, `check-web-ui-primitive-boundary.py` |
-| Static SPA architecture/security | `web-spa/scripts/check-architecture.mjs`, `check-auth-contract-boundary.py` |
+| Admin Console architecture/security | `admin/scripts/check-architecture.mjs`, `check-auth-contract-boundary.py` |
 | CI/dependencies/containers | `check-ci-actions.py`, `check-dependency-supply-chain.py`, `check-container-supply-chain.py` |
 | Scaffold surfaces/starters | `check-surface-catalog.py`, `check-starter-catalog.py` |
 | API imports and branch policy | `check-api-boundaries.sh`, `check-branch-governance.sh` |

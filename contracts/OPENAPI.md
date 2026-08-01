@@ -9,7 +9,7 @@ idempotency, retention, and other semantics that OpenAPI cannot express precisel
 
 - Redocly CLI validates OpenAPI structure and repository rules.
 - `openapi-typescript` generates deterministic TypeScript types independently into `web/` and
-  `web-spa/`; neither browser shell imports source from the other.
+  `admin/`; neither browser shell imports source from the other.
 - The route check starts the real Go route catalog with infrastructure disabled and verifies every
   described method and normalized path.
 - `oasdiff` compares a pull request against its target commit and rejects unreviewed breaking

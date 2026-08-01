@@ -41,7 +41,7 @@ REQUIRED_REFERENCES = [
     "../web/docs/MOCK_BFF.md",
     "../api/docs/ADDING_MODULE.md",
     "../web/docs/ADDING_FEATURE.md",
-    "../web-spa/docs/ADDING_FEATURE.md",
+    "../admin/docs/ADDING_FEATURE.md",
     "check-downstream-contamination.sh",
     "check-surface-catalog.py",
     "check-starter-catalog.py",

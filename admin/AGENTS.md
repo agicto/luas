@@ -1,11 +1,12 @@
-# AGENTS.md - Luas Web SPA
+# AGENTS.md - Luas Admin Console
 
-Rules for the static React application under `web-spa/`.
+Rules for the static React application under `admin/`.
 
 ## Scope
 
-The SPA uses Vite, React 19, TypeScript, TanStack Router, TanStack Query,
-Zustand, Tailwind 4, shadcn/ui, i18next, Zod, and Vitest. It
+The Admin Console is the project's management application. It uses Vite,
+React 19, TypeScript, TanStack Router, TanStack Query, Zustand, Tailwind 4,
+shadcn/ui, i18next, Zod, and Vitest. It
 builds browser-only assets under `dist/`; no Node.js runtime or server function
 may be required in production.
 
@@ -28,7 +29,7 @@ src/lib/                 generic pure helpers
 src/styles/              tokens and global styles
 src/test/                shared test setup
 scripts/                 deterministic build-output and budget checks
-docs/                    SPA-specific architecture, security, and deployment
+docs/                    Admin-specific architecture, security, and deployment
 ```
 
 ## Architecture Rules
@@ -142,7 +143,7 @@ corepack pnpm build
 `pnpm build` verifies that output is static, source maps are absent, and bundle
 budgets pass. Use browser verification for changed workflows and responsive
 layout. Use `cd .. && make check` only for a cross-cutting change or explicit
-release, not for every SPA commit or push.
+release, not for every Admin Console commit or push.
 
 ## Do Not
 

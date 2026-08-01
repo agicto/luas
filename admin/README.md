@@ -1,13 +1,14 @@
-# Luas Web SPA
+# Luas Admin Console
 
-`web-spa/` is Luas's lightweight browser shell for applications that do not
-need SSR, server components, or a frontend Node.js runtime. It produces static
-assets that can be uploaded directly to OSS/S3-compatible object storage and
-served through a CDN.
+`admin/` is Luas's project management console. It owns operator and
+administrative workflows and is implemented as a lightweight Vite SPA. It
+produces static assets that can be uploaded directly to OSS/S3-compatible
+object storage and served through a CDN.
 
-It is an alternative to `web/`, not a package imported by it. Both browser
-shells follow the same feature-first and HTTP-contract architecture while
-keeping independent source, dependencies, builds, and deployment policy.
+It complements the customer-facing `web/` application and is never imported by
+it. Projects may deploy either application or both. They follow the same
+feature-first and HTTP-contract architecture while keeping independent source,
+dependencies, builds, and deployment policy.
 
 ## Stack
 
@@ -81,7 +82,7 @@ so the static shell does not require cookies or a frontend server.
 
 ## Internationalization
 
-The SPA uses the same public locale identifiers as Web and the settings
+The Admin Console uses the same public locale identifiers as Web and the settings
 contract: `en-US` and `zh-Hans`. i18next resolves a stored display preference,
 browser language preferences, then `VITE_DEFAULT_LOCALE`. Locale choice is
 browser-only display state and contains no account or credential data.

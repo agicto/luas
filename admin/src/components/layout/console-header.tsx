@@ -41,7 +41,7 @@ export function ConsoleHeader() {
       </nav>
 
       <div className="ml-auto flex items-center gap-2">
-        <StatusBadge className="hidden sm:inline-flex">{t('common.staticSpa')}</StatusBadge>
+        <StatusBadge className="hidden sm:inline-flex">{t('common.adminConsole')}</StatusBadge>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

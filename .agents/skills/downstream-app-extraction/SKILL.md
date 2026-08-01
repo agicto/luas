@@ -27,8 +27,8 @@ Read these before extraction work:
 3. `AGENTS.md`, plus the nearest deployable unit's `AGENTS.md`.
 4. `web/docs/MOCK_BFF.md` when deleting or replacing mock route handlers.
 5. `api/docs/ADDING_MODULE.md` when keeping or adding backend starter-style behavior.
-6. `web/docs/ADDING_FEATURE.md` or `web-spa/docs/ADDING_FEATURE.md` for the
-   selected browser shell.
+6. `web/docs/ADDING_FEATURE.md` for customer journeys and
+   `admin/docs/ADDING_FEATURE.md` for project management workflows.
 7. `contracts/README.md` when real API behavior or HTTP client behavior changes.
 8. `contracts/ASSETS.md`, `api/docs/ASSETS.md`, and `web/docs/ASSETS.md` when retaining or removing
    uploaded-object behavior.
@@ -118,10 +118,10 @@ Classify each touched surface before changing it.
 4. **Preserve contracts**
    - Update `contracts/README.md` first if request or response behavior changes.
    - Keep `error_code`, `request_id`, validation errors, and pagination stable across API, Web services, and any retained mock BFF.
-   - Do not share source between `api/`, `web/`, and `web-spa/`; share
+   - Do not share source between `api/`, `web/`, and `admin/`; share
      documented contracts.
-   - Select the Next.js Web shell or static SPA shell and remove the alternative
-     the downstream app will not maintain.
+   - Keep `web/`, `admin/`, or both according to the downstream audiences and
+     deployment model; remove only a deployable the product will not maintain.
 
 5. **Clean product leakage**
    - Search for downstream product names, old product names, deployment names, job names, remote URLs, demo credentials, and content pipeline terms.

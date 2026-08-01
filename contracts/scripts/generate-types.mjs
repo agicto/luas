@@ -7,7 +7,7 @@ const contractDirectory = fileURLToPath(new URL('../', import.meta.url));
 const schemaURL = new URL('../openapi.yaml', import.meta.url);
 const outputs = [
   new URL('../../web/src/http/generated/openapi.ts', import.meta.url),
-  new URL('../../web-spa/src/http/generated/openapi.ts', import.meta.url),
+  new URL('../../admin/src/http/generated/openapi.ts', import.meta.url),
 ];
 const checkOnly = process.argv.includes('--check');
 const header = [

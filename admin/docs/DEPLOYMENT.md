@@ -1,4 +1,4 @@
-# Web SPA Deployment
+# Admin Console Deployment
 
 ## Artifact Contract
 
