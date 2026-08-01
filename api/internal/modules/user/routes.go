@@ -1,6 +1,8 @@
 package user
 
 import (
+	"github.com/gin-gonic/gin"
+
 	"github.com/zgiai/luas/api/internal/infra/router"
 )
 
@@ -17,6 +19,17 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 	h.protectPublicRoute(r.POST("/login", h.Login).Name("auth.login"), authEndpointLogin)
 	h.protectPublicRoute(r.POST("/password/reset", h.RequestPasswordReset).Name("auth.password.reset.request"), authEndpointPasswordReset)
 	h.protectPublicRoute(r.POST("/password/reset/confirm", h.ConfirmPasswordReset).Name("auth.password.reset.confirm"), authEndpointPasswordResetConfirm)
+
+	if h.browser != nil {
+		browserLogin := r.POST("/browser/auth/login", func(c *gin.Context) {
+			h.browser.login(c, h.authGuard)
+		}).Name("browser.auth.login")
+		if h.browser.enabled() {
+			h.protectPublicRoute(browserLogin, authEndpointLogin)
+		}
+		r.GET("/browser/auth/me", h.browser.current).Name("browser.auth.current")
+		r.POST("/browser/auth/logout", h.browser.logout).Name("browser.auth.logout")
+	}
 
 	// Protected routes
 	r.Group("", func(auth *router.Router) {

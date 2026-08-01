@@ -66,6 +66,58 @@ func TestValidate_AcceptsValidConfig(t *testing.T) {
 	}
 }
 
+func TestValidate_BrowserSessionPolicy(t *testing.T) {
+	tests := []struct {
+		name        string
+		environment string
+		database    bool
+		origin      string
+		wantError   string
+	}{
+		{name: "production HTTPS", environment: "production", database: true, origin: "https://admin.example.com"},
+		{name: "development loopback", environment: "development", database: true, origin: "http://127.0.0.1:4173"},
+		{name: "database required", environment: "development", origin: "http://127.0.0.1:4173", wantError: "DB_ENABLED"},
+		{name: "production HTTPS required", environment: "production", database: true, origin: "http://127.0.0.1:4173", wantError: "https"},
+		{name: "non-loopback HTTP rejected", environment: "development", database: true, origin: "http://admin.example.com", wantError: "loopback"},
+		{name: "path rejected", environment: "development", database: true, origin: "http://127.0.0.1:4173/admin", wantError: "without credentials, path"},
+		{name: "credentials rejected", environment: "development", database: true, origin: "http://user@127.0.0.1:4173", wantError: "without credentials, path"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := baseValidConfig(test.environment)
+			cfg.Database.Enabled = test.database
+			cfg.BrowserSession = BrowserSessionConfig{Enabled: true, Origin: test.origin}
+			if test.database {
+				cfg.Database.Host = "db.internal"
+				cfg.Database.Port = 5432
+				cfg.Database.Name = "luas"
+				cfg.Database.Username = "luas"
+				cfg.Database.Password = "secret"
+				cfg.Database.SSLMode = "require"
+				cfg.Database.Timezone = "UTC"
+				cfg.Database.MaxIdleConns = 10
+				cfg.Database.MaxOpenConns = 20
+				cfg.Database.ConnMaxIdleTime = time.Minute
+				cfg.Database.ConnMaxLifetime = time.Hour
+				cfg.Database.ConnectTimeout = time.Second
+				cfg.Database.SlowThreshold = time.Millisecond
+			}
+
+			err := validate(cfg)
+			if test.wantError == "" {
+				if err != nil {
+					t.Fatalf("validate() error = %v, want nil", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), test.wantError) {
+				t.Fatalf("validate() error = %v, want %q", err, test.wantError)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsInvalidDatabaseRuntimePolicy(t *testing.T) {
 	valid := DatabaseConfig{
 		Enabled:              true,
