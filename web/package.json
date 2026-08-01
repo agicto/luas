@@ -92,7 +92,7 @@
     "@vitest/coverage-v8": "4.1.9",
     "autoprefixer": "^10.4.23",
     "baseline-browser-mapping": "^2.10.40",
-    "cross-env": "^7.0.3",
+    "cross-env": "^10.1.0",
     "culori": "4.0.2",
     "eslint": "^9.39.1",
     "eslint-config-next": "16.2.11",
