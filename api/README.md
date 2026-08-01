@@ -26,6 +26,7 @@ without either browser application.
 - Wire dependency injection.
 - GORM persistence and versioned migrations.
 - Default `user`, `apikey`, and `audit` starters.
+- Optional same-origin HttpOnly browser-session adapter for static applications.
 - Provider-neutral AI capability with the `ai:chat` operator command.
 - Cancellable workflow queue capability with graceful worker shutdown.
 - Canonical API envelopes, dotted error codes, and request IDs.
@@ -175,6 +176,27 @@ make wire
 make vuln
 make air
 ```
+
+## Browser Session Adapter
+
+Static applications can use the API-owned browser session boundary instead of
+placing opaque bearer credentials in JavaScript storage. It is disabled by
+default and exposes fixed login, current-session, and logout operations only:
+
+```dotenv
+BROWSER_SESSION_ENABLED=true
+BROWSER_SESSION_ORIGIN=http://127.0.0.1:4173
+```
+
+Production requires an exact HTTPS origin and PostgreSQL-backed sessions. Route
+`/api/*` from the static application's public origin to the API, then call
+`/v1/browser/auth/login`, `/v1/browser/auth/me`, and
+`/v1/browser/auth/logout`. The adapter uses an HttpOnly `SameSite=Lax` cookie,
+rejects unsafe requests without the configured exact Origin, never emits the
+opaque credential in JSON, and is not itself system-operator authorization.
+
+See [`../contracts/AUTHENTICATION.md`](../contracts/AUTHENTICATION.md) for the
+complete contract and deployment boundary.
 
 ## Default HTTP Guardrails
 

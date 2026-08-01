@@ -13,9 +13,94 @@ servers:
   - url: /
     description: Current Luas API origin
 tags:
+  - name: Browser Auth
+    description: Optional same-origin HttpOnly browser-session adapter.
   - name: API Keys
     description: User-owned API key lifecycle.
 paths:
+  /v1/browser/auth/login:
+    post:
+      operationId: loginBrowserSession
+      summary: Create an HttpOnly browser session
+      tags: [Browser Auth]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrowserLoginRequest'
+      responses:
+        '200':
+          description: The browser session cookie is set and the minimal user view is returned.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserUserResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/browser/auth/me:
+    get:
+      operationId: getBrowserSession
+      summary: Resolve the current HttpOnly browser session
+      tags: [Browser Auth]
+      security:
+        - browserSession: []
+      responses:
+        '200':
+          description: The current minimal browser user view.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/AccountDisabled'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/browser/auth/logout:
+    post:
+      operationId: logoutBrowserSession
+      summary: Revoke and clear the current HttpOnly browser session
+      tags: [Browser Auth]
+      security:
+        - browserSession: []
+      parameters:
+        - $ref: '#/components/parameters/Origin'
+      responses:
+        '200':
+          description: The browser credential is absent locally and revoked when it existed.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrowserLogoutResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /v1/api-keys:
     get:
       operationId: listApiKeys
@@ -86,12 +171,25 @@ paths:
           $ref: '#/components/responses/ServiceUnavailable'
 components:
   securitySchemes:
+    browserSession:
+      type: apiKey
+      in: cookie
+      name: luas_browser_session
+      description: HttpOnly opaque session cookie; production uses the __Host- prefix.
     bearerSession:
       type: http
       scheme: bearer
       bearerFormat: opaque-session
       description: Opaque server-side session credential returned by the Luas login API.
   parameters:
+    Origin:
+      name: Origin
+      in: header
+      required: true
+      description: Exact configured browser origin required for unsafe browser-session operations.
+      schema:
+        type: string
+        format: uri
     Page:
       name: page
       in: query
@@ -129,6 +227,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: The request origin or authenticated authority is not allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    AccountDisabled:
+      description: The authenticated account is disabled.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    RateLimited:
+      description: The authentication attempt exceeded a configured abuse limit.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     APIKeyNotFound:
       description: The API key is missing or is not owned by the caller.
       content:
@@ -154,6 +270,70 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    BrowserLoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        password:
+          type: string
+          minLength: 6
+          maxLength: 50
+    BrowserUser:
+      type: object
+      additionalProperties: false
+      required: [id, email, name]
+      properties:
+        id:
+          type: string
+          pattern: '^[1-9][0-9]*$'
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+    BrowserUserData:
+      type: object
+      additionalProperties: false
+      required: [user]
+      properties:
+        user:
+          $ref: '#/components/schemas/BrowserUser'
+    BrowserUserResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/BrowserUserData'
+    BrowserLogoutData:
+      type: object
+      additionalProperties: false
+      required: [success]
+      properties:
+        success:
+          const: true
+    BrowserLogoutResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message, data]
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/BrowserLogoutData'
     PositiveID:
       type: integer
       format: int64

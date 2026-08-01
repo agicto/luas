@@ -36,6 +36,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/browser/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create an HttpOnly browser session */
+        post: operations["loginBrowserSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/browser/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke and clear the current HttpOnly browser session */
+        post: operations["logoutBrowserSession"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/browser/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Resolve the current HttpOnly browser session */
+        get: operations["getBrowserSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -64,6 +115,36 @@ export interface components {
             links: components["schemas"]["PaginationLinks"];
             message: string;
             meta: components["schemas"]["PaginationMeta"];
+        };
+        BrowserLoginRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        BrowserLogoutData: {
+            /** @constant */
+            success: true;
+        };
+        BrowserLogoutResponse: {
+            /** @constant */
+            code: 0;
+            data: components["schemas"]["BrowserLogoutData"];
+            message: string;
+        };
+        BrowserUser: {
+            /** Format: email */
+            email: string;
+            id: string;
+            name: string;
+        };
+        BrowserUserData: {
+            user: components["schemas"]["BrowserUser"];
+        };
+        BrowserUserResponse: {
+            /** @constant */
+            code: 0;
+            data: components["schemas"]["BrowserUserData"];
+            message: string;
         };
         CreateAPIKeyRequest: {
             /** Format: date-time */
@@ -123,6 +204,15 @@ export interface components {
         };
     };
     responses: {
+        /** @description The authenticated account is disabled. */
+        AccountDisabled: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
         /** @description The API key is missing or is not owned by the caller. */
         APIKeyNotFound: {
             headers: {
@@ -132,8 +222,26 @@ export interface components {
                 "application/json": components["schemas"]["ErrorResponse"];
             };
         };
+        /** @description The request origin or authenticated authority is not allowed. */
+        Forbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
         /** @description The request body or semantic input is invalid. */
         InvalidInput: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["ErrorResponse"];
+            };
+        };
+        /** @description The authentication attempt exceeded a configured abuse limit. */
+        RateLimited: {
             headers: {
                 [name: string]: unknown;
             };
@@ -181,6 +289,8 @@ export interface components {
     parameters: {
         /** @description Positive API key identifier. */
         APIKeyID: components["schemas"]["PositiveID"];
+        /** @description Exact configured browser origin required for unsafe browser-session operations. */
+        Origin: string;
         /** @description One-based page number. */
         Page: number;
         /** @description Requested page size, capped by the API. */
@@ -269,6 +379,90 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["APIKeyNotFound"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    loginBrowserSession: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured browser origin required for unsafe browser-session operations. */
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrowserLoginRequest"];
+            };
+        };
+        responses: {
+            /** @description The browser session cookie is set and the minimal user view is returned. */
+            200: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrowserUserResponse"];
+                };
+            };
+            400: components["responses"]["InvalidInput"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
+            429: components["responses"]["RateLimited"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    logoutBrowserSession: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Exact configured browser origin required for unsafe browser-session operations. */
+                Origin: components["parameters"]["Origin"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The browser credential is absent locally and revoked when it existed. */
+            200: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrowserLogoutResponse"];
+                };
+            };
+            403: components["responses"]["Forbidden"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getBrowserSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The current minimal browser user view. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrowserUserResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["AccountDisabled"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };

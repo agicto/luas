@@ -180,11 +180,12 @@ functions, private runtime environment, or mock BFF. Production routing serves e
 assets, routes an allowlisted `/api/*` prefix to a reviewed backend when needed, and rewrites other
 application paths to `index.html`.
 
-Static delivery does not make bearer-token storage safe. Protected workflows require a same-origin
-browser gateway or explicit Go browser-session boundary that owns HttpOnly cookies, Origin/CSRF
-enforcement, and fixed upstream mappings. Client route guards remain UX only. The initial static
-shell includes system/readiness and browser preference features; starter UI is ported against its
-contract when the required browser adapter exists. See
+Static delivery does not make bearer-token storage safe. The API provides an optional same-origin
+Go browser-session adapter that owns an HttpOnly cookie, exact Origin enforcement, and fixed auth
+operations; an equivalent reviewed gateway remains valid. Client route guards remain UX only, and
+the browser session proves identity rather than system-operator authority. The initial static shell
+includes system/readiness and browser preference features; protected starter UI is ported only after
+its authentication and authorization contracts exist. See
 [`../admin/docs/ARCHITECTURE.md`](../admin/docs/ARCHITECTURE.md) and
 [`../admin/docs/SECURITY.md`](../admin/docs/SECURITY.md).
 

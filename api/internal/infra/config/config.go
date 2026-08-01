@@ -91,6 +91,7 @@ type Config struct {
 	Queue          QueueConfig
 	Scheduler      SchedulerConfig
 	Authentication AuthenticationConfig
+	BrowserSession BrowserSessionConfig
 	Log            LogConfig
 	Sentry         SentryConfig
 	CORS           CORSConfig
@@ -315,6 +316,12 @@ type AuthenticationConfig struct {
 	SessionRetention     time.Duration
 }
 
+// BrowserSessionConfig controls the optional same-origin HttpOnly session adapter.
+type BrowserSessionConfig struct {
+	Enabled bool
+	Origin  string
+}
+
 type LogConfig struct {
 	Level       string
 	File        string
@@ -464,6 +471,10 @@ func Load() (*Config, error) {
 			SessionIdleTimeout:   env.GetDuration("AUTH_SESSION_IDLE_TIMEOUT", DefaultAuthenticationSessionIdleTimeout),
 			SessionTouchInterval: env.GetDuration("AUTH_SESSION_TOUCH_INTERVAL", DefaultAuthenticationSessionTouchInterval),
 			SessionRetention:     env.GetDuration("AUTH_SESSION_RETENTION", DefaultAuthenticationSessionRetention),
+		},
+		BrowserSession: BrowserSessionConfig{
+			Enabled: env.GetBool("BROWSER_SESSION_ENABLED", false),
+			Origin:  strings.TrimSpace(env.Get("BROWSER_SESSION_ORIGIN", "")),
 		},
 		Log: LogConfig{
 			Level:       env.Get("LOG_LEVEL", defaultLogLevel(isProd)),
@@ -784,6 +795,9 @@ func validate(cfg *Config) error {
 	if err := validateAuthenticationConfig(cfg.Authentication); err != nil {
 		return err
 	}
+	if err := validateBrowserSessionConfig(cfg.BrowserSession, cfg.Database.Enabled, isProd); err != nil {
+		return err
+	}
 	if err := validateQueueConfig(cfg.Queue, cfg.Database.Enabled); err != nil {
 		return err
 	}
@@ -924,6 +938,40 @@ func validateAuthenticationConfig(cfg AuthenticationConfig) error {
 		return fmt.Errorf("AUTH_SESSION_RETENTION must be between 0 and %s", maxRetention)
 	}
 	return nil
+}
+
+func validateBrowserSessionConfig(cfg BrowserSessionConfig, databaseEnabled, production bool) error {
+	if !cfg.Enabled {
+		return nil
+	}
+	if !databaseEnabled {
+		return fmt.Errorf("DB_ENABLED must be true when BROWSER_SESSION_ENABLED is true")
+	}
+
+	origin := strings.TrimSpace(cfg.Origin)
+	parsed, err := url.Parse(origin)
+	if err != nil || !parsed.IsAbs() || parsed.Host == "" || parsed.User != nil ||
+		parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return fmt.Errorf("BROWSER_SESSION_ORIGIN must be an absolute origin without credentials, path, query, or fragment")
+	}
+	if parsed.Scheme != "https" && parsed.Scheme != "http" {
+		return fmt.Errorf("BROWSER_SESSION_ORIGIN must use http or https")
+	}
+	if production && parsed.Scheme != "https" {
+		return fmt.Errorf("BROWSER_SESSION_ORIGIN must use https in production")
+	}
+	if parsed.Scheme == "http" && !isLoopbackHostname(parsed.Hostname()) {
+		return fmt.Errorf("BROWSER_SESSION_ORIGIN may use http only for a loopback host")
+	}
+	return nil
+}
+
+func isLoopbackHostname(hostname string) bool {
+	if strings.EqualFold(strings.TrimSpace(hostname), "localhost") {
+		return true
+	}
+	ip := net.ParseIP(strings.TrimSpace(hostname))
+	return ip != nil && ip.IsLoopback()
 }
 
 func validateAIConfig(aiConfig AIConfig, production bool) error {
