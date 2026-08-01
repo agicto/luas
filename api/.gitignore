@@ -50,7 +50,7 @@ tmp/
 temp/
 .tmp/
 
-# Database
+# Forbidden local database artifacts (PostgreSQL remains the only runtime target)
 *.db
 *.sqlite
 *.sqlite3

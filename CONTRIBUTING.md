@@ -64,6 +64,18 @@ cd web && corepack pnpm build
 
 Container, dependency, SBOM, benchmark, and Compose commands are listed in [AGENTS.md](AGENTS.md). Run the checks whose contracts your change touches.
 
+### Workspace Hygiene
+
+Generated files never belong in commits. Run `make clean` to remove API
+binaries, test executables, runtime logs, frontend build output, TypeScript
+build metadata, and Python tool caches while retaining installed dependencies.
+Run `make clean-all` only when a cold dependency reinstall is desired.
+
+`node_modules/`, `.next/`, `dist/`, coverage output, and local `storage/logs/`
+directories are disposable. A `.cache/` directory is also local-only, but may
+contain reusable vulnerability-scanner downloads; keep those caches outside
+the repository and do not remove them during ordinary cleanup.
+
 ## Pull Requests
 
 A focused pull request should explain:

@@ -1,4 +1,4 @@
-.PHONY: check agent-check governance contract-check contract-generate api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom
+.PHONY: check agent-check governance contract-check contract-generate api-check web-check web-spa-check dependency-scan sbom container-scan container-sbom clean clean-all
 
 check: governance contract-check api-check web-check web-spa-check
 
@@ -70,3 +70,19 @@ container-scan:
 container-sbom:
 	@test -n "$${IMAGE:-}" || { echo "IMAGE is required (for example, IMAGE=luas-api:container-check)" >&2; exit 2; }
 	bash scripts/container-security.sh sbom "$${IMAGE}" "$${SBOM_OUTPUT:-$${TMPDIR:-/tmp}/luas-container.cdx.json}"
+
+# Remove generated build, test, log, and language-tool output while preserving
+# installed dependencies and reusable scanner caches.
+clean:
+	$(MAKE) -C api clean
+	rm -f api/*.test
+	find api -type d -path '*/storage/logs' -prune -exec rm -rf {} +
+	cd web && corepack pnpm clean
+	rm -f web/next-env.d.ts
+	cd web-spa && corepack pnpm clean
+	rm -rf .ruff_cache .pytest_cache
+	find . \( -path './.git' -o -name node_modules -o -name .next \) -prune -o -type d -name __pycache__ -exec rm -rf {} +
+
+# Also remove installed JavaScript dependencies for a cold workspace reset.
+clean-all: clean
+	rm -rf contracts/node_modules web/node_modules web-spa/node_modules
