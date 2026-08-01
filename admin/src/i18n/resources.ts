@@ -6,7 +6,7 @@ const enUS = {
   translation: {
     app: {
       name: 'Luas',
-      shell: 'Static Console',
+      shell: 'Admin Console',
     },
     navigation: {
       overview: 'Overview',
@@ -15,7 +15,7 @@ const enUS = {
       section: 'Workspace',
       breadcrumb: 'Breadcrumb',
       toggle: 'Toggle sidebar',
-      mobileDescription: 'Navigate the static console.',
+      mobileDescription: 'Navigate the project management console.',
       open: 'Open navigation',
       close: 'Close navigation',
     },
@@ -82,7 +82,7 @@ const zhHans = {
   translation: {
     app: {
       name: 'Luas',
-      shell: '静态控制台',
+      shell: '管理后台',
     },
     navigation: {
       overview: '概览',
@@ -91,7 +91,7 @@ const zhHans = {
       section: '工作区',
       breadcrumb: '面包屑导航',
       toggle: '切换侧栏',
-      mobileDescription: '浏览静态控制台功能。',
+      mobileDescription: '浏览项目管理后台功能。',
       open: '打开导航',
       close: '关闭导航',
     },

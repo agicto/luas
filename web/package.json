@@ -1,7 +1,7 @@
 {
   "name": "luas-web",
   "version": "0.1.0",
-  "description": "Luas web — the Next.js + TypeScript half of the Luas AI scaffold (Luas: Irish for 'speed').",
+  "description": "Luas customer-facing web application built with Next.js and TypeScript.",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

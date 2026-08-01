@@ -108,7 +108,7 @@ curl -fsS http://127.0.0.1:8025/health/ready
 The Compose stack starts PostgreSQL, builds the API, applies migrations, and waits for readiness.
 The API listens on `http://127.0.0.1:8025`.
 
-### Start The Next.js Console
+### Start The Customer Web Application
 
 ```bash
 cd web

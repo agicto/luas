@@ -1,6 +1,23 @@
 # Luas Web
 
-Luas Web is the Next.js half of the Luas scaffold. It provides a feature-first React app, development mock BFF endpoints, protected console routes, i18n, typed environment config, and a small HTTP client for talking to the API half.
+`web/` is Luas's customer-facing application. It owns public pages,
+authentication and account journeys, customer workspaces, and other product
+experiences intended for end users. Next.js provides SSR, Server Components,
+SEO, and same-origin server adapters where those capabilities are useful.
+
+Luas Web is independent from the project management system under `admin/`.
+It may contain a signed-in customer console, but it must not become the place
+for operator-only administration. The two applications share HTTP contracts
+and design semantics, never source code or runtime state.
+
+## Role And Boundaries
+
+| This application owns | This application does not own |
+| --- | --- |
+| Public and customer-facing routes | Project operator and administrator workflows |
+| Registration, sign-in, account, and workspace journeys | API domain rules or PostgreSQL persistence |
+| SEO, SSR, Server Components, and server adapters | Static OSS/CDN-only delivery |
+| Customer UI state and development mock BFF behavior | Source code from `api/` or `admin/` |
 
 ## Stack
 

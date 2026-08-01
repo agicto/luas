@@ -1,7 +1,7 @@
 {
   "name": "luas-admin",
   "version": "0.1.0",
-  "description": "Luas project management console, delivered as a static Vite SPA.",
+  "description": "Luas project management system, delivered as a static Vite application.",
   "private": true,
   "type": "module",
   "scripts": {

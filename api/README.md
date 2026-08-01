@@ -8,6 +8,17 @@ It is a framework and starter template, not a product application. The default a
 only the minimum useful authentication, API key, and audit starters; additional business starters
 must be enabled explicitly.
 
+## Role And Boundaries
+
+`api/` is the authoritative backend for both Luas browser applications and for
+other HTTP clients. It owns domain rules, PostgreSQL persistence, migrations,
+public HTTP routes, background workers, and provider integrations.
+
+It does not own customer pages or administrative screens. Those belong to
+`web/` and `admin/` respectively, which integrate with this service only
+through the contracts under `../contracts/`. The API must remain deployable
+without either browser application.
+
 ## Core Capabilities
 
 - DDD-friendly modular package structure and layered request flow.

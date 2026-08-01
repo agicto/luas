@@ -1,7 +1,7 @@
-# Luas Admin Console
+# Luas Admin
 
-`admin/` is Luas's project management console. It owns operator and
-administrative workflows and is implemented as a lightweight Vite SPA. It
+`admin/` is Luas's project management system. It owns operator and
+administrator workflows and is implemented as a lightweight Vite SPA. It
 produces static assets that can be uploaded directly to OSS/S3-compatible
 object storage and served through a CDN.
 
@@ -9,6 +9,18 @@ It complements the customer-facing `web/` application and is never imported by
 it. Projects may deploy either application or both. They follow the same
 feature-first and HTTP-contract architecture while keeping independent source,
 dependencies, builds, and deployment policy.
+
+## Role And Boundaries
+
+| This application owns | This application does not own |
+| --- | --- |
+| Project operations, administration, audit, and configuration screens | Public marketing and customer product journeys |
+| Operator-focused navigation, tables, forms, and status views | API domain rules or PostgreSQL persistence |
+| Static browser assets for OSS/S3-compatible storage and CDN delivery | SSR, Server Components, or a production Node.js runtime |
+| Admin UI state and contract-backed HTTP services | Browser storage of bearer tokens, API keys, or secrets |
+
+`Admin` is the stable project and directory name. `SPA` describes only its
+browser implementation and deployment model; it is not the product name.
 
 ## Stack
 
