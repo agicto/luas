@@ -9,7 +9,7 @@ export function ThemeSync() {
     document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute('content', dark ? '#171717' : '#fafafa');
+      ?.setAttribute('content', dark ? '#171717' : '#0061ce');
   }, [dark]);
 
   return null;
