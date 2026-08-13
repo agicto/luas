@@ -26,6 +26,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(UserQueryService), new(*service)),
 	wire.Bind(new(Service), new(*service)),
 	NewAuthAbuseGuard,
+	NewBrowserSessionAdapter,
 	NewHandler,
 )
 

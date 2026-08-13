@@ -113,7 +113,7 @@ func TestAuthenticationSessionLogoutRouteRevokesPresentedCredential(t *testing.T
 	issued, err := sessions.Issue(context.Background(), user)
 	require.NoError(t, err)
 
-	handler := NewHandler(nil, nil, nil, sessions, nil, newAuthAbuseGuard(config.AuthenticationRateLimitConfig{}))
+	handler := NewHandler(nil, nil, nil, sessions, nil, newAuthAbuseGuard(config.AuthenticationRateLimitConfig{}), nil)
 	engine := gin.New()
 	routes := router.New(engine).Prefix("/v1")
 	handler.RegisterMiddleware(routes)

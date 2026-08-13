@@ -109,11 +109,17 @@ def main() -> int:
         failures,
         "contracts/AUTHENTICATION.md",
         (
-            "## Admin Console Authentication Boundary",
+            "## Go Browser Session Adapter",
             "`admin/` has no server runtime",
-            "same-origin browser gateway",
+            "POST /v1/browser/auth/login",
+            "GET /v1/browser/auth/me",
+            "POST /v1/browser/auth/logout",
+            "BROWSER_SESSION_ENABLED=true",
+            "BROWSER_SESSION_ORIGIN=https://admin.example.com",
+            "__Host-luas_browser_session",
+            "returns `503 COMMON.SERVICE_UNAVAILABLE` until enabled",
             "must not be stored in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected Admin Console authentication is deliberately incomplete",
+            "system-operator boundary",
         ),
     )
     require_all(
@@ -225,6 +231,47 @@ def main() -> int:
             "AUTH_SESSION_IDLE_TIMEOUT=168h",
             "AUTH_SESSION_TOUCH_INTERVAL=5m",
             "AUTH_SESSION_RETENTION=720h",
+            "BROWSER_SESSION_ENABLED=false",
+            "BROWSER_SESSION_ORIGIN=http://127.0.0.1:4173",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/browser_session_adapter.go",
+        (
+            "__Host-luas_browser_session",
+            "HttpOnly: true",
+            "SameSite: http.SameSiteLaxMode",
+            "Cache-Control",
+            "private, no-store",
+            'GetHeader("Origin")',
+            "writeServiceUnavailable",
+            "validAuthenticationCredential",
+            "sessions.Revoke",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/infra/config/config.go",
+        (
+            "type BrowserSessionConfig struct",
+            "BROWSER_SESSION_ENABLED",
+            "BROWSER_SESSION_ORIGIN",
+            "validateBrowserSessionConfig",
+            "must use https in production",
+            "may use http only for a loopback host",
+        ),
+    )
+    require_all(
+        failures,
+        "api/internal/modules/user/browser_session_adapter_test.go",
+        (
+            "TestBrowserSessionAdapterLoginCurrentLogoutLifecycle",
+            "TestBrowserSessionAdapterRejectsUntrustedMutationBeforeLogin",
+            "TestBrowserSessionAdapterMapsInvalidCredentialsWithoutCookie",
+            "TestBrowserSessionAdapterLogoutWithoutCookieIsIdempotent",
+            "TestBrowserSessionAdapterRoutesFailClosedByDefault",
+            "TestBrowserSessionAdapterProductionCookieUsesHostPrefix",
         ),
     )
     if re.search(r"^JWT_(?:SECRET|EXPIRE_DAYS)=", env_example, re.MULTILINE):
@@ -395,10 +442,11 @@ def main() -> int:
         "admin/docs/SECURITY.md",
         (
             "Every byte under `dist/` is public",
-            "reviewed browser gateway or Go adapter",
+            "built-in Go browser-session adapter or reviewed gateway",
             "HttpOnly session cookie",
             "Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected Admin Console auth is not",
+            "Protected Admin remains",
+            "system-operator",
             "A client-side route guard",
         ),
     )

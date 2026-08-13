@@ -12,9 +12,9 @@ application code, or enforce authorization.
 The preferred protected-app flow is:
 
 ```text
-Browser SPA
+Admin browser application
   -> same-origin /api operation
-  -> reviewed browser gateway or Go adapter
+  -> built-in Go browser-session adapter or reviewed gateway
   -> HttpOnly session cookie / fixed upstream mapping
   -> Luas API authorization
 ```
@@ -28,11 +28,17 @@ The gateway owns:
 - timeout and response-size limits;
 - safe forwarding and public error normalization.
 
+The built-in adapter exposes `/v1/browser/auth/login`, `/me`, and `/logout`
+when `BROWSER_SESSION_ENABLED=true`; it is fail-closed with deterministic `503`
+responses when disabled. Production requires an exact HTTPS
+`BROWSER_SESSION_ORIGIN` and PostgreSQL persistence.
+
 The existing Go `/v1/login` bearer response is server-to-server/API behavior.
 Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB,
-Zustand persistence, query cache, URLs, logs, or analytics. Until a browser
-gateway or explicit browser-session API exists, protected Admin Console auth is not
-production-complete.
+Zustand persistence, query cache, URLs, logs, or analytics. The adapter proves
+identity but does not invent platform authority. Protected Admin remains
+incomplete until its login/session UI and a separate system-operator
+authorization boundary are assembled.
 
 ## Cross-Origin APIs
 

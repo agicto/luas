@@ -105,10 +105,15 @@ messages, locales, localized formatting, or locale persistence.
 ## Authentication Boundary
 
 Static hosting removes the Next.js BFF. It does not make browser credential
-storage safe. Protected production applications should route same-origin
-`/api` requests to a gateway or Go browser adapter that owns HttpOnly cookies,
-CSRF/Origin checks, and fixed upstream operations. Never persist Luas bearer
-session tokens or API keys in browser storage.
+storage safe. Luas now provides an optional Go browser-session adapter at
+`/v1/browser/auth/*`. Enable it with `BROWSER_SESSION_ENABLED=true`, configure
+the exact Admin origin, and route same-origin `/api` requests to the API. An
+equivalent reviewed gateway remains valid. Never persist Luas bearer session
+tokens or API keys in browser storage.
+
+The adapter proves user identity only. Protected Admin routes remain incomplete
+until the Admin auth feature and the separate system-operator authorization
+boundary are assembled; an organization `admin` role is not platform authority.
 
 Read [docs/SECURITY.md](docs/SECURITY.md) before adding login or protected
 routes.
