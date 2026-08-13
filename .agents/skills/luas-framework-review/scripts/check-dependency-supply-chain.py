@@ -43,7 +43,7 @@ ALLOWED_BUILDS = {
     "@swc/core@1.15.5",
     "esbuild@0.28.1",
     "sharp@0.34.5",
-    "unrs-resolver@1.11.1",
+    "unrs-resolver@1.12.2",
 }
 DEPENDABOT_TARGETS = {
     ("npm", "/contracts"),
