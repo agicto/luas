@@ -10,7 +10,7 @@
     "check:routes": "node scripts/check-api-routes.mjs"
   },
   "devDependencies": {
-    "@redocly/cli": "2.43.2",
+    "@redocly/cli": "2.46.1",
     "openapi-typescript": "7.13.0",
     "yaml": "2.9.0"
   },
