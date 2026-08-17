@@ -4,7 +4,7 @@ ARG OCI_REVISION=unknown
 ARG OCI_VERSION=dev
 
 # Keep native dependencies ABI-compatible between build and runtime.
-FROM docker.io/library/node:22.23.1-alpine3.24@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS base
+FROM docker.io/library/node:26.7.0-alpine3.24@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
