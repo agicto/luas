@@ -1,0 +1,6 @@
+interface:
+  display_name: "Web App Testing"
+  short_description: "Verify a running UI in a browser"
+  default_prompt: "Use $webapp-testing to verify this requested workflow against the running Luas UI in a real browser."
+policy:
+  allow_implicit_invocation: false

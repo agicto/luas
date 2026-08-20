@@ -2,3 +2,5 @@ interface:
   display_name: "Downstream App Extraction"
   short_description: "Keep products out of Luas scaffold"
   default_prompt: "Use $downstream-app-extraction to convert Luas into a downstream app without leaking product behavior back into the scaffold."
+policy:
+  allow_implicit_invocation: false

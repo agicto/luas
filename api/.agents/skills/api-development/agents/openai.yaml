@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Development"
+  short_description: "Implement Luas HTTP behavior"
+  default_prompt: "Use $api-development to implement this Luas API route while preserving the owning HTTP contract."

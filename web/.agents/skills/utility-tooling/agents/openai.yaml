@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Utility Tooling"
+  short_description: "Add a genuinely shared helper"
+  default_prompt: "Use $utility-tooling to decide whether this helper belongs in shared Web utilities after repository search."

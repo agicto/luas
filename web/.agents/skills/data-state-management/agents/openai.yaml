@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Data State Management"
+  short_description: "Implement Query and client state"
+  default_prompt: "Use $data-state-management to implement this feature's service, query, cache, and client-state flow."

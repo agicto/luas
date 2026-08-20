@@ -1,0 +1,6 @@
+interface:
+  display_name: "Web Performance"
+  short_description: "Measure a Web performance regression"
+  default_prompt: "Use $web-perf to measure and isolate this reported Luas Web performance regression."
+policy:
+  allow_implicit_invocation: false
