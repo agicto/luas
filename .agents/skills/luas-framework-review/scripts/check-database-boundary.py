@@ -53,6 +53,19 @@ def require_all(
             failures.append(f"{relative_path} must contain {marker!r}")
 
 
+def require_patterns(
+    failures: list[str], relative_path: str, patterns: tuple[str, ...]
+) -> None:
+    path = ROOT / relative_path
+    if not path.exists():
+        failures.append(f"{relative_path} is missing")
+        return
+    content = read(relative_path)
+    for pattern in patterns:
+        if re.search(pattern, content, re.MULTILINE) is None:
+            failures.append(f"{relative_path} must match semantic pattern {pattern!r}")
+
+
 def require_absent(
     failures: list[str], relative_path: str, markers: tuple[str, ...]
 ) -> None:
@@ -303,14 +316,14 @@ def main() -> int:
             "must remain absent",
         ),
     )
-    require_all(
+    require_patterns(
         failures,
         "api/.agents/skills/database-design/SKILL.md",
         (
-            "Measure The Repository Seam",
-            "make benchmark-database",
-            "PostgreSQL is the only SQL compatibility target",
-            "Never add SQLite",
+            r"(?:## Performance Evidence|Measure The Repository Seam)",
+            r"make benchmark-database",
+            r"PostgreSQL is the only (?:relational database |SQL )?compatibility target",
+            r"(?:Do not|Never) add SQLite",
         ),
     )
     require_all(

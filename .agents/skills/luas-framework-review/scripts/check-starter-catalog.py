@@ -760,6 +760,11 @@ def main() -> int:
     require_all(
         failures,
         ".agents/skills/downstream-app-extraction/SKILL.md",
+        ("[references/organization.md](references/organization.md)",),
+    )
+    require_all(
+        failures,
+        ".agents/skills/downstream-app-extraction/references/organization.md",
         (
             "Organization-Id",
             "active organization selection",

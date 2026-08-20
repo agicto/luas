@@ -144,6 +144,23 @@ until the prompt observations are reviewed. `make agent-check` and
 `make agent-check-changed` now reject stale coverage, explicit-only leakage,
 routing errors, or entrypoint budget growth.
 
+The final governance audit also removed stale exact-wording assertions from the
+database boundary guard. It now accepts equivalent PostgreSQL-only,
+no-SQLite, benchmark, and performance-evidence language while still rejecting
+loss of those semantics. This keeps progressive-disclosure edits from failing
+only because a heading was renamed.
+
+The Web UI primitive guard now follows the accessibility entrypoint's checked
+link into `references/luas-controls.md` before asserting composed-button state.
+The control contract remains enforced without copying conditional detail back
+into the automatically discovered entrypoint.
+
+Downstream setting, usage, organization, and surface-catalog guards now follow
+the entrypoint's conditional references and canonical catalog instead of
+requiring their detailed tables or retention rules to be duplicated in
+`SKILL.md`. The guards still fail when a reference link or owned invariant is
+removed.
+
 ## Skill Taxonomy
 
 Invocation policy is now enforced through every skill's `agents/openai.yaml`.

@@ -422,7 +422,12 @@ def main() -> int:
     require_all(
         failures,
         ".agents/skills/downstream-app-extraction/SKILL.md",
-        ("When retaining `setting`", "monotonic reset tombstones", "generic JSON editor"),
+        ("[references/setting.md](references/setting.md)",),
+    )
+    require_all(
+        failures,
+        ".agents/skills/downstream-app-extraction/references/setting.md",
+        ("optional `setting`", "monotonic reset tombstones", "generic JSON editor"),
     )
 
     if failures:
