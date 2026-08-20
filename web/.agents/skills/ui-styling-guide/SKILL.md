@@ -3,71 +3,85 @@ name: ui-styling-guide
 description: Apply Luas UI primitives, variants, Tailwind, and OKLCH tokens. Use when styling within the existing design system, not for broad visual direction.
 ---
 
-# ui-styling-guide
+# Luas UI Styling
 
-## Overview
+Implement an already-decided visual direction through the existing Web design
+system. Use `frontend-design` instead when audience, hierarchy, or visual
+direction is still being designed.
 
-This skill defines the standards for UI development within the project. It ensures visual consistency, accessibility, and maintainability by using a structured design system based on OKLCH and shadcn/ui.
+## Authority
 
-## Guidelines
+Read `web/AGENTS.md` for component ownership, accessibility, i18n, and naming.
+Inspect the nearest component and theme files before introducing a token,
+variant, primitive, or shared component.
 
-### 1. Theme System (OKLCH & CSS Variables)
+## Tokens
 
-The project uses a layered Design Token system. Always prefer semantic classes over raw colors.
+- Use semantic classes backed by `src/themes/light.css` and `dark.css`; do not
+  consume primitives from `src/themes/primitives.css` directly in components.
+- Prefer canvas/surface/subtle backgrounds, main/subtle/muted foregrounds,
+  semantic borders, brand tokens, and status tokens over raw palette values.
+- Use `text-error` for readable error copy. Reserve `destructive` for
+  destructive action surfaces and borders.
+- Change light and dark mappings together. After token changes run
+  `corepack pnpm lint:theme-contrast`; guarded normal-text pairs remain at
+  least 4.5:1.
 
-- **Primitives**: Base colors in `src/themes/primitives.css` (Do not use directly).
-- **Semantic Tokens**: Functional naming in `light.css` / `dark.css`.
-  - Backgrounds: `bg-canvas`, `bg-surface`, `bg-subtle`
-  - Foregrounds: `text-main`, `text-subtle`, `text-muted`
-  - Borders: `border-main`, `border-subtle`, `border-strong`
-  - Brand: `brand-main`, `brand-subtle`, `brand-strong`
-  - Status text: `success`, `warning`, `error`, `info`
+## Component Ownership
 
-Use `text-error` for error copy. Keep `destructive` for destructive action backgrounds and borders. Run `pnpm lint:theme-contrast` after changing primitive colors or light/dark semantic mappings; every guarded normal-text pair must remain at least 4.5:1.
+- `src/components/ui/` owns project-wide shadcn-derived primitives. Treat a
+  shadcn CLI overwrite as a reviewed migration and preserve public semantics.
+- Feature UI belongs in `src/features/<feature>/components/`.
+- `src/components/features/` is for genuinely cross-feature composed UI;
+  `src/components/common/` remains generic and product-neutral.
+- Add a variant only for a repeatable semantic state. One-off layout belongs at
+  the caller.
 
-```tsx
-<div className="bg-bg-surface text-text-main border-border-subtle shadow-md p-4 rounded-lg">
-  <h1 className="text-brand">Heading</h1>
-  <p className="text-text-subtle">Subtle text description.</p>
-</div>
+## Interaction Contracts
+
+- Keep `Input` native. Import `DatePicker`, `ColorPicker`, and `PasswordInput`
+  explicitly for specialized behavior.
+- Style `Calendar` through React DayPicker slots without replacing grid or
+  focus semantics.
+- Preserve stable form-control IDs, `aria-invalid`, merged
+  `aria-describedby`, and polite error announcements.
+- Caller-owned labels are required for icon-only actions; reusable primitives
+  do not invent English fallback copy.
+- Shared title primitives remain heading-neutral so pages own the document
+  outline.
+- `AvatarImage` callers choose `alt`; use `alt=""` when adjacent text already
+  identifies the person.
+
+## Verification
+
+Run the narrowest check for the changed seam. Run these commands from `web/`:
+
+```bash
+# Theme mapping
+corepack pnpm lint:theme-contrast
+
+# Shared form and composed-control semantics
+corepack pnpm vitest run \
+  src/test/form-control-accessibility.test.tsx \
+  src/test/calendar-date-picker.test.tsx \
+  src/test/button-composition.test.tsx
 ```
 
-### 2. Component Organization
+Also run type-check or the owning feature test when a public component API or
+caller changes. Use `accessibility-audit` only for an explicitly requested
+WCAG pass, not as an automatic styling follow-up.
 
-- **UI Primitives**: `src/components/ui/` contains project-owned, shadcn-derived primitives. Modify them only at the shared ownership seam, preserve public APIs and accessibility behavior, and add contract tests for behavioral changes. Review any shadcn CLI overwrite as a migration, not a mechanical refresh.
-- **Feature Components**: prefer `src/features/[feature]/components/` for feature-owned UI.
-- **Shared Feature UI Blocks**: use `src/components/features/` only for reusable cross-feature UI.
-- **Common Components**: `src/components/common/` (Generic, non-business specific).
-- **Accessible Images**: `AvatarImage` requires an explicit `alt`; choose `alt=""` for decorative or redundant avatars.
-- **Heading Hierarchy**: shared title primitives such as `AlertTitle` stay neutral; pages and features own `h1`-`h6` levels.
+## Completion Criteria
 
-### 3. Component Standards
-
-For detailed component contracts (Named Exports, RSC First, Props Typing, CAS annotations), refer to:
-
-> **[AGENTS.md - Atomic Component Contract](file:///AGENTS.md#atomic-component-contract)**
-
-### 4. File Naming
-
-- Components: `kebab-case.tsx` (e.g., `login-form.tsx`)
-- Hooks: `use-kebab-case.ts` (e.g., `use-mobile.ts`)
-
-> [!IMPORTANT]
-> **Localized Core Copy**: Formal site, auth, and console surfaces must use `getT` or `useT` for user-facing copy. Follow the i18n handler's core-copy boundary for exact brands, technical identifiers, disposable devtools/examples, and the root fallback. Run `pnpm lint:i18n-copy` before completion.
-
-### Form Controls
-
-- Keep `Input` native. Specialized controls such as `DatePicker`, `ColorPicker`, and `PasswordInput` must be imported explicitly.
-- Style `Calendar` through React DayPicker's class-name slots without replacing its day-button focus behavior or calendar-grid semantics.
-- Use the shared form-control error seam for stable ids, `aria-invalid`, merged `aria-describedby`, and polite announcements.
-- Require caller-owned labels for icon-only actions so formal surfaces can localize them.
-- Run `pnpm exec vitest run src/test/form-control-accessibility.test.tsx src/test/calendar-date-picker.test.tsx` after changing shared form controls.
+- Styling uses existing semantic tokens and the correct ownership seam.
+- Shared primitive behavior and accessibility contracts remain intact.
+- Loading, disabled, focus, localization, and responsive states are stable.
+- Focused token/component checks pass.
 
 ## Related Skills
 
-Select another skill only when its distinct concern is active.
+Navigation only; do not load automatically:
 
-- [`frontend-design`](../frontend-design/): Creative direction that styling implements.
-- [`web-design-guidelines`](../web-design-guidelines/): Design tokens this guide consumes.
-- [`accessibility-audit`](../accessibility-audit/): Focus styles, contrast, and ARIA in styling decisions.
-- [`i18n-handler`](../i18n-handler/): Layout must accommodate variable translation lengths.
+- `frontend-design` for unresolved visual direction.
+- `i18n-handler` for translation-boundary changes.
+- `accessibility-audit` for an explicit WCAG review.

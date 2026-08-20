@@ -44,28 +44,24 @@ fi
 
 # 2. Check for TableName() method
 if ! grep -q "func.*TableName().*string" "$MODEL_FILE"; then
-    echo "⚠️  Missing TableName() method. Explicit table names are recommended."
-    WARNINGS=$((WARNINGS + 1))
+    echo "❌ Missing TableName() method. Luas persistence objects define table ownership explicitly."
+    ERRORS=$((ERRORS + 1))
 else
     echo "✅ TableName() method detected."
 fi
 
-# 3. Check for baseline lifecycle fields
-for field in "ID" "CreatedAt" "UpdatedAt"; do
-    if ! grep -q "$field" "$MODEL_FILE"; then
-        echo "❌ Missing mandatory field: $field"
-        ERRORS=$((ERRORS + 1))
+# 3. Report lifecycle fields without imposing one table shape.
+LIFECYCLE_FIELDS=()
+for field in "ID" "CreatedAt" "UpdatedAt" "DeletedAt"; do
+    if grep -q "$field" "$MODEL_FILE"; then
+        LIFECYCLE_FIELDS+=("$field")
     fi
 done
 
-if [ $ERRORS -eq 0 ]; then
-    echo "✅ Baseline lifecycle fields present."
-fi
-
-if grep -q "DeletedAt" "$MODEL_FILE"; then
-    echo "✅ Soft delete field detected."
+if [ ${#LIFECYCLE_FIELDS[@]} -gt 0 ]; then
+    echo "ℹ️  Lifecycle fields detected: ${LIFECYCLE_FIELDS[*]}. Confirm each matches record semantics."
 else
-    echo "ℹ️  Soft delete field not detected. Confirm the table does not require soft delete."
+    echo "ℹ️  No conventional lifecycle fields detected. Confirm the table uses an intentional key and lifecycle."
 fi
 
 # 4. Check only explicit column names. GORM directives such as CASCADE are case-sensitive.

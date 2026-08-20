@@ -71,6 +71,32 @@ The next largest entrypoint is the explicit-only `accessibility-audit` skill at
 only together with the Web review-boundary cleanup so WCAG behavior is not
 silently weakened.
 
+## 2026-08-20 Authority Deduplication Iteration
+
+API persistence skills now split steady-state PostgreSQL design from migration
+rollout review. MySQL rollout advice and the stale module-local migration path
+were removed; the migration checker rejects MySQL syntax and reviews PostgreSQL
+index/transaction behavior. Database validation no longer forces every table
+into one lifecycle-column template.
+
+Web design skills now have mutually exclusive jobs: visual direction,
+design-system implementation, UI/UX review, and explicit WCAG audit. Ordinary
+UI review uses checked-in Luas authority without a network fetch. Luas-specific
+form and composed-control contracts moved behind an accessibility reference.
+
+| Entrypoint | Before | After | Reduction |
+|---|---:|---:|---:|
+| `database-design` | 6,285 bytes | 4,302 bytes | 31.6% |
+| `sql-migration-review` | 5,613 bytes | 4,609 bytes | 17.9% |
+| `accessibility-audit` | 7,728 bytes | 4,982 bytes | 35.5% |
+| `ui-styling-guide` | 4,147 bytes | 3,401 bytes | 18.0% |
+| All active repository `SKILL.md` bodies | 138,577 bytes | 132,936 bytes | 4.1% |
+
+`web-design-guidelines` grew from 1,562 to 2,419 bytes because it now carries a
+small deterministic Luas review rubric instead of fetching an unpinned external
+rulebook. This trades 857 entrypoint bytes in an explicit-only skill for lower
+latency, reproducibility, and a stable authority boundary.
+
 ## Skill Taxonomy
 
 Invocation policy is now enforced through every skill's `agents/openai.yaml`.
@@ -264,9 +290,9 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Remove overlapping and stale authority from API and Web skills, starting with
-PostgreSQL migration guidance and the UI review family. Then forward-test
-representative prompts against the 32 skill descriptions and record
-false-positive or false-negative selections. Keep API package boundaries at
-zero baseline exceptions and preserve mock BFF contract tests while future
-skills are changed.
+Add a changed-files agent-guidance command so local skill/doc feedback does not
+scan every Markdown and source file. Preserve `make agent-check` as the complete
+pre-merge check. Then forward-test representative prompts against the 32 skill
+descriptions and record false-positive or false-negative selections. Keep API
+package boundaries at zero baseline exceptions and preserve mock BFF contract
+tests while future skills are changed.

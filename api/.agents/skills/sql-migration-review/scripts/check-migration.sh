@@ -44,19 +44,23 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 2. Down / rollback present
+# 2. Repository-required Down path present
 # -----------------------------------------------------------------------------
 if grep -qE "Down\(|DOWN|-- down|down:" "$FILE"; then
     report_ok "Down / rollback path detected"
 else
-    report_err "No Down / rollback path detected — every migration MUST have one"
+    report_err "No Down path detected — Luas migrations must implement the repository migration interface"
 fi
 
 # -----------------------------------------------------------------------------
 # 3. High-risk patterns
 # -----------------------------------------------------------------------------
+if grep -qiE "ALGORITHM[[:space:]]*=|LOCK[[:space:]]*=[[:space:]]*NONE|ENGINE[[:space:]]*=[[:space:]]*InnoDB" "$FILE"; then
+    report_err "Found MySQL migration syntax — Luas supports PostgreSQL only"
+fi
+
 if grep -qiE "ALTER TABLE[^;]+ADD COLUMN[^;]+DEFAULT[^;]+NOT NULL" "$FILE"; then
-    report_warn "Found ADD COLUMN ... DEFAULT ... NOT NULL — rewrites every row on large tables; verify table size"
+    report_warn "Found ADD COLUMN ... DEFAULT ... NOT NULL — verify PostgreSQL lock, default volatility, table size, and old-writer compatibility"
 fi
 
 if grep -qiE "DROP COLUMN|DROP TABLE" "$FILE"; then
@@ -74,8 +78,9 @@ fi
 # -----------------------------------------------------------------------------
 # 4. Index strategy hints
 # -----------------------------------------------------------------------------
-if grep -qiE "CREATE INDEX" "$FILE" && ! grep -qiE "CREATE INDEX CONCURRENTLY|--postgres-only" "$FILE" && grep -qi "postgres" "$FILE"; then
-    report_warn "Postgres CREATE INDEX without CONCURRENTLY locks the table; prefer CONCURRENTLY on hot tables"
+if grep -qiE "CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX" "$FILE" &&
+   ! grep -qiE "CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX[[:space:]]+CONCURRENTLY|--[[:space:]]*luas:[[:space:]]*blocking-index-reviewed" "$FILE"; then
+    report_warn "CREATE INDEX without CONCURRENTLY may block writes; use CONCURRENTLY for hot tables or add a reviewed blocking-index annotation"
 fi
 
 # -----------------------------------------------------------------------------
@@ -101,7 +106,7 @@ fi
 echo ""
 echo "================================================"
 if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
-    echo "✅ Static checks clean. Human review still required for backward compat, lock duration, rollback safety."
+    echo "✅ Static checks clean. Human review still required for deploy compatibility, lock duration, and recovery safety."
     exit 0
 elif [ $ERRORS -eq 0 ]; then
     echo "⚠️  $WARNINGS warning(s). Address before merge or document why ignored."

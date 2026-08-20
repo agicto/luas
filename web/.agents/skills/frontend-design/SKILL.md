@@ -58,7 +58,7 @@ aesthetic merely to make the page look distinctive.
 
 ## Related Skills
 
-Select another skill only when its distinct concern is active:
+Navigation only; do not load automatically:
 
 - `ui-styling-guide`: token or primitive implementation details.
 - `web-design-guidelines`: explicit design/UX review.

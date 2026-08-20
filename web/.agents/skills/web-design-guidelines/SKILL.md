@@ -3,42 +3,60 @@ name: web-design-guidelines
 description: Review Luas UI code against interface guidelines. Use for explicit design, UX, or visual-quality review; use accessibility-audit for a dedicated WCAG pass.
 ---
 
-# Web Interface Guidelines
+# Web Interface Review
 
-Review files for compliance with Web Interface Guidelines.
+Review a completed Luas UI for design and UX quality. This skill reports
+findings; it does not establish a new visual direction or run a WCAG audit.
 
-## How It Works
+## Review Authority
 
-1. Fetch the latest guidelines from the source URL below
-2. Read the specified files (or prompt user for files/pattern)
-3. Check against all rules in the fetched guidelines
-4. Output findings in the terse `file:line` format
+Use the checked-in sources first:
 
-## Guidelines Source
+1. `web/AGENTS.md` for Luas UI, responsive, i18n, and component rules.
+2. The nearest existing route, feature, primitive, and theme tokens.
+3. The requested files and their loading, empty, error, disabled, and mobile
+   states.
 
-Fetch fresh guidelines before each review:
+Do not fetch third-party guidelines during an ordinary review. If the user
+explicitly requests comparison with the latest Vercel Web Interface Guidelines,
+fetch their current primary source and label those findings as external rather
+than Luas requirements.
 
+## Review Axes
+
+- **Hierarchy**: the primary task, information density, headings, grouping, and
+  action priority are scannable.
+- **Interaction**: controls use familiar semantics, clear labels, predictable
+  feedback, and complete hit areas.
+- **States**: loading, empty, error, disabled, success, and destructive states
+  preserve layout and explain the next action.
+- **Responsive behavior**: content reflows without clipping, accidental
+  horizontal scrolling, or hidden primary actions.
+- **System consistency**: existing tokens, primitives, variants, spacing, and
+  icon conventions are reused instead of creating a parallel design system.
+- **Content**: copy is concise, localized, domain-accurate, and does not expose
+  backend or provider details.
+
+Baseline keyboard, focus, naming, and contrast rules still apply through
+`web/AGENTS.md`. Use `accessibility-audit` only when the request is a dedicated
+WCAG/a11y review.
+
+## Output
+
+Return only actionable findings ordered by severity:
+
+```text
+severity file:line - problem; smallest useful correction
 ```
-https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md
-```
 
-Use WebFetch to retrieve the latest rules. The fetched content contains all the rules and output format instructions.
-
-## Usage
-
-When a user provides a file or pattern argument:
-1. Fetch guidelines from the source URL above
-2. Read the specified files
-3. Apply all rules from the fetched guidelines
-4. Output findings using the format specified in the guidelines
-
-If no files specified, ask the user which files to review.
+Use **block** for a broken primary workflow, **fix** for meaningful UX/design
+debt, and **note** for a lower-risk polish opportunity. If no findings remain,
+state the reviewed scope and say so explicitly.
 
 ## Related Skills
 
-Select another skill only when its distinct concern is active.
+Navigation only; do not load automatically:
 
-- [`frontend-design`](../frontend-design/): Creative direction these tokens serve.
-- [`ui-styling-guide`](../ui-styling-guide/): Tailwind / shadcn mechanics that consume these tokens.
-- [`accessibility-audit`](../accessibility-audit/): Verify color / focus tokens meet WCAG AA contrast.
-- [`web-perf`](../web-perf/): CSS perf when applying tokens at scale.
+- `frontend-design` for a new visual direction.
+- `ui-styling-guide` for implementing tokens and primitives.
+- `accessibility-audit` for an explicit WCAG pass.
