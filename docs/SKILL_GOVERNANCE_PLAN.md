@@ -97,6 +97,25 @@ small deterministic Luas review rubric instead of fetching an unpinned external
 rulebook. This trades 857 entrypoint bytes in an explicit-only skill for lower
 latency, reproducibility, and a stable authority boundary.
 
+## 2026-08-20 Changed-Files Verification Iteration
+
+`make agent-check-changed` now derives its scope from the feature branch's
+merge-base with `main` plus staged, unstaged, and untracked files. Markdown
+links and English-source policy scan only existing changed files; vocabulary
+and skill metadata remain global because they are already cheap. Deletions,
+renames, or checker implementation changes automatically use the complete
+scan.
+
+Measured warm runs on this workspace:
+
+| Command/path | Time | Files scanned |
+|---|---:|---:|
+| `make agent-check` baseline | 2.67 s | 195 Markdown files plus all source |
+| Git-detected changed-file path | 1.08-1.50 s | 1 Markdown/source file plus global cheap guards |
+
+The observed targeted path is 43.8-59.6% faster while the pre-merge complete
+gate remains unchanged.
+
 ## Skill Taxonomy
 
 Invocation policy is now enforced through every skill's `agents/openai.yaml`.
@@ -290,9 +309,7 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Add a changed-files agent-guidance command so local skill/doc feedback does not
-scan every Markdown and source file. Preserve `make agent-check` as the complete
-pre-merge check. Then forward-test representative prompts against the 32 skill
-descriptions and record false-positive or false-negative selections. Keep API
-package boundaries at zero baseline exceptions and preserve mock BFF contract
-tests while future skills are changed.
+Forward-test representative prompts against the 32 skill descriptions and
+record false-positive or false-negative selections. Keep API package boundaries
+at zero baseline exceptions and preserve mock BFF contract tests while future
+skills are changed.

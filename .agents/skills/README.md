@@ -117,15 +117,25 @@ the Web scope.
 Run:
 
 ```bash
+make agent-check-changed
 make agent-check
 bash .agents/skills/scripts/skill-metrics.sh
 bash .agents/skills/scripts/list-skills.sh
 SKILL_VALIDATION_VERBOSE=1 bash .agents/skills/scripts/validate-skill.sh --all
 ```
 
-`make agent-check` is the fast loop for agent guidance. `make governance`
-executes all semantic/contract/supply-chain guards. `make check` already
-includes governance and should be the single final release gate.
+`make agent-check-changed` checks the feature-branch diff plus staged,
+unstaged, and untracked files. It scans changed Markdown/source files while
+keeping vocabulary and skill metadata checks global. Deletions, renames, or
+changes to the checker implementation fall back to the complete scan. Override
+the feature-branch base with `AGENT_CHECK_BASE_REF=<ref>` when it is not
+`main`.
+
+Run `make agent-check` once before merging an agent-guidance change. It remains
+the complete link, English-source, vocabulary, skill, and whitespace scan.
+`make governance` executes all semantic/contract/supply-chain guards.
+`make check` already includes governance and should be the single final release
+gate.
 
 ## Framework Guard Map
 
@@ -156,5 +166,6 @@ Use the built-in `skill-creator`, then:
 2. Write concrete trigger and non-trigger examples.
 3. Keep the core workflow concise; link optional resources conditionally.
 4. Test representative prompts and any bundled scripts.
-5. Run `make agent-check`.
+5. Run `make agent-check-changed` while editing and `make agent-check` once
+   before merge.
 6. Update this index and the nearest `AGENTS.md`.

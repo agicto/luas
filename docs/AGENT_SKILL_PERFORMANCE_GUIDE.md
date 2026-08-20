@@ -89,6 +89,13 @@ choose proof without loading another workflow.
 An ordinary commit or push is not a release boundary. Do not run a full gate
 again when an unchanged invocation already passed in the same task.
 
+For repositories where full guidance validation scans every document and
+source file, add a changed-files entrypoint. It should include committed branch
+changes plus staged, unstaged, and untracked files; keep global checks that are
+already cheap. Fall back to the complete scan for deletions, renames, or edits
+to the checker itself because unchanged callers may be affected. Run the
+complete guidance gate once before merge.
+
 ## Browser And UI Work
 
 Use an already available browser-control tool and the project's running server
