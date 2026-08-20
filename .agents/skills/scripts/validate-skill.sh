@@ -15,6 +15,8 @@ MAX_NAME=64
 MAX_DESC=1024
 MAX_DESC_PRACTICAL=200
 MAX_LINES=200
+MAX_IMPLICIT_BYTES=6000
+MAX_EXPLICIT_BYTES=7000
 MIN_SHORT_DESC=25
 MAX_SHORT_DESC=64
 
@@ -48,6 +50,9 @@ validate_one() {
     local name=""
     local description=""
     local extra_frontmatter=""
+    local file_bytes=0
+
+    file_bytes=$(wc -c < "$CURRENT_FILE" | tr -d ' ')
 
     local filename=${CURRENT_FILE##*/}
     if [ "$filename" != "SKILL.md" ]; then
@@ -167,6 +172,14 @@ validate_one() {
             ""|true|false) ;;
             *) err "policy.allow_implicit_invocation must be true or false" ;;
         esac
+
+        if [ "$invocation_policy" = "false" ]; then
+            if [ "$file_bytes" -gt "$MAX_EXPLICIT_BYTES" ]; then
+                err "explicit-only SKILL.md is $file_bytes bytes; maximum is $MAX_EXPLICIT_BYTES"
+            fi
+        elif [ "$file_bytes" -gt "$MAX_IMPLICIT_BYTES" ]; then
+            err "implicitly invokable SKILL.md is $file_bytes bytes; maximum is $MAX_IMPLICIT_BYTES"
+        fi
     fi
 
     if [ "$VERBOSE" = "1" ] &&

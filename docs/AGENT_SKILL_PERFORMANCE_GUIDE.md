@@ -53,6 +53,8 @@ Each skill should satisfy these constraints:
 - Own one repeatable workflow with a clear boundary.
 - Use a precise positive trigger and an important negative boundary.
 - Keep `SKILL.md` under 200 lines.
+- Put a byte budget on automatic entrypoints; Luas uses 6,000 bytes for
+  implicit skills and 7,000 bytes for explicit-only workflows.
 - Move optional examples and tutorials to `examples/` or `references/`.
 - Load those resources only when nearby production code is insufficient.
 - Put deterministic repeated checks in `scripts/`.
@@ -150,9 +152,13 @@ A migrated repository should meet all of these conditions:
   releases.
 - Skill validation is fast enough to run after guidance-only edits.
 - Representative prompts select the expected skill or correctly select none.
+- The routing fixture covers every skill and a near-miss for each explicit-only
+  workflow, and its checker reports false positives, false negatives, and
+  misroutes separately.
 
-For reference, the Luas review covered 32 skills, reduced active skill bodies
-from approximately 3,943 to 3,411 lines, and kept its guidance validation at
-3.76 seconds on the measured warm run. These figures are a baseline, not a
-universal target; selection accuracy and time to first useful edit matter more
-than minimizing line count alone.
+For reference, the Luas review covered 32 skills. Its 48-case recorded routing
+review covers every skill, all 11 explicit-only boundaries, and five routine
+no-skill requests. These fixtures test repository routing policy; use an
+independent model evaluation when one is separately authorized and available.
+The figures are a baseline, not a universal target: selection quality and time
+to first useful edit matter more than minimizing line count alone.

@@ -109,6 +109,8 @@ the Web scope.
 - `description`: at most 1024 bytes and preferably at most 200 bytes.
 - `SKILL.md`: at most 200 lines. Move optional tutorials and large examples to
   `references/` or `examples/`.
+- Implicitly invokable entrypoints: at most 6,000 bytes. Explicit-only
+  entrypoints: at most 7,000 bytes.
 - Frontmatter: `name` and `description`; UI/policy metadata belongs in
   `agents/openai.yaml`.
 - Detailed examples belong in `examples/` or `references/`.
@@ -120,6 +122,7 @@ Run:
 make agent-check-changed
 make agent-check
 bash .agents/skills/scripts/skill-metrics.sh
+python3 .agents/skills/scripts/check-skill-routing.py
 bash .agents/skills/scripts/list-skills.sh
 SKILL_VALIDATION_VERBOSE=1 bash .agents/skills/scripts/validate-skill.sh --all
 ```
@@ -136,6 +139,15 @@ the complete link, English-source, vocabulary, skill, and whitespace scan.
 `make governance` executes all semantic/contract/supply-chain guards.
 `make check` already includes governance and should be the single final release
 gate.
+
+The routing check reads `.agents/skills/evals/routing-cases.tsv`. Each recorded
+forward review names the expected and observed selection. The checker reports
+false positives, false negatives, and misroutes; requires a positive case for
+all 32 skills; and requires a near-miss boundary for every explicit-only skill.
+These are repository routing-contract results from a recorded review, not an
+independent model benchmark. When descriptions or invocation policy change,
+the metadata fingerprint forces a review of affected prompts and observations
+before merging.
 
 ## Framework Guard Map
 

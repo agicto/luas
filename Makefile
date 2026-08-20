@@ -1,4 +1,4 @@
-.PHONY: check agent-check agent-check-changed governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
+.PHONY: check agent-check agent-check-changed skill-routing-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
 
 check: governance contract-check api-check web-check admin-check
 
@@ -14,10 +14,14 @@ agent-check:
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-english-source.py
 	@bash .agents/skills/scripts/validate-skill.sh --all
+	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/scripts/check-skill-routing.py
 	@git diff --check
 
 agent-check-changed:
 	@bash .agents/skills/scripts/check-agent-changed.sh
+
+skill-routing-check:
+	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/scripts/check-skill-routing.py
 
 governance: agent-check
 	PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py

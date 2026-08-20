@@ -1,0 +1,49 @@
+id	mode	expected_skill	observed_skill	boundary_for	prompt
+positive-contract-evolution	implicit	contract-evolution	contract-evolution	-	Change the public pagination envelope across the API, Web service, and shared contract.
+positive-domain-modeling	implicit	domain-modeling	domain-modeling	-	Decide whether audit history is a starter, capability, or example and update the global vocabulary.
+positive-grill-before-build	implicit	grill-before-build	grill-before-build	-	The tenant-isolation model is still ambiguous after reading the contracts and code; resolve the blocking architecture choice before implementation.
+positive-systematic-debugging	implicit	systematic-debugging	systematic-debugging	-	A Go test flakes only in CI and the cause is unknown; reproduce and isolate it.
+positive-tdd-regression	implicit	tdd-regression	tdd-regression	-	Login accepts a known malformed identifier; the expected behavior is known, so add a failing regression test and fix it.
+positive-verification-before-completion	implicit	verification-before-completion	verification-before-completion	-	This new cross-generated artifact has no verification entry in AGENTS.md; determine sufficient proof before completion.
+positive-downstream-app-extraction	explicit	downstream-app-extraction	downstream-app-extraction	-	Use $downstream-app-extraction to remove scaffold examples and check product leakage for our downstream app.
+positive-luas-code-review	explicit	luas-code-review	luas-code-review	-	Use $luas-code-review to review the current diff against its specification and Luas standards.
+positive-luas-framework-review	explicit	luas-framework-review	luas-framework-review	-	Use $luas-framework-review for a framework-wide security, architecture, and AI-workflow audit.
+positive-pr-description-writer	explicit	pr-description-writer	pr-description-writer	-	Use $pr-description-writer to draft the pull request summary, risks, rollback, and test plan from this diff.
+positive-api-development	implicit	api-development	api-development	-	Add a paginated Gin endpoint with request validation and a stable error_code.
+positive-architecture-principles	implicit	architecture-principles	architecture-principles	-	Refactor this API capability boundary and decide whether callers need an interface or concrete constructor.
+positive-database-design	implicit	database-design	database-design	-	Design the PostgreSQL indexes and bounded query shape for notification delivery history.
+positive-logging-standards	implicit	logging-standards	logging-standards	-	Add a structured security event with request correlation and PII redaction.
+positive-module-creation	implicit	module-creation	module-creation	-	Create a new optional route-owning API starter for organization invitations.
+positive-testing-strategy	implicit	testing-strategy	testing-strategy	-	Choose whether this repository behavior needs a unit double or disposable PostgreSQL integration coverage.
+positive-deployment	explicit	deployment	deployment	-	Use $deployment to build the API image, start Compose, verify probes, migrations, and runtime logs.
+positive-kest-flow	explicit	kest-flow	kest-flow	-	Use $kest-flow to create a chained Markdown scenario against the running API.
+positive-sql-migration-review	explicit	sql-migration-review	sql-migration-review	-	Use $sql-migration-review to assess this PostgreSQL migration for locks, backfill safety, and recovery.
+positive-api-error-handling	implicit	api-error-handling	api-error-handling	-	Map API field errors, request_id, timeouts, and stable ApiErrorCode values in the Web client.
+positive-data-state-management	implicit	data-state-management	data-state-management	-	Implement a TanStack Query mutation with optimistic updates and precise cache invalidation.
+positive-environment-config	implicit	environment-config	environment-config	-	Add a validated server-only environment variable and keep it out of the browser bundle.
+positive-frontend-design	implicit	frontend-design	frontend-design	-	Design and substantially restyle the organization dashboard with a coherent visual direction.
+positive-i18n-handler	implicit	i18n-handler	i18n-handler	-	Add next-intl keys and locale routing for the account recovery page.
+positive-testing-standards	implicit	testing-standards	testing-standards	-	Write Vitest and Testing Library coverage for this Web form interaction.
+positive-ui-styling-guide	implicit	ui-styling-guide	ui-styling-guide	-	Style this existing dialog using Luas primitives, Tailwind variants, and OKLCH tokens.
+positive-utility-tooling	implicit	utility-tooling	utility-tooling	-	After searching the repo, extract this repeated pure formatter into a shared Web utility.
+positive-vercel-react-best-practices	implicit	vercel-react-best-practices	vercel-react-best-practices	-	Remove the measured server-component waterfall and reduce serialized client props on this Next.js route.
+positive-accessibility-audit	explicit	accessibility-audit	accessibility-audit	-	Use $accessibility-audit to perform a dedicated WCAG 2.2 AA review of the completed settings flow.
+positive-web-design-guidelines	explicit	web-design-guidelines	web-design-guidelines	-	Use $web-design-guidelines to review the completed UI for UX and visual-quality problems.
+positive-web-perf	explicit	web-perf	web-perf	-	Use $web-perf to measure the reported LCP regression and inspect route bundle budgets.
+positive-webapp-testing	explicit	webapp-testing	webapp-testing	-	Use $webapp-testing to verify the running responsive flow, browser console, and screenshots.
+boundary-downstream-app-extraction	implicit	none	none	downstream-app-extraction	Fix a product-neutral typo in the checked-in scaffold example.
+boundary-luas-code-review	implicit	none	none	luas-code-review	Implement the requested nil guard in the owning package and run its focused test.
+boundary-luas-framework-review	implicit	none	none	luas-framework-review	Correct one broken local documentation link and run the changed guidance check.
+boundary-pr-description-writer	implicit	none	none	pr-description-writer	Commit the already verified one-line documentation correction.
+boundary-deployment	implicit	none	none	deployment	Update explanatory wording in the Dockerfile comment without changing runtime behavior.
+boundary-kest-flow	implicit	testing-strategy	testing-strategy	kest-flow	Decide the proper API test seam for a repository error; no running server scenario is requested.
+boundary-sql-migration-review	implicit	database-design	database-design	sql-migration-review	Design a new PostgreSQL index and query shape; no migration file or rollout review exists yet.
+boundary-accessibility-audit	implicit	ui-styling-guide	ui-styling-guide	accessibility-audit	Apply the specified focus-ring token to the existing button primitive.
+boundary-web-design-guidelines	implicit	ui-styling-guide	ui-styling-guide	web-design-guidelines	Adjust this card padding using the existing Luas spacing tokens.
+boundary-web-perf	implicit	vercel-react-best-practices	vercel-react-best-practices	web-perf	Refactor an already identified Next.js request waterfall; no measurement or audit is requested.
+boundary-webapp-testing	implicit	testing-standards	testing-standards	webapp-testing	Write a focused component test for the dialog with Vitest; no running browser is needed.
+routine-go-rename	implicit	none	none	-	Rename a private Go helper and update its existing package test.
+routine-copy-edit	implicit	none	none	-	Change one typo in user-facing copy and update the matching snapshot.
+routine-lockfile	implicit	none	none	-	Refresh the lockfile after an already approved patch dependency update.
+routine-doc-link	implicit	none	none	-	Repair a local Markdown link in one feature document.
+routine-css-copy	implicit	none	none	-	Correct a comment in a CSS file without changing styles.
