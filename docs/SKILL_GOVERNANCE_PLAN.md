@@ -111,9 +111,9 @@ Measured warm runs on this workspace:
 | Command/path | Time | Files scanned |
 |---|---:|---:|
 | `make agent-check` baseline | 2.67 s | 195 Markdown files plus all source |
-| Changed-file targeted path | 0.75 s | 1 Markdown/source file plus global cheap guards |
+| Git-detected changed-file path | 1.08-1.50 s | 1 Markdown/source file plus global cheap guards |
 
-The representative targeted path is 71.9% faster while the pre-merge complete
+The observed targeted path is 43.8-59.6% faster while the pre-merge complete
 gate remains unchanged.
 
 ## Skill Taxonomy
