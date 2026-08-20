@@ -93,7 +93,8 @@ public HTTP behavior. The nearest `AGENTS.md` wins for local implementation.
 
 During implementation, run the narrowest check that proves the edited seam:
 
-- Agent guidance or skill-only change: `make agent-check`
+- Agent guidance or skill-only change: `make agent-check-changed` while
+  iterating, then `make agent-check` once before merge
 - API package change: targeted `go test`, then the relevant API tier
 - Web feature change: targeted Vitest, type check, or lint for that surface
 - Admin Console change: targeted Vitest, type check, lint, or static production build
@@ -109,6 +110,7 @@ rerun an unchanged successful gate in the same turn.
 
 ```bash
 # Agent guidance
+make agent-check-changed
 make agent-check
 make governance
 

@@ -30,10 +30,31 @@ def is_test_source(path: Path) -> bool:
     return path.name.endswith("_test.go") or "/src/test/" in f"/{relative}"
 
 
+def candidate_files(arguments: list[str]) -> list[Path]:
+    if not arguments:
+        return sorted(ROOT.rglob("*"))
+
+    selected: set[Path] = set()
+    for argument in arguments:
+        candidate = Path(argument)
+        if not candidate.is_absolute():
+            candidate = ROOT / candidate
+        candidate = candidate.resolve()
+
+        if not candidate.is_relative_to(ROOT) or not candidate.exists():
+            continue
+        if candidate.is_dir():
+            selected.update(candidate.rglob("*"))
+        else:
+            selected.add(candidate)
+
+    return sorted(selected)
+
+
 def main() -> int:
     failures: list[str] = []
 
-    for path in sorted(ROOT.rglob("*")):
+    for path in candidate_files(sys.argv[1:]):
         if not path.is_file() or any(part in IGNORED_PARTS for part in path.parts):
             continue
         if path.suffix != ".md" and path.suffix not in SOURCE_SUFFIXES and path.name != ".editorconfig":

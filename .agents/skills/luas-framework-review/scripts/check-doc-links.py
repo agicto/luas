@@ -44,12 +44,33 @@ def is_generated_or_vendor(path: Path) -> bool:
     return any(part in EXCLUDED_PARTS for part in path.relative_to(ROOT).parts)
 
 
-def markdown_files() -> list[Path]:
-    return sorted(
-        path
-        for path in ROOT.rglob("*.md")
-        if not is_generated_or_vendor(path)
-    )
+def markdown_files(arguments: list[str]) -> list[Path]:
+    if not arguments:
+        return sorted(
+            path
+            for path in ROOT.rglob("*.md")
+            if not is_generated_or_vendor(path)
+        )
+
+    selected: set[Path] = set()
+    for argument in arguments:
+        candidate = Path(argument)
+        if not candidate.is_absolute():
+            candidate = ROOT / candidate
+        candidate = candidate.resolve()
+
+        if not candidate.is_relative_to(ROOT) or not candidate.exists():
+            continue
+        if candidate.is_dir():
+            selected.update(
+                path
+                for path in candidate.rglob("*.md")
+                if not is_generated_or_vendor(path)
+            )
+        elif candidate.suffix == ".md" and not is_generated_or_vendor(candidate):
+            selected.add(candidate)
+
+    return sorted(selected)
 
 
 def strip_code_fences(lines: list[str]) -> list[tuple[int, str]]:
@@ -120,8 +141,9 @@ def resolve_target(source: Path, target: str) -> Path:
 
 def main() -> int:
     failures: list[str] = []
+    sources = markdown_files(sys.argv[1:])
 
-    for source in markdown_files():
+    for source in sources:
         for line_number, raw_target in extract_raw_targets(source):
             target = normalize_target(raw_target)
             if target is None:
@@ -142,7 +164,7 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print(f"Markdown link check passed ({len(markdown_files())} files scanned).")
+    print(f"Markdown link check passed ({len(sources)} files scanned).")
     return 0
 
 
