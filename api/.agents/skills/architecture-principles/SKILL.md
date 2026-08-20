@@ -7,28 +7,9 @@ description: Decide API seams, starter/capability boundaries, interfaces, and li
 
 ## Purpose
 
-This skill is the top-level architecture rulebook for Luas. Use it before creating or refactoring modules, changing default starter assembly, or introducing new interfaces.
-
-It defines the shared language for:
-
-- `module`
-- `interface`
-- `implementation`
-- `seam`
-- `adapter`
-- `depth`
-- `leverage`
-- `locality`
-
-Other skills should inherit these rules instead of redefining them.
-
-## When to Use
-
-- Designing or refactoring a module
-- Deciding whether something is a `starter`, `optional starter`, `capability`, or `example`
-- Deciding whether to add an interface
-- Reviewing a module that feels too fragmented or too coupled
-- Updating scaffolding, generators, or default rules used by AI agents
+Use this rulebook when structural work changes modules, default starter assembly,
+interfaces, or ownership seams. Other API skills inherit its vocabulary instead
+of redefining it.
 
 ## Vocabulary
 
@@ -167,12 +148,3 @@ Before finishing an architecture change, ask:
 - What caller got simpler?
 - What change is now more local?
 - Which skill should encode this rule so future AI output stays aligned?
-
-## Related Skills
-
-Select only when its separate concern is active:
-
-- [`module-creation`](../module-creation/): Translates these principles into the DDD module template.
-- [`database-design`](../database-design/): Translates these principles into schema and PO boundaries.
-- [`grill-before-build`](../../../../.agents/skills/grill-before-build/): Resolves a genuinely blocking high-impact decision.
-- [`pr-description-writer`](../../../../.agents/skills/pr-description-writer/): When recording an architecture decision, the PR body is its first home.

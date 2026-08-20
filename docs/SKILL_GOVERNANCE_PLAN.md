@@ -116,6 +116,34 @@ Measured warm runs on this workspace:
 The observed targeted path is 43.8-59.6% faster while the pre-merge complete
 gate remains unchanged.
 
+## 2026-08-20 Forward-Routing And Budget Iteration
+
+The checked-in routing suite records 48 realistic prompt reviews: one positive
+case for every repository skill, one near-miss for each of the 11 explicit-only
+workflows, and five routine no-skill tasks. The deterministic checker validates
+the fixture against current invocation policy and reports false positives,
+false negatives, and non-null misroutes separately.
+
+| Evidence | Result |
+|---|---:|
+| Positive coverage | 32/32 skills |
+| Explicit-only boundary coverage | 11/11 skills |
+| Recorded false positives / false negatives / misroutes | 0 / 0 / 0 |
+| Recorded routing accuracy | 48/48 (100.0%) |
+| Implicit entrypoint budget | <= 6,000 bytes |
+| Explicit-only entrypoint budget | <= 7,000 bytes |
+| Largest implicit entrypoint | 6,494 -> 5,978 bytes |
+| Active `SKILL.md` bodies | 132,936 -> 131,541 bytes |
+| Standalone routing guard, five warm runs | 0.10-0.14 s |
+
+The recorded observations are a reviewable repository routing contract, not an
+independent model benchmark. A separately authorized independent run can
+replace or supplement the `observed_skill` column without changing the metric
+definitions. A metadata fingerprint makes description or policy changes fail
+until the prompt observations are reviewed. `make agent-check` and
+`make agent-check-changed` now reject stale coverage, explicit-only leakage,
+routing errors, or entrypoint budget growth.
+
 ## Skill Taxonomy
 
 Invocation policy is now enforced through every skill's `agents/openai.yaml`.
@@ -309,7 +337,7 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Forward-test representative prompts against the 32 skill descriptions and
-record false-positive or false-negative selections. Keep API package boundaries
-at zero baseline exceptions and preserve mock BFF contract tests while future
-skills are changed.
+Keep the routing fixture current whenever descriptions or invocation policies
+change. Add an independent model run only when delegated evaluation is
+explicitly authorized; preserve API package boundaries and mock BFF contract
+tests while future skills evolve.
