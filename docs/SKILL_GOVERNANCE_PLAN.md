@@ -54,6 +54,23 @@ and architecture gate, and `make check` remains the single release gate.
 The portable lessons and migration recipe for downstream repositories live in
 [`AGENT_SKILL_PERFORMANCE_GUIDE.md`](AGENT_SKILL_PERFORMANCE_GUIDE.md).
 
+## 2026-08-20 Progressive Disclosure Iteration
+
+`downstream-app-extraction` now keeps only repository mode, context routing,
+the extraction workflow, completion criteria, and contamination check in its
+entrypoint. Optional-starter and mock BFF/auth details live in conditional
+references that load only for the active downstream slice.
+
+| Surface | Before | After | Reduction |
+|---|---:|---:|---:|
+| `downstream-app-extraction/SKILL.md` | 11,736 bytes | 5,917 bytes | 49.6% |
+| All active repository `SKILL.md` bodies | 144,396 bytes | 138,577 bytes | 4.0% |
+
+The next largest entrypoint is the explicit-only `accessibility-audit` skill at
+7,728 bytes. Its size no longer affects routine automatic routing; revise it
+only together with the Web review-boundary cleanup so WCAG behavior is not
+silently weakened.
+
 ## Skill Taxonomy
 
 Invocation policy is now enforced through every skill's `agents/openai.yaml`.
@@ -247,9 +264,9 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Split `downstream-app-extraction` by starter branch so its entrypoint loads only
-the extraction workflow and routes to starter-specific references on demand.
-Then forward-test representative prompts against the 32 skill descriptions and
-record false-positive or false-negative selections. Keep API package boundaries
-at zero baseline exceptions and preserve mock BFF contract tests while future
+Remove overlapping and stale authority from API and Web skills, starting with
+PostgreSQL migration guidance and the UI review family. Then forward-test
+representative prompts against the 32 skill descriptions and record
+false-positive or false-negative selections. Keep API package boundaries at
+zero baseline exceptions and preserve mock BFF contract tests while future
 skills are changed.
