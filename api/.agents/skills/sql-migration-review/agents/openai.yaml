@@ -1,0 +1,6 @@
+interface:
+  display_name: "SQL Migration Review"
+  short_description: "Review PostgreSQL rollout safety"
+  default_prompt: "Use $sql-migration-review to review this PostgreSQL migration for compatibility and rollout safety."
+policy:
+  allow_implicit_invocation: false

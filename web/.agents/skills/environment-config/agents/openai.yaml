@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Environment Config"
+  short_description: "Change validated environment boundaries"
+  default_prompt: "Use $environment-config to change this validated Web environment variable without crossing secret boundaries."

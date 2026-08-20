@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web API Error Handling"
+  short_description: "Map API failures into Web behavior"
+  default_prompt: "Use $api-error-handling to implement typed API error parsing and user-facing failure behavior in Web."

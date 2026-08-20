@@ -31,6 +31,20 @@ not duplicate the Next-specific skill set under `web/.agents/skills/`.
 6. Use focused checks while iterating. Run the full gate only for a
    cross-cutting change or explicit release; an ordinary push is not a release.
 
+Invocation policy is machine-readable in each skill's `agents/openai.yaml`:
+
+- `policy.allow_implicit_invocation: false` keeps high-cost, explicit workflows
+  out of automatic model selection while preserving `$skill-name` invocation.
+- An omitted policy keeps a focused discipline available for automatic
+  selection when its description matches.
+- Every repository skill must provide quoted UI metadata and a default prompt
+  that names the skill. `validate-skill.sh` enforces this contract.
+
+Explicit-only workflows currently cover broad reviews, downstream extraction,
+PR packaging, deployment, running-API/browser checks, dedicated accessibility,
+design and performance audits, and SQL migration review. Routine implementation
+disciplines remain implicitly invokable.
+
 Avoid descriptions such as "use for all development" or "use when adding or
 reviewing any UI." Descriptions should include positive triggers and important
 negative boundaries so implicit selection remains precise.
@@ -104,6 +118,7 @@ Run:
 
 ```bash
 make agent-check
+bash .agents/skills/scripts/skill-metrics.sh
 bash .agents/skills/scripts/list-skills.sh
 SKILL_VALIDATION_VERBOSE=1 bash .agents/skills/scripts/validate-skill.sh --all
 ```

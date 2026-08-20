@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Testing Strategy"
+  short_description: "Choose API test seams and doubles"
+  default_prompt: "Use $testing-strategy to choose the API test seam, doubles, and integration coverage for this behavior."

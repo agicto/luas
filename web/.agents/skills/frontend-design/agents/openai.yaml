@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Design"
+  short_description: "Establish a visual direction"
+  default_prompt: "Use $frontend-design to establish a substantial visual direction for this Luas page or component."

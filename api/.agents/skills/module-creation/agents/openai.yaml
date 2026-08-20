@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Module Creation"
+  short_description: "Create a route-owning starter"
+  default_prompt: "Use $module-creation to create this route-owning Luas API starter module at the correct boundary."

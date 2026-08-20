@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grill Before Build"
+  short_description: "Resolve a blocking design decision"
+  default_prompt: "Use $grill-before-build to resolve the blocking product or architecture decision before implementation."

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Web Design Guidelines"
+  short_description: "Review explicit UI and UX quality"
+  default_prompt: "Use $web-design-guidelines to review this completed Luas UI for explicit design and UX quality."
+policy:
+  allow_implicit_invocation: false

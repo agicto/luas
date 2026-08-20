@@ -1,0 +1,4 @@
+interface:
+  display_name: "Database Design"
+  short_description: "Design PostgreSQL persistence"
+  default_prompt: "Use $database-design to design the PostgreSQL model, indexes, and bounded query shape for this capability."

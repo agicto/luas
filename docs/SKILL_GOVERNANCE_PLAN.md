@@ -56,6 +56,12 @@ The portable lessons and migration recipe for downstream repositories live in
 
 ## Skill Taxonomy
 
+Invocation policy is now enforced through every skill's `agents/openai.yaml`.
+The initial policy baseline is 21 implicitly invokable skills and 11
+explicit-only workflows. Use `.agents/skills/scripts/skill-metrics.sh` to
+measure this split and the context-size baseline before and after each
+optimization slice.
+
 ### User-Invoked Router Skills
 
 These are high-level entry points. They orchestrate, ask questions, and select lower-level skills.
@@ -67,6 +73,12 @@ These are high-level entry points. They orchestrate, ask questions, and select l
 | `pr-description-writer` | Packages a completed diff into reviewable context. | Existing |
 | `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Existing |
 | `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Existing |
+
+The explicit-only set also includes high-cost local workflows for deployment,
+Kest scenarios, SQL migration review, accessibility audit, design review,
+browser verification, and Web performance measurement. These remain available
+through explicit `$skill-name` invocation but do not compete for routine model
+selection.
 
 ### Model-Invoked Discipline Skills
 
@@ -235,6 +247,9 @@ Before publishing Luas as a reusable starter kit release:
 
 ## Next Recommended Slice
 
-Forward-test representative prompts against the 32 skill descriptions and record false-positive or
-false-negative selections. Keep API package boundaries at zero baseline exceptions and preserve
-mock BFF contract tests while future skills are added.
+Split `downstream-app-extraction` by starter branch so its entrypoint loads only
+the extraction workflow and routes to starter-specific references on demand.
+Then forward-test representative prompts against the 32 skill descriptions and
+record false-positive or false-negative selections. Keep API package boundaries
+at zero baseline exceptions and preserve mock BFF contract tests while future
+skills are changed.

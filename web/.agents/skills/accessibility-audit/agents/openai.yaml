@@ -1,0 +1,6 @@
+interface:
+  display_name: "Accessibility Audit"
+  short_description: "Audit a completed UI for WCAG"
+  default_prompt: "Use $accessibility-audit to audit this completed Luas UI against WCAG 2.2 AA."
+policy:
+  allow_implicit_invocation: false

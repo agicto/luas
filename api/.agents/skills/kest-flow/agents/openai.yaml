@@ -1,0 +1,6 @@
+interface:
+  display_name: "Kest Flow"
+  short_description: "Run chained API scenarios"
+  default_prompt: "Use $kest-flow to create or run a chained Kest scenario against the running Luas API."
+policy:
+  allow_implicit_invocation: false

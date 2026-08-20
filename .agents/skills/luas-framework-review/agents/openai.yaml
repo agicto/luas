@@ -1,0 +1,6 @@
+interface:
+  display_name: "Luas Framework Review"
+  short_description: "Audit the Luas scaffold broadly"
+  default_prompt: "Use $luas-framework-review to audit Luas across the requested framework quality axes."
+policy:
+  allow_implicit_invocation: false

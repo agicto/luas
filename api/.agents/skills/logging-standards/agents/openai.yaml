@@ -1,0 +1,4 @@
+interface:
+  display_name: "Logging Standards"
+  short_description: "Design private structured telemetry"
+  default_prompt: "Use $logging-standards to design the structured event, correlation, level, and redaction behavior for this telemetry change."

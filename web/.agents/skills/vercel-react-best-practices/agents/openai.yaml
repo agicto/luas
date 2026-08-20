@@ -1,0 +1,4 @@
+interface:
+  display_name: "React Performance Practices"
+  short_description: "Apply a measured React optimization"
+  default_prompt: "Use $vercel-react-best-practices to apply the specific React or Next.js optimization supported by this evidence."

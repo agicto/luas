@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Testing Standards"
+  short_description: "Write behavior-focused Web tests"
+  default_prompt: "Use $testing-standards to write or restructure this Web behavior test with Vitest and Testing Library."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "API Architecture Principles"
+  short_description: "Decide API seams and ownership"
+  default_prompt: "Use $architecture-principles to decide the structural seam and lifecycle owner for this API change."

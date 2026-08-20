@@ -15,6 +15,8 @@ MAX_NAME=64
 MAX_DESC=1024
 MAX_DESC_PRACTICAL=200
 MAX_LINES=200
+MIN_SHORT_DESC=25
+MAX_SHORT_DESC=64
 
 ERRORS=0
 WARNINGS=0
@@ -128,6 +130,43 @@ validate_one() {
 
     if [ -n "$extra_frontmatter" ]; then
         warn "move optional UI/policy metadata to agents/openai.yaml"
+    fi
+
+    local metadata="$parent/agents/openai.yaml"
+    if [ ! -f "$metadata" ]; then
+        err "missing agents/openai.yaml"
+    else
+        local display_name=""
+        local short_description=""
+        local default_prompt=""
+        local invocation_policy=""
+
+        display_name=$(sed -n 's/^  display_name: "\(.*\)"$/\1/p' "$metadata")
+        short_description=$(sed -n 's/^  short_description: "\(.*\)"$/\1/p' "$metadata")
+        default_prompt=$(sed -n 's/^  default_prompt: "\(.*\)"$/\1/p' "$metadata")
+        invocation_policy=$(sed -n 's/^  allow_implicit_invocation: \(.*\)$/\1/p' "$metadata")
+
+        [ -n "$display_name" ] || err "agents/openai.yaml needs a quoted interface.display_name"
+        [ -n "$short_description" ] || err "agents/openai.yaml needs a quoted interface.short_description"
+        [ -n "$default_prompt" ] || err "agents/openai.yaml needs a quoted interface.default_prompt"
+
+        if [ -n "$short_description" ] &&
+           { [ ${#short_description} -lt $MIN_SHORT_DESC ] ||
+             [ ${#short_description} -gt $MAX_SHORT_DESC ]; }; then
+            err "interface.short_description must be $MIN_SHORT_DESC-$MAX_SHORT_DESC characters"
+        fi
+
+        if [ -n "$default_prompt" ]; then
+            case "$default_prompt" in
+                *"\$$name"*) ;;
+                *) err "interface.default_prompt must mention \$$name" ;;
+            esac
+        fi
+
+        case "$invocation_policy" in
+            ""|true|false) ;;
+            *) err "policy.allow_implicit_invocation must be true or false" ;;
+        esac
     fi
 
     if [ "$VERBOSE" = "1" ] &&

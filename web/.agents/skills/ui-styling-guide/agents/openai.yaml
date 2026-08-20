@@ -1,0 +1,4 @@
+interface:
+  display_name: "Luas UI Styling Guide"
+  short_description: "Apply existing tokens and primitives"
+  default_prompt: "Use $ui-styling-guide to style this UI with the existing Luas tokens, variants, and primitives."

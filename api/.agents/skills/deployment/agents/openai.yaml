@@ -1,0 +1,6 @@
+interface:
+  display_name: "API Deployment"
+  short_description: "Deploy and verify the API runtime"
+  default_prompt: "Use $deployment to deploy and verify the Luas API image and runtime configuration."
+policy:
+  allow_implicit_invocation: false

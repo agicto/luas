@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web I18n Handler"
+  short_description: "Change translation boundaries"
+  default_prompt: "Use $i18n-handler to change Luas locale keys, namespaces, or server and client translation boundaries."
