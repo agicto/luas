@@ -426,7 +426,12 @@ def main() -> int:
     require_all(
         failures,
         ".agents/skills/downstream-app-extraction/SKILL.md",
-        ("When retaining `usage`", "stable `source + event_id`"),
+        ("[references/usage.md](references/usage.md)",),
+    )
+    require_all(
+        failures,
+        ".agents/skills/downstream-app-extraction/references/usage.md",
+        ("optional `usage`", "stable `source + event_id`"),
     )
 
     if failures:

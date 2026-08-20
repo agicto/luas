@@ -96,8 +96,13 @@ def main() -> int:
     require_all(
         failures,
         "web/.agents/skills/accessibility-audit/SKILL.md",
+        ("[references/luas-controls.md](references/luas-controls.md)",),
+    )
+    require_all(
+        failures,
+        "web/.agents/skills/accessibility-audit/references/luas-controls.md",
         (
-            "#### Luas Composed Control Contract",
+            "## Composed Buttons And Links",
             "`Button asChild`",
             "`aria-disabled`",
             "`aria-busy`",

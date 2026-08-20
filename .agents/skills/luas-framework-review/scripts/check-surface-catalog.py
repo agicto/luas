@@ -119,14 +119,22 @@ def main() -> int:
         return fail(failures)
 
     catalog_rows = table_rows(SURFACE_DOC)
-    skill_rows = table_rows(DOWNSTREAM_SKILL)
+    downstream_text = read(DOWNSTREAM_SKILL)
     context_text = read(CONTEXT)
     surface_text = read(SURFACE_DOC)
 
     failures.extend(missing_surfaces("docs/SCAFFOLD_SURFACES.md", catalog_rows))
     failures.extend(unexpected_surfaces("docs/SCAFFOLD_SURFACES.md", catalog_rows))
-    failures.extend(missing_surfaces("downstream-app-extraction skill", skill_rows))
     failures.extend(check_catalog_rows(catalog_rows))
+
+    if "docs/SCAFFOLD_SURFACES.md" not in downstream_text:
+        failures.append(
+            "downstream-app-extraction skill must reference docs/SCAFFOLD_SURFACES.md"
+        )
+    if re.search(r"Assign exactly one catalog\s+classification", downstream_text) is None:
+        failures.append(
+            "downstream-app-extraction skill must require one catalog classification per surface"
+        )
 
     for title, normalized in CONTEXT_TERMS.items():
         if f"**{title}**" not in context_text:
