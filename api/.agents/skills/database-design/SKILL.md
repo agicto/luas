@@ -3,166 +3,96 @@ name: database-design
 description: Design Luas persistence models, indexes, bounded queries, and table lifecycle. Use for schema or query-shape decisions; use sql-migration-review for rollout safety.
 ---
 
-# Database Design Standards
+# Database Design
 
-## 📋 Purpose
+Design the steady-state PostgreSQL schema and repository query shape. Migration
+ordering, deploy compatibility, lock duration, and backfill rollout belong to
+`sql-migration-review`, not this skill.
 
-This skill provides the definitive standards for database design in the Luas project. It ensures data integrity, query performance, and consistent migration workflows across all modules.
+## Authority
 
-## 🎯 When to Use
+Read `api/AGENTS.md` for naming, layering, and the PostgreSQL-only boundary.
+Read `api/docs/DATABASE.md` only when runtime configuration, pool behavior,
+supported versions, or database performance evidence is active.
 
-- Designing tables for a new module
-- Adding or modifying columns in existing tables
-- Optimizing slow queries using indexes
-- Creating migration scripts
-- Reviewing database-related code in PRs
+## Design Decisions
 
----
+### Persistence boundary
 
-## 🏗️ Table Design Best Practices
+- Keep domain values free of GORM. Persistence objects use the `PO` suffix and
+  convert explicitly at the repository boundary.
+- Define `TableName()` explicitly and use plural `snake_case` table names.
+- Mark sensitive persistence fields with `json:"-"` even when the PO is not
+  intended for transport.
+- Choose lifecycle columns from record semantics. Mutable records commonly use
+  `created_at` and `updated_at`; append-only records and hard-delete tables do
+  not gain `deleted_at` by reflex.
+- Represent SQL nullability deliberately. Use pointers or a reviewed nullable
+  type only when absence differs from the zero value.
 
-### 1. Naming Conventions
-- **Tables**: `snake_case`, plural (e.g., `users`, `user_orders`).
-- **Columns**: `snake_case` (e.g., `created_at`, `is_active`).
-- **Persistence Objects (PO)**: Must have a `PO` suffix and a `TableName()` method.
+### PostgreSQL types and constraints
 
-### 2. Lifecycle Columns
-Choose lifecycle columns based on module semantics:
-- `id`: required for almost every starter table
-- `created_at`: recommended for mutable and auditable records
-- `updated_at`: recommended for mutable records
-- `deleted_at`: only when the module uses soft delete
+- PostgreSQL is the only compatibility target. Do not add SQLite or MySQL
+  branches, fixtures, migrations, drivers, or tests.
+- Prefer ordinary relational columns and constraints. Use `jsonb` only for data
+  whose shape is intentionally flexible and whose query/index strategy is
+  understood.
+- Enforce identity and relationship invariants with database uniqueness,
+  foreign keys, and check constraints where they remain valid independently of
+  application code.
+- Keep evolving business-state validation in the owning service rather than a
+  database enum or trigger that is difficult to deploy compatibly.
 
-Append-only tables such as audit logs may intentionally omit `deleted_at`.
+### Indexes and query shape
 
-```go
-// Example PO Structure
-type UserPO struct {
-    ID        uint           `gorm:"primaryKey"`
-    Username  string         `gorm:"size:255;not null;uniqueIndex"`
-    Email     string         `gorm:"size:255;not null;uniqueIndex"`
-    CreatedAt time.Time
-    UpdatedAt time.Time
-    DeletedAt gorm.DeletedAt `gorm:"index"`
-}
+- Derive indexes from real `WHERE`, join, ordering, and uniqueness paths. Do
+  not index every field or choose composite order from cardinality alone.
+- For a composite index, align leading columns with equality predicates, then
+  range/order predicates used by the actual query.
+- Keep list ordering deterministic. Unbounded lists require pagination; finite
+  code-owned catalogs use the reviewed bounded-list annotation.
+- Avoid query-per-row loops. Use a bounded join, preload, batch, or aggregate
+  that preserves the repository contract.
+- Select only response-owned columns when excluding sensitive or large fields
+  materially changes correctness or cost.
 
-func (UserPO) TableName() string {
-    return "users"
-}
+## Performance Evidence
+
+Inspect the generated SQL and run `EXPLAIN (ANALYZE, BUFFERS)` against
+representative PostgreSQL data before claiming an index or query improvement.
+Record exact application statement counts first; treat local latency and
+allocations as comparison evidence.
+
+Use the repository profile only when the changed seam matches it:
+
+```bash
+LUAS_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/luas_profile?sslmode=disable' \
+  make benchmark-database
 ```
 
-### 3. Data Types
-- **Strings**: Use `string` in Go. Specify `size:255` or `text` in GORM tags.
-- **Booleans**: Use `bool`. Defaults to `false`.
-- **Enums**: Use `int` or `string` with validation in the Service layer. Do not rely solely on DB-level enums.
-- **JSON**: Use `datatypes.JSON` or `string` for flexible data blobs.
+Do not enable `SkipDefaultTransaction`, `PrepareStmt`, or implicit prepared
+statements globally without a transaction audit and deployment-pooler evidence.
 
-### 4. Dialect Authority
+## Verification
 
-- PostgreSQL is the only SQL compatibility target.
-- Never add SQLite drivers, dependencies, DSNs, dialect branches, migrations,
-  fixtures, or repository tests.
-- GORM portability is not evidence of PostgreSQL compatibility. Verify SQL,
-  constraints, transactions, locks, indexes, and migrations against disposable
-  PostgreSQL.
-- Keep pure service tests database-free by using an existing repository seam
-  or test double.
+- Run `scripts/validate-db.sh <module-or-model-path>` for cheap PO checks.
+- Run the owning repository/module tests.
+- Verify constraints, transactions, locks, indexes, migrations, and query shape
+  against disposable PostgreSQL through `LUAS_TEST_POSTGRES_DSN`.
+- Use [examples/module_model_example.go](examples/module_model_example.go) only
+  when a concrete PO/index example is needed; it is not a universal template.
 
----
+## Completion Criteria
 
-## 🚀 Indexing Strategies
+- The PO and table lifecycle match domain semantics.
+- Constraints and indexes correspond to observable invariants and query paths.
+- Lists are bounded and deterministically ordered.
+- No unsupported dialect or database-free test is used as SQL evidence.
+- Performance claims include PostgreSQL query-plan and statement-count proof.
 
-### 1. Primary Rules
-- **Unique Indexes**: Use for fields like `email`, `username`, or `slug` to prevent logical duplicates.
-- **Query Alignment**: Index columns used frequently in `WHERE` clauses (e.g., `status`, `user_id`).
-- **Composite Indexes**: Use for queries that filter by multiple columns together. Order matters: high cardinality fields go first.
+## Related Skills
 
-### 2. GORM Index Tags
-```go
-Username  string `gorm:"uniqueIndex:idx_users_username"`
-Status    string `gorm:"index:idx_users_status"`
-// Composite Index
-TenantID  uint   `gorm:"index:idx_tenant_created;priority:1"`
-CreatedAt time.Time `gorm:"index:idx_tenant_created;priority:2"`
-```
+Navigation only; do not load automatically:
 
----
-
-## 🛠️ Migration Patterns
-
-### 1. Principle: Forward Only
-We use GORM's `AutoMigrate` for simple development, but **production changes must use explicit migration files** or controlled scripts to prevent data loss.
-
-### 2. Safe Conversions
-- **Adding columns**: Safe. Always provide a default or allow NULL.
-- **Renaming columns**: Unsafe. Use a new column, copy data, then drop the old one.
-- **Adding indexes**: Safe, but can be slow on large tables (Concurrently in Postgres).
-
----
-
-## ⚡ SQL Optimization
-
-### 1. Avoid `SELECT *`
-In repositories, only fetch what you need if performance is critical. However, for standard CRUD, GORM's default behavior is acceptable.
-
-### 2. N+1 Query Problem
-Never perform a database query inside a loop. Use Eager Loading.
-
-```go
-// ❌ WRONG
-for _, user := range users {
-    var profile Profile
-    db.Where("user_id = ?", user.ID).First(&profile) // N queries
-}
-
-// ✅ CORRECT (GORM Preload)
-db.Preload("Profile").Find(&users) // 2 queries total
-```
-
-### 3. Explain Analyze
-Whenever a query feels slow, use `EXPLAIN ANALYZE` in your DB console to check for sequential scans vs. index hits.
-
-### 4. Measure The Repository Seam
-
-- Count application SQL statements for representative success and empty-page paths.
-- Use deterministic ordering for offset or cursor pagination.
-- Record allocations and host-local p95 against PostgreSQL before claiming a query improvement.
-- Run `LUAS_TEST_POSTGRES_DSN=... make benchmark-database` for the default user list/write profile.
-- Do not enable `SkipDefaultTransaction`, `PrepareStmt`, or implicit prepared statements globally
-  without auditing transaction correctness and the deployment pooler mode.
-- Treat latency as comparison evidence until repeated runner data supports a portable threshold;
-  exact query count is the first stable regression budget.
-
----
-
-## ✅ Verification Checklist
-
-- [ ] Table lifecycle fields match the module semantics; `deleted_at` is not added by reflex.
-- [ ] Table names are plural `snake_case`.
-- [ ] Index tags are added for all search/filter criteria.
-- [ ] Unique constraints are placed on unique identifiers.
-- [ ] Pointer types are used for optional/nullable fields in POs.
-- [ ] `TableName()` is explicitly defined in `model.go`.
-- [ ] No DB-level logic (triggers/stored procs) - keep logic in Go.
-- [ ] No SQLite runtime, dependency, fixture, migration, or test was added.
-- [ ] SQL-sensitive behavior was verified against disposable PostgreSQL.
-- [ ] List queries have deterministic ordering and preserve total semantics on empty pages.
-- [ ] Query count, allocations, and p95 evidence accompany database performance claims.
-
----
-
-## 📚 Complete Examples
-
-- [**Module model.go Example**](./examples/module_model_example.go)
-
----
-
-## 🔗 Related Skills
-
-Select another skill only when its distinct concern is active.
-
-- [`module-creation`](../module-creation/): Where `model.go` lives.
-- [`../../../AGENTS.md`](../../../AGENTS.md): Mandatory API naming and layering rules.
-- [`sql-migration-review`](../sql-migration-review/): For reviewing the migrations this schema produces.
-
----
+- `module-creation` for a new route-owning starter.
+- `sql-migration-review` for deploying the schema change safely.

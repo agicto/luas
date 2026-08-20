@@ -26,7 +26,7 @@ guide for an ordinary component edit.
 | `utility-tooling` | Adding shared hooks or utilities after searching existing code |
 | `testing-standards` | Writing unit, component, or integration tests |
 | `webapp-testing` | Browser-driven verification or UI debugging |
-| `accessibility-audit` | Explicit WCAG audit or complex interaction review |
+| `accessibility-audit` | Explicit WCAG or accessibility audit of a completed surface |
 | `web-perf` | Measuring route bundles, Web Vitals, or a performance regression |
 | `vercel-react-best-practices` | Performance-sensitive React/Next.js implementation |
 

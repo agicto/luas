@@ -30,12 +30,12 @@ type UserPO struct {
 	// Defaults are set at the DB level for consistency
 	Status int `gorm:"index:idx_users_status;default:1"`
 
-	// 5. Audit Timestamps (Managed by GORM)
+	// 5. Lifecycle fields chosen for this mutable user record
 	CreatedAt time.Time `gorm:"index"`
 	UpdatedAt time.Time
 
-	// 6. Soft Delete
-	// Adding an index to DeletedAt is standard for performance
+	// 6. Soft delete is present because this record supports recovery.
+	// Append-only or hard-delete records should omit it.
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
