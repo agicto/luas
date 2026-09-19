@@ -7,12 +7,12 @@ skill metadata first and loads a full `SKILL.md` only after selecting it.
 
 | Working directory | Repository skills available |
 |---|---|
-| Repository root | 10 root skills |
-| `api/` | 10 root + 9 API skills |
-| `web/` | 10 root + 13 Web skills |
-| `admin/` | 10 root skills + local `AGENTS.md` |
+| Repository root | 11 root skills |
+| `api/` | 11 root + 9 API skills |
+| `web/` | 11 root + 13 Web skills |
+| `admin/` | 11 root skills + local `AGENTS.md` |
 
-The repository ships 32 skills in total. User, system, and plugin skills may
+The repository ships 33 skills in total. User, system, and plugin skills may
 also appear in Codex; do not add a repository skill with the same name as a
 known built-in skill.
 
@@ -53,6 +53,7 @@ negative boundaries so implicit selection remains precise.
 
 | Skill | Job |
 |---|---|
+| `business-implementation-planning` | Turn material business requests into implementation-ready plans |
 | `contract-evolution` | Evolve shared HTTP behavior |
 | `domain-modeling` | Resolve global vocabulary/ownership |
 | `downstream-app-extraction` | Separate product behavior from the scaffold |

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Business Implementation Planning"
+  short_description: "Create implementation-ready business plans"
+  default_prompt: "Use $business-implementation-planning to turn this business capability into an implementation-ready plan."

@@ -1,4 +1,5 @@
 id	mode	expected_skill	observed_skill	boundary_for	prompt
+positive-business-implementation-planning	implicit	business-implementation-planning	business-implementation-planning	-	Plan and then build a new approval workflow spanning PostgreSQL state, API contracts, Web, and Admin so another Codex agent can implement it without open design decisions.
 positive-contract-evolution	implicit	contract-evolution	contract-evolution	-	Change the public pagination envelope across the API, Web service, and shared contract.
 positive-domain-modeling	implicit	domain-modeling	domain-modeling	-	Decide whether audit history is a starter, capability, or example and update the global vocabulary.
 positive-grill-before-build	implicit	grill-before-build	grill-before-build	-	The tenant-isolation model is still ambiguous after reading the contracts and code; resolve the blocking architecture choice before implementation.
@@ -31,6 +32,7 @@ positive-accessibility-audit	explicit	accessibility-audit	accessibility-audit	-	
 positive-web-design-guidelines	explicit	web-design-guidelines	web-design-guidelines	-	Use $web-design-guidelines to review the completed UI for UX and visual-quality problems.
 positive-web-perf	explicit	web-perf	web-perf	-	Use $web-perf to measure the reported LCP regression and inspect route bundle budgets.
 positive-webapp-testing	explicit	webapp-testing	webapp-testing	-	Use $webapp-testing to verify the running responsive flow, browser console, and screenshots.
+boundary-business-implementation-planning	implicit	none	none	-	Implement the next already-specified slice from the approved complete plan without changing its scope or contract.
 boundary-downstream-app-extraction	implicit	none	none	downstream-app-extraction	Fix a product-neutral typo in the checked-in scaffold example.
 boundary-luas-code-review	implicit	none	none	luas-code-review	Implement the requested nil guard in the owning package and run its focused test.
 boundary-luas-framework-review	implicit	none	none	luas-framework-review	Correct one broken local documentation link and run the changed guidance check.

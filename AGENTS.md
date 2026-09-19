@@ -28,7 +28,10 @@ Start with the smallest context that can answer the task:
    routine local edits.
 4. Open the owning contract or architecture document only when that boundary
    is active.
-5. Load at most one primary skill when its trigger clearly matches. Routine
+5. For a new material business capability or cross-boundary workflow, complete
+   [docs/BUSINESS_IMPLEMENTATION_PLAN_STANDARD.md](docs/BUSINESS_IMPLEMENTATION_PLAN_STANDARD.md)
+   before implementation. Small local changes may use its reduced-plan rule.
+6. Load at most one primary skill when its trigger clearly matches. Routine
    local work already covered by the nearest `AGENTS.md` and code may load none.
    A skill's `Pair With` section is navigation, not automatic chaining.
 
@@ -45,6 +48,8 @@ after selecting it.
 - Use `luas-framework-review` only for an explicit framework-wide audit.
 - Use `luas-code-review` for an explicit diff/PR review, not as an automatic
   post-edit ritual.
+- Use `business-implementation-planning` before building a new material
+  business capability or cross-module workflow that lacks a complete plan.
 - Use `domain-modeling` only for global vocabulary or ownership boundaries,
   not ordinary symbol naming.
 - Use `grill-before-build` only when a high-impact decision remains unresolved
@@ -61,6 +66,7 @@ The complete skill index and helper catalog are in
 |---|---|
 | Global vocabulary and surface ownership | [CONTEXT.md](CONTEXT.md) |
 | Stable architecture and vertical flow | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
+| Business implementation readiness | [docs/BUSINESS_IMPLEMENTATION_PLAN_STANDARD.md](docs/BUSINESS_IMPLEMENTATION_PLAN_STANDARD.md) |
 | Branch and release behavior | [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
 | CI and supply-chain policy | [docs/CI.md](docs/CI.md), [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md), [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |
 | Shared HTTP envelope and compatibility | [contracts/README.md](contracts/README.md) |
