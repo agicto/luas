@@ -4,7 +4,7 @@ ARG OCI_REVISION=unknown
 ARG OCI_VERSION=dev
 
 # Build stage
-FROM docker.io/library/golang:1.25.12-alpine3.24@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587 AS builder
+FROM docker.io/library/golang:1.27.1-alpine3.24@sha256:4cb7ac979db5fcc41cae44b2227ba5ab8a51e8807f40d9ba4dee20a0ad960b5b AS builder
 
 WORKDIR /app
 
