@@ -107,6 +107,30 @@ func TestLoad_AuthenticationSessionDefaultsAndLegacyJWTRejection(t *testing.T) {
 	}
 }
 
+func TestLoad_BrowserSessionConfiguration(t *testing.T) {
+	withoutEnv(t, "BROWSER_SESSION_ENABLED", "BROWSER_SESSION_ORIGIN")
+	t.Setenv("APP_ENV", "development")
+	t.Setenv("DB_ENABLED", "true")
+	t.Setenv("DB_DRIVER", "postgres")
+	t.Setenv("DB_HOST", "localhost")
+	t.Setenv("DB_PORT", "5432")
+	t.Setenv("DB_NAME", "luas")
+	t.Setenv("DB_USERNAME", "postgres")
+	t.Setenv("DB_PASSWORD", "postgres")
+	t.Setenv("DB_SSLMODE", "disable")
+	t.Setenv("CORS_ALLOW_ORIGINS", "http://127.0.0.1:4173")
+	t.Setenv("BROWSER_SESSION_ENABLED", "true")
+	t.Setenv("BROWSER_SESSION_ORIGIN", "http://127.0.0.1:4173")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if !cfg.BrowserSession.Enabled || cfg.BrowserSession.Origin != "http://127.0.0.1:4173" {
+		t.Fatalf("BrowserSession = %#v", cfg.BrowserSession)
+	}
+}
+
 func TestLoad_OptionalStartersAreAdditiveAndEmptyByDefault(t *testing.T) {
 	withoutEnv(t, "OPTIONAL_STARTERS")
 	t.Setenv("APP_ENV", "development")

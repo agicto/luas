@@ -19,6 +19,14 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 
 ## Current Baseline
 
+- The API now ships a default-disabled, route-discoverable Go browser-session
+  adapter for static applications. It maps the existing persistent opaque
+  session into an HttpOnly `SameSite=Lax` cookie, requires an exact configured
+  Origin before unsafe requests, returns deterministic `503` behavior while
+  disabled, keeps credentials out of JSON, and validates its production HTTPS
+  and PostgreSQL requirements at startup. PostgreSQL-backed lifecycle tests
+  cover login, current-session resolution, idempotent logout, immediate
+  revocation, cross-origin rejection, invalid credentials, and cookie flags.
 - Global vocabulary now lives in [`../CONTEXT.md`](../CONTEXT.md).
 - API, customer-facing Next.js Web, and the project Admin Console remain
   independent deployable units and share contracts, not source code.

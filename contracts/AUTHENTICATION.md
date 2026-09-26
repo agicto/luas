@@ -200,11 +200,49 @@ issuance should add that capability to the API contract instead of hiding compen
   `401 AUTH.UNAUTHORIZED`. A disabled API user becomes
   `403 AUTH.ACCOUNT_DISABLED`. Availability failures remain retryable and do not redirect to login.
 
-## Admin Console Authentication Boundary
+## Go Browser Session Adapter
 
-`admin/` has no server runtime, private environment, or Route Handler. A protected production Admin Console
-therefore requires a same-origin `/api` origin that implements the Browser Auth Contract while
-keeping the opaque Go API session credential outside browser JavaScript.
+The API exposes an optional browser-session adapter for static applications such as `admin/`.
+It is disabled by default and returns `503 COMMON.SERVICE_UNAVAILABLE` until enabled, keeping the
+route catalog and OpenAPI surface deterministic. It does not create a third credential authority:
+it translates a same-origin HttpOnly cookie into the existing persistent Go authentication session.
+
+| Operation | API endpoint | Request | Successful `data` |
+|---|---|---|---|
+| Login | `POST /v1/browser/auth/login` | `{ email, password }` | `{ user: { id, email, name } }` |
+| Current session | `GET /v1/browser/auth/me` | none | `{ user: { id, email, name } }` |
+| Logout | `POST /v1/browser/auth/logout` | none | `{ success: true }` |
+
+Registration is intentionally absent. A management application must not silently become an
+account-registration surface. The adapter authenticates ordinary users only; a later
+system-operator boundary remains responsible for authorizing project administration.
+
+Enable the adapter only when the API is routed behind the same public origin as the browser
+application:
+
+```dotenv
+BROWSER_SESSION_ENABLED=true
+BROWSER_SESSION_ORIGIN=https://admin.example.com
+```
+
+Production requires an exact HTTPS origin without credentials, a path, query, or fragment. Local
+development may use an HTTP loopback origin. Enabling the adapter while database persistence is
+disabled is rejected at startup.
+
+The browser session cookie is `__Host-luas_browser_session` in production and
+`luas_browser_session` in development. It is HttpOnly, `SameSite=Lax`, `Path=/`, has no `Domain`,
+and is `Secure` in production. Its expiry never exceeds the API-issued session lifetime.
+
+Every response is `Cache-Control: private, no-store` and varies on `Cookie` and `Origin`. Login and
+logout require an `Origin` header that exactly equals `BROWSER_SESSION_ORIGIN`; missing, malformed,
+or cross-origin values fail with `403 AUTH.FORBIDDEN` before credentials are read or sessions are
+mutated. Missing, malformed, revoked, or expired cookies fail current-session resolution with
+`401 AUTH.UNAUTHORIZED`. Logout remains idempotent when the cookie is absent or the session has
+already ended, and always removes local browser credential custody.
+
+`admin/` has no server runtime, private environment, or Route Handler. A protected production Admin
+therefore routes same-origin `/api` requests to this adapter or to an equivalent reviewed gateway
+while keeping the opaque Go API session credential outside browser JavaScript.
 
 The gateway or Go browser adapter owns:
 
@@ -217,6 +255,6 @@ The gateway or Go browser adapter owns:
 
 The Go `/v1/login` `access_token` must not be stored in `localStorage`, `sessionStorage`, IndexedDB,
 Zustand persistence, TanStack Query persistence, a URL, or an analytics/logging surface. A
-client-side route guard is UX only and does not replace API authorization. Until the browser
-gateway exists, protected Admin Console authentication is deliberately incomplete rather than silently
-weaker.
+client-side route guard is UX only and does not replace API authorization. Until one of these
+boundaries is enabled, protected Admin authentication is deliberately incomplete rather than
+silently weaker.
