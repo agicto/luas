@@ -11,6 +11,19 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-01 — Operations hardening
+
+### Medium — CLI plugins no longer load from the current directory
+
+`plugin:list` and plugin dispatch search only absolute `PATH` entries, and plugin names must match
+`[a-z][a-z0-9-]*`. A plugin that lived only in the working directory must move onto `PATH`.
+
+### Low — Durable task operations
+
+New commands `workflow:tasks`, `workflow:retry`, `workflow:cancel`, and `workflow:prune` require
+`QUEUE_DRIVER=postgres`. Finished tasks were never deleted before; schedule `workflow:prune`
+(default retention 720h) to bound the `workflow_tasks` table.
+
 ## 2026-10-01 — Module ownership and generator
 
 ### Medium — Starters own their error mappings

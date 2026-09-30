@@ -1,11 +1,21 @@
 package plugin
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
+
+// validName limits plugin names to lowercase words so a name can never become a path.
+var validName = regexp.MustCompile(`^[a-z][a-z0-9-]{0,62}$`)
+
+// ValidName reports whether name can identify a plugin binary named luas-<name>.
+func ValidName(name string) bool {
+	return validName.MatchString(name)
+}
 
 // Plugin represents a plugin interface
 type Plugin interface {
@@ -14,11 +24,12 @@ type Plugin interface {
 	Description() string
 }
 
-// Discover automatically discovers installed plugins in PATH
-// Looks for executables matching pattern: luas-*
+// Discover finds installed plugins: executables named luas-<name> in PATH directories.
+// Discovery runs each plugin with --version, so only PATH is searched; the current working directory
+// is never included, because a checked-out repository could otherwise plant an executable.
 //
-// To author a plugin, ship an executable named `luas-<plugin>` on the user's
-// PATH and respond to `--version` for discovery.
+// To author a plugin, ship an executable named `luas-<plugin>` on the user's PATH and respond to
+// `--version` for discovery.
 func Discover() []PluginInfo {
 	var plugins []PluginInfo
 
@@ -28,18 +39,16 @@ func Discover() []PluginInfo {
 		return plugins
 	}
 
-	// Split PATH into directories
+	// Split PATH into directories. Empty entries mean the current directory to the shell, so skip them.
 	paths := strings.Split(pathEnv, string(os.PathListSeparator))
-
-	// Add current directory to search paths for development convenience
-	if wd, err := os.Getwd(); err == nil {
-		paths = append([]string{wd}, paths...)
-	}
 
 	// Track discovered plugins to avoid duplicates
 	discovered := make(map[string]bool)
 
 	for _, dir := range paths {
+		if dir == "" || !filepath.IsAbs(dir) {
+			continue
+		}
 		// Find all luas-* executables
 		pattern := filepath.Join(dir, "luas-*")
 		matches, err := filepath.Glob(pattern)
@@ -55,6 +64,9 @@ func Discover() []PluginInfo {
 
 			// Extract plugin name (remove luas- prefix)
 			name := strings.TrimPrefix(filepath.Base(match), "luas-")
+			if !ValidName(name) {
+				continue
+			}
 
 			// Skip if already discovered
 			if discovered[name] {
@@ -111,9 +123,15 @@ func getPluginVersion(binary string) string {
 	return strings.TrimSpace(string(output))
 }
 
-// Execute runs a plugin command
+// Execute runs a plugin command. The binary is resolved from PATH only.
 func Execute(pluginName string, args []string) error {
-	binary := "luas-" + pluginName
+	if !ValidName(pluginName) {
+		return fmt.Errorf("invalid plugin name %q", pluginName)
+	}
+	binary, err := exec.LookPath("luas-" + pluginName)
+	if err != nil {
+		return err
+	}
 	cmd := exec.Command(binary, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -123,6 +141,9 @@ func Execute(pluginName string, args []string) error {
 
 // IsInstalled checks if a plugin is installed
 func IsInstalled(pluginName string) bool {
+	if !ValidName(pluginName) {
+		return false
+	}
 	binary := "luas-" + pluginName
 	_, err := exec.LookPath(binary)
 	return err == nil

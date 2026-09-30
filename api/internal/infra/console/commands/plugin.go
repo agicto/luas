@@ -38,8 +38,7 @@ func (c *PluginListCommand) Run(args []string) error {
 	if len(plugins) == 0 {
 		c.output.Info("No plugins installed")
 		c.output.Info("")
-		c.output.Info("Install plugins with:")
-		c.output.Info("  go install github.com/zgiai/luas/api-ai/cmd/luas-ai@latest")
+		c.output.Info("A plugin is an executable named luas-<name> on PATH that answers --version.")
 		return nil
 	}
 

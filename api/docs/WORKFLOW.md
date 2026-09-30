@@ -85,6 +85,22 @@ waits for worker goroutines to exit. `Stop` can be called more than once. A typi
 
 The CLI worker already uses a signal-aware parent context for `SIGINT` and `SIGTERM`.
 
+## Operating Durable Tasks
+
+With `QUEUE_DRIVER=postgres`, operators inspect and repair tasks from the CLI. Payloads are never
+printed; the payload hash identifies duplicates.
+
+| Command | Effect |
+|---|---|
+| `workflow:tasks [--queue=name] [--status=failed] [--limit=50]` | List tasks newest first (limit 1–200) |
+| `workflow:retry <task-id>` | Return a **failed** task to `pending` with a fresh attempt budget; other states are rejected. The last failure code is kept until the task finishes again |
+| `workflow:cancel <task-id>` | Cancel a pending task, or ask a running task to stop at its next checkpoint |
+| `workflow:prune [--older-than=720h] [--batch=1000]` | Delete completed, failed, and canceled tasks last updated before the cutoff, oldest first, in one bounded batch (at most 10,000). Pending and processing tasks are never pruned |
+
+Retry, cancel, and prune emit structured `workflow.task_retried`, `workflow.task_canceled`, and
+`workflow.tasks_pruned` log events. Schedule `workflow:prune` like the other retention commands;
+repeat it while it reports a full batch.
+
 ## Custom Drivers
 
 Downstream applications may implement `workflow.Driver` or `workflow.DurableDriver` for a

@@ -160,6 +160,14 @@ starter adds transitive dependencies in deterministic order. Disabling a require
 unless `--cascade` is explicit. `--env-file` selects another runtime file, and updates use an atomic
 same-directory replacement.
 
+With `QUEUE_DRIVER=postgres`, `workflow:tasks`, `workflow:retry`, `workflow:cancel`, and
+`workflow:prune` inspect and repair durable tasks; see [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
+
+Unknown commands run a plugin: `luas <name>` executes `luas-<name>` found on `PATH`, with the CLI's
+environment, including database credentials. Plugin names must match `[a-z][a-z0-9-]*`, and the
+current directory is never searched. `plugin:list` runs each plugin with `--version`, so keep only
+trusted binaries on `PATH` in production images.
+
 ## Common Commands
 
 ```bash
