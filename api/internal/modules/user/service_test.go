@@ -11,8 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
+	"github.com/zgiai/luas/api/internal/capabilities/crypto"
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/events"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
 )
 
 type fakeRepo struct {
@@ -628,4 +630,35 @@ func TestServiceSignInAuthorizesBeforeIssuingSession(t *testing.T) {
 	})
 	require.ErrorIs(t, err, domain.ErrInvalidCredentials)
 	assert.Equal(t, 1, sessions.issued)
+}
+
+var _ UserMailer = (*testplatform.FakeMailer)(nil)
+
+func TestServiceRequestPasswordResetEmailsATokenMatchingTheStoredHash(t *testing.T) {
+	var storedHash string
+	repo := &fakeRepo{
+		findByEmailFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 5, Email: "ada@example.test", Status: 1}, nil
+		},
+		storeResetFn: func(_ context.Context, _ uint, tokenHash string, _ time.Time) error {
+			storedHash = tokenHash
+			return nil
+		},
+	}
+	mailer := testplatform.NewFakeMailer()
+	svc := NewService(repo, repo, &fakeSessionIssuer{}, events.NewEventBus(), mailer, NewAccountDeletionPolicy())
+
+	require.NoError(t, svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{Email: "ada@example.test"}))
+
+	sent := mailer.AssertSent(t, "ada@example.test", "password_reset")
+	assert.Equal(t, crypto.SHA256Hex(sent.Token), storedHash, "only the hash of the emailed token may be stored")
+}
+
+func TestServiceRequestPasswordResetSendsNothingForUnknownEmail(t *testing.T) {
+	repo := &fakeRepo{}
+	mailer := testplatform.NewFakeMailer()
+	svc := NewService(repo, repo, &fakeSessionIssuer{}, events.NewEventBus(), mailer, NewAccountDeletionPolicy())
+
+	require.NoError(t, svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{Email: "ghost@example.test"}))
+	mailer.AssertNothingSent(t)
 }

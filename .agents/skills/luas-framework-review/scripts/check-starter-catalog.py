@@ -395,7 +395,7 @@ def main() -> int:
     )
     require_all(
         failures,
-        "api/internal/bootstrap/domain_error_mappings.go",
+        "api/internal/modules/organization/error_mappings.go",
         (
             "ErrOrganizationContextRequired, http.StatusBadRequest",
             "ErrOrganizationContextInvalid, http.StatusBadRequest",

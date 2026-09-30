@@ -6,288 +6,126 @@ import (
 	"testing"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/modules/apikey"
+	"github.com/zgiai/luas/api/internal/modules/asset"
+	"github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/zgiai/luas/api/internal/modules/notification"
+	"github.com/zgiai/luas/api/internal/modules/operator"
+	"github.com/zgiai/luas/api/internal/modules/organization"
+	"github.com/zgiai/luas/api/internal/modules/permission"
+	"github.com/zgiai/luas/api/internal/modules/setting"
+	"github.com/zgiai/luas/api/internal/modules/usage"
+	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/modules/webhook"
+	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
-func TestRegisterDomainErrorMappings(t *testing.T) {
+func allStartersRegistry() *starter.Registry {
+	registry := starter.NewRegistry()
+	for _, module := range []interface{ Name() string }{
+		&audit.Handler{}, &apikey.Handler{}, &user.Handler{}, &organization.Handler{},
+		&permission.Handler{}, &notification.Handler{}, &asset.Handler{}, &setting.Handler{},
+		&usage.Handler{}, &webhook.Handler{}, &operator.Handler{},
+	} {
+		registry.RegisterModule(module)
+	}
+	return registry
+}
+
+// TestDomainErrorMappingsAreUnchangedWhenOwnedByStarters pins every mapping that used to live in one
+// central bootstrap list. Each starter now registers its own errors; the public contract must not move.
+func TestDomainErrorMappingsAreUnchangedWhenOwnedByStarters(t *testing.T) {
 	mapper := &response.ErrorMapper{}
-	registerDomainErrorMappings(mapper)
+	registerDomainErrorMappings(mapper, allStartersRegistry())
 
 	tests := []struct {
-		name       string
 		err        error
 		statusCode int
 		errorCode  string
 	}{
-		{
-			name:       "wrapped user not found",
-			err:        fmt.Errorf("load profile: %w", domain.ErrUserNotFound),
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeUserNotFound,
-		},
-		{
-			name:       "invalid credentials",
-			err:        domain.ErrInvalidCredentials,
-			statusCode: http.StatusUnauthorized,
-			errorCode:  domain.CodeInvalidCredentials,
-		},
-		{
-			name:       "permission denied",
-			err:        domain.ErrPermissionDenied,
-			statusCode: http.StatusForbidden,
-			errorCode:  domain.CodePermissionDenied,
-		},
-		{
-			name:       "access role not found",
-			err:        domain.ErrAccessRoleNotFound,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeAccessRoleNotFound,
-		},
-		{
-			name:       "access role slug already exists",
-			err:        domain.ErrAccessRoleSlugAlreadyExists,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeAccessRoleSlugAlreadyExists,
-		},
-		{
-			name:       "permission is unknown",
-			err:        domain.ErrPermissionUnknown,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodePermissionUnknown,
-		},
-		{
-			name:       "username already exists",
-			err:        domain.ErrUsernameAlreadyExists,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeUsernameAlreadyExists,
-		},
-		{
-			name:       "invalid input",
-			err:        domain.ErrInvalidInput,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeInvalidInput,
-		},
-		{
-			name:       "organization is not visible",
-			err:        fmt.Errorf("find membership: %w", domain.ErrOrganizationNotFound),
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeOrganizationNotFound,
-		},
-		{
-			name:       "organization ownership blocks account deletion",
-			err:        domain.ErrOrganizationOwnershipTransferRequired,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeOrganizationOwnershipTransferRequired,
-		},
-		{
-			name:       "organization ownership target is invalid",
-			err:        domain.ErrOrganizationOwnershipTransferTargetInvalid,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeOrganizationOwnershipTransferTargetInvalid,
-		},
-		{
-			name:       "organization context is required",
-			err:        domain.ErrOrganizationContextRequired,
-			statusCode: http.StatusBadRequest,
-			errorCode:  domain.CodeOrganizationContextRequired,
-		},
-		{
-			name:       "organization context is invalid",
-			err:        domain.ErrOrganizationContextInvalid,
-			statusCode: http.StatusBadRequest,
-			errorCode:  domain.CodeOrganizationContextInvalid,
-		},
-		{
-			name:       "organization memberships block account deletion",
-			err:        domain.ErrOrganizationMembershipExitRequired,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeOrganizationMembershipExitRequired,
-		},
-		{
-			name:       "organization member is not visible",
-			err:        domain.ErrOrganizationMemberNotFound,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeOrganizationMemberNotFound,
-		},
-		{
-			name:       "organization invitation is not visible",
-			err:        domain.ErrOrganizationInvitationNotFound,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeOrganizationInvitationNotFound,
-		},
-		{
-			name:       "organization invitation token is invalid",
-			err:        domain.ErrOrganizationInvitationInvalid,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeOrganizationInvitationInvalid,
-		},
-		{
-			name:       "organization invitation expired",
-			err:        domain.ErrOrganizationInvitationExpired,
-			statusCode: http.StatusGone,
-			errorCode:  domain.CodeOrganizationInvitationExpired,
-		},
-		{
-			name:       "organization invitation email mismatch",
-			err:        domain.ErrOrganizationInvitationEmailMismatch,
-			statusCode: http.StatusForbidden,
-			errorCode:  domain.CodeOrganizationInvitationEmailMismatch,
-		},
-		{
-			name:       "organization invitation already pending",
-			err:        domain.ErrOrganizationInvitationAlreadyPending,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeOrganizationInvitationAlreadyPending,
-		},
-		{
-			name:       "organization member already exists",
-			err:        domain.ErrOrganizationMemberAlreadyExists,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeOrganizationMemberAlreadyExists,
-		},
-		{
-			name:       "notification is not visible",
-			err:        fmt.Errorf("replace read state: %w", domain.ErrNotificationNotFound),
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeNotificationNotFound,
-		},
-		{
-			name:       "notification idempotency conflicts",
-			err:        domain.ErrNotificationIdempotencyConflict,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeNotificationIdempotencyConflict,
-		},
-		{
-			name:       "notification channel is invalid",
-			err:        domain.ErrNotificationInvalidChannel,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeNotificationInvalidChannel,
-		},
-		{
-			name:       "asset is not visible",
-			err:        fmt.Errorf("load asset: %w", domain.ErrAssetNotFound),
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeAssetNotFound,
-		},
-		{
-			name:       "asset is not ready",
-			err:        domain.ErrAssetNotReady,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeAssetNotReady,
-		},
-		{
-			name:       "asset idempotency conflicts",
-			err:        domain.ErrAssetIdempotencyConflict,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeAssetIdempotencyConflict,
-		},
-		{
-			name:       "asset cleanup blocks account deletion",
-			err:        domain.ErrAssetCleanupRequired,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeAssetCleanupRequired,
-		},
-		{
-			name:       "asset upload expired",
-			err:        domain.ErrAssetUploadExpired,
-			statusCode: http.StatusGone,
-			errorCode:  domain.CodeAssetUploadExpired,
-		},
-		{
-			name:       "asset size exceeded",
-			err:        domain.ErrAssetSizeExceeded,
-			statusCode: http.StatusRequestEntityTooLarge,
-			errorCode:  domain.CodeAssetSizeExceeded,
-		},
-		{
-			name:       "asset media type is invalid",
-			err:        domain.ErrAssetInvalidMediaType,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeAssetInvalidMediaType,
-		},
-		{
-			name:       "setting is not registered",
-			err:        domain.ErrSettingNotFound,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeSettingNotFound,
-		},
-		{
-			name:       "setting value is invalid",
-			err:        domain.ErrSettingInvalidValue,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeSettingInvalidValue,
-		},
-		{
-			name:       "usage metric is not registered",
-			err:        domain.ErrUsageMetricNotFound,
-			statusCode: http.StatusNotFound,
-			errorCode:  domain.CodeUsageMetricNotFound,
-		},
-		{
-			name:       "usage idempotency conflicts",
-			err:        domain.ErrUsageIdempotencyConflict,
-			statusCode: http.StatusConflict,
-			errorCode:  domain.CodeUsageIdempotencyConflict,
-		},
-		{
-			name:       "usage quota version is stale",
-			err:        domain.ErrUsageQuotaVersionConflict,
-			statusCode: http.StatusPreconditionFailed,
-			errorCode:  domain.CodeUsageQuotaVersionConflict,
-		},
-		{
-			name:       "usage event is invalid",
-			err:        domain.ErrUsageInvalidEvent,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeUsageInvalidEvent,
-		},
-		{
-			name:       "usage event is outside the accepted window",
-			err:        domain.ErrUsageEventOutsideWindow,
-			statusCode: http.StatusUnprocessableEntity,
-			errorCode:  domain.CodeUsageEventOutsideWindow,
-		},
-		{
-			name:       "usage quota precondition is required",
-			err:        domain.ErrUsagePreconditionRequired,
-			statusCode: http.StatusPreconditionRequired,
-			errorCode:  domain.CodeUsagePreconditionRequired,
-		},
-		{
-			name:       "usage quota is exceeded",
-			err:        domain.ErrUsageQuotaExceeded,
-			statusCode: http.StatusTooManyRequests,
-			errorCode:  domain.CodeUsageQuotaExceeded,
-		},
-		{
-			name:       "setting version is stale",
-			err:        domain.ErrSettingVersionConflict,
-			statusCode: http.StatusPreconditionFailed,
-			errorCode:  domain.CodeSettingVersionConflict,
-		},
-		{
-			name:       "setting version is required",
-			err:        domain.ErrSettingPreconditionRequired,
-			statusCode: http.StatusPreconditionRequired,
-			errorCode:  domain.CodeSettingPreconditionRequired,
-		},
-		{
-			name:       "wrapped service unavailable",
-			err:        fmt.Errorf("load dependency: %w", domain.ErrServiceUnavailable),
-			statusCode: http.StatusServiceUnavailable,
-			errorCode:  domain.CodeServiceUnavailable,
-		},
+		{domain.ErrNotFound, http.StatusNotFound, domain.CodeNotFound},
+		{domain.ErrUserNotFound, http.StatusNotFound, domain.CodeUserNotFound},
+		{domain.ErrRoleNotFound, http.StatusNotFound, domain.CodeRoleNotFound},
+		{domain.ErrAccessRoleNotFound, http.StatusNotFound, domain.CodeAccessRoleNotFound},
+		{domain.ErrAPIKeyNotFound, http.StatusNotFound, domain.CodeAPIKeyNotFound},
+		{domain.ErrOrganizationNotFound, http.StatusNotFound, domain.CodeOrganizationNotFound},
+		{domain.ErrOrganizationMemberNotFound, http.StatusNotFound, domain.CodeOrganizationMemberNotFound},
+		{domain.ErrOrganizationInvitationNotFound, http.StatusNotFound, domain.CodeOrganizationInvitationNotFound},
+		{domain.ErrOrganizationInvitationInvalid, http.StatusNotFound, domain.CodeOrganizationInvitationInvalid},
+		{domain.ErrNotificationNotFound, http.StatusNotFound, domain.CodeNotificationNotFound},
+		{domain.ErrAssetNotFound, http.StatusNotFound, domain.CodeAssetNotFound},
+		{domain.ErrSettingNotFound, http.StatusNotFound, domain.CodeSettingNotFound},
+		{domain.ErrUsageMetricNotFound, http.StatusNotFound, domain.CodeUsageMetricNotFound},
+		{domain.ErrWebhookEndpointNotFound, http.StatusNotFound, domain.CodeWebhookEndpointNotFound},
+		{domain.ErrWebhookDeliveryNotFound, http.StatusNotFound, domain.CodeWebhookDeliveryNotFound},
+		{domain.ErrOrganizationContextRequired, http.StatusBadRequest, domain.CodeOrganizationContextRequired},
+		{domain.ErrOrganizationContextInvalid, http.StatusBadRequest, domain.CodeOrganizationContextInvalid},
+		{domain.ErrInvalidCredentials, http.StatusUnauthorized, domain.CodeInvalidCredentials},
+		{domain.ErrAuthenticationRequired, http.StatusUnauthorized, response.ErrorCodeUnauthorized},
+		{domain.ErrAPIKeyInvalid, http.StatusUnauthorized, domain.CodeAPIKeyInvalid},
+		{domain.ErrAPIKeyExpired, http.StatusUnauthorized, domain.CodeAPIKeyExpired},
+		{domain.ErrAPIKeyRevoked, http.StatusUnauthorized, domain.CodeAPIKeyRevoked},
+		{domain.ErrPasswordResetTokenInvalid, http.StatusUnauthorized, domain.CodePasswordResetTokenInvalid},
+		{domain.ErrPasswordResetTokenExpired, http.StatusUnauthorized, domain.CodePasswordResetTokenExpired},
+		{domain.ErrAccountDisabled, http.StatusForbidden, domain.CodeAccountDisabled},
+		{domain.ErrPermissionDenied, http.StatusForbidden, domain.CodePermissionDenied},
+		{domain.ErrOrganizationInvitationEmailMismatch, http.StatusForbidden, domain.CodeOrganizationInvitationEmailMismatch},
+		{domain.ErrEmailAlreadyExists, http.StatusConflict, domain.CodeEmailAlreadyExists},
+		{domain.ErrUsernameAlreadyExists, http.StatusConflict, domain.CodeUsernameAlreadyExists},
+		{domain.ErrConflict, http.StatusConflict, domain.CodeConflict},
+		{domain.ErrOrganizationSlugAlreadyExists, http.StatusConflict, domain.CodeOrganizationSlugAlreadyExists},
+		{domain.ErrOrganizationOwnershipTransferRequired, http.StatusConflict, domain.CodeOrganizationOwnershipTransferRequired},
+		{domain.ErrOrganizationOwnershipTransferTargetInvalid, http.StatusConflict, domain.CodeOrganizationOwnershipTransferTargetInvalid},
+		{domain.ErrOrganizationMembershipExitRequired, http.StatusConflict, domain.CodeOrganizationMembershipExitRequired},
+		{domain.ErrOrganizationInvitationAlreadyPending, http.StatusConflict, domain.CodeOrganizationInvitationAlreadyPending},
+		{domain.ErrOrganizationMemberAlreadyExists, http.StatusConflict, domain.CodeOrganizationMemberAlreadyExists},
+		{domain.ErrAccessRoleSlugAlreadyExists, http.StatusConflict, domain.CodeAccessRoleSlugAlreadyExists},
+		{domain.ErrNotificationIdempotencyConflict, http.StatusConflict, domain.CodeNotificationIdempotencyConflict},
+		{domain.ErrAssetNotReady, http.StatusConflict, domain.CodeAssetNotReady},
+		{domain.ErrAssetIdempotencyConflict, http.StatusConflict, domain.CodeAssetIdempotencyConflict},
+		{domain.ErrAssetCleanupRequired, http.StatusConflict, domain.CodeAssetCleanupRequired},
+		{domain.ErrUsageIdempotencyConflict, http.StatusConflict, domain.CodeUsageIdempotencyConflict},
+		{domain.ErrWebhookIdempotencyConflict, http.StatusConflict, domain.CodeWebhookIdempotencyConflict},
+		{domain.ErrWebhookEndpointVersionConflict, http.StatusConflict, domain.CodeWebhookEndpointVersionConflict},
+		{domain.ErrWebhookReplayNotAllowed, http.StatusConflict, domain.CodeWebhookReplayNotAllowed},
+		{domain.ErrSettingVersionConflict, http.StatusPreconditionFailed, domain.CodeSettingVersionConflict},
+		{domain.ErrUsageQuotaVersionConflict, http.StatusPreconditionFailed, domain.CodeUsageQuotaVersionConflict},
+		{domain.ErrOrganizationInvitationExpired, http.StatusGone, domain.CodeOrganizationInvitationExpired},
+		{domain.ErrAssetUploadExpired, http.StatusGone, domain.CodeAssetUploadExpired},
+		{domain.ErrAssetSizeExceeded, http.StatusRequestEntityTooLarge, domain.CodeAssetSizeExceeded},
+		{domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput},
+		{domain.ErrPermissionUnknown, http.StatusUnprocessableEntity, domain.CodePermissionUnknown},
+		{domain.ErrNotificationInvalidChannel, http.StatusUnprocessableEntity, domain.CodeNotificationInvalidChannel},
+		{domain.ErrAssetInvalidMediaType, http.StatusUnprocessableEntity, domain.CodeAssetInvalidMediaType},
+		{domain.ErrSettingInvalidValue, http.StatusUnprocessableEntity, domain.CodeSettingInvalidValue},
+		{domain.ErrUsageInvalidEvent, http.StatusUnprocessableEntity, domain.CodeUsageInvalidEvent},
+		{domain.ErrUsageEventOutsideWindow, http.StatusUnprocessableEntity, domain.CodeUsageEventOutsideWindow},
+		{domain.ErrWebhookInvalidEventType, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidEventType},
+		{domain.ErrWebhookInvalidTarget, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidTarget},
+		{domain.ErrSettingPreconditionRequired, http.StatusPreconditionRequired, domain.CodeSettingPreconditionRequired},
+		{domain.ErrUsagePreconditionRequired, http.StatusPreconditionRequired, domain.CodeUsagePreconditionRequired},
+		{domain.ErrWebhookPreconditionRequired, http.StatusPreconditionRequired, domain.CodeWebhookPreconditionRequired},
+		{domain.ErrUsageQuotaExceeded, http.StatusTooManyRequests, domain.CodeUsageQuotaExceeded},
+		{domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable},
 	}
+	for _, test := range tests {
+		wrapped := fmt.Errorf("context: %w", test.err)
+		descriptor := mapper.Resolve(wrapped)
+		if descriptor.StatusCode != test.statusCode || descriptor.ErrorCode != test.errorCode {
+			t.Errorf("%v resolved to %d %s, want %d %s", test.err, descriptor.StatusCode, descriptor.ErrorCode, test.statusCode, test.errorCode)
+		}
+	}
+}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			descriptor := mapper.Resolve(tt.err)
-			if descriptor.StatusCode != tt.statusCode {
-				t.Fatalf("status = %d, want %d", descriptor.StatusCode, tt.statusCode)
-			}
-			if descriptor.ErrorCode != tt.errorCode {
-				t.Fatalf("error_code = %q, want %q", descriptor.ErrorCode, tt.errorCode)
-			}
-		})
+func TestCoreErrorMappingsDoNotDependOnOptionalStarters(t *testing.T) {
+	mapper := &response.ErrorMapper{}
+	registerDomainErrorMappings(mapper, nil)
+
+	if got := mapper.Resolve(domain.ErrPermissionDenied); got.StatusCode != http.StatusForbidden {
+		t.Fatalf("permission denied must stay mapped without the permission starter, got %d", got.StatusCode)
+	}
+	if got := mapper.Resolve(domain.ErrServiceUnavailable); got.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("service unavailable must stay a core mapping, got %d", got.StatusCode)
 	}
 }

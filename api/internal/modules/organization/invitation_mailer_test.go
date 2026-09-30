@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,3 +72,5 @@ func TestInvitationMailerRejectsUnconfiguredDelivery(t *testing.T) {
 	require.ErrorIs(t, err, email.ErrNotConfigured)
 	assert.Zero(t, sender.sendCalls)
 }
+
+var _ invitationEmailSender = (*testplatform.FakeMailer)(nil)

@@ -11,6 +11,28 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-01 — Module ownership and generator
+
+### Medium — Starters own their error mappings
+
+`internal/bootstrap/domain_error_mappings.go` now maps only shared errors (not found, conflict,
+invalid input, unavailable, authentication required, permission denied, legacy role). Each starter
+maps its own errors in `error_mappings.go` through the new `assembly.ErrorModule` capability. A fork
+that added mappings to the central file should move them into its starter's
+`RegisterErrorMappings`; `registerDomainErrorMappings` now also takes the starter registry.
+
+### Low — `make:module` generates a wired optional starter
+
+The generator adds a starter manifest, error-mapping hook, `auth`-protected routes, and a frozen SQL
+migration, and registers the starter constant and catalog entry. Generated packages drop underscores
+(`blog_post` directory, `blogpost` package).
+
+### Low — Test doubles and removed middleware
+
+- `internal/infra/testing.FakeMailer` records email for any starter mail seam.
+- The unused `internal/infra/middleware` CORS implementation was removed; the kernel uses
+  `gin-contrib/cors`.
+
 ## 2026-10-01 — Platform operator starter
 
 ### Low — New optional `operator` starter

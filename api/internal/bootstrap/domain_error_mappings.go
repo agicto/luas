@@ -4,85 +4,27 @@ import (
 	"net/http"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/starter"
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
-func registerDefaultDomainErrorMappings() {
-	registerDomainErrorMappings(response.DefaultErrorMapper)
-}
-
-func registerDomainErrorMappings(mapper *response.ErrorMapper) {
+// registerDomainErrorMappings installs the shared domain errors, then lets each active starter map
+// its own errors. Adding a starter never requires editing this file.
+func registerDomainErrorMappings(mapper *response.ErrorMapper, starters *starter.Registry) {
 	if mapper == nil {
 		return
 	}
+	registerCoreErrorMappings(mapper)
+	starters.RegisterErrorMappings(mapper)
+}
 
+// registerCoreErrorMappings maps errors shared by several starters or by core runtime code.
+func registerCoreErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrNotFound, http.StatusNotFound, domain.CodeNotFound)
-	mapper.Register(domain.ErrUserNotFound, http.StatusNotFound, domain.CodeUserNotFound)
 	mapper.Register(domain.ErrRoleNotFound, http.StatusNotFound, domain.CodeRoleNotFound)
-	mapper.Register(domain.ErrAccessRoleNotFound, http.StatusNotFound, domain.CodeAccessRoleNotFound)
-	mapper.Register(domain.ErrAPIKeyNotFound, http.StatusNotFound, domain.CodeAPIKeyNotFound)
-	mapper.Register(domain.ErrOrganizationNotFound, http.StatusNotFound, domain.CodeOrganizationNotFound)
-	mapper.Register(domain.ErrOrganizationMemberNotFound, http.StatusNotFound, domain.CodeOrganizationMemberNotFound)
-	mapper.Register(domain.ErrOrganizationInvitationNotFound, http.StatusNotFound, domain.CodeOrganizationInvitationNotFound)
-	mapper.Register(domain.ErrOrganizationInvitationInvalid, http.StatusNotFound, domain.CodeOrganizationInvitationInvalid)
-	mapper.Register(domain.ErrNotificationNotFound, http.StatusNotFound, domain.CodeNotificationNotFound)
-	mapper.Register(domain.ErrAssetNotFound, http.StatusNotFound, domain.CodeAssetNotFound)
-	mapper.Register(domain.ErrSettingNotFound, http.StatusNotFound, domain.CodeSettingNotFound)
-	mapper.Register(domain.ErrUsageMetricNotFound, http.StatusNotFound, domain.CodeUsageMetricNotFound)
-	mapper.Register(domain.ErrWebhookEndpointNotFound, http.StatusNotFound, domain.CodeWebhookEndpointNotFound)
-	mapper.Register(domain.ErrWebhookDeliveryNotFound, http.StatusNotFound, domain.CodeWebhookDeliveryNotFound)
-	mapper.Register(domain.ErrOrganizationContextRequired, http.StatusBadRequest, domain.CodeOrganizationContextRequired)
-	mapper.Register(domain.ErrOrganizationContextInvalid, http.StatusBadRequest, domain.CodeOrganizationContextInvalid)
-
-	mapper.Register(domain.ErrInvalidCredentials, http.StatusUnauthorized, domain.CodeInvalidCredentials)
 	mapper.Register(domain.ErrAuthenticationRequired, http.StatusUnauthorized, response.ErrorCodeUnauthorized)
-	mapper.Register(domain.ErrAPIKeyInvalid, http.StatusUnauthorized, domain.CodeAPIKeyInvalid)
-	mapper.Register(domain.ErrAPIKeyExpired, http.StatusUnauthorized, domain.CodeAPIKeyExpired)
-	mapper.Register(domain.ErrAPIKeyRevoked, http.StatusUnauthorized, domain.CodeAPIKeyRevoked)
-	mapper.Register(domain.ErrPasswordResetTokenInvalid, http.StatusUnauthorized, domain.CodePasswordResetTokenInvalid)
-	mapper.Register(domain.ErrPasswordResetTokenExpired, http.StatusUnauthorized, domain.CodePasswordResetTokenExpired)
-
-	mapper.Register(domain.ErrAccountDisabled, http.StatusForbidden, domain.CodeAccountDisabled)
 	mapper.Register(domain.ErrPermissionDenied, http.StatusForbidden, domain.CodePermissionDenied)
-	mapper.Register(domain.ErrOrganizationInvitationEmailMismatch, http.StatusForbidden, domain.CodeOrganizationInvitationEmailMismatch)
-
-	mapper.Register(domain.ErrEmailAlreadyExists, http.StatusConflict, domain.CodeEmailAlreadyExists)
-	mapper.Register(domain.ErrUsernameAlreadyExists, http.StatusConflict, domain.CodeUsernameAlreadyExists)
 	mapper.Register(domain.ErrConflict, http.StatusConflict, domain.CodeConflict)
-	mapper.Register(domain.ErrOrganizationSlugAlreadyExists, http.StatusConflict, domain.CodeOrganizationSlugAlreadyExists)
-	mapper.Register(domain.ErrOrganizationOwnershipTransferRequired, http.StatusConflict, domain.CodeOrganizationOwnershipTransferRequired)
-	mapper.Register(domain.ErrOrganizationOwnershipTransferTargetInvalid, http.StatusConflict, domain.CodeOrganizationOwnershipTransferTargetInvalid)
-	mapper.Register(domain.ErrOrganizationMembershipExitRequired, http.StatusConflict, domain.CodeOrganizationMembershipExitRequired)
-	mapper.Register(domain.ErrOrganizationInvitationAlreadyPending, http.StatusConflict, domain.CodeOrganizationInvitationAlreadyPending)
-	mapper.Register(domain.ErrOrganizationMemberAlreadyExists, http.StatusConflict, domain.CodeOrganizationMemberAlreadyExists)
-	mapper.Register(domain.ErrAccessRoleSlugAlreadyExists, http.StatusConflict, domain.CodeAccessRoleSlugAlreadyExists)
-	mapper.Register(domain.ErrNotificationIdempotencyConflict, http.StatusConflict, domain.CodeNotificationIdempotencyConflict)
-	mapper.Register(domain.ErrAssetNotReady, http.StatusConflict, domain.CodeAssetNotReady)
-	mapper.Register(domain.ErrAssetIdempotencyConflict, http.StatusConflict, domain.CodeAssetIdempotencyConflict)
-	mapper.Register(domain.ErrAssetCleanupRequired, http.StatusConflict, domain.CodeAssetCleanupRequired)
-	mapper.Register(domain.ErrUsageIdempotencyConflict, http.StatusConflict, domain.CodeUsageIdempotencyConflict)
-	mapper.Register(domain.ErrWebhookIdempotencyConflict, http.StatusConflict, domain.CodeWebhookIdempotencyConflict)
-	mapper.Register(domain.ErrWebhookEndpointVersionConflict, http.StatusConflict, domain.CodeWebhookEndpointVersionConflict)
-	mapper.Register(domain.ErrWebhookReplayNotAllowed, http.StatusConflict, domain.CodeWebhookReplayNotAllowed)
-	mapper.Register(domain.ErrSettingVersionConflict, http.StatusPreconditionFailed, domain.CodeSettingVersionConflict)
-	mapper.Register(domain.ErrUsageQuotaVersionConflict, http.StatusPreconditionFailed, domain.CodeUsageQuotaVersionConflict)
-
-	mapper.Register(domain.ErrOrganizationInvitationExpired, http.StatusGone, domain.CodeOrganizationInvitationExpired)
-	mapper.Register(domain.ErrAssetUploadExpired, http.StatusGone, domain.CodeAssetUploadExpired)
-	mapper.Register(domain.ErrAssetSizeExceeded, http.StatusRequestEntityTooLarge, domain.CodeAssetSizeExceeded)
-
 	mapper.Register(domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput)
-	mapper.Register(domain.ErrPermissionUnknown, http.StatusUnprocessableEntity, domain.CodePermissionUnknown)
-	mapper.Register(domain.ErrNotificationInvalidChannel, http.StatusUnprocessableEntity, domain.CodeNotificationInvalidChannel)
-	mapper.Register(domain.ErrAssetInvalidMediaType, http.StatusUnprocessableEntity, domain.CodeAssetInvalidMediaType)
-	mapper.Register(domain.ErrSettingInvalidValue, http.StatusUnprocessableEntity, domain.CodeSettingInvalidValue)
-	mapper.Register(domain.ErrUsageInvalidEvent, http.StatusUnprocessableEntity, domain.CodeUsageInvalidEvent)
-	mapper.Register(domain.ErrUsageEventOutsideWindow, http.StatusUnprocessableEntity, domain.CodeUsageEventOutsideWindow)
-	mapper.Register(domain.ErrWebhookInvalidEventType, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidEventType)
-	mapper.Register(domain.ErrWebhookInvalidTarget, http.StatusUnprocessableEntity, domain.CodeWebhookInvalidTarget)
-	mapper.Register(domain.ErrSettingPreconditionRequired, http.StatusPreconditionRequired, domain.CodeSettingPreconditionRequired)
-	mapper.Register(domain.ErrUsagePreconditionRequired, http.StatusPreconditionRequired, domain.CodeUsagePreconditionRequired)
-	mapper.Register(domain.ErrWebhookPreconditionRequired, http.StatusPreconditionRequired, domain.CodeWebhookPreconditionRequired)
-	mapper.Register(domain.ErrUsageQuotaExceeded, http.StatusTooManyRequests, domain.CodeUsageQuotaExceeded)
 	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

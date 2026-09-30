@@ -10,6 +10,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/migration"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Registry is the single assembly point for active default and optional starters.
@@ -259,6 +260,20 @@ func (r *Registry) RegisterMiddleware(routes *router.Router) {
 			continue
 		}
 		middlewareModule.RegisterMiddleware(routes)
+	}
+}
+
+// RegisterErrorMappings lets error-aware modules map their domain errors.
+func (r *Registry) RegisterErrorMappings(mapper *response.ErrorMapper) {
+	if r == nil {
+		return
+	}
+	for _, module := range r.modules {
+		errorModule, ok := module.(assembly.ErrorModule)
+		if !ok {
+			continue
+		}
+		errorModule.RegisterErrorMappings(mapper)
 	}
 }
 

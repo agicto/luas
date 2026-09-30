@@ -2,6 +2,26 @@
 
 Use this path for starter-style, route-owning backend behavior.
 
+## Generate A Wired Starter
+
+```bash
+go run ./cmd/luas make:module BlogPost
+```
+
+The generator creates `internal/modules/blog_post/` (package `blogpost`) with the domain entity,
+persistence, service, handler, `auth`-protected CRUD routes, error-mapping hook, provider set, starter
+manifest, and a service test; a frozen SQL migration; and it registers `config.StarterBlogPost` and the
+optional starter in `internal/starter/defaults.go`. A generator test compiles this output against the
+real module and runs its tests. Then:
+
+1. Run `make wire`.
+2. Regenerate the golden schema (`LUAS_UPDATE_GOLDEN_SCHEMA=1`) and review the diff.
+3. Write the HTTP contract, replace the placeholder `name` field with real business fields, and add
+   record ownership: generated routes only require a signed-in user.
+4. Enable it with `OPTIONAL_STARTERS=blogpost`.
+
+The steps below describe the same structure for a starter written by hand.
+
 ## Steps
 
 1. Name the module after the domain concept, not the transport action.
@@ -22,6 +42,7 @@ service_test.go
 
 5. Add a `config.Starter<Name>` constant and its entry in `StarterNames()` in `internal/infra/config/starters.go`. Use the constant everywhere the starter is named: its manifest, its handler's `Name()`, dependency lists, and selection checks (`cfg.Starters.Selected(config.Starter<Name>)`). Never compare starter names as string literals.
 6. Add one `NewStarterManifest` that owns the module, dependency names, migration names, seeder names, and any optional runtime hook.
+   Map the starter's domain errors in `error_mappings.go` with `(h *Handler) RegisterErrorMappings`; the registry installs them when the starter is active. Only errors shared by several starters or core code belong in `internal/bootstrap/domain_error_mappings.go`.
 7. In `internal/starter/defaults.go`, add the module `ProviderSet`, one `Handlers` field, and one manifest line in `DefaultManifests` (default starter) or `OptionalManifests` (optional starter). Do not edit `routes/api.go` or add positional parameters.
 8. Generate Wire with `make wire` and commit `wire_gen.go`; CI runs `make wire-check`. Routes register through the selected manifest's module.
 9. Write versioned migrations as frozen SQL or migration-local snapshot structs, never `AutoMigrate` on the module's live persistence structs. Regenerate `database/migrations/testdata/schema.golden.sql` with `LUAS_UPDATE_GOLDEN_SCHEMA=1` only when adding a migration, and review the diff.
@@ -35,6 +56,9 @@ service_test.go
 - Keep persistence details in `repository.go`.
 - Return domain values from repositories when practical; avoid leaking GORM models upward.
 - Add a test at the service seam before broad handler tests.
+- Use the shared doubles in `internal/infra/testing` before writing new ones: `FakeMailer` records email for
+  any starter mail seam, `EventRecorder`/`TestEventBus` capture events, and `OpenPostgres` gives an isolated
+  schema for SQL behavior.
 - Keep optional activation additive. Never use the optional list to subtract defaults.
 - Declare starter prerequisites with `WithStarterDependencies`; do not infer dependencies from
   import order or silently auto-enable them.
