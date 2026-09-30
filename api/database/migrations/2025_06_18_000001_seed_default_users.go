@@ -4,7 +4,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func init() {
@@ -16,25 +15,19 @@ type seedDefaultUsers struct {
 	migration.BaseMigration
 }
 
-// Up applies the migration.
+// Up creates the admin account (password: secret) only when no active user exists.
 func (m *seedDefaultUsers) Up(db *gorm.DB) error {
-	var count int64
-	db.Model(&user.UserPO{}).Count(&count)
-
-	if count == 0 {
-		adminUser := &user.UserPO{
-			Username: "admin",
-			Email:    "admin@example.com",
-			Password: "$2a$10$OkAgF/Pm/v3pdzkUhKJEeOhehkbTRZar9Rk3X2nEjCcrlsluiTnay", // password: secret
-			Nickname: "Admin User",
-			Status:   1,
-		}
-		return db.Create(adminUser).Error
-	}
-	return nil
+	return execStatements(db,
+		`INSERT INTO users (created_at, updated_at, username, password, email, nickname, avatar, phone, bio, status)
+		SELECT now(), now(), 'admin', '$2a$10$OkAgF/Pm/v3pdzkUhKJEeOhehkbTRZar9Rk3X2nEjCcrlsluiTnay',
+		       'admin@example.com', 'Admin User', '', '', '', 1
+		WHERE NOT EXISTS (SELECT 1 FROM users WHERE deleted_at IS NULL)`,
+	)
 }
 
-// Down reverts the migration.
+// Down soft-deletes the seeded admin account, matching the account lifecycle.
 func (m *seedDefaultUsers) Down(db *gorm.DB) error {
-	return db.Where("username = ?", "admin").Delete(&user.UserPO{}).Error
+	return execStatements(db,
+		`UPDATE users SET deleted_at = now() WHERE username = 'admin' AND deleted_at IS NULL`,
+	)
 }

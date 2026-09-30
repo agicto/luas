@@ -176,10 +176,10 @@ def main() -> int:
         "api/database/migrations/2026_07_15_020000_create_notification_tables.go",
         (
             "UseTransaction: true",
-            "notification.NotificationPO{}",
-            "notification.NotificationDeliveryPO{}",
-            "notification.NotificationPreferencePO{}",
-            "DropTable(&notification.NotificationDeliveryPO{})",
+            'CREATE TABLE notifications (',
+            'CREATE TABLE notification_deliveries (',
+            'CREATE TABLE notification_preferences (',
+            'DROP TABLE IF EXISTS notification_deliveries CASCADE',
         ),
     )
     require_all(

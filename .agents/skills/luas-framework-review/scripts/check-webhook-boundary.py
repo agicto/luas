@@ -302,12 +302,12 @@ def main() -> int:
         "api/database/migrations/2026_07_15_060000_create_webhook_tables.go",
         (
             "UseTransaction: true",
-            "webhook.EndpointPO{}",
-            "webhook.SubscriptionPO{}",
-            "webhook.EventPO{}",
-            "webhook.DeliveryPO{}",
-            "webhook.AttemptPO{}",
-            "DropTable(",
+            'CREATE TABLE webhook_endpoints (',
+            'CREATE TABLE webhook_subscriptions (',
+            'CREATE TABLE webhook_events (',
+            'CREATE TABLE webhook_deliveries (',
+            'CREATE TABLE webhook_delivery_attempts (',
+            "DROP TABLE IF EXISTS webhook_endpoints CASCADE",
         ),
     )
     require_all(

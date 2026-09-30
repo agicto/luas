@@ -236,10 +236,10 @@ def main() -> int:
         "api/database/migrations/2026_07_15_050000_create_usage_tables.go",
         (
             "UseTransaction: true",
-            "UsageCounterPO{}",
-            "UsageQuotaPO{}",
-            "UsageEventPO{}",
-            "DropTable(",
+            'CREATE TABLE usage_counters (',
+            'CREATE TABLE usage_quotas (',
+            'CREATE TABLE usage_events (',
+            "DROP TABLE IF EXISTS usage_counters CASCADE",
         ),
     )
     require_all(

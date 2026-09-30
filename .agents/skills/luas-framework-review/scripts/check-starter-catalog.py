@@ -414,8 +414,8 @@ def main() -> int:
         "api/database/migrations/2026_07_14_000000_create_organizations_tables.go",
         (
             "UseTransaction: true",
-            "organization.OrganizationPO{}",
-            "organization.OrganizationMembershipPO{}",
+            'CREATE TABLE organizations (',
+            'CREATE TABLE organization_memberships (',
         ),
     )
     require_all(
@@ -423,8 +423,8 @@ def main() -> int:
         "api/database/migrations/2026_07_15_000000_create_organization_invitations_table.go",
         (
             "UseTransaction: true",
-            "organization.OrganizationInvitationPO{}",
-            "DropTable(&organization.OrganizationInvitationPO{})",
+            'CREATE TABLE organization_invitations (',
+            'DROP TABLE IF EXISTS organization_invitations CASCADE',
         ),
     )
     require_all(

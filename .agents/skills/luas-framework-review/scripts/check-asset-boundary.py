@@ -258,8 +258,8 @@ def main() -> int:
         "api/database/migrations/2026_07_15_030000_create_assets_table.go",
         (
             "UseTransaction: true",
-            "AutoMigrate(&asset.AssetPO{})",
-            "DropTable(&asset.AssetPO{})",
+            'CREATE TABLE assets (',
+            'DROP TABLE IF EXISTS assets CASCADE',
             "remove provider objects before rollback",
         ),
     )

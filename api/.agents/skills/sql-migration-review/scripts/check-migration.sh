@@ -75,6 +75,10 @@ if grep -qiE "DELETE FROM[^;]*;" "$FILE" && ! grep -qiE "DELETE FROM[^;]*WHERE" 
     report_err "Found unbounded DELETE without WHERE — likely catastrophic"
 fi
 
+if [[ "$FILE" == *.go ]] && grep -qE '"github\.com/zgiai/luas/api/internal/(modules|capabilities)/' "$FILE"; then
+    report_err "Migration imports a live module or capability package — freeze the schema as SQL or a migration-local snapshot struct so later persistence changes cannot rewrite history"
+fi
+
 # -----------------------------------------------------------------------------
 # 4. Index strategy hints
 # -----------------------------------------------------------------------------

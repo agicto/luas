@@ -4,7 +4,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/modules/user"
 )
 
 func init() {
@@ -16,15 +15,16 @@ type addUniqueIndexToUsersUsername struct {
 	migration.BaseMigration
 }
 
-// Up applies the migration.
+// Up adds the index to installations whose users table predates it; fresh tables already have it.
 func (m *addUniqueIndexToUsersUsername) Up(db *gorm.DB) error {
-	if db.Migrator().HasIndex(&user.UserPO{}, "Username") {
-		return nil
-	}
-	return db.Migrator().CreateIndex(&user.UserPO{}, "Username")
+	return execStatements(db,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users (username)`,
+	)
 }
 
 // Down reverts the migration.
 func (m *addUniqueIndexToUsersUsername) Down(db *gorm.DB) error {
-	return db.Migrator().DropIndex(&user.UserPO{}, "Username")
+	return execStatements(db,
+		`DROP INDEX IF EXISTS idx_users_username`,
+	)
 }

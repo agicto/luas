@@ -227,8 +227,8 @@ def main() -> int:
         "api/database/migrations/2026_07_15_040000_create_settings_table.go",
         (
             "UseTransaction: true",
-            "AutoMigrate(&setting.SettingPO{})",
-            "DropTable(&setting.SettingPO{})",
+            'CREATE TABLE settings (',
+            'DROP TABLE IF EXISTS settings CASCADE',
         ),
     )
     require_all(
