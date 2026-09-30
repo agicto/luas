@@ -93,7 +93,7 @@ func NewService(
 		now:     time.Now,
 	}
 	if cfg != nil {
-		value.enabled = slices.Contains(cfg.Starters.Optional, "webhook")
+		value.enabled = cfg.Starters.Selected(config.StarterWebhook)
 		value.secretOverlap = cfg.Webhook.SecretOverlap
 		value.retention = cfg.Webhook.EventRetention
 	}

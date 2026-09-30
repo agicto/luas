@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"slices"
 	"strconv"
 	"syscall"
 
@@ -313,7 +312,7 @@ func loadUsageCommandRuntime() (*usageCommandRuntime, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !slices.Contains(cfg.Starters.Optional, "usage") {
+	if !cfg.Starters.Selected(config.StarterUsage) {
 		return nil, fmt.Errorf("usage starter is not selected in OPTIONAL_STARTERS")
 	}
 	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {

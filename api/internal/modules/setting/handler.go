@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	httphandler "github.com/zgiai/luas/api/pkg/handler"
@@ -47,7 +48,7 @@ func NewHandler(service *service, deletionPolicy *user.AccountDeletionPolicy) *H
 	}
 }
 
-func (h *Handler) Name() string { return "setting" }
+func (h *Handler) Name() string { return config.StarterSetting }
 
 // Activate installs user-setting cleanup only when the starter is selected.
 func (h *Handler) Activate() error {

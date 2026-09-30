@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -183,7 +182,7 @@ func loadSettingCommandRuntime() (*settingCommandRuntime, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !slices.Contains(cfg.Starters.Optional, "setting") {
+	if !cfg.Starters.Selected(config.StarterSetting) {
 		return nil, fmt.Errorf("setting starter is not selected in OPTIONAL_STARTERS")
 	}
 	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {

@@ -154,8 +154,8 @@ def main() -> int:
         failures,
         "api/internal/modules/asset/provider.go",
         (
-            '"asset"',
-            'WithStarterDependencies("user", "audit")',
+            'config.StarterAsset',
+            'WithStarterDependencies(config.StarterUser, config.StarterAudit)',
             "2026_07_15_030000_create_assets_table",
             "wire.Bind(new(domain.AssetReader)",
             "wire.Bind(new(domain.AssetMaintainer)",
@@ -249,7 +249,7 @@ def main() -> int:
         (
             'return "asset:prune"',
             'return "asset:prune [--batch=100]"',
-            'slices.Contains(cfg.Starters.Optional, "asset")',
+            'cfg.Starters.Selected(config.StarterAsset)',
             "runAssetPrune",
         ),
     )

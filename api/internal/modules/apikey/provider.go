@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -19,7 +20,7 @@ var ProviderSet = wire.NewSet(
 // NewStarterManifest describes how the API key starter participates in the default scaffold.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"apikey",
+		config.StarterAPIKey,
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_04_06_000000_create_api_keys_table"),
 	)

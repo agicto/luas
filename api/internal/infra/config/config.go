@@ -792,10 +792,10 @@ func validate(cfg *Config) error {
 		return err
 	}
 	if cfg.Organization.InvitationTTL < 0 ||
-		(slices.Contains(cfg.Starters.Optional, "organization") && cfg.Organization.InvitationTTL == 0) {
+		(cfg.Starters.Selected(StarterOrganization) && cfg.Organization.InvitationTTL == 0) {
 		return fmt.Errorf("ORGANIZATION_INVITATION_TTL must be greater than 0 when the organization starter is selected")
 	}
-	assetSelected := slices.Contains(cfg.Starters.Optional, "asset")
+	assetSelected := cfg.Starters.Selected(StarterAsset)
 	if err := validateObjectStorageConfig(cfg, assetSelected); err != nil {
 		return err
 	}
@@ -806,7 +806,7 @@ func validate(cfg *Config) error {
 	); err != nil {
 		return err
 	}
-	webhookSelected := slices.Contains(cfg.Starters.Optional, "webhook")
+	webhookSelected := cfg.Starters.Selected(StarterWebhook)
 	if err := validateWebhookConfig(cfg, webhookSelected); err != nil {
 		return err
 	}
@@ -984,7 +984,7 @@ func validAIIdentifier(value string, maxBytes int) bool {
 }
 
 func defaultObjectStorageDriver(optionalStarters []string, production bool) string {
-	if slices.Contains(optionalStarters, "asset") && !production {
+	if slices.Contains(optionalStarters, StarterAsset) && !production {
 		return "local"
 	}
 	return "disabled"

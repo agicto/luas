@@ -3,6 +3,7 @@ package notification
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	httphandler "github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
@@ -24,7 +25,7 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) Name() string { return "notification" }
+func (h *Handler) Name() string { return config.StarterNotification }
 
 func (h *Handler) List(c *gin.Context) {
 	userID, ok := httphandler.GetUserID(c)

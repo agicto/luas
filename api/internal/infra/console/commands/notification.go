@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -59,7 +58,7 @@ func (c *NotificationWorkCommand) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if !slices.Contains(cfg.Starters.Optional, "notification") {
+	if !cfg.Starters.Selected(config.StarterNotification) {
 		return fmt.Errorf("notification starter is not selected in OPTIONAL_STARTERS")
 	}
 	workerConfig, err := parseNotificationWorkerArgs(args)

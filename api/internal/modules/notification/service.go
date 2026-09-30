@@ -378,7 +378,7 @@ func (s *service) available() error {
 }
 
 func notificationStarterEnabled(cfg *config.Config) bool {
-	return cfg != nil && slices.Contains(cfg.Starters.Optional, "notification")
+	return cfg != nil && cfg.Starters.Selected(config.StarterNotification)
 }
 
 func validNotificationFilter(status string) bool {

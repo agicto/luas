@@ -64,8 +64,8 @@ def main() -> int:
         failures,
         "api/internal/modules/permission/provider.go",
         (
-            '"permission"',
-            'WithStarterDependencies("organization")',
+            'config.StarterPermission',
+            'WithStarterDependencies(config.StarterOrganization)',
             "2026_07_15_010000_create_permission_tables",
             "wire.Bind(new(domain.PermissionAuthorizer)",
         ),

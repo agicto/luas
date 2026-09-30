@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -350,7 +349,7 @@ func initWebhookApplication() (*app.Application, *config.Config, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	if !slices.Contains(cfg.Starters.Optional, "webhook") {
+	if !cfg.Starters.Selected(config.StarterWebhook) {
 		return nil, nil, fmt.Errorf("webhook starter is not selected in OPTIONAL_STARTERS")
 	}
 	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {

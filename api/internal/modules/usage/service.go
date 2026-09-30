@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"slices"
 	"strconv"
 	"time"
 
@@ -50,7 +49,7 @@ var (
 func NewService(catalog *Catalog, store usageStore, cfg *config.Config) *service {
 	value := &service{catalog: catalog, store: store, now: time.Now}
 	if cfg != nil {
-		value.enabled = slices.Contains(cfg.Starters.Optional, "usage")
+		value.enabled = cfg.Starters.Selected(config.StarterUsage)
 	}
 	return value
 }

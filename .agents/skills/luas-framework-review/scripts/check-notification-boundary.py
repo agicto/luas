@@ -146,8 +146,8 @@ def main() -> int:
         failures,
         "api/internal/modules/notification/provider.go",
         (
-            '"notification"',
-            'WithStarterDependencies("user", "audit")',
+            'config.StarterNotification',
+            'WithStarterDependencies(config.StarterUser, config.StarterAudit)',
             "2026_07_15_020000_create_notification_tables",
             "wire.Bind(new(domain.NotificationPublisher)",
             "wire.Bind(new(domain.NotificationDispatcher)",

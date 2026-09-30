@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -22,8 +23,8 @@ var ProviderSet = wire.NewSet(
 // NewStarterManifest describes setting routes, ownership dependencies, and persistence.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"setting",
-		assembly.WithStarterDependencies("user", "audit", "organization"),
+		config.StarterSetting,
+		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_040000_create_settings_table"),
 	)

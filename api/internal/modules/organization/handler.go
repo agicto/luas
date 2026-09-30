@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	"github.com/zgiai/luas/api/pkg/handler"
@@ -43,7 +44,7 @@ func NewHandler(
 
 // Name returns the starter module name.
 func (h *Handler) Name() string {
-	return "organization"
+	return config.StarterOrganization
 }
 
 // Activate installs ownership protection only when this optional starter is selected.

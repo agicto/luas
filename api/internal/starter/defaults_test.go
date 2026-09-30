@@ -12,7 +12,7 @@ import (
 func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 	registry := NewRegistry()
 
-	manifests := DefaultManifests(nil, nil, nil)
+	manifests := DefaultManifests(nil)
 	require.Len(t, manifests, 3)
 	assert.Equal(t, "audit", manifests[0].Name())
 	assert.Equal(t, "apikey", manifests[1].Name())
@@ -44,7 +44,7 @@ func TestDefaultManifestsRegisterDefaultAssets(t *testing.T) {
 func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "audit", manifests[0].Name())
@@ -66,7 +66,7 @@ func TestConfiguredManifestsEnableOrganizationAdditively(t *testing.T) {
 func TestConfiguredManifestsEnablePermissionAfterOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission", "organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 5)
 	assert.Equal(t, "organization", manifests[3].Name())
@@ -83,7 +83,7 @@ func TestConfiguredManifestsEnablePermissionAfterOrganization(t *testing.T) {
 func TestConfiguredManifestsRequireOrganizationForPermission(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"permission"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `optional starter "permission" requires "organization"`)
 }
@@ -91,7 +91,7 @@ func TestConfiguredManifestsRequireOrganizationForPermission(t *testing.T) {
 func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"billing"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unknown optional starter")
 }
@@ -99,7 +99,7 @@ func TestConfiguredManifestsRejectUnknownOptionalStarter(t *testing.T) {
 func TestConfiguredManifestsEnableNotificationWithoutOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"notification"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "notification", manifests[3].Name())
@@ -115,7 +115,7 @@ func TestConfiguredManifestsEnableNotificationWithoutOrganization(t *testing.T) 
 func TestConfiguredManifestsEnableAssetWithoutOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"asset"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 4)
 	assert.Equal(t, "asset", manifests[3].Name())
@@ -131,7 +131,7 @@ func TestConfiguredManifestsEnableAssetWithoutOrganization(t *testing.T) {
 func TestConfiguredManifestsEnableSettingAfterOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"setting", "organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 5)
 	assert.Equal(t, "organization", manifests[3].Name())
@@ -148,7 +148,7 @@ func TestConfiguredManifestsEnableSettingAfterOrganization(t *testing.T) {
 func TestConfiguredManifestsRequireOrganizationForSetting(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"setting"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `optional starter "setting" requires "organization"`)
 }
@@ -156,7 +156,7 @@ func TestConfiguredManifestsRequireOrganizationForSetting(t *testing.T) {
 func TestConfiguredManifestsEnableUsageAfterOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"usage", "organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 5)
 	assert.Equal(t, "organization", manifests[3].Name())
@@ -173,7 +173,7 @@ func TestConfiguredManifestsEnableUsageAfterOrganization(t *testing.T) {
 func TestConfiguredManifestsRequireOrganizationForUsage(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"usage"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `optional starter "usage" requires "organization"`)
 }
@@ -181,7 +181,7 @@ func TestConfiguredManifestsRequireOrganizationForUsage(t *testing.T) {
 func TestConfiguredManifestsEnableWebhookAfterOrganization(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"webhook", "organization"}}}
 
-	manifests, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	manifests, err := ConfiguredManifests(cfg, nil)
 	require.NoError(t, err)
 	require.Len(t, manifests, 5)
 	assert.Equal(t, "organization", manifests[3].Name())
@@ -198,7 +198,7 @@ func TestConfiguredManifestsEnableWebhookAfterOrganization(t *testing.T) {
 func TestConfiguredManifestsRequireOrganizationForWebhook(t *testing.T) {
 	cfg := &config.Config{Starters: config.StarterConfig{Optional: []string{"webhook"}}}
 
-	_, err := ConfiguredManifests(cfg, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	_, err := ConfiguredManifests(cfg, nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `optional starter "webhook" requires "organization"`)
 }

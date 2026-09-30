@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -47,7 +46,7 @@ func (c *AssetPruneCommand) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	if !slices.Contains(cfg.Starters.Optional, "asset") {
+	if !cfg.Starters.Selected(config.StarterAsset) {
 		return fmt.Errorf("asset starter is not selected in OPTIONAL_STARTERS")
 	}
 	if loggerErr := bootstrap.InitLogger(cfg); loggerErr != nil {

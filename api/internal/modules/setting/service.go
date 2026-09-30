@@ -40,7 +40,7 @@ var (
 func NewService(catalog *Catalog, store settingStore, cfg *config.Config) *service {
 	value := &service{catalog: catalog, store: store}
 	if cfg != nil {
-		value.enabled = slices.Contains(cfg.Starters.Optional, "setting")
+		value.enabled = cfg.Starters.Selected(config.StarterSetting)
 	}
 	return value
 }

@@ -147,8 +147,8 @@ def main() -> int:
         failures,
         "api/internal/modules/webhook/provider.go",
         (
-            '"webhook"',
-            'WithStarterDependencies("user", "audit", "organization")',
+            'config.StarterWebhook',
+            'WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization)',
             "2026_07_15_060000_create_webhook_tables",
             "wire.Bind(new(domain.WebhookPublisher)",
             "wire.Bind(new(domain.WebhookDispatcher)",

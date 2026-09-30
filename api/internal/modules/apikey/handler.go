@@ -3,6 +3,7 @@ package apikey
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
@@ -29,7 +30,7 @@ func NewHandler(service Service) *Handler {
 
 // Name returns the module name.
 func (h *Handler) Name() string {
-	return "apikey"
+	return config.StarterAPIKey
 }
 
 // RegisterMiddleware registers the api_key middleware group and alias.

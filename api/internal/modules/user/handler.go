@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	"github.com/zgiai/luas/api/pkg/handler"
@@ -70,7 +71,7 @@ func (h *Handler) Logout(c *gin.Context) {
 
 // Name returns the module name
 func (h *Handler) Name() string {
-	return "user"
+	return config.StarterUser
 }
 
 // RegisterEvents registers user module event listeners

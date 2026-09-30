@@ -127,6 +127,18 @@ def main() -> int:
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")
 
+    try:
+        starter_vocabulary = read("api/internal/infra/config/starters.go")
+    except FileNotFoundError:
+        starter_vocabulary = ""
+        failures.append("api/internal/infra/config/starters.go must define the starter name vocabulary")
+    starter_constants = {
+        value: constant
+        for constant, value in re.findall(
+            r'(?m)^\s*(Starter[A-Za-z]+)\s*=\s*"([a-z][a-z0-9_]*)"', starter_vocabulary
+        )
+    }
+
     for package_name in optional_packages:
         provider_path = f"api/internal/modules/{package_name}/provider.go"
         try:
@@ -134,9 +146,14 @@ def main() -> int:
         except FileNotFoundError:
             failures.append(f"{provider_path} is missing")
             continue
-        if f'"{package_name}"' not in provider:
+        constant = starter_constants.get(package_name)
+        if constant is None:
             failures.append(
-                f"{provider_path} must use the canonical starter name {package_name!r}"
+                f"api/internal/infra/config/starters.go must define a constant for starter {package_name!r}"
+            )
+        elif f"config.{constant}" not in provider:
+            failures.append(
+                f"{provider_path} must name its starter with config.{constant}"
             )
         migration_names = re.findall(
             r'"([0-9]{4}_[0-9]{2}_[0-9]{2}_[0-9]{6}_[a-z0-9_]+)"',
