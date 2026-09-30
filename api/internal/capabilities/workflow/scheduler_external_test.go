@@ -1,4 +1,4 @@
-package unit
+package workflow_test
 
 import (
 	"context"
@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/schedule"
+	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 )
 
 func TestEvent_EveryMinute(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).EveryMinute()
 
@@ -22,7 +22,7 @@ func TestEvent_EveryMinute(t *testing.T) {
 }
 
 func TestEvent_Hourly(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Hourly()
 
@@ -40,7 +40,7 @@ func TestEvent_Hourly(t *testing.T) {
 }
 
 func TestEvent_HourlyAt(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).HourlyAt(30)
 
@@ -58,7 +58,7 @@ func TestEvent_HourlyAt(t *testing.T) {
 }
 
 func TestEvent_Daily(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Daily()
 
@@ -76,7 +76,7 @@ func TestEvent_Daily(t *testing.T) {
 }
 
 func TestEvent_DailyAt(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).DailyAt(9, 30)
 
@@ -94,7 +94,7 @@ func TestEvent_DailyAt(t *testing.T) {
 }
 
 func TestEvent_Weekly(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Weekly()
 
@@ -112,7 +112,7 @@ func TestEvent_Weekly(t *testing.T) {
 }
 
 func TestEvent_Mondays(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Mondays().At(9, 0)
 
@@ -130,7 +130,7 @@ func TestEvent_Mondays(t *testing.T) {
 }
 
 func TestEvent_Weekdays(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Weekdays().At(9, 0)
 
@@ -148,7 +148,7 @@ func TestEvent_Weekdays(t *testing.T) {
 }
 
 func TestEvent_Weekends(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Weekends().At(10, 0)
 
@@ -166,7 +166,7 @@ func TestEvent_Weekends(t *testing.T) {
 }
 
 func TestEvent_EveryFiveMinutes(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).EveryFiveMinutes()
 
@@ -188,7 +188,7 @@ func TestEvent_EveryFiveMinutes(t *testing.T) {
 }
 
 func TestEvent_Monthly(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Monthly()
 
@@ -208,7 +208,7 @@ func TestEvent_Monthly(t *testing.T) {
 func TestEvent_Run(t *testing.T) {
 	var executed bool
 
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		executed = true
 		return nil
 	})
@@ -228,7 +228,7 @@ func TestEvent_Run(t *testing.T) {
 func TestEvent_WithoutOverlapping(t *testing.T) {
 	var counter int32
 
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		atomic.AddInt32(&counter, 1)
 		time.Sleep(100 * time.Millisecond)
 		return nil
@@ -253,7 +253,7 @@ func TestEvent_WithoutOverlapping(t *testing.T) {
 func TestEvent_Callbacks(t *testing.T) {
 	var beforeCalled, afterCalled, successCalled bool
 
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Before(func() {
 		beforeCalled = true
@@ -278,9 +278,9 @@ func TestEvent_Callbacks(t *testing.T) {
 }
 
 func TestScheduler_Register(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := workflow.NewScheduler()
 
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	})
 
@@ -293,15 +293,15 @@ func TestScheduler_Register(t *testing.T) {
 }
 
 func TestScheduler_DueEvents(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := workflow.NewScheduler()
 
 	// Event that's always due
-	event1 := schedule.Call("always", func(ctx context.Context) error {
+	event1 := workflow.Call("always", func(ctx context.Context) error {
 		return nil
 	}).EveryMinute()
 
 	// Event that's never due (at a specific time)
-	event2 := schedule.Call("specific", func(ctx context.Context) error {
+	event2 := workflow.Call("specific", func(ctx context.Context) error {
 		return nil
 	}).DailyAt(25, 0) // Invalid hour, never due
 
@@ -317,7 +317,7 @@ func TestScheduler_DueEvents(t *testing.T) {
 }
 
 func TestScheduler_Call(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := workflow.NewScheduler()
 
 	event := scheduler.Call("inline", func(ctx context.Context) error {
 		return nil
@@ -334,7 +334,7 @@ func TestScheduler_Call(t *testing.T) {
 }
 
 func TestScheduler_Clear(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := workflow.NewScheduler()
 
 	scheduler.Call("test1", func(ctx context.Context) error { return nil })
 	scheduler.Call("test2", func(ctx context.Context) error { return nil })
@@ -348,7 +348,7 @@ func TestScheduler_Clear(t *testing.T) {
 }
 
 func TestScheduler_Run(t *testing.T) {
-	scheduler := schedule.New()
+	scheduler := workflow.NewScheduler()
 	var executed bool
 
 	scheduler.Call("test", func(ctx context.Context) error {
@@ -365,7 +365,7 @@ func TestScheduler_Run(t *testing.T) {
 }
 
 func TestEvent_TwiceDaily(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).TwiceDaily(8, 18)
 
@@ -390,9 +390,9 @@ func TestEvent_TwiceDaily(t *testing.T) {
 
 func TestGlobal_Schedule(t *testing.T) {
 	// Clear any existing events
-	schedule.Global().Clear()
+	workflow.GlobalScheduler().Clear()
 
-	event := schedule.Schedule("global-test", func(ctx context.Context) error {
+	event := workflow.Schedule("global-test", func(ctx context.Context) error {
 		return nil
 	}).EveryMinute()
 
@@ -400,19 +400,19 @@ func TestGlobal_Schedule(t *testing.T) {
 		t.Errorf("Expected name 'global-test', got '%s'", event.Name())
 	}
 
-	events := schedule.Global().Events()
+	events := workflow.GlobalScheduler().Events()
 	if len(events) != 1 {
 		t.Errorf("Expected 1 event in global scheduler, got %d", len(events))
 	}
 
 	// Cleanup
-	schedule.Global().Clear()
+	workflow.GlobalScheduler().Clear()
 }
 
 func TestEvent_RunInBackground(t *testing.T) {
 	var executed int32
 
-	event := schedule.Call("bg-test", func(ctx context.Context) error {
+	event := workflow.Call("bg-test", func(ctx context.Context) error {
 		atomic.AddInt32(&executed, 1)
 		return nil
 	}).RunInBackground()
@@ -429,7 +429,7 @@ func TestEvent_RunInBackground(t *testing.T) {
 }
 
 func TestEvent_Yearly(t *testing.T) {
-	event := schedule.Call("test", func(ctx context.Context) error {
+	event := workflow.Call("test", func(ctx context.Context) error {
 		return nil
 	}).Yearly()
 

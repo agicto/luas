@@ -1,4 +1,4 @@
-package unit
+package env_test
 
 import (
 	"os"

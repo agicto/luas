@@ -358,21 +358,6 @@ func TestForeignKeyDefinition_Constrained(t *testing.T) {
 
 // Unit tests for Grammar implementations
 
-func TestMySQLGrammar_CompileCreate(t *testing.T) {
-	grammar := &MySQLGrammar{}
-	bp := NewBlueprint("users")
-	bp.Create()
-	bp.ID()
-	bp.String("name")
-
-	sql := grammar.CompileCreate(bp)
-
-	assert.Contains(t, sql, "CREATE TABLE `users`")
-	assert.Contains(t, sql, "`id` BIGINT")
-	assert.Contains(t, sql, "`name` VARCHAR(255)")
-	assert.Contains(t, sql, "PRIMARY KEY")
-}
-
 func TestPostgresGrammar_CompileCreate(t *testing.T) {
 	grammar := &PostgresGrammar{}
 	bp := NewBlueprint("users")
@@ -393,7 +378,6 @@ func TestNewGrammar_Factory(t *testing.T) {
 		dialect  string
 		expected string
 	}{
-		{"mysql", "*schema.MySQLGrammar"},
 		{"postgres", "*schema.PostgresGrammar"},
 		{"postgresql", "*schema.PostgresGrammar"},
 		{"unknown", "*schema.PostgresGrammar"},
@@ -413,7 +397,6 @@ func TestGrammar_CompileDrop(t *testing.T) {
 		grammar  Grammar
 		expected string
 	}{
-		{"MySQL", &MySQLGrammar{}, "DROP TABLE `users`"},
 		{"Postgres", &PostgresGrammar{}, "DROP TABLE \"users\""},
 	}
 
@@ -431,7 +414,6 @@ func TestGrammar_CompileDropIfExists(t *testing.T) {
 		grammar  Grammar
 		expected string
 	}{
-		{"MySQL", &MySQLGrammar{}, "DROP TABLE IF EXISTS `users`"},
 		{"Postgres", &PostgresGrammar{}, "DROP TABLE IF EXISTS \"users\""},
 	}
 
@@ -449,7 +431,6 @@ func TestGrammar_CompileRename(t *testing.T) {
 		grammar  Grammar
 		expected string
 	}{
-		{"MySQL", &MySQLGrammar{}, "RENAME TABLE `old` TO `new`"},
 		{"Postgres", &PostgresGrammar{}, "ALTER TABLE \"old\" RENAME TO \"new\""},
 	}
 

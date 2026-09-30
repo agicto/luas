@@ -270,8 +270,8 @@ Goal: make architecture improvement visible and repeatable.
      `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
    - Keep `api/docs/PACKAGE_BOUNDARIES.md` at zero baseline exceptions unless a new exception is
      explicitly justified in an ADR or roadmap entry.
-   - Treat `internal/infra/queue` and `internal/infra/schedule` as compatibility wrappers around
-     workflow-owned primitives, not as the canonical implementation home for new code.
+   - The former `internal/infra/queue`, `schedule`, and `retry` compatibility wrappers were removed
+     in 2026-09; workflow-owned primitives are the only implementation home.
 
 3. **Add downstream extraction workflow**
    - Status: implemented as a root skill with a product-leakage scan helper.

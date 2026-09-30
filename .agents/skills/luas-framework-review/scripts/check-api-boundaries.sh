@@ -28,36 +28,11 @@ assert_absent_path() {
 }
 
 assert_absent_path "internal/contracts" "use internal/starter/assembly for starter registry seams and root contracts/ for HTTP contracts."
-assert_absent_path "pkg/support/paths.go" "app path helpers belong in runtime-owned packages, not reusable pkg/support."
-assert_absent_path "pkg/support/debug.go" "debug dump/timing helpers belong in local devtools or internal diagnostics, not reusable pkg/support."
-assert_absent_path "pkg/support/manager.go" "driver registries should live at their owning capability seam, not in generic pkg/support."
-assert_absent_path "pkg/support/pipeline.go" "middleware chains should live at their owning runtime seam, not in generic pkg/support."
-assert_absent_path "pkg/support/conditionable.go" "generic conditional wrappers should live at a semantic response/resource/query seam, not in generic pkg/support."
-assert_absent_path "pkg/support/str.go" "broad string formatting and random string helpers should live at their owning seam, not in generic pkg/support."
-assert_absent_path "pkg/support/arr.go" "broad collection helpers should live at their owning seam, not in generic pkg/support."
-assert_absent_path "pkg/support/map.go" "broad map helpers should live at their owning seam, not in generic pkg/support."
-
-if ! support_doc=$(go doc -all ./pkg/support); then
-  echo "Unable to inspect api/pkg/support exports; package boundaries were not checked." >&2
-  exit 1
-fi
-support_exports=$(printf '%s\n' "$support_doc" | grep -E '^(func|type|var|const) [A-Z][A-Za-z0-9_]*' || true)
-unexpected_support_exports=$(printf '%s\n' "$support_exports" | grep -E -v '^func (Blank|Filled|DataGet|DataHas)\(' || true)
-if [ -n "$unexpected_support_exports" ]; then
-  echo "api/pkg/support exports must stay limited to Blank, Filled, DataGet, and DataHas; put new helpers at their owning seam." >&2
-  printf '%s\n' "$unexpected_support_exports" >&2
-  exit 1
-fi
-
-if grep -R -E -n --include='*.go' '^(func (Tap|With|IfVal|WhenFunc|UnlessVal|Value|Transform|Rescue|RescueWith|Retry|RetryWithDelay|RetryWhen|Once|Some|None|Of|OptionalMap|ThrowIf|ThrowUnless|Must|Coalesce|Default|Flow)(\[|\()|type Optional\[|var onceCache)' "$API_ROOT/pkg/support" >/dev/null; then
-  echo "api/pkg/support must not reintroduce generic control-flow, retry, panic, or Optional helpers; keep these at their owning seam." >&2
-  exit 1
-fi
-
-if grep -R -E -n --include='*.go' '^(func (DataSet|DataFill|DataForget)\(|func setNestedReflect\()' "$API_ROOT/pkg/support" >/dev/null; then
-  echo "api/pkg/support must not reintroduce mutating dot-notation data helpers; keep data shaping at the owning seam." >&2
-  exit 1
-fi
+# Generic grab-bag packages hide ownership; helpers belong at the seam that owns the behavior.
+for grab_bag in pkg/support pkg/utils pkg/common pkg/helpers internal/infra/utils internal/infra/common; do
+  assert_absent_path "$grab_bag" "generic helper packages hide ownership; put the helper at the capability, runtime, or starter seam that owns it."
+done
+assert_absent_path "internal/infra/contracts" "the term contract is reserved for HTTP contracts under root contracts/; name Go interfaces for their seam."
 
 KNOWN_VIOLATIONS=()
 

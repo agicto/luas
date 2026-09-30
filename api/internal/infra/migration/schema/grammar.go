@@ -63,14 +63,10 @@ type Grammar interface {
 	GetColumnType(column *ColumnDefinition) string
 }
 
-// NewGrammar creates a Grammar implementation for the configured dialect.
-func NewGrammar(dialect string) Grammar {
-	switch strings.ToLower(dialect) {
-	case "mysql":
-		return &MySQLGrammar{}
-	default:
-		return &PostgresGrammar{}
-	}
+// NewGrammar returns the PostgreSQL grammar. PostgreSQL is the only supported dialect; the argument
+// is kept so callers can pass the configured driver name without branching.
+func NewGrammar(_ string) Grammar {
+	return &PostgresGrammar{}
 }
 
 // baseGrammar provides common functionality for all grammar implementations

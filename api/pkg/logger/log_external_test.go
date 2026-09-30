@@ -1,4 +1,4 @@
-package unit
+package logger_test
 
 import (
 	"bytes"

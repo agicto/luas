@@ -23,16 +23,6 @@ func All() map[string]migration.Migration {
 	return registry
 }
 
-// Default returns the legacy default scaffold migration set.
-// Deprecated: starter.DefaultMigrations() is the canonical source for default starter assembly.
-func Default() map[string]migration.Migration {
-	out := make(map[string]migration.Migration, len(registry))
-	for name, m := range registry {
-		out[name] = m
-	}
-	return out
-}
-
 // Names returns all registered migration names in sorted order.
 func Names() []string {
 	names := make([]string, 0, len(registry))

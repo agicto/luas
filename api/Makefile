@@ -130,7 +130,7 @@ test-race:
 # Run the concurrency-critical queue lifecycle suite used by CI
 test-race-critical:
 	@echo "Running concurrency-critical race tests..."
-	go test -race ./tests/unit -run 'TestMemoryDriver|TestWorker_(StopInterruptsEmptyMemoryQueue|ExitsOnDriverCloseAndAcceptsConcurrentStop)' -count=1
+	go test -race ./internal/capabilities/workflow -run 'TestMemoryDriver|TestWorker_(StopInterruptsEmptyMemoryQueue|ExitsOnDriverCloseAndAcceptsConcurrentStop)' -count=1
 
 # Verify every SQL-owning package against one caller-provided PostgreSQL version.
 test-postgres-compatibility:
@@ -147,7 +147,7 @@ test-postgres-compatibility:
 # Measure the in-process memory queue round trip
 benchmark-workflow:
 	@echo "Benchmarking workflow memory queue..."
-	go test ./tests/unit -run '^$$' -bench '^BenchmarkMemoryDriver_RoundTrip$$' -benchmem
+	go test ./internal/capabilities/workflow -run '^$$' -bench '^BenchmarkMemoryDriver_RoundTrip$$' -benchmem
 
 # Measure the steady-state core HTTP middleware chain with metrics off and on
 benchmark-http:

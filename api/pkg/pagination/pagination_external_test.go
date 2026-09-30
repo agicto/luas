@@ -1,4 +1,4 @@
-package unit
+package pagination_test
 
 import (
 	"net/http"

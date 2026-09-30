@@ -3,8 +3,8 @@
 The workflow queue is a reusable technical capability. It remains independent of product modules
 and supports both lightweight local execution and PostgreSQL-backed durable workers.
 
-The canonical implementation lives in `internal/capabilities/workflow`. The
-`internal/infra/queue` package is a compatibility wrapper only.
+The implementation lives in `internal/capabilities/workflow`; there is no separate queue or
+scheduler package.
 
 ## Driver Matrix
 

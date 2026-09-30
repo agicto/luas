@@ -1,4 +1,4 @@
-package unit
+package ratelimit_test
 
 import (
 	"context"
