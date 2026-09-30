@@ -360,3 +360,5 @@ func TestDisabledServiceFailsClosed(t *testing.T) {
 	_, err := service.Publish(context.Background(), domain.NotificationPublication{})
 	assert.True(t, errors.Is(err, domain.ErrServiceUnavailable))
 }
+
+var _ emailSender = (*testplatform.FakeMailer)(nil)

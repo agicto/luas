@@ -36,6 +36,9 @@ service_test.go
 - Keep persistence details in `repository.go`.
 - Return domain values from repositories when practical; avoid leaking GORM models upward.
 - Add a test at the service seam before broad handler tests.
+- Use the shared doubles in `internal/infra/testing` before writing new ones: `FakeMailer` records email for
+  any starter mail seam, `EventRecorder`/`TestEventBus` capture events, and `OpenPostgres` gives an isolated
+  schema for SQL behavior.
 - Keep optional activation additive. Never use the optional list to subtract defaults.
 - Declare starter prerequisites with `WithStarterDependencies`; do not infer dependencies from
   import order or silently auto-enable them.
