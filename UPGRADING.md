@@ -11,6 +11,31 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-01 — Platform operator starter
+
+### Low — New optional `operator` starter
+
+Opt-in only; nothing changes unless `operator` is added to `OPTIONAL_STARTERS`.
+
+- Selecting it requires `OPERATOR_ALLOWED_ORIGINS` (exact Admin Console origins) and adds the
+  `platform_operators` migration, `/v1/operator/*` routes, and `operator:grant`, `operator:revoke`,
+  and `operator:list` commands. Grant the first operator with `luas operator:grant <email>`.
+- To require operator sign-in in the Admin Console, build it with `VITE_OPTIONAL_FEATURES=operator`
+  and route the Admin origin's `/api/*` to the Go API on the same origin. Without the flag the
+  console is unchanged.
+- New error codes: `OPERATOR.FORBIDDEN`, `OPERATOR.ORIGIN_REJECTED`, `OPERATOR.CSRF_REJECTED`,
+  `OPERATOR.TARGET_PROTECTED`. Clients that switch exhaustively on `error_code` should add them.
+- `domain.CredentialSignIn` and `domain.SessionRevoker` are new user-starter seams; the public login
+  now shares its credential check with operator sign-in without behavior change.
+- `domain.UserAdministrator` is a new user-starter seam used by `/v1/operator/users`. Disabling an
+  account through it revokes the account's sessions in the same transaction (reason
+  `account_disabled`); ending sessions uses the new revocation reason `operator`.
+- `domain.AuditLogRepository` gains `FindAll`, and `domain.AuditLogFilter` gains `UserID`, `From`, and
+  `To`. Custom audit repositories must implement `FindAll` (newest first, `From` inclusive, `To`
+  exclusive).
+- The setting starter's `Handler` exposes `AppList`, `AppSet`, and `AppReset` for app-scoped settings.
+  They perform no authorization; mount them only behind an authorizing starter such as `operator`.
+
 ## 2026-09-30 — Dead code and dialect cleanup
 
 ### High — Unused API packages removed

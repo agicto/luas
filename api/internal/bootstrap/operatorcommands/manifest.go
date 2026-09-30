@@ -21,5 +21,8 @@ func Manifest() infracommands.Manifest {
 		infracommands.Registration{Command: NewWebhookPublishTestCommand()},
 		infracommands.Registration{Command: NewWebhookReplayCommand()},
 		infracommands.Registration{Command: NewWebhookPruneCommand()},
+		infracommands.Registration{Command: NewOperatorGrantCommand()},
+		infracommands.Registration{Command: NewOperatorRevokeCommand()},
+		infracommands.Registration{Command: NewOperatorListCommand()},
 	)
 }

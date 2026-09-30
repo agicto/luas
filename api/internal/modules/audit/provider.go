@@ -16,6 +16,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(domain.AuditLogRecorder), new(*service)),
 	wire.Bind(new(domain.AuditLogMaintainer), new(*service)),
+	wire.Bind(new(domain.AuditLogQuery), new(*service)),
 	NewHandler,
 )
 

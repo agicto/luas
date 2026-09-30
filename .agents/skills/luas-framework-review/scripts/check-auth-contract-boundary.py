@@ -113,7 +113,7 @@ def main() -> int:
             "`admin/` has no server runtime",
             "same-origin browser gateway",
             "must not be stored in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected Admin Console authentication is deliberately incomplete",
+            "is the shipped Go browser adapter for platform operators",
         ),
     )
     require_all(
@@ -398,7 +398,7 @@ def main() -> int:
             "reviewed browser gateway or Go adapter",
             "HttpOnly session cookie",
             "Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB",
-            "protected Admin Console auth is not",
+            "shipped Go browser adapter for this",
             "A client-side route guard",
         ),
     )

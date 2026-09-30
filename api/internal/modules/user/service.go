@@ -83,6 +83,7 @@ type service struct {
 	eventBus       *events.EventBus
 	mailer         UserMailer
 	deletionPolicy *AccountDeletionPolicy
+	admin          userAdministrationStore
 	verifyPassword func(hashedPassword, password []byte) error
 }
 
@@ -91,6 +92,8 @@ var (
 	_ AuthService      = (*service)(nil)
 	_ ProfileService   = (*service)(nil)
 	_ UserQueryService = (*service)(nil)
+
+	_ domain.CredentialSignIn = (*service)(nil)
 )
 
 // NewService creates a new service instance
@@ -102,7 +105,7 @@ func NewService(
 	mailer UserMailer,
 	deletionPolicy *AccountDeletionPolicy,
 ) *service {
-	return &service{
+	svc := &service{
 		repo:           repo,
 		passwordResets: passwordResets,
 		sessions:       sessions,
@@ -111,6 +114,10 @@ func NewService(
 		deletionPolicy: deletionPolicy,
 		verifyPassword: bcrypt.CompareHashAndPassword,
 	}
+	if store, ok := repo.(userAdministrationStore); ok {
+		svc.admin = store
+	}
+	return svc
 }
 
 // ============================================================================
@@ -165,29 +172,75 @@ func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*doma
 
 // Login handles user login
 func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginResponse, error) {
-	user, err := s.repo.FindByLoginIdentifier(ctx, req.Username)
+	user, issued, err := s.signIn(ctx, req.Username, req.Password, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return &UserLoginResponse{
+		AccessToken: issued.AccessToken,
+		TokenType:   issued.TokenType,
+		ExpiresIn:   issued.ExpiresIn,
+		User:        user,
+	}, nil
+}
+
+// SignIn verifies credentials, lets the caller authorize the verified user, then issues a session.
+func (s *service) SignIn(
+	ctx context.Context,
+	identifier string,
+	password string,
+	authorize func(context.Context, *domain.User) error,
+) (*domain.IssuedSession, error) {
+	user, issued, err := s.signIn(ctx, identifier, password, authorize)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.IssuedSession{
+		Credential: issued.AccessToken,
+		ExpiresAt:  time.Now().Add(time.Duration(issued.ExpiresIn) * time.Second),
+		User:       user,
+	}, nil
+}
+
+// signIn is the single credential path for public login and operator sign-in. Unknown, wrong, and
+// disabled accounts share one failure and comparable hashing work so responses do not reveal
+// account state. authorize runs after verification and before any session exists.
+func (s *service) signIn(
+	ctx context.Context,
+	identifier string,
+	password string,
+	authorize func(context.Context, *domain.User) error,
+) (*domain.User, *IssuedAuthenticationSession, error) {
+	user, err := s.repo.FindByLoginIdentifier(ctx, identifier)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if compareErr := s.verifyPassword([]byte(dummyPasswordHash), []byte(req.Password)); compareErr != nil &&
+			if compareErr := s.verifyPassword([]byte(dummyPasswordHash), []byte(password)); compareErr != nil &&
 				!errors.Is(compareErr, bcrypt.ErrMismatchedHashAndPassword) {
 				slog.ErrorContext(ctx, "user.login_dummy_hash_invalid", "err", compareErr)
 			}
-			return nil, domain.ErrInvalidCredentials
+			return nil, nil, domain.ErrInvalidCredentials
 		}
-		return nil, fmt.Errorf("failed to lookup login identifier: %w", err)
+		return nil, nil, fmt.Errorf("failed to lookup login identifier: %w", err)
 	}
 
-	passwordErr := s.verifyPassword([]byte(user.Password), []byte(req.Password))
+	passwordErr := s.verifyPassword([]byte(user.Password), []byte(password))
 	if passwordErr != nil || !user.IsActive() {
-		return nil, domain.ErrInvalidCredentials
+		return nil, nil, domain.ErrInvalidCredentials
+	}
+
+	if authorize != nil {
+		if authErr := authorize(ctx, user); authErr != nil {
+			return nil, nil, authErr
+		}
 	}
 
 	if s.sessions == nil {
-		return nil, domain.ErrServiceUnavailable
+		return nil, nil, domain.ErrServiceUnavailable
 	}
 	issued, err := s.sessions.Issue(ctx, user)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Update last login. Auth has already succeeded; a write failure
@@ -200,13 +253,7 @@ func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginR
 			"err", err,
 		)
 	}
-
-	return &UserLoginResponse{
-		AccessToken: issued.AccessToken,
-		TokenType:   issued.TokenType,
-		ExpiresIn:   issued.ExpiresIn,
-		User:        user,
-	}, nil
+	return user, issued, nil
 }
 
 // ============================================================================

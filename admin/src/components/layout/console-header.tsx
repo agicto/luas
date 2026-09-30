@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { OperatorMenu } from '@/features/operator-session/components/operator-menu';
 import { useResolvedTheme } from '@/features/preferences/hooks/use-resolved-theme';
 import { usePreferencesStore } from '@/features/preferences/store/preferences-store';
 
@@ -14,8 +15,13 @@ export function ConsoleHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const dark = useResolvedTheme();
   const setTheme = usePreferencesStore((state) => state.setTheme);
-  const currentPage =
-    pathname === '/console/preferences' ? t('navigation.preferences') : t('navigation.overview');
+  const pageTitles: Record<string, string> = {
+    '/console/preferences': t('navigation.preferences'),
+    '/console/users': t('navigation.users'),
+    '/console/audit': t('navigation.audit'),
+    '/console/settings': t('navigation.settings'),
+  };
+  const currentPage = pageTitles[pathname] ?? t('navigation.overview');
   const themeLabel = dark ? t('preferences.light') : t('preferences.dark');
 
   return (
@@ -57,6 +63,7 @@ export function ConsoleHeader() {
           </TooltipTrigger>
           <TooltipContent side="bottom">{themeLabel}</TooltipContent>
         </Tooltip>
+        <OperatorMenu />
       </div>
     </header>
   );

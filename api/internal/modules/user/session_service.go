@@ -27,6 +27,7 @@ const (
 	sessionRevocationAccountDisabled = "account_disabled"
 	sessionRevocationExpired         = "expired"
 	sessionRevocationIdleTimeout     = "idle_timeout"
+	sessionRevocationOperator        = "operator"
 )
 
 // IssuedAuthenticationSession is the one-time plaintext session response.
@@ -143,6 +144,11 @@ func (s *SessionService) Revoke(ctx context.Context, credential, reason string) 
 	)
 }
 
+// RevokeSession ends one session as a user-initiated logout.
+func (s *SessionService) RevokeSession(ctx context.Context, credential string) error {
+	return s.Revoke(ctx, credential, sessionRevocationLogout)
+}
+
 // RevokeByID invalidates the already-authenticated current session.
 func (s *SessionService) RevokeByID(ctx context.Context, sessionID, reason string) error {
 	if s == nil || s.repo == nil {
@@ -210,7 +216,8 @@ func normalizeSessionRevocationReason(value string) string {
 		sessionRevocationAccountDeleted,
 		sessionRevocationAccountDisabled,
 		sessionRevocationExpired,
-		sessionRevocationIdleTimeout:
+		sessionRevocationIdleTimeout,
+		sessionRevocationOperator:
 		return strings.TrimSpace(value)
 	default:
 		return "security_event"

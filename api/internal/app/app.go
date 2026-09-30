@@ -38,4 +38,5 @@ type Application struct {
 	WebhookDispatcher      domain.WebhookDispatcher
 	WebhookTester          domain.WebhookTester
 	WebhookMaintainer      domain.WebhookMaintainer
+	OperatorGrants         domain.OperatorGrantStore
 }

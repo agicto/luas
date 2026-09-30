@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -246,7 +247,7 @@ func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config) {
 	r.Use(infraMiddleware.BodyLimit(bodyLimitBytes(cfg)))
 	r.Use(infraMiddleware.Timeout(requestTimeout(cfg)))
 
-	r.Use(cors.New(corsMiddlewareConfig(cfg.CORS)))
+	r.Use(cors.New(corsMiddlewareConfig(cfg)))
 
 	if cfg.Middleware.RateLimit.Enabled {
 		r.Use(ratelimit.Middleware(ratelimit.Config{
@@ -276,14 +277,33 @@ func effectiveHTTPConfig(cfg *config.Config) *config.Config {
 	}
 }
 
-func corsMiddlewareConfig(cfg config.CORSConfig) cors.Config {
-	return cors.Config{
-		AllowOrigins:     cfg.AllowOrigins,
-		AllowMethods:     cfg.AllowMethods,
-		AllowHeaders:     cfg.AllowHeaders,
-		ExposeHeaders:    cfg.ExposeHeaders,
-		AllowCredentials: cfg.AllowCredentials,
+// corsMiddlewareConfig builds the kernel CORS policy. When the operator starter is selected, its exact
+// Admin Console origins are always allowed, together with the CSRF header and PATCH, so an Admin origin
+// that reaches the API through a proxy or CDN is not rejected before the operator session checks run.
+func corsMiddlewareConfig(cfg *config.Config) cors.Config {
+	policy := cors.Config{
+		AllowOrigins:     slices.Clone(cfg.CORS.AllowOrigins),
+		AllowMethods:     slices.Clone(cfg.CORS.AllowMethods),
+		AllowHeaders:     slices.Clone(cfg.CORS.AllowHeaders),
+		ExposeHeaders:    cfg.CORS.ExposeHeaders,
+		AllowCredentials: cfg.CORS.AllowCredentials,
 	}
+	if cfg.Starters.Selected(config.StarterOperator) {
+		policy.AllowOrigins = appendMissing(policy.AllowOrigins, cfg.Operator.AllowedOrigins...)
+		policy.AllowHeaders = appendMissing(policy.AllowHeaders, "X-CSRF-Token")
+		policy.AllowMethods = appendMissing(policy.AllowMethods, http.MethodPatch)
+	}
+	return policy
+}
+
+func appendMissing(values []string, additions ...string) []string {
+	for _, addition := range additions {
+		addition = strings.TrimSpace(addition)
+		if addition != "" && !slices.Contains(values, addition) {
+			values = append(values, addition)
+		}
+	}
+	return values
 }
 
 func requestTimeout(cfg *config.Config) time.Duration {

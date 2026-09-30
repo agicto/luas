@@ -1,8 +1,9 @@
 import { Activity, Cloud, Gauge, PackageCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { env } from '@/config/env';
+import { env, isFeatureEnabled } from '@/config/env';
 import { featureManifest } from '@/config/feature-manifest';
 import { ApiHealthPanel } from '@/features/system/components/api-health-panel';
+import { OperatorSystemPanel } from '@/features/system/components/operator-system-panel';
 import { useApiReadiness } from '@/features/system/hooks/use-api-readiness';
 
 export function OverviewPage() {
@@ -50,7 +51,9 @@ export function OverviewPage() {
     },
     {
       label: t('overview.featureCount'),
-      value: String(Object.keys(featureManifest).length),
+      value: String(
+        Object.values(featureManifest).filter((feature) => feature.kind === 'core').length,
+      ),
     },
   ];
 
@@ -100,6 +103,7 @@ export function OverviewPage() {
             ))}
           </dl>
         </section>
+        {isFeatureEnabled('operator') ? <OperatorSystemPanel /> : null}
       </div>
     </div>
   );

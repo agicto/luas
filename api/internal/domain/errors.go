@@ -91,6 +91,9 @@ var (
 	ErrConflict           = errors.New("resource already exists")
 	ErrInvalidInput       = errors.New("invalid input")
 	ErrServiceUnavailable = errors.New("required service unavailable")
+
+	ErrOperatorForbidden       = errors.New("caller is not a platform operator")
+	ErrOperatorTargetProtected = errors.New("target account holds an operator grant")
 )
 
 // Events

@@ -84,6 +84,12 @@ func toResponse(entry *domain.AuditLog) *AuditLogResponse {
 	}
 }
 
+// Responses maps audit logs to the public AUDIT.md response shape for other starters that expose
+// audit history, such as the operator starter.
+func Responses(items []*domain.AuditLog) []*AuditLogResponse {
+	return toResponses(items)
+}
+
 func toResponses(items []*domain.AuditLog) []*AuditLogResponse {
 	result := make([]*AuditLogResponse, len(items))
 	for i, item := range items {

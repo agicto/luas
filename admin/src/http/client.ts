@@ -1,6 +1,6 @@
 import type { ZodType } from 'zod';
 import { env } from '@/config/env';
-import { ClientErrorCode, HttpStatusErrorCodeMap, isErrorCode } from './codes';
+import { ApiErrorCode, ClientErrorCode, HttpStatusErrorCodeMap, isErrorCode } from './codes';
 
 type ResponseMode = 'envelope' | 'json';
 type ApiFieldErrors = Record<string, string[]>;
@@ -48,6 +48,29 @@ export class ApiError extends Error {
       this.status = options.status;
     }
   }
+}
+
+type Method = 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+
+// The operator CSRF token lives only in memory. It is bound to the HttpOnly session cookie that the
+// API owns, so persisting it would add nothing and a reload refetches it from the session endpoint.
+let csrfToken: string | undefined;
+let csrfRecovery: (() => Promise<void>) | undefined;
+
+export const csrf = {
+  set(token: string | undefined): void {
+    csrfToken = token;
+  },
+  get(): string | undefined {
+    return csrfToken;
+  },
+  onRejected(recover: (() => Promise<void>) | undefined): void {
+    csrfRecovery = recover;
+  },
+};
+
+function isUnsafe(method: Method): boolean {
+  return method !== 'GET';
 }
 
 function requestUrl(path: string): string {
@@ -221,7 +244,30 @@ class HttpClient {
     path: string,
     options: RequestOptions<T> & {
       body?: unknown;
-      method: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+      method: Method;
+    },
+  ): Promise<T> {
+    try {
+      return await this.send(path, options);
+    } catch (error) {
+      if (
+        isUnsafe(options.method) &&
+        csrfRecovery &&
+        error instanceof ApiError &&
+        error.errorCode === ApiErrorCode.OPERATOR_CSRF_REJECTED
+      ) {
+        await csrfRecovery();
+        return this.send(path, options);
+      }
+      throw error;
+    }
+  }
+
+  private async send<T>(
+    path: string,
+    options: RequestOptions<T> & {
+      body?: unknown;
+      method: Method;
     },
   ): Promise<T> {
     const controller = new AbortController();
@@ -242,6 +288,9 @@ class HttpClient {
     headers.set('Accept', 'application/json');
     if (options.body !== undefined) {
       headers.set('Content-Type', 'application/json');
+    }
+    if (isUnsafe(options.method) && csrfToken) {
+      headers.set('X-CSRF-Token', csrfToken);
     }
 
     try {

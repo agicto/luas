@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Gauge, PanelsTopLeft, Settings2 } from 'lucide-react';
+import { Gauge, History, PanelsTopLeft, Settings2, SlidersHorizontal, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   Sidebar,
@@ -15,7 +15,15 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { env } from '@/config/env';
+import { env, isFeatureEnabled } from '@/config/env';
+
+const operatorNavigation = isFeatureEnabled('operator')
+  ? ([
+      { icon: Users, labelKey: 'navigation.users', to: '/console/users' },
+      { icon: History, labelKey: 'navigation.audit', to: '/console/audit' },
+      { icon: SlidersHorizontal, labelKey: 'navigation.settings', to: '/console/settings' },
+    ] as const)
+  : ([] as const);
 
 const navigationItems = [
   {
@@ -23,6 +31,7 @@ const navigationItems = [
     labelKey: 'navigation.overview',
     to: '/console',
   },
+  ...operatorNavigation,
   {
     icon: Settings2,
     labelKey: 'navigation.preferences',

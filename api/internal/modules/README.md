@@ -16,6 +16,7 @@ Route-owning starter modules directory, following Domain-Driven Design (DDD) pat
 | `setting` | Finite typed app, organization, and user overrides with versioned replacement. Depends on the `organization` starter. | Optional starter |
 | `usage` | Trusted idempotent metering, atomic quota decisions, and private summaries. Depends on the `organization` starter. | Optional starter |
 | `webhook` | Organization-owned outbound endpoints, signed durable delivery, retries, and replay. Depends on the `organization` starter. | Optional starter |
+| `operator` | Platform operators: CLI-managed grants and the Go-issued Admin Console cookie session. Depends on the default `user` and `audit` starters. | Optional starter |
 
 ## Standard Starter Structure (8 files)
 

@@ -18,6 +18,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/asset"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/notification"
+	"github.com/zgiai/luas/api/internal/modules/operator"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/setting"
@@ -115,6 +116,9 @@ func InitApplication() (*app.Application, error) {
 	sender := webhook.NewSender(configConfig, targetPolicy)
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, configConfig)
 	webhookHandler := webhook.NewHandler(webhookService)
+	operatorRepository := operator.NewRepository(db)
+	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
+	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, configConfig, settingHandler)
 	handlers := &starter.Handlers{
 		Audit:        handler,
 		APIKey:       apikeyHandler,
@@ -126,6 +130,7 @@ func InitApplication() (*app.Application, error) {
 		Setting:      settingHandler,
 		Usage:        usageHandler,
 		Webhook:      webhookHandler,
+		Operator:     operatorHandler,
 	}
 	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handlers)
 	if err != nil {
@@ -156,6 +161,7 @@ func InitApplication() (*app.Application, error) {
 		WebhookDispatcher:      webhookService,
 		WebhookTester:          webhookService,
 		WebhookMaintainer:      webhookService,
+		OperatorGrants:         operatorService,
 	}
 	return application, nil
 }
@@ -243,6 +249,9 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	sender := webhook.NewSender(cfg, targetPolicy)
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, cfg)
 	webhookHandler := webhook.NewHandler(webhookService)
+	operatorRepository := operator.NewRepository(db)
+	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
+	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, cfg, settingHandler)
 	handlers := &starter.Handlers{
 		Audit:        handler,
 		APIKey:       apikeyHandler,
@@ -254,6 +263,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		Setting:      settingHandler,
 		Usage:        usageHandler,
 		Webhook:      webhookHandler,
+		Operator:     operatorHandler,
 	}
 	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handlers)
 	if err != nil {
@@ -284,6 +294,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		WebhookDispatcher:      webhookService,
 		WebhookTester:          webhookService,
 		WebhookMaintainer:      webhookService,
+		OperatorGrants:         operatorService,
 	}
 	return application, nil
 }

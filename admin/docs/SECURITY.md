@@ -30,9 +30,26 @@ The gateway owns:
 
 The existing Go `/v1/login` bearer response is server-to-server/API behavior.
 Do not put its `access_token` in `localStorage`, `sessionStorage`, IndexedDB,
-Zustand persistence, query cache, URLs, logs, or analytics. Until a browser
-gateway or explicit browser-session API exists, protected Admin Console auth is not
-production-complete.
+Zustand persistence, query cache, URLs, logs, or analytics.
+
+## Platform Operator Sign-In
+
+The optional `operator` API starter is the shipped Go browser adapter for this
+console ([`../../contracts/OPERATORS.md`](../../contracts/OPERATORS.md)). Enable it
+in the console build with `VITE_OPTIONAL_FEATURES=operator`; without the flag the
+console has no sign-in and no protected feature:
+
+- `POST /v1/operator/session` sets an HttpOnly `SameSite=Strict` cookie; the
+  credential never reaches JavaScript.
+- The session response carries a CSRF token that `src/http/client.ts` keeps in
+  memory only and sends as `X-CSRF-Token` on unsafe requests. After
+  `OPERATOR.CSRF_REJECTED` the client refetches the session once and retries.
+- `/console` routes require a current operator session; `401`,
+  `OPERATOR.FORBIDDEN`, and `AUTH.ACCOUNT_DISABLED` return to `/login`. This
+  guard is UX only; the API authorizes every operator request.
+- The console origin must be listed in `OPERATOR_ALLOWED_ORIGINS`, and `/api/*`
+  must reach the Go API on the same origin so the cookie stays first-party.
+- Operator access is granted only with `luas operator:grant <email>`.
 
 ## Cross-Origin APIs
 

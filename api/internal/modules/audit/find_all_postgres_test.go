@@ -1,0 +1,65 @@
+package audit
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/zgiai/luas/api/internal/domain"
+	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+)
+
+func TestRepositoryFindAllPostgres(t *testing.T) {
+	db := testplatform.OpenPostgres(t, nil, &AuditLogPO{})
+	base := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
+	userA, userB := uint(1), uint(2)
+	rows := []AuditLogPO{
+		{CreatedAt: base, UserID: &userA, ActorType: "user", Action: "update", Resource: "users", Method: "POST", Path: "/a", StatusCode: 200},
+		{CreatedAt: base, UserID: &userB, ActorType: "user", Action: "update", Resource: "users", Method: "POST", Path: "/b", StatusCode: 200},
+		{CreatedAt: base.Add(time.Hour), UserID: &userA, ActorType: "user", Action: "delete", Resource: "users", Method: "DELETE", Path: "/c", StatusCode: 204},
+		{CreatedAt: base.Add(48 * time.Hour), ActorType: "system", Action: "grant", Resource: "platform_operators", Method: "CLI", Path: "operator:grant", StatusCode: 200},
+	}
+	for index := range rows {
+		require.NoError(t, db.Create(&rows[index]).Error)
+	}
+	repo := NewRepository(db)
+	ctx := context.Background()
+
+	t.Run("orders newest first with id as tie-breaker", func(t *testing.T) {
+		items, total, err := repo.FindAll(ctx, domain.AuditLogFilter{}, 1, 10)
+		require.NoError(t, err)
+		assert.EqualValues(t, 4, total)
+		paths := make([]string, len(items))
+		for index, item := range items {
+			paths[index] = item.Path
+		}
+		assert.Equal(t, []string{"operator:grant", "/c", "/b", "/a"}, paths)
+	})
+
+	t.Run("treats From as inclusive and To as exclusive", func(t *testing.T) {
+		items, total, err := repo.FindAll(ctx, domain.AuditLogFilter{From: base, To: base.Add(time.Hour)}, 1, 10)
+		require.NoError(t, err)
+		assert.EqualValues(t, 2, total)
+		assert.Len(t, items, 2)
+	})
+
+	t.Run("filters by user and action", func(t *testing.T) {
+		items, total, err := repo.FindAll(ctx, domain.AuditLogFilter{UserID: &userA, Action: "delete"}, 1, 10)
+		require.NoError(t, err)
+		assert.EqualValues(t, 1, total)
+		assert.Equal(t, "/c", items[0].Path)
+	})
+
+	t.Run("pages deterministically", func(t *testing.T) {
+		first, _, err := repo.FindAll(ctx, domain.AuditLogFilter{}, 1, 3)
+		require.NoError(t, err)
+		second, _, err := repo.FindAll(ctx, domain.AuditLogFilter{}, 2, 3)
+		require.NoError(t, err)
+		require.Len(t, first, 3)
+		require.Len(t, second, 1)
+		assert.Equal(t, "/a", second[0].Path)
+	})
+}
