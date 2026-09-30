@@ -15,6 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ConsoleIndexRouteImport } from './routes/console.index'
 import { Route as ConsoleAuditRouteImport } from './routes/console.audit'
 import { Route as ConsolePreferencesRouteImport } from './routes/console.preferences'
+import { Route as ConsoleSettingsRouteImport } from './routes/console.settings'
 import { Route as ConsoleUsersRouteImport } from './routes/console.users'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const ConsolePreferencesRoute = ConsolePreferencesRouteImport.update({
   path: '/preferences',
   getParentRoute: () => ConsoleRoute,
 } as any)
+const ConsoleSettingsRoute = ConsoleSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => ConsoleRoute,
+} as any)
 const ConsoleUsersRoute = ConsoleUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
   '/console/preferences': typeof ConsolePreferencesRoute
+  '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console/': typeof ConsoleIndexRoute
 }
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
   '/console/preferences': typeof ConsolePreferencesRoute
+  '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console': typeof ConsoleIndexRoute
 }
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
   '/console/preferences': typeof ConsolePreferencesRoute
+  '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console/': typeof ConsoleIndexRoute
 }
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/console/audit'
     | '/console/preferences'
+    | '/console/settings'
     | '/console/users'
     | '/console/'
   fileRoutesByTo: FileRoutesByTo
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/console/audit'
     | '/console/preferences'
+    | '/console/settings'
     | '/console/users'
     | '/console'
   id:
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/console/audit'
     | '/console/preferences'
+    | '/console/settings'
     | '/console/users'
     | '/console/'
   fileRoutesById: FileRoutesById
@@ -159,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsolePreferencesRouteImport
       parentRoute: typeof ConsoleRoute
     }
+    '/console/settings': {
+      id: '/console/settings'
+      path: '/settings'
+      fullPath: '/console/settings'
+      preLoaderRoute: typeof ConsoleSettingsRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
     '/console/users': {
       id: '/console/users'
       path: '/users'
@@ -172,6 +191,7 @@ declare module '@tanstack/react-router' {
 interface ConsoleRouteChildren {
   ConsoleAuditRoute: typeof ConsoleAuditRoute
   ConsolePreferencesRoute: typeof ConsolePreferencesRoute
+  ConsoleSettingsRoute: typeof ConsoleSettingsRoute
   ConsoleUsersRoute: typeof ConsoleUsersRoute
   ConsoleIndexRoute: typeof ConsoleIndexRoute
 }
@@ -179,6 +199,7 @@ interface ConsoleRouteChildren {
 const ConsoleRouteChildren: ConsoleRouteChildren = {
   ConsoleAuditRoute: ConsoleAuditRoute,
   ConsolePreferencesRoute: ConsolePreferencesRoute,
+  ConsoleSettingsRoute: ConsoleSettingsRoute,
   ConsoleUsersRoute: ConsoleUsersRoute,
   ConsoleIndexRoute: ConsoleIndexRoute,
 }

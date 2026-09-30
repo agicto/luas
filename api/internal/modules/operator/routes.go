@@ -24,5 +24,12 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 			Name("operator.user-sessions.revoke").WhereNumber("id")
 
 		operator.GET("/audit-logs", h.ListAuditLogs).Name("operator.audit-logs.index")
+		operator.GET("/system", h.System).Name("operator.system.show")
+
+		if h.settings != nil {
+			operator.GET("/settings", h.settings.AppList).Name("operator.settings.index")
+			operator.PATCH("/settings/:key", h.settings.AppSet).Name("operator.settings.update")
+			operator.DELETE("/settings/:key", h.settings.AppReset).Name("operator.settings.destroy")
+		}
 	})
 }

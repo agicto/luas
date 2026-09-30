@@ -19,6 +19,7 @@ export function ConsoleHeader() {
     '/console/preferences': t('navigation.preferences'),
     '/console/users': t('navigation.users'),
     '/console/audit': t('navigation.audit'),
+    '/console/settings': t('navigation.settings'),
   };
   const currentPage = pageTitles[pathname] ?? t('navigation.overview');
   const themeLabel = dark ? t('preferences.light') : t('preferences.dark');

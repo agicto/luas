@@ -27,6 +27,7 @@ type grantStore interface {
 	insertGrant(ctx context.Context, userID uint, now time.Time) (created bool, grantedAt time.Time, err error)
 	deleteGrant(ctx context.Context, userID uint) (bool, error)
 	listGrants(ctx context.Context) ([]grantPO, error)
+	ping(ctx context.Context) error
 }
 
 type repository struct {
@@ -118,4 +119,16 @@ func (r *repository) listGrants(ctx context.Context) ([]grantPO, error) {
 		return nil, err
 	}
 	return rows, nil
+}
+
+func (r *repository) ping(ctx context.Context) error {
+	db, err := r.conn(ctx)
+	if err != nil {
+		return err
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		return err
+	}
+	return sqlDB.PingContext(ctx)
 }

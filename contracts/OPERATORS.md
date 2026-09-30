@@ -124,6 +124,29 @@ by [`AUDIT.md`](AUDIT.md), paginated, newest first (`created_at` then `id`, desc
 Invalid values and ranges return `400 COMMON.INVALID_INPUT`. The endpoint reads only; operators
 cannot modify or delete audit records.
 
+## App Settings
+
+Registered only when the `setting` starter is also selected; otherwise these paths return `404`.
+Behavior, validation, `If-Match` preconditions, `ETag`s, and errors are exactly the app-scope rules of
+[`SETTINGS.md`](SETTINGS.md); the setting starter serves them and the operator starter only
+authorizes.
+
+| Operation | Method and path | Request | Success |
+|---|---|---|---|
+| List app settings | `GET /v1/operator/settings` | — | `200` effective app settings, including non-public keys |
+| Set override | `PATCH /v1/operator/settings/:key` | `If-Match: "setting-v{n}"`, `{ "value": … }` | `200` setting + `ETag` |
+| Reset override | `DELETE /v1/operator/settings/:key` | `If-Match: "setting-v{n}"` | `204` + `ETag` |
+
+Each change produces one audit record with the operator as actor; the setting starter adds the
+setting's business change to that record.
+
+## System Status
+
+`GET /v1/operator/system` returns `{ version, revision, go_version, starters, database }`.
+`version` and `revision` come from Go build metadata (`revision` is the first 12 characters of the
+VCS revision, empty when unavailable); `starters` lists the default starters followed by the selected
+optional starters; `database` is `ok` or `unavailable`.
+
 ## Configuration
 
 | Variable | Required | Rule |

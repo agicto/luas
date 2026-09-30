@@ -55,6 +55,8 @@ func (f *fakeGrants) deleteGrant(_ context.Context, userID uint) (bool, error) {
 
 func (f *fakeGrants) listGrants(context.Context) ([]grantPO, error) { return nil, f.err }
 
+func (f *fakeGrants) ping(context.Context) error { return f.err }
+
 type fakeUsers struct {
 	byID map[uint]*domain.User
 }
@@ -145,7 +147,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 	cfg := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{testOrigin}}}
 	cfg.App.Env = "production"
-	f.handler = NewHandler(svc, nil, cfg)
+	f.handler = NewHandler(svc, nil, cfg, nil)
 	f.engine = gin.New()
 	api := f.engine.Group("/v1")
 	api.POST("/operator/session", f.handler.SignIn)

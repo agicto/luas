@@ -472,6 +472,22 @@ Each slice updates `contracts/`, `openapi.yaml`, generated types, `UPGRADING.md`
    inactive state and the API returns `404`.
 8. Given `operator` is not selected, then no `/v1/operator` route and no `operator:*` command exists.
 
+## 15. Delivery Status (2026-10-01)
+
+All four slices are delivered on `feature/admin-operator-console`, each verified with unit, handler,
+and PostgreSQL tests plus a live browser run against a real API and database:
+
+| Slice | Evidence |
+|---|---|
+| 1. Identity and session | Non-operators receive no session; cookie is HttpOnly `SameSite=Strict`; CSRF and Origin enforced; no credential visible to page scripts |
+| 2. Users | Disabling revoked a live session (next call `401`); enable does not restore sessions; operator accounts are protected |
+| 3. Audit | Global trail shows operator actions attributed to the operator, filterable by user, action, and a bounded range |
+| 4. Settings and status | UI change reached `/v1/settings/public`; stale `If-Match` returned `412 SETTING.VERSION_CONFLICT`; status shows build revision, starters, and database |
+
+Refinements recorded during delivery: query-string validation follows the repository convention of
+`400 COMMON.INVALID_INPUT`; a disabled account's existing credentials fail with `401` because its
+sessions are revoked; system status reports Go build metadata instead of a static version.
+
 ## 15a. Decisions Made During Slice 1
 
 - **Kernel CORS:** `gin-contrib/cors` rejects an `Origin` outside `CORS_ALLOW_ORIGINS` with a bare

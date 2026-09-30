@@ -19,6 +19,10 @@ export const featureManifest = {
     kind: 'optional',
     routes: ['/console/audit'],
   },
+  appSettings: {
+    kind: 'optional',
+    routes: ['/console/settings'],
+  },
 } as const;
 
 export type FeatureName = keyof typeof featureManifest;

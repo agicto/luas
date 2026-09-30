@@ -33,6 +33,8 @@ Opt-in only; nothing changes unless `operator` is added to `OPTIONAL_STARTERS`.
 - `domain.AuditLogRepository` gains `FindAll`, and `domain.AuditLogFilter` gains `UserID`, `From`, and
   `To`. Custom audit repositories must implement `FindAll` (newest first, `From` inclusive, `To`
   exclusive).
+- The setting starter's `Handler` exposes `AppList`, `AppSet`, and `AppReset` for app-scoped settings.
+  They perform no authorization; mount them only behind an authorizing starter such as `operator`.
 
 ## 2026-09-30 — Dead code and dialect cleanup
 

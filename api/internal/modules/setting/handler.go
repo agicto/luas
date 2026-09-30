@@ -156,6 +156,18 @@ func (h *Handler) OrganizationReset(c *gin.Context) {
 	})
 }
 
+var appSettingTarget = domain.SettingTarget{Scope: domain.SettingScopeApp}
+
+// AppList, AppSet, and AppReset serve app-scoped settings to another starter that owns their
+// authorization, such as the operator starter. Validation, preconditions, ETags, and audit stay here.
+func (h *Handler) AppList(c *gin.Context) { h.list(c, appSettingTarget) }
+
+// AppSet replaces one app-scoped override; it requires If-Match.
+func (h *Handler) AppSet(c *gin.Context) { h.set(c, appSettingTarget) }
+
+// AppReset removes one app-scoped override; it requires If-Match.
+func (h *Handler) AppReset(c *gin.Context) { h.reset(c, appSettingTarget) }
+
 // luas:bounded-list max=64 reason=finite-code-owned-catalog
 func (h *Handler) list(c *gin.Context, target domain.SettingTarget) {
 	values, err := h.service.ListSettings(c.Request.Context(), target)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/modules/setting"
 	"github.com/zgiai/luas/api/internal/modules/user"
 	"github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/response"
@@ -21,14 +22,26 @@ const (
 
 // Handler serves the operator browser session and operator routes.
 type Handler struct {
-	service *service
-	session *browserSession
-	guard   *user.AuthAbuseGuard
+	service  *service
+	session  *browserSession
+	guard    *user.AuthAbuseGuard
+	settings *setting.Handler
+	cfg      *config.Config
 }
 
-// NewHandler creates the operator HTTP handler.
-func NewHandler(service *service, guard *user.AuthAbuseGuard, cfg *config.Config) *Handler {
-	return &Handler{service: service, session: newBrowserSession(cfg), guard: guard}
+// NewHandler creates the operator HTTP handler. App-scoped setting routes are mounted only when the
+// setting starter is selected; the setting starter keeps ownership of their behavior.
+func NewHandler(
+	service *service,
+	guard *user.AuthAbuseGuard,
+	cfg *config.Config,
+	settings *setting.Handler,
+) *Handler {
+	handler := &Handler{service: service, session: newBrowserSession(cfg), guard: guard, cfg: cfg}
+	if cfg != nil && cfg.Starters.Selected(config.StarterSetting) {
+		handler.settings = settings
+	}
+	return handler
 }
 
 // Name returns the module name.
