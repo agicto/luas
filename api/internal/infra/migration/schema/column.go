@@ -14,8 +14,6 @@ type ColumnDefinition struct {
 	autoIncrement bool
 	primary       bool
 	comment       string
-	after         string
-	first         bool
 	change        bool
 }
 
@@ -58,20 +56,6 @@ func (c *ColumnDefinition) Primary() *ColumnDefinition {
 // Returns the ColumnDefinition for method chaining.
 func (c *ColumnDefinition) Comment(comment string) *ColumnDefinition {
 	c.comment = comment
-	return c
-}
-
-// After places the column after another column (MySQL only).
-// Returns the ColumnDefinition for method chaining.
-func (c *ColumnDefinition) After(column string) *ColumnDefinition {
-	c.after = column
-	return c
-}
-
-// First places the column first in the table (MySQL only).
-// Returns the ColumnDefinition for method chaining.
-func (c *ColumnDefinition) First() *ColumnDefinition {
-	c.first = true
 	return c
 }
 
