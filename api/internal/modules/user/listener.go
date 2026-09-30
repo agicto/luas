@@ -16,7 +16,7 @@ func (h *Handler) handleUserCreated(ctx context.Context, e events.Event) error {
 	// The infra layer wraps simple domain events in WrappedEvent
 	var underlying any = e
 	if wrapped, ok := e.(events.WrappedEvent); ok {
-		underlying = wrapped.Event
+		underlying = wrapped.BasicEvent
 	}
 
 	// Double check the type

@@ -91,7 +91,7 @@ A package belongs in `internal/infra/` when:
    but **the reverse is forbidden**.
 
 Examples that fit: `infra/config`, `infra/middleware`, `infra/migration`,
-`infra/tracing`, `infra/http` (the JSON HTTP client wrapper).
+`infra/tracing`, `infra/router` (the Gin route registration wrapper).
 
 Smell test: if we swapped Gin for Echo, would this file rewrite? If yes,
 `internal/infra/`.
@@ -133,8 +133,8 @@ import.
 - Luas-branded startup output belongs in `internal/bootstrap/`, not in
   reusable `pkg/` helpers.
 - The previous duplicate (`pkg/encryption` ↔ `internal/capabilities/crypto`)
-  was resolved by keeping the capability-shaped `crypto` and treating
-  `pkg/encryption` as deprecated.
+  was resolved by keeping the capability-shaped `crypto`; the deprecated
+  `pkg/encryption` was removed in 2026-09.
 - `make:module` and the AGENTS.md template tell new contributors to
   always place new code under `internal/modules/<name>/` unless it
   truly belongs in one of these documented homes — and to point

@@ -23,7 +23,6 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/email"
 	infraevents "github.com/zgiai/luas/api/internal/infra/events"
 	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
-	pkgevents "github.com/zgiai/luas/api/pkg/events"
 )
 
 const (
@@ -54,7 +53,7 @@ type emailSender interface {
 }
 
 type eventPublisher interface {
-	Publish(context.Context, pkgevents.Event) error
+	Publish(context.Context, infraevents.BasicEvent) error
 }
 
 // Service owns publication, recipient state, and durable delivery dispatch.

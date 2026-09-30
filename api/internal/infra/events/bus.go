@@ -7,8 +7,6 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
-
-	"github.com/zgiai/luas/api/pkg/events"
 )
 
 // EventBus handles event publishing and subscription with priority support,
@@ -93,7 +91,7 @@ func (b *EventBus) Use(middleware ...EventMiddleware) {
 
 // Publish sends an event to all matching subscribers synchronously.
 // If the event does not satisfy the infra.Event interface, it is automatically wrapped with metadata.
-func (b *EventBus) Publish(ctx context.Context, e events.Event) error {
+func (b *EventBus) Publish(ctx context.Context, e BasicEvent) error {
 	b.mu.RLock()
 	if b.closed {
 		b.mu.RUnlock()
@@ -141,7 +139,7 @@ func (b *EventBus) Publish(ctx context.Context, e events.Event) error {
 
 // PublishAsync sends an event to all matching subscribers asynchronously.
 // Does not wait for handlers to complete and does not return errors.
-func (b *EventBus) PublishAsync(ctx context.Context, e events.Event) {
+func (b *EventBus) PublishAsync(ctx context.Context, e BasicEvent) {
 	go func() {
 		_ = b.Publish(ctx, e) //nolint:errcheck // fire-and-forget by API contract
 	}()

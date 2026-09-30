@@ -1,4 +1,4 @@
-package unit
+package workflow_test
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/queue"
+	"github.com/zgiai/luas/api/internal/capabilities/workflow"
 )
 
 // TestJob is a simple test job
@@ -75,18 +75,18 @@ func (j *QueuedJob) Queue() string {
 
 func init() {
 	// Register test jobs
-	queue.RegisterJob(&TestJob{})
-	queue.RegisterJob(&CounterJob{})
-	queue.RegisterJob(&FailingJob{})
-	queue.RegisterJob(&DelayedJob{})
-	queue.RegisterJob(&QueuedJob{})
+	workflow.RegisterJob(&TestJob{})
+	workflow.RegisterJob(&CounterJob{})
+	workflow.RegisterJob(&FailingJob{})
+	workflow.RegisterJob(&DelayedJob{})
+	workflow.RegisterJob(&QueuedJob{})
 }
 
 func TestQueue_Dispatch(t *testing.T) {
 	ctx := context.Background()
 
 	job := &TestJob{Message: "Hello"}
-	err := queue.Dispatch(ctx, job)
+	err := workflow.Dispatch(ctx, job)
 	if err != nil {
 		t.Fatalf("Dispatch failed: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestQueue_DispatchTo(t *testing.T) {
 	ctx := context.Background()
 
 	job := &TestJob{Message: "Hello"}
-	err := queue.DispatchTo(ctx, "emails", job)
+	err := workflow.DispatchTo(ctx, "emails", job)
 	if err != nil {
 		t.Fatalf("DispatchTo failed: %v", err)
 	}
@@ -104,7 +104,7 @@ func TestQueue_DispatchTo(t *testing.T) {
 
 func TestSyncDriver_Push(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewSyncDriver()
+	driver := workflow.NewSyncDriver()
 
 	payload := []byte(`{"type":"TestJob","data":{"message":"test"}}`)
 	err := driver.Push(ctx, "default", payload)
@@ -115,7 +115,7 @@ func TestSyncDriver_Push(t *testing.T) {
 
 func TestSyncDriver_Size(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewSyncDriver()
+	driver := workflow.NewSyncDriver()
 
 	size, err := driver.Size(ctx, "test-queue")
 	if err != nil {
@@ -128,7 +128,7 @@ func TestSyncDriver_Size(t *testing.T) {
 
 func TestSyncDriver_Clear(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewSyncDriver()
+	driver := workflow.NewSyncDriver()
 
 	err := driver.Clear(ctx, "test-queue")
 	if err != nil {
@@ -137,7 +137,7 @@ func TestSyncDriver_Clear(t *testing.T) {
 }
 
 func TestSyncDriver_PushDelayedHonorsContextCancellation(t *testing.T) {
-	driver := queue.NewSyncDriver()
+	driver := workflow.NewSyncDriver()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -149,7 +149,7 @@ func TestSyncDriver_PushDelayedHonorsContextCancellation(t *testing.T) {
 
 func TestMemoryDriver_PushAndPop(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewMemoryDriver(100)
+	driver := workflow.NewMemoryDriver(100)
 	defer driver.Close()
 
 	payload := []byte(`{"message":"test"}`)
@@ -184,7 +184,7 @@ func TestMemoryDriver_PushAndPop(t *testing.T) {
 
 func TestMemoryDriver_Clear(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewMemoryDriver(100)
+	driver := workflow.NewMemoryDriver(100)
 	defer driver.Close()
 
 	// Push some items
@@ -200,7 +200,7 @@ func TestMemoryDriver_Clear(t *testing.T) {
 
 func TestMemoryDriver_PushDelayed(t *testing.T) {
 	ctx := context.Background()
-	driver := queue.NewMemoryDriver(100)
+	driver := workflow.NewMemoryDriver(100)
 	defer driver.Close()
 
 	payload := []byte(`{"message":"delayed"}`)
@@ -228,7 +228,7 @@ func TestMemoryDriver_PushDelayed(t *testing.T) {
 }
 
 func TestMemoryDriver_CloseIsIdempotent(t *testing.T) {
-	driver := queue.NewMemoryDriver(1)
+	driver := workflow.NewMemoryDriver(1)
 
 	if err := driver.Push(context.Background(), "test", []byte("queued")); err != nil {
 		t.Fatalf("Push() error = %v", err)
@@ -244,37 +244,37 @@ func TestMemoryDriver_CloseIsIdempotent(t *testing.T) {
 func TestMemoryDriver_OperationsFailAfterClose(t *testing.T) {
 	tests := []struct {
 		name string
-		call func(context.Context, *queue.MemoryDriver) error
+		call func(context.Context, *workflow.MemoryDriver) error
 	}{
 		{
 			name: "push",
-			call: func(ctx context.Context, driver *queue.MemoryDriver) error {
+			call: func(ctx context.Context, driver *workflow.MemoryDriver) error {
 				return driver.Push(ctx, "test", []byte("payload"))
 			},
 		},
 		{
 			name: "push delayed",
-			call: func(ctx context.Context, driver *queue.MemoryDriver) error {
+			call: func(ctx context.Context, driver *workflow.MemoryDriver) error {
 				return driver.PushDelayed(ctx, "test", []byte("payload"), time.Millisecond)
 			},
 		},
 		{
 			name: "pop",
-			call: func(ctx context.Context, driver *queue.MemoryDriver) error {
+			call: func(ctx context.Context, driver *workflow.MemoryDriver) error {
 				_, err := driver.Pop(ctx, "test")
 				return err
 			},
 		},
 		{
 			name: "size",
-			call: func(ctx context.Context, driver *queue.MemoryDriver) error {
+			call: func(ctx context.Context, driver *workflow.MemoryDriver) error {
 				_, err := driver.Size(ctx, "test")
 				return err
 			},
 		},
 		{
 			name: "clear",
-			call: func(ctx context.Context, driver *queue.MemoryDriver) error {
+			call: func(ctx context.Context, driver *workflow.MemoryDriver) error {
 				return driver.Clear(ctx, "test")
 			},
 		},
@@ -282,7 +282,7 @@ func TestMemoryDriver_OperationsFailAfterClose(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			driver := queue.NewMemoryDriver(1)
+			driver := workflow.NewMemoryDriver(1)
 			if err := driver.Push(context.Background(), "test", []byte("queued")); err != nil {
 				t.Fatalf("Push() error = %v", err)
 			}
@@ -292,7 +292,7 @@ func TestMemoryDriver_OperationsFailAfterClose(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			cancel()
-			if err := tt.call(ctx, driver); !errors.Is(err, queue.ErrDriverClosed) {
+			if err := tt.call(ctx, driver); !errors.Is(err, workflow.ErrDriverClosed) {
 				t.Fatalf("operation after Close() error = %v, want ErrDriverClosed", err)
 			}
 		})
@@ -301,7 +301,7 @@ func TestMemoryDriver_OperationsFailAfterClose(t *testing.T) {
 
 func TestMemoryDriver_CloseUnblocksBlockedOperations(t *testing.T) {
 	t.Run("push", func(t *testing.T) {
-		driver := queue.NewMemoryDriver(1)
+		driver := workflow.NewMemoryDriver(1)
 		if err := driver.Push(context.Background(), "test", []byte("first")); err != nil {
 			t.Fatalf("first Push() error = %v", err)
 		}
@@ -317,7 +317,7 @@ func TestMemoryDriver_CloseUnblocksBlockedOperations(t *testing.T) {
 	})
 
 	t.Run("push delayed", func(t *testing.T) {
-		driver := queue.NewMemoryDriver(1)
+		driver := workflow.NewMemoryDriver(1)
 		if err := driver.PushDelayed(context.Background(), "test", []byte("first"), time.Hour); err != nil {
 			t.Fatalf("first PushDelayed() error = %v", err)
 		}
@@ -333,7 +333,7 @@ func TestMemoryDriver_CloseUnblocksBlockedOperations(t *testing.T) {
 	})
 
 	t.Run("pop", func(t *testing.T) {
-		driver := queue.NewMemoryDriver(1)
+		driver := workflow.NewMemoryDriver(1)
 		result := runQueueOperation(func() error {
 			_, err := driver.Pop(context.Background(), "test")
 			return err
@@ -348,7 +348,7 @@ func TestMemoryDriver_CloseUnblocksBlockedOperations(t *testing.T) {
 
 func TestMemoryDriver_PushDelayedHonorsContextCancellation(t *testing.T) {
 	t.Run("already canceled", func(t *testing.T) {
-		driver := queue.NewMemoryDriver(1)
+		driver := workflow.NewMemoryDriver(1)
 		defer driver.Close()
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -359,7 +359,7 @@ func TestMemoryDriver_PushDelayedHonorsContextCancellation(t *testing.T) {
 	})
 
 	t.Run("canceled while waiting", func(t *testing.T) {
-		driver := queue.NewMemoryDriver(1)
+		driver := workflow.NewMemoryDriver(1)
 		defer driver.Close()
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -380,7 +380,7 @@ func TestMemoryDriver_PushDelayedHonorsContextCancellation(t *testing.T) {
 }
 
 func TestMemoryDriver_PushDelayedAppliesBoundedBackpressure(t *testing.T) {
-	driver := queue.NewMemoryDriver(1)
+	driver := workflow.NewMemoryDriver(1)
 	defer driver.Close()
 
 	if err := driver.PushDelayed(context.Background(), "test", []byte("first"), time.Hour); err != nil {
@@ -395,7 +395,7 @@ func TestMemoryDriver_PushDelayedAppliesBoundedBackpressure(t *testing.T) {
 }
 
 func TestMemoryDriver_PreservesFIFOAcrossBufferWraparound(t *testing.T) {
-	driver := queue.NewMemoryDriver(2)
+	driver := workflow.NewMemoryDriver(2)
 	defer driver.Close()
 
 	if err := driver.Push(context.Background(), "test", []byte("first")); err != nil {
@@ -428,14 +428,14 @@ func TestMemoryDriver_PreservesFIFOAcrossBufferWraparound(t *testing.T) {
 }
 
 func TestMemoryDriver_ConcurrentLifecycle(t *testing.T) {
-	driver := queue.NewMemoryDriver(8)
+	driver := workflow.NewMemoryDriver(8)
 	ctx := context.Background()
 	start := make(chan struct{})
 	errorsFound := make(chan error, 256)
 	var operations sync.WaitGroup
 
 	recordUnexpected := func(err error) {
-		if err == nil || errors.Is(err, queue.ErrDriverClosed) {
+		if err == nil || errors.Is(err, workflow.ErrDriverClosed) {
 			return
 		}
 		select {
@@ -505,14 +505,14 @@ func TestMemoryDriver_ConcurrentLifecycle(t *testing.T) {
 }
 
 func TestWorker_StopInterruptsEmptyMemoryQueue(t *testing.T) {
-	manager := queue.New()
-	driver := queue.NewMemoryDriver(1)
+	manager := workflow.NewQueueManager()
+	driver := workflow.NewMemoryDriver(1)
 	manager.RegisterDriver("memory", driver)
 	if err := manager.SetDefaultDriver("memory"); err != nil {
 		t.Fatalf("SetDefaultDriver() error = %v", err)
 	}
 
-	worker := manager.NewWorker(queue.WorkerConfig{
+	worker := manager.NewWorker(workflow.WorkerConfig{
 		Queue:       "test",
 		Concurrency: 1,
 		Sleep:       time.Second,
@@ -542,14 +542,14 @@ func TestWorker_StopInterruptsEmptyMemoryQueue(t *testing.T) {
 }
 
 func TestWorker_ExitsOnDriverCloseAndAcceptsConcurrentStop(t *testing.T) {
-	manager := queue.New()
-	driver := queue.NewMemoryDriver(1)
+	manager := workflow.NewQueueManager()
+	driver := workflow.NewMemoryDriver(1)
 	manager.RegisterDriver("memory", driver)
 	if err := manager.SetDefaultDriver("memory"); err != nil {
 		t.Fatalf("SetDefaultDriver() error = %v", err)
 	}
 
-	worker := manager.NewWorker(queue.WorkerConfig{
+	worker := manager.NewWorker(workflow.WorkerConfig{
 		Queue:       "test",
 		Concurrency: 2,
 		Sleep:       time.Second,
@@ -610,7 +610,7 @@ func assertQueueOperationClosed(t *testing.T, result <-chan queueOperationResult
 		if outcome.panicValue != nil {
 			t.Fatalf("blocked operation panicked during Close(): %v", outcome.panicValue)
 		}
-		if !errors.Is(outcome.err, queue.ErrDriverClosed) {
+		if !errors.Is(outcome.err, workflow.ErrDriverClosed) {
 			t.Fatalf("blocked operation error = %v, want ErrDriverClosed", outcome.err)
 		}
 	case <-time.After(time.Second):
@@ -619,7 +619,7 @@ func assertQueueOperationClosed(t *testing.T, result <-chan queueOperationResult
 }
 
 func BenchmarkMemoryDriver_RoundTrip(b *testing.B) {
-	driver := queue.NewMemoryDriver(1)
+	driver := workflow.NewMemoryDriver(1)
 	b.Cleanup(func() {
 		_ = driver.Close()
 	})
@@ -641,7 +641,7 @@ func BenchmarkMemoryDriver_RoundTrip(b *testing.B) {
 }
 
 func TestWorker_Config(t *testing.T) {
-	config := queue.DefaultWorkerConfig()
+	config := workflow.DefaultWorkerConfig()
 
 	if config.Queue != "default" {
 		t.Errorf("Expected default queue name 'default', got '%s'", config.Queue)
@@ -655,28 +655,28 @@ func TestWorker_Config(t *testing.T) {
 }
 
 func TestWorker_Creation(t *testing.T) {
-	config := queue.WorkerConfig{
+	config := workflow.WorkerConfig{
 		Queue:       "test",
 		Concurrency: 2,
 		Sleep:       100 * time.Millisecond,
 		Timeout:     30 * time.Second,
 	}
 
-	worker := queue.NewWorker(config)
+	worker := workflow.NewWorker(config)
 	if worker == nil {
 		t.Fatal("NewWorker returned nil")
 	}
 }
 
 func TestWorker_StartStop(t *testing.T) {
-	config := queue.WorkerConfig{
+	config := workflow.WorkerConfig{
 		Queue:       "worker-test",
 		Concurrency: 1,
 		Sleep:       50 * time.Millisecond,
 		MaxJobs:     1,
 	}
 
-	worker := queue.NewWorker(config)
+	worker := workflow.NewWorker(config)
 	ctx := context.Background()
 
 	// Start
@@ -693,7 +693,7 @@ func TestQueue_Later(t *testing.T) {
 	ctx := context.Background()
 
 	job := &TestJob{Message: "Delayed job"}
-	err := queue.Later(ctx, 10*time.Millisecond, job)
+	err := workflow.Later(ctx, 10*time.Millisecond, job)
 	if err != nil {
 		t.Fatalf("Later failed: %v", err)
 	}
@@ -703,7 +703,7 @@ func TestQueue_LaterTo(t *testing.T) {
 	ctx := context.Background()
 
 	job := &TestJob{Message: "Delayed job to specific queue"}
-	err := queue.LaterTo(ctx, "delayed-queue", 10*time.Millisecond, job)
+	err := workflow.LaterTo(ctx, "delayed-queue", 10*time.Millisecond, job)
 	if err != nil {
 		t.Fatalf("LaterTo failed: %v", err)
 	}
@@ -713,7 +713,7 @@ func TestQueue_JobWithQueue(t *testing.T) {
 	ctx := context.Background()
 
 	job := &QueuedJob{QueueName: "custom-queue"}
-	err := queue.Dispatch(ctx, job)
+	err := workflow.Dispatch(ctx, job)
 	if err != nil {
 		t.Fatalf("Dispatch with queue failed: %v", err)
 	}
@@ -726,7 +726,7 @@ func TestQueue_JobWithDelay(t *testing.T) {
 		Message:   "Auto-delayed",
 		DelayTime: 10 * time.Millisecond,
 	}
-	err := queue.Dispatch(ctx, job)
+	err := workflow.Dispatch(ctx, job)
 	if err != nil {
 		t.Fatalf("Dispatch with delay failed: %v", err)
 	}
@@ -751,7 +751,7 @@ func TestQueue_RegisterJob(t *testing.T) {
 }
 
 func TestMemoryDriver_ContextCancellation(t *testing.T) {
-	driver := queue.NewMemoryDriver(100)
+	driver := workflow.NewMemoryDriver(100)
 	defer driver.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -769,19 +769,19 @@ func TestMemoryDriver_ContextCancellation(t *testing.T) {
 func TestWorker_ProcessWithCallbacks(t *testing.T) {
 	var beforeCalled, afterCalled int32
 
-	config := queue.WorkerConfig{
+	config := workflow.WorkerConfig{
 		Queue:       "callback-test",
 		Concurrency: 1,
 		Sleep:       10 * time.Millisecond,
-		BeforeJob: func(ctx context.Context, payload *queue.JobPayload) {
+		BeforeJob: func(ctx context.Context, payload *workflow.JobPayload) {
 			atomic.AddInt32(&beforeCalled, 1)
 		},
-		AfterJob: func(ctx context.Context, payload *queue.JobPayload, err error) {
+		AfterJob: func(ctx context.Context, payload *workflow.JobPayload, err error) {
 			atomic.AddInt32(&afterCalled, 1)
 		},
 	}
 
-	worker := queue.NewWorker(config)
+	worker := workflow.NewWorker(config)
 	if worker == nil {
 		t.Fatal("NewWorker returned nil")
 	}
@@ -790,7 +790,7 @@ func TestWorker_ProcessWithCallbacks(t *testing.T) {
 func TestQueue_Size(t *testing.T) {
 	ctx := context.Background()
 
-	size, err := queue.Size(ctx, "size-test")
+	size, err := workflow.Size(ctx, "size-test")
 	if err != nil {
 		t.Fatalf("Size failed: %v", err)
 	}
@@ -804,7 +804,7 @@ func TestQueue_Size(t *testing.T) {
 func TestQueue_Clear(t *testing.T) {
 	ctx := context.Background()
 
-	err := queue.Clear(ctx, "clear-test")
+	err := workflow.Clear(ctx, "clear-test")
 	if err != nil {
 		t.Fatalf("Clear failed: %v", err)
 	}

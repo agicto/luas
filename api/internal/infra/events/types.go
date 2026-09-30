@@ -7,13 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-
-	"github.com/zgiai/luas/api/pkg/events"
 )
 
 // Event represents a domain event with metadata support
 type Event interface {
-	events.Event
+	BasicEvent
 	// Metadata returns event metadata for tracing and correlation
 	Metadata() EventMetadata
 }
@@ -79,9 +77,9 @@ func (e BaseEvent) Metadata() EventMetadata {
 	return e.metadata
 }
 
-// WrappedEvent wraps a simple events.Event to satisfy the infra.Event interface
+// WrappedEvent wraps a BasicEvent to satisfy the Event interface
 type WrappedEvent struct {
-	events.Event
+	BasicEvent
 	metadata EventMetadata
 }
 
@@ -90,12 +88,12 @@ func (e WrappedEvent) Metadata() EventMetadata {
 }
 
 // Wrap converts a simple event to an infra event
-func Wrap(e events.Event) Event {
+func Wrap(e BasicEvent) Event {
 	if ie, ok := e.(Event); ok {
 		return ie
 	}
 	return WrappedEvent{
-		Event: e,
+		BasicEvent: e,
 		metadata: EventMetadata{
 			ID:        uuid.New().String(),
 			Timestamp: e.OccurredAt(),

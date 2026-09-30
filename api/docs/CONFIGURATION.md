@@ -264,7 +264,7 @@ settings.
 ## Verification
 
 ```bash
-go test ./tests/unit -run '^TestEnv_'
+go test ./pkg/env -run '^TestEnv_'
 go test ./internal/infra/config ./internal/infra/email ./internal/infra/storage ./internal/infra/console/commands
-go test -race ./tests/unit ./internal/infra/config ./internal/infra/email ./internal/infra/storage ./internal/infra/console/commands
+go test -race ./pkg/env ./internal/infra/config ./internal/infra/email ./internal/infra/storage ./internal/infra/console/commands
 ```

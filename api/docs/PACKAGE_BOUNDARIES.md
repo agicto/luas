@@ -51,41 +51,25 @@ None.
   application-branded console output out of reusable `pkg/` helpers.
 - Starter registry interfaces now live in `internal/starter/assembly` instead of the old
   top-level starter contract package, keeping HTTP contract vocabulary reserved for `contracts/`.
-- App-specific path helpers were removed from `pkg/support`; runtime-owned packages should compute
-  their own paths from configuration or explicit inputs instead of using global scaffold path state.
-- Debug dump, timing, stack, and memory-print helpers were removed from `pkg/support`; local
-  diagnostics should live in devtools or internal runtime packages when a real caller needs them.
-- Generic driver manager and pipeline pattern helpers were removed from `pkg/support`; driver
-  registries, middleware chains, and workflow pipelines should live at the owning capability or
-  runtime seam with domain-specific names.
-- Generic control-flow, retry, panic, and Optional helpers were removed from `pkg/support`; retry
-  behavior should stay at workflow or integration seams, and nil/error handling should be explicit
-  at the caller or owning package.
-- Generic conditional wrapper helpers were removed from `pkg/support`; conditional response,
-  resource, query, or workflow behavior should live at the semantic seam that owns the decision.
-- Broad string formatting, slug, random string, and UUID helpers were removed from `pkg/support`;
-  string normalization, slugging, and ID generation should live at the caller or the owning
-  capability, such as `internal/capabilities/idgen`.
-- Broad collection and map helper libraries were removed from `pkg/support`; collection transforms,
-  map shaping, and data projection should stay local to the caller or the starter/capability seam
-  that owns the shape.
+- Generic grab-bag packages are gone. After their helpers moved to owning seams, `pkg/support` and
+  `pkg/utils` had no production callers and were removed (2026-09); the boundary check now rejects
+  `support`, `utils`, `common`, and `helpers` packages under `pkg/` and `internal/infra/`.
 - Credential-shaped telemetry sanitization lives in the focused, standard-library-only
   `pkg/redact` package rather than a broad support helper or duplicated logger/exception blacklists.
-- Mutating dot-notation data helpers were removed from `pkg/support`; nested data writes and shape
-  mutations should stay local to the owning package instead of becoming scaffold-wide helpers.
-- `pkg/support` is now documented and guarded as a small read-only helper surface limited to
-  `Blank`, `Filled`, `DataGet`, and `DataHas`; new exported helpers should move to the starter,
-  capability, or runtime seam that owns the behavior.
+- Unadopted Laravel-style ports without production callers were removed (2026-09): `pkg/request`
+  (form requests), `pkg/resource` (API resources), `pkg/validation`, `pkg/hash`, the deprecated
+  `pkg/encryption` (superseded by `internal/capabilities/crypto`), `internal/infra/http`,
+  `internal/infra/lang`, and `internal/infra/types`.
 - `internal/capabilities/workflow` no longer imports `internal/infra/config`. Infra assembly code now maps
   `config.Config` into workflow-owned runtime configuration before calling the capability.
 - `internal/capabilities/workflow` no longer imports `internal/infra/retry`. Synchronous retry behavior now
   lives inside the workflow capability and is guarded by success, stop-retry, and exhaustion tests.
-- `internal/capabilities/workflow` no longer imports `internal/infra/schedule`. Scheduler behavior now lives
-  inside the workflow capability; `internal/infra/schedule` remains as a compatibility wrapper.
-- `internal/capabilities/workflow` no longer imports `internal/infra/queue`. Background job queue behavior now
-  lives inside the workflow capability; `internal/infra/queue` remains as a compatibility wrapper.
-- The cache seam now lives once in `internal/infra/cache`; the duplicate `internal/infra/contracts`
-  cache interfaces and global manager were removed. Downstream callers inject the byte-oriented
+- Queue, scheduler, and retry behavior live only in `internal/capabilities/workflow`. The former
+  `internal/infra/queue`, `internal/infra/schedule`, and `internal/infra/retry` compatibility wrappers
+  were removed (2026-09) and their tests now exercise the workflow capability directly.
+- The cache seam now lives once in `internal/infra/cache`; the duplicate cache interfaces and global
+  manager were removed, and the rest of `internal/infra/contracts` followed (2026-09) because the
+  term contract is reserved for HTTP contracts. Downstream callers inject the byte-oriented
   store instead of selecting mutable process-global drivers.
 - Cache request coalescing uses maintained `golang.org/x/sync/singleflight`; the shallow custom
   wrapper package and its cancellation bug were removed.
