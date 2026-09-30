@@ -472,6 +472,17 @@ Each slice updates `contracts/`, `openapi.yaml`, generated types, `UPGRADING.md`
    inactive state and the API returns `404`.
 8. Given `operator` is not selected, then no `/v1/operator` route and no `operator:*` command exists.
 
+## 15a. Decisions Made During Slice 1
+
+- **Kernel CORS:** `gin-contrib/cors` rejects an `Origin` outside `CORS_ALLOW_ORIGINS` with a bare
+  `403` before routing, and a CDN or dev proxy usually rewrites `Host`, so same-origin Admin requests
+  were blocked. When `operator` is selected, the kernel CORS policy now also allows
+  `OPERATOR_ALLOWED_ORIGINS`, the `X-CSRF-Token` header, and `PATCH`. An origin outside both lists
+  still receives the kernel's bare `403`.
+- **Sign-out attribution:** sign-out resolves the session before revoking it so the audit record
+  names the operator; an already invalid session still signs out with `204`.
+- **Dev origin:** the Admin dev server runs at `http://127.0.0.1:4173`.
+
 ## 16. Open Decisions
 
 None blocking. Recorded assumptions:

@@ -650,3 +650,54 @@ func TestValidate_AllowsDisabledServerWriteTimeout(t *testing.T) {
 		t.Fatalf("disabled server write timeout should be explicit and valid, got %v", err)
 	}
 }
+
+func TestValidate_OperatorPolicy(t *testing.T) {
+	validOperator := func(environment string) *Config {
+		cfg := baseValidConfig(environment)
+		cfg.Starters.Optional = []string{StarterOperator}
+		cfg.Operator = OperatorConfig{AllowedOrigins: []string{"https://admin.example.com"}}
+		return cfg
+	}
+	tests := []struct {
+		name        string
+		environment string
+		edit        func(*Config)
+		wantErr     string
+	}{
+		{name: "valid production", environment: "production"},
+		{name: "valid development http origin", environment: "development",
+			edit: func(cfg *Config) { cfg.Operator.AllowedOrigins = []string{"http://127.0.0.1:4173"} }},
+		{name: "not selected needs nothing", environment: "production",
+			edit: func(cfg *Config) { cfg.Starters.Optional = nil; cfg.Operator = OperatorConfig{} }},
+		{name: "missing origins", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.AllowedOrigins = nil }, wantErr: "OPERATOR_ALLOWED_ORIGINS is required"},
+		{name: "wildcard origin", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.AllowedOrigins = []string{"https://*.example.com"} }, wantErr: "exact"},
+		{name: "origin with path", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.AllowedOrigins = []string{"https://admin.example.com/app"} }, wantErr: "exact"},
+		{name: "production http origin", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.AllowedOrigins = []string{"http://admin.example.com"} }, wantErr: "https"},
+		{name: "invalid cookie name", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.SessionCookieName = "bad name" }, wantErr: "OPERATOR_SESSION_COOKIE_NAME"},
+		{name: "host prefix outside production", environment: "development",
+			edit: func(cfg *Config) {
+				cfg.Operator.AllowedOrigins = []string{"http://127.0.0.1:4173"}
+				cfg.Operator.SessionCookieName = "__Host-admin"
+			}, wantErr: "__Host-"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			cfg := validOperator(test.environment)
+			if test.edit != nil {
+				test.edit(cfg)
+			}
+			err := validateOperatorConfig(cfg, cfg.Starters.Selected(StarterOperator))
+			if test.wantErr == "" && err != nil {
+				t.Fatalf("validateOperatorConfig() error = %v", err)
+			}
+			if test.wantErr != "" && (err == nil || !strings.Contains(err.Error(), test.wantErr)) {
+				t.Fatalf("validateOperatorConfig() error = %v, want %q", err, test.wantErr)
+			}
+		})
+	}
+}

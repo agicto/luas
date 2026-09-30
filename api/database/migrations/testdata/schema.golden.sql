@@ -172,6 +172,10 @@ TABLE permission_roles
   COLUMN created_at timestamp with time zone
   COLUMN updated_at timestamp with time zone
 
+TABLE platform_operators
+  COLUMN user_id bigint NOT NULL
+  COLUMN granted_at timestamp with time zone NOT NULL
+
 TABLE settings
   COLUMN id bigint NOT NULL DEFAULT nextval('settings_id_seq'::regclass)
   COLUMN scope character varying(24) NOT NULL
@@ -379,6 +383,8 @@ CONSTRAINT permission_role_grants.fk_permission_roles_permissions FOREIGN KEY (a
 CONSTRAINT permission_role_grants.permission_role_grants_pkey PRIMARY KEY (access_role_id, permission)
 CONSTRAINT permission_roles.fk_permission_roles_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE
 CONSTRAINT permission_roles.permission_roles_pkey PRIMARY KEY (id)
+CONSTRAINT platform_operators.fk_platform_operators_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+CONSTRAINT platform_operators.platform_operators_pkey PRIMARY KEY (user_id)
 CONSTRAINT settings.fk_settings_organization FOREIGN KEY (organization_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE CASCADE
 CONSTRAINT settings.fk_settings_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
 CONSTRAINT settings.settings_key_check CHECK (((length((key)::text) >= 1) AND (length((key)::text) <= 96)))
@@ -519,6 +525,7 @@ INDEX CREATE UNIQUE INDEX permission_role_grants_pkey ON permission_role_grants 
 INDEX CREATE UNIQUE INDEX idx_permission_roles_org_slug ON permission_roles USING btree (organization_id, slug)
 INDEX CREATE INDEX idx_permission_roles_organization_id ON permission_roles USING btree (organization_id)
 INDEX CREATE UNIQUE INDEX permission_roles_pkey ON permission_roles USING btree (id)
+INDEX CREATE UNIQUE INDEX platform_operators_pkey ON platform_operators USING btree (user_id)
 INDEX CREATE INDEX idx_settings_organization ON settings USING btree (organization_id, subject_id)
 INDEX CREATE UNIQUE INDEX idx_settings_scope_subject_key ON settings USING btree (scope, subject_id, key)
 INDEX CREATE INDEX idx_settings_user ON settings USING btree (user_id, subject_id)

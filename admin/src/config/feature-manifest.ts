@@ -7,6 +7,10 @@ export const featureManifest = {
     kind: 'core',
     routes: ['/console/preferences'],
   },
+  operatorSession: {
+    kind: 'core',
+    routes: ['/login'],
+  },
 } as const;
 
 export type FeatureName = keyof typeof featureManifest;

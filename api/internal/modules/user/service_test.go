@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
@@ -584,4 +585,47 @@ func TestServiceConfirmPasswordResetReturnsDomainErrorFromResetStore(t *testing.
 	})
 
 	assert.ErrorIs(t, err, domain.ErrPasswordResetTokenExpired)
+}
+
+type countingSessionIssuer struct {
+	issued int
+}
+
+func (s *countingSessionIssuer) Issue(context.Context, *domain.User) (*IssuedAuthenticationSession, error) {
+	s.issued++
+	return &IssuedAuthenticationSession{AccessToken: "issued-credential", TokenType: "Bearer", ExpiresIn: 3600}, nil
+}
+
+func TestServiceSignInAuthorizesBeforeIssuingSession(t *testing.T) {
+	repo := &fakeRepo{
+		findByLoginFn: func(context.Context, string) (*domain.User, error) {
+			return &domain.User{ID: 7, Username: "ops", Password: mustHashTestPassword(t), Status: 1}, nil
+		},
+	}
+	sessions := &countingSessionIssuer{}
+	svc := NewService(repo, repo, sessions, events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
+
+	_, err := svc.SignIn(context.Background(), "ops", "password123", func(context.Context, *domain.User) error {
+		return domain.ErrOperatorForbidden
+	})
+	require.ErrorIs(t, err, domain.ErrOperatorForbidden)
+	assert.Zero(t, sessions.issued, "a rejected caller must never receive a session")
+
+	var authorized *domain.User
+	issued, err := svc.SignIn(context.Background(), "ops", "password123", func(_ context.Context, user *domain.User) error {
+		authorized = user
+		return nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, sessions.issued)
+	assert.Equal(t, "issued-credential", issued.Credential)
+	assert.Equal(t, uint(7), authorized.ID)
+	assert.True(t, issued.ExpiresAt.After(time.Now()))
+
+	_, err = svc.SignIn(context.Background(), "ops", "wrong-password", func(context.Context, *domain.User) error {
+		t.Fatal("authorize must not run for invalid credentials")
+		return nil
+	})
+	require.ErrorIs(t, err, domain.ErrInvalidCredentials)
+	assert.Equal(t, 1, sessions.issued)
 }

@@ -19,6 +19,8 @@ var ProviderSet = wire.NewSet(
 	NewSessionService,
 	wire.Bind(new(authenticationSessionIssuer), new(*SessionService)),
 	wire.Bind(new(domain.AuthenticationSessionMaintainer), new(*SessionService)),
+	wire.Bind(new(domain.SessionAuthenticator), new(*SessionService)),
+	wire.Bind(new(domain.SessionRevoker), new(*SessionService)),
 	NewUserMailer,
 	NewAccountDeletionPolicy,
 	NewService,
@@ -26,6 +28,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(ProfileService), new(*service)),
 	wire.Bind(new(UserQueryService), new(*service)),
 	wire.Bind(new(Service), new(*service)),
+	wire.Bind(new(domain.CredentialSignIn), new(*service)),
 	NewAuthAbuseGuard,
 	NewHandler,
 )

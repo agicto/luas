@@ -33,6 +33,9 @@ Organization-owned outbound endpoints, finite trusted events, Standard Webhooks 
 secret rotation, durable retry/replay, and the privacy-minimized delivery ledger are defined in
 [`WEBHOOKS.md`](WEBHOOKS.md).
 
+Platform operators, CLI-managed operator grants, and the Go-issued Admin Console cookie session with
+exact-Origin and CSRF enforcement are defined in [`OPERATORS.md`](OPERATORS.md).
+
 The default API key lifecycle, one-time plaintext rule, fixed browser adapter paths, scope grammar,
 and route guard semantics are defined in [`API_KEYS.md`](API_KEYS.md).
 

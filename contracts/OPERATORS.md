@@ -1,0 +1,87 @@
+# Platform Operator Contracts
+
+The optional `operator` starter lets platform operators run the deployment from the static Admin
+Console. It depends on the default `user` and `audit` starters and is selected with
+`OPTIONAL_STARTERS=operator`. When it is not selected, no `/v1/operator` route and no `operator:*`
+command exists.
+
+Implementation plan: [`../docs/plans/admin-operator-console.md`](../docs/plans/admin-operator-console.md).
+
+## Operators
+
+A platform operator is a user with a current operator grant. Grants are created and removed only
+from the CLI on a host with database access:
+
+```bash
+luas operator:grant <email>
+luas operator:revoke <email>
+luas operator:list
+```
+
+Granting or revoking twice is a no-op. Each change writes an audit record with the system as actor
+and the account's user ID as target. Deleting an account removes its grant. A grant is not an
+organization role and not a permission key.
+
+## Browser Session
+
+The Admin Console has no server runtime, so the Go API issues the operator session directly to the
+Admin origin. The console enables sign-in when built with `VITE_OPTIONAL_FEATURES=operator`. Deployments must route the Admin origin's `/api/*` prefix to the Go API on the same
+origin so the cookie is first-party.
+
+| Rule | Value |
+|---|---|
+| Cookie name | `OPERATOR_SESSION_COOKIE_NAME`; default `__Host-luas_operator` in production, `luas_operator` otherwise |
+| Cookie attributes | HttpOnly, `Secure` in production, `SameSite=Strict`, `Path=/`, no `Domain`, `Max-Age` = session lifetime |
+| Credential | The opaque authentication session from the `user` starter; never returned in a response body |
+| Session lifetime | The existing absolute and idle session limits |
+| Unsafe methods | Require `Origin` exactly equal to one of `OPERATOR_ALLOWED_ORIGINS` and header `X-CSRF-Token` |
+| CSRF token | Returned by sign-in and `GET /v1/operator/session`; bound to one session |
+| Caching | Every `/v1/operator` response sends `Cache-Control: private, no-store` |
+
+Each protected request re-checks the session, the account status, and the operator grant against
+current persistence, so disabling an account or revoking a grant takes effect on the next request.
+Unsafe operator requests are recorded by the audit middleware with the operator as actor.
+
+### Endpoints
+
+| Operation | Method and path | Request | Success |
+|---|---|---|---|
+| Sign in | `POST /v1/operator/session` | `Origin`; `{ identifier, password }` | `200 { operator, csrf_token }`, sets the cookie |
+| Current operator | `GET /v1/operator/session` | Cookie | `200 { operator, csrf_token }` |
+| Sign out | `DELETE /v1/operator/session` | Cookie, `Origin`, `X-CSRF-Token` | `204`, expires the cookie |
+
+`operator` is `{ id, username, email, nickname }`. `identifier` is a username or email of at most
+100 characters; `password` is at most 128 characters.
+
+Sign-in checks the operator grant after verifying credentials and before creating a session, so a
+non-operator never receives a session. It shares the public login per-IP and per-account quotas.
+Unknown, wrong, and disabled accounts all return `AUTH.INVALID_CREDENTIALS`.
+
+Sign-out without a cookie, or with an already revoked session, returns `204` and expires the cookie.
+
+### Errors
+
+| Condition | HTTP | `error_code` |
+|---|---:|---|
+| Malformed body | 400 | `COMMON.INVALID_INPUT` |
+| Field violation | 422 | `COMMON.VALIDATION_FAILED` |
+| Missing, unknown, expired, or revoked session | 401 | `AUTH.UNAUTHORIZED` |
+| Wrong credentials, unknown or disabled account at sign-in | 401 | `AUTH.INVALID_CREDENTIALS` |
+| Session whose account was later disabled | 403 | `AUTH.ACCOUNT_DISABLED` |
+| Caller has no operator grant | 403 | `OPERATOR.FORBIDDEN` |
+| `Origin` missing on an unsafe method, or not allowed by the operator starter | 403 | `OPERATOR.ORIGIN_REJECTED` |
+| `Origin` outside both `CORS_ALLOW_ORIGINS` and `OPERATOR_ALLOWED_ORIGINS` | 403 | none: the kernel CORS policy rejects it before routing |
+| `X-CSRF-Token` missing or not bound to this session | 403 | `OPERATOR.CSRF_REJECTED` |
+| Target account holds an operator grant | 409 | `OPERATOR.TARGET_PROTECTED` |
+| Sign-in quota exceeded | 429 | `COMMON.RATE_LIMITED` |
+| Persistence unavailable | 503 | `COMMON.SERVICE_UNAVAILABLE` |
+
+On `401` or `OPERATOR.FORBIDDEN` the Admin Console returns to sign-in. On
+`OPERATOR.CSRF_REJECTED` it refetches `GET /v1/operator/session` once and retries.
+
+## Configuration
+
+| Variable | Required | Rule |
+|---|---|---|
+| `OPERATOR_ALLOWED_ORIGINS` | When selected | Exact `scheme://host[:port]` origins, comma separated; `https` in production; no wildcards or paths |
+| `OPERATOR_SESSION_COOKIE_NAME` | No | Cookie token; the `__Host-` prefix is allowed only in production |

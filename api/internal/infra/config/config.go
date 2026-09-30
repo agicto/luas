@@ -100,6 +100,7 @@ type Config struct {
 	ObjectStorage  ObjectStorageConfig
 	Asset          AssetConfig
 	Webhook        WebhookConfig
+	Operator       OperatorConfig
 	R2             R2Config
 	Middleware     MiddlewareConfig
 	Metrics        MetricsConfig
@@ -399,6 +400,14 @@ type WebhookConfig struct {
 	AllowPrivateTargets bool
 }
 
+// OperatorConfig configures the optional platform-operator starter and its Admin Console session.
+type OperatorConfig struct {
+	// AllowedOrigins are the exact browser origins allowed to send unsafe operator requests.
+	AllowedOrigins []string
+	// SessionCookieName overrides the operator session cookie name.
+	SessionCookieName string
+}
+
 // TracingConfig holds OpenTelemetry tracing configuration
 type TracingConfig struct {
 	Enabled    bool
@@ -514,6 +523,10 @@ func Load() (*Config, error) {
 			EventRetention:      env.GetDuration("WEBHOOK_EVENT_RETENTION", DefaultWebhookEventRetention),
 			AllowInsecureHTTP:   env.GetBool("WEBHOOK_ALLOW_INSECURE_HTTP", false),
 			AllowPrivateTargets: env.GetBool("WEBHOOK_ALLOW_PRIVATE_TARGETS", false),
+		},
+		Operator: OperatorConfig{
+			AllowedOrigins:    env.GetSlice("OPERATOR_ALLOWED_ORIGINS", []string{}),
+			SessionCookieName: env.Get("OPERATOR_SESSION_COOKIE_NAME", ""),
 		},
 		R2: R2Config{
 			AccessKeyID:     env.Get("R2_ACCESS_KEY_ID", ""),
@@ -810,6 +823,9 @@ func validate(cfg *Config) error {
 	if err := validateWebhookConfig(cfg, webhookSelected); err != nil {
 		return err
 	}
+	if err := validateOperatorConfig(cfg, cfg.Starters.Selected(StarterOperator)); err != nil {
+		return err
+	}
 
 	// CORS: wildcard origin + credentials is rejected by browsers anyway.
 	// Catch the misconfiguration early at startup.
@@ -1097,6 +1113,48 @@ func validateWebhookConfig(cfg *Config, selected bool) error {
 		return fmt.Errorf("WEBHOOK_ALLOW_PRIVATE_TARGETS cannot be enabled in production")
 	}
 	return nil
+}
+
+func validateOperatorConfig(cfg *Config, selected bool) error {
+	operator := cfg.Operator
+	if !selected {
+		return nil
+	}
+	if len(operator.AllowedOrigins) == 0 {
+		return fmt.Errorf("OPERATOR_ALLOWED_ORIGINS is required when the operator starter is selected")
+	}
+	for _, raw := range operator.AllowedOrigins {
+		origin := strings.TrimSpace(raw)
+		parsed, err := url.Parse(origin)
+		if err != nil || parsed.Host == "" || (parsed.Scheme != "https" && parsed.Scheme != "http") ||
+			parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil ||
+			strings.Contains(origin, "*") || origin != parsed.Scheme+"://"+parsed.Host {
+			return fmt.Errorf("OPERATOR_ALLOWED_ORIGINS must list exact scheme://host[:port] origins without wildcards or paths")
+		}
+		if cfg.IsProduction() && parsed.Scheme != "https" {
+			return fmt.Errorf("OPERATOR_ALLOWED_ORIGINS must use https in production")
+		}
+	}
+	name := strings.TrimSpace(operator.SessionCookieName)
+	if name != "" && !validCookieName(name) {
+		return fmt.Errorf("OPERATOR_SESSION_COOKIE_NAME must be a valid cookie token")
+	}
+	if strings.HasPrefix(name, "__Host-") && !cfg.IsProduction() {
+		return fmt.Errorf("OPERATOR_SESSION_COOKIE_NAME may use the __Host- prefix only in production, where cookies are Secure")
+	}
+	return nil
+}
+
+func validCookieName(name string) bool {
+	if name == "" || len(name) > 64 {
+		return false
+	}
+	for _, r := range name {
+		if r <= 0x20 || r >= 0x7f || strings.ContainsRune("()<>@,;:\\\"/[]?={}", r) {
+			return false
+		}
+	}
+	return true
 }
 
 func validateEmailConfig(emailConfig EmailConfig) error {

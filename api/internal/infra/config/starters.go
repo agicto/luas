@@ -16,6 +16,7 @@ const (
 	StarterSetting      = "setting"
 	StarterUsage        = "usage"
 	StarterWebhook      = "webhook"
+	StarterOperator     = "operator"
 )
 
 // StarterNames returns every starter name known to this build, defaults first.
@@ -31,6 +32,7 @@ func StarterNames() []string {
 		StarterSetting,
 		StarterUsage,
 		StarterWebhook,
+		StarterOperator,
 	}
 }
 

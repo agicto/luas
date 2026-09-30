@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { OperatorMenu } from '@/features/operator-session/components/operator-menu';
 import { useResolvedTheme } from '@/features/preferences/hooks/use-resolved-theme';
 import { usePreferencesStore } from '@/features/preferences/store/preferences-store';
 
@@ -57,6 +58,7 @@ export function ConsoleHeader() {
           </TooltipTrigger>
           <TooltipContent side="bottom">{themeLabel}</TooltipContent>
         </Tooltip>
+        <OperatorMenu />
       </div>
     </header>
   );

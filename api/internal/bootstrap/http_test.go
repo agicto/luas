@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -412,5 +413,32 @@ func TestConfigureTrustedProxies_UsesForwardedClientIPFromConfiguredProxy(t *tes
 		if response.Code != http.StatusNoContent {
 			t.Fatalf("client %s status = %d, want %d", clientIP, response.Code, http.StatusNoContent)
 		}
+	}
+}
+
+func TestCORSPolicyAllowsOperatorOriginsOnlyWhenSelected(t *testing.T) {
+	cfg := &config.Config{
+		CORS: config.CORSConfig{
+			AllowOrigins: []string{"http://localhost:3000"},
+			AllowMethods: []string{"GET", "POST"},
+			AllowHeaders: []string{"Content-Type"},
+		},
+		Operator: config.OperatorConfig{AllowedOrigins: []string{"https://admin.example.test"}},
+	}
+
+	policy := corsMiddlewareConfig(cfg)
+	if slices.Contains(policy.AllowOrigins, "https://admin.example.test") {
+		t.Fatalf("operator origin allowed while the starter is not selected: %v", policy.AllowOrigins)
+	}
+
+	cfg.Starters.Optional = []string{config.StarterOperator}
+	policy = corsMiddlewareConfig(cfg)
+	if !slices.Contains(policy.AllowOrigins, "https://admin.example.test") ||
+		!slices.Contains(policy.AllowHeaders, "X-CSRF-Token") ||
+		!slices.Contains(policy.AllowMethods, "PATCH") {
+		t.Fatalf("operator CORS policy incomplete: %+v", policy)
+	}
+	if len(cfg.CORS.AllowOrigins) != 1 {
+		t.Fatalf("configured CORS origins were mutated: %v", cfg.CORS.AllowOrigins)
 	}
 }

@@ -89,4 +89,9 @@ const (
 	CodeWebhookEndpointVersionConflict = "WEBHOOK.ENDPOINT_VERSION_CONFLICT"
 	CodeWebhookPreconditionRequired    = "WEBHOOK.PRECONDITION_REQUIRED"
 	CodeWebhookReplayNotAllowed        = "WEBHOOK.REPLAY_NOT_ALLOWED"
+
+	CodeOperatorForbidden       = "OPERATOR.FORBIDDEN"
+	CodeOperatorOriginRejected  = "OPERATOR.ORIGIN_REJECTED"
+	CodeOperatorCSRFRejected    = "OPERATOR.CSRF_REJECTED"
+	CodeOperatorTargetProtected = "OPERATOR.TARGET_PROTECTED"
 )

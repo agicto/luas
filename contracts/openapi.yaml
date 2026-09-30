@@ -233,6 +233,10 @@ components:
         - WEBHOOK.ENDPOINT_VERSION_CONFLICT
         - WEBHOOK.PRECONDITION_REQUIRED
         - WEBHOOK.REPLAY_NOT_ALLOWED
+        - OPERATOR.FORBIDDEN
+        - OPERATOR.ORIGIN_REJECTED
+        - OPERATOR.CSRF_REJECTED
+        - OPERATOR.TARGET_PROTECTED
     FieldErrors:
       type: object
       additionalProperties:

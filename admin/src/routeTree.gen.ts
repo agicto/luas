@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConsoleRouteImport } from './routes/console'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ConsoleIndexRouteImport } from './routes/console.index'
 import { Route as ConsolePreferencesRouteImport } from './routes/console.preferences'
 
@@ -22,6 +23,11 @@ const IndexRoute = IndexRouteImport.update({
 const ConsoleRoute = ConsoleRouteImport.update({
   id: '/console',
   path: '/console',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConsoleIndexRoute = ConsoleIndexRouteImport.update({
@@ -38,11 +44,13 @@ const ConsolePreferencesRoute = ConsolePreferencesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/console': typeof ConsoleRouteWithChildren
+  '/login': typeof LoginRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console/': typeof ConsoleIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console': typeof ConsoleIndexRoute
 }
@@ -50,20 +58,28 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/console': typeof ConsoleRouteWithChildren
+  '/login': typeof LoginRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console/': typeof ConsoleIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/console' | '/console/preferences' | '/console/'
+  fullPaths: '/' | '/console' | '/login' | '/console/preferences' | '/console/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/console/preferences' | '/console'
-  id: '__root__' | '/' | '/console' | '/console/preferences' | '/console/'
+  to: '/' | '/login' | '/console/preferences' | '/console'
+  id:
+    | '__root__'
+    | '/'
+    | '/console'
+    | '/login'
+    | '/console/preferences'
+    | '/console/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConsoleRoute: typeof ConsoleRouteWithChildren
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -80,6 +96,13 @@ declare module '@tanstack/react-router' {
       path: '/console'
       fullPath: '/console'
       preLoaderRoute: typeof ConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/console/': {
@@ -115,6 +138,7 @@ const ConsoleRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConsoleRoute: ConsoleRouteWithChildren,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

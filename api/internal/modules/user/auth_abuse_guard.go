@@ -114,6 +114,17 @@ func (g *AuthAbuseGuard) allowSubject(c *gin.Context, endpoint authEndpoint, sub
 	return true
 }
 
+// LoginIPMiddleware returns the per-IP login quota so other sign-in surfaces share the login budget.
+// It returns nil when abuse protection is disabled.
+func (g *AuthAbuseGuard) LoginIPMiddleware() gin.HandlerFunc {
+	return g.perIPMiddleware(authEndpointLogin)
+}
+
+// AllowLoginSubject applies the per-account login quota and writes the 429 response when exceeded.
+func (g *AuthAbuseGuard) AllowLoginSubject(c *gin.Context, subject string) bool {
+	return g.allowSubject(c, authEndpointLogin, subject)
+}
+
 func authRateLimitError(c *gin.Context, _ time.Time) {
 	response.AbortWithCode(c, http.StatusTooManyRequests, response.ErrorCodeRateLimited, "Too many requests")
 }

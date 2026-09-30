@@ -201,6 +201,20 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   lease, attempts, stable local failure identifiers, and replay count without exposing target URLs,
   payloads, signatures, response bodies, or free-form provider errors.
 
+**Platform operator**
+: A user with a current operator grant who runs the deployment through the Admin Console. Not an
+  organization role, an organization owner, or a permission key. Operators cannot change accounts
+  that hold an operator grant; granting and revoking happen only from the CLI.
+
+**Operator grant**
+: The durable, CLI-managed record, owned by the optional `operator` starter, that makes one user a
+  platform operator. It has no lifecycle beyond existing or not and is removed with the account.
+
+**Operator session**
+: An ordinary authentication session that the Go API issues to the Admin Console in an HttpOnly
+  `SameSite=Strict` cookie, with exact-Origin and session-bound CSRF checks, instead of returning a
+  bearer credential to browser JavaScript.
+
 **Production API adapter**
 : The Web server-only same-origin boundary that maps explicit browser Route Handlers to fixed API
   operations while owning the HttpOnly API credential, timeout, body budgets, trusted client-IP

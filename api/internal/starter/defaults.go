@@ -12,6 +12,7 @@ import (
 	"github.com/zgiai/luas/api/internal/modules/asset"
 	"github.com/zgiai/luas/api/internal/modules/audit"
 	"github.com/zgiai/luas/api/internal/modules/notification"
+	"github.com/zgiai/luas/api/internal/modules/operator"
 	"github.com/zgiai/luas/api/internal/modules/organization"
 	permissionstarter "github.com/zgiai/luas/api/internal/modules/permission"
 	"github.com/zgiai/luas/api/internal/modules/setting"
@@ -33,6 +34,7 @@ var ProviderSet = wire.NewSet(
 	setting.ProviderSet,
 	usage.ProviderSet,
 	webhook.ProviderSet,
+	operator.ProviderSet,
 	wire.Struct(new(Handlers), "*"),
 	NewConfiguredRegistry,
 )
@@ -52,6 +54,7 @@ type Handlers struct {
 	Setting      *setting.Handler
 	Usage        *usage.Handler
 	Webhook      *webhook.Handler
+	Operator     *operator.Handler
 }
 
 func (h *Handlers) orMetadataOnly() *Handlers {
@@ -97,6 +100,7 @@ func OptionalManifests(handlers *Handlers) []assembly.StarterManifest {
 		setting.NewStarterManifest(h.Setting),
 		usage.NewStarterManifest(h.Usage),
 		webhook.NewStarterManifest(h.Webhook),
+		operator.NewStarterManifest(h.Operator),
 	}
 }
 

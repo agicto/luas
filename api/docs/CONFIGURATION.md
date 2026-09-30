@@ -159,6 +159,15 @@ and is documented in [`CACHE.md`](CACHE.md). It is not a rate-limit driver. Mult
 limiting belongs to the gateway/WAF or a deliberately assembled shared adapter with atomic decisions,
 explicit outage semantics, and owned lifecycle.
 
+## Platform Operator Configuration
+
+Selecting `operator` requires `OPERATOR_ALLOWED_ORIGINS`: the exact Admin Console origins
+(`scheme://host[:port]`, comma separated, no wildcards or paths, `https` in production). Unsafe
+operator requests must carry one of these origins. `OPERATOR_SESSION_COOKIE_NAME` optionally renames
+the session cookie; the default is `__Host-luas_operator` in production and `luas_operator` elsewhere,
+and the `__Host-` prefix is rejected outside production because it requires a `Secure` cookie. See
+[`../../contracts/OPERATORS.md`](../../contracts/OPERATORS.md).
+
 ## Outbound Webhook Configuration
 
 Selecting `webhook` requires `WEBHOOK_ENCRYPTION_KEY` with at least 32 characters. It protects

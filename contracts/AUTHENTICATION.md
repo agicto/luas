@@ -217,6 +217,9 @@ The gateway or Go browser adapter owns:
 
 The Go `/v1/login` `access_token` must not be stored in `localStorage`, `sessionStorage`, IndexedDB,
 Zustand persistence, TanStack Query persistence, a URL, or an analytics/logging surface. A
-client-side route guard is UX only and does not replace API authorization. Until the browser
-gateway exists, protected Admin Console authentication is deliberately incomplete rather than silently
-weaker.
+client-side route guard is UX only and does not replace API authorization.
+
+The optional `operator` starter is the shipped Go browser adapter for platform operators: it issues
+an HttpOnly `SameSite=Strict` cookie session with exact-Origin and CSRF enforcement. See
+[`OPERATORS.md`](OPERATORS.md). Other Admin Console audiences still need their own reviewed
+gateway.

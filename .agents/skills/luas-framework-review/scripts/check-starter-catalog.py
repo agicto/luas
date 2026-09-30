@@ -120,9 +120,9 @@ def main() -> int:
     optional_packages = [
         module_imports.get(alias, alias) for alias in optional_aliases
     ]
-    if optional_packages != ["organization", "permission", "notification", "asset", "setting", "usage", "webhook"]:
+    if optional_packages != ["organization", "permission", "notification", "asset", "setting", "usage", "webhook", "operator"]:
         failures.append(
-            "optional starter catalog must contain organization, permission, notification, asset, setting, usage, and webhook in canonical order"
+            "optional starter catalog must contain organization, permission, notification, asset, setting, usage, webhook, and operator in canonical order"
         )
     if "organization.NewStarterManifest" in default_segment:
         failures.append("organization must not be part of DefaultManifests")

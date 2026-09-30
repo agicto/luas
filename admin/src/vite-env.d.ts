@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_API_TIMEOUT_MS?: string;
   readonly VITE_API_MAX_RESPONSE_BYTES?: string;
   readonly VITE_DEFAULT_LOCALE?: 'en-US' | 'zh-Hans';
+  readonly VITE_OPTIONAL_FEATURES?: string;
 }
 
 interface ImportMeta {

@@ -143,6 +143,11 @@ func (s *SessionService) Revoke(ctx context.Context, credential, reason string) 
 	)
 }
 
+// RevokeSession ends one session as a user-initiated logout.
+func (s *SessionService) RevokeSession(ctx context.Context, credential string) error {
+	return s.Revoke(ctx, credential, sessionRevocationLogout)
+}
+
 // RevokeByID invalidates the already-authenticated current session.
 func (s *SessionService) RevokeByID(ctx context.Context, sessionID, reason string) error {
 	if s == nil || s.repo == nil {
