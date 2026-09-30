@@ -27,6 +27,9 @@ Opt-in only; nothing changes unless `operator` is added to `OPTIONAL_STARTERS`.
   `OPERATOR.TARGET_PROTECTED`. Clients that switch exhaustively on `error_code` should add them.
 - `domain.CredentialSignIn` and `domain.SessionRevoker` are new user-starter seams; the public login
   now shares its credential check with operator sign-in without behavior change.
+- `domain.UserAdministrator` is a new user-starter seam used by `/v1/operator/users`. Disabling an
+  account through it revokes the account's sessions in the same transaction (reason
+  `account_disabled`); ending sessions uses the new revocation reason `operator`.
 
 ## 2026-09-30 — Dead code and dialect cleanup
 

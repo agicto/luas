@@ -50,7 +50,9 @@ export function OverviewPage() {
     },
     {
       label: t('overview.featureCount'),
-      value: String(Object.keys(featureManifest).length),
+      value: String(
+        Object.values(featureManifest).filter((feature) => feature.kind === 'core').length,
+      ),
     },
   ];
 

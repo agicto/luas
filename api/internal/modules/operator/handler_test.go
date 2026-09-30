@@ -115,6 +115,7 @@ type fixture struct {
 	signIn  *fakeSignIn
 	auth    *fakeAuthenticator
 	revoker *fakeRevoker
+	admin   *fakeAdmin
 	engine  *gin.Engine
 }
 
@@ -128,6 +129,7 @@ func newFixture(t *testing.T) *fixture {
 		signIn:  &fakeSignIn{users: map[string]*domain.User{"ops": operatorUser, "member": memberUser}},
 		auth:    &fakeAuthenticator{identity: &domain.AuthenticationIdentity{UserID: 1, Username: "ops"}},
 		revoker: &fakeRevoker{},
+		admin:   newFakeAdmin(operatorUser, memberUser),
 	}
 	svc := &service{
 		grants:        f.grants,
@@ -135,6 +137,7 @@ func newFixture(t *testing.T) *fixture {
 		signIn:        f.signIn,
 		authenticator: f.auth,
 		revoker:       f.revoker,
+		admin:         f.admin,
 		now:           time.Now,
 	}
 	cfg := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{testOrigin}}}
@@ -147,6 +150,11 @@ func newFixture(t *testing.T) *fixture {
 	protected := api.Group("/operator", f.handler.requireOperator)
 	protected.GET("/session", f.handler.Current)
 	protected.POST("/probe", func(c *gin.Context) { c.Status(http.StatusNoContent) })
+	protected.GET("/users", f.handler.ListUsers)
+	protected.GET("/users/:id", f.handler.GetUser)
+	protected.POST("/users/:id/disable", f.handler.DisableUser)
+	protected.POST("/users/:id/enable", f.handler.EnableUser)
+	protected.POST("/users/:id/sessions/revoke", f.handler.RevokeUserSessions)
 	return f
 }
 

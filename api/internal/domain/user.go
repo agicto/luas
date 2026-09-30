@@ -41,3 +41,19 @@ type UserRepository interface {
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindAll(ctx context.Context, page, pageSize int) ([]*User, int64, error)
 }
+
+// UserListFilter narrows an administrative user listing. Query matches username or email
+// substrings; a nil Active lists every account.
+type UserListFilter struct {
+	Query  string
+	Active *bool
+}
+
+// UserAdministrator is the user starter's seam for platform operators. The user starter remains the
+// only writer of accounts and sessions; disabling an account revokes its sessions atomically.
+type UserAdministrator interface {
+	ListUsers(ctx context.Context, filter UserListFilter, page, pageSize int) ([]*User, int64, error)
+	GetUser(ctx context.Context, id uint) (*User, error)
+	SetUserActive(ctx context.Context, id uint, active bool) (*User, error)
+	RevokeUserSessions(ctx context.Context, id uint) error
+}

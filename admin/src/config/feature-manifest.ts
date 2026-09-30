@@ -8,8 +8,12 @@ export const featureManifest = {
     routes: ['/console/preferences'],
   },
   operatorSession: {
-    kind: 'core',
+    kind: 'optional',
     routes: ['/login'],
+  },
+  users: {
+    kind: 'optional',
+    routes: ['/console/users'],
   },
 } as const;
 

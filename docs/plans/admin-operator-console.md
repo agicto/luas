@@ -22,7 +22,7 @@ webhook, notification, or asset administration; multi-factor authentication; Web
 
 **Success signal.** With `OPTIONAL_STARTERS=operator`, a user granted by `luas operator:grant`
 signs in to the Admin Console, disables another user (whose next API call fails with
-`AUTH.ACCOUNT_DISABLED`), finds that action in the global audit log, and signs out; a non-operator
+`401 AUTH.UNAUTHORIZED`), finds that action in the global audit log, and signs out; a non-operator
 with valid credentials cannot sign in.
 
 **Decisions from the owner (2026-09-30).**
@@ -72,7 +72,7 @@ then records unsafe requests with the operator as actor.
 
 Operator selects a user and confirms. `POST /v1/operator/users/:id/disable` sets the account to
 disabled and revokes all of its sessions in one transaction. The user's next API call fails with
-`403 AUTH.ACCOUNT_DISABLED`. Repeating the command returns the current state (`200`, idempotent).
+`401 AUTH.UNAUTHORIZED` because its session no longer exists. Repeating the command returns the current state (`200`, idempotent).
 
 ### 3.4 Other flows
 

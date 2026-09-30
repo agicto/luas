@@ -58,7 +58,9 @@ describe('SignInPage', () => {
 
     submit();
 
-    await waitFor(() => expect(navigate).toHaveBeenCalledWith({ to: '/console/users', replace: true }));
+    await waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith({ to: '/console/users', replace: true }),
+    );
     expect(csrf.get()).toBe('csrf-token-0123456789');
     expect(queryClient.getQueryData(['operator', 'session'])).toMatchObject({
       operator: { username: 'ops' },
@@ -68,7 +70,10 @@ describe('SignInPage', () => {
   });
 
   it('explains that a verified account lacks operator access', async () => {
-    respond({ code: 403, error_code: 'OPERATOR.FORBIDDEN', message: 'Operator access is required' }, 403);
+    respond(
+      { code: 403, error_code: 'OPERATOR.FORBIDDEN', message: 'Operator access is required' },
+      403,
+    );
     renderPage();
 
     submit();

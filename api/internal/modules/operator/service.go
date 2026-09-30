@@ -25,6 +25,7 @@ type service struct {
 	signIn        domain.CredentialSignIn
 	authenticator domain.SessionAuthenticator
 	revoker       domain.SessionRevoker
+	admin         domain.UserAdministrator
 	now           func() time.Time
 }
 
@@ -37,6 +38,7 @@ func NewService(
 	signIn domain.CredentialSignIn,
 	authenticator domain.SessionAuthenticator,
 	revoker domain.SessionRevoker,
+	admin domain.UserAdministrator,
 ) *service {
 	return &service{
 		grants:        grants,
@@ -44,6 +46,7 @@ func NewService(
 		signIn:        signIn,
 		authenticator: authenticator,
 		revoker:       revoker,
+		admin:         admin,
 		now:           time.Now,
 	}
 }

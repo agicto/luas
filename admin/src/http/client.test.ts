@@ -94,7 +94,9 @@ describe('http client', () => {
       });
 
     it('adds the token to unsafe requests only', async () => {
-      const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(json({ code: 0, message: 'ok', data: {} })));
+      const fetchMock = vi
+        .fn()
+        .mockImplementation(() => Promise.resolve(json({ code: 0, message: 'ok', data: {} })));
       vi.stubGlobal('fetch', fetchMock);
       csrf.set('token-value-0123456789');
 

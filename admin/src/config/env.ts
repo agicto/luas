@@ -41,7 +41,10 @@ const optionalFeatures = z.string().transform((value, context) => {
     (name) => !(optionalFeatureNames as readonly string[]).includes(name),
   );
   if (unknown.length > 0) {
-    context.addIssue({ code: 'custom', message: `unknown optional features: ${unknown.join(', ')}` });
+    context.addIssue({
+      code: 'custom',
+      message: `unknown optional features: ${unknown.join(', ')}`,
+    });
     return z.NEVER;
   }
   return [...new Set(names)] as OptionalFeature[];

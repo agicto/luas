@@ -27,6 +27,7 @@ const (
 	sessionRevocationAccountDisabled = "account_disabled"
 	sessionRevocationExpired         = "expired"
 	sessionRevocationIdleTimeout     = "idle_timeout"
+	sessionRevocationOperator        = "operator"
 )
 
 // IssuedAuthenticationSession is the one-time plaintext session response.
@@ -215,7 +216,8 @@ func normalizeSessionRevocationReason(value string) string {
 		sessionRevocationAccountDeleted,
 		sessionRevocationAccountDisabled,
 		sessionRevocationExpired,
-		sessionRevocationIdleTimeout:
+		sessionRevocationIdleTimeout,
+		sessionRevocationOperator:
 		return strings.TrimSpace(value)
 	default:
 		return "security_event"

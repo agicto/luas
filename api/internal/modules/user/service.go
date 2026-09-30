@@ -83,6 +83,7 @@ type service struct {
 	eventBus       *events.EventBus
 	mailer         UserMailer
 	deletionPolicy *AccountDeletionPolicy
+	admin          userAdministrationStore
 	verifyPassword func(hashedPassword, password []byte) error
 }
 
@@ -104,7 +105,7 @@ func NewService(
 	mailer UserMailer,
 	deletionPolicy *AccountDeletionPolicy,
 ) *service {
-	return &service{
+	svc := &service{
 		repo:           repo,
 		passwordResets: passwordResets,
 		sessions:       sessions,
@@ -113,6 +114,10 @@ func NewService(
 		deletionPolicy: deletionPolicy,
 		verifyPassword: bcrypt.CompareHashAndPassword,
 	}
+	if store, ok := repo.(userAdministrationStore); ok {
+		svc.admin = store
+	}
+	return svc
 }
 
 // ============================================================================

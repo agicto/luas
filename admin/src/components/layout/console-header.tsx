@@ -15,8 +15,11 @@ export function ConsoleHeader() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const dark = useResolvedTheme();
   const setTheme = usePreferencesStore((state) => state.setTheme);
-  const currentPage =
-    pathname === '/console/preferences' ? t('navigation.preferences') : t('navigation.overview');
+  const pageTitles: Record<string, string> = {
+    '/console/preferences': t('navigation.preferences'),
+    '/console/users': t('navigation.users'),
+  };
+  const currentPage = pageTitles[pathname] ?? t('navigation.overview');
   const themeLabel = dark ? t('preferences.light') : t('preferences.dark');
 
   return (

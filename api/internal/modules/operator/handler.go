@@ -178,6 +178,8 @@ func writeError(c *gin.Context, message string, err error) {
 		response.AbortWithCode(c, http.StatusForbidden, domain.CodeOperatorForbidden, "Operator access is required")
 	case errors.Is(err, domain.ErrOperatorTargetProtected):
 		response.AbortWithCode(c, http.StatusConflict, domain.CodeOperatorTargetProtected, "Operator accounts cannot be changed here")
+	case errors.Is(err, domain.ErrInvalidInput):
+		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, "Invalid input")
 	case errors.Is(err, domain.ErrUserNotFound):
 		response.AbortWithCode(c, http.StatusNotFound, domain.CodeUserNotFound, "User not found")
 	default:

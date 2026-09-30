@@ -79,6 +79,36 @@ Sign-out without a cookie, or with an already revoked session, returns `204` and
 On `401` or `OPERATOR.FORBIDDEN` the Admin Console returns to sign-in. On
 `OPERATOR.CSRF_REJECTED` it refetches `GET /v1/operator/session` once and retries.
 
+## Users
+
+All routes require an operator session; unsafe methods also require `Origin` and `X-CSRF-Token`.
+
+| Operation | Method and path | Success |
+|---|---|---|
+| List users | `GET /v1/operator/users?q=&status=&page=&per_page=` | `200` paginated `managed user` list |
+| Get user | `GET /v1/operator/users/:id` | `200 managed user` |
+| Disable | `POST /v1/operator/users/:id/disable` | `200 managed user` |
+| Enable | `POST /v1/operator/users/:id/enable` | `200 managed user` |
+| End sessions | `POST /v1/operator/users/:id/sessions/revoke` | `204` |
+
+A managed user is `{ id, username, email, nickname, status, is_operator, created_at, last_login }`,
+where `status` is `active` or `disabled` and `last_login` may be `null`. Password hashes, phone, bio,
+and avatar are never returned.
+
+- `q` (at most 100 characters) matches username or email case-insensitively as a literal substring;
+  `%` and `_` are not wildcards. `status` is `active`, `disabled`, or `all` (default).
+  `per_page` is 1–100 (default 15). Results are ordered by descending ID. Invalid values return
+  `400 COMMON.INVALID_INPUT`.
+- Disabling revokes all of the account's sessions in the same transaction, so every existing
+  credential fails on its next API call with `401 AUTH.UNAUTHORIZED`, and new logins fail with
+  `AUTH.INVALID_CREDENTIALS`. Enabling does not restore sessions. Repeating either command returns
+  the current account unchanged.
+- Ending sessions revokes every active session without changing status.
+- Accounts that hold an operator grant, including the caller's own, cannot be disabled, enabled, or
+  signed out here: `409 OPERATOR.TARGET_PROTECTED`. Change operators from the CLI.
+- An unknown account returns `404 USER.NOT_FOUND`; a non-numeric ID returns
+  `400 COMMON.INVALID_INPUT`.
+
 ## Configuration
 
 | Variable | Required | Rule |
