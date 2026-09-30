@@ -20,11 +20,13 @@ provider.go
 service_test.go
 ```
 
-5. Add one `NewStarterManifest` that owns the module, dependency names, migration names, seeder names, and any optional runtime hook.
-6. For a default starter, add the manifest to `DefaultManifests`; for an optional starter, add its provider and manifest to the optional catalog without editing `routes/api.go`.
-7. Generate Wire with `make wire`. Routes register through the selected manifest's module.
-8. Verify both disabled and enabled assembly, including route and migration parity.
-9. Run `make test` in `api/`, or `make check` from the repo root.
+5. Add a `config.Starter<Name>` constant and its entry in `StarterNames()` in `internal/infra/config/starters.go`. Use the constant everywhere the starter is named: its manifest, its handler's `Name()`, dependency lists, and selection checks (`cfg.Starters.Selected(config.Starter<Name>)`). Never compare starter names as string literals.
+6. Add one `NewStarterManifest` that owns the module, dependency names, migration names, seeder names, and any optional runtime hook.
+7. In `internal/starter/defaults.go`, add the module `ProviderSet`, one `Handlers` field, and one manifest line in `DefaultManifests` (default starter) or `OptionalManifests` (optional starter). Do not edit `routes/api.go` or add positional parameters.
+8. Generate Wire with `make wire` and commit `wire_gen.go`; CI runs `make wire-check`. Routes register through the selected manifest's module.
+9. Write versioned migrations as frozen SQL or migration-local snapshot structs, never `AutoMigrate` on the module's live persistence structs. Regenerate `database/migrations/testdata/schema.golden.sql` with `LUAS_UPDATE_GOLDEN_SCHEMA=1` only when adding a migration, and review the diff.
+10. Verify both disabled and enabled assembly, including route and migration parity.
+11. Run `make test` in `api/`, or `make check` from the repo root.
 
 ## Design Rules
 
