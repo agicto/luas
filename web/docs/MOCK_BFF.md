@@ -73,7 +73,8 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
      downstream server can safely and authoritatively resolve the real session.
 5. Leave `MOCK_BFF_ENABLED=false` for production unless the deployment is explicitly demo-only.
 6. When all mock route handlers are removed, remove or adapt `src/test/mock-bff-route-contract.test.ts`
-   because that test is a scaffold guardrail for existing mock routes.
+   and `src/test/mock-bff-service-parity.test.ts` because those tests are scaffold guardrails for
+   existing mock routes.
 
 ## Keeping a Local Mock
 
@@ -120,6 +121,9 @@ Some downstream apps keep mock routes for local or preview development. In that 
   enabled `mock-session` demo receives the preset from its Login Server Component.
 - Run `src/test/mock-bff-route-contract.test.ts` and `src/test/error-code-vocabulary.test.ts` after
   adding or deleting mock route handlers.
+- `src/test/mock-bff-service-parity.test.ts` runs each feature's browser service unchanged against
+  the mock route handlers, so a mock response that drifts from the service's schema fails. Add a
+  case there when a feature gains a service method backed by a new mock route.
 
 ## Verification
 
