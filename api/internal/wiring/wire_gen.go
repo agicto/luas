@@ -117,7 +117,7 @@ func InitApplication() (*app.Application, error) {
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, configConfig)
 	webhookHandler := webhook.NewHandler(webhookService)
 	operatorRepository := operator.NewRepository(db)
-	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService)
+	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
 	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, configConfig)
 	handlers := &starter.Handlers{
 		Audit:        handler,
@@ -250,7 +250,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, cfg)
 	webhookHandler := webhook.NewHandler(webhookService)
 	operatorRepository := operator.NewRepository(db)
-	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService)
+	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
 	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, cfg)
 	handlers := &starter.Handlers{
 		Audit:        handler,

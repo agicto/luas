@@ -26,6 +26,7 @@ type service struct {
 	authenticator domain.SessionAuthenticator
 	revoker       domain.SessionRevoker
 	admin         domain.UserAdministrator
+	audit         domain.AuditLogQuery
 	now           func() time.Time
 }
 
@@ -39,6 +40,7 @@ func NewService(
 	authenticator domain.SessionAuthenticator,
 	revoker domain.SessionRevoker,
 	admin domain.UserAdministrator,
+	auditQuery domain.AuditLogQuery,
 ) *service {
 	return &service{
 		grants:        grants,
@@ -47,6 +49,7 @@ func NewService(
 		authenticator: authenticator,
 		revoker:       revoker,
 		admin:         admin,
+		audit:         auditQuery,
 		now:           time.Now,
 	}
 }

@@ -101,6 +101,24 @@ func (s *service) ListForUser(ctx context.Context, userID uint, filter domain.Au
 	return s.repo.FindByUserID(ctx, userID, filter, page, pageSize)
 }
 
+// ListAuditLogs returns platform-wide audit logs for platform operators. The time range is required
+// to be ordered and at most domain.MaxAuditQueryRange; a missing range covers the last 30 days.
+func (s *service) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
+	if page < 1 || pageSize < 1 || pageSize > 100 {
+		return nil, 0, domain.ErrInvalidInput
+	}
+	if filter.To.IsZero() {
+		filter.To = time.Now().UTC()
+	}
+	if filter.From.IsZero() {
+		filter.From = filter.To.Add(-30 * 24 * time.Hour)
+	}
+	if !filter.From.Before(filter.To) || filter.To.Sub(filter.From) > domain.MaxAuditQueryRange {
+		return nil, 0, domain.ErrInvalidInput
+	}
+	return s.repo.FindAll(ctx, filter, page, pageSize)
+}
+
 func normalizeActorType(actorType string, userID, apiKeyID *uint) string {
 	switch strings.TrimSpace(actorType) {
 	case domain.AuditActorUser, domain.AuditActorAPIKey, domain.AuditActorAnonymous, domain.AuditActorSystem:

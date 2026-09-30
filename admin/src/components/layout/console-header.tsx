@@ -18,6 +18,7 @@ export function ConsoleHeader() {
   const pageTitles: Record<string, string> = {
     '/console/preferences': t('navigation.preferences'),
     '/console/users': t('navigation.users'),
+    '/console/audit': t('navigation.audit'),
   };
   const currentPage = pageTitles[pathname] ?? t('navigation.overview');
   const themeLabel = dark ? t('preferences.light') : t('preferences.dark');

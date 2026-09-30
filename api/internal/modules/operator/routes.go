@@ -22,5 +22,7 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 		operator.POST("/users/:id/enable", h.EnableUser).Name("operator.users.enable").WhereNumber("id")
 		operator.POST("/users/:id/sessions/revoke", h.RevokeUserSessions).
 			Name("operator.user-sessions.revoke").WhereNumber("id")
+
+		operator.GET("/audit-logs", h.ListAuditLogs).Name("operator.audit-logs.index")
 	})
 }

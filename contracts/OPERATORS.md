@@ -109,6 +109,21 @@ and avatar are never returned.
 - An unknown account returns `404 USER.NOT_FOUND`; a non-numeric ID returns
   `400 COMMON.INVALID_INPUT`.
 
+## Audit Logs
+
+`GET /v1/operator/audit-logs` returns platform-wide audit history in the audit entry shape defined
+by [`AUDIT.md`](AUDIT.md), paginated, newest first (`created_at` then `id`, descending).
+
+| Query | Rule |
+|---|---|
+| `from`, `to` | RFC 3339 instants; `from` inclusive, `to` exclusive. `to` defaults to now, `from` to 30 days before `to`. The range must be ordered and at most 92 days |
+| `user_id` | Positive user ID of the recorded user |
+| `action`, `resource`, `method`, `request_id`, `status_code` | Exact matches with the same bounds as `AUDIT.md` |
+| `page`, `per_page` | `per_page` 1–100, default 15 |
+
+Invalid values and ranges return `400 COMMON.INVALID_INPUT`. The endpoint reads only; operators
+cannot modify or delete audit records.
+
 ## Configuration
 
 | Variable | Required | Rule |

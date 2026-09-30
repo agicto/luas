@@ -30,6 +30,9 @@ Opt-in only; nothing changes unless `operator` is added to `OPTIONAL_STARTERS`.
 - `domain.UserAdministrator` is a new user-starter seam used by `/v1/operator/users`. Disabling an
   account through it revokes the account's sessions in the same transaction (reason
   `account_disabled`); ending sessions uses the new revocation reason `operator`.
+- `domain.AuditLogRepository` gains `FindAll`, and `domain.AuditLogFilter` gains `UserID`, `From`, and
+  `To`. Custom audit repositories must implement `FindAll` (newest first, `From` inclusive, `To`
+  exclusive).
 
 ## 2026-09-30 — Dead code and dialect cleanup
 

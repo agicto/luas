@@ -55,12 +55,26 @@ type AuditLogFilter struct {
 	Method     string
 	RequestID  string
 	StatusCode int
+	// UserID, From, and To are used only by the platform-wide query; zero values mean unset.
+	UserID *uint
+	From   time.Time
+	To     time.Time
+}
+
+// MaxAuditQueryRange bounds one platform-wide audit query so scans stay on the time index.
+const MaxAuditQueryRange = 92 * 24 * time.Hour
+
+// AuditLogQuery is the platform-wide audit read seam for platform operators. Results are newest
+// first; From is inclusive and To is exclusive.
+type AuditLogQuery interface {
+	ListAuditLogs(ctx context.Context, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
 }
 
 // AuditLogRepository defines persistence for audit log records.
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *AuditLog) error
 	FindByUserID(ctx context.Context, userID uint, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
+	FindAll(ctx context.Context, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
 	PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error)
 }
 

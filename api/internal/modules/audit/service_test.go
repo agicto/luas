@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/zgiai/luas/api/internal/domain"
 )
@@ -24,6 +25,14 @@ func (m *mockRepository) Create(ctx context.Context, log *domain.AuditLog) error
 
 func (m *mockRepository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
 	args := m.Called(ctx, userID, filter, page, pageSize)
+	if args.Get(0) == nil {
+		return nil, args.Get(1).(int64), args.Error(2)
+	}
+	return args.Get(0).([]*domain.AuditLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *mockRepository) FindAll(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
+	args := m.Called(ctx, filter, page, pageSize)
 	if args.Get(0) == nil {
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
@@ -173,5 +182,29 @@ func TestServiceRecordRedactsSensitiveBusinessMetadata(t *testing.T) {
 	err := svc.Record(ctx, &domain.AuditLog{Method: "POST", Path: "/v1/example"})
 
 	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestServiceListAuditLogsBoundsTheTimeRange(t *testing.T) {
+	repo := new(mockRepository)
+	svc := NewService(repo)
+	now := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+
+	repo.On("FindAll", mock.Anything, mock.MatchedBy(func(filter domain.AuditLogFilter) bool {
+		return filter.To.Sub(filter.From) == 30*24*time.Hour
+	}), 1, 50).Return([]*domain.AuditLog{}, int64(0), nil).Once()
+	_, _, err := svc.ListAuditLogs(context.Background(), domain.AuditLogFilter{To: now}, 1, 50)
+	require.NoError(t, err, "a missing start defaults to 30 days before the end")
+
+	for name, filter := range map[string]domain.AuditLogFilter{
+		"reversed range": {From: now, To: now.Add(-time.Hour)},
+		"empty range":    {From: now, To: now},
+		"range too long": {From: now.Add(-domain.MaxAuditQueryRange - time.Hour), To: now},
+	} {
+		_, _, rangeErr := svc.ListAuditLogs(context.Background(), filter, 1, 50)
+		require.ErrorIs(t, rangeErr, domain.ErrInvalidInput, name)
+	}
+	_, _, err = svc.ListAuditLogs(context.Background(), domain.AuditLogFilter{}, 1, 101)
+	require.ErrorIs(t, err, domain.ErrInvalidInput)
 	repo.AssertExpectations(t)
 }
