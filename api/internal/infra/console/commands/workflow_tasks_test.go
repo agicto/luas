@@ -16,15 +16,15 @@ func TestWorkflowTaskCommandArguments(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "7b0c", id)
 
-	limit, err := intFlag([]string{"--limit=20"}, "limit", 50, 1, 200)
+	limit, err := intFlag([]string{"--limit=20"}, "limit", 50, 200)
 	require.NoError(t, err)
 	assert.Equal(t, 20, limit)
-	limit, err = intFlag(nil, "limit", 50, 1, 200)
+	limit, err = intFlag(nil, "limit", 50, 200)
 	require.NoError(t, err)
 	assert.Equal(t, 50, limit)
-	_, err = intFlag([]string{"--limit=201"}, "limit", 50, 1, 200)
+	_, err = intFlag([]string{"--limit=201"}, "limit", 50, 200)
 	require.Error(t, err)
-	_, err = intFlag([]string{"--limit=abc"}, "limit", 50, 1, 200)
+	_, err = intFlag([]string{"--limit=abc"}, "limit", 50, 200)
 	require.Error(t, err)
 }
 

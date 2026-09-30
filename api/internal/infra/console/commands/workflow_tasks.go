@@ -67,14 +67,14 @@ func flagValue(args []string, name string) (string, bool) {
 	return "", false
 }
 
-func intFlag(args []string, name string, fallback, minimum, maximum int) (int, error) {
+func intFlag(args []string, name string, fallback, maximum int) (int, error) {
 	raw, ok := flagValue(args, name)
 	if !ok {
 		return fallback, nil
 	}
 	value, err := strconv.Atoi(raw)
-	if err != nil || value < minimum || value > maximum {
-		return 0, fmt.Errorf("--%s must be an integer between %d and %d", name, minimum, maximum)
+	if err != nil || value < 1 || value > maximum {
+		return 0, fmt.Errorf("--%s must be an integer between 1 and %d", name, maximum)
 	}
 	return value, nil
 }
@@ -104,7 +104,7 @@ func (c *WorkflowTasksCommand) Usage() string {
 func (c *WorkflowTasksCommand) Run(args []string) error {
 	queue, _ := flagValue(args, "queue")
 	status, _ := flagValue(args, "status")
-	limit, err := intFlag(args, "limit", 50, 1, 200)
+	limit, err := intFlag(args, "limit", 50, 200)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func (c *WorkflowPruneCommand) Run(args []string) error {
 		}
 		retention = parsed
 	}
-	batch, err := intFlag(args, "batch", 1000, 1, 10000)
+	batch, err := intFlag(args, "batch", 1000, 10000)
 	if err != nil {
 		return err
 	}

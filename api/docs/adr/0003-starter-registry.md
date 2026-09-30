@@ -72,4 +72,5 @@ Grafana and deliberately deferred. Start one only when its trigger fires.
 | Module-owned configuration sections and validation | `config.go` grows past ~1,500 lines, or a fourth starter needs selection-dependent validation |
 | Downstream Wire extension point (Grafana `wireexts` pattern) | A downstream fork needs to add providers without editing `internal/wiring` |
 | Check module imports against declared manifest dependencies | More than ~15 modules, or the first undeclared cross-module import |
+| Starter start/stop lifecycle hooks with dependency-ordered shutdown | The first starter that runs background work inside the HTTP process; today the kernel stops the server, tracing, and database in order, and workers are separate commands |
 | Re-evaluate compile-time DI | See [ADR 0014](0014-wire-maintenance-posture.md) |
