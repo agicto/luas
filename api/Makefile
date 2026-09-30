@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check route-catalog-check clean test test-kest test-race test-race-critical test-postgres-compatibility benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check route-catalog-check wire-check clean test test-kest test-race test-race-critical test-postgres-compatibility benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -197,6 +197,15 @@ generate:
 wire:
 	@echo "Running Wire..."
 	cd internal/wiring && go tool wire
+
+# Fail when wire_gen.go differs from what the current providers generate. The file is restored
+# afterwards, so the check never rewrites the working tree.
+wire-check:
+	@snapshot=$$(mktemp) && cp internal/wiring/wire_gen.go "$$snapshot" && \
+	(cd internal/wiring && go tool wire >/dev/null 2>&1) ; \
+	if cmp -s "$$snapshot" internal/wiring/wire_gen.go; then rm -f "$$snapshot"; else \
+	diff -u "$$snapshot" internal/wiring/wire_gen.go; cp "$$snapshot" internal/wiring/wire_gen.go; rm -f "$$snapshot"; \
+	echo "wire_gen.go is stale: run 'make wire' and commit the result" >&2; exit 1; fi
 
 # Generate mocks
 mock:
