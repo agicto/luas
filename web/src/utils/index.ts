@@ -1,12 +1,6 @@
 /**
- * Utility functions index
- * Export all utility functions from this file
+ * Shared UI utilities. Keep this barrel limited to helpers with real callers; feature-specific
+ * helpers belong in the owning feature.
  */
 
-export * from './string';
-export * from './date';
-export * from './object';
-export * from './array';
-export * from './validation';
 export * from './cn';
-export * from './event-bus';
