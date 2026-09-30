@@ -259,33 +259,27 @@ luas/api/
 |   |-- server/               # HTTP server entry point
 |   `-- luas/                 # Operator CLI entry point
 |-- internal/
-|   |-- app/                  # Application aggregate
-|   |-- bootstrap/            # Startup and lifecycle
-|   |-- domain/               # Domain objects and errors
-|   |-- infra/                # Shared infrastructure
-|   |-- modules/              # Business starters
-|   `-- wiring/               # Wire dependency injection
-|-- pkg/                      # Public reusable packages
-|-- routes/                   # Global route entry point
+|   |-- app/                  # Assembled application root
+|   |-- bootstrap/            # Startup, HTTP kernel, and shutdown
+|   |-- capabilities/         # Framework-independent technical capabilities
+|   |-- domain/               # Standard-library-only domain vocabulary and errors
+|   |-- infra/                # Runtime infrastructure bound to Gin, GORM, and config
+|   |-- modules/              # Route-owning default and optional starters
+|   |-- starter/              # Starter catalog, selection, and registry
+|   `-- wiring/               # Wire injectors and generated wire_gen.go
+|-- pkg/                      # Framework-agnostic helpers
+|-- routes/                   # Core route entry point
 |-- database/
-|   |-- migrations/           # Database migrations
-|   `-- seeders/              # Data initialization
-`-- tests/
-    |-- feature/
-    |-- integration/
-    `-- unit/
+|   |-- migrations/           # Frozen, versioned PostgreSQL migrations
+|   `-- seeders/              # Development data
+`-- tests/                    # Cross-package feature, integration, and e2e suites
 ```
 
 ## Module Conventions
 
-Default and optional ownership boundaries:
-
-- `internal/modules/user`: default authentication starter with routes, migrations, and seeders.
-- `internal/modules/apikey`: default API key starter with routes, migrations, and the `api_key`
-  middleware group.
-- `internal/modules/audit`: default audit starter for global write capture and current-user history.
-- `internal/modules/asset`: optional private asset starter for ownership, metadata, inspection,
-  lifecycle, and deletion; object bytes remain owned by the storage capability.
+Default starters (`audit`, `apikey`, `user`) are always active; optional starters are added with
+`OPTIONAL_STARTERS`. The authoritative catalog, dependencies, and ownership table live in
+[`internal/modules/README.md`](internal/modules/README.md).
 
 A business starter normally follows this eight-file structure:
 

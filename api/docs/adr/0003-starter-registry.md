@@ -60,3 +60,16 @@ Update (2026-09-30):
 - Disabled optional starter code remains compiled into the binary so runtime activation stays a
   deployment configuration operation; binary-size impact must be measured when adding one.
 - `OPTIONAL_STARTERS` is restart-scoped configuration, not a runtime feature flag.
+
+## Revisit Triggers
+
+These assembly changes were evaluated in 2026-09 against Kratos, go-zero, uber-go/fx, Goravel, and
+Grafana and deliberately deferred. Start one only when its trigger fires.
+
+| Change | Trigger |
+|---|---|
+| `assembly.CommandModule` so modules own operator commands and workers; shrink `app.Application` port fields | Operator commands exceed ~25, or a downstream fork reports conflicts in `operatorcommands/manifest.go` or `app.go` |
+| Module-owned configuration sections and validation | `config.go` grows past ~1,500 lines, or a fourth starter needs selection-dependent validation |
+| Downstream Wire extension point (Grafana `wireexts` pattern) | A downstream fork needs to add providers without editing `internal/wiring` |
+| Check module imports against declared manifest dependencies | More than ~15 modules, or the first undeclared cross-module import |
+| Re-evaluate compile-time DI | See [ADR 0014](0014-wire-maintenance-posture.md) |
