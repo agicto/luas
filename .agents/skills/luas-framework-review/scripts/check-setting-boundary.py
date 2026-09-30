@@ -96,8 +96,8 @@ def main() -> int:
         failures,
         "api/internal/modules/setting/provider.go",
         (
-            '"setting"',
-            'WithStarterDependencies("user", "audit", "organization")',
+            'config.StarterSetting',
+            'WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization)',
             "2026_07_15_040000_create_settings_table",
             "wire.Bind(new(domain.SettingReader)",
             "wire.Bind(new(domain.AppSettingWriter)",
@@ -214,7 +214,7 @@ def main() -> int:
             'return "setting:list"',
             'return "setting:set --key=<key> --value=<json-scalar> --expected-version=<version>"',
             'return "setting:reset --key=<key> --expected-version=<version>"',
-            'slices.Contains(cfg.Starters.Optional, "setting")',
+            'cfg.Starters.Selected(config.StarterSetting)',
             "JSON number must be an integer",
             '[]string{"KEY", "KIND", "VISIBILITY", "VERSION", "SOURCE"}',
             "recordSettingCommandAudit(",
@@ -227,8 +227,8 @@ def main() -> int:
         "api/database/migrations/2026_07_15_040000_create_settings_table.go",
         (
             "UseTransaction: true",
-            "AutoMigrate(&setting.SettingPO{})",
-            "DropTable(&setting.SettingPO{})",
+            'CREATE TABLE settings (',
+            'DROP TABLE IF EXISTS settings CASCADE',
         ),
     )
     require_all(

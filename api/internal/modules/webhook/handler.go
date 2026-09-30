@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	httphandler "github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
@@ -38,7 +39,7 @@ func NewHandler(service *service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) Name() string { return "webhook" }
+func (h *Handler) Name() string { return config.StarterWebhook }
 
 // EventTypes returns the finite code-owned subscription catalog.
 // luas:bounded-list max=128 reason=finite-code-owned-catalog

@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -23,7 +24,7 @@ var ProviderSet = wire.NewSet(
 // NewStarterManifest describes the optional organization starter surfaces.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"organization",
+		config.StarterOrganization,
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames(
 			"2026_07_14_000000_create_organizations_tables",

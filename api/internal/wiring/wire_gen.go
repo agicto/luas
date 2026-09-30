@@ -115,7 +115,19 @@ func InitApplication() (*app.Application, error) {
 	sender := webhook.NewSender(configConfig, targetPolicy)
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, configConfig)
 	webhookHandler := webhook.NewHandler(webhookService)
-	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler, webhookHandler)
+	handlers := &starter.Handlers{
+		Audit:        handler,
+		APIKey:       apikeyHandler,
+		User:         userHandler,
+		Organization: organizationHandler,
+		Permission:   permissionHandler,
+		Notification: notificationHandler,
+		Asset:        assetHandler,
+		Setting:      settingHandler,
+		Usage:        usageHandler,
+		Webhook:      webhookHandler,
+	}
+	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handlers)
 	if err != nil {
 		return nil, err
 	}
@@ -231,7 +243,19 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	sender := webhook.NewSender(cfg, targetPolicy)
 	webhookService := webhook.NewService(webhookCatalog, webhookRepository, secretProtector, targetPolicy, sender, cfg)
 	webhookHandler := webhook.NewHandler(webhookService)
-	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handler, apikeyHandler, userHandler, organizationHandler, permissionHandler, notificationHandler, assetHandler, settingHandler, usageHandler, webhookHandler)
+	handlers := &starter.Handlers{
+		Audit:        handler,
+		APIKey:       apikeyHandler,
+		User:         userHandler,
+		Organization: organizationHandler,
+		Permission:   permissionHandler,
+		Notification: notificationHandler,
+		Asset:        assetHandler,
+		Setting:      settingHandler,
+		Usage:        usageHandler,
+		Webhook:      webhookHandler,
+	}
+	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handlers)
 	if err != nil {
 		return nil, err
 	}

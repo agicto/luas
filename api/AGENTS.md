@@ -68,7 +68,12 @@ Capabilities should not gain HTTP files merely to match that template.
 - Prefer concrete implementations and constructors. Add interfaces only at
   real replacement or test seams.
 - Keep Wire provider sets near the implementation they assemble and regenerate
-  Wire output when provider graphs change.
+  Wire output when provider graphs change; CI rejects a stale `wire_gen.go`.
+- Dependencies flow through constructors and Wire providers. Do not add global
+  service locators, registries, or event dispatchers; publish events through
+  the injected `events.EventBus`.
+- Name starters with the `config.Starter*` constants and check selection with
+  `cfg.Starters.Selected(...)`; never compare starter names as literals.
 - Never introduce reverse imports from domain/core layers into modules.
 
 ### Database Dialect
@@ -80,6 +85,9 @@ Capabilities should not gain HTTP files merely to match that template.
 - Unit tests that do not need SQL semantics use an existing repository seam or
   test double. Tests that validate SQL, constraints, transactions, locking,
   migrations, or query shape use disposable PostgreSQL.
+- Versioned migrations are frozen history: new migrations use SQL or a
+  migration-local snapshot struct, never `AutoMigrate` on a live module PO.
+  The golden schema test in `database/migrations` guards the result.
 
 ## Naming
 
@@ -152,8 +160,9 @@ go test ./internal/modules/<module>/...
 # Static + focused tests (scope is optional)
 bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 ./internal/modules/<module>/...
 
-# Generated dependency graph
+# Generated dependency graph (regenerate, then prove it is committed)
 make wire
+make wire-check
 
 # Runtime route assembly
 make route-catalog-check

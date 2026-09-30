@@ -113,6 +113,9 @@ jobs:
           LUAS_TEST_POSTGRES_DSN: postgres://luas:luas_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_test?sslmode=disable
         run: bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1
 
+      - name: Verify Wire output is current
+        run: make wire-check
+
       - name: Verify runtime route catalog
         run: make route-catalog-check
 

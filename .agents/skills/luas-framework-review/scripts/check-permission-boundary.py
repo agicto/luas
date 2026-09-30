@@ -64,8 +64,8 @@ def main() -> int:
         failures,
         "api/internal/modules/permission/provider.go",
         (
-            '"permission"',
-            'WithStarterDependencies("organization")',
+            'config.StarterPermission',
+            'WithStarterDependencies(config.StarterOrganization)',
             "2026_07_15_010000_create_permission_tables",
             "wire.Bind(new(domain.PermissionAuthorizer)",
         ),
@@ -133,9 +133,9 @@ def main() -> int:
         "api/database/migrations/2026_07_15_010000_create_permission_tables.go",
         (
             "UseTransaction: true",
-            "permission.AccessRolePO{}",
-            "permission.AccessRolePermissionPO{}",
-            "permission.AccessRoleAssignmentPO{}",
+            'CREATE TABLE permission_roles (',
+            'CREATE TABLE permission_role_grants (',
+            'CREATE TABLE permission_role_assignments (',
         ),
     )
     require_all(

@@ -67,6 +67,13 @@ schema itself remains unresolved.
   starter/core assembly.
 - Align the PO only at the deploy stage where new code can safely depend on the
   new shape.
+- A released migration is history. Express its DDL as SQL or a migration-local
+  snapshot struct; never `AutoMigrate` a module's live PO, because a later PO
+  edit would silently change what the old migration creates.
+  `TestMigrationsProduceGoldenSchema` compares a fresh schema with
+  `database/migrations/testdata/schema.golden.sql`. Regenerate that file with
+  `LUAS_UPDATE_GOLDEN_SCHEMA=1` only in a change that adds a migration, and
+  review its diff as the schema change.
 
 ## Static First Pass
 

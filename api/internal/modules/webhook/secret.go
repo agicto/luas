@@ -3,7 +3,6 @@ package webhook
 import (
 	"encoding/base64"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/zgiai/luas/api/internal/capabilities/crypto"
@@ -28,7 +27,7 @@ func NewSecretProtector(cfg *config.Config) (*secretProtector, error) {
 	if cfg == nil {
 		return &secretProtector{}, nil
 	}
-	selected := slices.Contains(cfg.Starters.Optional, "webhook")
+	selected := cfg.Starters.Selected(config.StarterWebhook)
 	if !selected && strings.TrimSpace(cfg.Webhook.EncryptionKey) == "" {
 		return &secretProtector{}, nil
 	}

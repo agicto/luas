@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -22,8 +23,8 @@ var ProviderSet = wire.NewSet(
 // NewStarterManifest describes permission runtime and migration ownership.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"permission",
-		assembly.WithStarterDependencies("organization"),
+		config.StarterPermission,
+		assembly.WithStarterDependencies(config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_010000_create_permission_tables"),
 	)

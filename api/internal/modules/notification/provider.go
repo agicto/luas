@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
@@ -31,8 +32,8 @@ func ProvideEventPublisher(bus *events.EventBus) eventPublisher { return bus }
 // NewStarterManifest describes notification routes, dependencies, and persistence ownership.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"notification",
-		assembly.WithStarterDependencies("user", "audit"),
+		config.StarterNotification,
+		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_020000_create_notification_tables"),
 	)

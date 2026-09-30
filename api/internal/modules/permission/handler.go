@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	"github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
@@ -27,7 +28,7 @@ func NewHandler(service *service, guard *Guard) *Handler {
 }
 
 // Name returns the starter module name.
-func (h *Handler) Name() string { return "permission" }
+func (h *Handler) Name() string { return config.StarterPermission }
 
 // GetEffective returns the current persisted permission context.
 func (h *Handler) GetEffective(c *gin.Context) {

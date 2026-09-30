@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
@@ -34,7 +35,7 @@ func NewHandler(service Service) *Handler {
 
 // Name returns the module name.
 func (h *Handler) Name() string {
-	return "audit"
+	return config.StarterAudit
 }
 
 // RegisterMiddleware registers the global audit alias.

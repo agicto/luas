@@ -57,7 +57,12 @@ pnpm version comes from that project's `packageManager`; the setup action receiv
 the same exact pnpm version, so an older developer-global binary cannot silently rewrite or
 interpret either lockfile.
 
-The API job runs `make route-catalog-check` after its build/lint/test tier. That command assembles
+The API job runs `make wire-check` after its build/lint/test tier. It regenerates the Wire graph
+and fails when the committed `internal/wiring/wire_gen.go` is stale, so a provider-set edit cannot
+merge without its generated output (see
+[`../api/docs/adr/0014-wire-maintenance-posture.md`](../api/docs/adr/0014-wire-maintenance-posture.md)).
+
+The API job then runs `make route-catalog-check`. That command assembles
 the real configured runtime, emits schema-versioned JSON, validates its closed shape and ordering,
 and requires core plus default-starter routes. Route inventory therefore cannot pass CI from a
 parallel source parser that omits health, conditional metrics, or optional starter registration.
@@ -65,7 +70,9 @@ parallel source parser that omits health, conditional metrics, or optional start
 The complete API gate runs on PostgreSQL 16. A separate compatibility matrix uses immutable images
 for PostgreSQL 15, 17, and 18 and runs `make test-postgres-compatibility`. That focused command owns
 migrations, repositories, transaction and locking behavior, optional starter persistence, and
-PostgreSQL durable tasks without repeating unrelated browser or pure-Go checks. The support window
+PostgreSQL durable tasks without repeating unrelated browser or pure-Go checks. On every supported
+version, `database/migrations` compares the schema a fresh database receives from all migrations
+with `testdata/schema.golden.sql`, and proves that a full reset rolls back to an empty schema. The support window
 is documented in [`../api/docs/DATABASE.md`](../api/docs/DATABASE.md) and must move forward before an
 upstream major version reaches end of life.
 

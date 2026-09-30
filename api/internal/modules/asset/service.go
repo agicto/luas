@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -81,7 +80,7 @@ func NewTransferSigner(cfg *config.Config) (*transferSigner, error) {
 	if cfg == nil {
 		return nil, fmt.Errorf("config is required for asset transfer signing")
 	}
-	if !slices.Contains(cfg.Starters.Optional, "asset") {
+	if !cfg.Starters.Selected(config.StarterAsset) {
 		return &transferSigner{}, nil
 	}
 	if cfg.ObjectStorage.Driver != "local" {
@@ -100,7 +99,7 @@ func NewService(
 ) *service {
 	value := &service{store: store, objects: objects, inspector: inspector, transferSigner: signer}
 	if cfg != nil {
-		value.enabled = slices.Contains(cfg.Starters.Optional, "asset")
+		value.enabled = cfg.Starters.Selected(config.StarterAsset)
 		value.appURL = cfg.App.URL
 		value.maxBytes = cfg.Asset.MaxBytes
 		value.uploadGrantTTL = cfg.Asset.UploadGrantTTL

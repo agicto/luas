@@ -210,7 +210,7 @@ def main() -> int:
     require_all(
         failures,
         "api/database/migrations/2026_04_27_000003_create_authentication_sessions_table.go",
-        ("AuthenticationSessionPO", "UseTransaction: true", "DropTable"),
+        ('CREATE TABLE authentication_sessions (', "UseTransaction: true", 'DROP TABLE IF EXISTS authentication_sessions CASCADE'),
     )
     require_all(
         failures,

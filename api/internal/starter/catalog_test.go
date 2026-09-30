@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -188,4 +189,16 @@ func testManifestWithDependencies(name string, dependencies ...string) assembly.
 		name,
 		assembly.WithStarterDependencies(dependencies...),
 	)
+}
+
+func TestAvailableCatalogNamesMatchConfigStarterVocabulary(t *testing.T) {
+	catalog, err := AvailableCatalog()
+	require.NoError(t, err)
+
+	names := make([]string, 0, len(catalog.Entries()))
+	for _, entry := range catalog.Entries() {
+		names = append(names, entry.Name)
+	}
+	assert.ElementsMatch(t, config.StarterNames(), names,
+		"every starter manifest needs a config.Starter* constant and every constant needs a manifest")
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
@@ -27,8 +28,8 @@ var ProviderSet = wire.NewSet(
 // NewStarterManifest describes webhook dependencies, routes, and persistence ownership.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"webhook",
-		assembly.WithStarterDependencies("user", "audit", "organization"),
+		config.StarterWebhook,
+		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_060000_create_webhook_tables"),
 	)

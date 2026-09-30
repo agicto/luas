@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/infra/email"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
@@ -37,7 +38,7 @@ func NewUserMailer(service *email.Service) UserMailer {
 // NewStarterManifest describes how the user starter participates in the default scaffold.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		"user",
+		config.StarterUser,
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames(
 			"2025_06_18_000000_create_users_table",
