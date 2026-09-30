@@ -1,214 +1,118 @@
 # Database Migrations
 
-## Overview
+Luas uses timestamped, versioned PostgreSQL migrations. Each migration is a Go type with `Up` and
+`Down` methods, registered by `init()`, and owned by one starter manifest. Seeders are described in
+[SEEDERS.md](SEEDERS.md); database runtime policy lives in [../docs/DATABASE.md](../docs/DATABASE.md).
 
-Luas uses a Laravel-style migration system with:
-- **Timestamped filenames** for automatic ordering
-- **Auto-registration** using `init()` functions
-- **CLI generator** for creating new migrations
-- **Rollback support** for database changes
+## Rules
 
-## Directory Structure
+1. **A released migration is history.** Express its DDL as SQL (run through `execStatements`) or with
+   the schema builder, never with `AutoMigrate` on a module's live persistence struct. A later model
+   edit must not change what an applied migration creates.
+2. **One rollout concern per migration.** Keep expansion, backfill, and destructive contraction in
+   separate migrations. Review rollout risk with the `sql-migration-review` skill.
+3. **Every migration implements `Down`.** A full reset must return the database to an empty schema.
+4. **Never edit an applied migration** except for a schema-neutral fix proven by the golden test.
+   Change behavior with a new migration.
 
+## Layout
+
+```text
+database/migrations/
+├── migrations.go                 # init()-populated registry
+├── sql.go                        # execStatements helper for frozen DDL
+├── 2025_06_18_000000_create_users_table.go
+├── ...
+├── schema_golden_postgres_test.go
+├── frozen_history_test.go
+└── testdata/schema.golden.sql    # schema a fresh database must receive
 ```
-database/
-└── migrations/
-    ├── migrations.go                              # Registry (auto-populated)
-    ├── 2025_06_18_000000_create_users_table.go
-    ├── 2025_06_18_000001_seed_default_users.go
-    ├── 2026_04_06_000000_create_api_keys_table.go
-    ├── 2026_04_26_000000_create_audit_logs_table.go
-    ├── 2026_04_27_000000_create_password_reset_tokens_table.go
-    ├── 2026_04_27_000001_add_unique_index_to_users_username.go
-    └── 2026_04_27_000002_add_business_fields_to_audit_logs.go
-```
 
-## Creating Migrations
+Filenames follow `YYYY_MM_DD_HHMMSS_description.go`; the timestamp orders execution.
 
-### Generate Migration File
+## Writing A Migration
 
 ```bash
-./luas make:migration create_posts_table
+./luas make:migration create_posts_table --create=posts
 ```
 
-**Output:**
-```
-✓ Migration created: database/migrations/2025_12_26_012920_create_posts_table.go
-ℹ Migration ID: 2025_12_26_012920_create_posts_table
-```
-
-### Generated File Structure
-
-```go
-package migrations
-
-import (
-    "github.com/go-gormigrate/gormigrate/v2"
-    "gorm.io/gorm"
-)
-
-func init() {
-    register(&gormigrate.Migration{
-        ID: "2025_12_26_012920_create_posts_table",
-        Migrate: func(db *gorm.DB) error {
-            // TODO: Implement migration logic
-            // Example: return db.AutoMigrate(&YourModel{})
-            return nil
-        },
-        Rollback: func(db *gorm.DB) error {
-            // TODO: Implement rollback logic
-            // Example: return db.Migrator().DropTable("your_table")
-            return nil
-        },
-    })
-}
-```
-
-### Implement Migration Logic
+The generator writes a registered type. Fill in `Up` and `Down` with frozen DDL:
 
 ```go
 func init() {
-    register(&gormigrate.Migration{
-        ID: "2025_12_26_012920_create_posts_table",
-        Migrate: func(db *gorm.DB) error {
-            return db.AutoMigrate(&blog.Post{})
-        },
-        Rollback: func(db *gorm.DB) error {
-            return db.Migrator().DropTable("posts")
-        },
-    })
+	register("2026_10_01_000000_create_posts_table", &createPostsTable{
+		BaseMigration: migration.BaseMigration{UseTransaction: true},
+	})
+}
+
+type createPostsTable struct {
+	migration.BaseMigration
+}
+
+// Up creates the posts table.
+func (m *createPostsTable) Up(db *gorm.DB) error {
+	return execStatements(db,
+		`CREATE TABLE posts (
+		    id bigserial NOT NULL,
+		    user_id bigint NOT NULL,
+		    title varchar(200) NOT NULL,
+		    created_at timestamptz NOT NULL,
+		    CONSTRAINT posts_pkey PRIMARY KEY (id)
+		)`,
+		`CREATE INDEX idx_posts_user_created ON posts (user_id, created_at DESC)`,
+		`ALTER TABLE posts ADD CONSTRAINT fk_posts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE`,
+	)
+}
+
+// Down drops the posts table.
+func (m *createPostsTable) Down(db *gorm.DB) error {
+	return execStatements(db, `DROP TABLE IF EXISTS posts CASCADE`)
 }
 ```
 
-## Running Migrations
+`CREATE INDEX CONCURRENTLY` cannot run in a transaction; such a migration sets
+`UseTransaction: false` (see `2026_07_25_000000_add_audit_retention_index.go`).
+
+## Ownership
+
+A migration runs only when its starter is active. The owning module lists it in its manifest:
+
+```go
+assembly.WithStarterMigrationNames("2026_10_01_000000_create_posts_table")
+```
+
+HTTP startup, `db:migrate`, and seeders resolve the same `OPTIONAL_STARTERS` selection, so every
+replica and pre-deploy job must use an identical selection.
+
+## Commands
+
+| Command | Alias | Purpose |
+|---|---|---|
+| `db:migrate [--pretend] [--step] [--force]` | `migrate` | Run pending migrations |
+| `db:rollback [--step=N] [--batch=N]` | `migrate:rollback` | Roll back the last batch or N steps |
+| `db:status` | `migrate:status` | Show ran and pending migrations |
+| `db:reset` | `migrate:reset` | Roll back every migration |
+| `db:fresh [--seed]` | `migrate:fresh` | Drop all tables and migrate again |
+
+Destructive commands refuse to run in production without `--force`. Executed migrations are
+recorded in the `migrations` table with their batch number.
+
+## Verification
+
+The migration package ships three guards:
+
+- `TestMigrationsProduceGoldenSchema` compares a freshly migrated database with
+  `testdata/schema.golden.sql`.
+- `TestMigrationsRollBackToEmptySchema` proves every `Down` reverses its `Up`.
+- `TestMigrationsDoNotDependOnLiveModelPackages` forbids importing module or capability packages.
 
 ```bash
-./luas migrate
+LUAS_TEST_POSTGRES_DSN=postgres://... go test ./database/migrations
 ```
 
-**Output:**
+When a change adds a migration, regenerate the golden file and review its diff as the schema change:
+
+```bash
+LUAS_UPDATE_GOLDEN_SCHEMA=1 LUAS_TEST_POSTGRES_DSN=postgres://... \
+  go test ./database/migrations -run TestMigrationsProduceGoldenSchema
 ```
-ℹ Running migrations...
-✓ Migrations completed
-✓ Done in 0s
-```
-
-## Migration Naming Convention
-
-**Format**: `YYYY_MM_DD_HHMMSS_description.go`
-
-**Examples:**
-- `2025_06_18_000000_create_users_table.go` - Create users table
-- `2025_06_18_000001_seed_default_users.go` - Seed default users
-- `2025_12_26_012920_add_status_to_posts.go` - Add column to existing table
-
-**Benefits:**
-- ✅ Automatic chronological ordering
-- ✅ No naming conflicts (timestamp ensures uniqueness)
-- ✅ Clear migration history
-
-## Auto-Registration
-
-Migrations are automatically registered using `init()` functions:
-
-```go
-func init() {
-    register(&gormigrate.Migration{
-        ID: "2025_12_26_012920_create_posts_table",
-        // ...
-    })
-}
-```
-
-**No manual registration needed!** The `register()` function adds migrations to the global registry automatically when the package is imported.
-
-## Migration Tracking
-
-All executed migrations are tracked in the `migrations` table:
-
-```sql
-SELECT * FROM migrations;
-```
-
-**Output:**
-```
-| id                                      |
-|-----------------------------------------|
-| 2025_06_18_000000_create_users_table    |
-| 2025_06_18_000001_seed_default_users    |
-| 2026_04_06_000000_create_api_keys_table |
-| ...                                     |
-```
-
-## Default vs Optional Migrations
-
-- `starter.DefaultMigrations()` only registers migrations enabled by the default starters.
-- `migrations.All()` returns the migration catalog registered in `database/migrations`.
-
-The current default scaffold runs `user`, `apikey`, and `audit` starter migrations. RBAC/permission
-is a planned optional starter direction, but there is no runnable permission migration set in the
-current tree.
-
-## Best Practices
-
-1. **One Migration, One Purpose**
-   - Each migration should do one thing (create table, add column, etc.)
-
-2. **Always Provide Rollback**
-   - Every migration should have a working `Rollback` function
-
-3. **Use Idempotent Operations**
-   - Use `FirstOrCreate` for seeds to allow re-running
-
-4. **Test Migrations**
-   - Test both `Migrate` and `Rollback` functions
-
-5. **Never Edit Existing Migrations**
-   - Once deployed, create a new migration instead
-
-## Common Patterns
-
-### Create Table
-```go
-Migrate: func(db *gorm.DB) error {
-    return db.AutoMigrate(&YourModel{})
-}
-```
-
-### Add Column
-```go
-Migrate: func(db *gorm.DB) error {
-    return db.Migrator().AddColumn(&User{}, "Status")
-}
-```
-
-### Seed Data
-```go
-Migrate: func(db *gorm.DB) error {
-    users := []User{
-        {Username: "admin", Email: "admin@example.com"},
-    }
-    for _, user := range users {
-        db.FirstOrCreate(&user, User{Username: user.Username})
-    }
-    return nil
-}
-```
-
-### Drop Table
-```go
-Rollback: func(db *gorm.DB) error {
-    return db.Migrator().DropTable("your_table")
-}
-```
-
-## Troubleshooting
-
-### Migration Already Exists
-If you see "migration file already exists", the timestamp collision is extremely rare. Wait a second and try again.
-
-### Migration Not Running
-Ensure the migration file is in `database/migrations/` and has an `init()` function that calls `register()`.
-
-### Rollback Not Working
-Check that your `Rollback` function properly reverses the `Migrate` operation.

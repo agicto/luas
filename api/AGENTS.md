@@ -145,6 +145,8 @@ Capabilities should not gain HTTP files merely to match that template.
 | Workflow lifecycle | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
 | Deployment | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
 | Route discovery | [docs/ROUTE_DISCOVERY.md](docs/ROUTE_DISCOVERY.md) |
+| Architecture decisions | [docs/adr/README.md](docs/adr/README.md) |
+| Migrations and seeders | [database/README.md](database/README.md) |
 | Capability behavior | The matching file under `docs/` and `../contracts/` |
 
 Open the matching capability document only when changing that capability.
