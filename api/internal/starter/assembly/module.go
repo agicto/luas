@@ -3,6 +3,7 @@ package assembly
 import (
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/zgiai/luas/api/pkg/response"
 )
 
 // Module is the minimal assembly seam shared by all Luas modules.
@@ -34,4 +35,11 @@ type MiddlewareModule interface {
 type EventModule interface {
 	Module
 	RegisterEvents(bus *events.EventBus)
+}
+
+// ErrorModule maps the module's domain errors to public HTTP status codes and error codes, so a
+// starter owns its error contract without editing core bootstrap.
+type ErrorModule interface {
+	Module
+	RegisterErrorMappings(mapper *response.ErrorMapper)
 }

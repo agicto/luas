@@ -27,6 +27,7 @@ import (
 	"github.com/zgiai/luas/api/internal/infra/ratelimit"
 	"github.com/zgiai/luas/api/internal/infra/tracing"
 	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/zgiai/luas/api/pkg/response"
 	"github.com/zgiai/luas/api/routes"
 )
 
@@ -42,7 +43,7 @@ type HttpKernel struct {
 func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Set Mode
 	setGinMode(application.Config.Server.Mode)
-	registerDefaultDomainErrorMappings()
+	registerDomainErrorMappings(response.DefaultErrorMapper, application.Starters)
 
 	// Create Engine
 	r := gin.New()

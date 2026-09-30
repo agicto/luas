@@ -42,6 +42,7 @@ Modules expose only the capabilities they actually need:
 - `assembly.RouteModule`: add `RegisterRoutes()`
 - `assembly.MiddlewareModule`: add `RegisterMiddleware()`
 - `assembly.EventModule`: add `RegisterEvents()`
+- `assembly.ErrorModule`: add `RegisterErrorMappings()` to own the starter's error contract
 
 These interfaces live in `internal/starter/assembly`. The starter registry dispatches these
 capabilities centrally, so route/bootstrap code does not need to know which optional hooks each

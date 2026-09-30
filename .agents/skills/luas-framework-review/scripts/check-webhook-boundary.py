@@ -131,7 +131,7 @@ def main() -> int:
     )
     require_all(
         failures,
-        "api/internal/bootstrap/domain_error_mappings.go",
+        "api/internal/modules/webhook/error_mappings.go",
         (
             "ErrWebhookEndpointNotFound, http.StatusNotFound",
             "ErrWebhookDeliveryNotFound, http.StatusNotFound",

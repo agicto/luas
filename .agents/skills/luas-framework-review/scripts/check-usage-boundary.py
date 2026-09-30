@@ -112,7 +112,7 @@ def main() -> int:
     )
     require_all(
         failures,
-        "api/internal/bootstrap/domain_error_mappings.go",
+        "api/internal/modules/usage/error_mappings.go",
         (
             "ErrUsageMetricNotFound, http.StatusNotFound",
             "ErrUsageIdempotencyConflict, http.StatusConflict",
