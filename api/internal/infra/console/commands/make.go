@@ -1,7 +1,9 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
+	"go/format"
 	"os"
 	"path/filepath"
 	"strings"
@@ -302,55 +304,181 @@ func (c *MakeModuleCommand) Run(args []string) error {
 	}
 
 	name := args[0]
-	snake := toSnakeCase(name)
-
-	// Target directory: internal/modules/[name]
-	dir := filepath.Join("internal", "modules", snake)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	data := moduleScaffoldData(name)
+	if err := validateModuleName(data); err != nil {
 		return err
 	}
-	domainDir := filepath.Join("internal", "domain")
-	if err := os.MkdirAll(domainDir, 0755); err != nil {
-		return err
+	snake := data["Package"]
+	data["MigrationID"] = migration.GenerateTimestamp() + "_create_" + data["TableName"] + "_table"
+
+	dir := filepath.Join("internal", "modules", snake)
+	if _, err := os.Stat(dir); err == nil {
+		return fmt.Errorf("module directory already exists: %s", dir)
+	}
+	for _, target := range []string{dir, filepath.Join("internal", "domain"), filepath.Join("database", "migrations")} {
+		if err := os.MkdirAll(target, 0o755); err != nil {
+			return err
+		}
 	}
 
 	files := []struct {
-		name     string
+		path     string
 		template string
 	}{
-		{"model.go", modelTemplate},
-		{"service.go", serviceTemplate},
-		{"handler.go", handlerTemplate},
-		{"repository.go", repositoryTemplate},
-		{"dto.go", dtoTemplate},
-		{"routes.go", routesTemplate},
-		{"service_test.go", serviceTestTemplate},
-		{"provider.go", providerTemplate},
+		{filepath.Join("internal", "domain", snake+".go"), domainTemplate},
+		{filepath.Join(dir, "model.go"), modelTemplate},
+		{filepath.Join(dir, "service.go"), serviceTemplate},
+		{filepath.Join(dir, "handler.go"), handlerTemplate},
+		{filepath.Join(dir, "repository.go"), repositoryTemplate},
+		{filepath.Join(dir, "dto.go"), dtoTemplate},
+		{filepath.Join(dir, "routes.go"), routesTemplate},
+		{filepath.Join(dir, "error_mappings.go"), errorMappingsTemplate},
+		{filepath.Join(dir, "service_test.go"), serviceTestTemplate},
+		{filepath.Join(dir, "provider.go"), providerTemplate},
+		{filepath.Join("database", "migrations", data["MigrationID"]+".go"), migrationTemplate},
 	}
-
-	data := moduleScaffoldData(name)
-
-	domainPath := filepath.Join(domainDir, snake+".go")
-	if err := generateFile(domainPath, domainTemplate, data); err != nil {
-		return err
-	}
-	c.output.Success("Created: %s", domainPath)
-
 	for _, f := range files {
-		path := filepath.Join(dir, f.name)
-		if err := generateFile(path, f.template, data); err != nil {
+		if err := generateFile(f.path, f.template, data); err != nil {
 			return err
 		}
-		c.output.Success("Created: %s", path)
+		c.output.Success("Created: %s", f.path)
 	}
 
-	c.output.Info("Module '%s' created successfully!", name)
-	c.output.Info("Next steps:")
-	c.output.Info("  1. Refine internal/domain/%s.go with real business fields", snake)
-	c.output.Info("  2. Decide whether the module is a starter, optional starter, or example")
-	c.output.Info("  3. If it becomes a default starter, add its starter manifest to internal/starter/defaults.go")
-	c.output.Info("  4. Run make wire and go test ./...")
+	wired, err := wireOptionalStarter(data)
+	if err != nil {
+		c.output.Warning("Could not wire the starter automatically: %v", err)
+	}
+	for _, path := range wired {
+		c.output.Success("Updated: %s", path)
+	}
+
+	c.output.Info("Optional starter '%s' created in %s. Next steps:", data["PackageName"], dir)
+	if err != nil {
+		c.output.Info("  - Add %s to internal/infra/config/starters.go and the starter to internal/starter/defaults.go", data["StarterConst"])
+	}
+	c.output.Info("  1. make wire")
+	c.output.Info("  2. LUAS_UPDATE_GOLDEN_SCHEMA=1 go test ./database/migrations -run TestMigrationsProduceGoldenSchema (with LUAS_TEST_POSTGRES_DSN)")
+	c.output.Info("  3. Document the HTTP contract under ../contracts/ and add the starter to the catalog checks")
+	c.output.Info("  4. Enable it with OPTIONAL_STARTERS=%s and run go test ./...", data["PackageName"])
+	c.output.Info("Routes require a signed-in user but no ownership: add record ownership before production use.")
 	return nil
+}
+
+// reservedModuleNames would shadow identifiers used where the starter is wired in.
+var reservedModuleNames = map[string]bool{
+	"assembly": true, "config": true, "domain": true, "fmt": true, "migration": true,
+	"response": true, "router": true, "seeders": true, "starter": true, "wire": true,
+}
+
+func validateModuleName(data map[string]string) error {
+	pkg := data["PackageName"]
+	if pkg == "" || !isLowerAlnum(pkg) || pkg[0] < 'a' || pkg[0] > 'z' {
+		return fmt.Errorf("module name must start with a letter and contain only letters and digits")
+	}
+	if reservedModuleNames[pkg] {
+		return fmt.Errorf("module name %q is reserved", pkg)
+	}
+	return nil
+}
+
+func isLowerAlnum(value string) bool {
+	for _, r := range value {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') {
+			return false
+		}
+	}
+	return true
+}
+
+// wireOptionalStarter registers the generated starter in the starter vocabulary and the optional
+// catalog. Each edit is a small, anchored insertion followed by gofmt; if an anchor is missing the
+// file is left untouched and the caller prints manual steps.
+func wireOptionalStarter(data map[string]string) ([]string, error) {
+	startersPath := filepath.Join("internal", "infra", "config", "starters.go")
+	defaultsPath := filepath.Join("internal", "starter", "defaults.go")
+	pkg, dir, model, constant := data["PackageName"], data["Package"], data["ModelName"], data["StarterConst"]
+
+	var updated []string
+	err := editGoFile(startersPath, func(source string) (string, error) {
+		if strings.Contains(source, "\t"+constant+" ") {
+			return source, nil
+		}
+		source, insertErr := insertBefore(source, "\n)\n\n// StarterNames", "\n\t"+constant+" = \""+pkg+"\"")
+		if insertErr != nil {
+			return "", insertErr
+		}
+		return insertAfterFunc(source, "func StarterNames() []string {", "\t}\n}", "\t\t"+constant+",\n")
+	})
+	if err != nil {
+		return updated, err
+	}
+	updated = append(updated, startersPath)
+
+	err = editGoFile(defaultsPath, func(source string) (string, error) {
+		importPath := "\"github.com/zgiai/luas/api/internal/modules/" + dir + "\""
+		importLine := "\t" + importPath + "\n"
+		if pkg != dir {
+			// goimports requires an alias when the package name differs from its directory.
+			importLine = "\t" + pkg + " " + importPath + "\n"
+		}
+		if strings.Contains(source, importLine) {
+			return source, nil
+		}
+		source, insertErr := insertBefore(source, "\t\"github.com/zgiai/luas/api/internal/starter/assembly\"", importLine)
+		if insertErr != nil {
+			return "", insertErr
+		}
+		var editErr error
+		if source, editErr = insertBefore(source, "\twire.Struct(new(Handlers), \"*\"),", "\t"+pkg+".ProviderSet,\n"); editErr != nil {
+			return "", editErr
+		}
+		if source, editErr = insertBefore(source, "}\n\nfunc (h *Handlers) orMetadataOnly", "\t"+model+" *"+pkg+".Handler\n"); editErr != nil {
+			return "", editErr
+		}
+		return insertAfterFunc(source, "func OptionalManifests(", "\t}\n}", "\t\t"+pkg+".NewStarterManifest(h."+model+"),\n")
+	})
+	if err != nil {
+		return updated, err
+	}
+	return append(updated, defaultsPath), nil
+}
+
+func editGoFile(path string, edit func(string) (string, error)) error {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	edited, err := edit(string(raw))
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	formatted, err := format.Source([]byte(edited))
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+	return os.WriteFile(path, formatted, 0o644)
+}
+
+func insertBefore(source, anchor, text string) (string, error) {
+	index := strings.Index(source, anchor)
+	if index < 0 {
+		return "", fmt.Errorf("anchor %q not found", anchor)
+	}
+	return source[:index] + text + source[index:], nil
+}
+
+// insertAfterFunc inserts text before the first closing anchor that follows a function signature.
+func insertAfterFunc(source, signature, closing, text string) (string, error) {
+	start := strings.Index(source, signature)
+	if start < 0 {
+		return "", fmt.Errorf("function %q not found", signature)
+	}
+	offset := strings.Index(source[start:], closing)
+	if offset < 0 {
+		return "", fmt.Errorf("end of %q not found", signature)
+	}
+	index := start + offset
+	return source[:index] + text + source[index:], nil
 }
 
 // Helper functions
@@ -363,14 +491,18 @@ func generateFile(path, tmpl string, data map[string]string) error {
 	if err != nil {
 		return err
 	}
-
-	f, err := os.Create(path)
-	if err != nil {
-		return err
+	var rendered bytes.Buffer
+	if execErr := t.Execute(&rendered, data); execErr != nil {
+		return execErr
 	}
-	defer f.Close()
-
-	return t.Execute(f, data)
+	content := rendered.Bytes()
+	if strings.HasSuffix(path, ".go") {
+		// Generated Go must be gofmt-clean so it passes the repository lint without edits.
+		if content, err = format.Source(content); err != nil {
+			return fmt.Errorf("format %s: %w", path, err)
+		}
+	}
+	return os.WriteFile(path, content, 0o644)
 }
 
 func moduleScaffoldData(name string) map[string]string {
@@ -379,6 +511,8 @@ func moduleScaffoldData(name string) map[string]string {
 
 	return map[string]string{
 		"Package":         snake,
+		"PackageName":     strings.ReplaceAll(snake, "_", ""),
+		"StarterConst":    "Starter" + pascal,
 		"ModelName":       pascal,
 		"ServiceName":     pascal,
 		"HandlerName":     pascal,
@@ -469,13 +603,14 @@ type {{.ModelName}}Repository interface {
 }
 `
 
-const modelTemplate = `package {{.Package}}
+const modelTemplate = `package {{.PackageName}}
 
 import (
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 // {{.ModelName}}PO is the persistent object for {{.ModelName}}.
@@ -518,7 +653,7 @@ func new{{.ModelName}}PO(item *domain.{{.ModelName}}) *{{.ModelName}}PO {
 }
 `
 
-const serviceTemplate = `package {{.Package}}
+const serviceTemplate = `package {{.PackageName}}
 
 import (
 	"context"
@@ -601,10 +736,12 @@ func (s *service) List(ctx context.Context, page, pageSize int) ([]*domain.{{.Mo
 }
 `
 
-const handlerTemplate = `package {{.Package}}
+const handlerTemplate = `package {{.PackageName}}
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/internal/starter/assembly"
 	httphandler "github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/pagination"
@@ -619,6 +756,7 @@ type Handler struct {
 var (
 	_ assembly.Module      = (*Handler)(nil)
 	_ assembly.RouteModule = (*Handler)(nil)
+	_ assembly.ErrorModule = (*Handler)(nil)
 )
 
 // NewHandler creates a new handler.
@@ -626,9 +764,9 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-// Name returns the module name.
+// Name returns the starter name.
 func (h *Handler) Name() string {
-	return "{{.Package}}"
+	return config.{{.StarterConst}}
 }
 
 func (h *Handler) List(c *gin.Context) {
@@ -710,14 +848,15 @@ func (h *Handler) Delete(c *gin.Context) {
 }
 `
 
-const repositoryTemplate = `package {{.Package}}
+const repositoryTemplate = `package {{.PackageName}}
 
 import (
 	"context"
 	"errors"
 
-	"github.com/zgiai/luas/api/internal/domain"
 	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/domain"
 )
 
 type repository struct {
@@ -797,7 +936,7 @@ func (r *repository) FindAll(ctx context.Context, page, pageSize int) ([]*domain
 }
 `
 
-const dtoTemplate = `package {{.Package}}
+const dtoTemplate = `package {{.PackageName}}
 
 import (
 	"time"
@@ -875,13 +1014,15 @@ func init() {
 }
 `
 
-const routesTemplate = `package {{.Package}}
+const routesTemplate = `package {{.PackageName}}
 
 import "github.com/zgiai/luas/api/internal/infra/router"
 
-// RegisterRoutes registers HTTP routes for the {{.Package}} module.
+// RegisterRoutes registers HTTP routes for the {{.Package}} starter. Every route requires a signed-in
+// user; record ownership is not enforced yet and must be added before production use.
 func (h *Handler) RegisterRoutes(r *router.Router) {
 	r.Group("/{{.RouteCollection}}", func(group *router.Router) {
+		group.WithMiddleware("auth")
 		group.GET("", h.List).Name("{{.Package}}.index")
 		group.POST("", h.Create).Name("{{.Package}}.store")
 		group.GET("/:id", h.Get).Name("{{.Package}}.show").WhereNumber("id")
@@ -891,7 +1032,7 @@ func (h *Handler) RegisterRoutes(r *router.Router) {
 }
 `
 
-const serviceTestTemplate = `package {{.Package}}
+const serviceTestTemplate = `package {{.PackageName}}
 
 import (
 	"context"
@@ -899,6 +1040,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
 	"github.com/zgiai/luas/api/internal/domain"
 )
 
@@ -955,14 +1097,17 @@ func Test{{.ServiceName}}GetByID(t *testing.T) {
 }
 `
 
-const providerTemplate = `package {{.Package}}
+const providerTemplate = `package {{.PackageName}}
 
 import (
 	"github.com/google/wire"
+
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/starter/assembly"
 )
 
-// ProviderSet is the provider set for this module.
+// ProviderSet is the provider set for this starter.
 var ProviderSet = wire.NewSet(
 	NewRepository,
 	wire.Bind(new(domain.{{.ModelName}}Repository), new(*repository)),
@@ -970,4 +1115,65 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(Service), new(*service)),
 	NewHandler,
 )
+
+// NewStarterManifest describes the {{.Package}} starter: its dependencies, routes, and migrations.
+func NewStarterManifest(handler *Handler) assembly.StarterManifest {
+	return assembly.NewStaticStarterManifest(
+		config.{{.StarterConst}},
+		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
+		assembly.WithStarterModule(handler),
+		assembly.WithStarterMigrationNames("{{.MigrationID}}"),
+	)
+}
+`
+
+const errorMappingsTemplate = `package {{.PackageName}}
+
+import "github.com/zgiai/luas/api/pkg/response"
+
+// RegisterErrorMappings maps this starter's own domain errors to public status and error codes.
+// Shared errors such as domain.ErrNotFound and domain.ErrInvalidInput are already mapped by core.
+func (h *Handler) RegisterErrorMappings(mapper *response.ErrorMapper) {
+	_ = mapper
+}
+`
+
+const migrationTemplate = `package migrations
+
+import (
+	"gorm.io/gorm"
+
+	"github.com/zgiai/luas/api/internal/infra/migration"
+)
+
+func init() {
+	register("{{.MigrationID}}", &create{{.ModelName}}Table{
+		BaseMigration: migration.BaseMigration{UseTransaction: true},
+	})
+}
+
+type create{{.ModelName}}Table struct {
+	migration.BaseMigration
+}
+
+// Up creates the {{.TableName}} table as frozen SQL; later model changes need a new migration.
+func (m *create{{.ModelName}}Table) Up(db *gorm.DB) error {
+	return execStatements(db,
+		` + "`" + `CREATE TABLE {{.TableName}} (
+		    id bigserial NOT NULL,
+		    name varchar(255) NOT NULL,
+		    created_at timestamptz,
+		    updated_at timestamptz,
+		    deleted_at timestamptz,
+		    CONSTRAINT {{.TableName}}_pkey PRIMARY KEY (id)
+		)` + "`" + `,
+		` + "`" + `CREATE INDEX idx_{{.TableName}}_name ON {{.TableName}} (name)` + "`" + `,
+		` + "`" + `CREATE INDEX idx_{{.TableName}}_deleted_at ON {{.TableName}} (deleted_at)` + "`" + `,
+	)
+}
+
+// Down drops the {{.TableName}} table.
+func (m *create{{.ModelName}}Table) Down(db *gorm.DB) error {
+	return execStatements(db, ` + "`" + `DROP TABLE IF EXISTS {{.TableName}} CASCADE` + "`" + `)
+}
 `

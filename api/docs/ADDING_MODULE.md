@@ -2,6 +2,26 @@
 
 Use this path for starter-style, route-owning backend behavior.
 
+## Generate A Wired Starter
+
+```bash
+go run ./cmd/luas make:module BlogPost
+```
+
+The generator creates `internal/modules/blog_post/` (package `blogpost`) with the domain entity,
+persistence, service, handler, `auth`-protected CRUD routes, error-mapping hook, provider set, starter
+manifest, and a service test; a frozen SQL migration; and it registers `config.StarterBlogPost` and the
+optional starter in `internal/starter/defaults.go`. A generator test compiles this output against the
+real module and runs its tests. Then:
+
+1. Run `make wire`.
+2. Regenerate the golden schema (`LUAS_UPDATE_GOLDEN_SCHEMA=1`) and review the diff.
+3. Write the HTTP contract, replace the placeholder `name` field with real business fields, and add
+   record ownership: generated routes only require a signed-in user.
+4. Enable it with `OPTIONAL_STARTERS=blogpost`.
+
+The steps below describe the same structure for a starter written by hand.
+
 ## Steps
 
 1. Name the module after the domain concept, not the transport action.
