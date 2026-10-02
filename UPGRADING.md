@@ -11,6 +11,16 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-02 — Schema cleanup
+
+### Low — `notification_preferences.user_id` loses its sequence default
+
+Migration `2026_10_02_000000_drop_notification_preferences_user_id_sequence` drops the
+`notification_preferences_user_id_seq` default left by the original `bigserial` definition. The
+column is always the owning user's ID, so no application write used the sequence. Run migrations
+with the `notification` starter selected; a fork that inserted preference rows without `user_id`
+must now supply it.
+
 ## 2026-10-01 — Operations hardening
 
 ### Medium — CLI plugins no longer load from the current directory

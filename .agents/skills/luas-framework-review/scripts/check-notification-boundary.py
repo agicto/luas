@@ -149,6 +149,7 @@ def main() -> int:
             'config.StarterNotification',
             'WithStarterDependencies(config.StarterUser, config.StarterAudit)',
             "2026_07_15_020000_create_notification_tables",
+            "2026_10_02_000000_drop_notification_preferences_user_id_sequence",
             "wire.Bind(new(domain.NotificationPublisher)",
             "wire.Bind(new(domain.NotificationDispatcher)",
         ),

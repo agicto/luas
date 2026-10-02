@@ -35,6 +35,9 @@ func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 		config.StarterNotification,
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
 		assembly.WithStarterModule(handler),
-		assembly.WithStarterMigrationNames("2026_07_15_020000_create_notification_tables"),
+		assembly.WithStarterMigrationNames(
+			"2026_07_15_020000_create_notification_tables",
+			"2026_10_02_000000_drop_notification_preferences_user_id_sequence",
+		),
 	)
 }
