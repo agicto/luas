@@ -261,9 +261,9 @@ This file is the canonical glossary for the whole repository. Use these terms wh
   Web application, or Admin Console.
 - The Web application and Admin Console have different audiences and may run
   together. Shared behavior comes from contracts and tests, not source imports.
-- The Admin Console requires a browser gateway or explicit browser-session API before protected
-  authentication is production-complete; browser storage never replaces HttpOnly credential
-  custody.
+- The Admin Console authenticates through the optional `operator` starter, which issues an HttpOnly
+  operator session from the Go API. Without that starter the console has no protected feature;
+  browser storage never replaces HttpOnly credential custody.
 - Active organization context is selected per request and verified against current membership.
 - API key scopes attenuate a user-owned credential and are not roles or generalized permissions.
 - Authentication sessions identify current signed-in users; API keys identify machine/API access.

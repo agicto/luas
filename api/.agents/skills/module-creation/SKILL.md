@@ -116,8 +116,8 @@ halves changed.
 
 - Canonical checklist:
   [`../../../docs/ADDING_MODULE.md`](../../../docs/ADDING_MODULE.md)
-- Generated-shape example:
-  [`examples/blog-module-example.md`](examples/blog-module-example.md)
+- Generated shape: run `luas make:module <name>` in a scratch checkout and read its output; the
+  generator is tested to build and is the maintained example.
 - HTTP rules: [`../api-development/`](../api-development/)
 - Persistence rules: [`../database-design/`](../database-design/)
 - Test boundaries: [`../testing-strategy/`](../testing-strategy/)

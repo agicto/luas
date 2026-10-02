@@ -7,49 +7,38 @@ description: Add a reusable Web utility or hook after repository search. Use for
 
 ## Overview
 
-This skill ensures a lean and consistent codebase by enforcing the "Search First" rule before any new utility or hook is implemented. It provides standards for creating and documenting internal tools.
+Keep the shared helper surface small. `src/utils` currently exports only `cn`, and `src/hooks`
+holds the two cross-feature hooks. A helper earns a place there only when at least two features
+need the same pure behavior.
 
 ## Guidelines
 
-### 1. The "Search First" Rule
-Before writing a new utility function or React hook, you **MUST**:
-1. **Check `src/utils/index.ts`**: Scan exports for existing utilities.
-2. **Check `src/hooks/`**: Browse file names and signatures for existing logic.
-3. **Check Approved Libraries**:
-   - `date-fns`: All date manipulations.
-   - `lodash-es`: Complex object/array operations (use sparingly).
-   - `validator`: Complex string validation.
+### 1. Search first
 
-### 2. Implementation Priority
-1. **Native Web APIs**: `Intl`, `URL`, `Crypto`, etc.
-2. **Existing Project Utils/Hooks**: Reuse what's already available.
-3. **Approved Third-Party Libraries**: Use dependencies from `package.json`.
-4. **Custom Implementation**: Only if the above options are exhausted.
+Before writing a utility or hook:
 
-### 3. Documentation & Discovery
-Use discovery tags in JSDoc headers:
-- `@util`: Marks a pure utility function.
-- `@hook`: Marks a reusable React hook.
+1. Check `src/utils/index.ts` and `src/hooks/`.
+2. Check the owning feature under `src/features/<feature>/`; behavior used by one feature stays
+   there.
+3. Check native Web APIs: `Intl`, `URL`, `URLSearchParams`, `crypto`, `structuredClone`.
+4. Check dependencies already in `package.json`. Do not add a date, collection, or validation
+   library for one call; schemas use Zod.
 
-```typescript
-/**
- * @util
- * @description Format a currency value using Intl.NumberFormat.
- */
-export function formatCurrency(value: number) { ... }
+### 2. Placement
+
+- Shared pure function: `src/utils/<name>.ts`, exported from `src/utils/index.ts`, with a test.
+- Shared hook: `src/hooks/use-<purpose>.ts`, following the Rules of Hooks.
+- Anything that reads environment, cookies, or the network is not a utility; it belongs to
+  `src/config`, `src/http`, or a feature service.
+
+### 3. Verification
+
+```bash
+corepack pnpm vitest run <test-file>
+corepack pnpm type-check
+corepack pnpm lint
 ```
-
-### 4. Contract for New Additions
-- **Utils**: Must be pure functions in `src/utils/[category].ts`, exported via `index.ts`, with tests in `__tests__/`.
-- **Hooks**: Must be in `src/hooks/use-[purpose].ts` and follow React Hook rules.
-
-> [!TIP]
-> **Minimalism**: Favor native Web APIs over external libraries whenever possible.
 
 ## Related Skills
 
-Select another skill only when its distinct concern is active.
-
-- [`environment-config`](../environment-config/): Config-aware utilities.
-- [`data-state-management`](../data-state-management/): State helpers often live here.
-- [`testing-standards`](../testing-standards/): Test the utilities themselves.
+- [`environment-config`](../environment-config/): environment access and validation.

@@ -21,7 +21,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 | `operator` optional starter | CLI-managed operator grants, Go-issued HttpOnly browser session with exact-Origin and CSRF enforcement, and operator routes for users, global audit, app settings, system status, organizations and members, webhook diagnosis and delivery replay, and the notification delivery ledger; matching Admin Console screens selected with `VITE_OPTIONAL_FEATURES` | Yes, when enabled | It is the Admin Console's browser gateway. Operators are not organization members; starter views are read-only except audited webhook replay, and never return secrets, payloads, or notification content. Granting is CLI-only; multi-factor authentication and impersonation are excluded. See [`contracts/OPERATORS.md`](../contracts/OPERATORS.md). |
 | Web shell | Auth route group, protected console, settings page, devtools, mock BFF guardrails, i18n, typed env | Yes | Good scaffold workspace. It is intentionally replaceable and should not become a fixed downstream workspace. |
 | Contracts | Global success/error envelopes, pagination, `error_code`, `request_id`, mock BFF expectations | Yes | Cross-starter endpoint contracts still need dedicated docs as new starters are added. |
-| Capabilities | Crypto, ID generation, AI, workflow, events, email, storage, queue, schedule, tracing | Partly | Email has typed all-or-none config, cancellation, a provider budget, bounded responses, and PII-safe errors; notification adds durable delivery ownership. Storage has a provider-neutral object seam, rooted private local adapter, and AWS SDK Go v2 R2 adapter; asset adds business ownership. Workflow offers local sync/memory drivers plus PostgreSQL durable tasks with fenced multi-replica claims, retries, cancellation, trace propagation, and lag metrics. Capabilities remain product-neutral and are not business starters by themselves. |
+| Capabilities | Crypto, ID generation, AI, workflow (queue, retry, scheduler, durable tasks), events, email, storage, tracing | Partly | Email has typed all-or-none config, cancellation, a provider budget, bounded responses, and PII-safe errors; notification adds durable delivery ownership. Storage has a provider-neutral object seam, rooted private local adapter, and AWS SDK Go v2 R2 adapter; asset adds business ownership. Workflow offers local sync/memory drivers plus PostgreSQL durable tasks with fenced multi-replica claims, retries, cancellation, trace propagation, and lag metrics. Capabilities remain product-neutral and are not business starters by themselves. |
 
 ## Architecture Review Findings
 
@@ -33,7 +33,7 @@ Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-rea
 ## Recommended Starter Sequence
 
 The production auth adapter plus the organization, permission, notification, asset, setting, usage,
-and webhook optional starters are complete. Keep the sequence below as an ownership map; the next
+webhook, and operator optional starters are complete. Keep the sequence below as an ownership map; the next
 undelivered boundary is an intentionally product-sensitive AI workspace.
 
 1. `organization` optional starter

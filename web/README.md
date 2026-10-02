@@ -23,7 +23,7 @@ and design semantics, never source code or runtime state.
 
 | Area      | Tooling                                              |
 | --------- | ---------------------------------------------------- |
-| Framework | Next.js 16.2.9 App Router                            |
+| Framework | Next.js 16 App Router                                |
 | UI        | React 19.2.7, Tailwind CSS 4, Radix UI, lucide-react |
 | State     | TanStack Query 5, Zustand 5                          |
 | i18n      | next-intl 4                                          |
@@ -226,6 +226,13 @@ The console validates the complete finite metric catalog and displays private cu
 or owner/admin organization summaries. Event recording, atomic consumption, quota writes, receipts,
 and billing semantics remain server-side. See [docs/USAGE.md](docs/USAGE.md) and
 [../contracts/USAGE.md](../contracts/USAGE.md).
+
+## Webhook Feature
+
+The optional webhook workspace is enabled with `organization` and `webhook` in
+`NEXT_PUBLIC_OPTIONAL_FEATURES`. Organization owners and admins manage endpoints, see the signing
+secret once on create or rotation, queue the fixed test event, and read deliveries and attempts.
+See [docs/WEBHOOKS.md](docs/WEBHOOKS.md) and [../contracts/WEBHOOKS.md](../contracts/WEBHOOKS.md).
 
 ## HTTP Contract
 

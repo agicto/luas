@@ -65,7 +65,7 @@ DB_NAME=luas
 ```
 
 `user`, `apikey`, and `audit` are enabled by default. Organization, permission, notification,
-asset, setting, usage, and webhook are optional starters. Every process that owns routes,
+asset, setting, usage, webhook, and operator are optional starters. Every process that owns routes,
 migrations, seeders, or workers must use the same complete dependency set.
 
 Organization and permission:
@@ -77,8 +77,9 @@ OPTIONAL_STARTERS=organization,permission
 The organization starter owns invitations, membership, ownership transfer, and active context.
 The permission starter adds organization-scoped access roles, exact grants, transactional
 assignments, and a replaceable authorizer. See
-[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md) and
-[`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md).
+[`../contracts/ORGANIZATIONS.md`](../contracts/ORGANIZATIONS.md),
+[`../contracts/PERMISSIONS.md`](../contracts/PERMISSIONS.md), and
+[`docs/PERMISSIONS.md`](docs/PERMISSIONS.md).
 
 Notifications:
 
@@ -352,6 +353,7 @@ make test-kest
 
 ## AI Capability
 
+See [`internal/capabilities/README.md`](internal/capabilities/README.md) for the capability catalog.
 `internal/capabilities/ai` is a provider-neutral technical capability with an OpenAI Responses API
 adapter. It is disabled by default and does not own prompts, conversations, runs, billing, or other
 product semantics.

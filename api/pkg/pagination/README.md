@@ -1,152 +1,42 @@
-# Pagination Package
+# pagination
 
-This package provides one consistent, bounded pagination model for API list operations.
+Offset and cursor pagination for list endpoints. The response shape is defined by
+[`../../../contracts/README.md`](../../../contracts/README.md); this package builds it.
 
-## Core Types
+## Request
 
-### Request
+`FromContext(c)` reads `page` and `per_page` from the query string.
 
-```go
-type Request struct {
-    Page     int    `form:"page" json:"page"`           // Page number; defaults to 1
-    PageSize int    `form:"page_size" json:"page_size"` // Items per page; defaults to 10, maximum 100
-    Keyword  string `form:"keyword" json:"keyword"`    // Search keyword
-}
-```
+| Constant | Value |
+|---|---|
+| `DefaultPage` | 1 |
+| `DefaultPerPage` | 15 |
+| `MaxPerPage` | 100 |
 
-### Result
+Out-of-range values fall back to the defaults or are capped at `MaxPerPage`.
 
-```go
-type Result struct {
-    Total    int64 `json:"total"`     // Total record count
-    Page     int   `json:"page"`      // Current page
-    PageSize int   `json:"page_size"` // Items per page
-    LastPage int   `json:"last_page"` // Last available page
-    From     int   `json:"from"`      // First position on the current page
-    To       int   `json:"to"`        // Last position on the current page
-}
-```
-
-## Usage
-
-### 1. Embed The Request In A DTO
+## Handler usage
 
 ```go
-type ListRequest struct {
-    pagination.Request
-    Status string `form:"status"`
-    Plan   string `form:"plan"`
-}
-```
-
-### 2. Bind Parameters In A Handler
-
-```go
-func (h *Handler) List(c *gin.Context) {
-    var req ListRequest
-    if err := c.ShouldBindQuery(&req); err != nil {
-        response.Error(c, http.StatusBadRequest, err.Error())
-        return
-    }
-
-    page := req.GetPage()         // Applies the default page
-    pageSize := req.GetPageSize() // Applies the configured bounds
-    offset := req.GetOffset()     // Calculates the SQL offset
-}
-```
-
-### 3. Query In A Repository
-
-```go
-func (r *repository) List(ctx context.Context, req *ListRequest) ([]*Model, int64, error) {
-    var items []*Model
-    var total int64
-
-    query := r.db.WithContext(ctx).Table("models")
-    if req.Keyword != "" {
-        query = query.Where("name LIKE ?", "%"+req.Keyword+"%")
-    }
-
-    if err := query.Count(&total).Error; err != nil {
-        return nil, 0, err
-    }
-
-    offset := req.GetOffset()
-    if err := query.Offset(offset).Limit(req.GetPageSize()).Find(&items).Error; err != nil {
-        return nil, 0, err
-    }
-
-    return items, total, nil
-}
-```
-
-### 4. Use The Convenience Helpers
-
-```go
-items, result, err := pagination.Paginate[Model](db, req)
+page := pagination.FromContext(c)
+items, total, err := h.service.List(c.Request.Context(), page.GetPage(), page.GetPerPage())
 if err != nil {
-    return nil, err
+	response.HandleError(c, "Failed to list items", err)
+	return
 }
-
-items, result, err := pagination.PaginateFromContext[Model](c, db)
+paginator := pagination.NewPaginator(toResponses(items), total, page.GetPage(), page.GetPerPage())
+paginator.SetPath(c.Request.URL.Path).WithQuery(c.Request.URL.Query())
+response.Success(c, paginator)
 ```
 
-### 5. Return The Response
+`response.Success` recognizes a paginator and writes the envelope with `data`, `meta`
+(`current_page`, `per_page`, `total`, `last_page`, `from`, `to`), and `links`.
 
-```go
-response.SuccessWithPagination(c, items, total, req.GetPage(), req.GetPageSize())
+Repositories bound their own page size: validate `page >= 1` and `1 <= pageSize <= 100` and return
+`domain.ErrInvalidInput` otherwise, as the starter repositories do.
 
-response.Success(c, map[string]interface{}{
-    "items": items,
-    "meta":  result,
-})
-```
+## Query helpers
 
-## Helpers
-
-### Request Methods
-
-- `GetPage() int`: returns the page number, defaulting to 1.
-- `GetPageSize() int`: returns the bounded page size, defaulting to 10 with a maximum of 100.
-- `GetOffset() int`: returns the SQL offset.
-
-### Package Functions
-
-- `FromQuery(query map[string][]string) *Request`: builds a request from query parameters.
-- `FromContext(c *gin.Context) *Request`: extracts a request from a Gin context.
-- `BuildResult(total, page, pageSize) *Result`: builds pagination metadata.
-- `Paginate[T](db, req) ([]T, *Result, error)`: performs a paginated query.
-
-## Response Shape
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "items": [],
-    "total": 100,
-    "page": 1,
-    "page_size": 20
-  }
-}
-```
-
-## Constraints
-
-1. Page defaults to 1 and page size defaults to 10.
-2. Page size is capped at 100 to bound query and response cost.
-3. The package integrates with `pkg/response.SuccessWithPagination()`.
-4. Generic helpers preserve result type safety.
-
-## Migration From The Legacy Paginator
-
-```go
-// Before
-paginator, err := pagination.Paginate[Model](db, page, pageSize)
-response.Success(c, paginator.ToMap())
-
-// Current
-items, result, err := pagination.Paginate[Model](db, req)
-response.SuccessWithPagination(c, items, result.Total, result.Page, result.PageSize)
-```
+`Paginate[T](db, req)` and `New[T](c, db)` run the count and the page query for a GORM scope and
+return the rows with a `*Paginator[T]`. `CursorPaginate` and `NewCursor` are the cursor variants for
+lists that must not count.

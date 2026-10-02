@@ -318,12 +318,12 @@ are the existing `setting` rules.
 ### Queries
 
 ```text
-QUERY ListUsers(operator, q, status, page, page_size)
-VALIDATE q length 0..100; status IN {active, disabled, all}; page >= 1; page_size 1..100 (default 20)
+QUERY ListUsers(operator, q, status, page, per_page)
+VALIDATE q length 0..100; status IN {active, disabled, all}; page >= 1; per_page 1..100 (default 15)
 LOAD page FROM user.UserAdministrator
   WHERE (q empty OR username ILIKE %q% OR email ILIKE %q%) AND status filter AND deleted_at IS NULL
   ORDER BY id DESC
-  LIMIT page_size
+  LIMIT per_page
 RETURN 200 { items: [{ id, username, email, nickname, status, is_operator, created_at, last_login }], pagination }
 ```
 
@@ -343,7 +343,7 @@ QUERY SystemStatus(operator)
 LOAD version FROM build metadata
 LOAD starters FROM starter registry (active names in dependency order)
 LOAD database FROM readiness probe (ok | unavailable)
-RETURN 200 { version, starters, database }
+RETURN 200 { version, revision, go_version, starters, database }
 ```
 
 ## 8. State Machines
@@ -472,9 +472,9 @@ Each slice updates `contracts/`, `openapi.yaml`, generated types, `UPGRADING.md`
    inactive state and the API returns `404`.
 8. Given `operator` is not selected, then no `/v1/operator` route and no `operator:*` command exists.
 
-## 15. Delivery Status (2026-10-01)
+## 15a. Delivery Status (2026-10-01)
 
-All four slices are delivered on `feature/admin-operator-console`, each verified with unit, handler,
+All four slices are delivered and merged to `main`, each verified with unit, handler,
 and PostgreSQL tests plus a live browser run against a real API and database:
 
 | Slice | Evidence |
@@ -488,7 +488,7 @@ Refinements recorded during delivery: query-string validation follows the reposi
 `400 COMMON.INVALID_INPUT`; a disabled account's existing credentials fail with `401` because its
 sessions are revoked; system status reports Go build metadata instead of a static version.
 
-## 15a. Decisions Made During Slice 1
+## 15b. Decisions Made During Slice 1
 
 - **Kernel CORS:** `gin-contrib/cors` rejects an `Origin` outside `CORS_ALLOW_ORIGINS` with a bare
   `403` before routing, and a CDN or dev proxy usually rewrites `Host`, so same-origin Admin requests

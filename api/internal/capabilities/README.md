@@ -25,6 +25,8 @@ capabilities may depend on `pkg/` and the standard library, but must not depend 
 | **idgen** | `capabilities/idgen` | UUID, Snowflake, and NanoID generation |
 | **crypto** | `capabilities/crypto` | Encryption, decryption, hashing, and password utilities |
 | **ai** | `capabilities/ai` | Provider-neutral, bounded AI execution with an OpenAI Responses API adapter |
+| **storage** | `capabilities/storage` | Provider-neutral object storage seam with rooted local and R2 adapters |
+| **workflow** | `capabilities/workflow` | Queue, retry, and scheduler primitives with memory and PostgreSQL durable-task drivers |
 
 ## Example
 
