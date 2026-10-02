@@ -157,11 +157,14 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
 - Local Markdown links across docs and agent guidance are guarded by `.agents/skills/luas-framework-review/scripts/check-doc-links.py` and CI.
 - API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
-- API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, starter registry interfaces now live in `internal/starter/assembly` instead of the old top-level starter contract package, `pkg/support` no longer owns the Luas startup banner, app-specific path helpers, debug dump/timing helpers, generic manager/pipeline pattern helpers, generic control-flow/retry/Optional helpers, generic conditional wrappers, broad string/random helpers, broad collection/map helpers, or mutating dot-notation data helpers, and the remaining `pkg/support` exported surface is guarded as `Blank`, `Filled`, `DataGet`, and `DataHas`; `pkg/response` no longer imports `internal/domain`, `internal/capabilities/ai` no longer imports `internal/infra/http`, and `internal/capabilities/workflow` no longer imports `internal/infra/config`, `internal/infra/retry`, `internal/infra/schedule`, or `internal/infra/queue`.
+- API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, starter registry interfaces live in `internal/starter/assembly`, and the grab-bag packages (`pkg/support`, `pkg/utils`, and the `internal/infra/{queue,schedule,retry,http}` compatibility wrappers) are deleted; `make governance` rejects new `support`, `utils`, `common`, or `helpers` packages under `pkg/` and `internal/infra/`. `pkg/response` does not import `internal/domain`, and queue, retry, and scheduler primitives are owned by `internal/capabilities/workflow`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
-- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell; Admin Console ports require their browser-gateway contract. Billing and AI workspace remain planned.
+- Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell. The optional `operator` starter is the Admin Console's browser gateway and gives platform operators user, audit, app-setting, and system screens plus read-mostly organization, webhook, and notification-delivery support views; tenant self-service stays in Web. Billing and AI workspace remain planned.
+- API assembly is guarded against drift: released migrations are frozen SQL checked against a golden schema, starter names and handlers have one source (`config.Starter*`, `starter.Handlers`), each starter owns its error mappings through `assembly.ErrorModule`, `make wire-check` fails CI on a stale `wire_gen.go`, and `make:module` generates a wired optional starter. The decision to keep Wire and the deferred assembly changes, each with a revisit trigger, are recorded in [`../api/docs/adr/0014-wire-maintenance-posture.md`](../api/docs/adr/0014-wire-maintenance-posture.md) and [`../api/docs/adr/0003-starter-registry.md`](../api/docs/adr/0003-starter-registry.md).
+- Downstream-facing changes from each round are listed by impact in [`../UPGRADING.md`](../UPGRADING.md).
+- The Web mock BFF is checked against the browser services that consume it: `web/src/test/mock-bff-service-parity.test.ts` runs every feature service unchanged against the mock route handlers, so a mock response that drifts from a service schema fails.
 
 ## Candidate Queue
 
@@ -742,7 +745,7 @@ Recommended slice:
 1. Keep new mock route handlers behind `guardMockBffRoute()`.
 2. Return mock success payloads through `apiSuccessResponse()` and errors through the shared error response helpers.
 3. Keep the client/server env split and conditional `SESSION_SECRET` requirement covered by `src/test/env-contract.test.ts` when changing mock auth or deployment behavior.
-4. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers.
+4. Run `src/test/mock-bff-route-contract.test.ts` when adding or deleting mock route handlers, and add a case to `src/test/mock-bff-service-parity.test.ts` when a feature service gains a method backed by a new mock route.
 5. Keep `web/docs/MOCK_BFF.md` current when mock route handlers, demo credentials, or auth session behavior change.
 6. Add production configuration tests when adding new demo-only flows.
 
@@ -1091,6 +1094,176 @@ Verification:
 - PostgreSQL integration tier against a disposable database
 - `make check`
 
+### Completed P1 — API Assembly Drift Guards
+
+Adding a starter used to mean coordinated edits to provider sets, manifests, migrations, generated
+Wire output, configuration validation, and the route catalog, with nothing failing when one was
+missed. A comparison with Kratos, go-zero, uber-go/fx, Goravel, and Grafana kept compile-time Wire
+([ADR 0014](../api/docs/adr/0014-wire-maintenance-posture.md)) and removed the drift instead:
+
+- Released migrations are frozen SQL and no longer call `AutoMigrate` on live persistence structs.
+  `TestMigrationsProduceGoldenSchema` compares a fresh database with
+  `database/migrations/testdata/schema.golden.sql`; a frozen-history test rejects imports of
+  `internal/modules` or `internal/capabilities` from migrations.
+- Starter names come from `config.Starter*` constants and `Config.Starters.Selected(name)`; a test
+  keeps the constant set equal to the catalog. Runtime handlers reach assembly through one
+  `starter.Handlers` struct.
+- `make wire-check` regenerates and compares `wire_gen.go` in CI.
+- The unused domain event system and the service locator, lifecycle, pipeline, and breaker packages
+  were removed.
+
+Deferred assembly changes and their triggers are listed in
+[ADR 0003](../api/docs/adr/0003-starter-registry.md#revisit-triggers).
+
+Verification:
+
+- `cd api && make wire-check && make route-catalog-check`
+- `cd api && make test-postgres-compatibility`
+- `make governance`
+
+### Completed P1 — Dead Code And Dialect Cleanup
+
+Packages with no production caller made the API look larger than it is and gave agents false seams
+to extend. Removed: `internal/infra/{queue,schedule,retry,http,lang,types,contracts}`, the global
+event dispatcher, `pkg/{hash,utils,request,resource,encryption,validation,support,events}`, the
+`api/tests/unit` directory (tests moved beside their packages), the MySQL schema grammar, the
+deprecated default migration and seeder registries, and unused Web utilities. `make governance` now
+rejects `support`, `utils`, `common`, and `helpers` packages under `pkg/` and `internal/infra/`, so
+the `pkg/support` item of the package-deepening candidate is closed by deletion.
+
+Verification:
+
+- `bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
+- `cd api && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 ./...`
+- `cd web && corepack pnpm type-check && corepack pnpm vitest run`
+
+### Completed P1 — Platform Operator Starter And Admin Console
+
+The Admin Console shipped no protected feature because a static client cannot hold a server
+credential and Luas had no platform-operator identity. The optional `operator` starter adds
+CLI-managed operator grants (`platform_operators`), a Go-issued HttpOnly `SameSite=Strict` session
+cookie with exact-Origin checks and a session-bound CSRF token, and `/v1/operator` routes. A verified
+non-operator receives no session, and operators cannot change accounts that hold a grant.
+
+Delivered screens and routes: users (disable, enable, end sessions), global audit log, app-scoped
+settings, system status, an organization directory with members, secret-free webhook endpoints,
+deliveries, and attempts with audited delivery replay, and the notification delivery ledger without
+content. Each owning starter exposes its operator handlers and keeps its data; `operator` owns
+authorization and mounts a surface only when that starter is selected. The console selects screens
+at build time with `VITE_OPTIONAL_FEATURES`.
+
+Plans and contract: [`plans/admin-operator-console.md`](plans/admin-operator-console.md),
+[`plans/admin-operator-starters.md`](plans/admin-operator-starters.md),
+[`../contracts/OPERATORS.md`](../contracts/OPERATORS.md).
+
+Verification:
+
+- `cd api && go test ./internal/modules/operator ./internal/modules/organization ./internal/modules/webhook ./internal/modules/notification`
+- `cd api && make test-postgres-compatibility`
+- `cd admin && corepack pnpm type-check && corepack pnpm lint && corepack pnpm vitest run && corepack pnpm build`
+- Live browser run against a real API and PostgreSQL: sign-in, disable a user, replay a webhook
+  delivery, and find both in the audit log attributed to the operator.
+
+### Completed P1 — Starter-Owned Error Mappings, Test Doubles, And Generator
+
+`internal/bootstrap/domain_error_mappings.go` maps only shared errors; each starter registers its
+own through `assembly.ErrorModule`, with a test pinning all 64 previous mappings.
+`internal/infra/testing.FakeMailer` stands in for any starter mail seam and is checked for parity
+with `email.Service`. `make:module` generates a starter that is wired, selected by constant, routed
+behind `auth`, and migrated with frozen SQL; a test builds and tests the generated output. Generated
+CRUD routes were public before this change.
+
+Verification:
+
+- `cd api && go test ./internal/bootstrap ./internal/infra/testing ./internal/infra/console/commands`
+
+### Completed P2 — Durable Task Operations And CLI Plugin Hardening
+
+PostgreSQL-backed workflow tasks gained operator commands (`workflow:tasks`, `workflow:retry`,
+`workflow:cancel`, `workflow:prune`); finished tasks were never deleted before. CLI plugins load only
+from absolute `PATH` entries with validated names; loading from the working directory was a
+code-execution risk.
+
+Verification:
+
+- `cd api && go test ./internal/capabilities/workflow ./internal/infra/plugin ./internal/infra/console/commands`
+- `cd api && make test-race-critical`
+
+### Completed P1 — Mock BFF And Browser Service Parity
+
+Route tests proved mock behavior and contract tests proved parsers accept sample envelopes, but
+nothing proved the mock emits what the services accept; OpenAPI covers only API keys. Renaming one
+field in a mock response left every existing test green. `mock-bff-service-parity.test.ts` now runs
+each feature service unchanged through an adapter that dispatches to the `src/app/api` route
+handlers, covering API keys, organizations, permissions, settings, usage, notifications, assets, and
+webhooks.
+
+Verification:
+
+- `cd web && corepack pnpm vitest run src/test/mock-bff-service-parity.test.ts`
+
+### Completed P3 — Notification Preference Key Sequence
+
+`notification_preferences.user_id` was created as `bigserial` although it is always the owning
+user's ID. A forward migration drops the default and its sequence; the released migration stays
+frozen and the golden schema records the change.
+
+Verification:
+
+- `cd api && go test ./database/migrations ./internal/starter`
+
+### P2 — Machine-Checkable Contracts Beyond API Keys
+
+Problem: `contracts/openapi.yaml` and the generated Web and Admin types cover only API keys. Every
+other capability, including all `/v1/operator` routes, is specified in Markdown and matched by
+hand-written Zod schemas in each client, so an API response change is caught only by a live run.
+
+Recommended slice:
+
+1. Add one more capability to `openapi.yaml` end to end (the operator session and users routes are
+   the smallest closed set) and generate types for Admin.
+2. Decide from that slice whether client schemas should be derived from the generated types or stay
+   hand-written with a type-level equality check.
+3. Extend `contracts/scripts/check-api-routes.mjs` coverage to the new paths.
+
+Verification:
+
+- `cd contracts && corepack pnpm check && corepack pnpm check:routes`
+- `cd admin && corepack pnpm type-check`
+
+### P2 — Operator Console Follow-Ups
+
+Problem: two operator actions were deferred because each needs a rule that does not exist yet
+([`plans/admin-operator-starters.md`](plans/admin-operator-starters.md), assumptions A2 and A3).
+
+Recommended slice:
+
+1. Operator disable of a webhook endpoint: needs a disabled reason an organization manager cannot
+   clear, otherwise the tenant can re-enable it.
+2. Operator retry of a failed notification delivery: adds a `failed → pending` transition and must
+   define the attempt budget and audit record.
+3. Start either only when a deployment reports the need; both require a plan under the business
+   implementation standard.
+
+Verification:
+
+- The owning starter's PostgreSQL tests and boundary guard, plus `contracts/OPERATORS.md`.
+
+### P3 — Remove The Deprecated `ROLE.NOT_FOUND` Error Code
+
+Problem: `ROLE.NOT_FOUND` remains in the public error-code enum although no starter emits it; access
+roles use `PERMISSION.ROLE_NOT_FOUND`. `UPGRADING.md` announces its removal.
+
+Recommended slice:
+
+1. Remove it from `contracts/openapi.yaml`, API constants, the core error mapping, and the Web and
+   Admin code lists in one release, with an `UPGRADING.md` entry.
+
+Verification:
+
+- `cd contracts && corepack pnpm check`
+- `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
+
 ### P1 — Starter Business Readiness
 
 Problem: the current default starter set is useful for auth, API keys, and audit, but most new SaaS, internal-tool, and developer-product projects also need reusable multi-user ownership, authorization, invitations, notification preferences, files, settings, usage, and integration flows.
@@ -1131,15 +1304,15 @@ Verification:
 
 ### P2 — Package and Seam Deepening
 
-Problem: packages such as `support`, `utils`, `pkg/errors`, `pkg/response`, and `internal/starter/assembly` should be reviewed for shallow-module drift. The API boundary check also records current reverse-import exceptions so they can be migrated deliberately.
+Problem: packages such as `pkg/errors`, `pkg/response`, and `internal/starter/assembly` should be reviewed for shallow-module drift. The grab-bag `support` and `utils` packages were deleted (see "Completed P1 — Dead Code And Dialect Cleanup"), and the API boundary check has no baseline exception left.
 
 Recommended slice:
 
 1. Pick one seam from [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md) or the package list above.
 2. Apply the deletion test.
 3. Either document why the seam is valid, deepen/rename it, or remove one baseline exception.
-4. For `internal/capabilities/workflow`, guard the now-clean boundary by keeping queue, retry, and scheduler primitives workflow-owned; only `internal/infra/*` compatibility packages may wrap them.
-5. Keep `pkg/support` small by requiring new exported helpers to land at the starter, capability, or runtime seam that owns the behavior.
+4. For `internal/capabilities/workflow`, keep queue, retry, and scheduler primitives workflow-owned; do not reintroduce `internal/infra` wrappers around them.
+5. Land new exported helpers at the starter, capability, or runtime seam that owns the behavior; `make governance` rejects new grab-bag packages.
 
 Verification:
 
