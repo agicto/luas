@@ -29,7 +29,7 @@ digest and apply its own Cosign identity and verification policy.
 Both Dockerfiles pin the Dockerfile frontend and every external `FROM` to an exact readable tag plus
 the reviewed multi-platform digest:
 
-- API builder: Go 1.25.12 on Alpine 3.24;
+- API builder: Go 1.25.13 on Alpine 3.24;
 - API runtime: distroless static Debian 12 `nonroot`;
 - Web build/runtime source: Node 22.23.1 on Alpine 3.24.
 

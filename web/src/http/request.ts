@@ -122,9 +122,15 @@ class HttpClient {
     );
   }
 
+  // The response interceptor resolves with the unwrapped payload instead of an AxiosResponse; axios
+  // cannot express that for a generic payload type, so the result is narrowed here once.
+  private payload<T>(response: Promise<unknown>): Promise<T> {
+    return response as Promise<T>;
+  }
+
   // Pure promise-based methods
   public get<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
-    return this.instance.get<T, T>(url, config);
+    return this.payload<T>(this.instance.get(url, config));
   }
 
   public getEnvelope<T = unknown>(
@@ -142,19 +148,19 @@ class HttpClient {
   }
 
   public post<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
-    return this.instance.post<T, T, D>(url, data, config);
+    return this.payload<T>(this.instance.post<unknown, unknown, D>(url, data, config));
   }
 
   public put<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
-    return this.instance.put<T, T, D>(url, data, config);
+    return this.payload<T>(this.instance.put<unknown, unknown, D>(url, data, config));
   }
 
   public patch<T = unknown, D = unknown>(url: string, data?: D, config?: RequestConfig): Promise<T> {
-    return this.instance.patch<T, T, D>(url, data, config);
+    return this.payload<T>(this.instance.patch<unknown, unknown, D>(url, data, config));
   }
 
   public delete<T = unknown>(url: string, config?: RequestConfig): Promise<T> {
-    return this.instance.delete<T, T>(url, config);
+    return this.payload<T>(this.instance.delete(url, config));
   }
 }
 

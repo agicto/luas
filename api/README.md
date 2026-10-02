@@ -37,7 +37,7 @@ without either browser application.
 
 ### 1. Prerequisites
 
-- Go 1.25.12 or later
+- Go 1.25.13 or later
 - PostgreSQL 15, 16, 17, or 18 on a current minor release
 - Redis only when a downstream application explicitly assembles the cache adapter or other shared
   infrastructure

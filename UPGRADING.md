@@ -11,6 +11,25 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-03 — Dependency security updates
+
+### Medium — Toolchain and framework minimums raised
+
+All open advisories are closed. A fork must pick up the same minimums:
+
+- Go `1.25.13` (seven standard-library advisories in `1.25.12`); the API builder image is pinned to
+  the matching digest in `api/Dockerfile`, `api/scripts/verify-container.sh`, and the container
+  governance check.
+- Next.js `16.3.8` and `eslint-config-next` `16.3.8` (three remote-code-execution advisories in
+  `16.2.x`), axios `1.20.0`, vitest `4.1.11`.
+- `google.golang.org/grpc` `1.83.1` and OpenTelemetry `1.45.0`.
+- pnpm overrides in all three `pnpm-workspace.yaml` files now force patched `sharp`, `undici`,
+  `js-yaml`, `browserslist`, `baseline-browser-mapping`, `brace-expansion`, and `@humanfs/node`.
+
+axios `1.20` changed its method return types; `web/src/http/request.ts` narrows the unwrapped
+payload in one helper. A fork that calls `axios` instances with two explicit type arguments
+(`get<T, T>`) should do the same.
+
 ## 2026-10-02 — Admin Console starter administration
 
 ### Low — Operator routes and screens for organizations, webhooks, and notifications
