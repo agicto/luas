@@ -11,6 +11,26 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-02 — Admin Console starter administration
+
+### Low — Operator routes and screens for organizations, webhooks, and notifications
+
+When `operator` is selected together with `organization`, `webhook`, or `notification`, the API now
+serves read-mostly operator routes for that starter under `/v1/operator`
+([`contracts/OPERATORS.md`](contracts/OPERATORS.md)): an organization directory with members,
+secret-free webhook endpoints, deliveries, and attempts with delivery replay, and the notification
+delivery ledger without content. A deployment that selects those starters but must not expose them
+to operators has to remove the mounts in `api/internal/modules/operator/routes.go`.
+
+The Admin Console shows the matching screens only when `VITE_OPTIONAL_FEATURES` lists
+`organization`, `webhook`, or `notification` in addition to `operator`. No migration.
+
+### Low — `operator.NewHandler` takes a `Surfaces` struct
+
+`operator.NewHandler(service, guard, cfg, settings)` became
+`operator.NewHandler(service, guard, cfg, operator.Surfaces{...})`. Wire injects `Surfaces`; only a
+fork that constructs the handler by hand must change the call.
+
 ## 2026-10-02 — Schema cleanup
 
 ### Low — `notification_preferences.user_id` loses its sequence default

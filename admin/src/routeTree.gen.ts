@@ -14,9 +14,12 @@ import { Route as ConsoleRouteImport } from './routes/console'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ConsoleIndexRouteImport } from './routes/console.index'
 import { Route as ConsoleAuditRouteImport } from './routes/console.audit'
+import { Route as ConsoleNotificationsRouteImport } from './routes/console.notifications'
 import { Route as ConsolePreferencesRouteImport } from './routes/console.preferences'
 import { Route as ConsoleSettingsRouteImport } from './routes/console.settings'
 import { Route as ConsoleUsersRouteImport } from './routes/console.users'
+import { Route as ConsoleOrganizationsIndexRouteImport } from './routes/console.organizations.index'
+import { Route as ConsoleOrganizationsOrganizationIdRouteImport } from './routes/console.organizations.$organizationId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -43,6 +46,11 @@ const ConsoleAuditRoute = ConsoleAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => ConsoleRoute,
 } as any)
+const ConsoleNotificationsRoute = ConsoleNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => ConsoleRoute,
+} as any)
 const ConsolePreferencesRoute = ConsolePreferencesRouteImport.update({
   id: '/preferences',
   path: '/preferences',
@@ -58,25 +66,43 @@ const ConsoleUsersRoute = ConsoleUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => ConsoleRoute,
 } as any)
+const ConsoleOrganizationsIndexRoute =
+  ConsoleOrganizationsIndexRouteImport.update({
+    id: '/organizations/',
+    path: '/organizations/',
+    getParentRoute: () => ConsoleRoute,
+  } as any)
+const ConsoleOrganizationsOrganizationIdRoute =
+  ConsoleOrganizationsOrganizationIdRouteImport.update({
+    id: '/organizations/$organizationId',
+    path: '/organizations/$organizationId',
+    getParentRoute: () => ConsoleRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/console': typeof ConsoleRouteWithChildren
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
+  '/console/notifications': typeof ConsoleNotificationsRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console/': typeof ConsoleIndexRoute
+  '/console/organizations/$organizationId': typeof ConsoleOrganizationsOrganizationIdRoute
+  '/console/organizations/': typeof ConsoleOrganizationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
+  '/console/notifications': typeof ConsoleNotificationsRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console': typeof ConsoleIndexRoute
+  '/console/organizations/$organizationId': typeof ConsoleOrganizationsOrganizationIdRoute
+  '/console/organizations': typeof ConsoleOrganizationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,10 +110,13 @@ export interface FileRoutesById {
   '/console': typeof ConsoleRouteWithChildren
   '/login': typeof LoginRoute
   '/console/audit': typeof ConsoleAuditRoute
+  '/console/notifications': typeof ConsoleNotificationsRoute
   '/console/preferences': typeof ConsolePreferencesRoute
   '/console/settings': typeof ConsoleSettingsRoute
   '/console/users': typeof ConsoleUsersRoute
   '/console/': typeof ConsoleIndexRoute
+  '/console/organizations/$organizationId': typeof ConsoleOrganizationsOrganizationIdRoute
+  '/console/organizations/': typeof ConsoleOrganizationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -96,29 +125,38 @@ export interface FileRouteTypes {
     | '/console'
     | '/login'
     | '/console/audit'
+    | '/console/notifications'
     | '/console/preferences'
     | '/console/settings'
     | '/console/users'
     | '/console/'
+    | '/console/organizations/$organizationId'
+    | '/console/organizations/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/console/audit'
+    | '/console/notifications'
     | '/console/preferences'
     | '/console/settings'
     | '/console/users'
     | '/console'
+    | '/console/organizations/$organizationId'
+    | '/console/organizations'
   id:
     | '__root__'
     | '/'
     | '/console'
     | '/login'
     | '/console/audit'
+    | '/console/notifications'
     | '/console/preferences'
     | '/console/settings'
     | '/console/users'
     | '/console/'
+    | '/console/organizations/$organizationId'
+    | '/console/organizations/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -164,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsoleAuditRouteImport
       parentRoute: typeof ConsoleRoute
     }
+    '/console/notifications': {
+      id: '/console/notifications'
+      path: '/notifications'
+      fullPath: '/console/notifications'
+      preLoaderRoute: typeof ConsoleNotificationsRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
     '/console/preferences': {
       id: '/console/preferences'
       path: '/preferences'
@@ -185,23 +230,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConsoleUsersRouteImport
       parentRoute: typeof ConsoleRoute
     }
+    '/console/organizations/': {
+      id: '/console/organizations/'
+      path: '/organizations'
+      fullPath: '/console/organizations/'
+      preLoaderRoute: typeof ConsoleOrganizationsIndexRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
+    '/console/organizations/$organizationId': {
+      id: '/console/organizations/$organizationId'
+      path: '/organizations/$organizationId'
+      fullPath: '/console/organizations/$organizationId'
+      preLoaderRoute: typeof ConsoleOrganizationsOrganizationIdRouteImport
+      parentRoute: typeof ConsoleRoute
+    }
   }
 }
 
 interface ConsoleRouteChildren {
   ConsoleAuditRoute: typeof ConsoleAuditRoute
+  ConsoleNotificationsRoute: typeof ConsoleNotificationsRoute
   ConsolePreferencesRoute: typeof ConsolePreferencesRoute
   ConsoleSettingsRoute: typeof ConsoleSettingsRoute
   ConsoleUsersRoute: typeof ConsoleUsersRoute
   ConsoleIndexRoute: typeof ConsoleIndexRoute
+  ConsoleOrganizationsOrganizationIdRoute: typeof ConsoleOrganizationsOrganizationIdRoute
+  ConsoleOrganizationsIndexRoute: typeof ConsoleOrganizationsIndexRoute
 }
 
 const ConsoleRouteChildren: ConsoleRouteChildren = {
   ConsoleAuditRoute: ConsoleAuditRoute,
+  ConsoleNotificationsRoute: ConsoleNotificationsRoute,
   ConsolePreferencesRoute: ConsolePreferencesRoute,
   ConsoleSettingsRoute: ConsoleSettingsRoute,
   ConsoleUsersRoute: ConsoleUsersRoute,
   ConsoleIndexRoute: ConsoleIndexRoute,
+  ConsoleOrganizationsOrganizationIdRoute:
+    ConsoleOrganizationsOrganizationIdRoute,
+  ConsoleOrganizationsIndexRoute: ConsoleOrganizationsIndexRoute,
 }
 
 const ConsoleRouteWithChildren =

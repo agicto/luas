@@ -50,6 +50,12 @@ console has no sign-in and no protected feature:
 - The console origin must be listed in `OPERATOR_ALLOWED_ORIGINS`, and `/api/*`
   must reach the Go API on the same origin so the cookie stays first-party.
 - Operator access is granted only with `luas operator:grant <email>`.
+- `organization`, `webhook`, and `notification` in `VITE_OPTIONAL_FEATURES` add operator screens
+  for those API starters. They are support views, not tenant self-service: an operator reads any
+  organization's members, webhook endpoints, and deliveries, and the notification delivery ledger,
+  without becoming an organization member. The API never returns signing secrets, event payloads,
+  notification content, or recipient addresses on these routes, so the console cannot show them.
+  The only write is webhook delivery replay, which is audited with the operator as actor.
 
 ## Cross-Origin APIs
 

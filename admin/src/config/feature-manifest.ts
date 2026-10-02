@@ -23,6 +23,18 @@ export const featureManifest = {
     kind: 'optional',
     routes: ['/console/settings'],
   },
+  organizations: {
+    kind: 'optional',
+    routes: ['/console/organizations', '/console/organizations/$organizationId'],
+  },
+  webhooks: {
+    kind: 'optional',
+    routes: ['/console/organizations/$organizationId'],
+  },
+  notificationDeliveries: {
+    kind: 'optional',
+    routes: ['/console/notifications'],
+  },
 } as const;
 
 export type FeatureName = keyof typeof featureManifest;

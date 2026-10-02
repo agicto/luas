@@ -20,8 +20,14 @@ export function ConsoleHeader() {
     '/console/users': t('navigation.users'),
     '/console/audit': t('navigation.audit'),
     '/console/settings': t('navigation.settings'),
+    '/console/organizations': t('navigation.organizations'),
+    '/console/notifications': t('navigation.notifications'),
   };
-  const currentPage = pageTitles[pathname] ?? t('navigation.overview');
+  const currentPage =
+    pageTitles[pathname] ??
+    (pathname.startsWith('/console/organizations/')
+      ? t('navigation.organizations')
+      : t('navigation.overview'));
   const themeLabel = dark ? t('preferences.light') : t('preferences.dark');
 
   return (

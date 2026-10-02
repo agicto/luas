@@ -1,5 +1,14 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Gauge, History, PanelsTopLeft, Settings2, SlidersHorizontal, Users } from 'lucide-react';
+import {
+  BellRing,
+  Building2,
+  Gauge,
+  History,
+  PanelsTopLeft,
+  Settings2,
+  SlidersHorizontal,
+  Users,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
   Sidebar,
@@ -15,7 +24,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { env, isFeatureEnabled } from '@/config/env';
+import { env, isFeatureEnabled, isOperatorFeatureEnabled } from '@/config/env';
 
 const operatorNavigation = isFeatureEnabled('operator')
   ? ([
@@ -25,6 +34,27 @@ const operatorNavigation = isFeatureEnabled('operator')
     ] as const)
   : ([] as const);
 
+const starterNavigation = [
+  ...(isOperatorFeatureEnabled('organization')
+    ? ([
+        {
+          icon: Building2,
+          labelKey: 'navigation.organizations',
+          to: '/console/organizations',
+        },
+      ] as const)
+    : []),
+  ...(isOperatorFeatureEnabled('notification')
+    ? ([
+        {
+          icon: BellRing,
+          labelKey: 'navigation.notifications',
+          to: '/console/notifications',
+        },
+      ] as const)
+    : []),
+];
+
 const navigationItems = [
   {
     icon: Gauge,
@@ -32,6 +62,7 @@ const navigationItems = [
     to: '/console',
   },
   ...operatorNavigation,
+  ...starterNavigation,
   {
     icon: Settings2,
     labelKey: 'navigation.preferences',
@@ -87,7 +118,10 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.to}>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === item.to}
+                      isActive={
+                        pathname === item.to ||
+                        (item.to !== '/console' && pathname.startsWith(`${item.to}/`))
+                      }
                       tooltip={label}
                       className="h-9"
                     >

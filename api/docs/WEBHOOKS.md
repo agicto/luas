@@ -14,6 +14,10 @@ delivery ledger. The canonical cross-half behavior is
   sender, service, routes, and tests.
 - `luas webhook:work` runs one or more independent database-ledger workers.
 - `luas webhook:publish-test`, `webhook:replay`, and `webhook:prune` are bounded operator tools.
+- With the `operator` starter also selected, platform operators read an organization's endpoints,
+  deliveries, and attempts and replay a delivery from the Admin Console through
+  `/v1/operator/organizations/:id/...` ([`OPERATORS.md`](../../contracts/OPERATORS.md)). The
+  `OperatorHandler` in this module serves those routes; the operator starter authorizes them.
 
 The worker uses the same image, database, `WEBHOOK_ENCRYPTION_KEY`, and `OPTIONAL_STARTERS` snapshot
 as the API process. It does not depend on the memory workflow queue.

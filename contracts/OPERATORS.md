@@ -5,7 +5,8 @@ Console. It depends on the default `user` and `audit` starters and is selected w
 `OPTIONAL_STARTERS=operator`. When it is not selected, no `/v1/operator` route and no `operator:*`
 command exists.
 
-Implementation plan: [`../docs/plans/admin-operator-console.md`](../docs/plans/admin-operator-console.md).
+Implementation plans: [`admin-operator-console.md`](../docs/plans/admin-operator-console.md) and
+[`admin-operator-starters.md`](../docs/plans/admin-operator-starters.md).
 
 ## Operators
 
@@ -139,6 +140,67 @@ authorizes.
 
 Each change produces one audit record with the operator as actor; the setting starter adds the
 setting's business change to that record.
+
+## Organizations
+
+Registered only when the `organization` starter is also selected; otherwise these paths return
+`404`. An operator is not an organization member: these routes apply no membership check and never
+set organization context. They are read-only.
+
+| Operation | Method and path | Success |
+|---|---|---|
+| List organizations | `GET /v1/operator/organizations?q=&page=&per_page=` | `200` paginated `operator organization` list |
+| Get organization | `GET /v1/operator/organizations/:id` | `200 operator organization` |
+| List members | `GET /v1/operator/organizations/:id/members?page=&per_page=` | `200` paginated `operator member` list |
+
+An operator organization is `{ id, name, slug, created_by, member_count, created_at, updated_at }`.
+An operator member is `{ id, user_id, username, nickname, email, role, joined_at }`, where `id` is
+the membership ID and `role` is `owner`, `admin`, or `member`. Memberships of deleted accounts are
+excluded from both the list and `member_count`.
+
+- `q` (at most 100 characters) matches name or slug case-insensitively as a literal substring; `%`
+  and `_` are not wildcards. Organizations are ordered by descending ID, members by ascending user
+  ID. `per_page` is 1–100 (default 15). Invalid values return `400 COMMON.INVALID_INPUT`.
+- An unknown organization returns `404 ORGANIZATION.NOT_FOUND`. Operator scope is global, so this
+  discloses only that the ID does not exist.
+
+## Webhooks
+
+Registered only when the `webhook` starter is also selected. Every route is nested under one
+organization and reuses the organization-scoped queries and representations of
+[`WEBHOOKS.md`](WEBHOOKS.md), so signing secrets, ciphertext, event payloads, signatures, and target
+response bodies are never returned.
+
+| Operation | Method and path | Success |
+|---|---|---|
+| List endpoints | `GET /v1/operator/organizations/:id/webhook-endpoints` | `200` paginated endpoint list |
+| List deliveries | `GET /v1/operator/organizations/:id/webhook-deliveries?endpoint_id=&status=` | `200` paginated delivery list |
+| List attempts | `GET /v1/operator/organizations/:id/webhook-deliveries/:delivery_id/attempts` | `200` paginated attempt list |
+| Replay delivery | `POST /v1/operator/organizations/:id/webhook-deliveries/:delivery_id/replay` | `200` delivery |
+
+- An unknown organization returns `404 ORGANIZATION.NOT_FOUND` before any webhook lookup. A delivery
+  that belongs to another organization returns `404 WEBHOOK.DELIVERY_NOT_FOUND`.
+- `status` is a delivery status and `endpoint_id` a positive integer; invalid filters and IDs return
+  `400 COMMON.INVALID_INPUT`.
+- Replay is the operator replay rule of `WEBHOOKS.md` with the operator as actor: the delivery must
+  be terminal, below the replay limit, and its endpoint active, otherwise
+  `409 WEBHOOK.REPLAY_NOT_ALLOWED`. It keeps the original message ID and returns the delivery as
+  `pending`. Each accepted replay starts one new delivery cycle, so the command is not idempotent.
+  It writes the webhook starter's replay audit record in addition to the request audit record.
+- Operators cannot create, update, disable, delete, or test endpoints or rotate secrets.
+
+## Notification Deliveries
+
+Registered only when the `notification` starter is also selected.
+
+`GET /v1/operator/notification-deliveries?status=&channel=&user_id=&page=&per_page=` returns the
+platform's channel delivery ledger, newest first (descending delivery ID), paginated.
+
+A delivery is `{ id, notification_id, user_id, kind, channel, status, attempts, last_failure_code,
+available_at, delivered_at, created_at, updated_at }`. `status` is `pending`, `processing`,
+`delivered`, or `failed`; `channel` is `in_app` or `email`; `user_id` is the recipient;
+`delivered_at` may be `null`. Notification titles, bodies, action URLs, and destination addresses are
+never returned. Invalid filters return `400 COMMON.INVALID_INPUT`. The endpoint reads only.
 
 ## System Status
 
