@@ -94,7 +94,7 @@ contract instead of copied from Next.js.
 ### Requirements
 
 - Docker with Compose v2 for the fastest API setup
-- Go 1.25.12 or newer for native API development
+- Go 1.25.13 or newer for native API development
 - Node.js 22.12 or newer with Corepack for either browser shell
 
 ### Start The API
