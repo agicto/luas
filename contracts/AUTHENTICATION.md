@@ -88,6 +88,11 @@ unrevocable path beside the new authority.
 The API user uses numeric identity and backend fields such as `username`, `nickname`, and
 `status`. It does not directly emit the Web shell's `name` view.
 
+A new `username` is 3-50 characters and must not contain `@`; registration rejects one that does
+with `422 COMMON.VALIDATION_FAILED`. The login `username` field accepts a username or an email. A
+value that contains `@` resolves to the account that owns that email before any account whose
+legacy username equals it, so one account cannot capture another account's email sign-in.
+
 ### Public Failure Semantics
 
 - Unknown identifiers, wrong passwords, and disabled accounts all return HTTP `401` with

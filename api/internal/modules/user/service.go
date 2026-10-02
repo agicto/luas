@@ -71,6 +71,7 @@ type userRepository interface {
 	FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error)
 	DeleteAccount(ctx context.Context, userID uint, check func(context.Context) error) error
 	UpdatePasswordAndRevokeSessions(ctx context.Context, userID uint, passwordHash string, now time.Time) error
+	RecordLogin(ctx context.Context, userID uint, at time.Time) error
 }
 
 const dummyPasswordHash = "$2a$10$BoIQPcmnuQfwI8s38RMnmeXm5V8xwU2lJVIF4EueN3y5x6KYUXelq"
@@ -247,7 +248,7 @@ func (s *service) signIn(
 	// here shouldn't fail the login, but it shouldn't be invisible either.
 	now := time.Now()
 	user.LastLogin = &now
-	if err := s.repo.Update(ctx, user); err != nil {
+	if err := s.repo.RecordLogin(ctx, user.ID, now); err != nil {
 		slog.WarnContext(ctx, "user.last_login_update_failed",
 			"user_id", user.ID,
 			"err", err,

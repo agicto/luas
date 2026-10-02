@@ -45,10 +45,16 @@ func newBrowserSession(cfg *config.Config) *browserSession {
 	if name := strings.TrimSpace(cfg.Operator.SessionCookieName); name != "" {
 		session.cookieName = name
 	}
+	allHTTPS := true
 	for _, origin := range cfg.Operator.AllowedOrigins {
 		if trimmed := strings.TrimSpace(origin); trimmed != "" {
 			session.allowedOrigins[trimmed] = struct{}{}
+			allHTTPS = allHTTPS && strings.HasPrefix(trimmed, "https://")
 		}
+	}
+	// An HTTPS-only deployment outside production, such as staging, still gets a Secure cookie.
+	if len(session.allowedOrigins) > 0 && allHTTPS {
+		session.secure = true
 	}
 	return session
 }
@@ -97,6 +103,19 @@ func (s *browserSession) clear(c *gin.Context) {
 }
 
 // originAllowed requires the request Origin to exactly match a configured Admin Console origin.
+// foreignOrigin reports a request that names an origin outside the allowed list. Browsers omit
+// Origin on same-origin reads, so an absent header is not foreign; a present one must be allowed.
+// Without this, a page on another origin trusted by the kernel CORS policy could read operator
+// responses with the operator's cookie.
+func (s *browserSession) foreignOrigin(c *gin.Context) bool {
+	origin := strings.TrimSpace(c.GetHeader("Origin"))
+	if origin == "" {
+		return false
+	}
+	_, ok := s.allowedOrigins[origin]
+	return !ok
+}
+
 func (s *browserSession) originAllowed(c *gin.Context) bool {
 	origin := strings.TrimSpace(c.GetHeader("Origin"))
 	if origin == "" {

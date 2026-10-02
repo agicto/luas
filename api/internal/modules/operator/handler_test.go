@@ -392,3 +392,33 @@ func TestBrowserSessionCookieNameFollowsEnvironment(t *testing.T) {
 	custom := &config.Config{Operator: config.OperatorConfig{SessionCookieName: "admin_sid"}}
 	assert.Equal(t, "admin_sid", newBrowserSession(custom).cookieName)
 }
+
+// The kernel CORS policy also trusts the customer Web origin, and a same-site page receives the
+// SameSite=Strict cookie, so reads must reject any origin outside OPERATOR_ALLOWED_ORIGINS.
+func TestOperatorReadsRejectForeignOrigins(t *testing.T) {
+	f := newFixture(t)
+
+	sameOrigin := f.do(t, call{method: http.MethodGet, path: "/v1/operator/users", cookie: testCredential})
+	require.Equal(t, http.StatusOK, sameOrigin.Code, "browsers omit Origin on same-origin reads")
+
+	allowed := f.do(t, call{method: http.MethodGet, path: "/v1/operator/users", cookie: testCredential, origin: testOrigin})
+	require.Equal(t, http.StatusOK, allowed.Code)
+
+	for _, path := range []string{"/v1/operator/users", "/v1/operator/session", "/v1/operator/audit-logs"} {
+		foreign := f.do(t, call{method: http.MethodGet, path: path, cookie: testCredential, origin: "https://app.example.test"})
+		require.Equal(t, http.StatusForbidden, foreign.Code, path)
+		assert.Equal(t, "OPERATOR.ORIGIN_REJECTED", errorCode(t, foreign))
+		assert.NotContains(t, foreign.Body.String(), "csrf_token")
+	}
+}
+
+func TestBrowserSessionCookieIsSecureForHTTPSOriginsOutsideProduction(t *testing.T) {
+	staging := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{"https://admin.staging.example.test"}}}
+	assert.True(t, newBrowserSession(staging).secure)
+
+	local := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{"http://127.0.0.1:4173"}}}
+	assert.False(t, newBrowserSession(local).secure)
+
+	mixed := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{"https://admin.example.test", "http://127.0.0.1:4173"}}}
+	assert.False(t, newBrowserSession(mixed).secure)
+}
