@@ -29,7 +29,7 @@ const integerFromString = (fallback: number, minimum: number, maximum: number) =
   );
 
 // Optional features mirror API optional starters and are selected at build time.
-const optionalFeatureNames = ['operator'] as const;
+const optionalFeatureNames = ['operator', 'organization', 'webhook', 'notification'] as const;
 export type OptionalFeature = (typeof optionalFeatureNames)[number];
 
 const optionalFeatures = z.string().transform((value, context) => {
@@ -77,4 +77,9 @@ export const env = Object.freeze(parsed.data);
 
 export function isFeatureEnabled(feature: OptionalFeature): boolean {
   return env.OPTIONAL_FEATURES.includes(feature);
+}
+
+/** Operator screens for another starter need the operator session and that starter's feature. */
+export function isOperatorFeatureEnabled(feature: Exclude<OptionalFeature, 'operator'>): boolean {
+  return isFeatureEnabled('operator') && isFeatureEnabled(feature);
 }

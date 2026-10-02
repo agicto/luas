@@ -288,6 +288,21 @@ Slice 2 depends on slice 1 (organization lookup and detail screen). Slice 3 is i
    no webhook section.
 8. A signed-in user without a grant receives `403 OPERATOR.FORBIDDEN` on every route above.
 
+## 15a. Delivery Status (2026-10-02)
+
+All three slices are delivered on `feature/admin-starter-administration`, verified with PostgreSQL
+tests for each new query, handler tests for mounting and guard order, Admin component tests, and a
+live browser run against a real API and database:
+
+| Slice | Evidence |
+|---|---|
+| 1. Organization directory | An operator who is a member of nothing lists and opens organizations; members show email; unknown ID is `404 ORGANIZATION.NOT_FOUND` |
+| 2. Webhook diagnosis and replay | Endpoints and deliveries render without secrets; a delivery addressed under another organization is `404`; replay of a pending delivery is `409`; replay of a delivered one returns it to `pending` with `replay_count` 1 and appears in the audit log with the operator as actor |
+| 3. Notification ledger | Filters by status, channel, and recipient; the response carries no title, body, or action URL |
+
+Refinement recorded during delivery: the default page size is the repository default of 15, and the
+console requests 20 (50 for the notification ledger and attempts).
+
 ## 16. Open Decisions
 
 None blocking. Recorded assumptions:
