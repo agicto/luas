@@ -224,5 +224,12 @@ var (
 		mustWebhookPrefix("240.0.0.0/4"),
 		mustWebhookPrefix("100::/64"),
 		mustWebhookPrefix("2001:db8::/32"),
+		// IPv6 transition ranges embed an IPv4 address and can reach private IPv4 networks on hosts
+		// that route them: IPv4-compatible, NAT64 (well-known and local-use), Teredo, and 6to4.
+		mustWebhookPrefix("::/96"),
+		mustWebhookPrefix("64:ff9b::/96"),
+		mustWebhookPrefix("64:ff9b:1::/48"),
+		mustWebhookPrefix("2001::/32"),
+		mustWebhookPrefix("2002::/16"),
 	}
 )

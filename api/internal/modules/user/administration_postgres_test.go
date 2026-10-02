@@ -118,3 +118,63 @@ func TestUserAdministrationPostgres(t *testing.T) {
 		require.ErrorIs(t, svc.RevokeUserSessions(ctx, 999999), domain.ErrUserNotFound)
 	})
 }
+
+// A sign-in or profile update that read the account before a password change, disable, or deletion
+// committed must not write the old values back.
+func TestStaleAccountWritesDoNotRevertSecurityState(t *testing.T) {
+	db := testplatform.OpenPostgres(t, nil, &UserPO{}, &AuthenticationSessionPO{})
+	ctx := context.Background()
+	repo := NewRepository(db)
+	seed := UserPO{Username: "dana", Email: "dana@example.test", Password: "old-hash", Status: userStatusActive}
+	require.NoError(t, db.Create(&seed).Error)
+
+	stale, err := repo.FindByID(ctx, seed.ID)
+	require.NoError(t, err)
+
+	require.NoError(t, repo.UpdatePasswordAndRevokeSessions(ctx, seed.ID, "new-hash", time.Now()))
+	require.NoError(t, repo.setUserStatus(ctx, seed.ID, userStatusDisabled, time.Now()))
+
+	stale.Nickname = "Dana"
+	require.NoError(t, repo.Update(ctx, stale))
+	require.NoError(t, repo.RecordLogin(ctx, stale.ID, time.Now()))
+
+	var current UserPO
+	require.NoError(t, db.First(&current, seed.ID).Error)
+	assert.Equal(t, "new-hash", current.Password, "a stale write must not restore the old password")
+	assert.Equal(t, userStatusDisabled, current.Status, "a stale write must not re-enable the account")
+	assert.Equal(t, "Dana", current.Nickname)
+	assert.NotNil(t, current.LastLogin)
+
+	require.NoError(t, db.Delete(&UserPO{}, seed.ID).Error)
+	stale.Nickname = "Resurrected"
+	require.ErrorIs(t, repo.Update(ctx, stale), domain.ErrUserNotFound)
+	require.NoError(t, repo.RecordLogin(ctx, stale.ID, time.Now()))
+	var live int64
+	require.NoError(t, db.Model(&UserPO{}).Where("id = ?", seed.ID).Count(&live).Error)
+	assert.Zero(t, live, "a stale write must not undelete the account")
+}
+
+// An account whose username equals another account's email must not capture that account's sign-in.
+func TestLoginIdentifierPrefersEmailForAddresses(t *testing.T) {
+	db := testplatform.OpenPostgres(t, nil, &UserPO{}, &AuthenticationSessionPO{})
+	ctx := context.Background()
+	repo := NewRepository(db)
+	victim := UserPO{Username: "victim", Email: "victim@example.test", Password: "x", Status: userStatusActive}
+	squatter := UserPO{Username: "victim@example.test", Email: "squatter@example.test", Password: "x", Status: userStatusActive}
+	plain := UserPO{Username: "plain", Email: "other@example.test", Password: "x", Status: userStatusActive}
+	for _, po := range []*UserPO{&squatter, &victim, &plain} {
+		require.NoError(t, db.Create(po).Error)
+	}
+
+	byEmail, err := repo.FindByLoginIdentifier(ctx, "victim@example.test")
+	require.NoError(t, err)
+	assert.Equal(t, victim.ID, byEmail.ID, "an address resolves to the account that owns the email")
+
+	byUsername, err := repo.FindByLoginIdentifier(ctx, "plain")
+	require.NoError(t, err)
+	assert.Equal(t, plain.ID, byUsername.ID)
+
+	legacy, err := repo.FindByLoginIdentifier(ctx, "squatter@example.test")
+	require.NoError(t, err)
+	assert.Equal(t, squatter.ID, legacy.ID)
+}

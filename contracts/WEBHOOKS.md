@@ -74,8 +74,9 @@ Target rules:
 - at most 2,048 bytes;
 - redirects are never followed;
 - DNS is resolved again at delivery time and the exact resolved IP is dialed;
-- loopback, private, link-local, multicast, unspecified, and metadata-network destinations are
-  rejected unless explicitly allowed for non-production local verification;
+- loopback, private, link-local, multicast, unspecified, metadata-network, and IPv6 transition
+  (IPv4-compatible, NAT64, Teredo, 6to4) destinations are rejected unless explicitly allowed for
+  non-production local verification;
 - TLS verification remains enabled.
 
 Production rejects insecure HTTP and private-target overrides. Deployment egress controls remain a

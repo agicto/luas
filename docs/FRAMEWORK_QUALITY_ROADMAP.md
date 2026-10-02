@@ -1212,6 +1212,52 @@ Verification:
 
 - `cd api && go test ./database/migrations ./internal/starter`
 
+### Completed P1 — Security Review Fixes (2026-10-03)
+
+A read-only review of the operator starter, authentication, webhooks, assets, the Web adapter, the
+Admin client, and the workflows found no critical or high defect and four that were fixed:
+
+- User writes are column-scoped. Sign-in and profile update previously wrote back the whole row
+  they had read, so a race with a password change, operator disable, or deletion could undo it.
+- Operator routes reject any `Origin` outside `OPERATOR_ALLOWED_ORIGINS` on every method. Before,
+  script on another origin trusted by the kernel CORS policy could read operator responses.
+- A login identifier that contains `@` resolves to the email owner, and new usernames cannot contain
+  `@`. The documented precedence had never been applied: GORM `First` replaced the ordering
+  expression, so the lowest ID won.
+- Webhook targets in IPv6 transition ranges are rejected, and the operator cookie is `Secure` for
+  HTTPS origins outside production.
+
+All open dependency advisories were closed in the same round (Next.js 16.3.8, Go 1.25.13, and
+others); `make dependency-scan` reports zero findings.
+
+Verification:
+
+- `cd api && go test ./internal/modules/user ./internal/modules/operator ./internal/modules/webhook`
+- `cd api && make test-postgres-compatibility`
+- `make dependency-scan`
+
+### P2 — Authentication Hardening Follow-Ups
+
+Problem: the same review left four lower-severity items that each need a design decision.
+
+Recommended slice:
+
+1. Sign-in quota counts every attempt, keyed by submitted identifier, in a per-process store: ten
+   requests lock a known account out for the window, and replicas multiply the budget. Count
+   failures only, key on the resolved account, and document the shared-store requirement.
+2. Any live session of an operator account is accepted as the operator cookie, including a bearer
+   credential from the public login. Mark sessions issued by operator sign-in and require the mark.
+3. Registration returns distinct username and email conflicts, and password reset sends mail
+   synchronously only for existing accounts, so both can enumerate accounts. The contract records
+   the first as a deliberate tradeoff; move reset delivery off the request path.
+4. `OPERATOR_SESSION_COOKIE_NAME` can drop the `__Host-` prefix in production, and `plugin:list`
+   runs discovered binaries without a timeout.
+
+Verification:
+
+- The owning starter's handler and PostgreSQL tests, plus `contracts/AUTHENTICATION.md` and
+  `contracts/OPERATORS.md`.
+
 ### P2 — Machine-Checkable Contracts Beyond API Keys
 
 Problem: `contracts/openapi.yaml` and the generated Web and Admin types cover only API keys. Every

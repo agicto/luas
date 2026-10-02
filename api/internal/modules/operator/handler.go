@@ -180,6 +180,10 @@ func (h *Handler) requireOperator(c *gin.Context) {
 		response.AbortWithCode(c, http.StatusUnauthorized, response.ErrorCodeUnauthorized, "Authentication required")
 		return
 	}
+	if h.session.foreignOrigin(c) {
+		response.AbortWithCode(c, http.StatusForbidden, domain.CodeOperatorOriginRejected, "Origin is not allowed")
+		return
+	}
 
 	account, err := h.service.Authenticate(c.Request.Context(), credential)
 	if err != nil {

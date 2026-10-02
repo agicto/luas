@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -80,18 +81,38 @@ func (r *repository) Create(ctx context.Context, user *domain.User) error {
 	return nil
 }
 
-// Update modifies an existing user
+// Update persists the mutable profile fields of a live account. Credentials, status, last login, and
+// deletion each have their own command, so a stale read can never write them back.
 func (r *repository) Update(ctx context.Context, user *domain.User) error {
 	db, err := r.withContext(ctx)
 	if err != nil {
 		return err
 	}
-	po := newUserPO(user)
-	if err := db.Save(po).Error; err != nil {
+	now := time.Now()
+	result := db.Model(&UserPO{}).Where("id = ?", user.ID).Updates(map[string]any{
+		"nickname":   user.Nickname,
+		"avatar":     user.Avatar,
+		"phone":      user.Phone,
+		"bio":        user.Bio,
+		"updated_at": now,
+	})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		return domain.ErrUserNotFound
+	}
+	user.UpdatedAt = now
+	return nil
+}
+
+// RecordLogin stores the time of a successful sign-in without touching any other column.
+func (r *repository) RecordLogin(ctx context.Context, userID uint, at time.Time) error {
+	db, err := r.withContext(ctx)
+	if err != nil {
 		return err
 	}
-	user.UpdatedAt = po.UpdatedAt
-	return nil
+	return db.Model(&UserPO{}).Where("id = ?", userID).UpdateColumn("last_login", at).Error
 }
 
 // Delete removes a user by ID
@@ -240,22 +261,27 @@ func (r *repository) FindByUsername(ctx context.Context, username string) (*doma
 	return po.toDomain(), nil
 }
 
-// FindByLoginIdentifier resolves username or email in one query. Username
-// keeps precedence to preserve the starter's historical login behavior when
-// identifiers collide across fields.
+// FindByLoginIdentifier resolves username or email in one query. An identifier that contains "@"
+// matches the email first, so an account whose username was set to another account's email cannot
+// capture that account's sign-in; any other identifier matches the username first.
 func (r *repository) FindByLoginIdentifier(ctx context.Context, identifier string) (*domain.User, error) {
 	db, err := r.withContext(ctx)
 	if err != nil {
 		return nil, err
 	}
+	preferred := "username"
+	if strings.Contains(identifier, "@") {
+		preferred = "email"
+	}
 	var po UserPO
 	err = db.
 		Where("username = ? OR email = ?", identifier, identifier).
-		Order(clause.Expr{
-			SQL:  "CASE WHEN username = ? THEN 0 ELSE 1 END",
+		Order(clause.OrderBy{Expression: clause.Expr{
+			SQL:  "CASE WHEN " + preferred + " = ? THEN 0 ELSE 1 END, id",
 			Vars: []any{identifier},
-		}).
-		First(&po).Error
+		}}).
+		// Take, not First: First appends a primary-key order that replaces the expression above.
+		Take(&po).Error
 	if err != nil {
 		return nil, err
 	}

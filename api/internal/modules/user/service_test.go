@@ -20,6 +20,7 @@ import (
 type fakeRepo struct {
 	createFn         func(context.Context, *domain.User) error
 	updateFn         func(context.Context, *domain.User) error
+	recordLoginFn    func(context.Context, uint, time.Time) error
 	deleteFn         func(context.Context, uint) error
 	findByIDFn       func(context.Context, uint) (*domain.User, error)
 	findByEmailFn    func(context.Context, string) (*domain.User, error)
@@ -74,6 +75,13 @@ func (r *fakeRepo) Create(ctx context.Context, user *domain.User) error {
 func (r *fakeRepo) Update(ctx context.Context, user *domain.User) error {
 	if r.updateFn != nil {
 		return r.updateFn(ctx, user)
+	}
+	return nil
+}
+
+func (r *fakeRepo) RecordLogin(ctx context.Context, userID uint, at time.Time) error {
+	if r.recordLoginFn != nil {
+		return r.recordLoginFn(ctx, userID, at)
 	}
 	return nil
 }
@@ -252,7 +260,8 @@ func TestServiceRegisterFailsFastOnLookupError(t *testing.T) {
 }
 
 func TestServiceLoginFindsEmailIdentifierAndUpdatesLastLogin(t *testing.T) {
-	var updated *domain.User
+	var recordedFor uint
+	fullRowWrites := 0
 	hashedPassword := mustHashTestPassword(t)
 
 	svc := newTestService(&fakeRepo{
@@ -265,8 +274,12 @@ func TestServiceLoginFindsEmailIdentifierAndUpdatesLastLogin(t *testing.T) {
 				Status:   1,
 			}, nil
 		},
-		updateFn: func(_ context.Context, user *domain.User) error {
-			updated = user
+		updateFn: func(context.Context, *domain.User) error {
+			fullRowWrites++
+			return nil
+		},
+		recordLoginFn: func(_ context.Context, userID uint, _ time.Time) error {
+			recordedFor = userID
 			return nil
 		},
 	})
@@ -280,8 +293,8 @@ func TestServiceLoginFindsEmailIdentifierAndUpdatesLastLogin(t *testing.T) {
 	assert.NotNil(t, resp)
 	assert.NotEmpty(t, resp.AccessToken)
 	assert.Equal(t, uint(42), resp.User.ID)
-	assert.NotNil(t, updated)
-	assert.NotNil(t, updated.LastLogin)
+	assert.Equal(t, uint(42), recordedFor)
+	assert.Zero(t, fullRowWrites, "sign-in must not write the account row it read")
 }
 
 func TestServiceLoginReturnsInvalidCredentialsOnWrongPassword(t *testing.T) {

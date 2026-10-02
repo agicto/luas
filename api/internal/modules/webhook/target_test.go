@@ -69,6 +69,12 @@ func TestTargetPolicyRejectsUnsafeURLFormsAndNetworks(t *testing.T) {
 		"https://203.0.113.1/hook",
 		" https://8.8.8.8/hook",
 		"https://8.8.8.8\\@example.com/hook",
+		"https://[64:ff9b::a00:1]/hook",
+		"https://[64:ff9b:1::a00:1]/hook",
+		"https://[2002:a00:1::1]/hook",
+		"https://[2001:0:a00:1::1]/hook",
+		"https://[::10.0.0.1]/hook",
+		"https://[::ffff:10.0.0.1]/hook",
 	}
 	for _, value := range unsafe {
 		_, _, err := policy.Normalize(context.Background(), value)

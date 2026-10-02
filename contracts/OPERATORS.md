@@ -32,10 +32,11 @@ origin so the cookie is first-party.
 | Rule | Value |
 |---|---|
 | Cookie name | `OPERATOR_SESSION_COOKIE_NAME`; default `__Host-luas_operator` in production, `luas_operator` otherwise |
-| Cookie attributes | HttpOnly, `Secure` in production, `SameSite=Strict`, `Path=/`, no `Domain`, `Max-Age` = session lifetime |
+| Cookie attributes | HttpOnly, `Secure` in production or whenever every allowed origin is `https`, `SameSite=Strict`, `Path=/`, no `Domain`, `Max-Age` = session lifetime |
 | Credential | The opaque authentication session from the `user` starter; never returned in a response body |
 | Session lifetime | The existing absolute and idle session limits |
 | Unsafe methods | Require `Origin` exactly equal to one of `OPERATOR_ALLOWED_ORIGINS` and header `X-CSRF-Token` |
+| Safe methods | `Origin` may be absent (same-origin reads); when present it must equal one of `OPERATOR_ALLOWED_ORIGINS`, so an origin trusted only by `CORS_ALLOW_ORIGINS` cannot read operator responses |
 | CSRF token | Returned by sign-in and `GET /v1/operator/session`; bound to one session |
 | Caching | Every `/v1/operator` response sends `Cache-Control: private, no-store` |
 
@@ -70,7 +71,7 @@ Sign-out without a cookie, or with an already revoked session, returns `204` and
 | Wrong credentials, unknown or disabled account at sign-in | 401 | `AUTH.INVALID_CREDENTIALS` |
 | Session whose account was later disabled | 403 | `AUTH.ACCOUNT_DISABLED` |
 | Caller has no operator grant | 403 | `OPERATOR.FORBIDDEN` |
-| `Origin` missing on an unsafe method, or not allowed by the operator starter | 403 | `OPERATOR.ORIGIN_REJECTED` |
+| `Origin` missing on an unsafe method, or present on any method and not allowed by the operator starter | 403 | `OPERATOR.ORIGIN_REJECTED` |
 | `Origin` outside both `CORS_ALLOW_ORIGINS` and `OPERATOR_ALLOWED_ORIGINS` | 403 | none: the kernel CORS policy rejects it before routing |
 | `X-CSRF-Token` missing or not bound to this session | 403 | `OPERATOR.CSRF_REJECTED` |
 | Target account holds an operator grant | 409 | `OPERATOR.TARGET_PROTECTED` |

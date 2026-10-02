@@ -11,6 +11,36 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-03 — Security review fixes
+
+### Medium — User writes are column-scoped
+
+`user` repository `Update` now writes only `nickname`, `avatar`, `phone`, and `bio` and returns
+`USER.NOT_FOUND` for a deleted account; sign-in records `last_login` through the new `RecordLogin`.
+Before, both wrote the whole row they had read, so a sign-in or profile update racing a password
+change, operator disable, or account deletion could restore the old password hash, re-enable the
+account, or undelete it. A fork that relied on `Update` to persist other columns must add a
+dedicated repository command for them.
+
+### Medium — Usernames cannot contain `@`, and email sign-in resolves to the email owner
+
+Registration rejects a username that contains `@` (`422`). A login identifier that contains `@`
+matches the email first. Before, the documented username precedence was not applied at all (the
+lookup returned the lowest ID), so an account registered with another account's email as its
+username could capture that account's sign-in. Existing usernames are not changed.
+
+### Low — Operator routes reject foreign origins on reads
+
+Every `/v1/operator` request that carries an `Origin` outside `OPERATOR_ALLOWED_ORIGINS` now fails
+with `403 OPERATOR.ORIGIN_REJECTED`, not only unsafe methods. Same-origin reads, which send no
+`Origin`, are unaffected. The operator cookie is `Secure` whenever every allowed origin is `https`.
+
+### Low — Webhook targets in IPv6 transition ranges are rejected
+
+IPv4-compatible (`::/96`), NAT64 (`64:ff9b::/96`, `64:ff9b:1::/48`), Teredo (`2001::/32`), and 6to4
+(`2002::/16`) destinations fail with `WEBHOOK.INVALID_TARGET` unless private targets are explicitly
+allowed.
+
 ## 2026-10-03 — Dependency security updates
 
 ### Medium — Toolchain and framework minimums raised

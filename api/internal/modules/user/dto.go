@@ -10,7 +10,8 @@ import (
 
 // UserRegisterRequest represents the registration request
 type UserRegisterRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=50"`
+	// A username never contains "@", so it cannot be mistaken for, or shadow, an email at sign-in.
+	Username string `json:"username" binding:"required,min=3,max=50,excludesrune=@"`
 	Password string `json:"password" binding:"required,min=6,max=50"`
 	Email    string `json:"email" binding:"required,email"`
 	Nickname string `json:"nickname" binding:"max=50"`
