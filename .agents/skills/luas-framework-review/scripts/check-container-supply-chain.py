@@ -26,8 +26,8 @@ API_RUNTIME = (
     "aef9602f8710ec12bde19d593fed1f76c708531bb7aba205110f1029786ead7b"
 )
 WEB_BASE = (
-    "docker.io/library/node:22.23.1-alpine3.24@sha256:"
-    "16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2"
+    "docker.io/library/node:22.23.3-alpine3.24@sha256:"
+    "0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402"
 )
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 IGNORE_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]*$")
