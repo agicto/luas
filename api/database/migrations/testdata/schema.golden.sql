@@ -92,7 +92,7 @@ TABLE notification_deliveries
   COLUMN updated_at timestamp with time zone NOT NULL
 
 TABLE notification_preferences
-  COLUMN user_id bigint NOT NULL DEFAULT nextval('notification_preferences_user_id_seq'::regclass)
+  COLUMN user_id bigint NOT NULL
   COLUMN in_app_enabled boolean NOT NULL
   COLUMN email_enabled boolean NOT NULL
   COLUMN created_at timestamp with time zone NOT NULL

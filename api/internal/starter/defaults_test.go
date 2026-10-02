@@ -106,7 +106,7 @@ func TestConfiguredManifestsEnableNotificationWithoutOrganization(t *testing.T) 
 
 	migrations, err := ConfiguredMigrations(cfg)
 	require.NoError(t, err)
-	assert.Len(t, migrations, 11)
+	assert.Len(t, migrations, 12)
 	notificationMigration, exists := migrations["2026_07_15_020000_create_notification_tables"]
 	require.True(t, exists)
 	assert.True(t, notificationMigration.WithinTransaction())
