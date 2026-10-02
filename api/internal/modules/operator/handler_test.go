@@ -147,7 +147,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 	cfg := &config.Config{Operator: config.OperatorConfig{AllowedOrigins: []string{testOrigin}}}
 	cfg.App.Env = "production"
-	f.handler = NewHandler(svc, nil, cfg, nil)
+	f.handler = NewHandler(svc, nil, cfg, Surfaces{})
 	f.engine = gin.New()
 	api := f.engine.Group("/v1")
 	api.POST("/operator/session", f.handler.SignIn)

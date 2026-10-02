@@ -19,6 +19,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(Service), new(*service)),
 	NewContextResolver,
 	NewHandler,
+	NewOperatorHandler,
 )
 
 // NewStarterManifest describes the optional organization starter surfaces.

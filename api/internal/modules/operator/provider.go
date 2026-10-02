@@ -14,6 +14,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(grantStore), new(*repository)),
 	NewService,
 	wire.Bind(new(domain.OperatorGrantStore), new(*service)),
+	wire.Struct(new(Surfaces), "*"),
 	NewHandler,
 )
 

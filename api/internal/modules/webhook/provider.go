@@ -23,6 +23,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(domain.WebhookTester), new(*service)),
 	wire.Bind(new(domain.WebhookMaintainer), new(*service)),
 	NewHandler,
+	NewOperatorHandler,
 )
 
 // NewStarterManifest describes webhook dependencies, routes, and persistence ownership.

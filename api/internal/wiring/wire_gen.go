@@ -118,7 +118,16 @@ func InitApplication() (*app.Application, error) {
 	webhookHandler := webhook.NewHandler(webhookService)
 	operatorRepository := operator.NewRepository(db)
 	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
-	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, configConfig, settingHandler)
+	operatorHandler := organization.NewOperatorHandler(organizationRepository)
+	webhookOperatorHandler := webhook.NewOperatorHandler(webhookService)
+	notificationOperatorHandler := notification.NewOperatorHandler(notificationRepository)
+	surfaces := operator.Surfaces{
+		Settings:      settingHandler,
+		Organizations: operatorHandler,
+		Webhooks:      webhookOperatorHandler,
+		Notifications: notificationOperatorHandler,
+	}
+	handler2 := operator.NewHandler(operatorService, authAbuseGuard, configConfig, surfaces)
 	handlers := &starter.Handlers{
 		Audit:        handler,
 		APIKey:       apikeyHandler,
@@ -130,7 +139,7 @@ func InitApplication() (*app.Application, error) {
 		Setting:      settingHandler,
 		Usage:        usageHandler,
 		Webhook:      webhookHandler,
-		Operator:     operatorHandler,
+		Operator:     handler2,
 	}
 	registry, err := starter.NewConfiguredRegistry(configConfig, migrator, handlers)
 	if err != nil {
@@ -251,7 +260,16 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	webhookHandler := webhook.NewHandler(webhookService)
 	operatorRepository := operator.NewRepository(db)
 	operatorService := operator.NewService(operatorRepository, userRepository, userService, sessionService, sessionService, userService, auditService)
-	operatorHandler := operator.NewHandler(operatorService, authAbuseGuard, cfg, settingHandler)
+	operatorHandler := organization.NewOperatorHandler(organizationRepository)
+	webhookOperatorHandler := webhook.NewOperatorHandler(webhookService)
+	notificationOperatorHandler := notification.NewOperatorHandler(notificationRepository)
+	surfaces := operator.Surfaces{
+		Settings:      settingHandler,
+		Organizations: operatorHandler,
+		Webhooks:      webhookOperatorHandler,
+		Notifications: notificationOperatorHandler,
+	}
+	handler2 := operator.NewHandler(operatorService, authAbuseGuard, cfg, surfaces)
 	handlers := &starter.Handlers{
 		Audit:        handler,
 		APIKey:       apikeyHandler,
@@ -263,7 +281,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		Setting:      settingHandler,
 		Usage:        usageHandler,
 		Webhook:      webhookHandler,
-		Operator:     operatorHandler,
+		Operator:     handler2,
 	}
 	registry, err := starter.NewConfiguredRegistry(cfg, migrator, handlers)
 	if err != nil {

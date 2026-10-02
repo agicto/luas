@@ -21,6 +21,7 @@ var ProviderSet = wire.NewSet(
 	wire.Bind(new(domain.NotificationPublisher), new(*service)),
 	wire.Bind(new(domain.NotificationDispatcher), new(*service)),
 	NewHandler,
+	NewOperatorHandler,
 )
 
 // ProvideEmailSender adapts the shared email capability to the starter-owned seam.

@@ -42,9 +42,9 @@ func TestSystemReportsDatabaseOutage(t *testing.T) {
 func TestSettingRoutesMountOnlyWhenSettingStarterIsSelected(t *testing.T) {
 	settings := &setting.Handler{}
 	without := &config.Config{}
-	assert.Nil(t, NewHandler(nil, nil, without, settings).settings)
+	assert.Nil(t, NewHandler(nil, nil, without, Surfaces{Settings: settings}).settings)
 
 	with := &config.Config{}
 	with.Starters.Optional = []string{config.StarterOrganization, config.StarterSetting}
-	assert.Same(t, settings, NewHandler(nil, nil, with, settings).settings)
+	assert.Same(t, settings, NewHandler(nil, nil, with, Surfaces{Settings: settings}).settings)
 }

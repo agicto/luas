@@ -9,8 +9,11 @@ import (
 
 	"github.com/zgiai/luas/api/internal/domain"
 	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/zgiai/luas/api/internal/modules/notification"
+	"github.com/zgiai/luas/api/internal/modules/organization"
 	"github.com/zgiai/luas/api/internal/modules/setting"
 	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/zgiai/luas/api/internal/modules/webhook"
 	"github.com/zgiai/luas/api/pkg/handler"
 	"github.com/zgiai/luas/api/pkg/response"
 )
@@ -20,26 +23,51 @@ const (
 	contextOperator   = "operator_account"
 )
 
-// Handler serves the operator browser session and operator routes.
-type Handler struct {
-	service  *service
-	session  *browserSession
-	guard    *user.AuthAbuseGuard
-	settings *setting.Handler
-	cfg      *config.Config
+// Surfaces are the operator-facing handlers owned by other optional starters. Each owning starter
+// keeps its behavior and data; this starter owns authorization and mounts a surface only when its
+// starter is selected.
+type Surfaces struct {
+	Settings      *setting.Handler
+	Organizations *organization.OperatorHandler
+	Webhooks      *webhook.OperatorHandler
+	Notifications *notification.OperatorHandler
 }
 
-// NewHandler creates the operator HTTP handler. App-scoped setting routes are mounted only when the
-// setting starter is selected; the setting starter keeps ownership of their behavior.
+// Handler serves the operator browser session and operator routes.
+type Handler struct {
+	service       *service
+	session       *browserSession
+	guard         *user.AuthAbuseGuard
+	settings      *setting.Handler
+	organizations *organization.OperatorHandler
+	webhooks      *webhook.OperatorHandler
+	notifications *notification.OperatorHandler
+	cfg           *config.Config
+}
+
+// NewHandler creates the operator HTTP handler and keeps only the surfaces of selected starters.
 func NewHandler(
 	service *service,
 	guard *user.AuthAbuseGuard,
 	cfg *config.Config,
-	settings *setting.Handler,
+	surfaces Surfaces,
 ) *Handler {
 	handler := &Handler{service: service, session: newBrowserSession(cfg), guard: guard, cfg: cfg}
-	if cfg != nil && cfg.Starters.Selected(config.StarterSetting) {
-		handler.settings = settings
+	if cfg == nil {
+		return handler
+	}
+	if cfg.Starters.Selected(config.StarterSetting) {
+		handler.settings = surfaces.Settings
+	}
+	if cfg.Starters.Selected(config.StarterOrganization) {
+		handler.organizations = surfaces.Organizations
+	}
+	// Webhook routes nest under an organization, so they need the organization surface as well.
+	if cfg.Starters.Selected(config.StarterWebhook) && handler.organizations != nil {
+		handler.webhooks = surfaces.Webhooks
+	}
+	if cfg.Starters.Selected(config.StarterNotification) {
+		handler.notifications = surfaces.Notifications
 	}
 	return handler
 }
