@@ -150,6 +150,11 @@ func TestOperatorHandlerRequireStopsUnknownOrganizations(t *testing.T) {
 	assert.EqualValues(t, 1, page.Meta.Total)
 	assert.EqualValues(t, 1, page.Data[0].MemberCount)
 
+	unknownMembers := get("/organizations/999999/members")
+	assert.Equal(t, http.StatusNotFound, unknownMembers.Code)
+	assert.Contains(t, unknownMembers.Body.String(), domain.CodeOrganizationNotFound)
+	assert.Equal(t, http.StatusBadRequest, get("/organizations/0").Code)
+
 	members := get("/organizations/1/members")
 	require.Equal(t, http.StatusOK, members.Code)
 	assert.Contains(t, members.Body.String(), `"email":"owner@example.com"`)

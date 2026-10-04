@@ -25,6 +25,6 @@ func registerCoreErrorMappings(mapper *response.ErrorMapper) {
 	mapper.Register(domain.ErrAuthenticationRequired, http.StatusUnauthorized, response.ErrorCodeUnauthorized)
 	mapper.Register(domain.ErrPermissionDenied, http.StatusForbidden, domain.CodePermissionDenied)
 	mapper.Register(domain.ErrConflict, http.StatusConflict, domain.CodeConflict)
-	mapper.Register(domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput)
+	mapper.Register(domain.ErrInvalidInput, http.StatusBadRequest, domain.CodeInvalidInput)
 	mapper.Register(domain.ErrServiceUnavailable, http.StatusServiceUnavailable, domain.CodeServiceUnavailable)
 }

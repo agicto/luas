@@ -2401,7 +2401,7 @@ export interface components {
                 "application/json": components["schemas"]["ErrorResponse"];
             };
         };
-        /** @description `ASSET.INVALID_MEDIA_TYPE` for an unsupported or inconsistent name, media type, or content, or `COMMON.INVALID_INPUT` for other semantically invalid input. */
+        /** @description `ASSET.INVALID_MEDIA_TYPE`: an unsupported or inconsistent name, media type, or content. */
         AssetUnprocessable: {
             headers: {
                 [name: string]: unknown;
@@ -2482,15 +2482,6 @@ export interface components {
                 "application/json": components["schemas"]["ErrorResponse"];
             };
         };
-        /** @description `COMMON.INVALID_INPUT`: a semantically invalid filter or identifier (for example an unknown `status`). */
-        NotificationInvalidInput: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
         /** @description `AUTH.ACCOUNT_DISABLED`, `OPERATOR.FORBIDDEN` (no current operator grant), `OPERATOR.ORIGIN_REJECTED`, or `OPERATOR.CSRF_REJECTED` on unsafe methods. */
         OperatorForbidden: {
             headers: {
@@ -2502,15 +2493,6 @@ export interface components {
         };
         /** @description `AUTH.INVALID_CREDENTIALS` for unknown, wrong, or disabled accounts. */
         OperatorInvalidCredentials: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ErrorResponse"];
-            };
-        };
-        /** @description `COMMON.INVALID_INPUT` with HTTP 422 when the organization path ID is `0`. */
-        OperatorInvalidIdentifier: {
             headers: {
                 [name: string]: unknown;
             };
@@ -2753,7 +2735,7 @@ export interface components {
                 "application/json": components["schemas"]["ErrorResponse"];
             };
         };
-        /** @description `WEBHOOK.INVALID_EVENT_TYPE`, `WEBHOOK.INVALID_TARGET`, or `COMMON.INVALID_INPUT` (for example an empty or over-long name). */
+        /** @description `WEBHOOK.INVALID_EVENT_TYPE` or `WEBHOOK.INVALID_TARGET`. */
         WebhookUnprocessable: {
             headers: {
                 [name: string]: unknown;
@@ -3163,6 +3145,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["APIKeyNotFound"];
             503: components["responses"]["ServiceUnavailable"];
@@ -3308,6 +3291,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["AssetNotFound"];
             422: components["responses"]["AssetUnprocessable"];
@@ -3337,6 +3321,7 @@ export interface operations {
                     "application/json": components["schemas"]["AssetResponse"];
                 };
             };
+            400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["AssetNotFound"];
             409: components["responses"]["AssetConflict"];
@@ -3369,6 +3354,7 @@ export interface operations {
                     "application/json": components["schemas"]["AssetTransferGrantResponse"];
                 };
             };
+            400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["AssetNotFound"];
             409: components["responses"]["AssetConflict"];
@@ -3405,7 +3391,15 @@ export interface operations {
             409: components["responses"]["AssetConflict"];
             410: components["responses"]["AssetUploadExpired"];
             413: components["responses"]["AssetTooLarge"];
-            422: components["responses"]["AssetUnprocessable"];
+            /** @description Field validation failed (`COMMON.VALIDATION_FAILED` with `errors`), or `ASSET.INVALID_MEDIA_TYPE`: an unsupported or inconsistent name, media type, or content. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ValidationErrorResponse"] | components["schemas"]["ErrorResponse"];
+                };
+            };
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3489,6 +3483,7 @@ export interface operations {
             400: components["responses"]["InvalidInput"];
             401: components["responses"]["AuthenticationInvalidCredentials"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -3564,6 +3559,7 @@ export interface operations {
             400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3592,6 +3588,7 @@ export interface operations {
             400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3642,8 +3639,8 @@ export interface operations {
                     "application/json": components["schemas"]["NotificationPageResponse"];
                 };
             };
+            400: components["responses"]["InvalidInput"];
             401: components["responses"]["Unauthorized"];
-            422: components["responses"]["NotificationInvalidInput"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3676,7 +3673,7 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
             413: components["responses"]["RequestTooLarge"];
-            422: components["responses"]["NotificationInvalidInput"];
+            422: components["responses"]["ValidationFailed"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3816,7 +3813,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["OperatorOrganizationNotFound"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3852,7 +3848,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["NotFound"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3891,7 +3886,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["OperatorOrganizationNotFound"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3929,7 +3923,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["OperatorOrganizationNotFound"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -3968,7 +3961,6 @@ export interface operations {
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["OperatorOrganizationNotFound"];
             409: components["responses"]["OperatorWebhookReplayNotAllowed"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -4004,7 +3996,6 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["OperatorForbidden"];
             404: components["responses"]["OperatorOrganizationNotFound"];
-            422: components["responses"]["OperatorInvalidIdentifier"];
             503: components["responses"]["ServiceUnavailable"];
         };
     };
@@ -4066,6 +4057,7 @@ export interface operations {
             401: components["responses"]["OperatorInvalidCredentials"];
             403: components["responses"]["OperatorSignInForbidden"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -5083,6 +5075,7 @@ export interface operations {
             };
             400: components["responses"]["InvalidInput"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
         };
     };
@@ -5120,15 +5113,7 @@ export interface operations {
             };
             404: components["responses"]["NotFound"];
             413: components["responses"]["RequestTooLarge"];
-            /** @description The token is blank after trimming whitespace (`COMMON.INVALID_INPUT`). */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -5228,6 +5213,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -5469,6 +5455,7 @@ export interface operations {
             403: components["responses"]["AuthenticationAccountDisabled"];
             404: components["responses"]["NotFound"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -5525,6 +5512,7 @@ export interface operations {
             403: components["responses"]["AuthenticationAccountDisabled"];
             404: components["responses"]["NotFound"];
             413: components["responses"]["RequestTooLarge"];
+            422: components["responses"]["ValidationFailed"];
             429: components["responses"]["RateLimited"];
             503: components["responses"]["ServiceUnavailable"];
         };
@@ -5875,15 +5863,6 @@ export interface operations {
             403: components["responses"]["WebhookForbidden"];
             404: components["responses"]["WebhookEndpointNotFound"];
             409: components["responses"]["WebhookTestConflict"];
-            /** @description `COMMON.INVALID_INPUT`: the `Idempotency-Key` does not match the allowed grammar. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
             503: components["responses"]["ServiceUnavailable"];
         };
     };

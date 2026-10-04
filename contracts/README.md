@@ -113,7 +113,9 @@ API errors expose a numeric HTTP `code` and a stable machine-readable `error_cod
 }
 ```
 
-Malformed JSON and transport-level input failures use HTTP 400 with `COMMON.INVALID_INPUT`. Schema and field validation errors use HTTP 422 and include field-level `errors`:
+Malformed JSON, an invalid query-string filter, a zero or malformed path ID, and other
+transport-level input failures use HTTP 400 with `COMMON.INVALID_INPUT`. A request body whose fields
+fail validation uses HTTP 422 and includes field-level `errors`, keyed by the JSON field name:
 
 ```json
 {
@@ -121,7 +123,7 @@ Malformed JSON and transport-level input failures use HTTP 400 with `COMMON.INVA
   "error_code": "COMMON.VALIDATION_FAILED",
   "message": "Validation failed",
   "errors": {
-    "email": ["email is required"]
+    "email": ["is required"]
   },
   "request_id": "req_123"
 }

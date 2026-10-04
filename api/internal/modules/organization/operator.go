@@ -111,10 +111,15 @@ func (h *OperatorHandler) Get(c *gin.Context) {
 	response.Success(c, organization)
 }
 
-// ListMembers returns the members of one organization ordered by user ID.
+// ListMembers returns the members of one organization ordered by user ID. An unknown organization
+// is 404, not an empty page.
 func (h *OperatorHandler) ListMembers(c *gin.Context) {
 	organizationID, ok := handler.ParseID(c, "id")
 	if !ok {
+		return
+	}
+	if _, err := h.store.operatorFind(c.Request.Context(), organizationID); err != nil {
+		response.HandleError(c, "Failed to load organization", err)
 		return
 	}
 	page := pagination.FromContext(c)

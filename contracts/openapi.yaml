@@ -141,6 +141,8 @@ paths:
           $ref: '#/components/responses/AuthenticationInvalidCredentials'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -193,6 +195,8 @@ paths:
           $ref: '#/components/responses/InvalidInput'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
   /v1/password/reset/confirm:
@@ -230,11 +234,7 @@ paths:
         '413':
           $ref: '#/components/responses/RequestTooLarge'
         '422':
-          description: The token is blank after trimming whitespace (`COMMON.INVALID_INPUT`).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -270,6 +270,8 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -340,6 +342,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -400,6 +404,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -524,6 +530,8 @@ paths:
       responses:
         '204':
           description: The API key is revoked or was already revoked.
+        '400':
+          $ref: '#/components/responses/InvalidInput'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1360,6 +1368,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/notification-read-state:
@@ -1390,6 +1400,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/notification-status:
@@ -1431,10 +1443,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/NotificationPageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
         '401':
           $ref: '#/components/responses/Unauthorized'
-        '422':
-          $ref: '#/components/responses/NotificationInvalidInput'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/notifications/{notification_id}:
@@ -1469,7 +1481,7 @@ paths:
         '413':
           $ref: '#/components/responses/RequestTooLarge'
         '422':
-          $ref: '#/components/responses/NotificationInvalidInput'
+          $ref: '#/components/responses/ValidationFailed'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/asset-transfers/{transfer_token}:
@@ -1629,7 +1641,14 @@ paths:
         '413':
           $ref: '#/components/responses/AssetTooLarge'
         '422':
-          $ref: '#/components/responses/AssetUnprocessable'
+          description: 'Field validation failed (`COMMON.VALIDATION_FAILED` with `errors`), or `ASSET.INVALID_MEDIA_TYPE`:
+            an unsupported or inconsistent name, media type, or content.'
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationErrorResponse'
+                  - $ref: '#/components/schemas/ErrorResponse'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/assets/{asset_id}:
@@ -1651,6 +1670,8 @@ paths:
               schema:
                 type: string
                 const: private, no-store
+        '400':
+          $ref: '#/components/responses/InvalidInput'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1682,6 +1703,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssetResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1719,6 +1742,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssetTransferGrantResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -2449,12 +2474,6 @@ paths:
           $ref: '#/components/responses/WebhookEndpointNotFound'
         '409':
           $ref: '#/components/responses/WebhookTestConflict'
-        '422':
-          description: '`COMMON.INVALID_INPUT`: the `Idempotency-Key` does not match the allowed grammar.'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/webhook-event-types:
@@ -2693,8 +2712,6 @@ paths:
           $ref: '#/components/responses/OperatorForbidden'
         '404':
           $ref: '#/components/responses/OperatorOrganizationNotFound'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/organizations/{organization_id}/members:
@@ -2732,8 +2749,6 @@ paths:
           $ref: '#/components/responses/OperatorForbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/organizations/{organization_id}/webhook-deliveries:
@@ -2779,8 +2794,6 @@ paths:
           $ref: '#/components/responses/OperatorForbidden'
         '404':
           $ref: '#/components/responses/OperatorOrganizationNotFound'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/organizations/{organization_id}/webhook-deliveries/{delivery_id}/attempts:
@@ -2819,8 +2832,6 @@ paths:
           $ref: '#/components/responses/OperatorForbidden'
         '404':
           $ref: '#/components/responses/OperatorOrganizationNotFound'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/organizations/{organization_id}/webhook-deliveries/{delivery_id}/replay:
@@ -2862,8 +2873,6 @@ paths:
           $ref: '#/components/responses/OperatorOrganizationNotFound'
         '409':
           $ref: '#/components/responses/OperatorWebhookReplayNotAllowed'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/organizations/{organization_id}/webhook-endpoints:
@@ -2901,8 +2910,6 @@ paths:
           $ref: '#/components/responses/OperatorForbidden'
         '404':
           $ref: '#/components/responses/OperatorOrganizationNotFound'
-        '422':
-          $ref: '#/components/responses/OperatorInvalidIdentifier'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /v1/operator/session:
@@ -2949,6 +2956,8 @@ paths:
           $ref: '#/components/responses/OperatorSignInForbidden'
         '413':
           $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '429':
           $ref: '#/components/responses/RateLimited'
         '503':
@@ -3711,13 +3720,6 @@ components:
             oneOf:
               - $ref: '#/components/schemas/ValidationErrorResponse'
               - $ref: '#/components/schemas/ErrorResponse'
-    NotificationInvalidInput:
-      description: '`COMMON.INVALID_INPUT`: a semantically invalid filter or identifier (for example an
-        unknown `status`).'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
     AssetConflict:
       description: '`ASSET.NOT_READY` when the lifecycle state forbids the operation, or `ASSET.IDEMPOTENCY_CONFLICT`
         when an idempotency key is reused with different metadata.'
@@ -3739,8 +3741,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     AssetUnprocessable:
-      description: '`ASSET.INVALID_MEDIA_TYPE` for an unsupported or inconsistent name, media type, or
-        content, or `COMMON.INVALID_INPUT` for other semantically invalid input.'
+      description: '`ASSET.INVALID_MEDIA_TYPE`: an unsupported or inconsistent name, media type, or content.'
       content:
         application/json:
           schema:
@@ -3791,8 +3792,7 @@ components:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
     WebhookUnprocessable:
-      description: '`WEBHOOK.INVALID_EVENT_TYPE`, `WEBHOOK.INVALID_TARGET`, or `COMMON.INVALID_INPUT`
-        (for example an empty or over-long name).'
+      description: '`WEBHOOK.INVALID_EVENT_TYPE` or `WEBHOOK.INVALID_TARGET`.'
       content:
         application/json:
           schema:
@@ -3868,12 +3868,6 @@ components:
       description: '`ORGANIZATION.NOT_FOUND` for an unknown organization, `WEBHOOK.DELIVERY_NOT_FOUND`
         for a delivery outside the organization, or `COMMON.NOT_FOUND` when a constrained path ID is not
         all digits.'
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    OperatorInvalidIdentifier:
-      description: '`COMMON.INVALID_INPUT` with HTTP 422 when the organization path ID is `0`.'
       content:
         application/json:
           schema:

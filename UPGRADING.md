@@ -11,6 +11,33 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## 2026-10-04 — Complete OpenAPI contract and error alignment
+
+### Medium — Body validation is 422, invalid input is 400
+
+The API now follows the global contract in `contracts/README.md`:
+
+- A request body that fails field validation (`binding` tags through `handler.BindJSON`) returns
+  `422 COMMON.VALIDATION_FAILED` with `errors` keyed by JSON field name. Before, it returned
+  `400 COMMON.INVALID_INPUT` without field errors.
+- `domain.ErrInvalidInput` maps to `400 COMMON.INVALID_INPUT`; it was `422` with the same code.
+- A path ID of `0` returns `400` from `handler.ParseID`. Before, some permission routes returned an
+  empty response for it.
+- A body over a starter's own size cap returns `413 COMMON.REQUEST_TOO_LARGE`, as the global limit
+  already did. Handlers that decode bodies themselves use `handler.WriteBodyError`.
+- `GET /v1/operator/organizations/:id/members` returns `404 ORGANIZATION.NOT_FOUND` for an unknown
+  organization instead of an empty page.
+
+Clients that branch on `error_code`, as the contract requires, need no change. A client that
+treated every `400` from a form submission as a field error should read `errors` from the `422`.
+
+### Low — Every operation is in `contracts/openapi.yaml`
+
+All 92 operations are described, and `make contract-check` fails when a route has no description or
+a description has no route. Regenerate the browser types with `make contract-generate` after a
+contract change. The health report's `latency_ms` is now milliseconds, and its duplicate
+`duration` field is gone.
+
 ## 2026-10-03 — Security review fixes
 
 ### Medium — User writes are column-scoped
