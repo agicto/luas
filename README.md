@@ -94,50 +94,47 @@ Tenant self-service stays in `web/`.
 
 ### Requirements
 
-- Docker with Compose v2 for the fastest API setup
-- Go 1.25.13 or newer for native API development
-- Node.js 22.12 or newer with Corepack for either browser shell
+- Docker with Compose v2 (only PostgreSQL runs in a container)
+- Go 1.25.13 or newer
+- Node.js 22.12 or newer with Corepack
 
-### Start The API
+Or open the repository in a dev container or GitHub Codespaces; [`.devcontainer`](.devcontainer)
+installs every tool.
 
-```bash
-cd api
-docker compose up --build --wait
-curl -fsS http://127.0.0.1:8025/health/ready
-```
-
-The Compose stack starts PostgreSQL, builds the API, applies migrations, and waits for readiness.
-The API listens on `http://127.0.0.1:8025`.
-
-### Start The Customer Web Application
+### Start Everything
 
 ```bash
-cd web
-corepack pnpm install
-cp .env.example .env.local
-corepack pnpm dev
+make dev
 ```
 
-Open `http://localhost:3000`. The development mock BFF makes the console immediately explorable;
-production requires an explicit API adapter or backend.
+`make dev` starts PostgreSQL, builds the API, applies migrations and seed data, grants the seeded
+admin the platform-operator role, and runs the API, the customer Web application, and the Admin
+Console with every optional starter enabled. Ctrl-C stops the processes; `make dev-down` stops the
+database and `make dev-reset` also deletes its data.
 
-### Start The Admin Console
+| Surface | URL | Sign in |
+|---|---|---|
+| Web | `http://localhost:3000` | `user@example.com` / `secret` |
+| Admin Console | `http://127.0.0.1:4173` | `admin@example.com` / `secret` (operator) |
+| API | `http://127.0.0.1:8025` | `POST /v1/login` |
+
+Ports and the starter selection are environment variables, for example
+`LUAS_API_PORT=18025 make dev`; run `scripts/dev.sh help` for the full list. The seeded accounts and
+local secrets are for development only.
+
+With the stack running, `cd admin && corepack pnpm e2e` drives the Admin Console against the API in
+a browser.
+
+### Run One Surface
 
 ```bash
-cd admin
-corepack pnpm install
-cp .env.example .env.local
-corepack pnpm dev
+cd api && docker compose up --build --wait     # API image with PostgreSQL
+cd web && corepack pnpm install && corepack pnpm dev    # Web with the development mock BFF
+cd admin && corepack pnpm install && corepack pnpm dev  # Admin Console shell
 ```
 
-Open `http://127.0.0.1:4173`. Build static deployment assets with:
-
-```bash
-corepack pnpm build
-```
-
-Upload `admin/dist/` to OSS, S3-compatible object storage, or a CDN. The output contains no
-frontend server bundle or production Node.js runtime.
+The Web mock BFF makes the customer console explorable without the API; production requires the
+same-origin API adapter. Build static Admin assets with `corepack pnpm build`.
 
 ## Enable Business Starters
 

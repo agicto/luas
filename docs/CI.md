@@ -9,6 +9,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 |---|---|---|
 | `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, PostgreSQL 15-18 compatibility, plus Next.js Web and Admin Console type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
+| `e2e.yml` | Starts PostgreSQL, the API, and the Admin Console with `make dev` and runs the Playwright operator smoke tests | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `skill-self-test.yml` | Starter-module skill validators in one job (Skill metadata is validated by `make governance`) | `contents: read` |
 | `sync-deploy-branches.yml` | Mechanical `dev` / `dev-c` deployment-branch synchronization | `contents: write` |

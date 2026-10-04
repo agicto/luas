@@ -23,3 +23,6 @@ Thumbs.db
 .pytest_cache/
 __pycache__/
 *.py[cod]
+
+# make dev build output and local object storage
+.luas-dev/

@@ -1,0 +1,24 @@
+# Local development database for `make dev`. The API, Web, and Admin processes run on the host so
+# they reload quickly; only PostgreSQL runs in a container. Never use these values in production.
+name: luas-dev
+
+services:
+  postgres:
+    image: postgres:16.14-alpine3.24@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    environment:
+      POSTGRES_DB: luas
+      POSTGRES_USER: luas
+      POSTGRES_PASSWORD: luas-local-only
+      TZ: UTC
+    ports:
+      - "127.0.0.1:${LUAS_DB_PORT:-55432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luas -d luas"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:

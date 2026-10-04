@@ -1,0 +1,23 @@
+{
+  "name": "Luas",
+  "image": "mcr.microsoft.com/devcontainers/go:1-1.25-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "containerEnv": {
+    "GOTOOLCHAIN": "auto"
+  },
+  "postCreateCommand": "corepack enable && for unit in contracts web admin; do (cd \"$unit\" && CI=true corepack pnpm install --frozen-lockfile); done",
+  "forwardPorts": [3000, 4173, 8025],
+  "portsAttributes": {
+    "3000": { "label": "Web" },
+    "4173": { "label": "Admin Console" },
+    "8025": { "label": "API" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["golang.go", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "redhat.vscode-yaml"]
+    }
+  }
+}
