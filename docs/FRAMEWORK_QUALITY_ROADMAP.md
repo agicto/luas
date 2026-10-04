@@ -1258,24 +1258,25 @@ Verification:
 - The owning starter's handler and PostgreSQL tests, plus `contracts/AUTHENTICATION.md` and
   `contracts/OPERATORS.md`.
 
-### P2 — Machine-Checkable Contracts Beyond API Keys
+### Completed P1 — Machine-Checkable Contracts For Every Operation
 
-Problem: `contracts/openapi.yaml` and the generated Web and Admin types cover only API keys. Every
-other capability, including all `/v1/operator` routes, is specified in Markdown and matched by
-hand-written Zod schemas in each client, so an API response change is caught only by a live run.
+`contracts/openapi.yaml` described three API key operations; every other capability lived only in
+Markdown and in hand-written client schemas. It now describes all 92 operations, including every
+optional starter and the operator console. The route check assembles the Go catalog with every
+optional starter and fails in both directions, so a route cannot ship without its description.
+Both browser shells assert at compile time that their Zod schemas accept every body the contract
+allows (21 Admin and 66 Web operation bindings).
 
-Recommended slice:
-
-1. Add one more capability to `openapi.yaml` end to end (the operator session and users routes are
-   the smallest closed set) and generate types for Admin.
-2. Decide from that slice whether client schemas should be derived from the generated types or stay
-   hand-written with a type-level equality check.
-3. Extend `contracts/scripts/check-api-routes.mjs` coverage to the new paths.
+Writing the contract surfaced real defects, all fixed in the same round: body validation returned
+400 instead of the documented 422 with field errors, `ErrInvalidInput` returned 422 with a 400
+code, `/v1/access-roles/0` wrote no response, the health report's `latency_ms` carried
+nanoseconds, the operator member list hid unknown organizations behind an empty page, and the Web
+setting, usage, and webhook pages broke when the server catalog grew.
 
 Verification:
 
-- `cd contracts && corepack pnpm check && corepack pnpm check:routes`
-- `cd admin && corepack pnpm type-check`
+- `make contract-check`
+- `cd web && corepack pnpm type-check` and `cd admin && corepack pnpm type-check`
 
 ### P2 — Operator Console Follow-Ups
 
