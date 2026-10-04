@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func writeExecutable(t *testing.T, dir, name string) {
@@ -57,5 +58,31 @@ func TestDiscoverSkipsInvalidNames(t *testing.T) {
 	plugins := Discover()
 	if len(plugins) != 1 || plugins[0].Name != "good" {
 		t.Fatalf("Discover() = %+v", plugins)
+	}
+}
+
+func TestPluginVersionProbeIsBounded(t *testing.T) {
+	dir := t.TempDir()
+	hanging := filepath.Join(dir, "luas-hang")
+	if err := os.WriteFile(hanging, []byte("#!/bin/sh\nexec sleep 30\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	chatty := filepath.Join(dir, "luas-chatty")
+	if err := os.WriteFile(chatty, []byte("#!/bin/sh\necho ' 2.1.0 '\necho second line\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	previous := pluginVersionTimeout
+	pluginVersionTimeout = 200 * time.Millisecond
+	t.Cleanup(func() { pluginVersionTimeout = previous })
+
+	started := time.Now()
+	if version := getPluginVersion(hanging); version != "" {
+		t.Fatalf("hanging plugin version = %q, want empty", version)
+	}
+	if elapsed := time.Since(started); elapsed > 2*time.Second {
+		t.Fatalf("version probe took %s; the timeout did not stop the plugin", elapsed)
+	}
+	if version := getPluginVersion(chatty); version != "2.1.0" {
+		t.Fatalf("chatty plugin version = %q, want the trimmed first line", version)
 	}
 }

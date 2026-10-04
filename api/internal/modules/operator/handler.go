@@ -117,10 +117,6 @@ func (h *Handler) SignIn(c *gin.Context) {
 	if !handler.BindJSON(c, &req) {
 		return
 	}
-	if h.guard != nil && !h.guard.AllowLoginSubject(c, req.Identifier) {
-		return
-	}
-
 	issued, err := h.service.SignIn(c.Request.Context(), req.Identifier, req.Password)
 	if err != nil {
 		writeError(c, "Operator sign-in failed", err)
@@ -215,6 +211,8 @@ func writeError(c *gin.Context, message string, err error) {
 	switch {
 	case errors.Is(err, domain.ErrInvalidCredentials):
 		response.AbortWithCode(c, http.StatusUnauthorized, domain.CodeInvalidCredentials, "Invalid credentials")
+	case errors.Is(err, domain.ErrSignInThrottled):
+		response.AbortWithCode(c, http.StatusTooManyRequests, response.ErrorCodeRateLimited, "Too many requests")
 	case errors.Is(err, domain.ErrAuthenticationRequired):
 		response.AbortWithCode(c, http.StatusUnauthorized, response.ErrorCodeUnauthorized, "Authentication required")
 	case errors.Is(err, domain.ErrAccountDisabled):

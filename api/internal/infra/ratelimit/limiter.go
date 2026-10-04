@@ -184,6 +184,15 @@ func (s *MemoryStore) Take(ctx context.Context, key string) (bool, int, time.Tim
 	return true, max(0, s.max-e.hits), e.resetAt
 }
 
+// Reset forgets the key's bucket, for example after a successful sign-in clears its failures.
+func (s *MemoryStore) Reset(_ context.Context, key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if current, exists := s.entries[key]; exists {
+		s.removeEntry(key, current)
+	}
+}
+
 func (s *MemoryStore) removeExpired(now time.Time) {
 	for key, current := range s.entries {
 		if !now.Before(current.resetAt) {

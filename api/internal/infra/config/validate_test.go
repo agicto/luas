@@ -684,6 +684,10 @@ func TestValidate_OperatorPolicy(t *testing.T) {
 				cfg.Operator.AllowedOrigins = []string{"http://127.0.0.1:4173"}
 				cfg.Operator.SessionCookieName = "__Host-admin"
 			}, wantErr: "__Host-"},
+		{name: "custom production name keeps the host prefix", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.SessionCookieName = "__Host-admin" }},
+		{name: "production name without the host prefix", environment: "production",
+			edit: func(cfg *Config) { cfg.Operator.SessionCookieName = "admin_sid" }, wantErr: "must keep the __Host- prefix"},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

@@ -56,6 +56,7 @@ type AuthenticationSessionPO struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	UserID           uint       `gorm:"not null;index"`
+	Audience         string     `gorm:"size:16;not null;default:user"`
 	TokenHash        string     `gorm:"size:64;not null;uniqueIndex"`
 	ExpiresAt        time.Time  `gorm:"not null;index"`
 	IdleExpiresAt    time.Time  `gorm:"not null;index"`

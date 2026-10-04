@@ -66,9 +66,16 @@ func NewSessionService(repo *repository, cfg *config.Config) *SessionService {
 }
 
 // Issue creates one hash-only persistent session and returns its plaintext credential once.
-func (s *SessionService) Issue(ctx context.Context, user *domain.User) (*IssuedAuthenticationSession, error) {
+func (s *SessionService) Issue(
+	ctx context.Context,
+	user *domain.User,
+	audience domain.SessionAudience,
+) (*IssuedAuthenticationSession, error) {
 	if user == nil || user.ID == 0 {
 		return nil, domain.ErrAuthenticationRequired
+	}
+	if audience != domain.SessionAudienceUser && audience != domain.SessionAudienceOperator {
+		return nil, fmt.Errorf("unknown session audience %q", audience)
 	}
 	if !user.IsActive() {
 		return nil, domain.ErrAccountDisabled
@@ -93,6 +100,7 @@ func (s *SessionService) Issue(ctx context.Context, user *domain.User) (*IssuedA
 	record := &AuthenticationSessionPO{
 		ID:            base64.RawURLEncoding.EncodeToString(sessionIDBytes),
 		UserID:        user.ID,
+		Audience:      string(audience),
 		TokenHash:     crypto.SHA256Hex(credential),
 		ExpiresAt:     expiresAt,
 		IdleExpiresAt: idleExpiresAt,

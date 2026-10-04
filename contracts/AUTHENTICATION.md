@@ -102,8 +102,10 @@ legacy username equals it, so one account cannot capture another account's email
   `AUTH.INVALID_CREDENTIALS`. The service performs a bcrypt comparison against a fixed dummy hash
   when no account exists, so the missing-account path does not skip the dominant password work.
 - Password-reset requests return the same success body for known and unknown email addresses.
-  Account-specific token-storage and delivery failures are logged internally and do not change the
-  public response.
+  The account lookup, token storage, and mail delivery run after the response on a bounded
+  background task, so neither the body nor the response time depends on whether the account
+  exists. Failures are logged internally. A delivery in flight when the process stops is lost;
+  the user requests another reset.
 - Registration currently preserves `USER.USERNAME_ALREADY_EXISTS` and
   `USER.EMAIL_ALREADY_EXISTS` for starter UX. This is a deliberate usability tradeoff: products
   with a stricter identity-enumeration threat model should replace those conflicts with one generic
@@ -113,7 +115,15 @@ legacy username equals it, so one account cannot capture another account's email
 
 Production enables endpoint-specific authentication limits by default. Login and password-reset
 flows use independent per-IP and normalized/hashed per-subject buckets; registration and reset
-confirmation have their own route quotas. An auth limit always returns HTTP `429` with
+confirmation have their own route quotas.
+
+The login subject budget counts failed sign-ins per account. It is keyed by the resolved account,
+so the username and the email of one account share it, and by the normalized identifier when no
+account matches, so unknown identifiers are throttled the same way. Each attempt takes one unit
+before the password check and a correct password clears the account's budget, so a user signing in
+normally never spends it. Once the budget is spent, even the right password returns `429` until
+the window ends; this bounds online guessing at the cost of letting an attacker hold one known
+account at the limit, which the per-IP quota and gateway controls must keep expensive. An auth limit always returns HTTP `429` with
 `COMMON.RATE_LIMITED`, and does not reveal which bucket fired or expose quota counters.
 
 IP identity is accepted from forwarding headers only when the direct upstream matches
@@ -128,9 +138,9 @@ a built-in Redis rate-limit driver, and a shared implementation must not silentl
 independent per-process buckets. These quotas are a starter baseline, not a substitute for MFA,
 breached-credential checks, adaptive bot controls, or product-specific account recovery policy.
 
-The starter email adapter is currently synchronous. Products that require strict response-time
-uniformity for password recovery should enqueue token delivery through a bounded, observable,
-durable worker and keep the HTTP response independent of delivery completion.
+Reset delivery is deliberately not durable: a queue payload would store the plaintext token. At
+most 32 deliveries run per process; requests beyond that are dropped and logged, well above what
+the reset quotas admit.
 
 ## Production API Adapter
 

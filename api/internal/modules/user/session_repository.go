@@ -14,6 +14,7 @@ import (
 type authenticationSessionRow struct {
 	SessionID     string     `gorm:"column:session_id"`
 	UserID        uint       `gorm:"column:user_id"`
+	Audience      string     `gorm:"column:audience"`
 	Username      string     `gorm:"column:username"`
 	UserStatus    int        `gorm:"column:user_status"`
 	UserDeletedAt *time.Time `gorm:"column:user_deleted_at"`
@@ -54,6 +55,7 @@ func (r *repository) authenticateSession(
 		Select([]string{
 			"sessions.id AS session_id",
 			"sessions.user_id",
+			"sessions.audience",
 			"sessions.expires_at",
 			"sessions.idle_expires_at",
 			"sessions.last_seen_at",
@@ -118,6 +120,7 @@ func (r *repository) authenticateSession(
 		UserID:    row.UserID,
 		Username:  row.Username,
 		SessionID: row.SessionID,
+		Audience:  domain.SessionAudience(row.Audience),
 	}, nil
 }
 

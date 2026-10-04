@@ -1236,27 +1236,27 @@ Verification:
 - `cd api && make test-postgres-compatibility`
 - `make dependency-scan`
 
-### P2 — Authentication Hardening Follow-Ups
+### Completed P2 — Authentication Hardening Follow-Ups
 
-Problem: the same review left four lower-severity items that each need a design decision.
+The same review left four lower-severity items; all are closed.
 
-Recommended slice:
-
-1. Sign-in quota counts every attempt, keyed by submitted identifier, in a per-process store: ten
-   requests lock a known account out for the window, and replicas multiply the budget. Count
-   failures only, key on the resolved account, and document the shared-store requirement.
-2. Any live session of an operator account is accepted as the operator cookie, including a bearer
-   credential from the public login. Mark sessions issued by operator sign-in and require the mark.
-3. Registration returns distinct username and email conflicts, and password reset sends mail
-   synchronously only for existing accounts, so both can enumerate accounts. The contract records
-   the first as a deliberate tradeoff; move reset delivery off the request path.
-4. `OPERATOR_SESSION_COOKIE_NAME` can drop the `__Host-` prefix in production, and `plugin:list`
-   runs discovered binaries without a timeout.
+1. The login subject budget now lives in the shared sign-in path. It is keyed by the resolved
+   account (by the normalized identifier when none matches), and a correct password clears it, so
+   only failures accumulate and a user's own sign-ins never lock them out. The store stays
+   process-local; the authentication contract still requires shared enforcement across replicas.
+2. Sessions record the audience that issued them (`user` or `operator`), and the operator routes
+   accept only operator sessions, so a public-login bearer credential no longer works as the
+   operator cookie.
+3. Password-reset lookup, token storage, and delivery run after the response on a bounded
+   background runner, so the response time no longer reveals whether an account exists. Distinct
+   registration conflicts remain a documented tradeoff.
+4. A production `OPERATOR_SESSION_COOKIE_NAME` must keep the `__Host-` prefix, and `plugin:list`
+   bounds each `--version` probe to two seconds and one line.
 
 Verification:
 
-- The owning starter's handler and PostgreSQL tests, plus `contracts/AUTHENTICATION.md` and
-  `contracts/OPERATORS.md`.
+- `cd api && go test ./internal/modules/user ./internal/modules/operator ./internal/infra/plugin ./internal/infra/config`
+- `cd api && make test-postgres-compatibility`
 
 ### Completed P1 — Machine-Checkable Contracts For Every Operation
 

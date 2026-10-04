@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"net/http"
 	"strings"
 	"time"
@@ -120,9 +121,22 @@ func (g *AuthAbuseGuard) LoginIPMiddleware() gin.HandlerFunc {
 	return g.perIPMiddleware(authEndpointLogin)
 }
 
-// AllowLoginSubject applies the per-account login quota and writes the 429 response when exceeded.
-func (g *AuthAbuseGuard) AllowLoginSubject(c *gin.Context, subject string) bool {
-	return g.allowSubject(c, authEndpointLogin, subject)
+// signInThrottle counts failed sign-ins per account. A sign-in takes one attempt before the
+// password check and a success resets the account, so only failures accumulate.
+type signInThrottle interface {
+	Take(ctx context.Context, key string) (allowed bool, remaining int, resetAt time.Time)
+	Reset(ctx context.Context, key string)
+}
+
+// loginThrottle returns the per-account sign-in failure budget, or nil when it is disabled.
+func (g *AuthAbuseGuard) loginThrottle() signInThrottle {
+	if g == nil || !g.enabled {
+		return nil
+	}
+	if store, ok := g.endpoints[authEndpointLogin].perSubject.(signInThrottle); ok {
+		return store
+	}
+	return nil
 }
 
 func authRateLimitError(c *gin.Context, _ time.Time) {

@@ -1,12 +1,14 @@
 package plugin
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // validName limits plugin names to lowercase words so a name can never become a path.
@@ -113,14 +115,27 @@ func isExecutable(path string) bool {
 	return mode.IsRegular() && (mode.Perm()&0111 != 0)
 }
 
-// getPluginVersion attempts to get plugin version
+// pluginVersionTimeout bounds discovery, so a plugin that hangs on --version cannot stall plugin:list.
+var pluginVersionTimeout = 2 * time.Second
+
+const maxPluginVersionLength = 128
+
+// getPluginVersion runs `<binary> --version` with a timeout and returns its first output line.
 func getPluginVersion(binary string) string {
-	cmd := exec.Command(binary, "--version")
+	ctx, cancel := context.WithTimeout(context.Background(), pluginVersionTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, binary, "--version")
+	cmd.WaitDelay = pluginVersionTimeout
 	output, err := cmd.Output()
 	if err != nil {
 		return ""
 	}
-	return strings.TrimSpace(string(output))
+	version, _, _ := strings.Cut(strings.TrimSpace(string(output)), "\n")
+	version = strings.TrimSpace(version)
+	if len(version) > maxPluginVersionLength {
+		version = version[:maxPluginVersionLength]
+	}
+	return version
 }
 
 // Execute runs a plugin command. The binary is resolved from PATH only.

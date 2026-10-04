@@ -34,9 +34,15 @@ type fakeRepo struct {
 
 type fakeSessionIssuer struct {
 	issueErr error
+	audience domain.SessionAudience
 }
 
-func (s *fakeSessionIssuer) Issue(context.Context, *domain.User) (*IssuedAuthenticationSession, error) {
+func (s *fakeSessionIssuer) Issue(
+	_ context.Context,
+	_ *domain.User,
+	audience domain.SessionAudience,
+) (*IssuedAuthenticationSession, error) {
+	s.audience = audience
 	if s.issueErr != nil {
 		return nil, s.issueErr
 	}
@@ -159,7 +165,9 @@ func (r *fakeRepo) UpdatePasswordAndRevokeSessions(ctx context.Context, userID u
 }
 
 func newTestService(repo userRepository) *service {
-	return NewService(repo, repo.(passwordResetStore), &fakeSessionIssuer{}, events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
+	svc := NewService(repo, repo.(passwordResetStore), &fakeSessionIssuer{}, events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
+	svc.runPasswordReset = runInline
+	return svc
 }
 
 func mustHashTestPassword(t *testing.T) string {
@@ -476,6 +484,7 @@ func TestServiceRequestPasswordResetPropagatesContextToMailer(t *testing.T) {
 		mailer,
 		NewAccountDeletionPolicy(),
 	)
+	svc.runPasswordReset = runInline
 
 	err := svc.RequestPasswordReset(ctx, &UserPasswordResetRequest{Email: "alice@example.com"})
 	if err != nil {
@@ -554,6 +563,7 @@ func TestServiceRequestPasswordResetDoesNotExposeAccountSpecificProcessingFailur
 				&fakeUserMailer{passwordResetErr: tt.mailErr},
 				NewAccountDeletionPolicy(),
 			)
+			svc.runPasswordReset = runInline
 
 			err := svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{
 				Email: "alice@example.com",
@@ -606,7 +616,7 @@ type countingSessionIssuer struct {
 	issued int
 }
 
-func (s *countingSessionIssuer) Issue(context.Context, *domain.User) (*IssuedAuthenticationSession, error) {
+func (s *countingSessionIssuer) Issue(context.Context, *domain.User, domain.SessionAudience) (*IssuedAuthenticationSession, error) {
 	s.issued++
 	return &IssuedAuthenticationSession{AccessToken: "issued-credential", TokenType: "Bearer", ExpiresIn: 3600}, nil
 }
@@ -620,14 +630,14 @@ func TestServiceSignInAuthorizesBeforeIssuingSession(t *testing.T) {
 	sessions := &countingSessionIssuer{}
 	svc := NewService(repo, repo, sessions, events.NewEventBus(), &fakeUserMailer{}, NewAccountDeletionPolicy())
 
-	_, err := svc.SignIn(context.Background(), "ops", "password123", func(context.Context, *domain.User) error {
+	_, err := svc.SignIn(context.Background(), "ops", "password123", domain.SessionAudienceOperator, func(context.Context, *domain.User) error {
 		return domain.ErrOperatorForbidden
 	})
 	require.ErrorIs(t, err, domain.ErrOperatorForbidden)
 	assert.Zero(t, sessions.issued, "a rejected caller must never receive a session")
 
 	var authorized *domain.User
-	issued, err := svc.SignIn(context.Background(), "ops", "password123", func(_ context.Context, user *domain.User) error {
+	issued, err := svc.SignIn(context.Background(), "ops", "password123", domain.SessionAudienceOperator, func(_ context.Context, user *domain.User) error {
 		authorized = user
 		return nil
 	})
@@ -637,7 +647,7 @@ func TestServiceSignInAuthorizesBeforeIssuingSession(t *testing.T) {
 	assert.Equal(t, uint(7), authorized.ID)
 	assert.True(t, issued.ExpiresAt.After(time.Now()))
 
-	_, err = svc.SignIn(context.Background(), "ops", "wrong-password", func(context.Context, *domain.User) error {
+	_, err = svc.SignIn(context.Background(), "ops", "wrong-password", domain.SessionAudienceOperator, func(context.Context, *domain.User) error {
 		t.Fatal("authorize must not run for invalid credentials")
 		return nil
 	})
@@ -660,6 +670,7 @@ func TestServiceRequestPasswordResetEmailsATokenMatchingTheStoredHash(t *testing
 	}
 	mailer := testplatform.NewFakeMailer()
 	svc := NewService(repo, repo, &fakeSessionIssuer{}, events.NewEventBus(), mailer, NewAccountDeletionPolicy())
+	svc.runPasswordReset = runInline
 
 	require.NoError(t, svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{Email: "ada@example.test"}))
 
@@ -671,6 +682,7 @@ func TestServiceRequestPasswordResetSendsNothingForUnknownEmail(t *testing.T) {
 	repo := &fakeRepo{}
 	mailer := testplatform.NewFakeMailer()
 	svc := NewService(repo, repo, &fakeSessionIssuer{}, events.NewEventBus(), mailer, NewAccountDeletionPolicy())
+	svc.runPasswordReset = runInline
 
 	require.NoError(t, svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{Email: "ghost@example.test"}))
 	mailer.AssertNothingSent(t)

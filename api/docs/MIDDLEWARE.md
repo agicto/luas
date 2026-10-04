@@ -142,6 +142,8 @@ The authentication guard is enabled by default in production and disabled by def
 It uses separate buckets per endpoint, then independent source-IP and normalized/hashed subject
 buckets where configured. A single `IP+subject` combined key is intentionally avoided because it
 does not stop one source from sweeping accounts or many sources from targeting one account.
+The login subject budget is enforced in the sign-in service rather than as middleware: it is keyed
+by the resolved account and only failed attempts consume it.
 Sensitive auth responses return the canonical `429` + `COMMON.RATE_LIMITED` envelope without
 quota diagnostics or a bucket-specific reason.
 

@@ -101,28 +101,6 @@ func TestAuthenticationRateLimitBlocksOneSourceAcrossLoginSubjects(t *testing.T)
 	}
 }
 
-func TestAuthenticationRateLimitBlocksOneSubjectAcrossSources(t *testing.T) {
-	service := &authGuardFakeService{}
-	engine := authProtectionTestEngine(t, config.AuthenticationRateLimitConfig{
-		Enabled: true,
-		Login: config.AuthenticationEndpointRateLimitConfig{
-			PerIP:      config.RateLimitRuleConfig{Max: 10, Window: time.Minute},
-			PerSubject: config.RateLimitRuleConfig{Max: 1, Window: time.Minute},
-		},
-	}, service)
-
-	first := performAuthRequest(engine, "/v1/login", `{"username":"Alice@example.com","password":"wrong"}`, "198.51.100.10:1001")
-	if first.Code != http.StatusOK {
-		t.Fatalf("first status = %d, want %d; body = %s", first.Code, http.StatusOK, first.Body.String())
-	}
-
-	second := performAuthRequest(engine, "/v1/login", `{"username":" alice@EXAMPLE.com ","password":"wrong"}`, "203.0.113.20:1002")
-	assertAuthenticationRateLimited(t, second)
-	if service.loginCalls != 1 {
-		t.Fatalf("login service calls = %d, want 1", service.loginCalls)
-	}
-}
-
 func TestAuthenticationRateLimitResetsAfterWindow(t *testing.T) {
 	service := &authGuardFakeService{}
 	engine := authProtectionTestEngine(t, config.AuthenticationRateLimitConfig{

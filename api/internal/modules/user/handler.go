@@ -109,10 +109,6 @@ func (h *Handler) Login(c *gin.Context) {
 	if !handler.BindJSON(c, &req) {
 		return
 	}
-	if !h.authGuard.allowSubject(c, authEndpointLogin, req.Username) {
-		return
-	}
-
 	resp, err := h.auth.Login(c.Request.Context(), &req)
 	if err != nil {
 		response.HandleError(c, "Login failed", err)

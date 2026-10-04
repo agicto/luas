@@ -1142,6 +1142,10 @@ func validateOperatorConfig(cfg *Config, selected bool) error {
 	if strings.HasPrefix(name, "__Host-") && !cfg.IsProduction() {
 		return fmt.Errorf("OPERATOR_SESSION_COOKIE_NAME may use the __Host- prefix only in production, where cookies are Secure")
 	}
+	if name != "" && cfg.IsProduction() && !strings.HasPrefix(name, "__Host-") {
+		return fmt.Errorf("OPERATOR_SESSION_COOKIE_NAME must keep the __Host- prefix in production, " +
+			"which binds the cookie to the API host over HTTPS")
+	}
 	return nil
 }
 

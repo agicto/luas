@@ -63,7 +63,7 @@ type passwordResetStore interface {
 }
 
 type authenticationSessionIssuer interface {
-	Issue(ctx context.Context, user *domain.User) (*IssuedAuthenticationSession, error)
+	Issue(ctx context.Context, user *domain.User, audience domain.SessionAudience) (*IssuedAuthenticationSession, error)
 }
 
 type userRepository interface {
@@ -86,6 +86,9 @@ type service struct {
 	deletionPolicy *AccountDeletionPolicy
 	admin          userAdministrationStore
 	verifyPassword func(hashedPassword, password []byte) error
+	signIns        signInThrottle
+	// runPasswordReset starts reset delivery; tests replace it with an inline runner.
+	runPasswordReset func(ctx context.Context, task func(context.Context))
 }
 
 var (
@@ -114,10 +117,28 @@ func NewService(
 		mailer:         mailer,
 		deletionPolicy: deletionPolicy,
 		verifyPassword: bcrypt.CompareHashAndPassword,
+		runPasswordReset: newBackgroundRunner(
+			"user.password_reset", passwordResetConcurrency, passwordResetTimeout,
+		).run,
 	}
 	if store, ok := repo.(userAdministrationStore); ok {
 		svc.admin = store
 	}
+	return svc
+}
+
+// ProvideService builds the service with the configured per-account sign-in failure budget.
+func ProvideService(
+	repo userRepository,
+	passwordResets passwordResetStore,
+	sessions authenticationSessionIssuer,
+	eventBus *events.EventBus,
+	mailer UserMailer,
+	deletionPolicy *AccountDeletionPolicy,
+	guard *AuthAbuseGuard,
+) *service {
+	svc := NewService(repo, passwordResets, sessions, eventBus, mailer, deletionPolicy)
+	svc.signIns = guard.loginThrottle()
 	return svc
 }
 
@@ -173,7 +194,7 @@ func (s *service) Register(ctx context.Context, req *UserRegisterRequest) (*doma
 
 // Login handles user login
 func (s *service) Login(ctx context.Context, req *UserLoginRequest) (*UserLoginResponse, error) {
-	user, issued, err := s.signIn(ctx, req.Username, req.Password, nil)
+	user, issued, err := s.signIn(ctx, req.Username, req.Password, domain.SessionAudienceUser, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -191,9 +212,10 @@ func (s *service) SignIn(
 	ctx context.Context,
 	identifier string,
 	password string,
+	audience domain.SessionAudience,
 	authorize func(context.Context, *domain.User) error,
 ) (*domain.IssuedSession, error) {
-	user, issued, err := s.signIn(ctx, identifier, password, authorize)
+	user, issued, err := s.signIn(ctx, identifier, password, audience, authorize)
 	if err != nil {
 		return nil, err
 	}
@@ -211,23 +233,38 @@ func (s *service) signIn(
 	ctx context.Context,
 	identifier string,
 	password string,
+	audience domain.SessionAudience,
 	authorize func(context.Context, *domain.User) error,
 ) (*domain.User, *IssuedAuthenticationSession, error) {
 	user, err := s.repo.FindByLoginIdentifier(ctx, identifier)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			if compareErr := s.verifyPassword([]byte(dummyPasswordHash), []byte(password)); compareErr != nil &&
-				!errors.Is(compareErr, bcrypt.ErrMismatchedHashAndPassword) {
-				slog.ErrorContext(ctx, "user.login_dummy_hash_invalid", "err", compareErr)
-			}
-			return nil, nil, domain.ErrInvalidCredentials
-		}
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil, fmt.Errorf("failed to lookup login identifier: %w", err)
+	}
+	if err != nil {
+		user = nil
+	}
+	throttleKey := signInThrottleKey(user, identifier)
+	if s.signIns != nil {
+		if allowed, _, _ := s.signIns.Take(ctx, throttleKey); !allowed {
+			return nil, nil, domain.ErrSignInThrottled
+		}
+	}
+	if user == nil {
+		if compareErr := s.verifyPassword([]byte(dummyPasswordHash), []byte(password)); compareErr != nil &&
+			!errors.Is(compareErr, bcrypt.ErrMismatchedHashAndPassword) {
+			slog.ErrorContext(ctx, "user.login_dummy_hash_invalid", "err", compareErr)
+		}
+		return nil, nil, domain.ErrInvalidCredentials
 	}
 
 	passwordErr := s.verifyPassword([]byte(user.Password), []byte(password))
 	if passwordErr != nil || !user.IsActive() {
 		return nil, nil, domain.ErrInvalidCredentials
+	}
+
+	// The password was right: clear the account's failures before any authorization decision.
+	if s.signIns != nil {
+		s.signIns.Reset(ctx, throttleKey)
 	}
 
 	if authorize != nil {
@@ -239,7 +276,7 @@ func (s *service) signIn(
 	if s.sessions == nil {
 		return nil, nil, domain.ErrServiceUnavailable
 	}
-	issued, err := s.sessions.Issue(ctx, user)
+	issued, err := s.sessions.Issue(ctx, user, audience)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -255,6 +292,15 @@ func (s *service) signIn(
 		)
 	}
 	return user, issued, nil
+}
+
+// signInThrottleKey keys known accounts by ID, so every identifier for one account shares a
+// budget, and unknown identifiers by their normalized hash, so they are throttled the same way.
+func signInThrottleKey(user *domain.User, identifier string) string {
+	if user != nil {
+		return "auth:login:user:" + strconv.FormatUint(uint64(user.ID), 10)
+	}
+	return "auth:login:identifier:" + crypto.SHA256Hex(strings.ToLower(strings.TrimSpace(identifier)))
 }
 
 // ============================================================================
@@ -385,38 +431,44 @@ func (s *service) DeleteAccount(ctx context.Context, userID uint) error {
 
 // RequestPasswordReset creates a one-time reset token and emails it to the user.
 func (s *service) RequestPasswordReset(ctx context.Context, req *UserPasswordResetRequest) error {
-	user, err := s.repo.FindByEmail(ctx, req.Email)
+	email := req.Email
+	s.runPasswordReset(ctx, func(ctx context.Context) {
+		s.deliverPasswordReset(ctx, email)
+	})
+	return nil
+}
+
+// deliverPasswordReset runs off the request path, so neither the account lookup nor mail delivery
+// changes the response or its timing. Every failure is logged and never reported to the caller.
+func (s *service) deliverPasswordReset(ctx context.Context, email string) {
+	user, err := s.repo.FindByEmail(ctx, email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			slog.ErrorContext(ctx, "user.password_reset_lookup_failed", "error_type", fmt.Sprintf("%T", err))
 		}
-		slog.ErrorContext(ctx, "user.password_reset_lookup_failed", "error_type", fmt.Sprintf("%T", err))
-		return nil
+		return
 	}
 
 	secret, err := crypto.GenerateKeyHex(24)
 	if err != nil {
 		slog.ErrorContext(ctx, "user.password_reset_token_generation_failed", "user_id", user.ID, "err", err)
-		return nil
+		return
 	}
 	resetToken := "zrp_" + strings.ToLower(idgen.ShortID()) + "." + secret
 	expiresAt := time.Now().Add(30 * time.Minute)
 
 	if err := s.passwordResets.StorePasswordResetToken(ctx, user.ID, crypto.SHA256Hex(resetToken), expiresAt); err != nil {
 		slog.ErrorContext(ctx, "user.password_reset_token_store_failed", "user_id", user.ID, "err", err)
-		return nil
+		return
 	}
 
 	if s.mailer == nil || !s.mailer.IsConfigured() {
 		slog.ErrorContext(ctx, "user.password_reset_mailer_missing", "user_id", user.ID)
-		return nil
+		return
 	}
 	if err := s.mailer.SendPasswordResetEmail(ctx, user.Email, resetToken); err != nil {
 		slog.ErrorContext(ctx, "user.password_reset_delivery_failed", "user_id", user.ID, "err", err)
-		return nil
 	}
-
-	return nil
 }
 
 // ConfirmPasswordReset consumes a one-time token and writes the new password hash.
