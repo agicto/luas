@@ -38,7 +38,7 @@ Corepack, pnpm, Yarn, Node build headers, debugger helpers, and manual pages are
 resulting filesystem, while the Node and native Sharp artifacts keep the same musl ABI used during
 the build. This removes development attack surface without creating an Alpine/glibc runtime mismatch.
 
-Dependabot discovers Docker updates weekly. A base-image update is not complete until the tag,
+Dependabot discovers Docker updates monthly and opens security updates as soon as they are published. A base-image update is not complete until the tag,
 Dockerfile digest, verifier material digest, governance constant, smoke test, and image scan change
 together. A digest-only update still requires release-note and image-diff review.
 

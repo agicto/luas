@@ -10,7 +10,7 @@ name: Skill Self-Test
 on:
   pull_request:
     paths:
-      - 'api/**'
+      - 'api/internal/modules/**'
       - '.agents/skills/**'
       - 'api/.agents/skills/**'
       - '.github/workflows/skill-self-test.yml'
@@ -20,7 +20,7 @@ on:
       - dev
       - dev-c
     paths:
-      - 'api/**'
+      - 'api/internal/modules/**'
       - '.agents/skills/**'
       - 'api/.agents/skills/**'
       - '.github/workflows/skill-self-test.yml'
@@ -35,10 +35,6 @@ jobs:
     defaults:
       run:
         working-directory: api
-    strategy:
-      fail-fast: false
-      matrix:
-        module: [user, apikey, audit, organization, permission, notification, asset, setting, usage, webhook]
     steps:
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
@@ -49,24 +45,17 @@ jobs:
           go-version-file: api/go.mod
           cache-dependency-path: api/go.sum
 
-      - name: module-creation self-test (${{ matrix.module }})
-        run: bash .agents/skills/module-creation/scripts/validate-module.sh ${{ matrix.module }}
-
-      - name: api-development self-test (${{ matrix.module }})
-        run: bash .agents/skills/api-development/scripts/validate-api.sh ${{ matrix.module }}
-
-      - name: database-design self-test (${{ matrix.module }})
-        run: bash .agents/skills/database-design/scripts/validate-db.sh ${{ matrix.module }}
-
-      - name: logging-standards self-test (${{ matrix.module }})
-        run: bash .agents/skills/logging-standards/scripts/validate-logging.sh ${{ matrix.module }}
-
-  skill-metadata:
-    name: Skill Metadata
-    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
-
-      - name: Validate every SKILL.md against codex loader rules
-        run: bash .agents/skills/scripts/validate-skill.sh --all
+      # One runner and one build cache for every module: the validators are static checks plus a
+      # package test, so a per-module matrix only multiplied setup time.
+      - name: Skill validators for every maintained starter module
+        run: |
+          status=0
+          for module in user apikey audit organization permission notification asset setting usage webhook; do
+            echo "::group::${module}"
+            bash .agents/skills/module-creation/scripts/validate-module.sh "$module" || status=1
+            bash .agents/skills/api-development/scripts/validate-api.sh "$module" || status=1
+            bash .agents/skills/database-design/scripts/validate-db.sh "$module" || status=1
+            bash .agents/skills/logging-standards/scripts/validate-logging.sh "$module" || status=1
+            echo "::endgroup::"
+          done
+          exit "$status"

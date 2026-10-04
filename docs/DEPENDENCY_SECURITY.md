@@ -16,7 +16,7 @@ inventories and scans every lock surface.
 | Vulnerability source | `scripts/dependency-security.sh` | OSV-Scanner 2.3.8 binaries are selected per platform and verified against reviewed SHA-256 digests. |
 | Inventory | `make sbom` | A validated CycloneDX 1.5 document contains both Go modules and npm packages. |
 | Continuous review | `.github/workflows/dependency-security.yml` | Dependency changes, weekly schedules, and manual runs scan every lock surface and retain the SBOM for 14 days. |
-| Update discovery | `.github/dependabot.yml` | Weekly grouped updates cover Go, all pnpm projects, GitHub Actions, and both Dockerfiles; major updates remain separate review units. |
+| Update discovery | `.github/dependabot.yml` | Monthly grouped version updates cover Go, all pnpm projects, GitHub Actions, and both Dockerfiles; security updates are grouped separately and major version updates remain separate review units. |
 
 Node 20 is intentionally absent because it is end-of-life and no longer receives security fixes.
 Node 22.12 is the minimum browser-tooling runtime and Node 22 remains the image/type-definition
