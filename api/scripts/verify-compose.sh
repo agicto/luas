@@ -22,6 +22,18 @@ fail() {
   exit 1
 }
 
+# rollback_through rolls back every migration applied after, and including, the named one. Kernel
+# migrations with later timestamps (for example workflow tasks) are rolled back with it and restored
+# by the following db:migrate, so the check does not depend on which migration happens to be last.
+rollback_through() {
+  local migration="$1" log_file="$2" steps
+  steps="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+SELECT COUNT(*) FROM migrations WHERE id >= (SELECT id FROM migrations WHERE migration = '${migration}');
+")"
+  [[ "${steps}" =~ ^[1-9][0-9]*$ ]] || fail "migration ${migration} is not applied"
+  compose exec -T api /app/luas db:rollback --step="${steps}" >"${log_file}" 2>&1
+}
+
 register_and_login_user() {
   local username="$1"
   local email="$2"
@@ -291,7 +303,7 @@ raise SystemExit(0 if valid else 1)
       --write-out '%{http_code}' \
       --header "Authorization: Bearer ${notification_token}" \
       "http://127.0.0.1:${published_port}/v1/notifications?status=everything")"
-    [[ "${notification_invalid_filter_status}" == "422" ]] || fail "invalid notification filter returned HTTP ${notification_invalid_filter_status}"
+    [[ "${notification_invalid_filter_status}" == "400" ]] || fail "invalid notification filter returned HTTP ${notification_invalid_filter_status}"
 
     notification_outsider_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/notification-outsider.json" \
@@ -373,7 +385,7 @@ WHERE table_schema = 'public'
     [[ "${notification_recipient_columns}" == "0" ]] || fail "notification delivery ledger exposes ${notification_recipient_columns} sensitive column(s)"
     notification_flow="${notification_list_status}/${notification_status_status}/${notification_invalid_filter_status}/${notification_outsider_status}/${notification_preference_get_status}/${notification_preference_put_status}/${notification_read_status}/worker:${notification_delivery_state}"
 
-    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/notification-rollback.log" 2>&1; then
+    if ! rollback_through 2026_07_15_020000_create_notification_tables "${TMP_DIR}/notification-rollback.log"; then
       fail "notification migration rollback failed"
     fi
     notification_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
@@ -608,7 +620,7 @@ raise SystemExit(0 if item["scope"] == "organization" and item["value"] == "zh-H
     fi
     setting_flow="public:${setting_public_status}/${setting_revalidate_status}/cli-cas:${setting_set_successes}/${setting_set_conflicts}/cli-audit:${setting_cli_audit_count}/user:${setting_user_list_status}/${setting_missing_precondition_status}/${setting_user_set_status}/${setting_stale_status}/${setting_user_reset_status}/organization:${setting_organization_set_status}"
 
-    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/setting-rollback.log" 2>&1; then
+    if ! rollback_through 2026_07_15_040000_create_settings_table "${TMP_DIR}/setting-rollback.log"; then
       fail "setting migration rollback failed"
     fi
     setting_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
@@ -776,7 +788,7 @@ raise SystemExit(0 if valid else 1)
     fi
     usage_flow="replay:${usage_replay_successes}/receipts:${usage_exact_receipts}/conflict:${usage_conflict_status}/quota:${usage_consume_successes}/${usage_consume_denials}/counter:${usage_final_counter}/http:${usage_user_status}/${usage_organization_list_status}"
 
-    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/usage-rollback.log" 2>&1; then
+    if ! rollback_through 2026_07_15_050000_create_usage_tables "${TMP_DIR}/usage-rollback.log"; then
       fail "usage migration rollback failed"
     fi
     usage_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
@@ -939,7 +951,7 @@ WHERE a.deleted_at IS NULL AND u.deleted_at IS NOT NULL;
     [[ "${orphaned_assets}" == "0" ]] || fail "concurrent account deletion left ${orphaned_assets} active orphan asset(s)"
     asset_account_race_flow="${asset_race_create_status}/${asset_race_delete_status}/orphans:${orphaned_assets}/user:${asset_race_user_id}"
 
-    if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/asset-rollback.log" 2>&1; then
+    if ! rollback_through 2026_07_15_030000_create_assets_table "${TMP_DIR}/asset-rollback.log"; then
       fail "asset migration rollback failed"
     fi
     asset_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
@@ -1240,7 +1252,7 @@ WHERE schemaname = 'public'
         [[ "${webhook_query_indexes}" == "7" ]] || fail "webhook schema has ${webhook_query_indexes}/7 query-shaped indexes"
         webhook_flow="${webhook_catalog_status}/${webhook_create_status}/${webhook_list_status}/${webhook_test_status}/${webhook_replay_status}/${webhook_delivery_status}/${webhook_attempt_status}:failed:404:private:${webhook_forbidden_columns}:indexes:${webhook_query_indexes}"
 
-        if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/webhook-rollback.log" 2>&1; then
+        if ! rollback_through 2026_07_15_060000_create_webhook_tables "${TMP_DIR}/webhook-rollback.log"; then
           fail "webhook migration rollback failed"
         fi
         webhook_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
@@ -1488,7 +1500,7 @@ raise SystemExit(0 if valid else 1)
         [[ "${permission_admin_revoked_status}" == "403" ]] || fail "deleted role did not revoke delegated permission"
         permission_flow="${permission_owner_status}/${permission_admin_denied_status}/${permission_role_status}/${permission_assign_status}/${permission_delegated_status}/${permission_escalation_status}/${permission_delete_status}/${permission_admin_revoked_status}"
 
-        if ! compose exec -T api /app/luas db:rollback --step=1 >"${TMP_DIR}/permission-rollback.log" 2>&1; then
+        if ! rollback_through 2026_07_15_010000_create_permission_tables "${TMP_DIR}/permission-rollback.log"; then
           fail "permission migration rollback failed"
         fi
         permission_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "

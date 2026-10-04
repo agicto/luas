@@ -4,6 +4,16 @@ Notable changes to Luas. Downstream migration steps for each change are in
 [`UPGRADING.md`](UPGRADING.md); the long-running quality record is in
 [`docs/FRAMEWORK_QUALITY_ROADMAP.md`](docs/FRAMEWORK_QUALITY_ROADMAP.md).
 
+## v0.21.1 — 2026-10-04
+
+### Fixed
+
+- The Web BFF answered an invalid notification filter with `422 COMMON.VALIDATION_FAILED`; it now
+  returns `400 COMMON.INVALID_INPUT`, as the API does.
+- The API Compose verification rolled back only the newest migration and so checked the wrong
+  table once the workflow-task migration was added; it now rolls back through the starter's own
+  migration. The Container workflow passes again.
+
 ## v0.21.0 — 2026-10-04
 
 The first release since v0.20.0. It turns the Admin Console into an operator console, makes every
