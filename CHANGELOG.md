@@ -19,6 +19,9 @@ Notable changes to Luas. Downstream migration steps for each change are in
 - [`deploy/kubernetes`](deploy/kubernetes/README.md): a hardened kustomize reference baseline for
   the API, workflow worker, Web, the pre-deploy migration job, and per-starter workers and
   retention CronJobs, validated against Kubernetes 1.30.
+- `make perf` and a nightly `perf.yml` run a k6 baseline against a release build and PostgreSQL,
+  failing when login, readiness, profile, API key, or audit log reads leave their p95 budgets; see
+  [`api/docs/PERFORMANCE.md`](api/docs/PERFORMANCE.md).
 - An `api/.env.example` drift test fails when configuration reads a variable the example omits.
 
 ### Changed

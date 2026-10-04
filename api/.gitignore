@@ -106,3 +106,6 @@ examples/*/dist/
 examples/*/tmp/
 examples/*/.env
 examples/*/*.log
+
+# k6 performance summaries
+/perf/results/

@@ -10,6 +10,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 | `ci.yml` | Root governance, OpenAPI lint/generation/route/breaking gates, API build/lint/test/runtime-route/race gates, PostgreSQL 15-18 compatibility, plus Next.js Web and Admin Console type/lint/test/build gates | `contents: read` |
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `e2e.yml` | Starts PostgreSQL, the API, and the Admin Console with `make dev` and runs the Playwright operator smoke tests | `contents: read` |
+| `perf.yml` | Nightly and on demand: a release build against PostgreSQL under the k6 baseline, failing when a hot path leaves its p95 or error budget; k6 is a checksum-pinned release | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `release.yml` | On a `vX.Y.Z` tag: requires the tag on `main` with a changelog section, builds and scans both images, attests the SBOMs, and publishes the GitHub release | `contents: read`; the job elevates to `contents: write`, `id-token: write`, `attestations: write` |
 | `skill-self-test.yml` | Starter-module skill validators in one job (Skill metadata is validated by `make governance`) | `contents: read` |

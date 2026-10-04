@@ -1,0 +1,75 @@
+name: Performance
+
+# Nightly k6 baseline: a release build of the API against PostgreSQL, failing when any hot path's
+# p95 latency or error rate leaves its budget in api/perf/k6/baseline.js.
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  K6_VERSION: v2.3.0
+  K6_SHA256: 39c3117b6af817592dcd0ce4242105c0a7af10948c2a425306f0be8f7a8a8ab1
+
+jobs:
+  baseline:
+    name: k6 baseline
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777 # 16.14-alpine3.24
+        env:
+          POSTGRES_DB: luas_perf
+          POSTGRES_USER: luas
+          POSTGRES_PASSWORD: luas_perf
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U luas -d luas_perf"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Install k6 (checksum-verified release)
+        run: |
+          archive="k6-${K6_VERSION}-linux-amd64"
+          curl -fsSL -o "${RUNNER_TEMP}/${archive}.tar.gz" \
+            "https://github.com/grafana/k6/releases/download/${K6_VERSION}/${archive}.tar.gz"
+          echo "${K6_SHA256}  ${RUNNER_TEMP}/${archive}.tar.gz" | sha256sum --check --strict
+          tar -xzf "${RUNNER_TEMP}/${archive}.tar.gz" -C "${RUNNER_TEMP}"
+          echo "K6=${RUNNER_TEMP}/${archive}/k6" >> "${GITHUB_ENV}"
+
+      - name: Run the baseline
+        env:
+          LUAS_PERF_POSTGRES_DSN: postgres://luas:luas_perf@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_perf?sslmode=disable
+          LUAS_PERF_OUTPUT: ${{ runner.temp }}/perf/summary.json
+        run: make perf
+
+      - name: Upload k6 summary
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: perf-summary-${{ github.sha }}
+          path: ${{ runner.temp }}/perf/summary.json
+          if-no-files-found: ignore
+          retention-days: 30

@@ -21,7 +21,7 @@ else
 	PATH_SEP=/
 endif
 
-.PHONY: all build build-server build-all container-check compose-check route-catalog-check wire-check clean test test-kest test-race test-race-critical test-postgres-compatibility benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
+.PHONY: all build build-server build-all container-check compose-check route-catalog-check wire-check clean test test-kest test-race test-race-critical test-postgres-compatibility benchmark-cache benchmark-database benchmark-http benchmark-rate-limit benchmark-workflow perf cover lint lint-fix generate wire mock dev air server migrate seed tidy update vuln setup install build-windows build-linux build-darwin build-all-platforms build-prod help
 
 # Default target
 all: lint test build
@@ -165,6 +165,11 @@ benchmark-cache:
 	go test ./internal/infra/cache -run '^$$' -bench '^BenchmarkMemory(Get|GetParallel|BoundedChurn)$$' -benchmem -count=5
 
 # Profile default user repository paths against an isolated PostgreSQL schema.
+# k6 load baseline with p95 budgets against a release build (needs k6 and a disposable database)
+perf:
+	@test -n "$$LUAS_PERF_POSTGRES_DSN" || (echo "LUAS_PERF_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
+	bash scripts/perf.sh
+
 benchmark-database:
 	@test -n "$$LUAS_TEST_POSTGRES_DSN" || (echo "LUAS_TEST_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
 	go test ./internal/infra/database ./internal/modules/user -run 'TestNewDB_PostgresAppliesRuntimeConnectionPolicy|TestPostgresUserRepository(QueryShape|PerformanceProfile)' -v -count=1
@@ -319,6 +324,7 @@ help:
 	@echo "  make benchmark-http     - Benchmark core HTTP middleware with metrics off/on"
 	@echo "  make benchmark-cache    - Benchmark bounded memory-cache reads and churn"
 	@echo "  make benchmark-database - Profile user repository paths on disposable PostgreSQL"
+	@echo "  make perf               - k6 load baseline with p95 budgets (LUAS_PERF_POSTGRES_DSN, k6)"
 	@echo "  make benchmark-workflow - Benchmark memory queue round trips"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

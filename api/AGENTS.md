@@ -141,6 +141,7 @@ Capabilities should not gain HTTP files merely to match that template.
 | Cache capability | [docs/CACHE.md](docs/CACHE.md) |
 | Authentication | [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) |
 | Observability/privacy | [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) |
+| Benchmarks and k6 load baseline | [docs/PERFORMANCE.md](docs/PERFORMANCE.md) |
 | Middleware | [docs/MIDDLEWARE.md](docs/MIDDLEWARE.md) |
 | Workflow lifecycle | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
 | Deployment | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) |
