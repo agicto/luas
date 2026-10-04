@@ -32,8 +32,8 @@ overrides:
   'undici@>=7.0.0 <7.29.1': 7.29.1
 
 allowBuilds:
-  '@parcel/watcher@2.5.1': true
-  '@swc/core@1.15.5': true
+  '@parcel/watcher@2.6.0': true
+  '@swc/core@1.16.13': true
   'esbuild@0.28.1': true
   'sharp@0.34.5': true
   'unrs-resolver@1.12.2': true

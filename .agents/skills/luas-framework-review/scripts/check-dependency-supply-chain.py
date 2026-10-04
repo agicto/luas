@@ -39,8 +39,8 @@ OSV_CHECKSUMS = {
     ),
 }
 ALLOWED_BUILDS = {
-    "@parcel/watcher@2.5.1",
-    "@swc/core@1.15.5",
+    "@parcel/watcher@2.6.0",
+    "@swc/core@1.16.13",
     "esbuild@0.28.1",
     "sharp@0.34.5",
     "unrs-resolver@1.12.2",
