@@ -40,6 +40,9 @@ The Go `user` starter exposes server-side authentication-session endpoints under
 | Request password reset | `POST /v1/password/reset` | `{ email }` | Generic message |
 | Confirm password reset | `POST /v1/password/reset/confirm` | `{ token, new_password }` | Generic message |
 | Profile | `GET /v1/users/profile` | Bearer token | API user |
+| Update profile | `PUT /v1/users/profile` | `{ nickname?, avatar?, phone?, bio? }` | API user |
+| Change password | `PUT /v1/users/password` | `{ old_password, new_password }` | `{ message }`; every session is revoked |
+| Delete account | `DELETE /v1/users/account` | Bearer token | No content (`204`) |
 
 `access_token` is an opaque, cryptographically random session credential. It is not a JWT and has
 no client-readable claims. The API stores only its SHA-256 hash and resolves identity, account

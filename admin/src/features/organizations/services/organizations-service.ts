@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractData, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   operatorMemberPageSchema,
@@ -36,3 +38,8 @@ export const organizationsService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
+assertContract<Accepts<z.input<typeof operatorOrganizationPageSchema>, ContractResponse<'listOperatorOrganizations', 200>>>();
+assertContract<Accepts<z.input<typeof operatorOrganizationSchema>, ContractData<'getOperatorOrganization', 200>>>();
+assertContract<Accepts<z.input<typeof operatorMemberPageSchema>, ContractResponse<'listOperatorOrganizationMembers', 200>>>();

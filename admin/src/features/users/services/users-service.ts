@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractData, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   managedUserPageSchema,
@@ -34,3 +36,8 @@ export const usersService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
+assertContract<Accepts<z.input<typeof managedUserPageSchema>, ContractResponse<'listOperatorUsers', 200>>>();
+assertContract<Accepts<z.input<typeof managedUserSchema>, ContractData<'disableOperatorUser', 200>>>();
+assertContract<Accepts<z.input<typeof managedUserSchema>, ContractData<'enableOperatorUser', 200>>>();

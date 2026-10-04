@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   notificationDeliveryPageSchema,
@@ -27,3 +29,6 @@ export const notificationDeliveriesService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
+assertContract<Accepts<z.input<typeof notificationDeliveryPageSchema>, ContractResponse<'listOperatorNotificationDeliveries', 200>>>();

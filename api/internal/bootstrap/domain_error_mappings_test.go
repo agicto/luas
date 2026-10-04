@@ -94,7 +94,7 @@ func TestDomainErrorMappingsAreUnchangedWhenOwnedByStarters(t *testing.T) {
 		{domain.ErrOrganizationInvitationExpired, http.StatusGone, domain.CodeOrganizationInvitationExpired},
 		{domain.ErrAssetUploadExpired, http.StatusGone, domain.CodeAssetUploadExpired},
 		{domain.ErrAssetSizeExceeded, http.StatusRequestEntityTooLarge, domain.CodeAssetSizeExceeded},
-		{domain.ErrInvalidInput, http.StatusUnprocessableEntity, domain.CodeInvalidInput},
+		{domain.ErrInvalidInput, http.StatusBadRequest, domain.CodeInvalidInput},
 		{domain.ErrPermissionUnknown, http.StatusUnprocessableEntity, domain.CodePermissionUnknown},
 		{domain.ErrNotificationInvalidChannel, http.StatusUnprocessableEntity, domain.CodeNotificationInvalidChannel},
 		{domain.ErrAssetInvalidMediaType, http.StatusUnprocessableEntity, domain.CodeAssetInvalidMediaType},

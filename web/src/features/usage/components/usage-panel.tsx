@@ -55,13 +55,7 @@ export function OrganizationUsagePanel({ organizationId }: { organizationId: num
   );
 }
 
-function UsagePanelState({
-  values,
-  error,
-  pending,
-  organization,
-  refetch,
-}: UsagePanelStateProps) {
+function UsagePanelState({ values, error, pending, organization, refetch }: UsagePanelStateProps) {
   const t = useT('usage');
   const locale = useLocale();
   const number = useMemo(() => new Intl.NumberFormat(locale), [locale]);
@@ -168,7 +162,8 @@ function UsagePanelState({
                   )}
                 </TableCell>
                 <TableCell className="min-w-44 text-muted-foreground">
-                  {date.format(new Date(item.period_start))} - {date.format(new Date(item.period_end))}
+                  {date.format(new Date(item.period_start))} -{' '}
+                  {date.format(new Date(item.period_end))}
                 </TableCell>
               </TableRow>
             );

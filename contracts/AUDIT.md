@@ -18,7 +18,7 @@ event stream, debug log, authorization source, or immutable regulatory archive.
 
 ```http
 GET /v1/audit-logs?page=1&per_page=15
-Authorization: Bearer <opaque-session-or-api-key>
+Authorization: Bearer <opaque-session>
 ```
 
 Optional exact-match filters are:
@@ -100,6 +100,8 @@ luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
 |---:|---|---|
 | 400 | `COMMON.INVALID_INPUT` | A query value is outside its transport bounds |
 | 401 | `AUTH.UNAUTHORIZED` | Authentication is missing or invalid |
+| 403 | `AUTH.ACCOUNT_DISABLED` | The session's account is disabled |
+| 429 | `COMMON.RATE_LIMITED` | The global rate limit is exceeded |
 | 503 | `COMMON.SERVICE_UNAVAILABLE` | Audit persistence is unavailable |
 
 Global envelopes and `request_id` behavior follow [`README.md`](README.md).

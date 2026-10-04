@@ -92,7 +92,7 @@ Successful creation returns HTTP 201 with a private, non-cacheable grant:
 ```json
 {
   "code": 0,
-  "message": "success",
+  "message": "created",
   "data": {
     "asset": {
       "id": "019bf6d8-17c5-7a98-a084-6d45793f5f0c",

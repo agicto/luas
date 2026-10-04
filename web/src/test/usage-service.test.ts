@@ -11,7 +11,15 @@ describe('usage service contract', () => {
     expect(parseOrganizationUsage(usageList('organization'))).toHaveLength(5);
   });
 
-  it('rejects missing, duplicate, mixed-scope, and unknown metrics', () => {
+  it('ignores metrics a larger server catalog adds', () => {
+    const values = usageList('user');
+    const extra = { ...values[0], metric: 'billing.invoices', unit: 'invoice', period: 'day' };
+    expect(parseUserUsage([...values, extra]).map(item => item.metric)).toEqual(
+      values.map(item => item.metric)
+    );
+  });
+
+  it('rejects missing, duplicate, and mixed-scope metrics', () => {
     const values = usageList('user');
     expect(() => parseUserUsage(values.slice(1))).toThrow();
     expect(() => parseUserUsage([...values.slice(0, 4), values[0]])).toThrow();

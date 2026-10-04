@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import { auditPageSchema, type AuditPage, type AuditSearch } from '@/features/audit/types';
 
@@ -30,3 +32,6 @@ export const auditService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
+assertContract<Accepts<z.input<typeof auditPageSchema>, ContractResponse<'listOperatorAuditLogs', 200>>>();

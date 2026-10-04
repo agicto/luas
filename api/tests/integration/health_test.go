@@ -332,7 +332,7 @@ func TestRegisterRoutes(t *testing.T) {
 	}
 }
 
-func TestCheckResult_Duration(t *testing.T) {
+func TestCheckResult_Latency(t *testing.T) {
 	checker := health.New()
 
 	checker.Register("slow", func(ctx context.Context) health.CheckResult {
@@ -343,8 +343,8 @@ func TestCheckResult_Duration(t *testing.T) {
 	ctx := context.Background()
 	results := checker.Check(ctx)
 
-	if results["slow"].Duration < 50*time.Millisecond {
-		t.Error("Expected duration to be at least 50ms")
+	if results["slow"].LatencyMS < 50 {
+		t.Errorf("Expected latency of at least 50ms, got %dms", results["slow"].LatencyMS)
 	}
 }
 

@@ -99,7 +99,8 @@ and avatar are never returned.
 
 - `q` (at most 100 characters) matches username or email case-insensitively as a literal substring;
   `%` and `_` are not wildcards. `status` is `active`, `disabled`, or `all` (default).
-  `per_page` is 1–100 (default 15). Results are ordered by descending ID. Invalid values return
+  `per_page` is 1–100 (default 15); out-of-range paging values fall back to the default or the
+  maximum. Results are ordered by descending ID. An invalid `status` returns
   `400 COMMON.INVALID_INPUT`.
 - Disabling revokes all of the account's sessions in the same transaction, so every existing
   credential fails on its next API call with `401 AUTH.UNAUTHORIZED`, and new logins fail with
@@ -108,8 +109,8 @@ and avatar are never returned.
 - Ending sessions revokes every active session without changing status.
 - Accounts that hold an operator grant, including the caller's own, cannot be disabled, enabled, or
   signed out here: `409 OPERATOR.TARGET_PROTECTED`. Change operators from the CLI.
-- An unknown account returns `404 USER.NOT_FOUND`; a non-numeric ID returns
-  `400 COMMON.INVALID_INPUT`.
+- An unknown account returns `404 USER.NOT_FOUND`; an ID of `0` returns `400 COMMON.INVALID_INPUT`,
+  and a non-numeric ID matches no route (`404 COMMON.NOT_FOUND`).
 
 ## Audit Logs
 

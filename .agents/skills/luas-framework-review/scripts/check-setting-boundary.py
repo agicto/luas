@@ -319,7 +319,7 @@ def main() -> int:
             "expectedAppSettings",
             "expectedUserSettings",
             "expectedOrganizationSettings",
-            "identities.length !== expected.length",
+            "expected.map(identity =>",
             "ClientErrorCode.INVALID_RESPONSE",
             "'If-Match': versionETag(expectedVersion)",
             "'Organization-Id': String(organizationId)",

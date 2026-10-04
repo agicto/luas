@@ -1,5 +1,7 @@
 import {
   array,
+  boolean,
+  enum as enumeration,
   int,
   iso,
   literal,
@@ -8,6 +10,8 @@ import {
   nonnegative,
   nullable,
   number,
+  object,
+  optional,
   refine,
   strictObject,
   string,
@@ -91,6 +95,31 @@ const userTimezoneSettingSchema = strictObject({
   updated_at: updatedAtSchema,
 });
 
+/**
+ * Any well-formed setting as `contracts/openapi.yaml` describes it. The setting catalog is
+ * code-owned and downstream apps extend it, so the client reads every entry with this schema and
+ * then narrows only the definitions it renders; an unknown definition is ignored, not an error.
+ */
+export const settingWireSchema = object({
+  scope: enumeration(['app', 'organization', 'user']),
+  key: string(),
+  kind: enumeration(['string', 'boolean', 'integer', 'enum', 'timezone']),
+  visibility: enumeration(['public', 'private']),
+  value: union([string(), number(), boolean()]),
+  version: safeVersionSchema,
+  source: sourceSchema,
+  options: optional(array(string())),
+  updated_at: updatedAtSchema,
+});
+
+export const settingWireListSchema = array(settingWireSchema).check(
+  refine(values => {
+    const identities = values.map(value => `${value.scope}:${value.key}`);
+    return new Set(identities).size === identities.length;
+  })
+);
+
+/** The definitions this client renders, each validated against its exact rules. */
 export const settingSchema = union([
   appDisplayNameSettingSchema,
   appLocaleSettingSchema,
@@ -98,14 +127,6 @@ export const settingSchema = union([
   userLocaleSettingSchema,
   userTimezoneSettingSchema,
 ]);
-
-export const settingListSchema = array(settingSchema).check(
-  maxLength(64),
-  refine(values => {
-    const identities = values.map(value => `${value.scope}:${value.key}`);
-    return new Set(identities).size === identities.length;
-  })
-);
 
 export const localeSettingMutationSchema = strictObject({ value: localeSchema });
 export const timezoneSettingMutationSchema = strictObject({ value: timezoneSchema });

@@ -375,7 +375,7 @@ def main() -> int:
         "web/src/features/webhook/schemas.ts",
         (
             "from 'zod/mini'",
-            "literal('webhook.test')",
+            "regex(/^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)+$/u)",
             "strictObject",
             "webhookEndpointSecretSchema",
             "webhookDeliverySchema",

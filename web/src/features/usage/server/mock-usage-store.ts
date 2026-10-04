@@ -22,7 +22,11 @@ export const mockUsageStore = {
   },
 
   organization(_organizationId: number, at = new Date()): OrganizationUsageSummary[] {
-    return summaries('organization', at, [1_842, 84_120, 19_604, 52_428_800, 61]) as OrganizationUsageSummary[];
+    return summaries(
+      'organization',
+      at,
+      [1_842, 84_120, 19_604, 52_428_800, 61]
+    ) as OrganizationUsageSummary[];
   },
 };
 

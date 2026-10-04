@@ -328,7 +328,7 @@ def main() -> int:
         "web/src/features/usage/services/usage-service.ts",
         (
             "expectedMetrics",
-            "usageSummaryListSchema.safeParse(value)",
+            "usageSummaryWireListSchema.safeParse(value)",
             "ClientErrorCode.INVALID_RESPONSE",
             "'/usage/user'",
             "'/organization-usage'",
@@ -384,7 +384,7 @@ def main() -> int:
         "web/src/test/usage-service.test.ts",
         (
             "exact finite user and organization catalogs",
-            "unknown metrics",
+            "ignores metrics a larger server catalog adds",
             "unsafe integers",
         ),
     )

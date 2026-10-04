@@ -35,8 +35,9 @@ import (
 //	}
 func ParseID(c *gin.Context, param string) (uint, bool) {
 	idStr := c.Param(param)
+	// Resource IDs are positive; zero is malformed input, not a lookup.
 	id, err := strconv.ParseUint(idStr, 10, 64)
-	if err != nil {
+	if err != nil || id == 0 {
 		response.BadRequest(c, "Invalid ID format", err)
 		return 0, false
 	}
@@ -113,15 +114,18 @@ func MustGetUserID(c *gin.Context) uint {
 //	    return
 //	}
 func BindJSON(c *gin.Context, obj any) bool {
+	useWireFieldNames()
 	if err := c.ShouldBindJSON(obj); err != nil {
-		response.BadRequest(c, "Invalid request parameters", err)
+		WriteBodyError(c, err)
 		return false
 	}
 	return true
 }
 
-// BindQuery binds query parameters and sends error response if invalid.
+// BindQuery binds query parameters and sends error response if invalid. Query strings are
+// transport-level input, so every failure is 400 COMMON.INVALID_INPUT.
 func BindQuery(c *gin.Context, obj any) bool {
+	useWireFieldNames()
 	if err := c.ShouldBindQuery(obj); err != nil {
 		response.BadRequest(c, "Invalid query parameters", err)
 		return false

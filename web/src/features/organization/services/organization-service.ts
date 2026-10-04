@@ -1,3 +1,12 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import request, { ApiError } from '@/http/request';
 import { ClientErrorCode } from '@/http/codes';
 import {
@@ -243,3 +252,67 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<
+    z.input<typeof organizationPageEnvelopeSchema>,
+    ContractResponse<'listOrganizations', 200>
+  >
+>();
+assertContract<Accepts<z.input<typeof organizationSchema>, ContractData<'getOrganization', 200>>>();
+assertContract<
+  Accepts<z.input<typeof organizationSchema>, ContractData<'createOrganization', 201>>
+>();
+assertContract<Sends<CreateOrganizationInput, ContractRequest<'createOrganization'>>>();
+assertContract<
+  Accepts<z.input<typeof organizationSchema>, ContractData<'updateOrganization', 200>>
+>();
+assertContract<Sends<UpdateOrganizationInput, ContractRequest<'updateOrganization'>>>();
+assertContract<
+  Accepts<z.input<typeof organizationContextSchema>, ContractData<'getOrganizationContext', 200>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof organizationMemberPageEnvelopeSchema>,
+    ContractResponse<'listOrganizationMembers', 200>
+  >
+>();
+assertContract<
+  Accepts<
+    z.input<typeof organizationMemberSchema>,
+    ContractData<'updateOrganizationMemberRole', 200>
+  >
+>();
+assertContract<
+  Sends<UpdateOrganizationMemberInput, ContractRequest<'updateOrganizationMemberRole'>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof organizationOwnershipTransferSchema>,
+    ContractData<'transferOrganizationOwnership', 200>
+  >
+>();
+assertContract<
+  Sends<TransferOrganizationOwnershipInput, ContractRequest<'transferOrganizationOwnership'>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof organizationInvitationPageEnvelopeSchema>,
+    ContractResponse<'listOrganizationInvitations', 200>
+  >
+>();
+assertContract<
+  Accepts<
+    z.input<typeof organizationInvitationCreateResultSchema>,
+    ContractData<'createOrganizationInvitation', 201>
+  >
+>();
+assertContract<
+  Sends<CreateOrganizationInvitationInput, ContractRequest<'createOrganizationInvitation'>>
+>();
+assertContract<
+  Accepts<z.input<typeof organizationSchema>, ContractData<'acceptOrganizationInvitation', 200>>
+>();
+assertContract<
+  Sends<AcceptOrganizationInvitationInput, ContractRequest<'acceptOrganizationInvitation'>>
+>();

@@ -41,7 +41,8 @@ an arbitrary URL. Downstream server modules publish only through `domain.Webhook
 Event types are a finite code-owned catalog. Keys use lowercase dotted segments and each definition
 owns a payload validator. The shipped catalog contains only `webhook.test`, whose exact object
 schema is owned by the starter. Downstream apps add reviewed product event definitions and typed
-publisher adapters before subscriptions can select them.
+publisher adapters before subscriptions can select them. Browser clients therefore accept any
+catalog-valid event type in responses instead of a hard-coded list.
 
 An internal publication contains:
 
@@ -158,8 +159,8 @@ Responses are `private, no-store` and vary on `Authorization` and `Organization-
 | Replace endpoint configuration | `PATCH /v1/webhook-endpoints/:id` | Endpoint summary |
 | Delete endpoint | `DELETE /v1/webhook-endpoints/:id` | No content |
 | Replace endpoint status | `PUT /v1/webhook-endpoints/:id/status` | Endpoint summary |
-| Rotate signing secret | `POST /v1/webhook-endpoints/:id/secret-rotations` | Endpoint plus one-time secret |
-| Queue endpoint test | `POST /v1/webhook-endpoints/:id/tests` | Delivery summary |
+| Rotate signing secret | `POST /v1/webhook-endpoints/:id/secret-rotations` | `201`: endpoint plus one-time secret |
+| Queue endpoint test | `POST /v1/webhook-endpoints/:id/tests` | `202`: delivery summary |
 | List deliveries | `GET /v1/webhook-deliveries` | Paginated delivery summaries |
 | List attempts | `GET /v1/webhook-deliveries/:id/attempts` | Paginated attempt summaries |
 

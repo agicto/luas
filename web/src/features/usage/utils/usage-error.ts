@@ -2,10 +2,7 @@ import { ApiErrorCode, ClientErrorCode } from '@/http/codes';
 import { ApiError } from '@/http/request';
 
 export type UsageErrorKey =
-  | 'errors.forbidden'
-  | 'errors.generic'
-  | 'errors.invalidResponse'
-  | 'errors.unavailable';
+  'errors.forbidden' | 'errors.generic' | 'errors.invalidResponse' | 'errors.unavailable';
 
 export function resolveUsageErrorKey(error: unknown): UsageErrorKey {
   if (!(error instanceof ApiError)) return 'errors.generic';

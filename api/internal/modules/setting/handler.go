@@ -255,7 +255,7 @@ func bindSettingMutation(c *gin.Context) (*setSettingRequest, bool) {
 			response.HandleError(c, "Invalid setting value", domain.ErrSettingInvalidValue)
 			return nil, false
 		}
-		response.BadRequest(c, "Invalid setting request", err)
+		httphandler.WriteBodyError(c, err)
 		return nil, false
 	}
 	var trailing any

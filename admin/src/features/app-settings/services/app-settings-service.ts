@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractData, type ContractRequest, type Sends } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   appSettingListSchema,
@@ -29,3 +31,8 @@ export const appSettingsService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml and these schemas disagree.
+assertContract<Accepts<z.input<typeof appSettingListSchema>, ContractData<'listOperatorAppSettings', 200>>>();
+assertContract<Accepts<z.input<typeof appSettingSchema>, ContractData<'setOperatorAppSetting', 200>>>();
+assertContract<Sends<{ value: AppSettingValue }, ContractRequest<'setOperatorAppSetting'>>>();

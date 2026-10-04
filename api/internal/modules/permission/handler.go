@@ -197,7 +197,7 @@ func permissionContextAndID(c *gin.Context, parameter string) (domain.Organizati
 		return domain.OrganizationContext{}, 0, false
 	}
 	id, ok := handler.ParseID(c, parameter)
-	if !ok || id == 0 {
+	if !ok {
 		return domain.OrganizationContext{}, 0, false
 	}
 	return organization, id, true

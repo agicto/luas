@@ -384,7 +384,7 @@ func bindWebhookJSON[T any](c *gin.Context) (T, bool) {
 	decoder := json.NewDecoder(c.Request.Body)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&request); err != nil {
-		response.BadRequest(c, "Invalid webhook request", err)
+		httphandler.WriteBodyError(c, err)
 		return request, false
 	}
 	var trailing any
