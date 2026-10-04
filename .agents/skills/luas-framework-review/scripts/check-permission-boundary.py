@@ -198,7 +198,7 @@ def main() -> int:
         (
             'permission_flow="skipped"',
             'permission_migration_flow="skipped"',
-            "/app/luas db:rollback --step=1",
+            "rollback_through 2026_07_15_010000_create_permission_tables",
             "/app/luas db:migrate",
             "permission migration re-apply created",
         ),
