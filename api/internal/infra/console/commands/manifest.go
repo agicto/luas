@@ -120,6 +120,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewStarterCheckCommand()},
 		Registration{Command: NewStarterEnableCommand()},
 		Registration{Command: NewStarterDisableCommand()},
+		Registration{Command: NewProjectInitCommand()},
 	)
 
 	return []Manifest{makeManifest, databaseManifest, starterManifest, coreManifest}

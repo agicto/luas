@@ -101,6 +101,21 @@ Tenant self-service stays in `web/`.
 Or open the repository in a dev container or GitHub Codespaces; [`.devcontainer`](.devcontainer)
 installs every tool.
 
+### Start A New Project
+
+Copy the scaffold into your own repository, then rename it once before the first commit:
+
+```bash
+make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform/api \
+  STARTERS=organization,permission,operator
+```
+
+`project:init` rewrites the Go module path, package and container-project names, display name,
+repository URL, and the default starter selection for the API, Web, Admin, and `make dev`. It
+records the scaffold version in `.luas-project.json` and refuses to run twice. Then remove the
+examples and starters you do not need with the
+[downstream extraction guide](.agents/skills/downstream-app-extraction/SKILL.md).
+
 ### Start Everything
 
 ```bash
