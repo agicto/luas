@@ -24,6 +24,8 @@ type starterListFormat string
 const (
 	starterListFormatTable starterListFormat = "table"
 	starterListFormatJSON  starterListFormat = "json"
+	// starterListFormatMarkdown prints the full catalog as the table in internal/modules/README.md.
+	starterListFormatMarkdown starterListFormat = "markdown"
 )
 
 type starterCatalogEntry struct {
@@ -90,7 +92,7 @@ func (c *StarterListCommand) Description() string {
 	return "List available starters and the current selection"
 }
 func (c *StarterListCommand) Usage() string {
-	return "starter:list [--env-file=path] [--format=table|json]"
+	return "starter:list [--env-file=path] [--format=table|json|markdown]"
 }
 func (c *StarterListCommand) SuppressCompletionOutput() bool { return c.suppressCompletion }
 
@@ -122,7 +124,11 @@ func (c *StarterListCommand) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	c.suppressCompletion = options.format == starterListFormatJSON
+	c.suppressCompletion = options.format != starterListFormatTable
+	if options.format == starterListFormatMarkdown {
+		_, writeErr := fmt.Fprint(os.Stdout, starter.MarkdownCatalog())
+		return writeErr
+	}
 
 	document, err := loadStarterCatalogDocument(options.envFile)
 	if err != nil {
@@ -241,11 +247,11 @@ func parseStarterCommandOptions(args []string, allowFormat, requireNames bool) (
 
 func setStarterListFormat(options *starterCommandOptions, raw string) error {
 	switch starterListFormat(raw) {
-	case starterListFormatTable, starterListFormatJSON:
+	case starterListFormatTable, starterListFormatJSON, starterListFormatMarkdown:
 		options.format = starterListFormat(raw)
 		return nil
 	default:
-		return fmt.Errorf("--format must be table or json")
+		return fmt.Errorf("--format must be table, json, or markdown")
 	}
 }
 

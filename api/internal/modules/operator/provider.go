@@ -22,6 +22,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterOperator,
+		assembly.WithStarterSummary("Platform operators: CLI-managed grants and the Admin Console cookie session."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_10_01_000000_create_platform_operators_table"),

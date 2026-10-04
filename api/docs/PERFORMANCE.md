@@ -37,9 +37,10 @@ cost rather than queueing:
 | `api_keys` | `GET /v1/api-keys` | 30/s | 75 ms |
 | `audit_logs` | `GET /v1/audit-logs` | 20/s | 100 ms |
 
-Every run also requires fewer than 1% failed requests and more than 99% passing checks. On an
-Apple M-series laptop the measured p95 values are 10–20 times below these budgets. The budgets are
-set for a shared CI runner, so a failure means a real regression and not noise.
+Every run also requires fewer than 1% failed requests and more than 99% passing checks. On a
+GitHub-hosted runner the read paths measure about 1–4 ms at p95, well inside their budgets. Login
+is bcrypt-bound and measures about 165 ms against its 300 ms budget, so password-hashing cost
+changes show up there first.
 
 Both rate limiters are disabled for the run because the baseline measures request cost, not abuse
 controls. Settings:

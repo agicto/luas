@@ -7,7 +7,8 @@
     "lint": "redocly lint openapi.yaml",
     "generate": "node scripts/generate-types.mjs",
     "check": "redocly lint openapi.yaml && node scripts/generate-types.mjs --check",
-    "check:routes": "node scripts/check-api-routes.mjs"
+    "check:routes": "node scripts/check-api-routes.mjs",
+    "merge-fragment": "node scripts/merge-fragment.mjs"
   },
   "devDependencies": {
     "@redocly/cli": "2.43.2",

@@ -16,6 +16,7 @@ LINK_CHECK=.agents/skills/luas-framework-review/scripts/check-doc-links.py
 ENGLISH_CHECK=.agents/skills/luas-framework-review/scripts/check-english-source.py
 SKILL_CHECK=.agents/skills/scripts/validate-skill.sh
 ROUTING_CHECK=.agents/skills/scripts/check-skill-routing.py
+INDEX_CHECK=.agents/skills/scripts/render-skill-index.py
 
 CHANGED_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-agent-changed.XXXXXX")
 UNTRACKED_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-agent-untracked.XXXXXX")
@@ -61,6 +62,7 @@ while IFS= read -r path; do
         "$ENGLISH_CHECK"|\
         "$SKILL_CHECK"|\
         "$ROUTING_CHECK"|\
+        "$INDEX_CHECK"|\
         .agents/skills/scripts/check-agent-changed.sh)
             FULL_REASON="an agent-check implementation file changed"
             ;;
@@ -89,6 +91,7 @@ if [ -n "$FULL_REASON" ]; then
     PYTHONDONTWRITEBYTECODE=1 python3 "$LINK_CHECK"
     PYTHONDONTWRITEBYTECODE=1 python3 "$ENGLISH_CHECK"
     bash "$SKILL_CHECK" --all
+    PYTHONDONTWRITEBYTECODE=1 python3 "$INDEX_CHECK" --check
     PYTHONDONTWRITEBYTECODE=1 python3 "$ROUTING_CHECK"
     run_whitespace_checks
     exit 0
@@ -122,6 +125,7 @@ else
     echo "English source check passed (0 changed files scanned)."
 fi
 bash "$SKILL_CHECK" --all
+PYTHONDONTWRITEBYTECODE=1 python3 "$INDEX_CHECK" --check
 PYTHONDONTWRITEBYTECODE=1 python3 "$ROUTING_CHECK"
 run_whitespace_checks
 

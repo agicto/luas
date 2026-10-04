@@ -34,6 +34,7 @@ func ProvideEventPublisher(bus *events.EventBus) eventPublisher { return bus }
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterNotification,
+		assembly.WithStarterSummary("User-scoped in-app notifications and durable email delivery with preferences and leases."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames(

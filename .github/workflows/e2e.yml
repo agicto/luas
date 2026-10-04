@@ -1,13 +1,15 @@
 name: End-to-End
 
-# Starts the real stack with `make dev` (PostgreSQL, Go API, Admin Console) and drives the Admin
-# Console in a browser. It proves both the one-command development path and the operator flow.
+# Starts the real stack with `make dev` (PostgreSQL, Go API, and a browser shell) and drives the
+# browser shell. It proves the one-command development path, the operator flow in the Admin
+# Console, and sign-in through the server-owned API adapter in the Web application.
 
 on:
   pull_request:
     paths:
       - "api/**"
       - "admin/**"
+      - "web/**"
       - "contracts/**"
       - "scripts/dev.sh"
       - "compose.dev.yaml"
@@ -21,6 +23,7 @@ on:
     paths:
       - "api/**"
       - "admin/**"
+      - "web/**"
       - "contracts/**"
       - "scripts/dev.sh"
       - "compose.dev.yaml"
@@ -97,5 +100,69 @@ jobs:
         with:
           name: e2e-traces-${{ github.sha }}
           path: admin/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  web:
+    name: Web application against the API
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    timeout-minutes: 20
+    env:
+      LUAS_DEV_SERVICES: api,web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: api/go.mod
+          cache-dependency-path: api/go.sum
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          package_json_file: web/package.json
+
+      - name: Set up Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install Web dependencies and the test browser
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Start the stack with make dev
+        run: |
+          make dev > "${RUNNER_TEMP}/dev.log" 2>&1 &
+          for _ in $(seq 1 180); do
+            if grep -q "Stack is up" "${RUNNER_TEMP}/dev.log"; then exit 0; fi
+            if grep -qE "\[dev\].*(exited|in use|required|did not)" "${RUNNER_TEMP}/dev.log"; then break; fi
+            sleep 2
+          done
+          cat "${RUNNER_TEMP}/dev.log"
+          exit 1
+
+      - name: Run end-to-end tests
+        working-directory: web
+        run: pnpm e2e
+
+      - name: Show the stack log
+        if: ${{ failure() }}
+        run: cat "${RUNNER_TEMP}/dev.log"
+
+      - name: Upload Playwright traces
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-web-traces-${{ github.sha }}
+          path: web/test-results
           if-no-files-found: ignore
           retention-days: 7

@@ -21,6 +21,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterAPIKey,
+		assembly.WithStarterSummary("Personal API keys with one-time secrets, revocation, and request authentication."),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_04_06_000000_create_api_keys_table"),
 	)

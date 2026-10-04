@@ -18,6 +18,7 @@ type StaticStarterManifest struct {
 	modules        []Module
 	migrationNames []string
 	seederNames    []string
+	summary        string
 }
 
 // Dependencies returns starter names that must be selected before this manifest.
@@ -54,6 +55,19 @@ func (m *StaticStarterManifest) MigrationNames() []string {
 	return append([]string(nil), m.migrationNames...)
 }
 
+// Summary returns the one-line description shown in generated starter catalogs.
+func (m *StaticStarterManifest) Summary() string {
+	return m.summary
+}
+
+// SummaryOf returns a manifest's one-line description, or "" when it does not provide one.
+func SummaryOf(manifest StarterManifest) string {
+	if described, ok := manifest.(interface{ Summary() string }); ok {
+		return described.Summary()
+	}
+	return ""
+}
+
 // SeederNames returns the seeder names required by this starter.
 func (m *StaticStarterManifest) SeederNames() []string {
 	return append([]string(nil), m.seederNames...)
@@ -86,6 +100,13 @@ func isNilModule(module Module) bool {
 		return value.IsNil()
 	default:
 		return false
+	}
+}
+
+// WithStarterSummary sets the one-line description shown in generated starter catalogs.
+func WithStarterSummary(summary string) StarterManifestOption {
+	return func(manifest *StaticStarterManifest) {
+		manifest.summary = summary
 	}
 }
 

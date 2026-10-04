@@ -43,6 +43,7 @@ func NewUserMailer(service *email.Service) UserMailer {
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterUser,
+		assembly.WithStarterSummary("Registration, sign-in, revocable sessions, profile, and password reset."),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames(
 			"2025_06_18_000000_create_users_table",

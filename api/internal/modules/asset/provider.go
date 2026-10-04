@@ -25,6 +25,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterAsset,
+		assembly.WithStarterSummary("User-owned private objects with bounded transfer grants and inspection."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_030000_create_assets_table"),

@@ -24,6 +24,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterSetting,
+		assembly.WithStarterSummary("Finite typed app, organization, and user overrides with versioned replacement."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_040000_create_settings_table"),

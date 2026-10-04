@@ -27,6 +27,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterUsage,
+		assembly.WithStarterSummary("Trusted idempotent metering, atomic quota decisions, and private summaries."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_050000_create_usage_tables"),

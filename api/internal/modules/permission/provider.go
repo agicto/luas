@@ -24,6 +24,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterPermission,
+		assembly.WithStarterSummary("Organization-scoped access roles, exact permission keys, member assignments, and fail-closed checks."),
 		assembly.WithStarterDependencies(config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_010000_create_permission_tables"),
