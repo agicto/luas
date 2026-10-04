@@ -12,6 +12,7 @@
     "lint": "eslint . --max-warnings=0 && node scripts/check-architecture.mjs",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
     "build": "tsr generate && tsc -b --pretty false && vite build && node scripts/check-static-output.mjs && node scripts/check-bundle-budget.mjs",
     "preview": "vite preview",
     "format": "prettier --write .",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/router-cli": "^1.167.21",
     "@tanstack/router-plugin": "^1.168.23",

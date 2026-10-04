@@ -1,4 +1,15 @@
-.PHONY: check agent-check agent-check-changed skill-routing-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
+.PHONY: dev dev-down dev-reset check agent-check agent-check-changed skill-routing-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
+
+# One-command local stack: PostgreSQL in Docker, API, Web, and Admin on the host.
+# Override ports with LUAS_API_PORT, LUAS_WEB_PORT, LUAS_ADMIN_PORT, LUAS_DB_PORT.
+dev:
+	@bash scripts/dev.sh up
+
+dev-down:
+	@bash scripts/dev.sh down
+
+dev-reset:
+	@bash scripts/dev.sh reset
 
 check: governance contract-check api-check web-check admin-check
 

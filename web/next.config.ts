@@ -25,6 +25,9 @@ const nextConfig: NextConfig = {
   },
 
   productionBrowserSourceMaps: false,
+
+  // web/AGENTS.md is the reviewed agent guide for this shell; `next dev` must not append to it.
+  agentRules: false,
   turbopack: {},
 
   // Browser response policy only. Cache ownership remains route-specific.
