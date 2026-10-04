@@ -70,6 +70,7 @@ TABLE authentication_sessions
   COLUMN last_seen_at timestamp with time zone NOT NULL
   COLUMN revoked_at timestamp with time zone
   COLUMN revocation_reason character varying(32) NOT NULL DEFAULT ''::character varying
+  COLUMN audience character varying(16) NOT NULL DEFAULT 'user'::character varying
 
 TABLE migrations
   COLUMN id integer NOT NULL DEFAULT nextval('migrations_id_seq'::regclass)
@@ -353,6 +354,7 @@ CONSTRAINT assets.assets_status_check CHECK (((status)::text = ANY ((ARRAY['pend
 CONSTRAINT assets.fk_assets_user FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT
 CONSTRAINT audit_logs.audit_logs_pkey PRIMARY KEY (id)
 CONSTRAINT authentication_sessions.authentication_sessions_pkey PRIMARY KEY (id)
+CONSTRAINT authentication_sessions.chk_authentication_sessions_audience CHECK (((audience)::text = ANY ((ARRAY['user'::character varying, 'operator'::character varying])::text[])))
 CONSTRAINT migrations.migrations_pkey PRIMARY KEY (id)
 CONSTRAINT notification_deliveries.fk_notifications_deliveries FOREIGN KEY (notification_id) REFERENCES notifications(id) ON UPDATE CASCADE ON DELETE CASCADE
 CONSTRAINT notification_deliveries.notification_deliveries_channel_check CHECK (((channel)::text = ANY ((ARRAY['in_app'::character varying, 'email'::character varying])::text[])))

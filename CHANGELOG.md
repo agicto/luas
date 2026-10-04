@@ -30,6 +30,15 @@ Notable changes to Luas. Downstream migration steps for each change are in
   platform logger, the start-up banner is suppressed, and server and worker start lines are
   structured events.
 
+### Security
+
+- The login subject budget counts failed sign-ins per account: a correct password clears it and
+  the username and email of one account share it.
+- Sessions record their sign-in audience; operator routes reject sessions from the public login.
+- Password-reset lookup and delivery run after the response, so its timing no longer reveals
+  whether an account exists.
+- A production operator cookie name must keep the `__Host-` prefix; plugin discovery times out.
+
 ### Fixed
 
 - The workflow worker's PostgreSQL queue metrics no longer stop reporting while the queue is

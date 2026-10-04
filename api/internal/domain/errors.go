@@ -17,6 +17,7 @@ var (
 	ErrAuthenticationRequired    = errors.New("authentication is required")
 	ErrPasswordResetTokenInvalid = errors.New("password reset token is invalid")
 	ErrPasswordResetTokenExpired = errors.New("password reset token is expired")
+	ErrSignInThrottled           = errors.New("too many failed sign-in attempts")
 
 	// Permission errors
 	ErrPermissionDenied            = errors.New("permission denied")

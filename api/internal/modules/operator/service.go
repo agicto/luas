@@ -60,7 +60,7 @@ func (s *service) SignIn(ctx context.Context, identifier, password string) (*dom
 	if s.signIn == nil {
 		return nil, domain.ErrServiceUnavailable
 	}
-	return s.signIn.SignIn(ctx, identifier, password, func(ctx context.Context, user *domain.User) error {
+	return s.signIn.SignIn(ctx, identifier, password, domain.SessionAudienceOperator, func(ctx context.Context, user *domain.User) error {
 		return s.requireOperator(ctx, user.ID)
 	})
 }
@@ -74,7 +74,7 @@ func (s *service) Authenticate(ctx context.Context, credential string) (*domain.
 	if err != nil {
 		return nil, err
 	}
-	if identity == nil {
+	if identity == nil || identity.Audience != domain.SessionAudienceOperator {
 		return nil, domain.ErrAuthenticationRequired
 	}
 	if grantErr := s.requireOperator(ctx, identity.UserID); grantErr != nil {

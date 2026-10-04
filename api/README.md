@@ -201,7 +201,7 @@ The API kernel enables these core protections by default:
 - `RateLimit`: enabled by default in production at `600/min` per client IP and returns
   `429 COMMON.RATE_LIMITED` when exceeded.
 - `AuthAbuseGuard`: production login and password-reset paths use separate per-IP and per-subject
-  budgets.
+  budgets; the login subject budget counts failures per account.
 - `TrustedProxies`: forwarding headers are ignored unless the upstream appears in
   `SERVER_TRUSTED_PROXIES`.
 - `CORS`: permits local browser shells by default; production must configure trusted origins.

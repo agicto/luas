@@ -11,12 +11,32 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Deprecation removals and structured production logs
+## Unreleased — Deprecation removals, authentication hardening, and structured production logs
 
 ### Low — `ROLE.NOT_FOUND` removed
 
 The deprecated `ROLE.NOT_FOUND` value is gone from the API, `contracts/openapi.yaml`, and the Web
 and Admin code lists, as scheduled in v0.21.0. Match `PERMISSION.ROLE_NOT_FOUND` instead.
+
+### Medium — Operators sign in again after the session audience migration
+
+`2026_10_04_000000_add_audience_to_authentication_sessions` marks every existing session as a
+public-login session, and the operator routes now accept only sessions issued by
+`POST /v1/operator/session`. Operators are signed out of the Admin Console once after the
+migration. Public sessions are unaffected. Code that implements `domain.CredentialSignIn` or calls
+`SessionService.Issue` passes a `domain.SessionAudience`.
+
+### Medium — Production operator cookie names keep `__Host-`
+
+Configuration validation rejects a production `OPERATOR_SESSION_COOKIE_NAME` without the `__Host-`
+prefix. Unset it to use `__Host-luas_operator`, or rename the custom value.
+
+### Low — Login throttling counts failures per account
+
+`AUTH_RATE_LIMIT_LOGIN_SUBJECT_MAX` now counts failed sign-ins per account instead of every
+attempt per submitted identifier, and a correct password resets it. Review the value if it was
+raised to absorb legitimate repeated sign-ins. `AuthAbuseGuard.AllowLoginSubject` is removed; the
+user service enforces the budget.
 
 ### Low — JSON logging covers database and `log/slog` output
 

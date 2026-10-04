@@ -11,7 +11,17 @@ type AuthenticationIdentity struct {
 	UserID    uint
 	Username  string
 	SessionID string
+	Audience  SessionAudience
 }
+
+// SessionAudience records which sign-in surface issued a session. A surface accepts only sessions
+// issued for it, so a public-login credential can never act as an operator console session.
+type SessionAudience string
+
+const (
+	SessionAudienceUser     SessionAudience = "user"
+	SessionAudienceOperator SessionAudience = "operator"
+)
 
 // SessionAuthenticator resolves one opaque bearer credential against current persistence.
 type SessionAuthenticator interface {
@@ -39,6 +49,7 @@ type CredentialSignIn interface {
 		ctx context.Context,
 		identifier string,
 		password string,
+		audience SessionAudience,
 		authorize func(context.Context, *User) error,
 	) (*IssuedSession, error)
 }

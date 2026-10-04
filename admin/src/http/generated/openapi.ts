@@ -600,7 +600,7 @@ export interface paths {
         put?: never;
         /**
          * Sign in a platform operator and set the operator session cookie
-         * @description Credentials are verified before the operator grant is checked, so a non-operator never receives a session. Shares the public login per-IP and per-account quotas.
+         * @description Credentials are verified before the operator grant is checked, so a non-operator never receives a session. Shares the public login per-IP and per-account quotas. Only sessions issued here are accepted by the operator routes.
          */
         post: operations["signInOperator"];
         /**

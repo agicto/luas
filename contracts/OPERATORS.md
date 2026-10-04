@@ -33,7 +33,7 @@ origin so the cookie is first-party.
 |---|---|
 | Cookie name | `OPERATOR_SESSION_COOKIE_NAME`; default `__Host-luas_operator` in production, `luas_operator` otherwise |
 | Cookie attributes | HttpOnly, `Secure` in production or whenever every allowed origin is `https`, `SameSite=Strict`, `Path=/`, no `Domain`, `Max-Age` = session lifetime |
-| Credential | The opaque authentication session from the `user` starter; never returned in a response body |
+| Credential | The opaque authentication session from the `user` starter, issued with the `operator` audience; never returned in a response body |
 | Session lifetime | The existing absolute and idle session limits |
 | Unsafe methods | Require `Origin` exactly equal to one of `OPERATOR_ALLOWED_ORIGINS` and header `X-CSRF-Token` |
 | Safe methods | `Origin` may be absent (same-origin reads); when present it must equal one of `OPERATOR_ALLOWED_ORIGINS`, so an origin trusted only by `CORS_ALLOW_ORIGINS` cannot read operator responses |
@@ -57,6 +57,9 @@ Unsafe operator requests are recorded by the audit middleware with the operator 
 
 Sign-in checks the operator grant after verifying credentials and before creating a session, so a
 non-operator never receives a session. It shares the public login per-IP and per-account quotas.
+The session is marked with the `operator` audience, and the operator routes accept only such
+sessions: a credential from the public `POST /v1/login` is rejected with `401 AUTH.UNAUTHORIZED`
+even when its account holds an operator grant.
 Unknown, wrong, and disabled accounts all return `AUTH.INVALID_CREDENTIALS`.
 
 Sign-out without a cookie, or with an already revoked session, returns `204` and expires the cookie.
@@ -67,7 +70,7 @@ Sign-out without a cookie, or with an already revoked session, returns `204` and
 |---|---:|---|
 | Malformed body | 400 | `COMMON.INVALID_INPUT` |
 | Field violation | 422 | `COMMON.VALIDATION_FAILED` |
-| Missing, unknown, expired, or revoked session | 401 | `AUTH.UNAUTHORIZED` |
+| Missing, unknown, expired, or revoked session, or one not issued by operator sign-in | 401 | `AUTH.UNAUTHORIZED` |
 | Wrong credentials, unknown or disabled account at sign-in | 401 | `AUTH.INVALID_CREDENTIALS` |
 | Session whose account was later disabled | 403 | `AUTH.ACCOUNT_DISABLED` |
 | Caller has no operator grant | 403 | `OPERATOR.FORBIDDEN` |
@@ -216,4 +219,4 @@ optional starters; `database` is `ok` or `unavailable`.
 | Variable | Required | Rule |
 |---|---|---|
 | `OPERATOR_ALLOWED_ORIGINS` | When selected | Exact `scheme://host[:port]` origins, comma separated; `https` in production; no wildcards or paths |
-| `OPERATOR_SESSION_COOKIE_NAME` | No | Cookie token; the `__Host-` prefix is allowed only in production |
+| `OPERATOR_SESSION_COOKIE_NAME` | No | Cookie token; in production it must start with `__Host-`, which is allowed only there |

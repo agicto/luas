@@ -82,8 +82,12 @@ func (f *fakeSignIn) SignIn(
 	ctx context.Context,
 	identifier string,
 	password string,
+	audience domain.SessionAudience,
 	authorize func(context.Context, *domain.User) error,
 ) (*domain.IssuedSession, error) {
+	if audience != domain.SessionAudienceOperator {
+		return nil, domain.ErrInvalidInput
+	}
 	user, ok := f.users[identifier]
 	if !ok || password != "secret" {
 		return nil, domain.ErrInvalidCredentials
@@ -130,7 +134,7 @@ func newFixture(t *testing.T) *fixture {
 	f := &fixture{
 		grants:  &fakeGrants{operators: map[uint]bool{1: true}},
 		signIn:  &fakeSignIn{users: map[string]*domain.User{"ops": operatorUser, "member": memberUser}},
-		auth:    &fakeAuthenticator{identity: &domain.AuthenticationIdentity{UserID: 1, Username: "ops"}},
+		auth:    &fakeAuthenticator{identity: &domain.AuthenticationIdentity{UserID: 1, Username: "ops", Audience: domain.SessionAudienceOperator}},
 		revoker: &fakeRevoker{},
 		admin:   newFakeAdmin(operatorUser, memberUser),
 		audit:   &fakeAuditQuery{},
@@ -276,6 +280,9 @@ func TestCurrentSessionRequiresValidOperatorSession(t *testing.T) {
 	}{
 		{name: "no cookie", wantCode: http.StatusUnauthorized, wantErr: "AUTH.UNAUTHORIZED"},
 		{name: "revoked session", cookie: testCredential, auth: &fakeAuthenticator{err: domain.ErrAuthenticationRequired},
+			wantCode: http.StatusUnauthorized, wantErr: "AUTH.UNAUTHORIZED"},
+		{name: "public login session", cookie: testCredential, auth: &fakeAuthenticator{identity: &domain.AuthenticationIdentity{
+			UserID: 1, Username: "ops", Audience: domain.SessionAudienceUser}},
 			wantCode: http.StatusUnauthorized, wantErr: "AUTH.UNAUTHORIZED"},
 		{name: "disabled account", cookie: testCredential, auth: &fakeAuthenticator{err: domain.ErrAccountDisabled},
 			wantCode: http.StatusForbidden, wantErr: domain.CodeAccountDisabled},

@@ -24,10 +24,25 @@ import (
 	"github.com/zgiai/luas/api/pkg/response"
 )
 
+func TestAuthenticationSessionCarriesItsSignInAudience(t *testing.T) {
+	service, _, user := newAuthenticationSessionFixture(t)
+
+	for _, audience := range []domain.SessionAudience{domain.SessionAudienceUser, domain.SessionAudienceOperator} {
+		issued, err := service.Issue(context.Background(), user, audience)
+		require.NoError(t, err)
+		identity, err := service.Authenticate(context.Background(), issued.AccessToken)
+		require.NoError(t, err)
+		assert.Equal(t, audience, identity.Audience)
+	}
+
+	_, err := service.Issue(context.Background(), user, "console")
+	require.Error(t, err, "an unknown audience must not be stored")
+}
+
 func TestAuthenticationSessionIsOpaqueHashOnlyAndImmediatelyRevocable(t *testing.T) {
 	service, db, user := newAuthenticationSessionFixture(t)
 
-	issued, err := service.Issue(context.Background(), user)
+	issued, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 	require.NotEmpty(t, issued.AccessToken)
 	assert.Equal(t, "Bearer", issued.TokenType)
@@ -60,21 +75,21 @@ func TestAuthenticationSessionEnforcesIdleAbsoluteAndAccountState(t *testing.T) 
 	base := time.Date(2026, time.July, 15, 12, 0, 0, 0, time.UTC)
 	service.now = func() time.Time { return base }
 
-	idleSession, err := service.Issue(context.Background(), user)
+	idleSession, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 	service.now = func() time.Time { return base.Add(31 * time.Minute) }
 	_, err = service.Authenticate(context.Background(), idleSession.AccessToken)
 	assert.ErrorIs(t, err, domain.ErrAuthenticationRequired)
 
 	service.now = func() time.Time { return base }
-	absoluteSession, err := service.Issue(context.Background(), user)
+	absoluteSession, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 	service.now = func() time.Time { return base.Add(2*time.Hour + time.Second) }
 	_, err = service.Authenticate(context.Background(), absoluteSession.AccessToken)
 	assert.ErrorIs(t, err, domain.ErrAuthenticationRequired)
 
 	service.now = func() time.Time { return base }
-	disabledSession, err := service.Issue(context.Background(), user)
+	disabledSession, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 	require.NoError(t, db.Model(&UserPO{}).Where("id = ?", user.ID).Update("status", 0).Error)
 	_, err = service.Authenticate(context.Background(), disabledSession.AccessToken)
@@ -86,7 +101,7 @@ func TestAuthenticationSessionTouchIsWriteThrottled(t *testing.T) {
 	base := time.Date(2026, time.July, 15, 12, 0, 0, 0, time.UTC)
 	service.now = func() time.Time { return base }
 
-	issued, err := service.Issue(context.Background(), user)
+	issued, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 
 	service.now = func() time.Time { return base.Add(4 * time.Minute) }
@@ -110,7 +125,7 @@ func TestAuthenticationSessionTouchIsWriteThrottled(t *testing.T) {
 func TestAuthenticationSessionLogoutRouteRevokesPresentedCredential(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	sessions, _, user := newAuthenticationSessionFixture(t)
-	issued, err := sessions.Issue(context.Background(), user)
+	issued, err := sessions.Issue(context.Background(), user, domain.SessionAudienceUser)
 	require.NoError(t, err)
 
 	handler := NewHandler(nil, nil, nil, sessions, nil, newAuthAbuseGuard(config.AuthenticationRateLimitConfig{}))
@@ -187,7 +202,7 @@ func TestPasswordSecurityEventsRevokeExistingAuthenticationSessions(t *testing.T
 				&fakeUserMailer{},
 				NewAccountDeletionPolicy(),
 			)
-			issued, err := sessions.Issue(context.Background(), user)
+			issued, err := sessions.Issue(context.Background(), user, domain.SessionAudienceUser)
 			require.NoError(t, err)
 
 			require.NoError(t, test.run(context.Background(), svc, repo, user))
@@ -252,7 +267,7 @@ func TestAuthenticationSessionPruneHonorsRetentionAndBatch(t *testing.T) {
 	service.now = func() time.Time { return base }
 
 	for range 3 {
-		_, err := service.Issue(context.Background(), user)
+		_, err := service.Issue(context.Background(), user, domain.SessionAudienceUser)
 		require.NoError(t, err)
 	}
 	var sessions []AuthenticationSessionPO
