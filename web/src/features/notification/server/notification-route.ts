@@ -78,9 +78,10 @@ export async function listNotificationsRoute(request: Request): Promise<NextResp
   if (!route.available) return route.response;
   const rawStatus = new URL(request.url).searchParams.get('status') ?? 'all';
   if (rawStatus !== 'all' && rawStatus !== 'unread') {
+    // A query-string filter is transport input: 400 COMMON.INVALID_INPUT, as the Go API returns.
     return apiErrorResponse({
-      status: 422,
-      errorCode: ApiErrorCode.COMMON_VALIDATION_FAILED,
+      status: 400,
+      errorCode: ApiErrorCode.COMMON_INVALID_INPUT,
       message: 'Invalid notification filter',
     });
   }

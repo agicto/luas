@@ -141,9 +141,9 @@ describe('notification browser route boundary', () => {
       request('/api/notifications?status=everything')
     );
 
-    expect(response.status).toBe(422);
+    expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({
-      error_code: 'COMMON.VALIDATION_FAILED',
+      error_code: 'COMMON.INVALID_INPUT',
     });
   });
 
