@@ -113,8 +113,9 @@ affected runtime content.
 
 ## Downstream Publication Boundary
 
-Luas does not choose a registry, cloud identity, release environment, or trust root. A downstream
-publisher should:
+Luas does not choose a registry, cloud identity, release environment, or trust root, and does not
+publish images. Each Luas release attaches the dependency and image SBOMs with build provenance
+attestations ([`VERSIONING.md`](VERSIONING.md)). A downstream publisher should:
 
 1. Build once and push by digest with registry-supported maximal provenance and SBOM attestations.
 2. Sign the immutable registry digest through Cosign keyless OIDC or an organization-owned key.

@@ -11,6 +11,13 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## Unreleased — Deprecation removals
+
+### Low — `ROLE.NOT_FOUND` removed
+
+The deprecated `ROLE.NOT_FOUND` value is gone from the API, `contracts/openapi.yaml`, and the Web
+and Admin code lists, as scheduled in v0.21.0. Match `PERMISSION.ROLE_NOT_FOUND` instead.
+
 ## 2026-10-04 — Complete OpenAPI contract and error alignment
 
 ### Medium — Body validation is 422, invalid input is 400

@@ -12,10 +12,20 @@ Notable changes to Luas. Downstream migration steps for each change are in
   and Compose project names, display name, repository URL, and the default starter selection for the
   API, Web, Admin, and `make dev`. It records the source version in `.luas-project.json`.
 
+- Tag-driven releases: pushing `vX.Y.Z` runs `release.yml`, which requires the tag on `main` with
+  a changelog section, builds and scans both images, attests the dependency and image SBOMs, and
+  publishes the GitHub release. `make release-check VERSION=vX.Y.Z` verifies `main` before tagging.
+- [`docs/VERSIONING.md`](docs/VERSIONING.md) defines version numbers and the deprecation process.
+
 ### Changed
 
 - The starter-catalog and migration-review checks read the Go module path from `api/go.mod`, so
   they keep working after a rename.
+
+### Removed
+
+- The deprecated `ROLE.NOT_FOUND` error code, announced in v0.21.0; access roles use
+  `PERMISSION.ROLE_NOT_FOUND`.
 
 ## v0.21.1 — 2026-10-04
 

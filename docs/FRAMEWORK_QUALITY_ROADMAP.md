@@ -1296,20 +1296,18 @@ Verification:
 
 - The owning starter's PostgreSQL tests and boundary guard, plus `contracts/OPERATORS.md`.
 
-### P3 — Remove The Deprecated `ROLE.NOT_FOUND` Error Code
+### Completed P2 — Versioning, Deprecation, And Tag-Driven Releases
 
-Problem: `ROLE.NOT_FOUND` remains in the public error-code enum although no starter emits it; access
-roles use `PERMISSION.ROLE_NOT_FOUND`. `UPGRADING.md` announces its removal.
-
-Recommended slice:
-
-1. Remove it from `contracts/openapi.yaml`, API constants, the core error mapping, and the Web and
-   Admin code lists in one release, with an `UPGRADING.md` entry.
+Releases were cut by hand, and v0.21.0 shipped while a CI workflow was failing. Version numbers and
+the deprecation process are now defined in [`VERSIONING.md`](VERSIONING.md), `make release-check`
+verifies `main` before tagging, and `release.yml` publishes a release only for a tag on `main` with
+a changelog section, after building and scanning both images and attesting their SBOMs. The
+deprecated `ROLE.NOT_FOUND` code was removed under the new process.
 
 Verification:
 
-- `cd contracts && corepack pnpm check`
-- `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
+- `bash scripts/release-check.sh vX.Y.Z` failure paths
+- `python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py`
 
 ### P1 — Starter Business Readiness
 

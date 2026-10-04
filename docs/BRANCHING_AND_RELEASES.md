@@ -78,7 +78,8 @@ remain CI-owned deployment trigger branches, and `release/*` starts from `main` 
 
 ## Verification Before Release
 
-Run these before merging `release/*` or `hotfix/*` to `main`:
+Version numbers, deprecation, and the tag-driven release workflow are defined in
+[`VERSIONING.md`](VERSIONING.md). Run these before merging `release/*` or `hotfix/*` to `main`:
 
 ```bash
 make check

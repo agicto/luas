@@ -1,0 +1,94 @@
+name: Release
+
+# Runs when a maintainer pushes a vX.Y.Z tag (see docs/VERSIONING.md). It refuses tags that are not
+# on main or have no CHANGELOG.md section, builds and scans both production images, exports the
+# dependency and image SBOMs, attests their build provenance, and publishes the GitHub release.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Verify and publish
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      TAG: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require a tag on main with release notes
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "${GITHUB_SHA}" origin/main ||
+            { echo "::error::${TAG} is not on main"; exit 1; }
+          awk -v heading="## ${TAG} — " 'index($0, heading) == 1 {f=1; next} /^## /{f=0} f' \
+            CHANGELOG.md > "${RUNNER_TEMP}/notes.md"
+          grep -q '[^[:space:]]' "${RUNNER_TEMP}/notes.md" ||
+            { echo "::error::CHANGELOG.md has no '## ${TAG} — YYYY-MM-DD' section"; exit 1; }
+          printf '\nUpgrade steps: [UPGRADING.md](%s/blob/%s/UPGRADING.md)\n' \
+            "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" "${TAG}" >> "${RUNNER_TEMP}/notes.md"
+
+      - name: Dependency SBOM and vulnerability scan
+        run: |
+          mkdir -p dist
+          bash scripts/dependency-security.sh sbom "${PWD}/dist/luas-dependencies.cdx.json"
+          bash scripts/dependency-security.sh scan
+
+      - name: API image, smoke test, SBOM, and scan
+        working-directory: api
+        env:
+          OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}
+          OCI_REVISION: ${{ github.sha }}
+          OCI_VERSION: ${{ github.ref_name }}
+          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/luas-api.build-metadata.json
+        run: |
+          bash scripts/verify-container.sh luas-api:release
+          bash ../scripts/container-security.sh verify luas-api:release "${GITHUB_WORKSPACE}/dist/luas-api.cdx.json"
+
+      - name: Web image, smoke test, SBOM, and scan
+        working-directory: web
+        env:
+          OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}
+          OCI_REVISION: ${{ github.sha }}
+          OCI_VERSION: ${{ github.ref_name }}
+          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/luas-web.build-metadata.json
+        run: |
+          bash scripts/verify-container.sh luas-web:release
+          bash ../scripts/container-security.sh verify luas-web:release "${GITHUB_WORKSPACE}/dist/luas-web.cdx.json"
+
+      - name: Attest build provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/*
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="$(git tag --list --format='%(contents:subject)' "${TAG}")"
+          title="${title:-${TAG}}"
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release edit "${TAG}" --title "${title}" --notes-file "${RUNNER_TEMP}/notes.md"
+            gh release upload "${TAG}" dist/* --clobber
+          else
+            gh release create "${TAG}" --verify-tag --title "${title}" \
+              --notes-file "${RUNNER_TEMP}/notes.md" dist/*
+          fi

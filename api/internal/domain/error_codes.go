@@ -34,7 +34,6 @@ const (
 	CodePermissionUnknown           = "PERMISSION.UNKNOWN"
 	CodeAccessRoleNotFound          = "PERMISSION.ROLE_NOT_FOUND"
 	CodeAccessRoleSlugAlreadyExists = "PERMISSION.ROLE_SLUG_ALREADY_EXISTS"
-	CodeRoleNotFound                = "ROLE.NOT_FOUND" // Deprecated: use CodeAccessRoleNotFound.
 
 	CodeAPIKeyNotFound = "API_KEY.NOT_FOUND"
 	CodeAPIKeyInvalid  = "API_KEY.INVALID"
