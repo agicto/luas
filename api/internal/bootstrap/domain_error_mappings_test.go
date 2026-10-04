@@ -46,7 +46,6 @@ func TestDomainErrorMappingsAreUnchangedWhenOwnedByStarters(t *testing.T) {
 	}{
 		{domain.ErrNotFound, http.StatusNotFound, domain.CodeNotFound},
 		{domain.ErrUserNotFound, http.StatusNotFound, domain.CodeUserNotFound},
-		{domain.ErrRoleNotFound, http.StatusNotFound, domain.CodeRoleNotFound},
 		{domain.ErrAccessRoleNotFound, http.StatusNotFound, domain.CodeAccessRoleNotFound},
 		{domain.ErrAPIKeyNotFound, http.StatusNotFound, domain.CodeAPIKeyNotFound},
 		{domain.ErrOrganizationNotFound, http.StatusNotFound, domain.CodeOrganizationNotFound},

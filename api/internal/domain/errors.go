@@ -23,7 +23,6 @@ var (
 	ErrPermissionUnknown           = errors.New("permission is not registered")
 	ErrAccessRoleNotFound          = errors.New("access role not found")
 	ErrAccessRoleSlugAlreadyExists = errors.New("access role slug already exists")
-	ErrRoleNotFound                = errors.New("role not found") // Deprecated: use ErrAccessRoleNotFound.
 
 	// API key errors
 	ErrAPIKeyNotFound = errors.New("api key not found")

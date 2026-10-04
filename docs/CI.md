@@ -11,6 +11,7 @@ compatible with supported runners, and reviewable without trusting a movable act
 | `container.yml` | API image identity, smoke test, SBOM/scan evidence, and local Compose lifecycle | `contents: read` |
 | `e2e.yml` | Starts PostgreSQL, the API, and the Admin Console with `make dev` and runs the Playwright operator smoke tests | `contents: read` |
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
+| `release.yml` | On a `vX.Y.Z` tag: requires the tag on `main` with a changelog section, builds and scans both images, attests the SBOMs, and publishes the GitHub release | `contents: read`; the job elevates to `contents: write`, `id-token: write`, `attestations: write` |
 | `skill-self-test.yml` | Starter-module skill validators in one job (Skill metadata is validated by `make governance`) | `contents: read` |
 | `sync-deploy-branches.yml` | Mechanical `dev` / `dev-c` deployment-branch synchronization | `contents: write` |
 | `web-container.yml` | Web image identity, smoke test, SBOM, and vulnerability gate | `contents: read` |

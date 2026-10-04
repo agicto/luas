@@ -32,6 +32,11 @@ class ActionPin:
 
 
 REVIEWED_ACTIONS = {
+    "actions/attest": ActionPin(
+        sha="1e69f48acb82d1966a394da916b4c1698aa569d6",
+        version="v4.2.2",
+        runtime="node24",
+    ),
     "actions/checkout": ActionPin(
         sha="93cb6efe18208431cddfb8368fd83d5badbf9bfd",
         version="v5.0.1",
@@ -69,6 +74,7 @@ REVIEWED_WORKFLOW_PERMISSIONS = {
     "container.yml": {"contents": "read"},
     "dependency-security.yml": {"contents": "read"},
     "e2e.yml": {"contents": "read"},
+    "release.yml": {"contents": "read"},
     "skill-self-test.yml": {"contents": "read"},
     "sync-deploy-branches.yml": {"contents": "write"},
     "web-container.yml": {"contents": "read"},

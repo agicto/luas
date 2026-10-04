@@ -1,4 +1,4 @@
-.PHONY: init-project dev dev-down dev-reset check agent-check agent-check-changed skill-routing-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
+.PHONY: release-check init-project dev dev-down dev-reset check agent-check agent-check-changed skill-routing-check governance contract-check contract-generate api-check web-check admin-check dependency-scan sbom container-scan container-sbom clean clean-all
 
 # Turn a fresh copy of the scaffold into a named project (run once, before the first commit):
 #   make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform/api \
@@ -9,6 +9,11 @@ init-project:
 	cd api && go run ./cmd/luas project:init --name="$(NAME)" --slug="$(SLUG)" --module="$(MODULE)" \
 		$(if $(REPOSITORY),--repository="$(REPOSITORY)") $(if $(STARTERS),--starters="$(STARTERS)")
 	cd api && go mod tidy
+
+# Verify main is ready to tag; see docs/VERSIONING.md.
+release-check:
+	@test -n "$(VERSION)" || { echo 'usage: make release-check VERSION=v0.22.0' >&2; exit 2; }
+	@bash scripts/release-check.sh "$(VERSION)"
 
 # One-command local stack: PostgreSQL in Docker, API, Web, and Admin on the host.
 # Override ports with LUAS_API_PORT, LUAS_WEB_PORT, LUAS_ADMIN_PORT, LUAS_DB_PORT.
