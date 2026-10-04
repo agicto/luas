@@ -313,6 +313,7 @@ luas/
 | Add an Admin Console feature | [admin/docs/ADDING_FEATURE.md](admin/docs/ADDING_FEATURE.md) |
 | Starter capability matrix | [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 | CI and releases | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
+| Release notes | [CHANGELOG.md](CHANGELOG.md) |
 | Upgrading a downstream fork | [UPGRADING.md](UPGRADING.md) |
 | Dependency and container security | [docs/DEPENDENCY_SECURITY.md](docs/DEPENDENCY_SECURITY.md) and [docs/CONTAINER_SECURITY.md](docs/CONTAINER_SECURITY.md) |
 | AI-assisted development | [docs/AGENT_SKILL_PERFORMANCE_GUIDE.md](docs/AGENT_SKILL_PERFORMANCE_GUIDE.md) |
