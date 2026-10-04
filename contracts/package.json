@@ -11,9 +11,9 @@
     "merge-fragment": "node scripts/merge-fragment.mjs"
   },
   "devDependencies": {
-    "@redocly/cli": "2.43.2",
+    "@redocly/cli": "2.57.0",
     "openapi-typescript": "7.13.0",
-    "yaml": "2.9.0"
+    "yaml": "2.9.1"
   },
   "engines": {
     "node": "^22.12.0 || ^24.0.0",
