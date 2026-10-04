@@ -60,6 +60,8 @@ Do not load references for starters outside the requested downstream slice.
 
 1. **Confirm the repository boundary.** Record the mode and, in downstream
    mode, the application name and product identifiers used for leakage checks.
+   A fresh downstream copy without `.luas-project.json` is renamed first with
+   `make init-project`; do not rename the module path or package names by hand.
 2. **Inventory inherited surfaces.** List every changing API module, Web or
    Admin feature, mock route, console page, devtool, example, environment
    variable, background job, and deployment branch. Assign exactly one catalog

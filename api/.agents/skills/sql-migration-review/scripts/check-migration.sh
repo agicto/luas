@@ -75,7 +75,10 @@ if grep -qiE "DELETE FROM[^;]*;" "$FILE" && ! grep -qiE "DELETE FROM[^;]*WHERE" 
     report_err "Found unbounded DELETE without WHERE — likely catastrophic"
 fi
 
-if [[ "$FILE" == *.go ]] && grep -qE '"github\.com/zgiai/luas/api/internal/(modules|capabilities)/' "$FILE"; then
+# The module path comes from go.mod so the check survives `make init-project` renames.
+GO_MODULE="$(awk '/^module /{print $2; exit}' "$(git rev-parse --show-toplevel)/api/go.mod")"
+if [[ "$FILE" == *.go ]] && grep -qF "\"${GO_MODULE}/internal/modules/" "$FILE" ||
+  { [[ "$FILE" == *.go ]] && grep -qF "\"${GO_MODULE}/internal/capabilities/" "$FILE"; }; then
     report_err "Migration imports a live module or capability package — freeze the schema as SQL or a migration-local snapshot struct so later persistence changes cannot rewrite history"
 fi
 

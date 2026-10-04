@@ -110,10 +110,14 @@ def main() -> int:
     optional_aliases = re.findall(
         r"([a-z][a-z0-9_]*)\.NewStarterManifest", optional_segment
     )
+    # Read the module path from go.mod so the check survives `make init-project` renames.
+    go_module = re.search(r"(?m)^module\s+(\S+)", (ROOT / "api/go.mod").read_text()).group(1)
     module_imports = {
         (alias or module_name): module_name
         for alias, module_name in re.findall(
-            r'(?m)^\s*(?:([a-z][a-z0-9_]*)\s+)?"github\.com/zgiai/luas/api/internal/modules/([a-z][a-z0-9_]*)"',
+            r'(?m)^\s*(?:([a-z][a-z0-9_]*)\s+)?"'
+            + re.escape(go_module)
+            + r'/internal/modules/([a-z][a-z0-9_]*)"',
             defaults,
         )
     }

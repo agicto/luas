@@ -4,6 +4,19 @@ Notable changes to Luas. Downstream migration steps for each change are in
 [`UPGRADING.md`](UPGRADING.md); the long-running quality record is in
 [`docs/FRAMEWORK_QUALITY_ROADMAP.md`](docs/FRAMEWORK_QUALITY_ROADMAP.md).
 
+## Unreleased
+
+### Added
+
+- `make init-project` (`luas project:init`) renames a fresh scaffold copy: Go module path, package
+  and Compose project names, display name, repository URL, and the default starter selection for the
+  API, Web, Admin, and `make dev`. It records the source version in `.luas-project.json`.
+
+### Changed
+
+- The starter-catalog and migration-review checks read the Go module path from `api/go.mod`, so
+  they keep working after a rename.
+
 ## v0.21.1 — 2026-10-04
 
 ### Fixed
