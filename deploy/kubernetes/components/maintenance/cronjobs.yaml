@@ -1,0 +1,93 @@
+# Expired and revoked authentication sessions (user starter).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: luas-auth-session-prune
+spec:
+  schedule: "17 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: luas-auth-session-prune
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: auth-session-prune
+              image: luas-api
+              command: ["/app/luas"]
+              args: ["auth-session:prune", "--batch=500"]
+              envFrom:
+                - configMapRef:
+                    name: luas-api-config
+                - secretRef:
+                    name: luas-api-secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}
+---
+# Finished durable workflow tasks (QUEUE_DRIVER=postgres).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: luas-workflow-prune
+spec:
+  schedule: "27 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: luas-workflow-prune
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: workflow-prune
+              image: luas-api
+              command: ["/app/luas"]
+              args: ["workflow:prune", "--older-than=720h"]
+              envFrom:
+                - configMapRef:
+                    name: luas-api-config
+                - secretRef:
+                    name: luas-api-secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

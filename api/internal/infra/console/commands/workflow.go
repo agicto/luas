@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strconv"
@@ -115,7 +116,7 @@ func (c *WorkflowWorkCommand) Run(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	c.output.Info("Starting workflow worker on queue %q with driver %q", workerCfg.Queue, driverName)
+	slog.Info("workflow.worker_started", "queue", workerCfg.Queue, "driver", driverName)
 	worker, err := manager.StartWorker(ctx, workerCfg)
 	if err != nil {
 		return fmt.Errorf("failed to start workflow worker: %w", err)
@@ -173,7 +174,7 @@ func (c *WorkflowScheduleWorkCommand) Run(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	c.output.Info("Starting workflow scheduler loop")
+	slog.Info("workflow.scheduler_started")
 	manager.StartScheduler(ctx)
 	c.output.Success("Workflow scheduler stopped")
 	return nil

@@ -1,0 +1,7 @@
+# Asset starter: the abandoned-upload and deleted-object cleanup job. Add it to an overlay's
+# components and include `asset` in OPTIONAL_STARTERS together with the R2 secret group.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - cronjob.yaml

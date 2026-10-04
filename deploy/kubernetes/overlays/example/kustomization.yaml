@@ -1,0 +1,23 @@
+# Example overlay: the base plus the organization, notification, and webhook starters with their
+# workers and retention jobs. Copy and adjust per environment.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: luas
+
+resources:
+  - ../../base
+
+components:
+  - ../../components/notification
+  - ../../components/webhook
+  - ../../components/maintenance
+
+patches:
+  - target:
+      kind: ConfigMap
+      name: luas-api-config
+    patch: |-
+      - op: replace
+        path: /data/OPTIONAL_STARTERS
+        value: organization,notification,webhook

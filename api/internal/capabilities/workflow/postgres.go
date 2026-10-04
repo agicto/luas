@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -369,12 +370,13 @@ func (d *PostgresDriver) Stats(ctx context.Context, queue string, now time.Time)
 			stats.Failed = row.Count
 		}
 	}
-	var oldest *time.Time
+	// min() over no rows is NULL; an empty queue is the common case and has no lag.
+	var oldest sql.NullTime
 	if err := d.db.WithContext(ctx).Model(&TaskPO{}).Select("min(available_at)").Where("queue = ? AND status = ? AND available_at <= ?", queue, taskStatusPending, now).Scan(&oldest).Error; err != nil {
 		return QueueStats{}, err
 	}
-	if oldest != nil && now.After(*oldest) {
-		stats.Lag = now.Sub(*oldest)
+	if oldest.Valid && now.After(oldest.Time) {
+		stats.Lag = now.Sub(oldest.Time)
 	}
 	return stats, nil
 }

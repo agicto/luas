@@ -16,11 +16,24 @@ Notable changes to Luas. Downstream migration steps for each change are in
   a changelog section, builds and scans both images, attests the dependency and image SBOMs, and
   publishes the GitHub release. `make release-check VERSION=vX.Y.Z` verifies `main` before tagging.
 - [`docs/VERSIONING.md`](docs/VERSIONING.md) defines version numbers and the deprecation process.
+- [`deploy/kubernetes`](deploy/kubernetes/README.md): a hardened kustomize reference baseline for
+  the API, workflow worker, Web, the pre-deploy migration job, and per-starter workers and
+  retention CronJobs, validated against Kubernetes 1.30.
+- An `api/.env.example` drift test fails when configuration reads a variable the example omits.
 
 ### Changed
 
 - The starter-catalog and migration-review checks read the Go module path from `api/go.mod`, so
   they keep working after a rename.
+- With `LOG_JSON=true`, every API log line is JSON: GORM query errors and slow queries are
+  structured (`database.query_failed`, `database.slow_query`), `log/slog` records go through the
+  platform logger, the start-up banner is suppressed, and server and worker start lines are
+  structured events.
+
+### Fixed
+
+- The workflow worker's PostgreSQL queue metrics no longer stop reporting while the queue is
+  empty; a NULL oldest-task timestamp failed the scan.
 
 ### Removed
 

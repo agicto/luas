@@ -1,0 +1,8 @@
+# Retention jobs for the default runtime: authentication sessions and finished workflow tasks.
+# Review each schedule. Audit retention needs a cutoff chosen by your policy
+# (`luas audit:prune --before=<RFC3339>`), so it is deliberately not scheduled here.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - cronjobs.yaml

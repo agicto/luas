@@ -14,6 +14,7 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
 | `luas notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
 | `luas webhook:work` | Optional webhook starter | Processes signed outbound deliveries with bounded network calls and database leases. |
+| [`deploy/kubernetes`](../../deploy/kubernetes/README.md) | Example | Hardened kustomize reference for the API, workers, retention jobs, migration job, and Web. |
 | Production deployment manifests | Downstream app | Own secrets, network policy, replicas, migrations, rollout, and rollback. |
 
 ## Production Image
