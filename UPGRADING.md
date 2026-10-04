@@ -11,7 +11,7 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Deprecation removals, authentication hardening, and structured production logs
+## v0.22.0 — Deprecation removals, authentication hardening, and structured production logs
 
 ### Low — `ROLE.NOT_FOUND` removed
 

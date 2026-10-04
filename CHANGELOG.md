@@ -6,6 +6,8 @@ Notable changes to Luas. Downstream migration steps for each change are in
 
 ## Unreleased
 
+## v0.22.0 — 2026-10-04
+
 ### Added
 
 - `make init-project` (`luas project:init`) renames a fresh scaffold copy: Go module path, package
