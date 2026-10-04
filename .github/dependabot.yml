@@ -4,26 +4,35 @@ updates:
   - package-ecosystem: npm
     directory: /contracts
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:05"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    open-pull-requests-limit: 1
     groups:
       contracts-development-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
+      contracts-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(contracts)
 
   - package-ecosystem: npm
     directory: /web
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:10"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    open-pull-requests-limit: 2
     groups:
       web-production-minor-patch:
         dependency-type: production
@@ -31,32 +40,44 @@ updates:
       web-development-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
+      web-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(web)
 
   - package-ecosystem: gomod
     directory: /api
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:20"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    open-pull-requests-limit: 2
     groups:
       go-minor-patch:
         patterns: ["*"]
         update-types: [minor, patch]
+      go-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(api)
 
   - package-ecosystem: npm
     directory: /admin
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:15"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    open-pull-requests-limit: 2
     groups:
       admin-production-minor-patch:
         dependency-type: production
@@ -64,50 +85,71 @@ updates:
       admin-development-minor-patch:
         dependency-type: development
         update-types: [minor, patch]
+      admin-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(admin)
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:30"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 14
+      semver-major-days: 30
+    open-pull-requests-limit: 1
     groups:
       actions:
         patterns: ["*"]
         update-types: [minor, patch]
+      actions-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(actions)
 
   - package-ecosystem: docker
     directory: /api
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:40"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 14
+      semver-major-days: 30
+    open-pull-requests-limit: 1
     groups:
       api-images:
         patterns: ["*"]
         update-types: [minor, patch]
+      api-images-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(api-image)
 
   - package-ecosystem: docker
     directory: /web
     schedule:
-      interval: weekly
+      interval: monthly
       day: monday
       time: "05:50"
       timezone: Europe/Dublin
-    open-pull-requests-limit: 3
+    cooldown:
+      default-days: 14
+      semver-major-days: 30
+    open-pull-requests-limit: 1
     groups:
       web-images:
         patterns: ["*"]
         update-types: [minor, patch]
+      web-images-security:
+        applies-to: security-updates
+        patterns: ["*"]
     commit-message:
       prefix: deps(web-image)

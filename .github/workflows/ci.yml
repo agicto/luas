@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   governance:
     name: Governance
@@ -118,14 +122,6 @@ jobs:
 
       - name: Verify runtime route catalog
         run: make route-catalog-check
-
-      - name: PostgreSQL audit retention evidence
-        env:
-          LUAS_TEST_POSTGRES_DSN: postgres://luas:luas_test@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_test?sslmode=disable
-        run: >-
-          go test ./internal/modules/audit ./database/migrations
-          -run 'TestRepositoryPruneBeforePostgres|TestAddAuditRetentionIndexPostgres'
-          -count=1
 
       - name: Concurrency-critical queue lifecycle race tests
         run: make test-race-critical

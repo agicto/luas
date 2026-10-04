@@ -293,12 +293,30 @@ def main() -> int:
             ".github/dependabot.yml targets must be npm/contracts+web+admin, gomod/api, "
             "GitHub Actions/root, and Docker/api+web"
         )
-    if dependabot.count("interval: weekly") != len(DEPENDABOT_TARGETS):
-        failures.append("every Dependabot target must run weekly")
+    if dependabot.count("interval: monthly") != len(DEPENDABOT_TARGETS):
+        failures.append("every Dependabot target must run monthly")
     groups = parse_dependabot_groups(dependabot)
-    if set(groups) != DEPENDABOT_GROUPS:
+    version_groups = {
+        name
+        for name, body in groups.items()
+        if "applies-to: security-updates" not in body
+    }
+    security_groups = {
+        name
+        for name, body in groups.items()
+        if "applies-to: security-updates" in body
+    }
+    if version_groups != DEPENDABOT_GROUPS:
         failures.append("Dependabot must keep the nine reviewed minor/patch update groups")
+    if len(security_groups) != len(DEPENDABOT_TARGETS):
+        failures.append("Dependabot must keep one security-update group per target")
     for name, body in groups.items():
+        if name in security_groups:
+            if 'patterns: ["*"]' not in body:
+                failures.append(
+                    f"Dependabot security group {name!r} must cover all dependencies"
+                )
+            continue
         if "update-types: [minor, patch]" not in body:
             failures.append(
                 f"Dependabot group {name!r} must keep major updates as separate reviews"

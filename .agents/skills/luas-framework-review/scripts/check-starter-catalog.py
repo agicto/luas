@@ -796,7 +796,7 @@ def main() -> int:
     require_all(
         failures,
         ".github/workflows/skill-self-test.yml",
-        ("module: [user, apikey, audit, organization, permission, notification, asset, setting, usage, webhook]",),
+        ("for module in user apikey audit organization permission notification asset setting usage webhook; do",),
     )
 
     if failures:
