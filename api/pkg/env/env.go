@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -203,11 +204,33 @@ func captureSystemEnv() map[string]string {
 	return result
 }
 
+var requestedKeys sync.Map
+
+// lookup reads one variable through the loaded environment and records that configuration asked
+// for it, so tooling can compare the variables the code reads with the documented ones.
+func lookup(key string) (string, bool) {
+	loadForGetter()
+	requestedKeys.Store(key, struct{}{})
+	return os.LookupEnv(key)
+}
+
+// RequestedKeys returns, sorted, every variable name a getter has been asked for in this process.
+func RequestedKeys() []string {
+	keys := []string{}
+	requestedKeys.Range(func(key, _ any) bool {
+		if name, ok := key.(string); ok {
+			keys = append(keys, name)
+		}
+		return true
+	})
+	sort.Strings(keys)
+	return keys
+}
+
 // Get returns the value of an environment variable.
 // If the variable is not set, returns the default value.
 func Get(key string, defaultValue ...string) string {
-	loadForGetter()
-	if value, exists := os.LookupEnv(key); exists {
+	if value, exists := lookup(key); exists {
 		return value
 	}
 	if len(defaultValue) > 0 {
@@ -219,8 +242,7 @@ func Get(key string, defaultValue ...string) string {
 // GetOrFail returns the value of an environment variable.
 // Panics if the variable is not set.
 func GetOrFail(key string) string {
-	loadForGetter()
-	if value, exists := os.LookupEnv(key); exists {
+	if value, exists := lookup(key); exists {
 		return value
 	}
 	panic("Environment variable " + key + " is required but not set")
@@ -229,8 +251,7 @@ func GetOrFail(key string) string {
 // GetBool returns the boolean value of an environment variable.
 // Recognizes: true, false, 1, 0, yes, no, on, off (case-insensitive)
 func GetBool(key string, defaultValue ...bool) bool {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]
@@ -258,8 +279,7 @@ func GetBool(key string, defaultValue ...bool) bool {
 
 // GetInt returns the integer value of an environment variable.
 func GetInt(key string, defaultValue ...int) int {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]
@@ -279,8 +299,7 @@ func GetInt(key string, defaultValue ...int) int {
 
 // GetInt64 returns the int64 value of an environment variable.
 func GetInt64(key string, defaultValue ...int64) int64 {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]
@@ -300,8 +319,7 @@ func GetInt64(key string, defaultValue ...int64) int64 {
 
 // GetFloat returns the float64 value of an environment variable.
 func GetFloat(key string, defaultValue ...float64) float64 {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]
@@ -321,8 +339,7 @@ func GetFloat(key string, defaultValue ...float64) float64 {
 
 // GetDuration returns the time.Duration value of an environment variable.
 func GetDuration(key string, defaultValue ...time.Duration) time.Duration {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]
@@ -342,8 +359,7 @@ func GetDuration(key string, defaultValue ...time.Duration) time.Duration {
 
 // GetSlice returns a slice from a comma-separated environment variable.
 func GetSlice(key string, defaultValue ...[]string) []string {
-	loadForGetter()
-	value, exists := os.LookupEnv(key)
+	value, exists := lookup(key)
 	if !exists || value == "" {
 		if len(defaultValue) > 0 {
 			return defaultValue[0]

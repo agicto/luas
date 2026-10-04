@@ -1,0 +1,46 @@
+# Webhook history past WEBHOOK_EVENT_RETENTION (webhook starter).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: luas-webhook-prune
+spec:
+  schedule: "37 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: luas-webhook-prune
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: webhook-prune
+              image: luas-api
+              command: ["/app/luas"]
+              args: ["webhook:prune"]
+              envFrom:
+                - configMapRef:
+                    name: luas-api-config
+                - secretRef:
+                    name: luas-api-secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

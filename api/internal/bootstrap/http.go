@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -126,7 +127,9 @@ func RegisterHTTPRoutes(engine *gin.Engine, application *app.Application) *healt
 
 // Handle starts the HTTP server with graceful shutdown
 func (k *HttpKernel) Handle() {
-	printBanner("1.0.0")
+	if !k.App.Config.Log.JSON {
+		printBanner("1.0.0")
+	}
 
 	cfg := k.App.Config
 	srv := newHTTPServer(cfg, k.Engine)
@@ -138,12 +141,16 @@ func (k *HttpKernel) Handle() {
 	// (log.Fatal here would os.Exit and skip resource cleanup).
 	go func() {
 		url := "http://" + srv.Addr
-
-		log.Printf("\n")
-		log.Printf("  🚀 Luas Server Started!")
-		log.Printf("  ➜ Listen:  \033[36m%s\033[0m", url)
-		log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
-		log.Printf("\n")
+		// JSON logging (the production default) gets one structured record instead of the banner.
+		if cfg.Log.JSON {
+			slog.Info("server.started", "listen", url, "mode", cfg.Server.Mode)
+		} else {
+			log.Printf("\n")
+			log.Printf("  🚀 Luas Server Started!")
+			log.Printf("  ➜ Listen:  \033[36m%s\033[0m", url)
+			log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
+			log.Printf("\n")
+		}
 
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			serverErr <- err

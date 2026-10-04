@@ -42,11 +42,7 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 	dbCfg := cfg.Database
 
 	// Configure custom logger
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		buildLoggerConfig(cfg),
-	)
-	newLogger = wrapObservedLogger(newLogger)
+	newLogger := wrapObservedLogger(buildGormLogger(cfg))
 
 	dsn, dsnErr := postgresDSN(cfg)
 	if dsnErr != nil {
@@ -120,6 +116,16 @@ func timeoutSeconds(timeout time.Duration) int64 {
 		seconds++
 	}
 	return seconds
+}
+
+// buildGormLogger follows LOG_JSON: structured slog output when JSON logging is on (the production
+// default), GORM's readable colored output otherwise.
+func buildGormLogger(cfg *config.Config) logger.Interface {
+	loggerConfig := buildLoggerConfig(cfg)
+	if cfg.Log.JSON {
+		return newStructuredLogger(loggerConfig)
+	}
+	return logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), loggerConfig)
 }
 
 func buildLoggerConfig(cfg *config.Config) logger.Config {

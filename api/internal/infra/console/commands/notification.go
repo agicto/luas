@@ -78,11 +78,7 @@ func (c *NotificationWorkCommand) Run(args []string) error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	c.output.Info(
-		"Starting notification worker with batch %d and poll interval %s",
-		workerConfig.Batch,
-		workerConfig.Poll,
-	)
+	slog.Info("notification.worker_started", "batch", workerConfig.Batch, "poll", workerConfig.Poll.String())
 
 	processed, err := runNotificationWorker(ctx, application.NotificationDispatcher, workerConfig)
 	if err != nil && !errors.Is(err, context.Canceled) {

@@ -1,0 +1,6 @@
+# Runtime configuration shared by the base and the migration job.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - config.yaml

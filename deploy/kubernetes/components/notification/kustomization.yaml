@@ -1,0 +1,7 @@
+# Notification starter: the email delivery worker. Add it to an overlay's components and include
+# `notification` in OPTIONAL_STARTERS.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - deployment.yaml

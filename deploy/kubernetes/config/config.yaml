@@ -1,0 +1,25 @@
+# Non-secret runtime configuration shared by every API replica, worker, and job. Keep
+# OPTIONAL_STARTERS identical across all of them. Secrets live in the `luas-api-secrets` Secret,
+# created outside this repository (see ../README.md).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: luas-api-config
+data:
+  APP_ENV: production
+  APP_URL: https://app.example.com
+  SERVER_HOST: 0.0.0.0
+  SERVER_PORT: "8025"
+  SERVER_TRUSTED_PROXIES: ""
+  OPTIONAL_STARTERS: ""
+  DB_ENABLED: "true"
+  DB_DRIVER: postgres
+  DB_HOST: postgres.example.internal
+  DB_PORT: "5432"
+  DB_NAME: luas
+  DB_SSLMODE: require
+  DB_MAX_OPEN_CONNS: "20"
+  QUEUE_DRIVER: postgres
+  CORS_ALLOW_ORIGINS: https://app.example.com
+  LOG_JSON: "true"
+  AI_ENABLED: "false"

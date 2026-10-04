@@ -1,0 +1,46 @@
+# Abandoned asset uploads and deleted objects (asset starter).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: luas-asset-prune
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: luas-asset-prune
+        spec:
+          restartPolicy: Never
+          automountServiceAccountToken: false
+          securityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: asset-prune
+              image: luas-api
+              command: ["/app/luas"]
+              args: ["asset:prune", "--batch=100"]
+              envFrom:
+                - configMapRef:
+                    name: luas-api-config
+                - secretRef:
+                    name: luas-api-secrets
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: [ALL]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir: {}

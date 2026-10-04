@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,8 @@ func InitLogger(cfg *config.Config) error {
 		runtimeLogger.AddHandler(handler)
 	}
 	logger.SetDefault(runtimeLogger)
+	// Route log/slog call sites through the same outputs, so JSON logging and Sentry cover them.
+	slog.SetDefault(slog.New(logger.NewSlogHandler(runtimeLogger)))
 	return nil
 }
 

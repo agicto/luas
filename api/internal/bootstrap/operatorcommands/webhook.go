@@ -68,7 +68,7 @@ func (c *WebhookWorkCommand) Run(args []string) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	c.output.Info("Starting webhook worker with batch %d and poll interval %s", workerConfig.Batch, workerConfig.Poll)
+	slog.Info("webhook.worker_started", "batch", workerConfig.Batch, "poll", workerConfig.Poll.String())
 	processed, err := runWebhookWorker(ctx, application.WebhookDispatcher, workerConfig)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return err

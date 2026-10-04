@@ -1,0 +1,23 @@
+# Reference production baseline for the Luas API, workers, and Web application. Copy it into the
+# downstream deployment repository and own it there; see ../README.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: luas
+    includeSelectors: false
+
+resources:
+  - ../config
+  - api.yaml
+  - worker.yaml
+  - web.yaml
+
+images:
+  - name: luas-api
+    newName: registry.example.com/luas-api
+    newTag: replace-with-a-digest
+  - name: luas-web
+    newName: registry.example.com/luas-web
+    newTag: replace-with-a-digest

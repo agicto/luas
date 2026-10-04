@@ -93,3 +93,22 @@ func TestPostgresDriverOperatorTaskManagement(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+func TestPostgresDriverStatsHandlesAnEmptyQueue(t *testing.T) {
+	db := openWorkflowPostgres(t)
+	driver, err := NewPostgresDriver(db)
+	require.NoError(t, err)
+	ctx := context.Background()
+
+	stats, err := driver.Stats(ctx, "empty", time.Now())
+	require.NoError(t, err, "min() over no pending rows is NULL and must not fail")
+	assert.Zero(t, stats.Lag)
+	assert.Zero(t, stats.Pending)
+
+	_, err = driver.PushTask(ctx, "busy", workflowTestPayload(t, uuid.NewString(), ""))
+	require.NoError(t, err)
+	stats, err = driver.Stats(ctx, "busy", time.Now().Add(time.Minute))
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, stats.Pending)
+	assert.Greater(t, stats.Lag, 50*time.Second)
+}

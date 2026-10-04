@@ -11,12 +11,20 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Deprecation removals
+## Unreleased — Deprecation removals and structured production logs
 
 ### Low — `ROLE.NOT_FOUND` removed
 
 The deprecated `ROLE.NOT_FOUND` value is gone from the API, `contracts/openapi.yaml`, and the Web
 and Admin code lists, as scheduled in v0.21.0. Match `PERMISSION.ROLE_NOT_FOUND` instead.
+
+### Low — JSON logging covers database and `log/slog` output
+
+With `LOG_JSON=true`, database errors and slow queries arrive as `database.query_failed` and
+`database.slow_query` events with `sql`, `rows`, and `elapsed_ms` fields instead of colored text,
+and the ASCII banner is gone. Update log queries or alerts that matched the old text. Code that
+calls `log/slog` now reaches the configured logger outputs. Console output in development is
+unchanged.
 
 ## 2026-10-04 — Complete OpenAPI contract and error alignment
 
