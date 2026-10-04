@@ -51,6 +51,10 @@ value at 4096 bytes; arbitrary objects and arrays are not supported.
 Removing or changing a definition is a code migration decision. Rows for unknown keys are never
 returned and do not turn into an unbounded dynamic configuration surface.
 
+Because downstream apps extend the catalog, a browser client renders the definitions it knows,
+validates each of them exactly, and ignores definitions it does not know. A definition the client
+needs but the response lacks is an invalid response.
+
 ## Effective Values And Versions
 
 An effective setting has this shape:

@@ -1,3 +1,12 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import request, { ApiError } from '@/http/request';
 import { ClientErrorCode } from '@/http/codes';
 import {
@@ -107,3 +116,41 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<
+    z.input<typeof notificationPageEnvelopeSchema>,
+    ContractResponse<'listNotifications', 200>
+  >
+>();
+assertContract<
+  Accepts<z.input<typeof notificationStatusSchema>, ContractData<'getNotificationStatus', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof notificationSchema>, ContractData<'updateNotificationReadState', 200>>
+>();
+assertContract<
+  Sends<ReplaceNotificationReadStateInput, ContractRequest<'updateNotificationReadState'>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof notificationReadStateResultSchema>,
+    ContractData<'markNotificationsReadThrough', 200>
+  >
+>();
+assertContract<
+  Sends<MarkNotificationsReadInput, ContractRequest<'markNotificationsReadThrough'>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof notificationPreferenceSchema>,
+    ContractData<'getNotificationPreferences', 200>
+  >
+>();
+assertContract<
+  Accepts<
+    z.input<typeof notificationPreferenceSchema>,
+    ContractData<'replaceNotificationPreferences', 200>
+  >
+>();
+assertContract<Sends<NotificationPreference, ContractRequest<'replaceNotificationPreferences'>>>();

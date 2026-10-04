@@ -29,8 +29,7 @@ interface UsageRouteEnvironment {
 }
 
 type UsageRouteResolution =
-  | { available: true; backend: UsageBackend }
-  | { available: false; response: NextResponse };
+  { available: true; backend: UsageBackend } | { available: false; response: NextResponse };
 
 type AuthenticatedUsageBackend =
   | { authenticated: true; backend: 'go-api'; accessToken: string }

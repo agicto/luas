@@ -25,7 +25,11 @@ const nonnegativeIntegerSchema = number().check(
   maximum(Number.MAX_SAFE_INTEGER)
 );
 const timestampSchema = iso.datetime({ offset: true });
-const webhookEventTypeSchema = literal('webhook.test');
+// The event catalog is code-owned and downstream apps extend it; accept any catalog-valid type.
+const webhookEventTypeSchema = string().check(
+  maxLength(100),
+  regex(/^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+$/u)
+);
 const endpointNameSchema = string().check(
   minLength(1),
   maxLength(100),

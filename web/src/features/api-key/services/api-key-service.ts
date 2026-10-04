@@ -1,3 +1,12 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import { ClientErrorCode } from '@/http/codes';
 import request, { ApiError } from '@/http/request';
 import { apiKeyPageEnvelopeSchema, createApiKeyResultSchema } from '@/features/api-key/schemas';
@@ -43,3 +52,11 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<z.input<typeof apiKeyPageEnvelopeSchema>, ContractResponse<'listApiKeys', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof createApiKeyResultSchema>, ContractData<'createApiKey', 201>>
+>();
+assertContract<Sends<CreateApiKeyInput, ContractRequest<'createApiKey'>>>();

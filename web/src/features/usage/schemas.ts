@@ -9,8 +9,10 @@ import {
   nonnegative,
   nullable,
   number,
+  object,
   refine,
   strictObject,
+  string,
   union,
 } from 'zod/mini';
 
@@ -22,11 +24,7 @@ export const usageMetricSchema = union([
   literal('workflow.runs'),
 ]);
 
-const safeIntegerSchema = number().check(
-  int(),
-  nonnegative(),
-  maximum(Number.MAX_SAFE_INTEGER)
-);
+const safeIntegerSchema = number().check(int(), nonnegative(), maximum(Number.MAX_SAFE_INTEGER));
 const nullableSafeIntegerSchema = nullable(safeIntegerSchema);
 
 export const usageSummarySchema = strictObject({
@@ -46,7 +44,29 @@ export const usageSummarySchema = strictObject({
   updated_at: nullable(iso.datetime({ offset: true })),
 }).check(refine(isSemanticallyValidSummary));
 
-export const usageSummaryListSchema = array(usageSummarySchema).check(
+/**
+ * Any well-formed summary as `contracts/openapi.yaml` describes it. The metric catalog is
+ * code-owned and downstream apps extend it, so summaries are read with this schema first and only
+ * the metrics this client renders are narrowed with `usageSummarySchema`.
+ */
+export const usageSummaryWireSchema = object({
+  scope: union([literal('user'), literal('organization')]),
+  metric: string(),
+  unit: string(),
+  period: union([literal('day'), literal('month')]),
+  period_start: string(),
+  period_end: string(),
+  used: safeIntegerSchema,
+  limit: nullableSafeIntegerSchema,
+  remaining: nullableSafeIntegerSchema,
+  overage: safeIntegerSchema,
+  over_limit: boolean(),
+  quota_source: union([literal('default'), literal('override')]),
+  quota_version: safeIntegerSchema,
+  updated_at: nullable(string()),
+});
+
+export const usageSummaryWireListSchema = array(usageSummaryWireSchema).check(
   maxLength(64),
   refine(values => {
     const identities = values.map(value => `${value.scope}:${value.metric}`);
@@ -55,7 +75,12 @@ export const usageSummaryListSchema = array(usageSummarySchema).check(
 );
 
 function isSemanticallyValidSummary(summary: {
-  metric: 'api.requests' | 'ai.input_tokens' | 'ai.output_tokens' | 'asset.transfer_bytes' | 'workflow.runs';
+  metric:
+    | 'api.requests'
+    | 'ai.input_tokens'
+    | 'ai.output_tokens'
+    | 'asset.transfer_bytes'
+    | 'workflow.runs';
   unit: 'request' | 'token' | 'byte' | 'run';
   period_start: string;
   period_end: string;
@@ -76,7 +101,10 @@ function isSemanticallyValidSummary(summary: {
   } as const;
   if (summary.unit !== expectedUnit[summary.metric]) return false;
   if (Date.parse(summary.period_end) <= Date.parse(summary.period_start)) return false;
-  if (summary.quota_source === 'override' && (summary.limit === null || summary.quota_version < 1)) {
+  if (
+    summary.quota_source === 'override' &&
+    (summary.limit === null || summary.quota_version < 1)
+  ) {
     return false;
   }
   if (summary.limit === null) {
@@ -87,6 +115,6 @@ function isSemanticallyValidSummary(summary: {
   return (
     summary.remaining === remaining &&
     summary.overage === overage &&
-    summary.over_limit === (overage > 0)
+    summary.over_limit === overage > 0
   );
 }

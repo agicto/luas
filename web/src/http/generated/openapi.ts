@@ -1455,7 +1455,7 @@ export interface components {
             created_at: string;
             /** Format: uuid */
             id: string;
-            media_type: string;
+            media_type: components["schemas"]["AssetMediaType"];
             original_name: string;
             /** Format: date-time */
             ready_at: string | null;
@@ -1463,6 +1463,11 @@ export interface components {
             size_bytes: number;
             status: components["schemas"]["AssetStatus"];
         };
+        /**
+         * @description Media types the starter asset policy accepts.
+         * @enum {string}
+         */
+        AssetMediaType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "text/plain" | "text/csv";
         AssetPageResponse: {
             /** @constant */
             code: 0;
@@ -1485,8 +1490,11 @@ export interface components {
             headers: {
                 [key: string]: string;
             };
-            /** @description HTTP method the caller must use, such as `PUT` or `GET`. */
-            method: string;
+            /**
+             * @description `PUT` for an upload grant, `GET` for a download grant.
+             * @enum {string}
+             */
+            method: "GET" | "PUT";
             /** @description Short-lived bearer-credential URL; never log or persist it. */
             url: string;
         };
@@ -1502,8 +1510,7 @@ export interface components {
         };
         AssetUploadIntentRequest: {
             idempotency_key: string;
-            /** @enum {string} */
-            media_type: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "text/plain" | "text/csv";
+            media_type: components["schemas"]["AssetMediaType"];
             /** @description Trimmed UTF-8 file name (at most 255 bytes) without path separators or control characters; its extension must match `media_type`. */
             original_name: string;
             /**

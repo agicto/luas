@@ -1,3 +1,5 @@
+import type { assetMediaTypes } from '@/features/asset/schemas';
+
 export type AssetStatus = 'pending' | 'ready' | 'rejected';
 export type AssetFilter = 'all' | AssetStatus;
 
@@ -41,9 +43,11 @@ export interface AssetPage {
   };
 }
 
+export type AssetMediaType = (typeof assetMediaTypes)[number];
+
 export interface CreateUploadIntentInput {
   idempotency_key: string;
   original_name: string;
-  media_type: string;
+  media_type: AssetMediaType;
   size_bytes: number;
 }

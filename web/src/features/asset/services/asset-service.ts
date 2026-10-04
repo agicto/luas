@@ -1,6 +1,16 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import {
   assetPageEnvelopeSchema,
   assetSchema,
+  createUploadIntentSchema,
   transferGrantSchema,
   uploadIntentResultSchema,
 } from '@/features/asset/schemas';
@@ -13,7 +23,7 @@ import type {
   TransferGrant,
   UploadIntentResult,
 } from '@/features/asset/types';
-import { ClientErrorCode } from '@/http/codes';
+import { ApiErrorCode, ClientErrorCode } from '@/http/codes';
 import request, { ApiError } from '@/http/request';
 
 interface ListOptions {
@@ -41,12 +51,16 @@ export const assetService = {
   },
 
   async upload(file: File, idempotencyKey: string): Promise<AssetItem> {
-    const intent = await this.createUploadIntent({
+    const input = createUploadIntentSchema.safeParse({
       idempotency_key: idempotencyKey,
       original_name: file.name,
       media_type: file.type,
       size_bytes: file.size,
     });
+    if (!input.success) {
+      throw new ApiError('The file is not an accepted asset', ApiErrorCode.COMMON_INVALID_INPUT);
+    }
+    const intent = await this.createUploadIntent(input.data);
     await uploadToGrant(intent.upload, file);
     return this.complete(intent.asset.id);
   },
@@ -95,3 +109,15 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<z.input<typeof assetPageEnvelopeSchema>, ContractResponse<'listAssets', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof uploadIntentResultSchema>, ContractData<'createAssetUploadIntent', 201>>
+>();
+assertContract<Sends<CreateUploadIntentInput, ContractRequest<'createAssetUploadIntent'>>>();
+assertContract<Accepts<z.input<typeof assetSchema>, ContractData<'completeAssetUpload', 200>>>();
+assertContract<
+  Accepts<z.input<typeof transferGrantSchema>, ContractData<'createAssetDownloadGrant', 200>>
+>();

@@ -1,3 +1,12 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import request, { ApiError } from '@/http/request';
 import { ClientErrorCode } from '@/http/codes';
 import {
@@ -151,3 +160,25 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<z.input<typeof permissionContextSchema>, ContractData<'getPermissionContext', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof permissionCatalogSchema>, ContractData<'listPermissions', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof accessRolePageEnvelopeSchema>, ContractResponse<'listAccessRoles', 200>>
+>();
+assertContract<Accepts<z.input<typeof accessRoleSchema>, ContractData<'getAccessRole', 200>>>();
+assertContract<Accepts<z.input<typeof accessRoleSchema>, ContractData<'createAccessRole', 201>>>();
+assertContract<Sends<CreateAccessRoleInput, ContractRequest<'createAccessRole'>>>();
+assertContract<Accepts<z.input<typeof accessRoleSchema>, ContractData<'updateAccessRole', 200>>>();
+assertContract<Sends<UpdateAccessRoleInput, ContractRequest<'updateAccessRole'>>>();
+assertContract<
+  Accepts<z.input<typeof memberAccessRolesSchema>, ContractData<'getMemberAccessRoles', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof memberAccessRolesSchema>, ContractData<'replaceMemberAccessRoles', 200>>
+>();
+assertContract<Sends<ReplaceMemberAccessRolesInput, ContractRequest<'replaceMemberAccessRoles'>>>();

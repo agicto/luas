@@ -1,3 +1,12 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type ContractResponse,
+  type Sends,
+} from '@/http/contract';
 import request, { ApiError } from '@/http/request';
 import { ClientErrorCode } from '@/http/codes';
 import {
@@ -36,9 +45,7 @@ export const webhookService = {
       headers: organizationHeaders(organizationId),
     });
     const parsed = webhookEventTypeListSchema.safeParse(value);
-    if (!parsed.success || parsed.data.length !== 1 || parsed.data[0] !== 'webhook.test') {
-      throw invalidResponse();
-    }
+    if (!parsed.success) throw invalidResponse();
     return parsed.data;
   },
 
@@ -201,3 +208,46 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<z.input<typeof webhookEventTypeListSchema>, ContractData<'listWebhookEventTypes', 200>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof webhookEndpointPageEnvelopeSchema>,
+    ContractResponse<'listWebhookEndpoints', 200>
+  >
+>();
+assertContract<
+  Accepts<z.input<typeof webhookEndpointSecretSchema>, ContractData<'createWebhookEndpoint', 201>>
+>();
+assertContract<Sends<WebhookEndpointInput, ContractRequest<'createWebhookEndpoint'>>>();
+assertContract<
+  Accepts<z.input<typeof webhookEndpointSchema>, ContractData<'updateWebhookEndpoint', 200>>
+>();
+assertContract<Sends<WebhookEndpointInput, ContractRequest<'updateWebhookEndpoint'>>>();
+assertContract<
+  Accepts<z.input<typeof webhookEndpointSchema>, ContractData<'replaceWebhookEndpointStatus', 200>>
+>();
+assertContract<Sends<{ enabled: boolean }, ContractRequest<'replaceWebhookEndpointStatus'>>>();
+assertContract<
+  Accepts<
+    z.input<typeof webhookEndpointSecretSchema>,
+    ContractData<'rotateWebhookEndpointSecret', 201>
+  >
+>();
+assertContract<
+  Accepts<z.input<typeof webhookDeliverySchema>, ContractData<'createWebhookEndpointTest', 202>>
+>();
+assertContract<
+  Accepts<
+    z.input<typeof webhookDeliveryPageEnvelopeSchema>,
+    ContractResponse<'listWebhookDeliveries', 200>
+  >
+>();
+assertContract<
+  Accepts<
+    z.input<typeof webhookAttemptPageEnvelopeSchema>,
+    ContractResponse<'listWebhookDeliveryAttempts', 200>
+  >
+>();

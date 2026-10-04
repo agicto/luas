@@ -23,7 +23,7 @@ export const ASSET_DEFAULT_UPLOAD_BYTES = 10 * 1_024 * 1_024;
 
 const assetIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const idempotencyPattern = /^[A-Za-z0-9._:-]{1,128}$/;
-const mediaTypes = [
+export const assetMediaTypes = [
   'image/jpeg',
   'image/png',
   'image/webp',
@@ -42,7 +42,7 @@ const filenameSchema = string().check(
   maxLength(255),
   refine(value => isSafeFilename(value))
 );
-const mediaTypeSchema = union(mediaTypes.map(value => literal(value)));
+const mediaTypeSchema = union(assetMediaTypes.map(value => literal(value)));
 const grantHeadersSchema = record(string(), string()).check(
   refine(headers => isSafeGrantHeaderRecord(headers))
 );

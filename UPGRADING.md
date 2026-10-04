@@ -31,6 +31,19 @@ The API now follows the global contract in `contracts/README.md`:
 Clients that branch on `error_code`, as the contract requires, need no change. A client that
 treated every `400` from a form submission as a field error should read `errors` from the `422`.
 
+### Medium — Browser clients bind their schemas to the OpenAPI contract
+
+`web/src/http/contract.ts` and `admin/src/http/contract.ts` derive request and response bodies
+from the generated OpenAPI operations, and each feature service asserts that its Zod schemas accept
+every body the contract allows. `corepack pnpm type-check` now fails when a client schema and the
+contract drift; fix the side that is wrong rather than removing the assertion.
+
+The Web setting, usage, and webhook features no longer reject a response because the server's
+code-owned catalog has entries the client does not render. They read every entry with a generic
+schema, validate the entries they render exactly, and ignore the rest, so deploying an API with a
+larger catalog before the Web build no longer breaks those pages. A fork that relied on the client
+rejecting unknown entries must check that on the server instead.
+
 ### Low — Every operation is in `contracts/openapi.yaml`
 
 All 92 operations are described, and `make contract-check` fails when a route has no description or

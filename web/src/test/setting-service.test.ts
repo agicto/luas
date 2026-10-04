@@ -33,7 +33,18 @@ describe('setting service contract parsing', () => {
     ).toHaveLength(2);
   });
 
-  it('fails closed for unknown, missing, duplicate, and malformed definitions', () => {
+  it('ignores definitions a larger server catalog adds', () => {
+    const parsed = parseUserSettings([
+      setting('user', 'localization.locale', 'enum', 'private', 'en-US', {
+        options: ['en-US', 'zh-Hans'],
+      }),
+      setting('user', 'notifications.digest', 'boolean', 'private', true),
+      setting('user', 'localization.timezone', 'timezone', 'private', 'UTC'),
+    ]);
+    expect(parsed.map(item => item.key)).toEqual(['localization.locale', 'localization.timezone']);
+  });
+
+  it('fails closed for missing, duplicate, and malformed definitions', () => {
     expect(() =>
       parseUserSettings([
         setting('user', 'localization.locale', 'enum', 'private', 'en-US', {

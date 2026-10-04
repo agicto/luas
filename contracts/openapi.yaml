@@ -5376,7 +5376,7 @@ components:
           minLength: 1
           maxLength: 255
         media_type:
-          type: string
+          $ref: '#/components/schemas/AssetMediaType'
         size_bytes:
           type: integer
           format: int64
@@ -5446,14 +5446,7 @@ components:
           description: Trimmed UTF-8 file name (at most 255 bytes) without path separators or control
             characters; its extension must match `media_type`.
         media_type:
-          type: string
-          enum:
-            - image/jpeg
-            - image/png
-            - image/webp
-            - application/pdf
-            - text/plain
-            - text/csv
+          $ref: '#/components/schemas/AssetMediaType'
         size_bytes:
           type: integer
           format: int64
@@ -5470,7 +5463,10 @@ components:
       properties:
         method:
           type: string
-          description: HTTP method the caller must use, such as `PUT` or `GET`.
+          enum:
+            - GET
+            - PUT
+          description: '`PUT` for an upload grant, `GET` for a download grant.'
         url:
           type: string
           description: Short-lived bearer-credential URL; never log or persist it.
@@ -6552,3 +6548,13 @@ components:
           type: string
         data:
           $ref: '#/components/schemas/AppSetting'
+    AssetMediaType:
+      type: string
+      enum:
+        - image/jpeg
+        - image/png
+        - image/webp
+        - application/pdf
+        - text/plain
+        - text/csv
+      description: Media types the starter asset policy accepts.

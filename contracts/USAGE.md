@@ -112,7 +112,8 @@ is raised/reset.
 ## Browser Read Contract
 
 The browser contract is read-only and returns the finite current-period catalog. It is deliberately
-unpaginated because the code-owned catalog is capped at 64 definitions.
+unpaginated because the code-owned catalog is capped at 64 definitions. Downstream apps extend the catalog,
+so a browser client renders the metrics it knows and ignores the rest.
 
 | Method | Path | Auth | Behavior |
 |---|---|---|---|

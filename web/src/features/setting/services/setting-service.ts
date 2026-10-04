@@ -1,6 +1,18 @@
+import type { z } from 'zod/mini';
+import {
+  assertContract,
+  type Accepts,
+  type ContractData,
+  type ContractRequest,
+  type Sends,
+} from '@/http/contract';
 import request, { ApiError } from '@/http/request';
 import { ClientErrorCode } from '@/http/codes';
-import { settingListSchema, settingSchema } from '@/features/setting/schemas';
+import {
+  settingSchema,
+  settingWireListSchema,
+  settingWireSchema,
+} from '@/features/setting/schemas';
 import type {
   AppSetting,
   OrganizationSetting,
@@ -99,24 +111,28 @@ export function parseExpectedSetting(
   scope: Setting['scope'],
   key: Setting['key']
 ): Setting {
-  const parsed = settingSchema.safeParse(value);
-  if (!parsed.success || parsed.data.scope !== scope || parsed.data.key !== key) {
+  const wire = settingWireSchema.safeParse(value);
+  if (!wire.success || wire.data.scope !== scope || wire.data.key !== key) {
     throw invalidResponse();
   }
+  const parsed = settingSchema.safeParse(wire.data);
+  if (!parsed.success) throw invalidResponse();
   return parsed.data;
 }
 
+/**
+ * Returns the expected definitions in catalog order. Each must be present and valid; definitions
+ * the server adds beyond them are ignored so an API with a larger catalog does not break this page.
+ */
 function parseExpectedList(value: unknown, expected: readonly string[]): Setting[] {
-  const parsed = settingListSchema.safeParse(value);
-  if (!parsed.success) throw invalidResponse();
-  const identities = parsed.data.map(item => `${item.scope}:${item.key}`);
-  if (
-    identities.length !== expected.length ||
-    !expected.every(identity => identities.includes(identity))
-  ) {
-    throw invalidResponse();
-  }
-  return parsed.data;
+  const wire = settingWireListSchema.safeParse(value);
+  if (!wire.success) throw invalidResponse();
+  return expected.map(identity => {
+    const item = wire.data.find(entry => `${entry.scope}:${entry.key}` === identity);
+    const parsed = settingSchema.safeParse(item);
+    if (!parsed.success) throw invalidResponse();
+    return parsed.data;
+  });
 }
 
 function versionETag(version: number): string {
@@ -132,3 +148,21 @@ function invalidResponse(): ApiError {
     ClientErrorCode.INVALID_RESPONSE
   );
 }
+
+assertContract<
+  Accepts<z.input<typeof settingWireListSchema>, ContractData<'listPublicSettings', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof settingWireListSchema>, ContractData<'listUserSettings', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof settingWireSchema>, ContractData<'updateUserSetting', 200>>
+>();
+assertContract<Sends<SettingMutation, ContractRequest<'updateUserSetting'>>>();
+assertContract<
+  Accepts<z.input<typeof settingWireListSchema>, ContractData<'listOrganizationSettings', 200>>
+>();
+assertContract<
+  Accepts<z.input<typeof settingWireSchema>, ContractData<'updateOrganizationSetting', 200>>
+>();
+assertContract<Sends<SettingMutation, ContractRequest<'updateOrganizationSetting'>>>();

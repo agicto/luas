@@ -41,7 +41,8 @@ an arbitrary URL. Downstream server modules publish only through `domain.Webhook
 Event types are a finite code-owned catalog. Keys use lowercase dotted segments and each definition
 owns a payload validator. The shipped catalog contains only `webhook.test`, whose exact object
 schema is owned by the starter. Downstream apps add reviewed product event definitions and typed
-publisher adapters before subscriptions can select them.
+publisher adapters before subscriptions can select them. Browser clients therefore accept any
+catalog-valid event type in responses instead of a hard-coded list.
 
 An internal publication contains:
 
