@@ -24,6 +24,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterAudit,
+		assembly.WithStarterSummary("Write-request audit logging, history reads, and bounded retention."),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_04_26_000000_create_audit_logs_table"),
 		assembly.WithStarterMigrationNames("2026_04_27_000002_add_business_fields_to_audit_logs"),

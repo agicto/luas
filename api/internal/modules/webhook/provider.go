@@ -30,6 +30,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterWebhook,
+		assembly.WithStarterSummary("Organization-owned outbound endpoints with signed durable delivery, retries, and replay."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames("2026_07_15_060000_create_webhook_tables"),

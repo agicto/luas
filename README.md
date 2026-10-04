@@ -138,7 +138,8 @@ Ports and the starter selection are environment variables, for example
 local secrets are for development only.
 
 With the stack running, `cd admin && corepack pnpm e2e` drives the Admin Console against the API in
-a browser.
+a browser, and `cd web && corepack pnpm e2e` signs in to the Web application through its API
+adapter.
 
 ### Run One Surface
 

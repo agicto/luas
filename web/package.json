@@ -23,7 +23,8 @@
     "format": "prettier --write .",
     "clean": "rimraf .next .turbo .eslintcache *.tsbuildinfo coverage",
     "clean:all": "rimraf .next .turbo .eslintcache *.tsbuildinfo coverage node_modules",
-    "reset": "pnpm clean:all && pnpm install"
+    "reset": "pnpm clean:all && pnpm install",
+    "e2e": "playwright test"
   },
   "keywords": [
     "nextjs",
@@ -79,6 +80,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

@@ -26,6 +26,7 @@ var ProviderSet = wire.NewSet(
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
 		config.StarterOrganization,
+		assembly.WithStarterSummary("Organization ownership, membership, invitations, active context, and ownership transfer."),
 		assembly.WithStarterModule(handler),
 		assembly.WithStarterMigrationNames(
 			"2026_07_14_000000_create_organizations_tables",
