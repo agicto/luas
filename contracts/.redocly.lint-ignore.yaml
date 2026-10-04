@@ -1,0 +1,8 @@
+# Health probes answer 200 or 503 only: they are unauthenticated, take no input, and are exempt from
+# rate limiting, so no 4xx response exists to document.
+openapi.yaml:
+  operation-4xx-response:
+    - '#/paths/~1health/get/responses'
+    - '#/paths/~1health~1live/get/responses'
+    - '#/paths/~1health~1ready/get/responses'
+    - '#/paths/~1v1~1health/get/responses'

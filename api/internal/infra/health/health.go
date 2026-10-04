@@ -22,12 +22,12 @@ const (
 
 // CheckResult represents the result of a health check
 type CheckResult struct {
-	Status    Status         `json:"status"`
-	Message   string         `json:"message,omitempty"`
-	Details   map[string]any `json:"details,omitempty"`
-	Latency   time.Duration  `json:"latency_ms,omitempty"`
-	Duration  time.Duration  `json:"duration,omitempty"`
-	Timestamp time.Time      `json:"timestamp,omitempty"`
+	Status  Status         `json:"status"`
+	Message string         `json:"message,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
+	// LatencyMS is the check's wall time in whole milliseconds.
+	LatencyMS int64     `json:"latency_ms"`
+	Timestamp time.Time `json:"timestamp,omitempty"`
 }
 
 // Checker is a function that performs a health check
@@ -79,9 +79,7 @@ func (h *Health) Check(ctx context.Context) map[string]CheckResult {
 			defer wg.Done()
 			start := time.Now()
 			result := checker(ctx)
-			duration := time.Since(start)
-			result.Latency = duration
-			result.Duration = duration
+			result.LatencyMS = time.Since(start).Milliseconds()
 			result.Timestamp = start
 
 			mu.Lock()

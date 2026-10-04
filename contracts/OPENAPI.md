@@ -1,17 +1,18 @@
 # OpenAPI Contract
 
-[`openapi.yaml`](openapi.yaml) is the OpenAPI 3.1 machine contract for reviewed Luas HTTP
-surfaces. Coverage is incremental: a path becomes machine-authoritative only when it is present in
-the description. The owning Markdown contract continues to define authorization, privacy,
-idempotency, retention, and other semantics that OpenAPI cannot express precisely.
+[`openapi.yaml`](openapi.yaml) is the OpenAPI 3.1 machine contract for every Luas HTTP operation,
+including every optional starter. Only `GET /` (service banner) and `GET /metrics` (Prometheus text)
+are intentionally undocumented. The owning Markdown contract continues to define authorization,
+privacy, idempotency, retention, and other semantics that OpenAPI cannot express precisely.
 
 ## Toolchain
 
 - Redocly CLI validates OpenAPI structure and repository rules.
 - `openapi-typescript` generates deterministic TypeScript types independently into `web/` and
   `admin/`; neither browser shell imports source from the other.
-- The route check starts the real Go route catalog with infrastructure disabled and verifies every
-  described method and normalized path.
+- The route check assembles the real Go route catalog with every optional starter selected and
+  infrastructure disabled. It fails when a described operation has no route and when a route has
+  no described operation, so a new endpoint cannot ship without its contract.
 - `oasdiff` compares a pull request against its target commit and rejects unreviewed breaking
   changes.
 
@@ -30,7 +31,8 @@ generator during installation. CI fails when either copy is stale.
 
 ## Change Workflow
 
-1. Update the owning Markdown contract and `openapi.yaml` together.
+1. Update the owning Markdown contract and `openapi.yaml` together. A new route fails
+   `corepack pnpm check:routes` until it is described.
 2. Add only behavior that the API actually implements.
 3. Run `cd contracts && corepack pnpm generate`.
 4. Bind browser request, response, and error types to generated schemas at the owning feature seam.
