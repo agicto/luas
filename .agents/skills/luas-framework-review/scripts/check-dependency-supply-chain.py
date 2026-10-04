@@ -116,6 +116,9 @@ def parse_dependabot_groups(content: str) -> dict[str, str]:
 
 
 def exception_date(value: object) -> dt.date | None:
+    # TOML parses a timestamp as datetime, a subclass of date; compare calendar dates only.
+    if isinstance(value, dt.datetime):
+        return value.date()
     if isinstance(value, dt.date):
         return value
     if isinstance(value, str):
