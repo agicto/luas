@@ -1422,6 +1422,34 @@ export interface components {
             /** @constant */
             version: "v1";
         };
+        /** @description An app-scoped setting; the operator console never receives other scopes. */
+        AppSetting: {
+            key: string;
+            kind: components["schemas"]["SettingKind"];
+            /** @description Allowed values; present only for enum definitions. */
+            options?: string[];
+            /** @constant */
+            scope: "app";
+            source: components["schemas"]["SettingSource"];
+            /** Format: date-time */
+            updated_at: string | null;
+            value: components["schemas"]["SettingValue"];
+            /** Format: int64 */
+            version: number;
+            visibility: components["schemas"]["SettingVisibility"];
+        };
+        AppSettingListResponse: {
+            /** @constant */
+            code: 0;
+            data: components["schemas"]["AppSetting"][];
+            message: string;
+        };
+        AppSettingResponse: {
+            /** @constant */
+            code: 0;
+            data: components["schemas"]["AppSetting"];
+            message: string;
+        };
         Asset: {
             /** Format: date-time */
             created_at: string;
@@ -1657,8 +1685,16 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
         };
+        HealthLivenessProbe: {
+            /** @constant */
+            status: "up";
+        };
         HealthProbe: {
             status: components["schemas"]["HealthStatus"];
+        };
+        HealthReadinessProbe: {
+            /** @enum {string} */
+            status: "up" | "degraded";
         };
         HealthReport: {
             checks?: {
@@ -2851,7 +2887,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthProbe"];
+                    "application/json": components["schemas"]["HealthLivenessProbe"];
                 };
             };
             503: components["responses"]["ServiceUnavailable"];
@@ -2872,7 +2908,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthProbe"];
+                    "application/json": components["schemas"]["HealthReadinessProbe"];
                 };
             };
             /** @description Not ready. */
@@ -4108,7 +4144,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SettingListResponse"];
+                    "application/json": components["schemas"]["AppSettingListResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];
@@ -4188,7 +4224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SettingResponse"];
+                    "application/json": components["schemas"]["AppSettingResponse"];
                 };
             };
             400: components["responses"]["InvalidInput"];

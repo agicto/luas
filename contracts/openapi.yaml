@@ -76,7 +76,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthProbe'
+                $ref: '#/components/schemas/HealthLivenessProbe'
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
   /health/ready:
@@ -92,7 +92,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthProbe'
+                $ref: '#/components/schemas/HealthReadinessProbe'
         '503':
           description: Not ready.
           content:
@@ -3056,7 +3056,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SettingListResponse'
+                $ref: '#/components/schemas/AppSettingListResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -3101,7 +3101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SettingResponse'
+                $ref: '#/components/schemas/AppSettingResponse'
         '400':
           $ref: '#/components/responses/InvalidInput'
         '401':
@@ -4194,6 +4194,25 @@ components:
         - up
         - degraded
         - down
+    HealthLivenessProbe:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          const: up
+    HealthReadinessProbe:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - up
+            - degraded
     HealthProbe:
       type: object
       additionalProperties: false
@@ -6462,3 +6481,74 @@ components:
           $ref: '#/components/schemas/PaginationMeta'
         links:
           $ref: '#/components/schemas/PaginationLinks'
+    AppSetting:
+      type: object
+      additionalProperties: false
+      required:
+        - scope
+        - key
+        - kind
+        - visibility
+        - value
+        - version
+        - source
+        - updated_at
+      properties:
+        scope:
+          const: app
+        key:
+          type: string
+        kind:
+          $ref: '#/components/schemas/SettingKind'
+        visibility:
+          $ref: '#/components/schemas/SettingVisibility'
+        value:
+          $ref: '#/components/schemas/SettingValue'
+        version:
+          type: integer
+          format: int64
+          minimum: 0
+        source:
+          $ref: '#/components/schemas/SettingSource'
+        options:
+          type: array
+          items:
+            type: string
+          description: Allowed values; present only for enum definitions.
+        updated_at:
+          type:
+            - string
+            - 'null'
+          format: date-time
+      description: An app-scoped setting; the operator console never receives other scopes.
+    AppSettingListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          maxItems: 64
+          items:
+            $ref: '#/components/schemas/AppSetting'
+    AppSettingResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AppSetting'

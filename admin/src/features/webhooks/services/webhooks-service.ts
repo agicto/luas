@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractData, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   webhookAttemptPageSchema,
@@ -63,3 +65,9 @@ export const webhooksService = {
     );
   },
 };
+
+// Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
+assertContract<Accepts<z.input<typeof webhookEndpointPageSchema>, ContractResponse<'listOperatorWebhookEndpoints', 200>>>();
+assertContract<Accepts<z.input<typeof webhookDeliveryPageSchema>, ContractResponse<'listOperatorWebhookDeliveries', 200>>>();
+assertContract<Accepts<z.input<typeof webhookAttemptPageSchema>, ContractResponse<'listOperatorWebhookDeliveryAttempts', 200>>>();
+assertContract<Accepts<z.input<typeof webhookDeliverySchema>, ContractData<'replayOperatorWebhookDelivery', 200>>>();

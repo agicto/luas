@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+import { assertContract, type Accepts, type ContractData, type ContractResponse } from '@/http/contract';
 import { http } from '@/http/client';
 import {
   operatorSystemSchema,
@@ -21,3 +23,7 @@ export const systemService = {
     });
   },
 };
+
+// Fails type-check when contracts/openapi.yaml and these schemas disagree.
+assertContract<Accepts<z.input<typeof readinessSchema>, ContractResponse<'getReadiness', 200>>>();
+assertContract<Accepts<z.input<typeof operatorSystemSchema>, ContractData<'getOperatorSystemStatus', 200>>>();
