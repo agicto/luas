@@ -265,7 +265,8 @@ An invitation view contains no plaintext token:
 | 409 | `ORGANIZATION.OWNERSHIP_TRANSFER_REQUIRED` | Account deletion would leave an owned organization without an owner |
 | 409 | `ORGANIZATION.OWNERSHIP_TRANSFER_TARGET_INVALID` | Ownership transfer targets the current owner or another invalid member state |
 | 409 | `ORGANIZATION.MEMBERSHIP_EXIT_REQUIRED` | Account deletion would retain one or more non-owner memberships |
-| 404 | `ORGANIZATION.MEMBER_NOT_FOUND` | The member resource does not exist in the visible organization |
+| 404 | `ORGANIZATION.MEMBER_NOT_FOUND` | The member resource, or the ownership-transfer target, does not exist in the visible organization |
+| 409 | `COMMON.CONFLICT` | A role change raced with another change to the same membership; retry after reading it again |
 | 403 | `ORGANIZATION.INVITATION.EMAIL_MISMATCH` | The token belongs to a different account email |
 | 403 | `PERMISSION.DENIED` | The caller is a member but the role cannot perform the mutation |
 | 422 | `COMMON.VALIDATION_FAILED` | A request field fails the documented shape |

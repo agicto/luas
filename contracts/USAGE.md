@@ -119,7 +119,7 @@ unpaginated because the code-owned catalog is capped at 64 definitions.
 | `GET` | `/v1/usage/user` | Authentication session | Current user's effective summaries |
 | `GET` | `/v1/organization-usage` | Authentication session + verified `Organization-Id` | Owner/admin organization summaries |
 
-Organization members receive `403 COMMON.PERMISSION_DENIED`. Every response, including errors, is
+Organization members receive `403 PERMISSION.DENIED`. Every response, including errors, is
 `Cache-Control: private, no-store`, `Pragma: no-cache`, and varies on authorization; organization
 responses also vary on `Organization-Id`.
 
