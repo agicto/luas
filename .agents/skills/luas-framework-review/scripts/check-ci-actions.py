@@ -74,6 +74,7 @@ REVIEWED_WORKFLOW_PERMISSIONS = {
     "container.yml": {"contents": "read"},
     "dependency-security.yml": {"contents": "read"},
     "e2e.yml": {"contents": "read"},
+    "perf.yml": {"contents": "read"},
     "release.yml": {"contents": "read"},
     "skill-self-test.yml": {"contents": "read"},
     "sync-deploy-branches.yml": {"contents": "write"},
