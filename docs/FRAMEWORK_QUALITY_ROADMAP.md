@@ -66,7 +66,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   projects reject unsupported Node lines, use Node 22.12+/24 LTS with Node 22 type semantics, and
   pin pnpm 10.34.5 with a 24-hour resolution quarantine, trust non-downgrade, blocked exotic
   transitive sources, and a strict five-version build-script allowlist. A checksum-pinned
-  OSV-Scanner 2.3.8 scans `api/go.mod`, `web/pnpm-lock.yaml`, and `admin/pnpm-lock.yaml`, exports a
+  OSV-Scanner 2.3.8 scans `api/go.mod` and the `contracts`, `web`, and `admin` pnpm lockfiles, exports a
   validated CycloneDX 1.5 SBOM, and permits only reasoned, expiring exceptions.
 - Container supply-chain policy covers the API and Next.js Web images. The Admin Console deliberately
   has no runtime image and is governed as a static build artifact. Dockerfile frontend and every

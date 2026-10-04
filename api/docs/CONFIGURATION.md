@@ -77,9 +77,9 @@ guidance lives in [`DATABASE.md`](DATABASE.md).
 
 `OPTIONAL_STARTERS` is a comma-separated, additive list of canonical starter names. The default is
 empty; `audit`, `apikey`, and `user` remain active without being named. Available values are
-`organization`, `permission`, `notification`, `asset`, `setting`, `usage`, and `webhook`;
-permission, setting, usage, and webhook explicitly depend on organization, while notification and
-asset can be selected independently:
+`organization`, `permission`, `notification`, `asset`, `setting`, `usage`, `webhook`, and
+`operator`; permission, setting, usage, and webhook explicitly depend on organization, while
+notification, asset, and operator can be selected independently:
 
 ```dotenv
 OPTIONAL_STARTERS=organization,permission
@@ -208,8 +208,8 @@ the asset starter fails validation unless the driver is explicitly `r2`; contain
 never a production fallback.
 
 The local driver uses `OBJECT_STORAGE_LOCAL_ROOT` and is intended for private development data only.
-The R2 driver requires the all-or-none secret group `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
-`R2_ACCESS_KEY_SECRET`, `R2_BUCKET`, and `R2_ENDPOINT`. Production requires an HTTPS endpoint.
+The R2 driver requires the all-or-none group `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
+`R2_BUCKET`, `R2_REGION`, and `R2_ENDPOINT`. Production requires an HTTPS endpoint.
 `OBJECT_STORAGE_REQUEST_TIMEOUT` bounds provider operations and defaults to `30s`.
 
 The local asset adapter additionally requires a purpose-specific `ASSET_TRANSFER_SIGNING_KEY` of at

@@ -33,7 +33,7 @@ Kest Flow is a powerful API testing framework that achieves "Documentation as Co
 @name Login
 @retry 2
 
-POST /api/v1/auth/login
+POST /v1/login
 Content-Type: application/json
 
 {
@@ -65,7 +65,7 @@ user_id = data.user.id
 
 **Use in Subsequent Requests:**
 ```kest
-GET /api/v1/users/profile
+GET /v1/users/profile
 Authorization: Bearer {{token}}
 ```
 
@@ -98,8 +98,6 @@ kest run tests/ --parallel --jobs 4
 See `.agents/skills/kest-flow/examples/` for complete flow examples:
 
 - `user-auth.flow.md` - User registration and login flow
-- `project-crud.flow.md` - Full CRUD operations
-- `hmac-signature.flow.md` - HMAC signing example
 
 ## Best Practices
 

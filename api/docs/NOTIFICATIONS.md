@@ -77,7 +77,7 @@ Operational flags:
 | `--once` | Run one bounded dispatch call, useful for a scheduled job or verification |
 
 Multiple workers may share one database. Claims use a short transaction, due-state compare/update,
-random lease token, and `SKIP LOCKED` on PostgreSQL/MySQL. Provider calls run after commit. A worker
+random lease token, and `SKIP LOCKED` on PostgreSQL. Provider calls run after commit. A worker
 may complete only with its current lease token; expired processing rows can be reclaimed without an
 old worker overwriting the newer result.
 

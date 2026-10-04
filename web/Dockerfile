@@ -4,7 +4,7 @@ ARG OCI_REVISION=unknown
 ARG OCI_VERSION=dev
 
 # Keep native dependencies ABI-compatible between build and runtime.
-FROM docker.io/library/node:22.23.1-alpine3.24@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS base
+FROM docker.io/library/node:22.23.3-alpine3.24@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -48,8 +48,8 @@ LABEL org.opencontainers.image.title="Luas Web" \
     org.opencontainers.image.source="${OCI_SOURCE}" \
     org.opencontainers.image.revision="${OCI_REVISION}" \
     org.opencontainers.image.version="${OCI_VERSION}" \
-    org.opencontainers.image.base.name="docker.io/library/node:22.23.1-alpine3.24" \
-    org.opencontainers.image.base.digest="sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2"
+    org.opencontainers.image.base.name="docker.io/library/node:22.23.3-alpine3.24" \
+    org.opencontainers.image.base.digest="sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402"
 
 COPY --from=runtime-root / /
 

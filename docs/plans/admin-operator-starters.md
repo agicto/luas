@@ -290,7 +290,7 @@ Slice 2 depends on slice 1 (organization lookup and detail screen). Slice 3 is i
 
 ## 15a. Delivery Status (2026-10-02)
 
-All three slices are delivered on `feature/admin-starter-administration`, verified with PostgreSQL
+All three slices are delivered and merged to `main`, verified with PostgreSQL
 tests for each new query, handler tests for mounting and guard order, Admin component tests, and a
 live browser run against a real API and database:
 

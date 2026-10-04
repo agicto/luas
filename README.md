@@ -85,9 +85,10 @@ documented HTTP contracts and never import backend source code.
 | TanStack type-safe file routing | No | Yes |
 
 The applications are independent and can run together. `web/` serves customers;
-`admin/` serves project operators and administrators. The current Admin Console
-is a lightweight foundation, so management workflows are ported contract by
-contract instead of copied from Next.js.
+`admin/` serves platform operators. With the optional `operator` starter it has
+operator sign-in, user management, the global audit log, app settings, system
+status, and read-mostly organization, webhook, and notification-delivery views.
+Tenant self-service stays in `web/`.
 
 ## Quick Start
 
@@ -167,7 +168,8 @@ NEXT_PUBLIC_OPTIONAL_FEATURES=organization,permission,notification
 Dependencies are explicit:
 
 - `permission`, `setting`, `usage`, and `webhook` require `organization`.
-- `notification` and `asset` can be enabled independently.
+- `notification`, `asset`, and `operator` can be enabled independently. `operator` is the Admin
+  Console's sign-in and administration starter; see [`contracts/OPERATORS.md`](contracts/OPERATORS.md).
 - API servers, migrations, workers, and browser features should use a compatible starter selection.
 
 Disabling a dependency is rejected while another selected starter needs it. Use an explicit

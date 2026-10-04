@@ -52,7 +52,9 @@ All open advisories are closed. A fork must pick up the same minimums:
   governance check.
 - Next.js `16.3.8` and `eslint-config-next` `16.3.8` (three remote-code-execution advisories in
   `16.2.x`), axios `1.20.0`, vitest `4.1.11`.
-- `google.golang.org/grpc` `1.83.1` and OpenTelemetry `1.45.0`.
+- `google.golang.org/grpc` `1.83.2`, `golang.org/x/crypto` `0.55.0`, and OpenTelemetry `1.45.0`.
+- The Web base image is Node `22.23.3` on Alpine 3.24 (OpenSSL fix), pinned by digest in
+  `web/Dockerfile`, `web/scripts/verify-container.sh`, and the container governance check.
 - pnpm overrides in all three `pnpm-workspace.yaml` files now force patched `sharp`, `undici`,
   `js-yaml`, `browserslist`, `baseline-browser-mapping`, `brace-expansion`, and `@humanfs/node`.
 

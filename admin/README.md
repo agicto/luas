@@ -83,9 +83,19 @@ Feature-owned code lives under `src/features/<feature>/`. Routes remain thin,
 TanStack Query owns remote state, Zustand owns shared browser-only UI state,
 and Zod validates important successful responses before caching.
 
-The initial shell includes `system` and `preferences` core features. Additional
-default or optional starter UI should be ported contract by contract rather
-than copied mechanically from Next.js.
+`system` and `preferences` are core features. The rest are optional and selected
+at build time with `VITE_OPTIONAL_FEATURES`:
+
+| Value | Adds | API starter required |
+| --- | --- | --- |
+| `operator` | Operator sign-in, users, audit log, app settings, system status | `operator` (`setting` for app settings) |
+| `organization` | Organization directory and members | `operator`, `organization` |
+| `webhook` | Webhook endpoints, deliveries, attempts, and replay on the organization page | `operator`, `organization`, `webhook` |
+| `notification` | Notification delivery ledger | `operator`, `notification` |
+
+These are operator support views, not tenant self-service; that stays in the
+Next.js Web application. New screens are built against their contract rather
+than copied from Next.js.
 
 The console uses the official shadcn/ui Sidebar composition with an inset
 content surface, icon-collapse mode on desktop, and a Sheet-backed navigation
@@ -110,7 +120,9 @@ storage safe. Protected production applications should route same-origin
 CSRF/Origin checks, and fixed upstream operations. Never persist Luas bearer
 session tokens or API keys in browser storage.
 
-Read [docs/SECURITY.md](docs/SECURITY.md) before adding login or protected
+The optional `operator` API starter is the shipped Go browser adapter: it sets an
+HttpOnly operator session cookie and enforces Origin and CSRF. Read
+[docs/SECURITY.md](docs/SECURITY.md) before changing sign-in or adding protected
 routes.
 
 ## Verification

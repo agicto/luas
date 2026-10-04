@@ -182,9 +182,9 @@ application paths to `index.html`.
 
 Static delivery does not make bearer-token storage safe. Protected workflows require a same-origin
 browser gateway or explicit Go browser-session boundary that owns HttpOnly cookies, Origin/CSRF
-enforcement, and fixed upstream mappings. Client route guards remain UX only. The initial static
-shell includes system/readiness and browser preference features; starter UI is ported against its
-contract when the required browser adapter exists. See
+enforcement, and fixed upstream mappings. Client route guards remain UX only. The optional `operator`
+starter is that boundary for the Admin Console: with it the console has operator sign-in and
+administration screens, and without it only system readiness and browser preferences. See
 [`../admin/docs/ARCHITECTURE.md`](../admin/docs/ARCHITECTURE.md) and
 [`../admin/docs/SECURITY.md`](../admin/docs/SECURITY.md).
 

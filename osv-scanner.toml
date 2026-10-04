@@ -1,3 +1,8 @@
 # OSV exceptions are empty by default. Any future [[IgnoredVulns]] entry must
 # include a non-empty reason and ignoreUntil date. Package overrides must use
 # the equivalent reason and effectiveUntil fields. Root governance enforces it.
+
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-12-31
+reason = "braces 3.0.3 has no fixed release. Web reaches it only through micromatch in @parcel/watcher (next-intl message extraction) and fast-glob in eslint-config-next. Both expand glob patterns from repository configuration, never from request input, so the nested-pattern stack exhaustion is not attacker-reachable. Remove when a patched braces ships."

@@ -106,8 +106,10 @@ Global envelopes and `request_id` behavior follow [`README.md`](README.md).
 
 ## Browser Support
 
-The Go API contract is available by default. The Next.js and Admin Console shells do not yet claim an
-audit-history feature or mock parity. A browser port must use a fixed same-origin adapter, preserve
+The Go API contract is available by default. The Next.js shell does not yet claim a user-scoped
+audit-history feature or mock parity. The Admin Console shows the platform-wide trail to operators
+through `/v1/operator/audit-logs` ([`OPERATORS.md`](OPERATORS.md)). A browser port of the
+user-scoped history must use a fixed same-origin adapter, preserve
 pagination and private caching, validate this response before rendering, and keep credentials in
 the existing HttpOnly session boundary.
 

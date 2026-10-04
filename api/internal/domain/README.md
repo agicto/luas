@@ -1,7 +1,7 @@
 # Domain Layer
 
 `internal/domain/` is the framework-free vocabulary for Luas starter behavior. It names domain
-entities, value objects, domain errors, domain events, repository seams, and stable API
+entities, value objects, domain errors, repository seams, starter-owned event payloads, and stable API
 `error_code` constants that starter modules can share.
 
 It is not a home for HTTP handlers, GORM persistence objects, external SDK clients, runtime
@@ -16,7 +16,7 @@ configuration, response helpers, or downstream product-specific workflows.
 | Domain errors | `ErrInvalidCredentials`, `ErrAPIKeyRevoked` | HTTP response envelopes |
 | Error codes | `COMMON.NOT_FOUND`, `AUTH.INVALID_CREDENTIALS` constants | Web-only fallback or client-only codes |
 | Repository seams | Small interfaces consumed by services | SQL queries, GORM sessions, transaction wiring |
-| Domain events | Event names and payloads | Event bus infrastructure or async worker runtime |
+| Event payloads | A starter's published payload, such as `NotificationCreatedEvent` | Event bus infrastructure, a generic domain-event system, or async worker runtime |
 
 ## Boundary Rules
 

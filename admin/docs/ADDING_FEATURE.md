@@ -57,9 +57,11 @@ layouts own navigation composition; feature pages own workflow presentation.
 
 ## Security
 
-Before adding authentication or a protected route, define the browser gateway
-that owns HttpOnly cookies and CSRF/Origin enforcement. A client-side route
-guard is never authorization.
+Protected routes use the operator session issued by the API `operator` starter,
+which owns the HttpOnly cookie and CSRF/Origin enforcement; see
+[SECURITY.md](SECURITY.md#platform-operator-sign-in). Add a protected screen
+behind a `/v1/operator` route that authorizes it. A client-side route guard is
+never authorization.
 
 Every `VITE_*` value is public. Add it to `.env.example`,
 `src/vite-env.d.ts`, and `src/config/env.ts`, and document whether it is a

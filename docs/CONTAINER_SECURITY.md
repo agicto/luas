@@ -31,7 +31,7 @@ the reviewed multi-platform digest:
 
 - API builder: Go 1.25.13 on Alpine 3.24;
 - API runtime: distroless static Debian 12 `nonroot`;
-- Web build/runtime source: Node 22.23.1 on Alpine 3.24.
+- Web build/runtime source: Node 22.23.3 on Alpine 3.24.
 
 The Web final image materializes a cleaned runtime root into a new `scratch` stage. apk, npm, npx,
 Corepack, pnpm, Yarn, Node build headers, debugger helpers, and manual pages are absent from the
