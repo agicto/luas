@@ -26,9 +26,19 @@ Notable changes to Luas. Downstream migration steps for each change are in
   throughput 50–70%. A record can take about 50 ms to appear in history; graceful shutdown writes
   every queued record.
 - The `(user_id, id)` audit index replaces the single-column `user_id` index.
+- TypeScript 6 in Web and Admin; lucide-react 1.x; React 19.3 and the Admin TanStack, i18next, and
+  Zod minor updates; `x/crypto`, `x/sync`, and `gin-contrib/cors` updates unlocked by Go 1.26.
+  golangci-lint 2.14.0 in CI.
 - `DB_MAX_IDLE_CONNS` now defaults to `DB_MAX_OPEN_CONNS` instead of 10. The small idle pool
   reopened PostgreSQL connections whenever concurrency dipped; under load, p99 latency on the
   starter read paths fell from about 100 ms to about 10–20 ms and throughput rose about 40%.
+
+### Security
+
+- Go 1.26.9 replaces Go 1.25.13, which no longer receives fixes, closing 13 standard-library
+  advisories (html/template, net/http, and others); `golang.org/x/net` 0.60.0 closes four more.
+- `seroval` 1.6.3 (critical and high advisories, reached through TanStack Query devtools) and
+  `source-map-js` 1.2.2 are pinned through pnpm overrides.
 
 ### Deprecated
 

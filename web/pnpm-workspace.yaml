@@ -32,6 +32,8 @@ overrides:
   'sharp@<0.35.4': 0.35.4
   'undici@>=7.0.0 <7.29.1': 7.29.1
   'vite@>=7.0.0 <=7.3.4': 7.3.5
+  'seroval@<1.6.3': 1.6.3
+  'source-map-js@<1.2.2': 1.2.2
 
 allowBuilds:
   '@parcel/watcher@2.6.0': true

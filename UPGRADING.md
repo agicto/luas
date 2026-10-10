@@ -13,6 +13,18 @@ entries in order.
 
 ## Unreleased — Database pool defaults, audit cursor pages, and batched audit writes
 
+### High — Build with Go 1.26.9
+
+`api/go.mod` requires Go 1.26.9 and the API image builds on `golang:1.26.9-alpine3.24`. Go 1.25 no
+longer receives security fixes. Install Go 1.26.9 or let `GOTOOLCHAIN=auto` fetch it, and use
+golangci-lint 2.14.0 or newer: releases built with Go 1.25 refuse to lint a Go 1.26 module.
+
+### Medium — TypeScript 6 in the browser shells
+
+Web and Admin build with TypeScript 6. Admin no longer sets the deprecated `baseUrl`; its `@/*`
+path alias resolves relative to the tsconfig file. Forks that added `baseUrl`-relative imports
+should switch them to the alias.
+
 ### Scheduled — Offset pages on audit history endpoints
 
 `page` on `GET /v1/audit-logs` and `GET /v1/operator/audit-logs` is deprecated and will be removed in a
