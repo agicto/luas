@@ -44,6 +44,30 @@ func (r *repository) Create(ctx context.Context, entry *domain.AuditLog) error {
 	return nil
 }
 
+// CreateBatch inserts records in one multi-row statement.
+func (r *repository) CreateBatch(ctx context.Context, entries []*domain.AuditLog) error {
+	if len(entries) == 0 {
+		return nil
+	}
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return err
+	}
+	rows := make([]*AuditLogPO, len(entries))
+	for index, entry := range entries {
+		rows[index] = newAuditLogPO(entry)
+	}
+	if err := db.Create(&rows).Error; err != nil {
+		return err
+	}
+	for index, row := range rows {
+		entries[index].ID = row.ID
+		entries[index].CreatedAt = row.CreatedAt
+		entries[index].UpdatedAt = row.UpdatedAt
+	}
+	return nil
+}
+
 func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
 	db, err := r.withContext(ctx)
 	if err != nil {
@@ -53,12 +77,53 @@ func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domai
 	return findAuditPage(query, "id DESC", page, pageSize)
 }
 
+// FindByUserIDAfter pages one user's history newest first on the (user_id, id) index.
+func (r *repository) FindByUserIDAfter(
+	ctx context.Context,
+	userID uint,
+	filter domain.AuditLogFilter,
+	after *domain.AuditLogCursor,
+	limit int,
+) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := applyAuditFilter(db.Model(&AuditLogPO{}).Where("user_id = ?", userID), filter)
+	if after != nil {
+		query = query.Where("id < ?", after.ID)
+	}
+	return findAuditSlice(query.Order("id DESC"), limit)
+}
+
 // FindAll returns platform-wide audit logs newest first, using the (created_at, id) index.
 func (r *repository) FindAll(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
 	db, err := r.withContext(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
+	return findAuditPage(platformAuditQuery(db, filter), "created_at DESC, id DESC", page, pageSize)
+}
+
+// FindAllAfter pages platform-wide history newest first on the (created_at, id) index.
+func (r *repository) FindAllAfter(
+	ctx context.Context,
+	filter domain.AuditLogFilter,
+	after *domain.AuditLogCursor,
+	limit int,
+) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	db, err := r.withContext(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := platformAuditQuery(db, filter)
+	if after != nil {
+		query = query.Where("(created_at, id) < (?, ?)", after.CreatedAt.UTC(), after.ID)
+	}
+	return findAuditSlice(query.Order("created_at DESC, id DESC"), limit)
+}
+
+func platformAuditQuery(db *gorm.DB, filter domain.AuditLogFilter) *gorm.DB {
 	query := db.Model(&AuditLogPO{})
 	if filter.UserID != nil {
 		query = query.Where("user_id = ?", *filter.UserID)
@@ -69,7 +134,26 @@ func (r *repository) FindAll(ctx context.Context, filter domain.AuditLogFilter, 
 	if !filter.To.IsZero() {
 		query = query.Where("created_at < ?", filter.To.UTC())
 	}
-	return findAuditPage(applyAuditFilter(query, filter), "created_at DESC, id DESC", page, pageSize)
+	return applyAuditFilter(query, filter)
+}
+
+// findAuditSlice reads one extra row to learn whether an older page exists, so no count is needed.
+func findAuditSlice(query *gorm.DB, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	var rows []AuditLogPO
+	if err := query.Limit(limit + 1).Find(&rows).Error; err != nil {
+		return nil, nil, err
+	}
+	var next *domain.AuditLogCursor
+	if len(rows) > limit {
+		rows = rows[:limit]
+		last := rows[limit-1]
+		next = &domain.AuditLogCursor{CreatedAt: last.CreatedAt, ID: last.ID}
+	}
+	items := make([]*domain.AuditLog, len(rows))
+	for i := range rows {
+		items[i] = rows[i].toDomain()
+	}
+	return items, next, nil
 }
 
 func applyAuditFilter(query *gorm.DB, filter domain.AuditLogFilter) *gorm.DB {

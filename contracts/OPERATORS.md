@@ -118,14 +118,17 @@ and avatar are never returned.
 ## Audit Logs
 
 `GET /v1/operator/audit-logs` returns platform-wide audit history in the audit entry shape defined
-by [`AUDIT.md`](AUDIT.md), paginated, newest first (`created_at` then `id`, descending).
+by [`AUDIT.md`](AUDIT.md), newest first (`created_at` then `id`, descending). Request keyset pages
+with `cursor` ([Cursor pages](README.md#cursor-pages)); offset pages are deprecated here, as for the
+user history.
 
 | Query | Rule |
 |---|---|
 | `from`, `to` | RFC 3339 instants; `from` inclusive, `to` exclusive. `to` defaults to now, `from` to 30 days before `to`. The range must be ordered and at most 92 days |
 | `user_id` | Positive user ID of the recorded user |
 | `action`, `resource`, `method`, `request_id`, `status_code` | Exact matches with the same bounds as `AUDIT.md` |
-| `page`, `per_page` | `per_page` 1–100, default 15 |
+| `cursor`, `per_page` | `cursor` from the previous page's `meta.next_cursor`, empty for the newest page; `per_page` 1–100, default 15 |
+| `page` | Deprecated offset page; cannot be combined with `cursor` |
 
 Invalid values and ranges return `400 COMMON.INVALID_INPUT`. The endpoint reads only; operators
 cannot modify or delete audit records.

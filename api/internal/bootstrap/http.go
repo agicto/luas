@@ -209,7 +209,14 @@ func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error, 
 		_ = diagnostics.Close() // profiles in progress are diagnostic only; do not delay shutdown
 	}
 
-	// 2. Shutdown tracer provider (flush remaining spans)
+	// 2. Let starters finish background work, such as queued audit records, while the database is open.
+	if k.App.Starters != nil {
+		if err := k.App.Starters.Shutdown(ctx); err != nil {
+			log.Printf("Starter shutdown error: %v", err)
+		}
+	}
+
+	// 3. Shutdown tracer provider (flush remaining spans)
 	if k.TracerProvider != nil {
 		if err := k.TracerProvider.Shutdown(ctx); err != nil {
 			log.Printf("Tracer shutdown error: %v", err)
@@ -218,7 +225,7 @@ func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error, 
 		}
 	}
 
-	// 3. Close database connection
+	// 4. Close database connection
 	if k.App.DB != nil {
 		if sqlDB, err := k.App.DB.DB(); err == nil {
 			if err := sqlDB.Close(); err != nil {

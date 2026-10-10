@@ -12,12 +12,27 @@ Notable changes to Luas. Downstream migration steps for each change are in
   migrate in a maintenance window; the default stays `simple_protocol`. See `api/docs/DATABASE.md`.
 - `SERVER_DIAGNOSTICS_ADDR` serves Go runtime profiles on a separate loopback-only listener; off by
   default.
+- Cursor pages for `GET /v1/audit-logs` and `GET /v1/operator/audit-logs`: send `cursor` (empty for
+  the newest page) and follow `meta.next_cursor`. They skip the per-page `COUNT(*)`; on a million
+  audit rows the first page served about 38 times more requests and deep pages fell from up to
+  0.5 s to about 2 ms. The Admin Console audit page uses them.
+- `AUDIT_WRITE_MODE` (`async` by default, or `sync`) and a `ShutdownModule` assembly seam that the
+  HTTP kernel calls after draining requests and before closing the database.
+- The nightly k6 baseline seeds one million audit rows and budgets keyset history reads.
 
 ### Changed
 
+- Request audit records are written in batches after the response by default, raising write-request
+  throughput 50–70%. A record can take about 50 ms to appear in history; graceful shutdown writes
+  every queued record.
+- The `(user_id, id)` audit index replaces the single-column `user_id` index.
 - `DB_MAX_IDLE_CONNS` now defaults to `DB_MAX_OPEN_CONNS` instead of 10. The small idle pool
   reopened PostgreSQL connections whenever concurrency dipped; under load, p99 latency on the
   starter read paths fell from about 100 ms to about 10–20 ms and throughput rose about 40%.
+
+### Deprecated
+
+- Offset pages (`page`) on `GET /v1/audit-logs` and `GET /v1/operator/audit-logs`; use `cursor`.
 
 ### Fixed
 

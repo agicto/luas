@@ -166,3 +166,44 @@ func TestAuditLogsCaptureAPIKeyLifecycle(t *testing.T) {
 	require.True(t, ok)
 	require.ElementsMatch(t, []interface{}{"models:invoke", "models:read"}, scopeValues)
 }
+
+func TestAuditHistoryKeysetPagesFollowTheCursor(t *testing.T) {
+	email := fmt.Sprintf("audit_keyset_%d@example.com", rand.Intn(100000))
+	tc := NewTestCase(t)
+	tc.Post("/v1/register").
+		WithJSON(map[string]any{"username": "keysetuser", "email": email, "password": "password123"}).
+		Call().
+		AssertCreated()
+	token := tc.Post("/v1/login").
+		WithJSON(map[string]any{"username": email, "password": "password123"}).
+		Call().
+		AssertOk().
+		JSON()["data"].(map[string]any)["access_token"].(string)
+	for _, nickname := range []string{"first", "second", "third"} {
+		tc.Put("/v1/users/profile").WithToken(token).WithJSON(map[string]any{"nickname": nickname}).Call().AssertOk()
+	}
+
+	seen := map[float64]bool{}
+	cursor := ""
+	for pages := 0; pages < 10; pages++ {
+		body := tc.Get("/v1/audit-logs?per_page=1&cursor=" + cursor).WithToken(token).Call().AssertOk().JSON()
+		meta := body["meta"].(map[string]any)
+		require.NotContains(t, meta, "total", "keyset pages never count")
+		require.NotContains(t, body, "links")
+		data := body["data"].([]any)
+		require.Len(t, data, 1)
+		id := data[0].(map[string]any)["id"].(float64)
+		require.False(t, seen[id], "a record appeared on two pages")
+		seen[id] = true
+		next, _ := meta["next_cursor"].(string)
+		if next == "" {
+			require.Equal(t, false, meta["has_more"])
+			break
+		}
+		cursor = next
+	}
+	// Registration, sign-in, and the three profile updates are each audited once.
+	require.Len(t, seen, 5)
+
+	tc.Get("/v1/audit-logs?cursor=&page=2").WithToken(token).Call().AssertStatus(400)
+}

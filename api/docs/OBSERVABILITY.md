@@ -61,6 +61,14 @@ business changes. The audit starter redacts sensitive `Changes` fields and recur
 `Metadata` again at the service boundary before persistence. Feature code should record stable IDs
 and state transitions, never bearer values, passwords, invitation tokens, provider payloads, or PII.
 
+Request audit records are written by a bounded in-memory queue in batches of up to 200 rows every
+50 ms (`AUDIT_WRITE_MODE=async`, the default), which raised write-request throughput by 50–70% in
+the baseline measurements. A full queue falls back to a synchronous write, a failed batch is retried
+row by row, and the HTTP kernel drains the queue after it stops accepting requests and before it
+closes the database. Records still queued when a process is killed without a graceful shutdown are
+lost; `AUDIT_WRITE_MODE=sync` restores a write before every response. Commands and other direct
+`Record` callers always write synchronously.
+
 ## Logging APIs
 
 - Business and event operations use the existing `log/slog` seams.

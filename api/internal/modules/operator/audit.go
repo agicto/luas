@@ -72,6 +72,20 @@ func (h *Handler) ListAuditLogs(c *gin.Context) {
 		return
 	}
 	page := pagination.FromContext(c)
+	after, keyset, cursorErr := audit.CursorRequest(c.Request.URL.Query())
+	if cursorErr != nil {
+		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, "Invalid cursor")
+		return
+	}
+	if keyset {
+		items, next, err := h.service.audit.ListAuditLogsAfter(c.Request.Context(), filter, after, page.GetPerPage())
+		if err != nil {
+			writeError(c, "List audit logs", err)
+			return
+		}
+		response.SuccessCursorPage(c, audit.Responses(items), page.GetPerPage(), audit.EncodeCursor(next))
+		return
+	}
 	items, total, err := h.service.audit.ListAuditLogs(c.Request.Context(), filter, page.GetPage(), page.GetPerPage())
 	if err != nil {
 		writeError(c, "List audit logs", err)

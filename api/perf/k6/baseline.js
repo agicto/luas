@@ -19,7 +19,9 @@ const budgets = {
   login: { rate: 5, p95: 300 },
   profile: { rate: 50, p95: 50 },
   api_keys: { rate: 30, p95: 75 },
-  audit_logs: { rate: 20, p95: 100 },
+  // Keyset history over the seeded large table. At this rate on half a million rows, keyset pages
+  // measured p95 7 ms and the offset pages they replace 26 ms, so a reintroduced count fails here.
+  audit_history: { rate: 20, p95: 20 },
 };
 
 const scenarios = {};
@@ -86,7 +88,15 @@ export function api_keys(data) {
   check(response, { 'api keys 200': r => r.status === 200 });
 }
 
-export function audit_logs(data) {
-  const response = http.get(`${baseURL}/v1/audit-logs?page=1&per_page=20`, authorized(data, 'GET /v1/audit-logs'));
-  check(response, { 'audit logs 200': r => r.status === 200 });
+export function audit_history(data) {
+  const first = http.get(`${baseURL}/v1/audit-logs?cursor=&per_page=20`, authorized(data, 'GET /v1/audit-logs (keyset)'));
+  check(first, { 'audit history 200': r => r.status === 200 && r.json('meta.next_cursor') !== undefined });
+  const next = first.json('meta.next_cursor');
+  if (next) {
+    const older = http.get(
+      `${baseURL}/v1/audit-logs?cursor=${encodeURIComponent(next)}&per_page=20`,
+      authorized(data, 'GET /v1/audit-logs (keyset)'),
+    );
+    check(older, { 'audit history next page 200': r => r.status === 200 });
+  }
 }

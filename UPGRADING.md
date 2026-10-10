@@ -11,7 +11,34 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Database pool defaults
+## Unreleased — Database pool defaults, audit cursor pages, and batched audit writes
+
+### Scheduled — Offset pages on audit history endpoints
+
+`page` on `GET /v1/audit-logs` and `GET /v1/operator/audit-logs` is deprecated and will be removed in a
+later minor release: each offset page counts every matching record. Send `cursor` instead (empty for
+the newest page) and pass `meta.next_cursor` back for older pages. Cursor responses have
+`meta.per_page`, `meta.has_more`, and `meta.next_cursor`, and no `total`, `last_page`, or `links`, so
+a client that shows "page X of Y" or a total count must switch to next/previous navigation. Sending
+both `cursor` and `page` returns `400 COMMON.INVALID_INPUT`.
+
+### Medium — Request audit records are written after the response
+
+`AUDIT_WRITE_MODE` defaults to `async`: request audit records are queued and written in batches, so
+reading audit history immediately after a write can miss that write for about 50 ms, and a process
+killed without a graceful shutdown loses the records still queued. Tests that assert on audit
+history right after a request should set `cfg.Audit.WriteMode = config.AuditWriteModeSync`, as the
+feature test harness does. Set `AUDIT_WRITE_MODE=sync` in deployments that need every record
+committed before the response. Code that implements `domain.AuditLogRepository` adds `CreateBatch`,
+`FindByUserIDAfter`, and `FindAllAfter`; code that implements `domain.AuditLogQuery` adds
+`ListAuditLogsAfter`.
+
+### Low — Audit keyset index migration
+
+`2026_10_10_000000_add_audit_user_keyset_index` builds `(user_id, id)` with `CREATE INDEX
+CONCURRENTLY` and then drops the single-column `user_id` index, so it does not block audit writes;
+on a large table it takes time proportional to the table size.
+
 
 ### Low — Idle database connections follow the open limit
 

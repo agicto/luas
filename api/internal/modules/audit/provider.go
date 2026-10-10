@@ -12,7 +12,7 @@ import (
 var ProviderSet = wire.NewSet(
 	NewRepository,
 	wire.Bind(new(domain.AuditLogRepository), new(*repository)),
-	NewService,
+	ProvideService,
 	wire.Bind(new(Service), new(*service)),
 	wire.Bind(new(domain.AuditLogRecorder), new(*service)),
 	wire.Bind(new(domain.AuditLogMaintainer), new(*service)),
@@ -29,5 +29,6 @@ func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 		assembly.WithStarterMigrationNames("2026_04_26_000000_create_audit_logs_table"),
 		assembly.WithStarterMigrationNames("2026_04_27_000002_add_business_fields_to_audit_logs"),
 		assembly.WithStarterMigrationNames("2026_07_25_000000_add_audit_retention_index"),
+		assembly.WithStarterMigrationNames("2026_10_10_000000_add_audit_user_keyset_index"),
 	)
 }

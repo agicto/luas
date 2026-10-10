@@ -16,14 +16,14 @@ export const auditEntrySchema = z.object({
   created_at: z.string(),
 });
 
+/** A keyset page: no total, and `next_cursor` reads the next, older page. */
 export const auditPageSchema = z.object({
   code: z.literal(0),
   data: z.array(auditEntrySchema),
   meta: z.object({
-    current_page: z.number().int().min(1),
-    last_page: z.number().int().min(1),
     per_page: z.number().int().min(1),
-    total: z.number().int().min(0),
+    has_more: z.boolean(),
+    next_cursor: z.string().max(128).nullable(),
   }),
 });
 
@@ -36,5 +36,6 @@ export interface AuditSearch {
   user_id?: number | undefined;
   from?: string | undefined;
   to?: string | undefined;
-  page?: number | undefined;
+  /** Opaque keyset position from the previous page; absent means the newest entries. */
+  cursor?: string | undefined;
 }

@@ -6,18 +6,24 @@ import (
 	"time"
 
 	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/zgiai/luas/api/internal/infra/config"
 	"github.com/zgiai/luas/api/pkg/redact"
 )
 
 // Service defines audit logging operations.
 type Service interface {
 	Record(ctx context.Context, entry *domain.AuditLog) error
+	RecordRequest(ctx context.Context, entry *domain.AuditLog) error
+	Shutdown(ctx context.Context) error
 	ListForUser(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error)
+	ListForUserAfter(ctx context.Context, userID uint, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error)
 	PruneAuditLogs(ctx context.Context, before time.Time, batch int) (int64, error)
 }
 
 type service struct {
 	repo domain.AuditLogRepository
+	// writer, when set, takes request audit records off the response path (AUDIT_WRITE_MODE=async).
+	writer *asyncWriter
 }
 
 var (
@@ -33,7 +39,47 @@ func NewService(repo domain.AuditLogRepository) *service {
 	return &service{repo: repo}
 }
 
+// ProvideService builds the service with the configured request audit write mode.
+func ProvideService(repo domain.AuditLogRepository, cfg *config.Config) *service {
+	svc := NewService(repo)
+	if cfg == nil || cfg.Audit.WriteMode != config.AuditWriteModeSync {
+		svc.writer = newAsyncWriter(repo)
+	}
+	return svc
+}
+
+// Record validates, normalizes, and stores one audit record before returning.
 func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
+	if err := s.prepare(ctx, entry); err != nil {
+		return err
+	}
+	return s.repo.Create(ctx, entry)
+}
+
+// RecordRequest stores the audit record of a completed HTTP request. Normalization, which reads
+// request-scoped changes, finishes before it returns; in async mode the write happens afterwards.
+func (s *service) RecordRequest(ctx context.Context, entry *domain.AuditLog) error {
+	if err := s.prepare(ctx, entry); err != nil {
+		return err
+	}
+	if s.writer == nil {
+		return s.repo.Create(ctx, entry)
+	}
+	if entry.CreatedAt.IsZero() {
+		entry.CreatedAt = time.Now().UTC() // the request time, not the later flush time
+	}
+	return s.writer.Write(ctx, entry)
+}
+
+// Shutdown writes every queued request audit record.
+func (s *service) Shutdown(ctx context.Context) error {
+	if s.writer == nil {
+		return nil
+	}
+	return s.writer.Shutdown(ctx)
+}
+
+func (s *service) prepare(ctx context.Context, entry *domain.AuditLog) error {
 	if entry == nil {
 		return domain.ErrInvalidInput
 	}
@@ -82,8 +128,7 @@ func (s *service) Record(ctx context.Context, entry *domain.AuditLog) error {
 			entry.Result = domain.AuditResultSuccess
 		}
 	}
-
-	return s.repo.Create(ctx, entry)
+	return nil
 }
 
 // PruneAuditLogs removes one bounded batch strictly older than the reviewed cutoff.
@@ -107,6 +152,48 @@ func (s *service) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilte
 	if page < 1 || pageSize < 1 || pageSize > 100 {
 		return nil, 0, domain.ErrInvalidInput
 	}
+	filter, err := platformAuditRange(filter)
+	if err != nil {
+		return nil, 0, err
+	}
+	return s.repo.FindAll(ctx, filter, page, pageSize)
+}
+
+// ListForUserAfter returns one keyset page of the user's own history, newest first.
+func (s *service) ListForUserAfter(
+	ctx context.Context,
+	userID uint,
+	filter domain.AuditLogFilter,
+	after *domain.AuditLogCursor,
+	limit int,
+) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	if userID == 0 || limit < 1 || limit > 100 {
+		return nil, nil, domain.ErrInvalidInput
+	}
+	return s.repo.FindByUserIDAfter(ctx, userID, filter, after, limit)
+}
+
+// ListAuditLogsAfter returns one keyset page of platform-wide history under the same range rules as
+// ListAuditLogs, without counting the matching records.
+func (s *service) ListAuditLogsAfter(
+	ctx context.Context,
+	filter domain.AuditLogFilter,
+	after *domain.AuditLogCursor,
+	limit int,
+) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	if limit < 1 || limit > 100 {
+		return nil, nil, domain.ErrInvalidInput
+	}
+	filter, err := platformAuditRange(filter)
+	if err != nil {
+		return nil, nil, err
+	}
+	return s.repo.FindAllAfter(ctx, filter, after, limit)
+}
+
+// platformAuditRange defaults a missing range to the last 30 days and rejects an unordered range or
+// one longer than domain.MaxAuditQueryRange.
+func platformAuditRange(filter domain.AuditLogFilter) (domain.AuditLogFilter, error) {
 	if filter.To.IsZero() {
 		filter.To = time.Now().UTC()
 	}
@@ -114,9 +201,9 @@ func (s *service) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilte
 		filter.From = filter.To.Add(-30 * 24 * time.Hour)
 	}
 	if !filter.From.Before(filter.To) || filter.To.Sub(filter.From) > domain.MaxAuditQueryRange {
-		return nil, 0, domain.ErrInvalidInput
+		return filter, domain.ErrInvalidInput
 	}
-	return s.repo.FindAll(ctx, filter, page, pageSize)
+	return filter, nil
 }
 
 func normalizeActorType(actorType string, userID, apiKeyID *uint) string {

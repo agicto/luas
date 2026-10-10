@@ -101,6 +101,7 @@ type Config struct {
 	ObjectStorage  ObjectStorageConfig
 	Asset          AssetConfig
 	Webhook        WebhookConfig
+	Audit          AuditConfig
 	Operator       OperatorConfig
 	R2             R2Config
 	Middleware     MiddlewareConfig
@@ -158,6 +159,20 @@ type ServerConfig struct {
 	// DiagnosticsAddr serves Go runtime profiles (pprof) when set. It must be a loopback address;
 	// reach it with `kubectl port-forward` or an SSH tunnel, never through the public listener.
 	DiagnosticsAddr string
+}
+
+// AuditWriteMode values select when request audit records are written.
+const (
+	// AuditWriteModeAsync queues request audit records and writes them in batches off the response
+	// path; a graceful shutdown drains the queue.
+	AuditWriteModeAsync = "async"
+	// AuditWriteModeSync writes each request audit record before the response completes.
+	AuditWriteModeSync = "sync"
+)
+
+// AuditConfig holds audit starter runtime policy.
+type AuditConfig struct {
+	WriteMode string
 }
 
 // MiddlewareConfig holds middleware configuration
@@ -542,6 +557,9 @@ func Load() (*Config, error) {
 			AllowInsecureHTTP:   env.GetBool("WEBHOOK_ALLOW_INSECURE_HTTP", false),
 			AllowPrivateTargets: env.GetBool("WEBHOOK_ALLOW_PRIVATE_TARGETS", false),
 		},
+		Audit: AuditConfig{
+			WriteMode: strings.TrimSpace(env.Get("AUDIT_WRITE_MODE", AuditWriteModeAsync)),
+		},
 		Operator: OperatorConfig{
 			AllowedOrigins:    env.GetSlice("OPERATOR_ALLOWED_ORIGINS", []string{}),
 			SessionCookieName: env.Get("OPERATOR_SESSION_COOKIE_NAME", ""),
@@ -881,6 +899,11 @@ func validate(cfg *Config) error {
 		}
 	}
 
+	switch cfg.Audit.WriteMode {
+	case "", AuditWriteModeAsync, AuditWriteModeSync:
+	default:
+		return fmt.Errorf("AUDIT_WRITE_MODE must be async or sync")
+	}
 	if err := validateServerTransport(cfg.Server, cfg.Middleware); err != nil {
 		return err
 	}

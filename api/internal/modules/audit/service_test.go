@@ -23,6 +23,11 @@ func (m *mockRepository) Create(ctx context.Context, log *domain.AuditLog) error
 	return args.Error(0)
 }
 
+func (m *mockRepository) CreateBatch(ctx context.Context, logs []*domain.AuditLog) error {
+	args := m.Called(ctx, logs)
+	return args.Error(0)
+}
+
 func (m *mockRepository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
 	args := m.Called(ctx, userID, filter, page, pageSize)
 	if args.Get(0) == nil {
@@ -37,6 +42,20 @@ func (m *mockRepository) FindAll(ctx context.Context, filter domain.AuditLogFilt
 		return nil, args.Get(1).(int64), args.Error(2)
 	}
 	return args.Get(0).([]*domain.AuditLog), args.Get(1).(int64), args.Error(2)
+}
+
+func (m *mockRepository) FindByUserIDAfter(ctx context.Context, userID uint, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	args := m.Called(ctx, userID, filter, after, limit)
+	next, _ := args.Get(1).(*domain.AuditLogCursor)
+	items, _ := args.Get(0).([]*domain.AuditLog)
+	return items, next, args.Error(2)
+}
+
+func (m *mockRepository) FindAllAfter(ctx context.Context, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	args := m.Called(ctx, filter, after, limit)
+	next, _ := args.Get(1).(*domain.AuditLogCursor)
+	items, _ := args.Get(0).([]*domain.AuditLog)
+	return items, next, args.Error(2)
 }
 
 func (m *mockRepository) PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error) {

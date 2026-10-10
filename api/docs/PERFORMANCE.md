@@ -35,7 +35,7 @@ cost rather than queueing:
 | `login` | `POST /v1/login` (bcrypt cost 10) | 5/s | 300 ms |
 | `profile` | `GET /v1/users/profile` | 50/s | 50 ms |
 | `api_keys` | `GET /v1/api-keys` | 30/s | 75 ms |
-| `audit_logs` | `GET /v1/audit-logs` | 20/s | 100 ms |
+| `audit_history` | `GET /v1/audit-logs?cursor=` (two keyset pages) over 1,000,000 seeded rows | 20/s | 20 ms |
 
 Every run also requires fewer than 1% failed requests and more than 99% passing checks. On a
 GitHub-hosted runner the read paths measure about 1–4 ms at p95, well inside their budgets. Login
@@ -49,6 +49,7 @@ controls. Settings:
 |---|---|---|
 | `LUAS_PERF_DURATION` | `30s` | Length of each scenario |
 | `LUAS_PERF_BUDGET_SCALE` | `1` | Multiplies every p95 budget, for slower hardware; error budgets are unchanged |
+| `LUAS_PERF_AUDIT_ROWS` | `1000000` | Audit rows seeded with `psql` (half owned by the measured account); `0` skips seeding |
 | `LUAS_PERF_OUTPUT` | `perf/results/summary.json` | k6 summary export |
 | `K6` | `k6` on `PATH` | k6 binary |
 
@@ -81,6 +82,25 @@ laptop), so treat the ratios rather than the absolute numbers as the result:
 With the small idle pool, the CPU profile showed new PostgreSQL connections (SCRAM key derivation)
 being opened throughout the run: every dip in concurrency closed connections that the next burst
 had to reopen.
+
+## Audit History At Scale
+
+With 1,000,000 audit rows, 500,000 of them owned by the measured account, 16 concurrent clients:
+
+| Request | Throughput | p50 |
+|---|---|---|
+| Offset page 1 (`page=1`, deprecated) | ~170 req/s | ~92 ms |
+| Keyset first page (`cursor=`) | ~6,500 req/s | ~2.3 ms |
+| Offset page 20,000 | — | 130–550 ms per request |
+| Keyset page at the same depth | — | ~2 ms per request |
+
+The offset cost is the `COUNT(*)` each page runs: reading the 20 rows takes about 0.1 ms, counting
+half a million takes about 10 ms of parallel scan per request, so concurrent readers saturate the
+database CPU.
+
+Write requests with the audit middleware measured about 2,500–3,400 req/s writing each record before
+the response (`AUDIT_WRITE_MODE=sync`) and 4,200–5,800 req/s with batched writes (the default), with
+every record present after a graceful shutdown.
 
 ## Changing The Baseline
 

@@ -14,7 +14,7 @@ const searchSchema = z.object({
   user_id: z.coerce.number().int().positive().optional().catch(undefined),
   from: day,
   to: day,
-  page: z.coerce.number().int().min(1).optional().catch(undefined),
+  cursor: z.string().max(128).optional().catch(undefined),
 });
 
 export const Route = createFileRoute('/console/audit')({

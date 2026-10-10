@@ -67,14 +67,29 @@ const MaxAuditQueryRange = 92 * 24 * time.Hour
 // AuditLogQuery is the platform-wide audit read seam for platform operators. Results are newest
 // first; From is inclusive and To is exclusive.
 type AuditLogQuery interface {
+	// ListAuditLogs serves the offset pages that the contract deprecates: each page counts every
+	// matching row. New callers use ListAuditLogsAfter.
 	ListAuditLogs(ctx context.Context, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
+	ListAuditLogsAfter(ctx context.Context, filter AuditLogFilter, after *AuditLogCursor, limit int) ([]*AuditLog, *AuditLogCursor, error)
+}
+
+// AuditLogCursor marks the last record of a keyset page. The next page holds records strictly
+// older than it: by ID for one user's history, by (CreatedAt, ID) for the platform-wide list.
+type AuditLogCursor struct {
+	CreatedAt time.Time
+	ID        uint
 }
 
 // AuditLogRepository defines persistence for audit log records.
 type AuditLogRepository interface {
 	Create(ctx context.Context, log *AuditLog) error
+	CreateBatch(ctx context.Context, logs []*AuditLog) error
 	FindByUserID(ctx context.Context, userID uint, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
 	FindAll(ctx context.Context, filter AuditLogFilter, page, pageSize int) ([]*AuditLog, int64, error)
+	// FindByUserIDAfter and FindAllAfter return up to limit records older than after (nil starts at
+	// the newest) and the cursor for the next page, which is nil when no older record remains.
+	FindByUserIDAfter(ctx context.Context, userID uint, filter AuditLogFilter, after *AuditLogCursor, limit int) ([]*AuditLog, *AuditLogCursor, error)
+	FindAllAfter(ctx context.Context, filter AuditLogFilter, after *AuditLogCursor, limit int) ([]*AuditLog, *AuditLogCursor, error)
 	PruneBefore(ctx context.Context, before time.Time, batch int) (int64, error)
 }
 

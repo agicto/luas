@@ -1,6 +1,8 @@
 package assembly
 
 import (
+	"context"
+
 	"github.com/zgiai/luas/api/internal/infra/events"
 	"github.com/zgiai/luas/api/internal/infra/router"
 	"github.com/zgiai/luas/api/pkg/response"
@@ -17,6 +19,13 @@ type Module interface {
 type ActivationModule interface {
 	Module
 	Activate() error
+}
+
+// ShutdownModule finishes background work after the HTTP server stops taking requests and before
+// shared resources such as the database close.
+type ShutdownModule interface {
+	Module
+	Shutdown(ctx context.Context) error
 }
 
 // RouteModule registers HTTP routes for a module.

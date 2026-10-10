@@ -99,6 +99,29 @@ Paginated responses add `meta` and `links`:
 }
 ```
 
+### Cursor Pages
+
+Endpoints whose collections grow without bound, such as audit history, also serve keyset pages.
+Sending `cursor` selects them; an empty value requests the newest page:
+
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": [],
+  "meta": {
+    "per_page": 15,
+    "has_more": true,
+    "next_cursor": "MTc5MTYwMjE..."
+  }
+}
+```
+
+Pass `meta.next_cursor` back unchanged as `cursor` to read the next page; it is `null` on the last
+page. The token is opaque and its format is not part of the contract. A cursor page has no `total`
+or `links`, so it costs the same at any depth. A malformed cursor, or `cursor` combined with
+`page`, returns `400 COMMON.INVALID_INPUT`.
+
 ## Error Responses
 
 API errors expose a numeric HTTP `code` and a stable machine-readable `error_code`:

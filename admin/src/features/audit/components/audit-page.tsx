@@ -22,7 +22,14 @@ export function AuditPage({ search, onSearchChange }: AuditPageProps) {
   const [userId, setUserId] = useState(search.user_id ? String(search.user_id) : '');
   const [from, setFrom] = useState(search.from ?? '');
   const [to, setTo] = useState(search.to ?? '');
+  // Cursors of the pages before the current one, so Previous retraces the visited pages. A page
+  // opened from a link has no trail, and Previous returns to the newest entries.
+  const [trail, setTrail] = useState<string[]>([]);
   const meta = logs.data?.meta;
+  const goTo = (cursor: string | undefined, nextTrail: string[]) => {
+    setTrail(nextTrail);
+    onSearchChange({ ...search, cursor });
+  };
   const dateFormat = new Intl.DateTimeFormat(i18n.language, {
     dateStyle: 'medium',
     timeStyle: 'medium',
@@ -38,8 +45,9 @@ export function AuditPage({ search, onSearchChange }: AuditPageProps) {
       user_id: Number.isInteger(parsedUser) && parsedUser > 0 ? parsedUser : undefined,
       from: from || undefined,
       to: to || undefined,
-      page: undefined,
+      cursor: undefined,
     });
+    setTrail([]);
   };
 
   return (
@@ -60,9 +68,7 @@ export function AuditPage({ search, onSearchChange }: AuditPageProps) {
               <h2 id="audit-title" className="panel-title">
                 {t('audit.listTitle')}
               </h2>
-              <p className="panel-description">
-                {meta ? t('audit.total', { count: meta.total }) : t('audit.rangeHint')}
-              </p>
+              <p className="panel-description">{t('audit.rangeHint')}</p>
             </div>
           </div>
           <form
@@ -171,34 +177,29 @@ export function AuditPage({ search, onSearchChange }: AuditPageProps) {
           )}
         </div>
 
-        {meta && meta.last_page > 1 ? (
+        {meta && (search.cursor || meta.has_more) ? (
           <nav
-            className="flex items-center justify-between border-t px-4 py-3 text-sm"
+            className="flex items-center justify-end gap-2 border-t px-4 py-3 text-sm"
             aria-label={t('users.pagination')}
           >
-            <span className="text-muted-foreground">
-              {t('users.page', { page: meta.current_page, pages: meta.last_page })}
-            </span>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={meta.current_page <= 1}
-                onClick={() => onSearchChange({ ...search, page: meta.current_page - 1 })}
-              >
-                {t('users.previous')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                disabled={meta.current_page >= meta.last_page}
-                onClick={() => onSearchChange({ ...search, page: meta.current_page + 1 })}
-              >
-                {t('users.next')}
-              </Button>
-            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!search.cursor}
+              onClick={() => goTo(trail.at(-1) || undefined, trail.slice(0, -1))}
+            >
+              {t('users.previous')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={!meta.next_cursor}
+              onClick={() => goTo(meta.next_cursor ?? undefined, [...trail, search.cursor ?? ''])}
+            >
+              {t('users.next')}
+            </Button>
           </nav>
         ) : null}
       </section>

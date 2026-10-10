@@ -414,12 +414,15 @@ paths:
     get:
       operationId: listAuditLogs
       summary: List the authenticated user's audit history
-      description: Newest first; only records whose `user_id` is the caller.
+      description: Newest first; only records whose `user_id` is the caller. Pass `cursor` (empty for
+        the first page) for keyset pages, which cost the same at any depth. Offset pages (`page`) are
+        deprecated for this operation because each one counts every matching record.
       tags:
         - Audit
       security:
         - bearerSession: []
       parameters:
+        - $ref: '#/components/parameters/AuditCursor'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
         - name: action
@@ -450,11 +453,13 @@ paths:
             maximum: 599
       responses:
         '200':
-          description: Paginated audit entries.
+          description: A keyset page when `cursor` is present, otherwise a deprecated offset page.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditLogPageResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/AuditLogCursorPageResponse'
+                  - $ref: '#/components/schemas/AuditLogPageResponse'
         '400':
           $ref: '#/components/responses/InvalidInput'
         '401':
@@ -2514,7 +2519,8 @@ paths:
       operationId: listOperatorAuditLogs
       summary: List platform-wide audit history, newest first
       description: '`to` defaults to now and `from` to 30 days before `to`; the range must be ordered
-        and at most 92 days.'
+        and at most 92 days. Pass `cursor` (empty for the first page) for keyset pages; offset pages
+        (`page`) are deprecated for this operation because each one counts every matching record.'
       tags:
         - Operator
       security:
@@ -2564,11 +2570,12 @@ paths:
             type: integer
             minimum: 100
             maximum: 599
+        - $ref: '#/components/parameters/AuditCursor'
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
-          description: Paginated audit entries.
+          description: A keyset page when `cursor` is present, otherwise a deprecated offset page.
           headers:
             Cache-Control:
               description: Operator responses are never cached.
@@ -2578,7 +2585,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuditLogPageResponse'
+                oneOf:
+                  - $ref: '#/components/schemas/AuditLogCursorPageResponse'
+                  - $ref: '#/components/schemas/AuditLogPageResponse'
         '400':
           $ref: '#/components/responses/InvalidInput'
         '401':
@@ -3405,6 +3414,14 @@ components:
         type: integer
         minimum: 1
         default: 1
+    AuditCursor:
+      name: cursor
+      in: query
+      description: Opaque keyset position from `meta.next_cursor`; empty requests the first page. It
+        selects keyset pagination and cannot be combined with `page`.
+      schema:
+        type: string
+        maxLength: 128
     PerPage:
       name: per_page
       in: query
@@ -4559,6 +4576,45 @@ components:
         updated_at:
           type: string
           format: date-time
+    CursorPageMeta:
+      type: object
+      additionalProperties: false
+      required:
+        - per_page
+        - has_more
+        - next_cursor
+      properties:
+        per_page:
+          type: integer
+          minimum: 1
+          maximum: 100
+        has_more:
+          type: boolean
+        next_cursor:
+          description: Pass as `cursor` to read the next, older page; null on the last page.
+          type:
+            - string
+            - 'null'
+          maxLength: 128
+    AuditLogCursorPageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'
     AuditLogPageResponse:
       type: object
       additionalProperties: false
