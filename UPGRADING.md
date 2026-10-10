@@ -11,7 +11,7 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Database pool defaults, audit cursor pages, and batched audit writes
+## v0.23.0 — Go 1.26, database pool defaults, audit cursor pages, and batched audit writes
 
 ### High — Build with Go 1.26.9
 

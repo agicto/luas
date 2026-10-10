@@ -6,6 +6,8 @@ Notable changes to Luas. Downstream migration steps for each change are in
 
 ## Unreleased
 
+## v0.23.0 — 2026-10-10
+
 ### Added
 
 - `DB_QUERY_EXEC_MODE` opts into pgx statement caching (`cache_statement`) for deployments that
