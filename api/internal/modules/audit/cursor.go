@@ -46,19 +46,20 @@ func DecodeCursor(token string) (*domain.AuditLogCursor, error) {
 	return &domain.AuditLogCursor{CreatedAt: time.Unix(0, createdAt).UTC(), ID: uint(recordID)}, nil
 }
 
-// CursorRequest reports whether the request asked for keyset pagination and decodes its position.
-// A present but empty cursor parameter requests the first keyset page.
-func CursorRequest(query map[string][]string) (cursor *domain.AuditLogCursor, keyset bool, err error) {
-	values, keyset := query["cursor"]
-	if !keyset {
-		return nil, false, nil
-	}
+// CursorRequest decodes the keyset position of a history request. A missing or empty cursor starts
+// at the newest record. Offset pages were removed, so a page parameter is rejected rather than
+// silently ignored.
+func CursorRequest(query map[string][]string) (*domain.AuditLogCursor, error) {
 	if _, hasPage := query["page"]; hasPage {
-		return nil, true, fmt.Errorf("%w: cursor cannot be combined with page", domain.ErrInvalidInput)
+		return nil, fmt.Errorf("%w: page is no longer supported; use cursor", domain.ErrInvalidInput)
 	}
-	if len(values) != 1 {
-		return nil, true, fmt.Errorf("%w: cursor must appear once", domain.ErrInvalidInput)
+	values := query["cursor"]
+	switch len(values) {
+	case 0:
+		return nil, nil
+	case 1:
+		return DecodeCursor(values[0])
+	default:
+		return nil, fmt.Errorf("%w: cursor must appear once", domain.ErrInvalidInput)
 	}
-	cursor, err = DecodeCursor(values[0])
-	return cursor, true, err
 }

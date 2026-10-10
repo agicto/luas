@@ -101,8 +101,8 @@ Paginated responses add `meta` and `links`:
 
 ### Cursor Pages
 
-Endpoints whose collections grow without bound, such as audit history, also serve keyset pages.
-Sending `cursor` selects them; an empty value requests the newest page:
+Endpoints whose collections grow without bound, such as audit history, serve keyset pages. A
+missing or empty `cursor` requests the newest page:
 
 ```json
 {
@@ -119,8 +119,8 @@ Sending `cursor` selects them; an empty value requests the newest page:
 
 Pass `meta.next_cursor` back unchanged as `cursor` to read the next page; it is `null` on the last
 page. The token is opaque and its format is not part of the contract. A cursor page has no `total`
-or `links`, so it costs the same at any depth. A malformed cursor, or `cursor` combined with
-`page`, returns `400 COMMON.INVALID_INPUT`.
+or `links`, so it costs the same at any depth. A malformed cursor, or a `page` parameter on a
+keyset endpoint, returns `400 COMMON.INVALID_INPUT`.
 
 ## Error Responses
 

@@ -11,6 +11,18 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## Unreleased — Audit offset pages removed
+
+### High — Audit history endpoints return keyset pages only
+
+As scheduled in v0.23.0, `GET /v1/audit-logs` and `GET /v1/operator/audit-logs` no longer accept
+`page`; a request with it returns `400 COMMON.INVALID_INPUT`. Every response is a keyset page with
+`meta.per_page`, `meta.has_more`, and `meta.next_cursor`, and no `total`, `last_page`, or `links`.
+Omit `cursor` (or send it empty) for the newest page and pass `meta.next_cursor` back for older
+ones. In Go, use `ListForUserAfter` and `ListAuditLogsAfter` (and `FindByUserIDAfter` and
+`FindAllAfter` on the repository); the offset methods are removed from the audit service,
+`domain.AuditLogQuery`, and `domain.AuditLogRepository`.
+
 ## v0.23.0 — Go 1.26, database pool defaults, audit cursor pages, and batched audit writes
 
 ### High — Build with Go 1.26.9

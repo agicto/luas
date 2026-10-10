@@ -15,7 +15,6 @@ type Service interface {
 	Record(ctx context.Context, entry *domain.AuditLog) error
 	RecordRequest(ctx context.Context, entry *domain.AuditLog) error
 	Shutdown(ctx context.Context) error
-	ListForUser(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error)
 	ListForUserAfter(ctx context.Context, userID uint, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error)
 	PruneAuditLogs(ctx context.Context, before time.Time, batch int) (int64, error)
 }
@@ -139,26 +138,6 @@ func (s *service) PruneAuditLogs(ctx context.Context, before time.Time, batch in
 	return s.repo.PruneBefore(ctx, before.UTC(), batch)
 }
 
-func (s *service) ListForUser(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	if userID == 0 {
-		return nil, 0, domain.ErrInvalidInput
-	}
-	return s.repo.FindByUserID(ctx, userID, filter, page, pageSize)
-}
-
-// ListAuditLogs returns platform-wide audit logs for platform operators. The time range is required
-// to be ordered and at most domain.MaxAuditQueryRange; a missing range covers the last 30 days.
-func (s *service) ListAuditLogs(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	if page < 1 || pageSize < 1 || pageSize > 100 {
-		return nil, 0, domain.ErrInvalidInput
-	}
-	filter, err := platformAuditRange(filter)
-	if err != nil {
-		return nil, 0, err
-	}
-	return s.repo.FindAll(ctx, filter, page, pageSize)
-}
-
 // ListForUserAfter returns one keyset page of the user's own history, newest first.
 func (s *service) ListForUserAfter(
 	ctx context.Context,
@@ -173,8 +152,8 @@ func (s *service) ListForUserAfter(
 	return s.repo.FindByUserIDAfter(ctx, userID, filter, after, limit)
 }
 
-// ListAuditLogsAfter returns one keyset page of platform-wide history under the same range rules as
-// ListAuditLogs, without counting the matching records.
+// ListAuditLogsAfter returns one keyset page of platform-wide history. The time range defaults to
+// the last 30 days and may span at most domain.MaxAuditQueryRange.
 func (s *service) ListAuditLogsAfter(
 	ctx context.Context,
 	filter domain.AuditLogFilter,

@@ -68,15 +68,6 @@ func (r *repository) CreateBatch(ctx context.Context, entries []*domain.AuditLog
 	return nil
 }
 
-func (r *repository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	db, err := r.withContext(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	query := applyAuditFilter(db.Model(&AuditLogPO{}).Where("user_id = ?", userID), filter)
-	return findAuditPage(query, "id DESC", page, pageSize)
-}
-
 // FindByUserIDAfter pages one user's history newest first on the (user_id, id) index.
 func (r *repository) FindByUserIDAfter(
 	ctx context.Context,
@@ -94,15 +85,6 @@ func (r *repository) FindByUserIDAfter(
 		query = query.Where("id < ?", after.ID)
 	}
 	return findAuditSlice(query.Order("id DESC"), limit)
-}
-
-// FindAll returns platform-wide audit logs newest first, using the (created_at, id) index.
-func (r *repository) FindAll(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	db, err := r.withContext(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-	return findAuditPage(platformAuditQuery(db, filter), "created_at DESC, id DESC", page, pageSize)
 }
 
 // FindAllAfter pages platform-wide history newest first on the (created_at, id) index.
@@ -173,30 +155,6 @@ func applyAuditFilter(query *gorm.DB, filter domain.AuditLogFilter) *gorm.DB {
 		query = query.Where("status_code = ?", filter.StatusCode)
 	}
 	return query
-}
-
-func findAuditPage(query *gorm.DB, order string, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 15
-	}
-	var (
-		rows  []AuditLogPO
-		total int64
-	)
-	if err := query.Session(&gorm.Session{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-	if err := query.Order(order).Offset((page - 1) * pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
-		return nil, 0, err
-	}
-	items := make([]*domain.AuditLog, len(rows))
-	for i := range rows {
-		items[i] = rows[i].toDomain()
-	}
-	return items, total, nil
 }
 
 // PruneBefore deletes one deterministic PostgreSQL batch without holding an unbounded transaction.
