@@ -687,3 +687,32 @@ func TestServiceRequestPasswordResetSendsNothingForUnknownEmail(t *testing.T) {
 	require.NoError(t, svc.RequestPasswordReset(context.Background(), &UserPasswordResetRequest{Email: "ghost@example.test"}))
 	mailer.AssertNothingSent(t)
 }
+
+func TestCurrentUserLookupsKeepDatabaseFailuresDistinctFromMissingAccounts(t *testing.T) {
+	queryFailure := errors.New("cached plan must not change result type")
+	for _, test := range []struct {
+		name    string
+		lookup  error
+		want    error
+		notWant error
+	}{
+		{name: "missing account", lookup: gorm.ErrRecordNotFound, want: domain.ErrUserNotFound},
+		{name: "database unavailable", lookup: domain.ErrServiceUnavailable, want: domain.ErrServiceUnavailable},
+		{name: "query failure", lookup: queryFailure, want: queryFailure, notWant: domain.ErrUserNotFound},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			svc := newTestService(&fakeRepo{
+				findByIDFn: func(context.Context, uint) (*domain.User, error) { return nil, test.lookup },
+			})
+			_, profileErr := svc.GetProfile(context.Background(), 7)
+			_, updateErr := svc.UpdateProfile(context.Background(), 7, &UserUpdateRequest{})
+			passwordErr := svc.ChangePassword(context.Background(), 7, &UserChangePasswordRequest{})
+			for _, err := range []error{profileErr, updateErr, passwordErr} {
+				assert.ErrorIs(t, err, test.want)
+				if test.notWant != nil {
+					assert.NotErrorIs(t, err, test.notWant)
+				}
+			}
+		})
+	}
+}

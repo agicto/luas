@@ -705,3 +705,24 @@ func TestValidate_OperatorPolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateDiagnosticsAddrRequiresLoopback(t *testing.T) {
+	for addr, ok := range map[string]bool{
+		"":               true,
+		"127.0.0.1:6060": true,
+		"[::1]:6060":     true,
+		"localhost:6060": true,
+		"0.0.0.0:6060":   false,
+		":6060":          false,
+		"10.0.0.5:6060":  false,
+		"127.0.0.1":      false,
+	} {
+		err := validateDiagnosticsAddr(addr)
+		if ok && err != nil {
+			t.Errorf("validateDiagnosticsAddr(%q) = %v, want nil", addr, err)
+		}
+		if !ok && err == nil {
+			t.Errorf("validateDiagnosticsAddr(%q) = nil, want a rejection", addr)
+		}
+	}
+}

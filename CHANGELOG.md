@@ -6,6 +6,24 @@ Notable changes to Luas. Downstream migration steps for each change are in
 
 ## Unreleased
 
+### Added
+
+- `DB_QUERY_EXEC_MODE` opts into pgx statement caching (`cache_statement`) for deployments that
+  migrate in a maintenance window; the default stays `simple_protocol`. See `api/docs/DATABASE.md`.
+- `SERVER_DIAGNOSTICS_ADDR` serves Go runtime profiles on a separate loopback-only listener; off by
+  default.
+
+### Changed
+
+- `DB_MAX_IDLE_CONNS` now defaults to `DB_MAX_OPEN_CONNS` instead of 10. The small idle pool
+  reopened PostgreSQL connections whenever concurrency dipped; under load, p99 latency on the
+  starter read paths fell from about 100 ms to about 10–20 ms and throughput rose about 40%.
+
+### Fixed
+
+- Profile, profile update, and password change answered any database failure with
+  `404 USER.NOT_FOUND`; only a missing account does now, and other failures are server errors.
+
 ## v0.22.0 — 2026-10-04
 
 ### Added

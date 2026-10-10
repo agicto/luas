@@ -708,3 +708,26 @@ func TestLoadAIConfigRejectsInsecureProductionEndpoint(t *testing.T) {
 		t.Fatalf("LoadAIConfig() error = %v, want production HTTPS error", err)
 	}
 }
+
+func TestDatabaseIdlePoolDefaultsToTheOpenLimit(t *testing.T) {
+	withoutEnv(t, "DB_MAX_IDLE_CONNS")
+	t.Setenv("DB_ENABLED", "false")
+	t.Setenv("DB_MAX_OPEN_CONNS", "20")
+
+	cfg, err := LoadFresh()
+	if err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Database.MaxOpenConns != 20 || cfg.Database.MaxIdleConns != 20 {
+		t.Fatalf("pool = open %d idle %d, want idle to follow the open limit of 20",
+			cfg.Database.MaxOpenConns, cfg.Database.MaxIdleConns)
+	}
+
+	t.Setenv("DB_MAX_IDLE_CONNS", "5")
+	if cfg, err = LoadFresh(); err != nil {
+		t.Fatalf("LoadFresh() error = %v", err)
+	}
+	if cfg.Database.MaxIdleConns != 5 {
+		t.Fatalf("explicit idle pool = %d, want 5", cfg.Database.MaxIdleConns)
+	}
+}

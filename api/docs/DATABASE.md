@@ -40,7 +40,8 @@ resources:
 |---|---:|---|
 | `DB_DRIVER` | `postgres` | Exact `postgres` is required; every other value fails validation. |
 | `DB_MAX_OPEN_CONNS` | `100` | Positive and finite; zero cannot silently enable an unlimited pool. |
-| `DB_MAX_IDLE_CONNS` | `10` | Zero through `DB_MAX_OPEN_CONNS`. |
+| `DB_MAX_IDLE_CONNS` | `DB_MAX_OPEN_CONNS` | Zero through `DB_MAX_OPEN_CONNS`. Keeping it at the open limit avoids reconnecting (TCP, TLS, SCRAM) whenever concurrency dips; `DB_CONN_MAX_IDLE_TIME` still retires unused connections. |
+| `DB_QUERY_EXEC_MODE` | `simple_protocol` | `simple_protocol`, `cache_statement`, `cache_describe`, or `describe_exec`; see [Query execution mode](#query-execution-mode). |
 | `DB_CONN_MAX_IDLE_TIME` | `15m` | Positive and no longer than connection lifetime. |
 | `DB_CONN_MAX_LIFETIME` | `1h` | Positive maximum reuse age. |
 | `DB_CONNECT_TIMEOUT` | `5s` | Positive startup connection and ping deadline. |
@@ -68,10 +69,29 @@ GORM automatic ping is disabled. Luas applies the finite pool policy first, then
 returns an error. The HTTP kernel closes the long-lived shared pool after request draining and trace
 shutdown.
 
-The PostgreSQL adapter deliberately retains `PreferSimpleProtocol`. Do not enable GORM
-`PrepareStmt`, pgx implicit statement caching, or `SkipDefaultTransaction` globally without a
-transaction audit and measurements against the deployment's pooler mode. GORM write transactions
-protect consistency; a local latency win is not enough to remove them across all starters.
+Do not enable GORM `PrepareStmt` or `SkipDefaultTransaction` globally without a transaction audit
+and measurements against the deployment's pooler mode. GORM write transactions protect
+consistency; a local latency win is not enough to remove them across all starters.
+
+### Query Execution Mode
+
+`DB_QUERY_EXEC_MODE` selects how pgx sends queries. The default, `simple_protocol`, sends each query
+as text in one round trip. It works behind every pooler mode, including PgBouncer transaction
+pooling, and caches nothing.
+
+`cache_statement` prepares each distinct query once per connection and reuses the plan. Measured on
+the starter read paths, it cut median latency by about 30% and raised throughput by 15–40%. It has
+one cost that matters for rolling deployments: a migration that changes a table's columns
+invalidates every cached `SELECT *` plan, and **the first such query on each pooled connection
+fails** (`cached plan must not change result type`) before pgx drops the plan. With 100 pooled
+connections, an old replica can fail up to 100 requests while a migration runs. Choose it only when:
+
+- migrations run in a maintenance window, or replicas restart after each migration before serving;
+- every pooler between the API and PostgreSQL supports prepared statements (PgBouncer 1.21+ with
+  `max_prepared_statements`, or session pooling).
+
+`cache_describe` and `describe_exec` trade some of the gain for fewer cached plans; they need the
+same pooler support.
 
 ## Starter Query Baseline
 
