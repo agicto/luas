@@ -52,6 +52,9 @@ func setupApp(t *testing.T, configure func(*config.Config), optionalStarters ...
 	cfg.AI.DefaultProvider = "openai"
 	cfg.AI.DefaultModel = "gpt-5"
 	cfg.Organization.InvitationTTL = config.DefaultOrganizationInvitationTTL
+	// Feature tests read audit history right after a request; async mode is covered by the audit
+	// starter's PostgreSQL tests.
+	cfg.Audit.WriteMode = config.AuditWriteModeSync
 	if configure != nil {
 		configure(cfg)
 	}

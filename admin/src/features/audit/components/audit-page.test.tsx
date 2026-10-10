@@ -1,17 +1,19 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@/i18n';
 import { AuditPage } from '@/features/audit/components/audit-page';
+import type { AuditSearch } from '@/features/audit/types';
 
-function renderWith(response: Response) {
+function renderWith(response: Response, search: AuditSearch = {}, onSearchChange = vi.fn()) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
-  render(
+  const view = render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
     >
-      <AuditPage search={{}} onSearchChange={vi.fn()} />
+      <AuditPage search={search} onSearchChange={onSearchChange} />
     </QueryClientProvider>,
   );
+  return { ...view, onSearchChange };
 }
 
 function json(body: unknown, status = 200) {
@@ -43,7 +45,7 @@ describe('AuditPage', () => {
             created_at: '2026-09-30T04:40:00Z',
           },
         ],
-        meta: { current_page: 1, last_page: 1, per_page: 50, total: 1 },
+        meta: { per_page: 50, has_more: false, next_cursor: null },
       }),
     );
 
@@ -55,5 +57,36 @@ describe('AuditPage', () => {
   it('explains an invalid date range', async () => {
     renderWith(json({ code: 400, error_code: 'COMMON.INVALID_INPUT', message: 'bad' }, 400));
     expect(await screen.findByRole('alert')).toHaveTextContent(/92 days/);
+  });
+
+  it('pages forward with the next cursor and back to the newest entries', async () => {
+    const entry = {
+      id: 2,
+      actor_type: 'system',
+      action: 'grant',
+      resource: 'platform_operators',
+      method: 'CLI',
+      path: 'operator:grant',
+      status_code: 200,
+      created_at: '2026-09-30T04:40:00Z',
+    };
+    const page = (next: string | null) =>
+      json({
+        code: 0,
+        message: 'success',
+        data: [entry],
+        meta: { per_page: 50, has_more: next !== null, next_cursor: next },
+      });
+
+    const first = renderWith(page('older-1'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Next' }));
+    expect(first.onSearchChange).toHaveBeenLastCalledWith({ cursor: 'older-1' });
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    first.unmount();
+
+    const deep = renderWith(page(null), { cursor: 'older-1' });
+    expect(await screen.findByRole('button', { name: 'Next' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+    expect(deep.onSearchChange).toHaveBeenLastCalledWith({ cursor: undefined });
   });
 });

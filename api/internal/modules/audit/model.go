@@ -9,10 +9,10 @@ import (
 
 // AuditLogPO is the persistent object for audit log records.
 type AuditLogPO struct {
-	ID         uint      `gorm:"primaryKey;index:idx_audit_logs_created_id,priority:2"`
+	ID         uint      `gorm:"primaryKey;index:idx_audit_logs_created_id,priority:2;index:idx_audit_logs_user_id_id,priority:2"`
 	CreatedAt  time.Time `gorm:"index:idx_audit_logs_created_id,priority:1"`
 	UpdatedAt  time.Time
-	UserID     *uint  `gorm:"index"`
+	UserID     *uint  `gorm:"index:idx_audit_logs_user_id_id,priority:1"`
 	ActorType  string `gorm:"size:20;not null;index"`
 	ActorID    *uint  `gorm:"index"`
 	APIKeyID   *uint  `gorm:"index"`

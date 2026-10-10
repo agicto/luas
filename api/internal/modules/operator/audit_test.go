@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"testing"
 	"time"
@@ -14,7 +15,18 @@ import (
 
 type fakeAuditQuery struct {
 	filter domain.AuditLogFilter
+	after  *domain.AuditLogCursor
+	limit  int
 	err    error
+}
+
+func (f *fakeAuditQuery) ListAuditLogsAfter(_ context.Context, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
+	f.filter, f.after, f.limit = filter, after, limit
+	if f.err != nil {
+		return nil, nil, f.err
+	}
+	items := []*domain.AuditLog{{ID: 9, ActorType: "user", Action: "disable", Resource: "users", Method: "POST", Path: "/v1/operator/users/:id/disable", StatusCode: 200}}
+	return items, &domain.AuditLogCursor{CreatedAt: time.Date(2026, 9, 2, 0, 0, 0, 0, time.UTC), ID: 9}, nil
 }
 
 func (f *fakeAuditQuery) ListAuditLogs(_ context.Context, filter domain.AuditLogFilter, _, _ int) ([]*domain.AuditLog, int64, error) {
@@ -58,4 +70,49 @@ func TestListAuditLogsRequiresOperator(t *testing.T) {
 	recorder := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: "/v1/operator/audit-logs"})
 	assert.Equal(t, http.StatusForbidden, recorder.Code)
 	assert.Equal(t, domain.CodeOperatorForbidden, errorCode(t, recorder))
+}
+
+func TestListAuditLogsKeysetModeSkipsTheCountAndReturnsACursor(t *testing.T) {
+	f := newFixture(t)
+
+	first := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: "/v1/operator/audit-logs?cursor=&per_page=25"})
+	require.Equal(t, http.StatusOK, first.Code, first.Body.String())
+	var body struct {
+		Data []map[string]any `json:"data"`
+		Meta struct {
+			PerPage    int     `json:"per_page"`
+			HasMore    bool    `json:"has_more"`
+			NextCursor *string `json:"next_cursor"`
+			Total      *int    `json:"total"`
+		} `json:"meta"`
+		Links any `json:"links"`
+	}
+	require.NoError(t, json.Unmarshal(first.Body.Bytes(), &body))
+	assert.Nil(t, f.audit.after, "an empty cursor starts at the newest record")
+	assert.Equal(t, 25, f.audit.limit)
+	assert.Len(t, body.Data, 1)
+	assert.Equal(t, 25, body.Meta.PerPage)
+	assert.True(t, body.Meta.HasMore)
+	require.NotNil(t, body.Meta.NextCursor)
+	assert.Nil(t, body.Meta.Total, "keyset pages carry no total")
+	assert.Nil(t, body.Links)
+
+	next := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: "/v1/operator/audit-logs?cursor=" + *body.Meta.NextCursor})
+	require.Equal(t, http.StatusOK, next.Code, next.Body.String())
+	require.NotNil(t, f.audit.after)
+	assert.Equal(t, uint(9), f.audit.after.ID)
+	assert.True(t, f.audit.after.CreatedAt.Equal(time.Date(2026, 9, 2, 0, 0, 0, 0, time.UTC)))
+}
+
+func TestListAuditLogsRejectsMalformedOrMixedCursors(t *testing.T) {
+	f := newFixture(t)
+	for _, path := range []string{
+		"/v1/operator/audit-logs?cursor=not*base64",
+		"/v1/operator/audit-logs?cursor=&page=2",
+		"/v1/operator/audit-logs?cursor=a&cursor=b",
+	} {
+		recorder := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: path})
+		assert.Equal(t, http.StatusBadRequest, recorder.Code, path)
+		assert.Equal(t, "COMMON.INVALID_INPUT", errorCode(t, recorder), path)
+	}
 }

@@ -1,6 +1,8 @@
 package starter
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -236,6 +238,22 @@ func (r *Registry) Modules() []assembly.Module {
 }
 
 // RegisterRoutes lets route-aware modules attach their HTTP routes.
+// Shutdown lets every ShutdownModule finish its background work, in registration order.
+func (r *Registry) Shutdown(ctx context.Context) error {
+	if r == nil {
+		return nil
+	}
+	var errs []error
+	for _, module := range r.Modules() {
+		if closer, ok := module.(assembly.ShutdownModule); ok {
+			if err := closer.Shutdown(ctx); err != nil {
+				errs = append(errs, fmt.Errorf("%s: %w", module.Name(), err))
+			}
+		}
+	}
+	return errors.Join(errs...)
+}
+
 func (r *Registry) RegisterRoutes(routes *router.Router) {
 	if r == nil {
 		return

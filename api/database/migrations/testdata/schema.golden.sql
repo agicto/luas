@@ -476,7 +476,7 @@ INDEX CREATE INDEX idx_audit_logs_route_name ON audit_logs USING btree (route_na
 INDEX CREATE INDEX idx_audit_logs_status_code ON audit_logs USING btree (status_code)
 INDEX CREATE INDEX idx_audit_logs_target_id ON audit_logs USING btree (target_id)
 INDEX CREATE INDEX idx_audit_logs_target_type ON audit_logs USING btree (target_type)
-INDEX CREATE INDEX idx_audit_logs_user_id ON audit_logs USING btree (user_id)
+INDEX CREATE INDEX idx_audit_logs_user_id_id ON audit_logs USING btree (user_id, id)
 INDEX CREATE UNIQUE INDEX authentication_sessions_pkey ON authentication_sessions USING btree (id)
 INDEX CREATE INDEX idx_authentication_sessions_expires_at ON authentication_sessions USING btree (expires_at)
 INDEX CREATE INDEX idx_authentication_sessions_idle_expires_at ON authentication_sessions USING btree (idle_expires_at)

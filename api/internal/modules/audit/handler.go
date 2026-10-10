@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +27,13 @@ var (
 	_ assembly.Module           = (*Handler)(nil)
 	_ assembly.RouteModule      = (*Handler)(nil)
 	_ assembly.MiddlewareModule = (*Handler)(nil)
+	_ assembly.ShutdownModule   = (*Handler)(nil)
 )
+
+// Shutdown writes the request audit records still queued once the server stops taking requests.
+func (h *Handler) Shutdown(ctx context.Context) error {
+	return h.service.Shutdown(ctx)
+}
 
 // NewHandler creates a new audit handler.
 func NewHandler(service Service) *Handler {
@@ -56,6 +63,21 @@ func (h *Handler) List(c *gin.Context) {
 	}
 
 	page := pagination.FromContext(c)
+	after, keyset, err := CursorRequest(c.Request.URL.Query())
+	if err != nil {
+		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, "Invalid cursor")
+		return
+	}
+	if keyset {
+		items, next, listErr := h.service.ListForUserAfter(c.Request.Context(), userID, req.toFilter(), after, page.GetPerPage())
+		if listErr != nil {
+			response.HandleError(c, "Failed to list audit logs", listErr)
+			return
+		}
+		response.SuccessCursorPage(c, toResponses(items), page.GetPerPage(), EncodeCursor(next))
+		return
+	}
+
 	items, total, err := h.service.ListForUser(c.Request.Context(), userID, req.toFilter(), page.GetPage(), page.GetPerPage())
 	if err != nil {
 		response.HandleError(c, "Failed to list audit logs", err)
@@ -82,7 +104,7 @@ func (h *Handler) AuditMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.service.Record(c.Request.Context(), entry); err != nil {
+		if err := h.service.RecordRequest(c.Request.Context(), entry); err != nil {
 			logger.Channel("audit").Warning("failed to write audit log", map[string]any{
 				"error":      err.Error(),
 				"method":     entry.Method,

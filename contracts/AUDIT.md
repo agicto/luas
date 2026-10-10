@@ -10,6 +10,10 @@ event stream, debug log, authorization source, or immutable regulatory archive.
 - Starters may attach a finite action, resource, target, result, redacted changes, and
   privacy-reviewed metadata through the audit change seam.
 - Audit persistence failure is logged and does not rewrite a completed business response.
+- By default (`AUDIT_WRITE_MODE=async`) request records are written in batches shortly after the
+  response, so a write may take up to about 50 ms to appear in history. A graceful shutdown writes
+  every queued record; a process that dies without one loses the records still queued. Set
+  `AUDIT_WRITE_MODE=sync` to write each record before the response completes.
 - The read API returns only records whose `user_id` is the authenticated caller. It does not expose
   organization-wide, other-user, anonymous, API-key-only, or system-operator history.
 - Audit records assist investigation; authorization always uses current application state.
@@ -31,7 +35,11 @@ Optional exact-match filters are:
 | `request_id` | 80 characters | Correlation identifier |
 | `status_code` | 100-599 | Exact HTTP result status |
 
-Pagination follows [`README.md`](README.md). Results are ordered newest first by audit identifier.
+Results are ordered newest first by audit identifier. Request keyset pages with `cursor`, as
+described under [Cursor pages](README.md#cursor-pages): `GET /v1/audit-logs?cursor=&per_page=15`
+returns the newest page, and each `meta.next_cursor` reads the next, older one. Offset pages
+(`page`) still work but are deprecated for this endpoint and will be removed in a later minor
+release: each one counts every matching record, which grows with the history.
 Each item may contain:
 
 ```json
