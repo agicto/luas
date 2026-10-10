@@ -71,27 +71,16 @@ func (h *Handler) ListAuditLogs(c *gin.Context) {
 		writeError(c, "List audit logs", domain.ErrServiceUnavailable)
 		return
 	}
-	page := pagination.FromContext(c)
-	after, keyset, cursorErr := audit.CursorRequest(c.Request.URL.Query())
-	if cursorErr != nil {
-		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, "Invalid cursor")
+	after, err := audit.CursorRequest(c.Request.URL.Query())
+	if err != nil {
+		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, err.Error())
 		return
 	}
-	if keyset {
-		items, next, err := h.service.audit.ListAuditLogsAfter(c.Request.Context(), filter, after, page.GetPerPage())
-		if err != nil {
-			writeError(c, "List audit logs", err)
-			return
-		}
-		response.SuccessCursorPage(c, audit.Responses(items), page.GetPerPage(), audit.EncodeCursor(next))
-		return
-	}
-	items, total, err := h.service.audit.ListAuditLogs(c.Request.Context(), filter, page.GetPage(), page.GetPerPage())
+	perPage := pagination.FromContext(c).GetPerPage()
+	items, next, err := h.service.audit.ListAuditLogsAfter(c.Request.Context(), filter, after, perPage)
 	if err != nil {
 		writeError(c, "List audit logs", err)
 		return
 	}
-	paginator := pagination.NewPaginator(audit.Responses(items), total, page.GetPage(), page.GetPerPage())
-	paginator.SetPath(c.Request.URL.Path)
-	response.Success(c, paginator)
+	response.SuccessCursorPage(c, audit.Responses(items), perPage, audit.EncodeCursor(next))
 }

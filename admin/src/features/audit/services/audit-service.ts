@@ -11,8 +11,10 @@ function startOfLocalDay(day: string, days = 0): string {
 
 export const auditService = {
   list(search: AuditSearch, signal?: AbortSignal): Promise<AuditPage> {
-    // Keyset pages cost the same at any depth; offset pages count every matching entry.
-    const params = new URLSearchParams({ cursor: search.cursor ?? '', per_page: '50' });
+    const params = new URLSearchParams({ per_page: '50' });
+    if (search.cursor) {
+      params.set('cursor', search.cursor);
+    }
     if (search.action) {
       params.set('action', search.action);
     }
@@ -35,9 +37,6 @@ export const auditService = {
 };
 
 // Fails type-check when contracts/openapi.yaml allows a body these schemas would reject.
-// The contract answers with a keyset page whenever `cursor` is sent, which this service always does.
-type KeysetPage = Extract<
-  ContractResponse<'listOperatorAuditLogs', 200>,
-  { meta: { next_cursor: unknown } }
->;
-assertContract<Accepts<z.input<typeof auditPageSchema>, KeysetPage>>();
+assertContract<
+  Accepts<z.input<typeof auditPageSchema>, ContractResponse<'listOperatorAuditLogs', 200>>
+>();

@@ -14,7 +14,7 @@ import (
 )
 
 // Keyset pages must visit every matching record exactly once, newest first, including records
-// that share a timestamp, and must agree with the offset pages they replace.
+// that share a timestamp.
 func TestRepositoryKeysetPagesVisitEveryRecordOncePostgres(t *testing.T) {
 	db := testplatform.OpenPostgres(t, nil, &AuditLogPO{})
 	base := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
@@ -58,13 +58,9 @@ func TestRepositoryKeysetPagesVisitEveryRecordOncePostgres(t *testing.T) {
 		keyset := collect(t, func(after *domain.AuditLogCursor) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
 			return repo.FindAllAfter(ctx, domain.AuditLogFilter{}, after, 4)
 		})
-		offset, total, err := repo.FindAll(ctx, domain.AuditLogFilter{}, 1, 100)
-		require.NoError(t, err)
-		require.EqualValues(t, 23, total)
-		expected := make([]uint, len(offset))
-		for index, item := range offset {
-			expected[index] = item.ID
-		}
+		var expected []uint
+		require.NoError(t, db.Model(&AuditLogPO{}).Order("created_at DESC, id DESC").Pluck("id", &expected).Error)
+		require.Len(t, expected, 23)
 		assert.Equal(t, expected, keyset)
 	})
 
@@ -72,13 +68,9 @@ func TestRepositoryKeysetPagesVisitEveryRecordOncePostgres(t *testing.T) {
 		keyset := collect(t, func(after *domain.AuditLogCursor) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
 			return repo.FindByUserIDAfter(ctx, owner, domain.AuditLogFilter{}, after, 5)
 		})
-		offset, total, err := repo.FindByUserID(ctx, owner, domain.AuditLogFilter{}, 1, 100)
-		require.NoError(t, err)
-		require.EqualValues(t, 17, total)
-		expected := make([]uint, len(offset))
-		for index, item := range offset {
-			expected[index] = item.ID
-		}
+		var expected []uint
+		require.NoError(t, db.Model(&AuditLogPO{}).Where("user_id = ?", owner).Order("id DESC").Pluck("id", &expected).Error)
+		require.Len(t, expected, 17)
 		assert.Equal(t, expected, keyset)
 	})
 

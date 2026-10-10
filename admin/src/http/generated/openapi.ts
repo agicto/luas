@@ -257,7 +257,7 @@ export interface paths {
         };
         /**
          * List the authenticated user's audit history
-         * @description Newest first; only records whose `user_id` is the caller. Pass `cursor` (empty for the first page) for keyset pages, which cost the same at any depth. Offset pages (`page`) are deprecated for this operation because each one counts every matching record.
+         * @description Newest first; only records whose `user_id` is the caller. Keyset pages cost the same at any depth; pass `meta.next_cursor` as `cursor` for the next, older page.
          */
         get: operations["listAuditLogs"];
         put?: never;
@@ -417,7 +417,7 @@ export interface paths {
         };
         /**
          * List platform-wide audit history, newest first
-         * @description `to` defaults to now and `from` to 30 days before `to`; the range must be ordered and at most 92 days. Pass `cursor` (empty for the first page) for keyset pages; offset pages (`page`) are deprecated for this operation because each one counts every matching record.
+         * @description `to` defaults to now and `from` to 30 days before `to`; the range must be ordered and at most 92 days. Keyset pages: pass `meta.next_cursor` as `cursor` for the next, older page.
          */
         get: operations["listOperatorAuditLogs"];
         put?: never;
@@ -1562,14 +1562,6 @@ export interface components {
             data: components["schemas"]["AuditLog"][];
             message: string;
             meta: components["schemas"]["CursorPageMeta"];
-        };
-        AuditLogPageResponse: {
-            /** @constant */
-            code: 0;
-            data: components["schemas"]["AuditLog"][];
-            links: components["schemas"]["PaginationLinks"];
-            message: string;
-            meta: components["schemas"]["PaginationMeta"];
         };
         AuditValueChange: {
             after?: unknown;
@@ -2810,7 +2802,7 @@ export interface components {
         AssetStatusFilter: "all" | "pending" | "ready" | "rejected";
         /** @description Opaque, short-lived signed transfer token issued in a local-driver grant URL. */
         AssetTransferToken: string;
-        /** @description Opaque keyset position from `meta.next_cursor`; empty requests the first page. It selects keyset pagination and cannot be combined with `page`. */
+        /** @description Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest page. The removed `page` parameter is rejected with 400. */
         AuditCursor: string;
         /** @description Session-bound CSRF token returned by the operator session endpoints. */
         CSRFToken: string;
@@ -3465,11 +3457,9 @@ export interface operations {
         parameters: {
             query?: {
                 action?: string;
-                /** @description Opaque keyset position from `meta.next_cursor`; empty requests the first page. It selects keyset pagination and cannot be combined with `page`. */
+                /** @description Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest page. The removed `page` parameter is rejected with 400. */
                 cursor?: components["parameters"]["AuditCursor"];
                 method?: string;
-                /** @description One-based page number. */
-                page?: components["parameters"]["Page"];
                 /** @description Requested page size, capped by the API. */
                 per_page?: components["parameters"]["PerPage"];
                 request_id?: string;
@@ -3482,13 +3472,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A keyset page when `cursor` is present, otherwise a deprecated offset page. */
+            /** @description One keyset page of audit entries. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditLogCursorPageResponse"] | components["schemas"]["AuditLogPageResponse"];
+                    "application/json": components["schemas"]["AuditLogCursorPageResponse"];
                 };
             };
             400: components["responses"]["InvalidInput"];
@@ -3741,13 +3731,11 @@ export interface operations {
         parameters: {
             query?: {
                 action?: string;
-                /** @description Opaque keyset position from `meta.next_cursor`; empty requests the first page. It selects keyset pagination and cannot be combined with `page`. */
+                /** @description Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest page. The removed `page` parameter is rejected with 400. */
                 cursor?: components["parameters"]["AuditCursor"];
                 /** @description Inclusive RFC 3339 lower bound. */
                 from?: string;
                 method?: string;
-                /** @description One-based page number. */
-                page?: components["parameters"]["Page"];
                 /** @description Requested page size, capped by the API. */
                 per_page?: components["parameters"]["PerPage"];
                 request_id?: string;
@@ -3763,7 +3751,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description A keyset page when `cursor` is present, otherwise a deprecated offset page. */
+            /** @description One keyset page of audit entries. */
             200: {
                 headers: {
                     /** @description Operator responses are never cached. */
@@ -3771,7 +3759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditLogCursorPageResponse"] | components["schemas"]["AuditLogPageResponse"];
+                    "application/json": components["schemas"]["AuditLogCursorPageResponse"];
                 };
             };
             400: components["responses"]["InvalidInput"];

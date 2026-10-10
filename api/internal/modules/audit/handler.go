@@ -62,31 +62,18 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	page := pagination.FromContext(c)
-	after, keyset, err := CursorRequest(c.Request.URL.Query())
+	after, err := CursorRequest(c.Request.URL.Query())
 	if err != nil {
-		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, "Invalid cursor")
+		response.AbortWithCode(c, http.StatusBadRequest, response.ErrorCodeInvalidInput, err.Error())
 		return
 	}
-	if keyset {
-		items, next, listErr := h.service.ListForUserAfter(c.Request.Context(), userID, req.toFilter(), after, page.GetPerPage())
-		if listErr != nil {
-			response.HandleError(c, "Failed to list audit logs", listErr)
-			return
-		}
-		response.SuccessCursorPage(c, toResponses(items), page.GetPerPage(), EncodeCursor(next))
-		return
-	}
-
-	items, total, err := h.service.ListForUser(c.Request.Context(), userID, req.toFilter(), page.GetPage(), page.GetPerPage())
+	perPage := pagination.FromContext(c).GetPerPage()
+	items, next, err := h.service.ListForUserAfter(c.Request.Context(), userID, req.toFilter(), after, perPage)
 	if err != nil {
 		response.HandleError(c, "Failed to list audit logs", err)
 		return
 	}
-
-	paginator := pagination.NewPaginator(toResponses(items), total, page.GetPage(), page.GetPerPage())
-	paginator.SetPath(c.Request.URL.Path)
-	response.Success(c, paginator)
+	response.SuccessCursorPage(c, toResponses(items), perPage, EncodeCursor(next))
 }
 
 // AuditMiddleware records mutating API requests without blocking the primary request path.

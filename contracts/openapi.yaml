@@ -414,16 +414,14 @@ paths:
     get:
       operationId: listAuditLogs
       summary: List the authenticated user's audit history
-      description: Newest first; only records whose `user_id` is the caller. Pass `cursor` (empty for
-        the first page) for keyset pages, which cost the same at any depth. Offset pages (`page`) are
-        deprecated for this operation because each one counts every matching record.
+      description: Newest first; only records whose `user_id` is the caller. Keyset pages cost the same
+        at any depth; pass `meta.next_cursor` as `cursor` for the next, older page.
       tags:
         - Audit
       security:
         - bearerSession: []
       parameters:
         - $ref: '#/components/parameters/AuditCursor'
-        - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
         - name: action
           in: query
@@ -453,13 +451,14 @@ paths:
             maximum: 599
       responses:
         '200':
-          description: A keyset page when `cursor` is present, otherwise a deprecated offset page.
+          description: One keyset page of audit entries.
           content:
             application/json:
               schema:
+                # A one-member oneOf is equivalent to the $ref; it keeps oasdiff reading the removal of
+                # the deprecated offset shape as a narrowed response rather than a changed type.
                 oneOf:
                   - $ref: '#/components/schemas/AuditLogCursorPageResponse'
-                  - $ref: '#/components/schemas/AuditLogPageResponse'
         '400':
           $ref: '#/components/responses/InvalidInput'
         '401':
@@ -2519,8 +2518,7 @@ paths:
       operationId: listOperatorAuditLogs
       summary: List platform-wide audit history, newest first
       description: '`to` defaults to now and `from` to 30 days before `to`; the range must be ordered
-        and at most 92 days. Pass `cursor` (empty for the first page) for keyset pages; offset pages
-        (`page`) are deprecated for this operation because each one counts every matching record.'
+        and at most 92 days. Keyset pages: pass `meta.next_cursor` as `cursor` for the next, older page.'
       tags:
         - Operator
       security:
@@ -2571,11 +2569,10 @@ paths:
             minimum: 100
             maximum: 599
         - $ref: '#/components/parameters/AuditCursor'
-        - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PerPage'
       responses:
         '200':
-          description: A keyset page when `cursor` is present, otherwise a deprecated offset page.
+          description: One keyset page of audit entries.
           headers:
             Cache-Control:
               description: Operator responses are never cached.
@@ -2585,9 +2582,10 @@ paths:
           content:
             application/json:
               schema:
+                # A one-member oneOf is equivalent to the $ref; it keeps oasdiff reading the removal of
+                # the deprecated offset shape as a narrowed response rather than a changed type.
                 oneOf:
                   - $ref: '#/components/schemas/AuditLogCursorPageResponse'
-                  - $ref: '#/components/schemas/AuditLogPageResponse'
         '400':
           $ref: '#/components/responses/InvalidInput'
         '401':
@@ -3417,8 +3415,8 @@ components:
     AuditCursor:
       name: cursor
       in: query
-      description: Opaque keyset position from `meta.next_cursor`; empty requests the first page. It
-        selects keyset pagination and cannot be combined with `page`.
+      description: Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest
+        page. The removed `page` parameter is rejected with 400.
       schema:
         type: string
         maxLength: 128
@@ -4615,28 +4613,6 @@ components:
             $ref: '#/components/schemas/AuditLog'
         meta:
           $ref: '#/components/schemas/CursorPageMeta'
-    AuditLogPageResponse:
-      type: object
-      additionalProperties: false
-      required:
-        - code
-        - message
-        - data
-        - meta
-        - links
-      properties:
-        code:
-          const: 0
-        message:
-          type: string
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/AuditLog'
-        meta:
-          $ref: '#/components/schemas/PaginationMeta'
-        links:
-          $ref: '#/components/schemas/PaginationLinks'
     ApiVersionHealth:
       type: object
       additionalProperties: false
