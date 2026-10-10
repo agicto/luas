@@ -311,22 +311,28 @@ func signInThrottleKey(user *domain.User, identifier string) string {
 func (s *service) GetProfile(ctx context.Context, userID uint) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, domain.ErrServiceUnavailable) {
-			return nil, err
-		}
-		return nil, domain.ErrUserNotFound
+		return nil, currentUserLookupError(err)
 	}
 	return user, nil
+}
+
+// currentUserLookupError keeps "not found" distinct from database failures, so a query error is
+// never reported to the client as a missing account.
+func currentUserLookupError(err error) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return domain.ErrUserNotFound
+	}
+	if errors.Is(err, domain.ErrServiceUnavailable) {
+		return err
+	}
+	return fmt.Errorf("load current user: %w", err)
 }
 
 // UpdateProfile updates user profile
 func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdateRequest) (*domain.User, error) {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, domain.ErrServiceUnavailable) {
-			return nil, err
-		}
-		return nil, domain.ErrUserNotFound
+		return nil, currentUserLookupError(err)
 	}
 
 	changes := make(map[string]domain.AuditValueChange)
@@ -368,10 +374,7 @@ func (s *service) UpdateProfile(ctx context.Context, userID uint, req *UserUpdat
 func (s *service) ChangePassword(ctx context.Context, userID uint, req *UserChangePasswordRequest) error {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
-		if errors.Is(err, domain.ErrServiceUnavailable) {
-			return err
-		}
-		return domain.ErrUserNotFound
+		return currentUserLookupError(err)
 	}
 
 	if cmpErr := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.OldPassword)); cmpErr != nil {

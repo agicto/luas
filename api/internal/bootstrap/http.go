@@ -133,6 +133,8 @@ func (k *HttpKernel) Handle() {
 
 	cfg := k.App.Config
 	srv := newHTTPServer(cfg, k.Engine)
+	diagnostics := newDiagnosticsServer(cfg)
+	startDiagnosticsServer(diagnostics)
 
 	serverErr := make(chan error, 1)
 
@@ -158,7 +160,7 @@ func (k *HttpKernel) Handle() {
 	}()
 
 	// Graceful Shutdown
-	k.gracefulShutdown(srv, serverErr)
+	k.gracefulShutdown(srv, serverErr, diagnostics)
 }
 
 func newHTTPServer(cfg *config.Config, handler http.Handler) *http.Server {
@@ -184,7 +186,7 @@ func newHTTPServer(cfg *config.Config, handler http.Handler) *http.Server {
 }
 
 // gracefulShutdown handles graceful shutdown of the server and resources
-func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error) {
+func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error, diagnostics *http.Server) {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -202,6 +204,9 @@ func (k *HttpKernel) gracefulShutdown(srv *http.Server, serverErr <-chan error) 
 	// 1. Shutdown HTTP server (stop accepting new requests, wait for existing)
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Printf("HTTP server shutdown error: %v", err)
+	}
+	if diagnostics != nil {
+		_ = diagnostics.Close() // profiles in progress are diagnostic only; do not delay shutdown
 	}
 
 	// 2. Shutdown tracer provider (flush remaining spans)

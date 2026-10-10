@@ -55,6 +55,33 @@ controls. Settings:
 `.github/workflows/perf.yml` runs the baseline nightly and on demand, and keeps the summary as an
 artifact for 30 days.
 
+## Profiling A Running Process
+
+Set `SERVER_DIAGNOSTICS_ADDR=127.0.0.1:6060` to serve Go runtime profiles (`/debug/pprof/`) on a
+separate listener. It is off by default, and configuration validation rejects any non-loopback
+address, because profiles expose goroutine stacks, memory contents, and command-line arguments.
+Reach it through a tunnel, never the public port:
+
+```bash
+kubectl port-forward deploy/luas-api 6060:6060
+go tool pprof -top http://127.0.0.1:6060/debug/pprof/profile?seconds=15
+```
+
+## Connection Pool Measurements
+
+These settings came from saturating a release build (64 concurrent clients, PostgreSQL on the same
+laptop), so treat the ratios rather than the absolute numbers as the result:
+
+| Change | `GET /v1/users/profile` | `GET /v1/api-keys` |
+|---|---|---|
+| Idle pool 10 (old default) | ~7,200 req/s, p99 ~100 ms | ~6,000 req/s, p99 ~60 ms |
+| Idle pool = open limit (new default) | ~10,500 req/s, p99 ~13 ms | ~7,300 req/s, p99 ~20 ms |
+| Plus `DB_QUERY_EXEC_MODE=cache_statement` | ~13,700 req/s, p99 ~12 ms | ~8,600 req/s, p99 ~18 ms |
+
+With the small idle pool, the CPU profile showed new PostgreSQL connections (SCRAM key derivation)
+being opened throughout the run: every dip in concurrency closed connections that the next burst
+had to reopen.
+
 ## Changing The Baseline
 
 - **New hot path.** Add a scenario and its budget in the same change as the endpoint.

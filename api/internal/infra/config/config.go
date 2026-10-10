@@ -34,8 +34,6 @@ const (
 	DefaultMiddlewareRequestTimeoutSeconds = 180
 	// DefaultEmailRequestTimeout caps one outbound provider call.
 	DefaultEmailRequestTimeout = 10 * time.Second
-	// DefaultDatabaseMaxIdleConns bounds idle PostgreSQL connections per process.
-	DefaultDatabaseMaxIdleConns = 10
 	// DefaultDatabaseMaxOpenConns bounds total PostgreSQL connections per process.
 	DefaultDatabaseMaxOpenConns = 100
 	// DefaultDatabaseConnMaxIdleTime retires unused connections before infrastructure changes make them stale.
@@ -44,6 +42,9 @@ const (
 	DefaultDatabaseConnMaxLifetime = time.Hour
 	// DefaultDatabaseConnectTimeout bounds startup connection establishment and ping.
 	DefaultDatabaseConnectTimeout = 5 * time.Second
+	// DefaultDatabaseQueryExecMode keeps the PostgreSQL simple protocol: it works behind every pooler
+	// mode and never caches a statement that a schema migration could invalidate.
+	DefaultDatabaseQueryExecMode = "simple_protocol"
 	// DefaultAIRequestTimeout caps one complete provider call or streaming session.
 	DefaultAIRequestTimeout = 120 * time.Second
 	// DefaultAIMaxInputBytes bounds input plus instructions before provider serialization.
@@ -154,6 +155,9 @@ type ServerConfig struct {
 	IdleTimeout       int
 	MaxHeaderBytes    int
 	TrustedProxies    []string
+	// DiagnosticsAddr serves Go runtime profiles (pprof) when set. It must be a loopback address;
+	// reach it with `kubectl port-forward` or an SSH tunnel, never through the public listener.
+	DiagnosticsAddr string
 }
 
 // MiddlewareConfig holds middleware configuration
@@ -224,6 +228,14 @@ type DatabaseConfig struct {
 	LogLevel             string
 	SlowThreshold        time.Duration
 	IgnoreRecordNotFound bool
+	// QueryExecMode is the pgx query execution mode; see docs/DATABASE.md for the tradeoff.
+	QueryExecMode string
+}
+
+// UsesSimpleProtocol reports whether queries use the PostgreSQL simple protocol, the default when
+// QueryExecMode is unset.
+func (d DatabaseConfig) UsesSimpleProtocol() bool {
+	return d.QueryExecMode == "" || d.QueryExecMode == DefaultDatabaseQueryExecMode
 }
 
 // DBName returns the database name (alias for Name)
@@ -260,6 +272,11 @@ func (d DatabaseConfig) Validate() error {
 	}
 	if d.SlowThreshold <= 0 {
 		return fmt.Errorf("DB_SLOW_THRESHOLD must be greater than 0")
+	}
+	switch d.QueryExecMode {
+	case "", "simple_protocol", "cache_statement", "cache_describe", "describe_exec":
+	default:
+		return fmt.Errorf("DB_QUERY_EXEC_MODE must be simple_protocol, cache_statement, cache_describe, or describe_exec")
 	}
 	switch strings.ToLower(strings.TrimSpace(d.LogLevel)) {
 	case "", "silent", "error", "warn", "warning", "info":
@@ -453,6 +470,7 @@ func Load() (*Config, error) {
 			IdleTimeout:       env.GetInt("SERVER_IDLE_TIMEOUT", defaultServerIdleTimeoutSeconds),
 			MaxHeaderBytes:    env.GetInt("SERVER_MAX_HEADER_BYTES", defaultServerMaxHeaderBytes),
 			TrustedProxies:    env.GetSlice("SERVER_TRUSTED_PROXIES", []string{}),
+			DiagnosticsAddr:   strings.TrimSpace(env.Get("SERVER_DIAGNOSTICS_ADDR", "")),
 		},
 		Database: databaseConfig,
 		Queue: QueueConfig{
@@ -625,11 +643,14 @@ func loadDatabaseConfig() (DatabaseConfig, error) {
 	if err != nil {
 		return DatabaseConfig{}, err
 	}
-	maxIdle, err := strictDatabaseInt("DB_MAX_IDLE_CONNS", DefaultDatabaseMaxIdleConns)
+	maxOpen, err := strictDatabaseInt("DB_MAX_OPEN_CONNS", DefaultDatabaseMaxOpenConns)
 	if err != nil {
 		return DatabaseConfig{}, err
 	}
-	maxOpen, err := strictDatabaseInt("DB_MAX_OPEN_CONNS", DefaultDatabaseMaxOpenConns)
+	// Idle connections default to the open limit: a smaller idle pool closes connections whenever
+	// concurrency dips and pays TCP, TLS, and SCRAM setup again on the next burst, which measured
+	// as a 7x worse p99. DB_CONN_MAX_IDLE_TIME still retires connections that stay unused.
+	maxIdle, err := strictDatabaseInt("DB_MAX_IDLE_CONNS", maxOpen)
 	if err != nil {
 		return DatabaseConfig{}, err
 	}
@@ -681,6 +702,7 @@ func loadDatabaseConfig() (DatabaseConfig, error) {
 		LogLevel:             strings.TrimSpace(env.Get("DB_LOG_LEVEL", "")),
 		SlowThreshold:        slowThreshold,
 		IgnoreRecordNotFound: ignoreNotFound,
+		QueryExecMode:        strings.TrimSpace(env.Get("DB_QUERY_EXEC_MODE", DefaultDatabaseQueryExecMode)),
 	}, nil
 }
 
@@ -1183,6 +1205,9 @@ func validateEmailConfig(emailConfig EmailConfig) error {
 }
 
 func validateServerTransport(server ServerConfig, middleware MiddlewareConfig) error {
+	if err := validateDiagnosticsAddr(server.DiagnosticsAddr); err != nil {
+		return err
+	}
 	values := []struct {
 		name  string
 		value int
@@ -1297,4 +1322,23 @@ func Use(cfg *Config) (*Config, error) {
 	}
 	GlobalConfig = cfg
 	return cfg, nil
+}
+
+// validateDiagnosticsAddr keeps runtime profiles off every non-loopback interface: they expose
+// memory contents, goroutine stacks, and command-line arguments.
+func validateDiagnosticsAddr(addr string) error {
+	if addr == "" {
+		return nil
+	}
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil || port == "" {
+		return fmt.Errorf("SERVER_DIAGNOSTICS_ADDR must be host:port, for example 127.0.0.1:6060")
+	}
+	if host == "localhost" {
+		return nil
+	}
+	if ip := net.ParseIP(host); ip == nil || !ip.IsLoopback() {
+		return fmt.Errorf("SERVER_DIAGNOSTICS_ADDR must listen on a loopback address such as 127.0.0.1")
+	}
+	return nil
 }

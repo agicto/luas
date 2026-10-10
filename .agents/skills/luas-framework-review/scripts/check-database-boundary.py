@@ -122,7 +122,9 @@ def main() -> int:
         failures,
         "api/internal/infra/config/config.go",
         (
-            "DefaultDatabaseMaxIdleConns = 10",
+            'DefaultDatabaseQueryExecMode = "simple_protocol"',
+            'strictDatabaseInt("DB_MAX_IDLE_CONNS", maxOpen)',
+            "DB_QUERY_EXEC_MODE must be simple_protocol, cache_statement, cache_describe, or describe_exec",
             "DefaultDatabaseMaxOpenConns = 100",
             "DefaultDatabaseConnMaxIdleTime = 15 * time.Minute",
             "DefaultDatabaseConnMaxLifetime = time.Hour",
@@ -165,13 +167,16 @@ def main() -> int:
             "PingContext",
             "sqlDB.Close()",
             "postgres.New",
-            "PreferSimpleProtocol: true",
+            "PreferSimpleProtocol: dbCfg.UsesSimpleProtocol()",
+            'parameters.Set("default_query_exec_mode"',
         ),
     )
     require_absent(
         failures,
         "api/internal/infra/database/database.go",
         (
+            "PrepareStmt",
+            "SkipDefaultTransaction",
             'fmt.Sprintf("host=%s user=%s password=%s',
             "sqlDB.Ping()",
         ),

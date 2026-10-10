@@ -50,7 +50,7 @@ func initDB(cfg *config.Config) (*gorm.DB, error) {
 	}
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  dsn,
-		PreferSimpleProtocol: true,
+		PreferSimpleProtocol: dbCfg.UsesSimpleProtocol(),
 	}), &gorm.Config{
 		Logger:               newLogger,
 		DisableAutomaticPing: true,
@@ -106,6 +106,9 @@ func postgresDSN(cfg *config.Config) (string, error) {
 	parameters.Set("connect_timeout", strconv.FormatInt(timeoutSeconds(dbCfg.ConnectTimeout), 10))
 	parameters.Set("sslmode", dbCfg.SSLMode)
 	parameters.Set("timezone", dbCfg.Timezone)
+	if !dbCfg.UsesSimpleProtocol() {
+		parameters.Set("default_query_exec_mode", dbCfg.QueryExecMode)
+	}
 	dsn.RawQuery = parameters.Encode()
 	return dsn.String(), nil
 }

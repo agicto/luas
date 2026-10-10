@@ -11,6 +11,16 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## Unreleased — Database pool defaults
+
+### Low — Idle database connections follow the open limit
+
+`DB_MAX_IDLE_CONNS` defaults to `DB_MAX_OPEN_CONNS` (previously 10). Each process keeps up to its
+open limit of connections between bursts until `DB_CONN_MAX_IDLE_TIME` (15 minutes) retires them,
+so PostgreSQL may show more idle connections than before. The total is still bounded by the
+`DB_MAX_OPEN_CONNS` budget you already sized per replica. Set `DB_MAX_IDLE_CONNS` explicitly to keep
+the old behavior, and remove `DB_MAX_IDLE_CONNS=10` from env files copied from the old example.
+
 ## v0.22.0 — Deprecation removals, authentication hardening, and structured production logs
 
 ### Low — `ROLE.NOT_FOUND` removed

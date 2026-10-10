@@ -190,6 +190,26 @@ func TestPostgresDSN_EncodesCredentialsAndConnectionPolicy(t *testing.T) {
 	assert.Equal(t, "7", parsed.Query().Get("connect_timeout"))
 	assert.Equal(t, "luas", parsed.Query().Get("application_name"))
 	assert.NotContains(t, dsn, "p@ss word:/?#[]")
+	assert.False(t, parsed.Query().Has("default_query_exec_mode"), "the simple protocol is the default")
+}
+
+func TestPostgresDSN_PassesAnOptInQueryExecMode(t *testing.T) {
+	cfg := &config.Config{Database: config.DatabaseConfig{
+		Enabled: true, Driver: "postgres", Host: "db", Port: 5432, Name: "app", Username: "app", Password: "secret",
+		SSLMode: "disable", Timezone: "UTC", MaxIdleConns: 1, MaxOpenConns: 1,
+		ConnMaxIdleTime: time.Minute, ConnMaxLifetime: time.Hour, ConnectTimeout: time.Second,
+		SlowThreshold: time.Second, QueryExecMode: "cache_statement",
+	}}
+	dsn, err := postgresDSN(cfg)
+	require.NoError(t, err)
+	parsed, err := url.Parse(dsn)
+	require.NoError(t, err)
+	assert.Equal(t, "cache_statement", parsed.Query().Get("default_query_exec_mode"))
+	assert.False(t, cfg.Database.UsesSimpleProtocol())
+
+	cfg.Database.QueryExecMode = "sometimes"
+	_, err = postgresDSN(cfg)
+	require.ErrorContains(t, err, "DB_QUERY_EXEC_MODE")
 }
 
 func TestNewDB_PostgresAppliesRuntimeConnectionPolicy(t *testing.T) {
