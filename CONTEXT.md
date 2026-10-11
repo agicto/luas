@@ -40,7 +40,10 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : A starter-quality building block that exists in the repository but is disabled in the default scaffold. API optional starters are activated additively through the canonical starter catalog; they never replace or subtract the default starter set.
 
 **Plugin**
-: A versioned capability distributed as source from the plugin registry and installed with `fastbuild plugin:add`. A plugin usually installs one optional starter; once installed, the project owns its code, and `fastbuild.plugins.lock` records the installed version and file checksums. A plugin is not an external CLI command (`command:list`) and is never loaded at runtime.
+: A versioned unit distributed as source from the plugin registry and installed with `fastbuild plugin:add`. Its kind is `feature` (a capability that usually installs one optional starter, a contract, and browser screens), `theme` (design tokens for both browser shells; one at a time), or `block` (a reusable page section). Once installed, the project owns its code, and `fastbuild.plugins.lock` records the installed version, file checksums, slot edits, and contract additions, so `plugin:update` can merge and `plugin:remove` can reverse it. A plugin is not an external CLI command (`command:list`) and is never loaded at runtime.
+
+**Slot**
+: A named extension point marked in a core file with a `fastbuild:slot <name>` comment. Plugins and `make:module` edit core files only by inserting lines at slots; `fastbuild plugin:slots` lists them, and a guard keeps the catalog and the markers aligned.
 
 **Plugin registry**
 : The catalog plugins are installed from: `registry/` in the scaffold repository, or the `registry/` directory of the FastBuild release a project started from. Its `index.json` is generated and checksums every plugin file.

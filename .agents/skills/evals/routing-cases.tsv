@@ -51,3 +51,5 @@ routine-doc-link	implicit	none	none	-	Repair a local Markdown link in one featur
 routine-css-copy	implicit	none	none	-	Correct a comment in a CSS file without changing styles.
 positive-plugin-integration	implicit	plugin-integration	plugin-integration	-	Our team needs a searchable knowledge base for internal documents; add it to this FastBuild project.
 neighbor-plugin-integration-no-plugin	implicit	business-implementation-planning	business-implementation-planning	-	Build our custom loan-approval workflow with multi-stage underwriting; no registry plugin covers it.
+positive-plugin-integration-theme	implicit	plugin-integration	plugin-integration	-	Give the web app and admin console a calmer enterprise look; check whether a registry theme fits before restyling by hand.
+positive-plugin-integration-remove	implicit	plugin-integration	plugin-integration	-	We no longer need the installed knowledge-base plugin; take it out of the project cleanly.
