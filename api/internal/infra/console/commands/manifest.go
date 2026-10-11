@@ -137,6 +137,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewPluginDoctorCommand()},
 		Registration{Command: NewPluginSlotsCommand()},
 		Registration{Command: NewPluginPackCommand()},
+		Registration{Command: NewMCPCommand()},
 	)
 
 	return []Manifest{makeManifest, databaseManifest, starterManifest, pluginManifest, coreManifest}

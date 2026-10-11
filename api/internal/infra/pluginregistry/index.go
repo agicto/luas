@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // IndexFile is the generated catalog at the root of a registry.
@@ -192,15 +194,19 @@ type SearchResult struct {
 }
 
 // Search ranks plugins against a free-text query: name matches weigh most, then keywords and
-// use cases, then the summary and description. An empty query returns every plugin.
+// use cases, then the summary and description. Queries can be sentences in any language: a
+// keyword or name that appears inside the query counts too, which matters for languages written
+// without spaces. An empty query returns every plugin.
 func (i *Index) Search(query string) []SearchResult {
-	terms := strings.Fields(strings.ToLower(query))
+	query = strings.ToLower(query)
+	terms := searchTerms(query)
 	var results []SearchResult
 	for _, entry := range i.Plugins {
 		score := 0
 		for _, term := range terms {
 			score += termScore(entry, term)
 		}
+		score += embeddedScore(entry, query)
 		if len(terms) == 0 || score > 0 {
 			results = append(results, SearchResult{Entry: entry, Score: score})
 		}
@@ -212,6 +218,24 @@ func (i *Index) Search(query string) []SearchResult {
 		return results[a].Entry.Name < results[b].Entry.Name
 	})
 	return results
+}
+
+// searchStopWords carry no meaning about which plugin fits.
+var searchStopWords = map[string]bool{
+	"a": true, "an": true, "and": true, "add": true, "for": true, "in": true, "into": true, "it": true,
+	"me": true, "my": true, "need": true, "of": true, "on": true, "our": true, "the": true, "this": true,
+	"to": true, "want": true, "we": true, "with": true, "project": true, "app": true, "fastbuild": true,
+}
+
+// searchTerms splits a query on anything that is not a letter or digit and drops stop words.
+func searchTerms(query string) []string {
+	var terms []string
+	for _, term := range strings.FieldsFunc(query, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) }) {
+		if !searchStopWords[term] {
+			terms = append(terms, term)
+		}
+	}
+	return terms
 }
 
 func termScore(entry IndexEntry, term string) int {
@@ -236,6 +260,28 @@ func termScore(entry IndexEntry, term string) int {
 		score++
 	}
 	return score
+}
+
+// embeddedScore credits keywords and name words that appear inside the query itself, such as
+// "知识库" in "我们需要一个知识库".
+func embeddedScore(entry IndexEntry, query string) int {
+	score := 0
+	for _, keyword := range entry.Keywords {
+		keyword = strings.ToLower(keyword)
+		if utf8.RuneCountInString(keyword) >= 2 && !isASCII(keyword) && strings.Contains(query, keyword) {
+			score += 6
+		}
+	}
+	return score
+}
+
+func isASCII(text string) bool {
+	for _, r := range text {
+		if r > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
 }
 
 // PluginFilePath returns the path of a plugin file inside a registry directory.

@@ -18,6 +18,18 @@ go run ./cmd/fastbuild plugin:remove knowledge-base
 A project created with `make init-project` installs plugins from the FastBuild release it started
 from; this directory is not copied into new projects.
 
+## For Coding Agents
+
+Agents read the `plugin-integration` skill and call the commands with `--format=json`. Agents that
+speak the Model Context Protocol can use the read-only tools of `fastbuild mcp` instead
+(`project_info`, `plugin_search`, `plugin_info`, `plugin_preview`, `plugin_status`, `plugin_doctor`,
+`plugin_slots`); installing stays an explicit CLI step the builder sees.
+
+```bash
+claude mcp add fastbuild -- sh -c 'cd api && go run ./cmd/fastbuild mcp'   # Claude Code
+codex mcp add fastbuild -- sh -c 'cd api && go run ./cmd/fastbuild mcp'    # Codex
+```
+
 ## Kinds
 
 | Kind | Installs | Example |

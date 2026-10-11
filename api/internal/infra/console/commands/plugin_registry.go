@@ -42,7 +42,7 @@ func (c *PluginSearchCommand) Description() string {
 	return "Search the plugin registry for a capability"
 }
 func (c *PluginSearchCommand) Usage() string {
-	return "plugin:search [words...] [--source=path] [--format=table|json]"
+	return "plugin:search [words...] [--kind=feature|theme|block] [--source=path] [--format=table|json]"
 }
 
 func (c *PluginInfoCommand) Name() string { return "plugin:info" }
@@ -74,9 +74,19 @@ func (c *PluginSearchCommand) Run(args []string) error {
 		return err
 	}
 	results := index.Search(strings.Join(words, " "))
+	if kind, ok := flagValue(args, "kind"); ok {
+		filtered := results[:0]
+		for _, match := range results {
+			if match.Entry.PluginKind() == kind {
+				filtered = append(filtered, match)
+			}
+		}
+		results = filtered
+	}
 	if format == "json" {
 		type result struct {
 			Name     string   `json:"name"`
+			Kind     string   `json:"kind"`
 			Version  string   `json:"version"`
 			Summary  string   `json:"summary"`
 			UseWhen  []string `json:"use_when"`
@@ -85,7 +95,7 @@ func (c *PluginSearchCommand) Run(args []string) error {
 		}
 		out := make([]result, 0, len(results))
 		for _, match := range results {
-			out = append(out, result{match.Entry.Name, match.Entry.Version, match.Entry.Summary,
+			out = append(out, result{match.Entry.Name, match.Entry.PluginKind(), match.Entry.Version, match.Entry.Summary,
 				match.Entry.UseWhen, match.Entry.Requires.Starters, match.Score})
 		}
 		return writeJSON(map[string]any{"source": source.Describe(), "plugins": out})
@@ -96,9 +106,9 @@ func (c *PluginSearchCommand) Run(args []string) error {
 	}
 	rows := make([][]string, 0, len(results))
 	for _, match := range results {
-		rows = append(rows, []string{match.Entry.Name, match.Entry.Version, match.Entry.Summary})
+		rows = append(rows, []string{match.Entry.Name, match.Entry.PluginKind(), match.Entry.Version, match.Entry.Summary})
 	}
-	c.output.Table([]string{"Name", "Version", "Summary"}, rows)
+	c.output.Table([]string{"Name", "Kind", "Version", "Summary"}, rows)
 	c.output.Line("Next: fastbuild plugin:info <name>")
 	return nil
 }
@@ -131,7 +141,7 @@ func (c *PluginInfoCommand) Run(args []string) error {
 	if format == "json" {
 		return writeJSON(map[string]any{"source": source.Describe(), "plugin": entry, "integration": string(integration)})
 	}
-	c.output.Title(entry.Name + " " + entry.Version)
+	c.output.Title(entry.Name + " " + entry.Version + " (" + entry.PluginKind() + ")")
 	c.output.Line(entry.Summary)
 	c.output.NewLine()
 	c.output.Line(entry.Description)
@@ -460,11 +470,8 @@ func newProjectInstaller(root string, source pluginregistry.Source) (*pluginregi
 		return nil, err
 	}
 	scaffoldVersion := ""
-	if raw, readErr := os.ReadFile(filepath.Join(root, projectMarkerFile)); readErr == nil {
-		var marker ProjectMarker
-		if json.Unmarshal(raw, &marker) == nil {
-			scaffoldVersion = marker.ScaffoldVersion
-		}
+	if marker, markerErr := readProjectMarker(root); markerErr == nil {
+		scaffoldVersion = marker.ScaffoldVersion
 	}
 	installer := &pluginregistry.Installer{
 		Root:            root,
