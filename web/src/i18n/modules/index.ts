@@ -14,6 +14,7 @@ import settings, { type SettingsMessages } from './settings/en-US';
 import errors, { type ErrorsMessages } from './errors/en-US';
 import metadata, { type MetadataMessages } from './metadata/en-US';
 import test, { type TestMessages } from './test/en-US';
+// fastbuild:slot web.i18n.message-imports
 import type { LocaleMessageVariableParity } from '../locale-message-shape';
 import type { Locale } from '../locales';
 
@@ -37,6 +38,7 @@ export const messages = {
   errors,
   metadata,
   test,
+  // fastbuild:slot web.i18n.messages
 } as const;
 
 export type Messages = typeof messages;
@@ -61,6 +63,7 @@ export interface MessageSchema {
   errors: ErrorsMessages;
   metadata: MetadataMessages;
   test: TestMessages;
+  // fastbuild:slot web.i18n.message-schema
 }
 
 interface ZhHansMessageSchema {
@@ -80,6 +83,7 @@ interface ZhHansMessageSchema {
   errors: typeof import('./errors/zh-Hans').default;
   metadata: typeof import('./metadata/zh-Hans').default;
   test: typeof import('./test/zh-Hans').default;
+  // fastbuild:slot web.i18n.zh-hans-schema
 }
 
 type Assert<T extends true> = T;

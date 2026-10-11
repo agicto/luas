@@ -109,6 +109,8 @@ func downstreamProject(t *testing.T) string {
 }
 
 func TestPluginAddInstallsAdaptsWiresAndLocks(t *testing.T) {
+	scaffoldAPIRoot, err := filepath.Abs(filepath.Join("..", "..", "..", ".."))
+	require.NoError(t, err)
 	registry := fixtureRegistry(t)
 	root := downstreamProject(t)
 	t.Chdir(filepath.Join(root, "api"))
@@ -146,4 +148,32 @@ func TestPluginAddInstallsAdaptsWiresAndLocks(t *testing.T) {
 
 	err = NewPluginAddCommand().Run([]string{"demo-notes", "--source=" + registry})
 	assert.ErrorContains(t, err, "already installed")
+
+	// Without contract tooling the fragment waits to be merged, and the doctor says so.
+	doctorErr := NewPluginDoctorCommand().Run(nil)
+	assert.ErrorContains(t, doctorErr, "1 plugin integration problems")
+
+	captureStdout(t, func() error { return NewPluginRemoveCommand().Run([]string{"demo-notes"}) })
+	for _, file := range []string{"internal/infra/config/starters.go", "internal/starter/defaults.go"} {
+		original, readErr := os.ReadFile(filepath.Join(scaffoldAPIRoot, filepath.FromSlash(file)))
+		require.NoError(t, readErr)
+		current, _ := os.ReadFile(filepath.Join(root, "api", filepath.FromSlash(file)))
+		assert.Equal(t, string(original), string(current), "plugin:remove restores %s", file)
+	}
+	assert.NoDirExists(t, filepath.Join(root, "api/internal/modules/demonotes"))
+	assert.NoFileExists(t, filepath.Join(root, pluginregistry.LockFile))
+}
+
+// TestProjectSlotsAreMarkedExactlyOnce keeps the slot catalog and the markers in the source aligned:
+// every cataloged slot is marked once in its file, and no file marks an uncataloged slot.
+func TestProjectSlotsAreMarkedExactlyOnce(t *testing.T) {
+	repoRoot, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".."))
+	require.NoError(t, err)
+	found, err := pluginregistry.ScanSlotMarkers(repoRoot, "api/internal", "web/src", "admin/src")
+	require.NoError(t, err)
+	for _, slot := range pluginregistry.ProjectSlots {
+		assert.Equal(t, []string{slot.File}, found[slot.Name], "slot %s", slot.Name)
+		delete(found, slot.Name)
+	}
+	assert.Empty(t, found, "markers without a catalog entry in pluginregistry.ProjectSlots")
 }

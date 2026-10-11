@@ -341,13 +341,6 @@ func (c *PluginStatusCommand) Description() string {
 }
 func (c *PluginStatusCommand) Usage() string { return "plugin:status [--format=table|json]" }
 
-// pluginEditedFiles are the repository files plugin:add may change besides the plugin's own files.
-var pluginEditedFiles = []string{
-	"api/internal/infra/config/starters.go",
-	"api/internal/starter/defaults.go",
-	"contracts/openapi.yaml",
-}
-
 func (c *PluginAddCommand) Run(args []string) error {
 	names, _, err := positionalAndFormat(args, "text")
 	if err != nil {
@@ -381,13 +374,16 @@ func (c *PluginAddCommand) Run(args []string) error {
 		for _, file := range result.Written {
 			c.output.Line("  + " + file)
 		}
+		for _, applied := range result.Wiring {
+			c.output.Line("  ~ %s (%s)", applied.File, applied.Slot)
+		}
 		return nil
 	}
 	c.output.Success("Installed %s %s from %s", entry.Name, entry.Version, source.Describe())
 	for _, file := range result.Written {
 		c.output.Line("  + " + file)
 	}
-	for _, file := range result.Edited {
+	for _, file := range result.Edited() {
 		c.output.Line("  ~ " + file)
 	}
 	if entry.Fragment != "" && !result.FragmentMerged {
@@ -457,7 +453,7 @@ func (c *PluginStatusCommand) Run(args []string) error {
 }
 
 // newProjectInstaller configures an installer for the checkout at root: the project's scaffold
-// version, its starters, its Go module path, and the starter and contract hooks.
+// version, its starters, its Go module path, and the contract tooling when it is installed.
 func newProjectInstaller(root string, source pluginregistry.Source) (*pluginregistry.Installer, error) {
 	module, err := projectModulePath(root)
 	if err != nil {
@@ -474,41 +470,58 @@ func newProjectInstaller(root string, source pluginregistry.Source) (*pluginregi
 		Root:            root,
 		Source:          source,
 		ScaffoldVersion: scaffoldVersion,
+		ScaffoldModule:  scaffoldModulePath,
 		KnownStarters:   config.StarterNames(),
-		EditedFiles:     pluginEditedFiles,
 		Transform: func(_ string, content []byte) []byte {
 			if module == scaffoldModulePath {
 				return content
 			}
 			return []byte(strings.ReplaceAll(string(content), scaffoldModulePath, module))
 		},
-		WireStarter: func(spec pluginregistry.StarterSpec) ([]string, error) {
-			edited, err := wireOptionalStarterIn(filepath.Join(root, "api"), map[string]string{
-				"PackageName":  spec.PackageName(),
-				"Package":      spec.Directory,
-				"ModelName":    spec.Handler,
-				"StarterConst": spec.Const,
-			})
-			relative := make([]string, 0, len(edited))
-			for _, file := range edited {
-				if rel, relErr := filepath.Rel(root, file); relErr == nil {
-					relative = append(relative, filepath.ToSlash(rel))
-				}
-			}
-			return relative, err
-		},
 	}
 	if node, lookErr := exec.LookPath("node"); lookErr == nil && fileExists(filepath.Join(root, "contracts", "node_modules", "yaml", "package.json")) {
-		installer.MergeFragment = func(fragment string) error {
-			command := exec.Command(node, "scripts/merge-fragment.mjs", filepath.Join(root, filepath.FromSlash(fragment)))
-			command.Dir = filepath.Join(root, "contracts")
-			if output, runErr := command.CombinedOutput(); runErr != nil {
-				return fmt.Errorf("%w: %s", runErr, strings.TrimSpace(string(output)))
-			}
-			return nil
-		}
+		installer.Contract = nodeContract{root: root, node: node}
 	}
 	return installer, nil
+}
+
+// nodeContract runs the contract tooling in contracts/scripts, which owns the openapi.yaml layout.
+type nodeContract struct {
+	root string
+	node string
+}
+
+func (n nodeContract) run(args ...string) ([]byte, error) {
+	command := exec.Command(n.node, args...)
+	command.Dir = filepath.Join(n.root, "contracts")
+	var stderr strings.Builder
+	command.Stderr = &stderr
+	output, err := command.Output()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return output, nil
+}
+
+func (n nodeContract) Merge(fragment string) (*pluginregistry.ContractAdditions, error) {
+	output, err := n.run("scripts/merge-fragment.mjs", "--json", filepath.Join(n.root, filepath.FromSlash(fragment)))
+	if err != nil {
+		return nil, err
+	}
+	var additions pluginregistry.ContractAdditions
+	if decodeErr := json.Unmarshal(output, &additions); decodeErr != nil {
+		return nil, fmt.Errorf("merge-fragment output: %w", decodeErr)
+	}
+	return &additions, nil
+}
+
+func (n nodeContract) Remove(additions pluginregistry.ContractAdditions) error {
+	raw, err := json.Marshal(additions)
+	if err != nil {
+		return err
+	}
+	_, err = n.run("scripts/remove-contract.mjs", string(raw))
+	return err
 }
 
 func projectModulePath(root string) (string, error) {

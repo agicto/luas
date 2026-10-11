@@ -7,11 +7,13 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
 	"github.com/fastagi/fastbuild/api/internal/infra/console"
 	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/pluginregistry"
 )
 
 // MakeModelCommand creates a new model
@@ -398,104 +400,31 @@ func isLowerAlnum(value string) bool {
 	return true
 }
 
-// wireOptionalStarter registers the generated starter in the starter vocabulary and the optional
-// catalog. Each edit is a small, anchored insertion followed by gofmt; if an anchor is missing the
-// file is left untouched and the caller prints manual steps.
+// wireOptionalStarter registers the generated starter at the starter slots, the same edits
+// plugin:add makes for a plugin's starter. If a slot is missing, nothing is written and the caller
+// prints manual steps. It runs from the api directory.
 func wireOptionalStarter(data map[string]string) ([]string, error) {
-	return wireOptionalStarterIn(".", data)
+	module, err := projectModulePath("..")
+	if err != nil {
+		return nil, err
+	}
+	spec := pluginregistry.StarterSpec{
+		Name: data["PackageName"], Const: data["StarterConst"], Directory: data["Package"],
+		Package: data["PackageName"], Handler: data["ModelName"],
+	}
+	applied, err := pluginregistry.ApplyInserts("..", spec.Inserts(module))
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, insert := range applied {
+		if !slices.Contains(files, insert.File) {
+			files = append(files, insert.File)
+		}
+	}
+	return files, nil
 }
 
-// wireOptionalStarterIn registers a starter in the API at apiDir: its config constant, provider
-// set, handler field, and manifest. It is shared by make:module and plugin:add.
-func wireOptionalStarterIn(apiDir string, data map[string]string) ([]string, error) {
-	startersPath := filepath.Join(apiDir, "internal", "infra", "config", "starters.go")
-	defaultsPath := filepath.Join(apiDir, "internal", "starter", "defaults.go")
-	pkg, dir, model, constant := data["PackageName"], data["Package"], data["ModelName"], data["StarterConst"]
-
-	var updated []string
-	err := editGoFile(startersPath, func(source string) (string, error) {
-		if strings.Contains(source, "\t"+constant+" ") {
-			return source, nil
-		}
-		source, insertErr := insertBefore(source, "\n)\n\n// StarterNames", "\n\t"+constant+" = \""+pkg+"\"")
-		if insertErr != nil {
-			return "", insertErr
-		}
-		return insertAfterFunc(source, "func StarterNames() []string {", "\t}\n}", "\t\t"+constant+",\n")
-	})
-	if err != nil {
-		return updated, err
-	}
-	updated = append(updated, startersPath)
-
-	err = editGoFile(defaultsPath, func(source string) (string, error) {
-		importPath := "\"github.com/fastagi/fastbuild/api/internal/modules/" + dir + "\""
-		importLine := "\t" + importPath + "\n"
-		if pkg != dir {
-			// goimports requires an alias when the package name differs from its directory.
-			importLine = "\t" + pkg + " " + importPath + "\n"
-		}
-		if strings.Contains(source, importLine) {
-			return source, nil
-		}
-		source, insertErr := insertBefore(source, "\t\"github.com/fastagi/fastbuild/api/internal/starter/assembly\"", importLine)
-		if insertErr != nil {
-			return "", insertErr
-		}
-		var editErr error
-		if source, editErr = insertBefore(source, "\twire.Struct(new(Handlers), \"*\"),", "\t"+pkg+".ProviderSet,\n"); editErr != nil {
-			return "", editErr
-		}
-		if source, editErr = insertBefore(source, "}\n\nfunc (h *Handlers) orMetadataOnly", "\t"+model+" *"+pkg+".Handler\n"); editErr != nil {
-			return "", editErr
-		}
-		return insertAfterFunc(source, "func OptionalManifests(", "\t}\n}", "\t\t"+pkg+".NewStarterManifest(h."+model+"),\n")
-	})
-	if err != nil {
-		return updated, err
-	}
-	return append(updated, defaultsPath), nil
-}
-
-func editGoFile(path string, edit func(string) (string, error)) error {
-	raw, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	edited, err := edit(string(raw))
-	if err != nil {
-		return fmt.Errorf("%s: %w", path, err)
-	}
-	formatted, err := format.Source([]byte(edited))
-	if err != nil {
-		return fmt.Errorf("%s: %w", path, err)
-	}
-	return os.WriteFile(path, formatted, 0o644)
-}
-
-func insertBefore(source, anchor, text string) (string, error) {
-	index := strings.Index(source, anchor)
-	if index < 0 {
-		return "", fmt.Errorf("anchor %q not found", anchor)
-	}
-	return source[:index] + text + source[index:], nil
-}
-
-// insertAfterFunc inserts text before the first closing anchor that follows a function signature.
-func insertAfterFunc(source, signature, closing, text string) (string, error) {
-	start := strings.Index(source, signature)
-	if start < 0 {
-		return "", fmt.Errorf("function %q not found", signature)
-	}
-	offset := strings.Index(source[start:], closing)
-	if offset < 0 {
-		return "", fmt.Errorf("end of %q not found", signature)
-	}
-	index := start + offset
-	return source[:index] + text + source[index:], nil
-}
-
-// Helper functions
 func generateFile(path, tmpl string, data map[string]string) error {
 	if _, err := os.Stat(path); err == nil {
 		return fmt.Errorf("file already exists: %s", path)

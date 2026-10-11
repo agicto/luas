@@ -1,5 +1,6 @@
-// Proves every official plugin's contract fragment still merges into the current openapi.yaml and
-// that the merged contract passes the same lint as the committed one.
+// Proves every official plugin's contract fragment still merges into the current openapi.yaml, that
+// the merged contract passes the same lint as the committed one, and that removing the recorded
+// additions restores openapi.yaml byte for byte, as plugin:remove and plugin:update rely on.
 import { execFile } from 'node:child_process';
 import { copyFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,7 +8,7 @@ import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 
-import { mergeFragment } from './lib/fragment.mjs';
+import { mergeFragment, removeContract } from './lib/fragment.mjs';
 
 const execute = promisify(execFile);
 const contractsDir = fileURLToPath(new URL('..', import.meta.url));
@@ -20,7 +21,10 @@ let checked = 0;
 for (const plugin of index.plugins) {
   if (!plugin.fragment) continue;
   const fragment = await readFile(join(registryDir, 'plugins', plugin.name, 'files', plugin.fragment), 'utf8');
-  const { merged } = mergeFragment(source, fragment);
+  const { merged, additions } = mergeFragment(source, fragment);
+  if (removeContract(merged, additions) !== source) {
+    throw new Error(`plugin ${plugin.name}: removing its contract additions does not restore openapi.yaml`);
+  }
   const scratch = await mkdtemp(join(tmpdir(), `fastbuild-${plugin.name}-`));
   try {
     await writeFile(join(scratch, 'openapi.yaml'), merged, 'utf8');
@@ -36,4 +40,4 @@ for (const plugin of index.plugins) {
   }
   checked += 1;
 }
-console.log(`Registry fragment check passed (${checked} plugin fragments merge and lint against openapi.yaml).`);
+console.log(`Registry fragment check passed (${checked} plugin fragments merge, lint, and remove cleanly against openapi.yaml).`);

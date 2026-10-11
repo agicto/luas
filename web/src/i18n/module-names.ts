@@ -15,6 +15,7 @@ export const AVAILABLE_MODULES = [
   'errors',
   'metadata',
   'test',
+  // fastbuild:slot web.i18n.modules
 ] as const;
 
 export type ModuleName = (typeof AVAILABLE_MODULES)[number];

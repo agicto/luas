@@ -20,6 +20,7 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/modules/user"
 	"github.com/fastagi/fastbuild/api/internal/modules/webhook"
 	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	// fastbuild:slot api.starter.imports
 )
 
 // ProviderSet wires every available starter provider and the configured registry.
@@ -35,6 +36,7 @@ var ProviderSet = wire.NewSet(
 	usage.ProviderSet,
 	webhook.ProviderSet,
 	operator.ProviderSet,
+	// fastbuild:slot api.starter.providers
 	wire.Struct(new(Handlers), "*"),
 	NewConfiguredRegistry,
 )
@@ -55,6 +57,7 @@ type Handlers struct {
 	Usage        *usage.Handler
 	Webhook      *webhook.Handler
 	Operator     *operator.Handler
+	// fastbuild:slot api.starter.handlers
 }
 
 func (h *Handlers) orMetadataOnly() *Handlers {
@@ -101,6 +104,7 @@ func OptionalManifests(handlers *Handlers) []assembly.StarterManifest {
 		usage.NewStarterManifest(h.Usage),
 		webhook.NewStarterManifest(h.Webhook),
 		operator.NewStarterManifest(h.Operator),
+		// fastbuild:slot api.starter.manifests
 	}
 }
 
