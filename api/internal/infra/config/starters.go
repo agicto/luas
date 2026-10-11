@@ -17,6 +17,7 @@ const (
 	StarterUsage        = "usage"
 	StarterWebhook      = "webhook"
 	StarterOperator     = "operator"
+	// fastbuild:slot api.starter.constants
 )
 
 // StarterNames returns every starter name known to this build, defaults first.
@@ -33,6 +34,7 @@ func StarterNames() []string {
 		StarterUsage,
 		StarterWebhook,
 		StarterOperator,
+		// fastbuild:slot api.starter.names
 	}
 }
 

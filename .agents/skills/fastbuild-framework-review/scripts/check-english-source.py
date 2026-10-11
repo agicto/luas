@@ -16,8 +16,16 @@ SOURCE_SUFFIXES = {".css", ".go", ".js", ".mjs", ".py", ".sh", ".ts", ".tsx", ".
 IGNORED_PARTS = {".git", ".next", "coverage", "dist", "node_modules"}
 
 
+PLUGIN_FILES = re.compile(r"^registry/plugins/[^/]+/files/")
+
+
+def installed_path(path: Path) -> str:
+    """Return the repository path a file has once installed; plugin files keep the core rules."""
+    return PLUGIN_FILES.sub("", path.relative_to(ROOT).as_posix())
+
+
 def is_localization_source(path: Path) -> bool:
-    relative = path.relative_to(ROOT).as_posix()
+    relative = installed_path(path)
     return (
         relative == "admin/src/i18n/resources.ts"
         or relative == "web/src/i18n/locales.ts"
@@ -26,7 +34,7 @@ def is_localization_source(path: Path) -> bool:
 
 
 def is_test_source(path: Path) -> bool:
-    relative = path.relative_to(ROOT).as_posix()
+    relative = installed_path(path)
     return path.name.endswith("_test.go") or "/src/test/" in f"/{relative}"
 
 
@@ -57,6 +65,8 @@ def main() -> int:
     for path in candidate_files(sys.argv[1:]):
         if not path.is_file() or any(part in IGNORED_PARTS for part in path.parts):
             continue
+        if path.relative_to(ROOT).as_posix().startswith(".claude/worktrees/"):
+            continue  # local agent worktrees are separate checkouts
         if path.suffix != ".md" and path.suffix not in SOURCE_SUFFIXES and path.name != ".editorconfig":
             continue
 

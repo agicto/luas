@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // ManifestFile is the manifest name inside each plugin directory.
@@ -26,7 +29,9 @@ var (
 // agents: everything the CLI does deterministically and everything an agent needs to decide
 // whether the plugin fits is declared here.
 type Manifest struct {
-	Name        string   `json:"name"`
+	Name string `json:"name"`
+	// Kind is feature (the default), theme, block, or template.
+	Kind        string   `json:"kind,omitempty"`
 	Version     string   `json:"version"`
 	Summary     string   `json:"summary"`
 	Description string   `json:"description"`
@@ -39,8 +44,43 @@ type Manifest struct {
 	Requires  Requirements `json:"requires"`
 	Starter   *StarterSpec `json:"starter,omitempty"`
 	// Fragment is the repository path of the OpenAPI fragment the plugin adds, if any.
-	Fragment string   `json:"fragment,omitempty"`
+	Fragment string `json:"fragment,omitempty"`
+	// Wiring inserts lines at named slots in core files, for example a Web navigation item.
+	Wiring []Insert `json:"wiring,omitempty"`
+	// Includes lists, in install order, the plugins a template installs.
+	Includes []string `json:"includes,omitempty"`
 	Env      []EnvVar `json:"env,omitempty"`
+}
+
+// Plugin kinds.
+const (
+	// KindFeature is a capability: API module, contract, and optional browser screens.
+	KindFeature = "feature"
+	// KindTheme restyles the browser shells through design tokens; one theme is installed at a time.
+	KindTheme = "theme"
+	// KindBlock is a reusable page section the builder places where it fits.
+	KindBlock = "block"
+	// KindTemplate is a starting point: a set of plugins installed together, plus the starters they
+	// need. It ships no files of its own.
+	KindTemplate = "template"
+)
+
+// PluginKind returns the manifest kind, defaulting to feature.
+func (m Manifest) PluginKind() string {
+	if m.Kind == "" {
+		return KindFeature
+	}
+	return m.Kind
+}
+
+// AllInserts returns the starter wiring followed by the explicit wiring, with scaffoldModule as
+// the module path in generated imports.
+func (m Manifest) AllInserts(scaffoldModule string) []Insert {
+	var inserts []Insert
+	if m.Starter != nil {
+		inserts = append(inserts, m.Starter.Inserts(scaffoldModule)...)
+	}
+	return append(inserts, m.Wiring...)
 }
 
 // Requirements names what must already exist in the project.
@@ -72,6 +112,24 @@ type EnvVar struct {
 	Default     string `json:"default,omitempty"`
 }
 
+// Inserts returns the slot edits that register the starter, the same edits make:module makes.
+func (s StarterSpec) Inserts(module string) []Insert {
+	pkg := s.PackageName()
+	importLine := `"` + module + "/internal/modules/" + s.Directory + `"`
+	if pkg != s.Directory {
+		// goimports requires an alias when the package name differs from its directory.
+		importLine = pkg + " " + importLine
+	}
+	return []Insert{
+		{Slot: "api.starter.constants", Lines: []string{s.Const + ` = "` + s.Name + `"`}},
+		{Slot: "api.starter.names", Lines: []string{s.Const + ","}},
+		{Slot: "api.starter.imports", Lines: []string{importLine}},
+		{Slot: "api.starter.providers", Lines: []string{pkg + ".ProviderSet,"}},
+		{Slot: "api.starter.handlers", Lines: []string{s.Handler + " *" + pkg + ".Handler"}},
+		{Slot: "api.starter.manifests", Lines: []string{pkg + ".NewStarterManifest(h." + s.Handler + "),"}},
+	}
+}
+
 // PackageName returns the Go package name of the installed starter.
 func (s StarterSpec) PackageName() string {
 	if s.Package != "" {
@@ -91,6 +149,37 @@ func (m Manifest) Validate() error {
 	}
 	if _, err := ParseVersion(m.FastBuild); err != nil {
 		problems = append(problems, "fastbuild must be the minimum scaffold version, for example 0.25.0")
+	}
+	kind := m.PluginKind()
+	if kind != KindFeature && kind != KindTheme && kind != KindBlock && kind != KindTemplate {
+		problems = append(problems, "kind must be feature, theme, block, or template")
+	}
+	if kind == KindTemplate {
+		if len(m.Includes) == 0 || len(m.Wiring) > 0 || len(m.Requires.Plugins) > 0 {
+			problems = append(problems, "a template lists its plugins in includes and has no wiring or required plugins")
+		}
+	} else if len(m.Includes) > 0 {
+		problems = append(problems, "only templates include plugins")
+	}
+	included := map[string]bool{}
+	for _, name := range m.Includes {
+		if !pluginNamePattern.MatchString(name) || name == m.Name || included[name] {
+			problems = append(problems, fmt.Sprintf("includes has an invalid or repeated name %q", name))
+		}
+		included[name] = true
+	}
+	if kind != KindFeature && (m.Starter != nil || m.Fragment != "") {
+		problems = append(problems, "only feature plugins install a starter or a contract fragment")
+	}
+	if kind == KindTheme && !slices.ContainsFunc(m.Wiring, func(insert Insert) bool { return strings.HasSuffix(insert.Slot, ".theme") }) {
+		problems = append(problems, "a theme must wire at least one *.theme slot")
+	}
+	for _, insert := range m.Wiring {
+		if err := insert.validate(); err != nil {
+			problems = append(problems, err.Error())
+		} else if _, ok := FindSlot(insert.Slot); !ok {
+			problems = append(problems, fmt.Sprintf("wiring slot %q is not a project slot; see plugin:slots", insert.Slot))
+		}
 	}
 	if strings.TrimSpace(m.Summary) == "" || len(m.Summary) > 120 {
 		problems = append(problems, "summary is required and at most 120 characters")
@@ -144,10 +233,5 @@ func (m Manifest) Validate() error {
 
 // ValidFilePath reports whether a plugin file path is a safe, repository-relative path.
 func ValidFilePath(name string) bool {
-	if name == "" || strings.Contains(name, "\\") || strings.HasPrefix(name, "/") {
-		return false
-	}
-	clean := path.Clean(name)
-	return clean == name && clean != "." && !strings.HasPrefix(clean, "../") && clean != ".." &&
-		!strings.HasPrefix(clean, ".git/")
+	return projectfiles.SafeRelativePath(name)
 }

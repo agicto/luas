@@ -112,6 +112,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewWorkflowRetryCommand()},
 		Registration{Command: NewWorkflowCancelCommand()},
 		Registration{Command: NewWorkflowPruneCommand()},
+		Registration{Command: NewRateLimitPruneCommand()},
 		Registration{Command: NewNotificationWorkCommand()},
 		Registration{Command: NewAssetPruneCommand()},
 	)
@@ -123,6 +124,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewStarterEnableCommand()},
 		Registration{Command: NewStarterDisableCommand()},
 		Registration{Command: NewProjectInitCommand()},
+		Registration{Command: NewProjectUpgradeCommand()},
 	)
 
 	pluginManifest := NewManifest(
@@ -132,6 +134,12 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewPluginIndexCommand()},
 		Registration{Command: NewPluginAddCommand()},
 		Registration{Command: NewPluginStatusCommand()},
+		Registration{Command: NewPluginUpdateCommand()},
+		Registration{Command: NewPluginRemoveCommand()},
+		Registration{Command: NewPluginDoctorCommand()},
+		Registration{Command: NewPluginSlotsCommand()},
+		Registration{Command: NewPluginPackCommand()},
+		Registration{Command: NewMCPCommand()},
 	)
 
 	return []Manifest{makeManifest, databaseManifest, starterManifest, pluginManifest, coreManifest}

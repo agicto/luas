@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,6 +110,8 @@ func downstreamProject(t *testing.T) string {
 }
 
 func TestPluginAddInstallsAdaptsWiresAndLocks(t *testing.T) {
+	scaffoldAPIRoot, err := filepath.Abs(filepath.Join("..", "..", "..", ".."))
+	require.NoError(t, err)
 	registry := fixtureRegistry(t)
 	root := downstreamProject(t)
 	t.Chdir(filepath.Join(root, "api"))
@@ -146,4 +149,79 @@ func TestPluginAddInstallsAdaptsWiresAndLocks(t *testing.T) {
 
 	err = NewPluginAddCommand().Run([]string{"demo-notes", "--source=" + registry})
 	assert.ErrorContains(t, err, "already installed")
+
+	// Without contract tooling the fragment waits to be merged, and the doctor says so.
+	doctorErr := NewPluginDoctorCommand().Run(nil)
+	assert.ErrorContains(t, doctorErr, "1 plugin integration problems")
+
+	captureStdout(t, func() error { return NewPluginRemoveCommand().Run([]string{"demo-notes"}) })
+	for _, file := range []string{"internal/infra/config/starters.go", "internal/starter/defaults.go"} {
+		original, readErr := os.ReadFile(filepath.Join(scaffoldAPIRoot, filepath.FromSlash(file)))
+		require.NoError(t, readErr)
+		current, _ := os.ReadFile(filepath.Join(root, "api", filepath.FromSlash(file)))
+		assert.Equal(t, string(original), string(current), "plugin:remove restores %s", file)
+	}
+	assert.NoDirExists(t, filepath.Join(root, "api/internal/modules/demonotes"))
+	assert.NoFileExists(t, filepath.Join(root, pluginregistry.LockFile))
+}
+
+// TestProjectSlotsAreMarkedExactlyOnce keeps the slot catalog and the markers in the source aligned:
+// every cataloged slot is marked once in its file, and no file marks an uncataloged slot.
+func TestProjectSlotsAreMarkedExactlyOnce(t *testing.T) {
+	repoRoot, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".."))
+	require.NoError(t, err)
+	found, err := pluginregistry.ScanSlotMarkers(repoRoot, "api/internal", "web/src", "admin/src")
+	require.NoError(t, err)
+	for _, slot := range pluginregistry.ProjectSlots {
+		assert.Equal(t, []string{slot.File}, found[slot.Name], "slot %s", slot.Name)
+		delete(found, slot.Name)
+	}
+	assert.Empty(t, found, "markers without a catalog entry in pluginregistry.ProjectSlots")
+}
+
+func TestCommunitySourcesNeedExplicitTrust(t *testing.T) {
+	community, err := pluginregistry.ParseRemoteSource("github:someone/plugins@v1.0.0")
+	require.NoError(t, err)
+	official, err := pluginregistry.ParseRemoteSource("github:" + scaffoldGitHubRepository + "@v0.25.0")
+	require.NoError(t, err)
+	assert.Equal(t, trustCommunity, sourceTrust(community))
+	assert.Equal(t, trustOfficial, sourceTrust(official))
+	assert.Equal(t, trustLocal, sourceTrust(pluginregistry.NewLocalSource(t.TempDir(), "path:./mine")))
+
+	err = requireTrust(community, nil)
+	require.ErrorContains(t, err, "https://github.com/someone/plugins/tree/v1.0.0/registry")
+	assert.NoError(t, requireTrust(community, []string{"--trust"}))
+	assert.NoError(t, requireTrust(official, nil))
+}
+
+// TestPluginSearchSelectsTheRightPlugin replays real requests, in English and Chinese, against the
+// official registry: an agent that installs the top result must pick the expected plugin. Add a
+// case whenever a plugin is added or a request was matched wrongly.
+func TestPluginSearchSelectsTheRightPlugin(t *testing.T) {
+	repoRoot, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".."))
+	require.NoError(t, err)
+	index, err := pluginregistry.NewLocalSource(filepath.Join(repoRoot, registryDir), "local:registry").Index()
+	require.NoError(t, err)
+	raw, err := os.ReadFile(filepath.Join(repoRoot, registryDir, "evals", "search-cases.tsv"))
+	require.NoError(t, err)
+
+	cases, correct := 0, 0
+	for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n")[1:] {
+		query, expected, ok := strings.Cut(line, "\t")
+		require.True(t, ok, "malformed case %q", line)
+		_, known := index.Find(expected)
+		require.True(t, known, "case expects unknown plugin %q", expected)
+		cases++
+		results := index.Search(query)
+		if len(results) > 0 && results[0].Entry.Name == expected {
+			correct++
+			continue
+		}
+		top := "nothing"
+		if len(results) > 0 {
+			top = results[0].Entry.Name
+		}
+		t.Errorf("%q: want %s, top result %s", query, expected, top)
+	}
+	t.Logf("plugin selection: %d/%d correct", correct, cases)
 }

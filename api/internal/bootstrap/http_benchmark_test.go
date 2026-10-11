@@ -50,7 +50,7 @@ func benchmarkHTTPRouter(metricsEnabled bool) *gin.Engine {
 	if metricsEnabled {
 		router.Use(metrics.Middleware())
 	}
-	applyGlobalMiddleware(router, testHTTPConfig())
+	applyGlobalMiddleware(router, testHTTPConfig(), nil)
 	router.GET("/v1/items/:id", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})

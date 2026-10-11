@@ -42,7 +42,7 @@ func (c *PluginSearchCommand) Description() string {
 	return "Search the plugin registry for a capability"
 }
 func (c *PluginSearchCommand) Usage() string {
-	return "plugin:search [words...] [--source=path] [--format=table|json]"
+	return "plugin:search [words...] [--kind=feature|theme|block|template] [--source=path] [--format=table|json]"
 }
 
 func (c *PluginInfoCommand) Name() string { return "plugin:info" }
@@ -74,9 +74,19 @@ func (c *PluginSearchCommand) Run(args []string) error {
 		return err
 	}
 	results := index.Search(strings.Join(words, " "))
+	if kind, ok := flagValue(args, "kind"); ok {
+		filtered := results[:0]
+		for _, match := range results {
+			if match.Entry.PluginKind() == kind {
+				filtered = append(filtered, match)
+			}
+		}
+		results = filtered
+	}
 	if format == "json" {
 		type result struct {
 			Name     string   `json:"name"`
+			Kind     string   `json:"kind"`
 			Version  string   `json:"version"`
 			Summary  string   `json:"summary"`
 			UseWhen  []string `json:"use_when"`
@@ -85,10 +95,10 @@ func (c *PluginSearchCommand) Run(args []string) error {
 		}
 		out := make([]result, 0, len(results))
 		for _, match := range results {
-			out = append(out, result{match.Entry.Name, match.Entry.Version, match.Entry.Summary,
+			out = append(out, result{match.Entry.Name, match.Entry.PluginKind(), match.Entry.Version, match.Entry.Summary,
 				match.Entry.UseWhen, match.Entry.Requires.Starters, match.Score})
 		}
-		return writeJSON(map[string]any{"source": source.Describe(), "plugins": out})
+		return writeJSON(map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugins": out})
 	}
 	if len(results) == 0 {
 		c.output.Info("No plugin in %s matches %q.", source.Describe(), strings.Join(words, " "))
@@ -96,9 +106,9 @@ func (c *PluginSearchCommand) Run(args []string) error {
 	}
 	rows := make([][]string, 0, len(results))
 	for _, match := range results {
-		rows = append(rows, []string{match.Entry.Name, match.Entry.Version, match.Entry.Summary})
+		rows = append(rows, []string{match.Entry.Name, match.Entry.PluginKind(), match.Entry.Version, match.Entry.Summary})
 	}
-	c.output.Table([]string{"Name", "Version", "Summary"}, rows)
+	c.output.Table([]string{"Name", "Kind", "Version", "Summary"}, rows)
 	c.output.Line("Next: fastbuild plugin:info <name>")
 	return nil
 }
@@ -129,19 +139,22 @@ func (c *PluginInfoCommand) Run(args []string) error {
 		return err
 	}
 	if format == "json" {
-		return writeJSON(map[string]any{"source": source.Describe(), "plugin": entry, "integration": string(integration)})
+		return writeJSON(map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugin": entry, "integration": string(integration)})
 	}
-	c.output.Title(entry.Name + " " + entry.Version)
+	c.output.Title(entry.Name + " " + entry.Version + " (" + entry.PluginKind() + ")")
 	c.output.Line(entry.Summary)
 	c.output.NewLine()
 	c.output.Line(entry.Description)
 	c.output.NewLine()
-	c.output.TwoColumn("Source", source.Describe())
+	c.output.TwoColumn("Source", source.Describe()+" ("+sourceTrust(source)+")")
 	c.output.TwoColumn("Requires FastBuild", ">= "+entry.FastBuild)
 	c.output.TwoColumn("Requires starters", listOrDash(entry.Requires.Starters))
 	c.output.TwoColumn("Requires plugins", listOrDash(entry.Requires.Plugins))
 	if entry.Starter != nil {
 		c.output.TwoColumn("Installs starter", entry.Starter.Name)
+	}
+	if len(entry.Includes) > 0 {
+		c.output.TwoColumn("Installs plugins", strings.Join(entry.Includes, ", "))
 	}
 	c.output.Section("Use when")
 	for _, situation := range entry.UseWhen {
@@ -209,6 +222,39 @@ func resolvePluginSource(args []string) (pluginregistry.Source, error) {
 		return pluginregistry.NewLocalSource(filepath.Join(root, registryDir), "local:registry"), nil
 	}
 	return projectReleaseSource(root)
+}
+
+// Source trust levels. Official plugins come from FastBuild releases; local ones from a directory
+// the builder controls; community ones from any other repository and need an explicit --trust.
+const (
+	trustOfficial  = "official"
+	trustLocal     = "local"
+	trustCommunity = "community"
+)
+
+func sourceTrust(source pluginregistry.Source) string {
+	label := source.Describe()
+	switch {
+	case label == "local:registry" || strings.HasPrefix(label, "github:"+scaffoldGitHubRepository+"@"):
+		return trustOfficial
+	case strings.HasPrefix(label, "path:"):
+		return trustLocal
+	default:
+		return trustCommunity
+	}
+}
+
+// requireTrust stops installs from community sources until the builder has reviewed them.
+func requireTrust(source pluginregistry.Source, args []string) error {
+	if sourceTrust(source) != trustCommunity || hasFlag(args, "trust") {
+		return nil
+	}
+	remote, ok := source.(*pluginregistry.RemoteSource)
+	where := source.Describe()
+	if ok {
+		where = fmt.Sprintf("https://github.com/%s/%s/tree/%s/registry", remote.Owner, remote.Repo, remote.Ref)
+	}
+	return fmt.Errorf("%s is a community source, not a FastBuild release: review %s, then pass --trust", source.Describe(), where)
 }
 
 func sourceFromFlag(raw string) (pluginregistry.Source, error) {
@@ -332,7 +378,7 @@ func (c *PluginAddCommand) Description() string {
 	return "Install a registry plugin into this project as source"
 }
 func (c *PluginAddCommand) Usage() string {
-	return "plugin:add <name> [--source=path|github:owner/repo@tag] [--dry-run]"
+	return "plugin:add <name> [--source=path|github:owner/repo@tag] [--trust] [--dry-run]"
 }
 
 func (c *PluginStatusCommand) Name() string { return "plugin:status" }
@@ -340,13 +386,6 @@ func (c *PluginStatusCommand) Description() string {
 	return "Show installed plugins and which of their files changed since installation"
 }
 func (c *PluginStatusCommand) Usage() string { return "plugin:status [--format=table|json]" }
-
-// pluginEditedFiles are the repository files plugin:add may change besides the plugin's own files.
-var pluginEditedFiles = []string{
-	"api/internal/infra/config/starters.go",
-	"api/internal/starter/defaults.go",
-	"contracts/openapi.yaml",
-}
 
 func (c *PluginAddCommand) Run(args []string) error {
 	names, _, err := positionalAndFormat(args, "text")
@@ -365,11 +404,19 @@ func (c *PluginAddCommand) Run(args []string) error {
 		return err
 	}
 	defer closeSource(source)
+	if trustErr := requireTrust(source, args); trustErr != nil {
+		return trustErr
+	}
 	installer, err := newProjectInstaller(root, source)
 	if err != nil {
 		return err
 	}
 	installer.DryRun = hasFlag(args, "dry-run")
+	if index, indexErr := source.Index(); indexErr == nil {
+		if entry, ok := index.Find(names[0]); ok && entry.PluginKind() == pluginregistry.KindTemplate {
+			return c.addTemplate(installer, source, names[0])
+		}
+	}
 
 	result, err := installer.Install(names[0])
 	if err != nil {
@@ -381,13 +428,16 @@ func (c *PluginAddCommand) Run(args []string) error {
 		for _, file := range result.Written {
 			c.output.Line("  + " + file)
 		}
+		for _, applied := range result.Wiring {
+			c.output.Line("  ~ %s (%s)", applied.File, applied.Slot)
+		}
 		return nil
 	}
 	c.output.Success("Installed %s %s from %s", entry.Name, entry.Version, source.Describe())
 	for _, file := range result.Written {
 		c.output.Line("  + " + file)
 	}
-	for _, file := range result.Edited {
+	for _, file := range result.Edited() {
 		c.output.Line("  ~ " + file)
 	}
 	if entry.Fragment != "" && !result.FragmentMerged {
@@ -405,6 +455,41 @@ func (c *PluginAddCommand) Run(args []string) error {
 		c.output.Line(string(integration))
 	}
 	c.output.Line("Recorded in %s. Review the diff before committing.", pluginregistry.LockFile)
+	return nil
+}
+
+// addTemplate installs every plugin of a template and lists each one's integration steps.
+func (c *PluginAddCommand) addTemplate(installer *pluginregistry.Installer, source pluginregistry.Source, name string) error {
+	result, err := installer.InstallTemplate(name)
+	if err != nil {
+		return err
+	}
+	verb := "Installed"
+	if installer.DryRun {
+		verb = "Dry run: would install"
+	}
+	c.output.Success("%s template %s %s from %s", verb, name, result.Template.Version, source.Describe())
+	for _, skipped := range result.Skipped {
+		c.output.Line("  = %s (already installed)", skipped)
+	}
+	for _, installed := range result.Installed {
+		c.output.Line("  + %s %s: %d files, %d slot edits", installed.Entry.Name, installed.Entry.Version,
+			len(installed.Written), len(installed.Wiring))
+	}
+	if installer.DryRun {
+		return nil
+	}
+	c.output.Section("Integration steps")
+	for _, installed := range result.Installed {
+		if integration, docErr := source.ReadDocument(installed.Entry.Name, pluginregistry.IntegrationFile); docErr == nil {
+			c.output.Line("## %s", installed.Entry.Name)
+			c.output.Line(string(integration))
+		}
+	}
+	if len(result.Template.Requires.Starters) > 0 {
+		c.output.Line("Enable the starters %s and each plugin's starter in OPTIONAL_STARTERS.", strings.Join(result.Template.Requires.Starters, ", "))
+	}
+	c.output.Line("Finish when plugin:doctor and make check pass.")
 	return nil
 }
 
@@ -457,58 +542,72 @@ func (c *PluginStatusCommand) Run(args []string) error {
 }
 
 // newProjectInstaller configures an installer for the checkout at root: the project's scaffold
-// version, its starters, its Go module path, and the starter and contract hooks.
+// version, its starters, its Go module path, and the contract tooling when it is installed.
 func newProjectInstaller(root string, source pluginregistry.Source) (*pluginregistry.Installer, error) {
 	module, err := projectModulePath(root)
 	if err != nil {
 		return nil, err
 	}
 	scaffoldVersion := ""
-	if raw, readErr := os.ReadFile(filepath.Join(root, projectMarkerFile)); readErr == nil {
-		var marker ProjectMarker
-		if json.Unmarshal(raw, &marker) == nil {
-			scaffoldVersion = marker.ScaffoldVersion
-		}
+	if marker, markerErr := readProjectMarker(root); markerErr == nil {
+		scaffoldVersion = marker.ScaffoldVersion
 	}
 	installer := &pluginregistry.Installer{
 		Root:            root,
 		Source:          source,
 		ScaffoldVersion: scaffoldVersion,
+		ScaffoldModule:  scaffoldModulePath,
 		KnownStarters:   config.StarterNames(),
-		EditedFiles:     pluginEditedFiles,
 		Transform: func(_ string, content []byte) []byte {
 			if module == scaffoldModulePath {
 				return content
 			}
 			return []byte(strings.ReplaceAll(string(content), scaffoldModulePath, module))
 		},
-		WireStarter: func(spec pluginregistry.StarterSpec) ([]string, error) {
-			edited, err := wireOptionalStarterIn(filepath.Join(root, "api"), map[string]string{
-				"PackageName":  spec.PackageName(),
-				"Package":      spec.Directory,
-				"ModelName":    spec.Handler,
-				"StarterConst": spec.Const,
-			})
-			relative := make([]string, 0, len(edited))
-			for _, file := range edited {
-				if rel, relErr := filepath.Rel(root, file); relErr == nil {
-					relative = append(relative, filepath.ToSlash(rel))
-				}
-			}
-			return relative, err
-		},
 	}
 	if node, lookErr := exec.LookPath("node"); lookErr == nil && fileExists(filepath.Join(root, "contracts", "node_modules", "yaml", "package.json")) {
-		installer.MergeFragment = func(fragment string) error {
-			command := exec.Command(node, "scripts/merge-fragment.mjs", filepath.Join(root, filepath.FromSlash(fragment)))
-			command.Dir = filepath.Join(root, "contracts")
-			if output, runErr := command.CombinedOutput(); runErr != nil {
-				return fmt.Errorf("%w: %s", runErr, strings.TrimSpace(string(output)))
-			}
-			return nil
-		}
+		installer.Contract = nodeContract{root: root, node: node}
 	}
 	return installer, nil
+}
+
+// nodeContract runs the contract tooling in contracts/scripts, which owns the openapi.yaml layout.
+type nodeContract struct {
+	root string
+	node string
+}
+
+func (n nodeContract) run(args ...string) ([]byte, error) {
+	command := exec.Command(n.node, args...)
+	command.Dir = filepath.Join(n.root, "contracts")
+	var stderr strings.Builder
+	command.Stderr = &stderr
+	output, err := command.Output()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(stderr.String()))
+	}
+	return output, nil
+}
+
+func (n nodeContract) Merge(fragment string) (*pluginregistry.ContractAdditions, error) {
+	output, err := n.run("scripts/merge-fragment.mjs", "--json", filepath.Join(n.root, filepath.FromSlash(fragment)))
+	if err != nil {
+		return nil, err
+	}
+	var additions pluginregistry.ContractAdditions
+	if decodeErr := json.Unmarshal(output, &additions); decodeErr != nil {
+		return nil, fmt.Errorf("merge-fragment output: %w", decodeErr)
+	}
+	return &additions, nil
+}
+
+func (n nodeContract) Remove(additions pluginregistry.ContractAdditions) error {
+	raw, err := json.Marshal(additions)
+	if err != nil {
+		return err
+	}
+	_, err = n.run("scripts/remove-contract.mjs", string(raw))
+	return err
 }
 
 func projectModulePath(root string) (string, error) {

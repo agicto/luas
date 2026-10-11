@@ -9,6 +9,7 @@ const messages = {
   profile: 'Profile',
   analytics: 'Analytics',
   styleguide: 'Styleguide',
+  // fastbuild:slot web.i18n.nav.en-us
 } as const;
 
 export default messages;

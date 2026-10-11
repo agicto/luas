@@ -6,6 +6,7 @@ export const OPTIONAL_WEB_FEATURES = [
   'setting',
   'usage',
   'webhook',
+  // fastbuild:slot web.features
 ] as const;
 
 export type OptionalWebFeature = (typeof OPTIONAL_WEB_FEATURES)[number];
@@ -16,6 +17,7 @@ const featureDependencies: Partial<Record<OptionalWebFeature, readonly OptionalW
   setting: ['organization'],
   usage: ['organization'],
   webhook: ['organization'],
+  // fastbuild:slot web.feature-dependencies
 };
 
 export function parseOptionalWebFeatures(value: string): readonly OptionalWebFeature[] {

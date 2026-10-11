@@ -1,0 +1,463 @@
+# OpenAPI fragment of the comments plugin. plugin:add merges it into contracts/openapi.yaml.
+x-error-codes:
+  - COMMENT.NOT_FOUND
+  - COMMENT.RESOURCE_NOT_FOUND
+  - COMMENT.UNSUPPORTED_RESOURCE_TYPE
+  - COMMENT.INVALID
+  - COMMENT.INVALID_PARENT
+  - COMMENT.INVALID_MENTIONS
+  - COMMENT.VERSION_CONFLICT
+  - COMMENT.PRECONDITION_REQUIRED
+tags:
+  - name: Comments
+    description: Threaded comments with mentions on organization resources (comments plugin).
+paths:
+  /v1/comments:
+    get:
+      operationId: listComments
+      summary: List a resource's comment threads, oldest first
+      description: Keyset pages of root comments, each with its first three replies and whether more exist; pass
+        `meta.next_cursor` as `cursor` for the next page. Requires read access to the resource.
+      tags:
+        - Comments
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/CommentResourceType'
+        - $ref: '#/components/parameters/CommentResourceID'
+        - $ref: '#/components/parameters/CommentCursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: One page of threads.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentThreadPageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`COMMENT.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: '`COMMENT.UNSUPPORTED_RESOURCE_TYPE`: the resource type is not registered.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createComment
+      summary: Comment on a resource or reply to a comment
+      description: Requires comment access to the resource. A reply to a reply joins the root's thread. Each
+        newly mentioned member receives one notification when the notification starter is enabled.
+      tags:
+        - Comments
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: The created comment.
+          headers:
+            ETag:
+              description: Comment validator `"comment-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`COMMENT.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENT.INVALID` for a blank body;
+            `COMMENT.INVALID_PARENT` for a parent that is missing, deleted, or on another resource;
+            `COMMENT.INVALID_MENTIONS` for duplicates or non-members; `COMMENT.UNSUPPORTED_RESOURCE_TYPE`.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/comments/{comment_id}:
+    patch:
+      operationId: updateComment
+      summary: Edit the caller's own comment
+      description: Authors only. `If-Match` must carry the `ETag` that was read. Newly added mentions are notified.
+      tags:
+        - Comments
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/CommentID'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentRequest'
+      responses:
+        '200':
+          description: The edited comment.
+          headers:
+            ETag:
+              description: Comment validator `"comment-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`COMMENT.NOT_FOUND`, also for deleted comments and other organizations'' comments.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '412':
+          description: '`COMMENT.VERSION_CONFLICT`: the comment changed since it was read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENT.INVALID` for an empty edit or a
+            blank body; `COMMENT.INVALID_MENTIONS` for duplicates or non-members.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '428':
+          description: '`COMMENT.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deleteComment
+      summary: Delete a comment
+      description: The author, or an organization owner or admin. The comment keeps its place in the thread with
+        its body and mentions erased.
+      tags:
+        - Comments
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/CommentID'
+      responses:
+        '204':
+          description: The comment is deleted.
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`COMMENT.NOT_FOUND`, also for deleted comments and other organizations'' comments.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/comments/{comment_id}/replies:
+    get:
+      operationId: listCommentReplies
+      summary: List a thread's replies, oldest first
+      description: Keyset pages; pass `meta.next_cursor` as `cursor` for the next page. Requires read access to the
+        resource.
+      tags:
+        - Comments
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/CommentID'
+        - $ref: '#/components/parameters/CommentCursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: One page of replies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentPageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`COMMENT.NOT_FOUND`, also for other organizations'' comments.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  parameters:
+    CommentID:
+      name: comment_id
+      in: path
+      required: true
+      description: Positive comment identifier.
+      schema:
+        $ref: '#/components/schemas/PositiveID'
+    CommentResourceType:
+      name: resource_type
+      in: query
+      required: true
+      description: A resource type registered by the project, for example `task`.
+      schema:
+        $ref: '#/components/schemas/CommentResourceType'
+    CommentResourceID:
+      name: resource_id
+      in: query
+      required: true
+      description: The commented resource's identifier.
+      schema:
+        $ref: '#/components/schemas/CommentResourceID'
+    CommentCursor:
+      name: cursor
+      in: query
+      description: Opaque keyset position from `meta.next_cursor`; absent or empty requests the first page.
+      schema:
+        type: string
+        maxLength: 32
+  schemas:
+    CommentResourceType:
+      type: string
+      minLength: 1
+      maxLength: 40
+      pattern: ^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$
+    CommentResourceID:
+      type: string
+      minLength: 1
+      maxLength: 64
+      pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]*$
+    Comment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - resource_type
+        - resource_id
+        - parent_id
+        - author_id
+        - body
+        - mentions
+        - version
+        - created_at
+        - updated_at
+        - edited_at
+        - deleted_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        resource_type:
+          $ref: '#/components/schemas/CommentResourceType'
+        resource_id:
+          $ref: '#/components/schemas/CommentResourceID'
+        parent_id:
+          description: The thread root for a reply, or null for a root comment.
+          oneOf:
+            - $ref: '#/components/schemas/PositiveID'
+            - type: 'null'
+        author_id:
+          description: The author, or null after the account was deleted.
+          oneOf:
+            - $ref: '#/components/schemas/PositiveID'
+            - type: 'null'
+        body:
+          description: Plain text or Markdown; render it as text, never as raw HTML. Null once deleted.
+          oneOf:
+            - type: string
+              minLength: 1
+              maxLength: 10000
+            - type: 'null'
+        mentions:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          description: Mentioned members' user IDs; empty once deleted.
+          items:
+            $ref: '#/components/schemas/PositiveID'
+        version:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        edited_at:
+          description: When the author last edited the comment, or null.
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+        deleted_at:
+          description: When the comment was deleted, or null.
+          oneOf:
+            - type: string
+              format: date-time
+            - type: 'null'
+    CommentThread:
+      type: object
+      additionalProperties: false
+      required:
+        - comment
+        - replies
+        - has_more_replies
+      properties:
+        comment:
+          $ref: '#/components/schemas/Comment'
+        replies:
+          type: array
+          maxItems: 3
+          description: The root's first replies, oldest first.
+          items:
+            $ref: '#/components/schemas/Comment'
+        has_more_replies:
+          type: boolean
+          description: Whether `GET /v1/comments/{comment_id}/replies` has more replies.
+    CreateCommentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - resource_type
+        - resource_id
+        - body
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/CommentResourceType'
+        resource_id:
+          $ref: '#/components/schemas/CommentResourceID'
+        parent_id:
+          $ref: '#/components/schemas/PositiveID'
+        body:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: 1-10,000 characters after trimming surrounding whitespace.
+        mentions:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          description: User IDs of organization members to notify.
+          items:
+            $ref: '#/components/schemas/PositiveID'
+    UpdateCommentRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        body:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        mentions:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          description: Replaces the mention list; only newly added members are notified.
+          items:
+            $ref: '#/components/schemas/PositiveID'
+    CommentResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Comment'
+    CommentPageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'
+    CommentThreadPageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentThread'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'

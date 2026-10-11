@@ -1,0 +1,19 @@
+{
+  "name": "theme-warm",
+  "kind": "theme",
+  "version": "0.1.0",
+  "summary": "Content-first warm theme for Web and Admin: paper neutrals, ink text, terracotta accent, soft radius.",
+  "description": "Restyles the Web application and the Admin Console through design tokens only: warm paper-like neutrals, ink-like text, a terracotta brand accent, and a softer radius suited to long-form reading such as documentation, knowledge bases, and content sites. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+  "keywords": ["theme", "warm", "content", "reading", "editorial", "docs", "blog", "soft", "主题", "温暖", "阅读", "内容", "文档"],
+  "use_when": [
+    "the product is content-first: documentation, a knowledge base, a blog, or a community",
+    "the builder asks for a warm, friendly, soft, or editorial look",
+    "long text should be comfortable to read in light and dark mode"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {},
+  "wiring": [
+    { "slot": "web.theme", "lines": ["@import \"./presets/warm.css\";"] },
+    { "slot": "admin.theme", "lines": ["@import './themes/warm.css';"] }
+  ]
+}

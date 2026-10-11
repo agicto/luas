@@ -133,9 +133,11 @@ IP identity is accepted from forwarding headers only when the direct upstream ma
 The built-in stores are bounded and process-local. Each auth rule retains at most
 `AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE` active identity buckets (default 10,000), then evicts the
 least recently used bucket. Multi-replica production deployments must provide equivalent distributed
-enforcement at the gateway/WAF or through an explicitly assembled shared limiter. FastBuild does not ship
+enforcement: `RATE_LIMIT_STORE=postgres` shares every auth quota across replicas through PostgreSQL,
+or the gateway/WAF or an explicitly assembled shared limiter can enforce it. FastBuild does not ship
 a built-in Redis rate-limit driver, and a shared implementation must not silently fall back to
-independent per-process buckets. These quotas are a starter baseline, not a substitute for MFA,
+independent per-process buckets. When the shared store fails, every policy keeps the canonical `429`
++ `COMMON.RATE_LIMITED` response shape for denials. These quotas are a starter baseline, not a substitute for MFA,
 breached-credential checks, adaptive bot controls, or product-specific account recovery policy.
 
 Reset delivery is deliberately not durable: a queue payload would store the plaintext token. At

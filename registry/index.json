@@ -2,10 +2,378 @@
   "version": 1,
   "plugins": [
     {
+      "name": "block-auth-card",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sign-in and sign-up card shell with logo, alternative actions, form slot, footer, and legal text.",
+      "description": "A Web block that frames authentication pages: brand mark, page heading, optional alternative sign-in actions with a divider, a slot for the caller's form, a footer line for switching between sign-in and sign-up, and legal text. It contains no authentication logic: the existing auth feature's forms and session handling stay in charge. Built from the Card and Separator primitives and theme tokens; all copy arrives through props.",
+      "keywords": [
+        "block",
+        "auth",
+        "authentication",
+        "sign in",
+        "sign up",
+        "login",
+        "register",
+        "card",
+        "登录",
+        "注册",
+        "认证",
+        "账号"
+      ],
+      "use_when": [
+        "sign-in, sign-up, or password pages need a consistent framed layout",
+        "the builder asks for a login or registration card design",
+        "single sign-on buttons should sit above the email form with a divider"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/auth-card/auth-card.test.tsx": "58140ed1d439b1b077503ce518200a434947b698e0742489458eaf8f2b87c03e",
+        "web/src/components/blocks/auth-card/index.tsx": "45ccc49ea5a45fb2908ad95381da17fceec98e07d05e7bca0aa7290b06e8d0b0"
+      }
+    },
+    {
+      "name": "block-dashboard-stats",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "KPI cards with values, accessible trends, icons, and a loading state for dashboards.",
+      "description": "A Web block that renders a responsive grid of KPI cards: label, value, optional icon, an optional trend whose color follows whether the change is good news, a secondary line, and skeleton cards while loading. Built from the Card and Skeleton primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "dashboard",
+        "stats",
+        "kpi",
+        "metrics",
+        "cards",
+        "analytics",
+        "overview",
+        "trend",
+        "仪表盘",
+        "统计",
+        "指标",
+        "卡片",
+        "概览"
+      ],
+      "use_when": [
+        "a dashboard or overview page needs headline numbers",
+        "the builder asks for KPI, metric, or stat cards with a trend",
+        "a console home page should summarize usage, revenue, or activity"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/dashboard-stats/dashboard-stats.test.tsx": "66ff2f18644e46198634594ecbe1081a99926d0bb2f98a76db08ba307c6bf6f2",
+        "web/src/components/blocks/dashboard-stats/index.tsx": "51bb500c029a0aaa5fab52bd2333d94aa6f40f7641fa2cacbe1edeae35de2fce"
+      }
+    },
+    {
+      "name": "block-data-table",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sortable, paginated table shell generic over the row type, with aria-sort and an empty state.",
+      "description": "A Web client block that renders typed columns over the rows passed in: sortable headers with aria-sort, optional row-header cells, client-side pagination with labelled controls and an announced page status, and an empty state across all columns. Built from the Table and Button primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "table",
+        "data table",
+        "grid",
+        "list",
+        "sort",
+        "sortable",
+        "pagination",
+        "paginated",
+        "表格",
+        "数据表",
+        "排序",
+        "分页",
+        "列表"
+      ],
+      "use_when": [
+        "a page lists records such as members, orders, invoices, or audit entries",
+        "the builder asks for a sortable or paginated table",
+        "a list needs an empty state and accessible sorting without a heavy grid library"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/data-table/data-table.test.tsx": "c61ff4b19a1d6d5bfb0b9c98ee407f3854c5f9639cfb69c7ec9cac726bdcd15b",
+        "web/src/components/blocks/data-table/index.tsx": "0ec3edbeb0b14dbb960659fffcca5484d7b9afbb9b3dcbfd9eae5ae87dc49f75"
+      }
+    },
+    {
+      "name": "block-empty-state",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Empty, no-results, error, and no-access state panels with recovery actions.",
+      "description": "A Web block for the moments a page has nothing to show: empty collections, empty search results, failed loads (announced as an alert, with an optional request id), and missing access. Each variant has its own decorative icon and tone; title, description, and actions arrive through props, and a bare mode fits inside cards and table cells. Built from theme tokens and lucide-react icons; it fetches nothing.",
+      "keywords": [
+        "block",
+        "empty state",
+        "error state",
+        "no results",
+        "no access",
+        "forbidden",
+        "zero state",
+        "placeholder",
+        "空状态",
+        "错误",
+        "无权限",
+        "无结果",
+        "占位"
+      ],
+      "use_when": [
+        "a list, table, or search can be empty and should guide the user to a next step",
+        "a page needs a consistent error or no-access panel with a retry action",
+        "the builder asks for empty, error, or permission states"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/empty-state/empty-state.test.tsx": "f771a57c1b97fd641887d89907e43e70877469129d902b344b53cd92a1b9a059",
+        "web/src/components/blocks/empty-state/index.tsx": "397994bfe1ff5beaca31dfe125d2bf6dbcba31430aa4a2d63dba83a6cd6212e3"
+      }
+    },
+    {
+      "name": "block-landing-hero",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Landing page hero with eyebrow, heading, calls to action, optional media, and a feature grid.",
+      "description": "A Web block for the top of a public landing page: an eyebrow badge, the page heading, supporting copy, primary and secondary calls to action, optional media beside the copy on wide screens, and a responsive feature grid with decorative icons. Built from the Badge primitive and theme tokens; all copy and actions arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "landing",
+        "hero",
+        "homepage",
+        "marketing",
+        "cta",
+        "call to action",
+        "features",
+        "首页",
+        "落地页",
+        "营销",
+        "主视觉",
+        "功能介绍"
+      ],
+      "use_when": [
+        "a public home or product page needs a headline section with calls to action",
+        "the builder asks for a landing page, hero, or marketing section",
+        "key features should be presented in a grid under the headline"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/landing-hero/index.tsx": "5c7462101fe24a30ed56aad5717a87d940db2a2dc6fdd0e39e46b7cf449f1fdc",
+        "web/src/components/blocks/landing-hero/landing-hero.test.tsx": "bdbbe4f8ffdd8d04b8110887d6aa3934ff410abc629018ac1bd1029ea0750a9c"
+      }
+    },
+    {
+      "name": "block-onboarding-steps",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Onboarding checklist with a progress bar, step states, and an action on the current step.",
+      "description": "A Web block that renders an onboarding checklist: a progress bar with an accessible label, an ordered list of complete, current, and upcoming steps announced in words, aria-current on the current step, and an action slot on that step. Step status comes from the caller; built from the Card primitives, theme tokens, and lucide-react icons; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "onboarding",
+        "stepper",
+        "steps",
+        "checklist",
+        "getting started",
+        "setup",
+        "progress",
+        "wizard",
+        "引导",
+        "新手",
+        "步骤",
+        "清单",
+        "进度"
+      ],
+      "use_when": [
+        "new users or organizations should see what to set up next",
+        "the builder asks for a getting-started checklist or stepper",
+        "a console home page needs setup progress until the account is ready"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/onboarding-steps/index.tsx": "b8cbbc384799d0bb84044f563a17c3de2017e6f43f3417e808fe49d3e2fa3cce",
+        "web/src/components/blocks/onboarding-steps/onboarding-steps.test.tsx": "09002e80944cb17ca97b1ee4cb23dae672ea2f4b9cb3509ebe026d28fcb86d03"
+      }
+    },
+    {
+      "name": "block-pricing-table",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Pricing plans with feature lists, a highlighted plan, and call-to-action slots.",
+      "description": "A Web block that renders plan cards: name, description, a preformatted price and period, a feature list that announces included and missing features in words, a call-to-action slot, and one highlighted plan with a badge. Built from the Card and Badge primitives and theme tokens; prices and copy arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "pricing",
+        "plans",
+        "tiers",
+        "subscription",
+        "billing",
+        "price table",
+        "compare plans",
+        "定价",
+        "价格",
+        "套餐",
+        "订阅",
+        "方案"
+      ],
+      "use_when": [
+        "a public site or upgrade page must show plans and prices",
+        "the builder asks for a pricing table or plan comparison",
+        "one plan should be recommended with a highlight"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/pricing-table/index.tsx": "99ee357955f28897e40a72e1878af329ab9c397dad09c4d7f94634cf4f1169bb",
+        "web/src/components/blocks/pricing-table/pricing-table.test.tsx": "cb7d7c8b97a35122fcefa4c9fc7254f2479fdbcc595115cfa7ff786f30274f1a"
+      }
+    },
+    {
+      "name": "block-settings-page",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sectioned settings layout with page header, section navigation, and framed sections with footers.",
+      "description": "A Web block that lays out a settings page: a heading with optional actions, a section navigation that is a sticky sidebar on wide screens and a horizontal strip on phones, and one labelled card per section with an optional action footer and a danger tone for irreversible settings. Built from the Card primitives and theme tokens; forms and copy arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "settings",
+        "preferences",
+        "account",
+        "profile",
+        "configuration",
+        "layout",
+        "sections",
+        "设置",
+        "偏好",
+        "账户",
+        "配置",
+        "个人资料"
+      ],
+      "use_when": [
+        "a product needs an account, workspace, or organization settings page",
+        "several groups of preferences should share one page with navigation",
+        "the builder asks for a settings layout with a danger zone"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/settings-page/index.tsx": "766ace710e194b93d703b4cb517487b1c4818f735507baa25f0f1f13606e4a64",
+        "web/src/components/blocks/settings-page/settings-page.test.tsx": "68b0f20c5afd04a76cb184424b48b9c6d59d0674ec028dc3f2f0d57e3839a0b5"
+      }
+    },
+    {
+      "name": "comments",
+      "kind": "feature",
+      "version": "0.1.0",
+      "summary": "Threaded comments with @mentions on any organization resource the project registers.",
+      "description": "Adds a comment starter: members comment on and reply to organization resources such as tasks, documents, or tickets. Threads are one level deep, edits use optimistic concurrency (If-Match), deletes are soft so threads keep their shape, and owners and admins can moderate. Mentioned members get an idempotent notification when the notification starter is enabled. Each module decides which of its resources are commentable and who may read or comment through a small resource-type seam.",
+      "keywords": [
+        "comments",
+        "comment",
+        "threads",
+        "replies",
+        "discussion",
+        "mentions",
+        "@mention",
+        "feedback",
+        "collaboration",
+        "评论",
+        "回复",
+        "讨论",
+        "提及",
+        "@提及",
+        "协作",
+        "留言"
+      ],
+      "use_when": [
+        "members need to discuss a task, document, ticket, or any other organization record",
+        "users want to reply to comments and @mention teammates",
+        "a module needs a comment thread without building its own comments table"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization"
+        ]
+      },
+      "starter": {
+        "name": "comment",
+        "const": "StarterComment",
+        "directory": "comment",
+        "handler": "Comment"
+      },
+      "fragment": "contracts/fragments/comments.yaml",
+      "files": {
+        "api/database/migrations/2026_10_11_010000_create_comments_table.go": "0f9257199580455738da03174cca79f50c73dea580a77f11e61b928c01710ab0",
+        "api/internal/modules/comment/errors.go": "6fc84bdbe392a38d3a9fb3780a0a05bc280e7f82b425b98c23329652f4134c16",
+        "api/internal/modules/comment/handler.go": "c72070d230078da7979d7ece50be0943a89c7a9897de8082ac79feed42b55076",
+        "api/internal/modules/comment/handler_test.go": "4a8c5b95d7649e14ff630b4813d868590933b26d9eea70efe92d9310e6137075",
+        "api/internal/modules/comment/memory_store_test.go": "c7197e0402b41d418d0145c8b723777942dbe1e48fb167ed15f53a93abf5ffeb",
+        "api/internal/modules/comment/model.go": "90df5db7b0a12e56c07bb9f4e6bf708bd2034541f4cc14e614e8d8232af17ff6",
+        "api/internal/modules/comment/provider.go": "1e9e0848ec2db15dcb46a22a0a50bbcb44ec5a6589452d7588b549b1ca68be5b",
+        "api/internal/modules/comment/repository.go": "0da8eb92750f154dffce3bc59b1aab7aa0e1ed7d4b4e59f1da5757ede333604c",
+        "api/internal/modules/comment/repository_postgres_test.go": "6bd9ed6e10621b84c5ee0408c1cbabf72558e871824677133a8df4d1cba06164",
+        "api/internal/modules/comment/resources.go": "e3b300ef8e54b852aae7bb78553b5117d7a70bf1179f03eb844e6289d6e86b47",
+        "api/internal/modules/comment/routes.go": "5ed173130d547b932a83bd463552bef327d758f96a167f635bab0f415fea4ea6",
+        "api/internal/modules/comment/service.go": "39d733b2af825bb535006ffe5c02c489d6ed15d03663b5fcbcf07b7d3792b6a3",
+        "api/internal/modules/comment/service_test.go": "cef9b64819da3fc16eff3206cfd29a49d3e25b98e865c0ab873de56cc5c28aff",
+        "contracts/COMMENTS.md": "ddf02732951b02f3382488e0dc3539eacace33cbc8342ee6a7fec02018b8f498",
+        "contracts/fragments/comments.yaml": "b94c039a6a5e74496b94e58a690d1871e31903c64cd8786524fdf54aaf8c66b2"
+      }
+    },
+    {
+      "name": "internal-tool",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "An internal operations tool: roles, admin console, tags, comments, dashboards, and data tables.",
+      "description": "Starts a back-office or operations tool: organizations with roles and permissions, the operator Admin Console, tags and threaded comments for records, and dashboard, data table, settings, and empty-state blocks in the enterprise theme.",
+      "keywords": [
+        "internal tool",
+        "back office",
+        "admin",
+        "operations",
+        "crm",
+        "erp",
+        "dashboard",
+        "内部工具",
+        "后台",
+        "运营",
+        "管理系统"
+      ],
+      "use_when": [
+        "the builder needs an internal back-office, operations, or admin tool",
+        "staff manage records with tags, comments, and dashboards"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "permission",
+          "operator"
+        ]
+      },
+      "includes": [
+        "tags",
+        "comments",
+        "theme-enterprise",
+        "block-dashboard-stats",
+        "block-data-table",
+        "block-settings-page",
+        "block-empty-state"
+      ],
+      "files": {}
+    },
+    {
       "name": "knowledge-base",
       "version": "0.1.0",
       "summary": "Organization knowledge articles with full-text and substring search.",
-      "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
+      "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. The Web console gets a Knowledge page to list, search, read, and edit articles. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
       "keywords": [
         "knowledge",
         "knowledge base",
@@ -39,6 +407,112 @@
         "handler": "Knowledge"
       },
       "fragment": "contracts/fragments/knowledge-base.yaml",
+      "wiring": [
+        {
+          "slot": "web.features",
+          "lines": [
+            "'knowledge',"
+          ]
+        },
+        {
+          "slot": "web.feature-dependencies",
+          "lines": [
+            "knowledge: ['organization'],"
+          ]
+        },
+        {
+          "slot": "web.http.error-codes",
+          "lines": [
+            "KNOWLEDGE_ARTICLE_NOT_FOUND: 'KNOWLEDGE.ARTICLE_NOT_FOUND',",
+            "KNOWLEDGE_INVALID_ARTICLE: 'KNOWLEDGE.INVALID_ARTICLE',",
+            "KNOWLEDGE_VERSION_CONFLICT: 'KNOWLEDGE.VERSION_CONFLICT',",
+            "KNOWLEDGE_PRECONDITION_REQUIRED: 'KNOWLEDGE.PRECONDITION_REQUIRED',"
+          ]
+        },
+        {
+          "slot": "web.routes.console",
+          "lines": [
+            "KNOWLEDGE: '/console/knowledge',"
+          ]
+        },
+        {
+          "slot": "web.console.nav-icons",
+          "lines": [
+            "BookOpen,"
+          ]
+        },
+        {
+          "slot": "web.console.nav",
+          "lines": [
+            "...(isWebFeatureEnabled('knowledge')",
+            "  ? [",
+            "      {",
+            "        titleKey: 'nav.knowledge' as const,",
+            "        href: ROUTES.CONSOLE.KNOWLEDGE,",
+            "        icon: BookOpen,",
+            "      },",
+            "    ]",
+            "  : []),"
+          ]
+        },
+        {
+          "slot": "web.i18n.modules",
+          "lines": [
+            "'knowledge',"
+          ]
+        },
+        {
+          "slot": "web.i18n.loaders",
+          "lines": [
+            "knowledge: {",
+            "  'zh-Hans': () =\u003e import('./modules/knowledge/zh-Hans'),",
+            "  'en-US': () =\u003e import('./modules/knowledge/en-US'),",
+            "},"
+          ]
+        },
+        {
+          "slot": "web.i18n.message-imports",
+          "lines": [
+            "import knowledge, { type KnowledgeMessages } from './knowledge/en-US';"
+          ]
+        },
+        {
+          "slot": "web.i18n.messages",
+          "lines": [
+            "knowledge,"
+          ]
+        },
+        {
+          "slot": "web.i18n.message-schema",
+          "lines": [
+            "knowledge: KnowledgeMessages;"
+          ]
+        },
+        {
+          "slot": "web.i18n.zh-hans-schema",
+          "lines": [
+            "knowledge: typeof import('./knowledge/zh-Hans').default;"
+          ]
+        },
+        {
+          "slot": "web.i18n.client-namespaces",
+          "lines": [
+            "knowledge: ['knowledge'],"
+          ]
+        },
+        {
+          "slot": "web.i18n.nav.en-us",
+          "lines": [
+            "knowledge: 'Knowledge',"
+          ]
+        },
+        {
+          "slot": "web.i18n.nav.zh-hans",
+          "lines": [
+            "knowledge: '知识库',"
+          ]
+        }
+      ],
       "files": {
         "api/database/migrations/2026_10_11_000000_create_knowledge_articles_table.go": "be83d50eadb9511760c2f6d58187bb582773f5ee4c182e714ecb4cc1ce9537ff",
         "api/internal/modules/knowledge/errors.go": "1d4bb9507bfdd72079df626c59c968f8424559c793744c34f6d6011b702f5bf9",
@@ -51,7 +525,309 @@
         "api/internal/modules/knowledge/routes.go": "84d94432f8f4dfd7ba1d9918864ddfc072c7a53bd5edd3b327a2dc63c79bd944",
         "api/internal/modules/knowledge/service.go": "1f9bdd3e9cc1a676d4d9e57088de74fcd9e20c89f3cd959f6ad6a7facf9680fc",
         "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
-        "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
+        "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd",
+        "web/src/app/(protected)/(console)/console/knowledge/layout.tsx": "11cdf2bd72bd30c845cc0f4233a8b1de1e9c619e49bcc7f1d32da89ad8c7c6ac",
+        "web/src/app/(protected)/(console)/console/knowledge/page.tsx": "b3108daef839b5d559574ba19215f8593ffab82174c486d376a4ff87cf1dc09b",
+        "web/src/app/api/knowledge-articles/[id]/route.ts": "654f00365d79a673a95967dc2d24981eba28712522ae6fdfc272f5f8d7e79792",
+        "web/src/app/api/knowledge-articles/route.ts": "78fbff48575942621a6fd5df647e2b30e6cca1c84eded345f80caf7a1c0d4688",
+        "web/src/app/api/knowledge-search/route.ts": "f332b7b5ab61ad7bddf506652001f8458cda1ed44d28358f0e519193f54e5f4b",
+        "web/src/features/knowledge/components/knowledge-workspace.tsx": "244447610b3e29583104998d5c8debdb948fde65e6b972a6497cc8637999dfd7",
+        "web/src/features/knowledge/hooks/use-knowledge.ts": "223a4ff2e4a39a53e0cc9239771b4c9bb2b287001ce09e2f86f6b2773484a196",
+        "web/src/features/knowledge/index.ts": "edb4a8ff50a05751a062859ad9e52a05f8710070587b542b6c2720ba712d13ef",
+        "web/src/features/knowledge/schemas.ts": "0333e4128a740e2386b748a10a7d1bb60934b00361d457b33046e2edb28c27b4",
+        "web/src/features/knowledge/server/knowledge-route.ts": "32a1d744e8ed5c63e8f8e30f97cd63f5ea53ca591704b8f18b7f55374bc9a069",
+        "web/src/features/knowledge/server/mock-knowledge-store.ts": "cc92ea015f07be7333fd8d0d7bd9e2fb15f59d72c96d8499aed352192b0bea7b",
+        "web/src/features/knowledge/services/knowledge-service.ts": "647ea3aeceb1e4bfacfa9563366c36648aa7efe028e5396522452a26e8807c62",
+        "web/src/features/knowledge/types.ts": "dc12124e5502677c019dc20a3816b369042e6a55a6aeca6f4b916f8d354d73f8",
+        "web/src/features/knowledge/utils/knowledge-error.ts": "bf3550b268b2eb7c0dd180aa389e0916b1949f1373ce9e3bdc1cc03d94be0c82",
+        "web/src/i18n/modules/knowledge/en-US.ts": "5adb82ae95a63aed4198dc1a033172ac4b3fa9ec614fbb1fa4b964c1de087d04",
+        "web/src/i18n/modules/knowledge/index.ts": "7141b9bda2c177dca8bb3bb4a335b74a94f323b34eda731ada47b74c7011360d",
+        "web/src/i18n/modules/knowledge/zh-Hans.ts": "41b59b2700572d481d7bc39a9433089b50e069a48321c8481e81d8f8c9036a45",
+        "web/src/test/knowledge-route.test.ts": "763708002962215a07d5ecaae2d15a90896d13668915243ae5a7279e532f24f4",
+        "web/src/test/knowledge-service.test.ts": "541f5834201afd9d39c0a83e2e0c1907bc42d20dd23867e9a42999976aeb85e1",
+        "web/src/test/knowledge-ui.test.tsx": "345e185c1a7faa86bebf161cf4f32ae2d1e6cd241435aae393a442ceaab4ed8c",
+        "web/src/test/mock-bff-parity/knowledge.ts": "97cb3a584d255a7c46e53cc20d564c904e6d0e994f17bfc2e31f2667ae9e5812"
+      }
+    },
+    {
+      "name": "knowledge-portal",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "A team knowledge portal: searchable articles with tags and comments in a reading-friendly theme.",
+      "description": "Starts an internal or customer-facing knowledge portal: the knowledge base with full-text and Chinese substring search, organization tags, threaded comments with mentions, the warm reading theme, and landing and empty-state blocks. Selects the organization and notification starters so mentions reach people.",
+      "keywords": [
+        "knowledge portal",
+        "wiki",
+        "help center",
+        "documentation site",
+        "intranet",
+        "知识门户",
+        "知识库",
+        "帮助中心",
+        "文档中心",
+        "内网"
+      ],
+      "use_when": [
+        "the builder wants a wiki, help center, or documentation portal as the starting point",
+        "a team needs searchable, tagged, and discussable articles"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "notification"
+        ]
+      },
+      "includes": [
+        "knowledge-base",
+        "tags",
+        "comments",
+        "theme-warm",
+        "block-landing-hero",
+        "block-empty-state"
+      ],
+      "files": {}
+    },
+    {
+      "name": "saas-app",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "A multi-tenant SaaS starting point: organizations, roles, usage, settings, and the pages a product needs.",
+      "description": "Starts a subscription-style SaaS product: organizations with roles and permissions, usage metering, settings, and notifications, styled with the enterprise theme, with blocks for the landing page, pricing, sign-in, onboarding, dashboard, data tables, settings, and empty states. Billing stays a product decision and is not included.",
+      "keywords": [
+        "saas",
+        "multi-tenant",
+        "subscription",
+        "b2b",
+        "startup",
+        "product",
+        "多租户",
+        "订阅",
+        "创业",
+        "产品"
+      ],
+      "use_when": [
+        "the builder is starting a multi-tenant SaaS product",
+        "the product needs organizations, roles, usage, and the standard product pages from day one"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "permission",
+          "notification",
+          "setting",
+          "usage"
+        ]
+      },
+      "includes": [
+        "theme-enterprise",
+        "block-landing-hero",
+        "block-pricing-table",
+        "block-auth-card",
+        "block-onboarding-steps",
+        "block-dashboard-stats",
+        "block-data-table",
+        "block-settings-page",
+        "block-empty-state"
+      ],
+      "files": {}
+    },
+    {
+      "name": "tags",
+      "kind": "feature",
+      "version": "0.1.0",
+      "summary": "Organization tags with palette colors that other modules' resources can carry.",
+      "description": "Adds a tag starter: organization owners and admins create tags (unique names ignoring case, a fixed palette of color tokens, a short description) and attach up to 20 of them to any resource whose module registers a resource type; every member reads tags, a resource's tags, and the resources carrying a tag. Assignments are replaced idempotently, writes use optimistic concurrency (If-Match), and audit records tag IDs and names but never descriptions. Ships with no resource types; modules register theirs at assembly time without the tag module importing them.",
+      "keywords": [
+        "tags",
+        "tag",
+        "labels",
+        "label",
+        "categories",
+        "taxonomy",
+        "tagging",
+        "classification",
+        "标签",
+        "标记",
+        "分类",
+        "打标签"
+      ],
+      "use_when": [
+        "the team needs labels, tags, or categories on its records",
+        "members must filter or group resources by organization-defined tags",
+        "another module or plugin needs a shared, product-neutral way to label its resources"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization"
+        ]
+      },
+      "starter": {
+        "name": "tag",
+        "const": "StarterTag",
+        "directory": "tag",
+        "handler": "Tag"
+      },
+      "fragment": "contracts/fragments/tags.yaml",
+      "files": {
+        "api/database/migrations/2026_10_11_000100_create_tags_tables.go": "6af335728ccb9f5116c05a4493c4adae9dd2abdf966e7746fd40cea8dd62fc07",
+        "api/internal/modules/tag/errors.go": "8bf3bcd42288464f161438b716caba1ba13bd619eda630cbe18c712f8411fc74",
+        "api/internal/modules/tag/handler.go": "5ba06cb5180919642c09971d64b048b260c89f0c5a17fb0b9bf0b6790e3a2870",
+        "api/internal/modules/tag/handler_test.go": "2cd151b19d0c15da4527165585b251dcbe72d3c1c0bc22e1a08401db841543ec",
+        "api/internal/modules/tag/memory_store_test.go": "01cd00b2c5b62f174fa6c3f01b4bdee7c4249a3fe6eaea399bc2bd3dacfa189f",
+        "api/internal/modules/tag/model.go": "baf8710d2a45ce1bda83111c68c821eab79c68b8f64893ed9da6fa4bdd1c51f0",
+        "api/internal/modules/tag/provider.go": "6aa5ce558253885e80a5360aedd068d3898afdff2272899c5511b38973bdcaa3",
+        "api/internal/modules/tag/repository.go": "d2e159aa30c8e1e79073f299838f94b76d356c01b7020baec7bf5141ad7d68cc",
+        "api/internal/modules/tag/repository_postgres_test.go": "9d7ed7884f883e1f3b8c59bf6ff378e964f90678d1696b154cee110558803a72",
+        "api/internal/modules/tag/resource_types.go": "76cdb9bcb64023a4983aa2d53e6dd459cab651e9d2d2bdbf1e8cc07f4b57edd8",
+        "api/internal/modules/tag/routes.go": "82e413d55c4e570408fd754dad8d964d4040787d777c73965405c9ef36a02e2a",
+        "api/internal/modules/tag/service.go": "d0794bc4eb476cfbcd228fbcc85a44df79f11577cebf2b8e71b327c0ff590885",
+        "api/internal/modules/tag/service_test.go": "28ea96d9da0116b664bd8f1484f6d3144454c092c89c571a2fe93f939128d6e6",
+        "contracts/TAGS.md": "67dea9170f72366892a99cb00b6448fce793620f0d4c08f6a7a4ec38a8e9b4cf",
+        "contracts/fragments/tags.yaml": "2578d9391007b0fd94665f37acc9d33fd38293bc52ad42a9b124b22fbe01754b"
+      }
+    },
+    {
+      "name": "theme-enterprise",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Calm blue enterprise theme for Web and Admin: denser spacing, smaller radius, crisp borders.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: a calm blue primary and brand, cool neutral surfaces, opaque crisp borders, a 0.375rem radius, a 4% denser Tailwind spacing unit, and less translucent Admin material. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "enterprise",
+        "corporate",
+        "business",
+        "blue",
+        "dense",
+        "compact",
+        "dashboard",
+        "主题",
+        "企业",
+        "商务",
+        "蓝色",
+        "紧凑"
+      ],
+      "use_when": [
+        "the product is a business or internal tool and should look calm, trustworthy, and information dense",
+        "the builder asks for a corporate, enterprise, or blue look",
+        "tables and dashboards need slightly tighter spacing without changing components"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/enterprise.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/enterprise.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/enterprise.css": "acd7500a7b5b3b464bb18e12338d391c0ec34ff90808d4e580f3f41750f3d006",
+        "web/src/themes/presets/enterprise.css": "90f343176af630dc0d8b638f6a7c850a4f27a280a1c5d7ddcbae863732a6bb31"
+      }
+    },
+    {
+      "name": "theme-midnight",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Dark-leaning, high-contrast theme for Web and Admin: near-black navy and a vivid violet accent.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: near-black navy surfaces, bright high-contrast text, clearly visible borders, and a vivid violet accent in dark mode; light mode keeps the identity with midnight-navy controls and deep ink text. Every checked readable pair meets WCAG AA 4.5:1 in both modes. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "midnight",
+        "dark",
+        "dark mode",
+        "high contrast",
+        "violet",
+        "developer",
+        "night",
+        "主题",
+        "暗色",
+        "深色",
+        "高对比度",
+        "夜间"
+      ],
+      "use_when": [
+        "the product targets developers or night-time use and should look dark and bold",
+        "the builder asks for a dark, midnight, neon, or high-contrast look",
+        "the brand needs a vivid accent that stays readable on dark surfaces"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/midnight.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/midnight.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/midnight.css": "4e724366a092b59f19d1ca8d01b02e5d4be18538548045bf1d2f626fb9b3b294",
+        "web/src/themes/presets/midnight.css": "085c9773c7986fdd9818b684e7e297e1b246a62329f6422a5467c77625c123a4"
+      }
+    },
+    {
+      "name": "theme-warm",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Content-first warm theme for Web and Admin: paper neutrals, ink text, terracotta accent, soft radius.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: warm paper-like neutrals, ink-like text, a terracotta brand accent, and a softer radius suited to long-form reading such as documentation, knowledge bases, and content sites. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "warm",
+        "content",
+        "reading",
+        "editorial",
+        "docs",
+        "blog",
+        "soft",
+        "主题",
+        "温暖",
+        "阅读",
+        "内容",
+        "文档"
+      ],
+      "use_when": [
+        "the product is content-first: documentation, a knowledge base, a blog, or a community",
+        "the builder asks for a warm, friendly, soft, or editorial look",
+        "long text should be comfortable to read in light and dark mode"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/warm.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/warm.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/warm.css": "da4caef8689352e67829c475fc59e104248d7190e070df7298b2cb12207aff89",
+        "web/src/themes/presets/warm.css": "7063b03af3b554256475572783910afe6f948705e13511f9127339642b828557"
       }
     }
   ]

@@ -14,9 +14,10 @@ import (
 )
 
 // TestOfficialPluginsInstallBuildAndTest installs every registry plugin into a scratch copy of the
-// API wiring, compiles the API with the installed files overlaid, and runs the plugin's own tests,
-// so a core change that breaks an official plugin fails here instead of in a downstream project.
-// The plugin's PostgreSQL tests run when FASTBUILD_TEST_POSTGRES_DSN is set, as in CI.
+// slot files, compiles the API with the installed files overlaid, runs the plugin's own tests, and
+// removes the plugin again, so a core change that breaks an official plugin or its removal fails
+// here instead of in a downstream project. The plugin's PostgreSQL tests run when
+// FASTBUILD_TEST_POSTGRES_DSN is set, as in CI.
 func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds the API once per plugin")
@@ -31,10 +32,12 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 	for _, entry := range index.Plugins {
 		t.Run(entry.Name, func(t *testing.T) {
 			scratch := t.TempDir()
-			for _, file := range pluginEditedFiles {
-				raw, readErr := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(file)))
+			originals := map[string][]byte{}
+			for _, slot := range pluginregistry.ProjectSlots {
+				raw, readErr := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(slot.File)))
 				require.NoError(t, readErr)
-				target := filepath.Join(scratch, filepath.FromSlash(file))
+				originals[slot.File] = raw
+				target := filepath.Join(scratch, filepath.FromSlash(slot.File))
 				require.NoError(t, os.MkdirAll(filepath.Dir(target), 0o755))
 				require.NoError(t, os.WriteFile(target, raw, 0o644))
 			}
@@ -42,14 +45,25 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 
 			installer, setupErr := newProjectInstaller(scratch, source)
 			require.NoError(t, setupErr)
-			installer.MergeFragment = nil // the contracts check merges and lints fragments
-			result, installErr := installer.Install(entry.Name)
-			require.NoError(t, installErr)
+			installer.Contract = nil // the contracts check merges, lints, and removes fragments
+			// A template installs all of its plugins together, which proves they compile side by side.
+			var results []*pluginregistry.Result
+			if entry.PluginKind() == pluginregistry.KindTemplate {
+				template, installErr := installer.InstallTemplate(entry.Name)
+				require.NoError(t, installErr)
+				results = template.Installed
+			} else {
+				result, installErr := installer.Install(entry.Name)
+				require.NoError(t, installErr)
+				results = []*pluginregistry.Result{result}
+			}
 
 			replace := map[string]string{}
-			for _, file := range append(append([]string{}, result.Written...), result.Edited...) {
-				if strings.HasPrefix(file, "api/") {
-					replace[filepath.Join(repoRoot, filepath.FromSlash(file))] = filepath.Join(scratch, filepath.FromSlash(file))
+			for _, result := range results {
+				for _, file := range append(append([]string{}, result.Written...), result.Edited()...) {
+					if strings.HasPrefix(file, "api/") {
+						replace[filepath.Join(repoRoot, filepath.FromSlash(file))] = filepath.Join(scratch, filepath.FromSlash(file))
+					}
 				}
 			}
 			overlay, marshalErr := json.Marshal(map[string]any{"Replace": replace})
@@ -58,10 +72,14 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 			require.NoError(t, os.WriteFile(overlayPath, overlay, 0o644))
 
 			packages := []string{"./internal/starter", "./internal/infra/config", "./database/migrations", "./internal/wiring"}
+			for _, result := range results {
+				if result.Entry.Starter != nil {
+					packages = append(packages, "./internal/modules/"+result.Entry.Starter.Directory)
+				}
+			}
 			var pluginPackage string
 			if entry.Starter != nil {
 				pluginPackage = "./internal/modules/" + entry.Starter.Directory
-				packages = append(packages, pluginPackage)
 			}
 			run := func(args ...string) {
 				command := exec.Command("go", args...)
@@ -70,6 +88,18 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 				require.NoError(t, cmdErr, "go %s\n%s", strings.Join(args, " "), output)
 			}
 			run(append([]string{"build", "-overlay=" + overlayPath}, packages...)...)
+			defer func() {
+				for index := len(results) - 1; index >= 0; index-- {
+					_, removeErr := installer.Remove(results[index].Entry.Name, pluginregistry.RemoveOptions{})
+					require.NoError(t, removeErr)
+				}
+				for file, original := range originals {
+					current, readErr := os.ReadFile(filepath.Join(scratch, filepath.FromSlash(file)))
+					require.NoError(t, readErr)
+					require.Equal(t, string(original), string(current), "plugin:remove restores %s", file)
+				}
+				require.NoFileExists(t, filepath.Join(scratch, pluginregistry.LockFile))
+			}()
 			if pluginPackage == "" {
 				return
 			}

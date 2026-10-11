@@ -3,6 +3,7 @@ package console
 import (
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -103,7 +104,7 @@ func (app *Application) Run(args []string) error {
 		return err
 	}
 
-	if shouldPrintCompletionOutput(cmd) {
+	if shouldPrintCompletionOutput(cmd) && !slices.Contains(args[2:], "--format=json") {
 		color.Green("  ✓ Done in %v", elapsed.Round(time.Millisecond))
 	}
 	return nil

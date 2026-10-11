@@ -144,24 +144,34 @@ if (consoleLayout.includes('<aside')) {
   failures.push('console-layout.tsx must not replace the shared Sidebar with a manual aside');
 }
 
+// globals.css wires Tailwind; tokens.css holds the design tokens that themes override.
 const globalStyles = await read('src/styles/globals.css');
 for (const marker of [
   "@import 'tw-animate-css'",
+  "@import './tokens.css'",
+  '/* fastbuild:slot admin.theme */',
   '--color-primary',
   '--color-sidebar-accent',
-  '--brand: oklch(0.5 0.2 250)',
-  '--brand: oklch(0.65 0.15 250)',
   '--color-brand-foreground',
-  '--sidebar-accent: var(--brand-subtle)',
 ]) {
   if (!globalStyles.includes(marker)) {
     failures.push(`src/styles/globals.css must retain ${marker}`);
   }
 }
+const tokenStyles = await read('src/styles/tokens.css');
+for (const marker of [
+  '--brand: oklch(0.5 0.2 250)',
+  '--brand: oklch(0.65 0.15 250)',
+  '--sidebar-accent: var(--brand-subtle)',
+]) {
+  if (!tokenStyles.includes(marker)) {
+    failures.push(`src/styles/tokens.css must retain ${marker}`);
+  }
+}
 for (const retiredBrandMarker of ['0.52 0.12 178', '0.68 0.11 178']) {
-  if (globalStyles.includes(retiredBrandMarker)) {
+  if (tokenStyles.includes(retiredBrandMarker)) {
     failures.push(
-      `src/styles/globals.css must use Rhine blue instead of retired green ${retiredBrandMarker}`,
+      `src/styles/tokens.css must use Rhine blue instead of retired green ${retiredBrandMarker}`,
     );
   }
 }

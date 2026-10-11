@@ -14,6 +14,7 @@ import {
   Building2,
   FolderOpen,
   Gauge,
+  // fastbuild:slot web.console.nav-icons
 } from 'lucide-react';
 
 import { cn } from '@/utils';
@@ -94,6 +95,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
           },
         ]
       : []),
+    // fastbuild:slot web.console.nav
   ];
 
   const secondaryNavItems: NavItem[] = [

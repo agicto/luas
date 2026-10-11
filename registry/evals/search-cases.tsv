@@ -1,0 +1,33 @@
+query	expected
+We need a searchable knowledge base for our internal documents	knowledge-base
+Add a wiki where the team can write and search articles	knowledge-base
+我们需要一个内部知识库，方便搜索文档	knowledge-base
+做一个FAQ和帮助文档	knowledge-base
+Let members label records with colored tags	tags
+给记录打标签，并按标签筛选	tags
+Users should be able to comment on tasks and mention teammates	comments
+添加评论和回复功能，支持@提及同事	comments
+Make the app look like a calm enterprise product	theme-enterprise
+换一个企业风格的蓝色主题	theme-enterprise
+A warm, reading-friendly look for a content site	theme-warm
+I want a dark, high-contrast theme with a vivid accent	theme-midnight
+暗黑高对比度主题	theme-midnight
+Show KPI cards with trends on the dashboard	block-dashboard-stats
+仪表盘指标卡片	block-dashboard-stats
+A sortable, paginated table of records	block-data-table
+数据表格，支持排序和分页	block-data-table
+A settings page with sections	block-settings-page
+Pricing page with plans and a highlighted plan	block-pricing-table
+价格方案页面	block-pricing-table
+Empty state and error state for lists	block-empty-state
+A sign in card for the login page	block-auth-card
+登录注册卡片	block-auth-card
+An onboarding checklist for new users	block-onboarding-steps
+新用户引导步骤	block-onboarding-steps
+Landing page hero with call to action	block-landing-hero
+首页英雄区和功能介绍	block-landing-hero
+Start a help center portal project	knowledge-portal
+Start a multi-tenant SaaS product	saas-app
+做一个多租户SaaS产品	saas-app
+We are building an internal back office tool	internal-tool
+做一个内部运营管理后台	internal-tool

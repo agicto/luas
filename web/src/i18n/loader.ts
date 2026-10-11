@@ -79,6 +79,7 @@ const moduleRegistry: ModuleRegistry = {
     'zh-Hans': () => import('./modules/test/zh-Hans'),
     'en-US': () => import('./modules/test/en-US'),
   },
+  // fastbuild:slot web.i18n.loaders
 };
 
 type ModuleKey = keyof typeof moduleRegistry;

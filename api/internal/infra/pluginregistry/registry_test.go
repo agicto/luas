@@ -68,6 +68,14 @@ func TestSearchRanksNameAndKeywordsAboveDescriptions(t *testing.T) {
 	require.Len(t, chinese, 1)
 	assert.Equal(t, "knowledge-base", chinese[0].Entry.Name)
 
+	sentence := index.Search("我们需要一个内部知识库，方便搜索文档")
+	require.NotEmpty(t, sentence)
+	assert.Equal(t, "knowledge-base", sentence[0].Entry.Name, "keywords inside a sentence without spaces match")
+
+	english := index.Search("We need a place for our docs, please add it to the project")
+	require.Len(t, english, 1, "stop words such as 'add' and 'project' match nothing on their own")
+	assert.Equal(t, "knowledge-base", english[0].Entry.Name)
+
 	assert.Len(t, index.Search(""), 2, "an empty query lists every plugin")
 	assert.Empty(t, index.Search("payments"))
 }

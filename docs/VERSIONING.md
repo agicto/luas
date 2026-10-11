@@ -11,11 +11,33 @@ FastBuild uses semantic versioning on the `0.y.z` line:
 |---|---|---|
 | Fix with no public behavior change | patch (`0.21.1`) | `CHANGELOG.md` entry |
 | New capability, or a change a downstream project must act on | minor (`0.22.0`) | `CHANGELOG.md` and an `UPGRADING.md` entry with impact level |
-| Stability commitment for public contracts | `1.0.0` | A separate decision; not before the contracts and starter catalog stop changing every minor release |
+| Stability commitment for public contracts | `1.0.0` | The compatibility promise below; see [`ROADMAP.md`](ROADMAP.md) for the exit criteria |
 
 "Public behavior" means anything a downstream project can depend on: HTTP contracts and
-`error_code` values, configuration variables, CLI commands, starter seams, migration names, and
-generated client types.
+`error_code` values, configuration variables, CLI commands, starter seams, migration names,
+generated client types, and the plugin formats listed below.
+
+## Compatibility Promise From 1.0
+
+From `1.0.0`, a minor or patch release never breaks these surfaces; only a major release may, and
+it ships an `UPGRADING.md` path and `project:upgrade` support for it.
+
+| Surface | Stable within a major version | Allowed in a minor release |
+|---|---|---|
+| HTTP contract (`/v1`) | Paths, methods, fields, status codes, `error_code` values | New endpoints, optional fields, new error codes |
+| Configuration | Variable names, meanings, and safe defaults | New variables with safe defaults |
+| CLI | Command names, flags, exit codes, `--format=json` fields | New commands, flags, and JSON fields |
+| Plugin manifest (`plugin.json`) and index (`version: 1`) | Every field and its meaning | New optional fields |
+| Lock file (`fastbuild.plugins.lock`, `version: 1`) | Every field and its meaning | New optional fields |
+| Slots | Slot names, files, and insertion semantics | New slots |
+| Starter seams and migration names | Exported seams used by starters and plugins; applied migration names | New seams |
+| MCP tools (`fastbuild mcp`) | Tool names and result fields | New tools and fields |
+
+A plugin declares the oldest release it supports in `fastbuild`; the registry of each release only
+lists plugins that install and pass their tests on it. `project:upgrade` moves a project between
+any two releases of one major version.
+
+Until `1.0.0`, minor releases may change these surfaces; each change has an `UPGRADING.md` entry.
 
 ## Deprecation
 

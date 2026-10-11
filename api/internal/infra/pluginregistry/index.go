@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // IndexFile is the generated catalog at the root of a registry.
@@ -70,8 +72,12 @@ func BuildIndex(registryDir string) (*Index, error) {
 		if manifest.Name != entry.Name() {
 			return nil, fmt.Errorf("plugin directory %q declares name %q", entry.Name(), manifest.Name)
 		}
-		files, err := hashPluginFiles(filepath.Join(pluginDir, FilesDir))
-		if err != nil {
+		files := map[string]string{}
+		if manifest.PluginKind() == KindTemplate {
+			if _, statErr := os.Stat(filepath.Join(pluginDir, FilesDir)); statErr == nil {
+				return nil, fmt.Errorf("template %q ships files; templates only include plugins", manifest.Name)
+			}
+		} else if files, err = hashPluginFiles(filepath.Join(pluginDir, FilesDir)); err != nil {
 			return nil, fmt.Errorf("plugin %q: %w", manifest.Name, err)
 		}
 		if manifest.Fragment != "" {
@@ -82,6 +88,14 @@ func BuildIndex(registryDir string) (*Index, error) {
 		index.Plugins = append(index.Plugins, IndexEntry{Manifest: *manifest, Files: files})
 	}
 	sort.Slice(index.Plugins, func(a, b int) bool { return index.Plugins[a].Name < index.Plugins[b].Name })
+	for _, entry := range index.Plugins {
+		for _, include := range entry.Includes {
+			member, ok := index.Find(include)
+			if !ok || member.PluginKind() == KindTemplate {
+				return nil, fmt.Errorf("template %q includes %q, which is not a plugin in this registry", entry.Name, include)
+			}
+		}
+	}
 	return index, nil
 }
 
@@ -192,15 +206,19 @@ type SearchResult struct {
 }
 
 // Search ranks plugins against a free-text query: name matches weigh most, then keywords and
-// use cases, then the summary and description. An empty query returns every plugin.
+// use cases, then the summary and description. Queries can be sentences in any language: a
+// keyword or name that appears inside the query counts too, which matters for languages written
+// without spaces. An empty query returns every plugin.
 func (i *Index) Search(query string) []SearchResult {
-	terms := strings.Fields(strings.ToLower(query))
+	query = strings.ToLower(query)
+	terms := searchTerms(query)
 	var results []SearchResult
 	for _, entry := range i.Plugins {
 		score := 0
 		for _, term := range terms {
 			score += termScore(entry, term)
 		}
+		score += embeddedScore(entry, query)
 		if len(terms) == 0 || score > 0 {
 			results = append(results, SearchResult{Entry: entry, Score: score})
 		}
@@ -212,6 +230,24 @@ func (i *Index) Search(query string) []SearchResult {
 		return results[a].Entry.Name < results[b].Entry.Name
 	})
 	return results
+}
+
+// searchStopWords carry no meaning about which plugin fits.
+var searchStopWords = map[string]bool{
+	"a": true, "an": true, "and": true, "add": true, "for": true, "in": true, "into": true, "it": true,
+	"me": true, "my": true, "need": true, "of": true, "on": true, "our": true, "the": true, "this": true,
+	"to": true, "want": true, "we": true, "with": true, "project": true, "app": true, "fastbuild": true,
+}
+
+// searchTerms splits a query on anything that is not a letter or digit and drops stop words.
+func searchTerms(query string) []string {
+	var terms []string
+	for _, term := range strings.FieldsFunc(query, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) }) {
+		if !searchStopWords[term] {
+			terms = append(terms, term)
+		}
+	}
+	return terms
 }
 
 func termScore(entry IndexEntry, term string) int {
@@ -236,6 +272,28 @@ func termScore(entry IndexEntry, term string) int {
 		score++
 	}
 	return score
+}
+
+// embeddedScore credits non-ASCII keywords that appear inside the query itself, such as a
+// Chinese keyword inside a Chinese sentence written without spaces.
+func embeddedScore(entry IndexEntry, query string) int {
+	score := 0
+	for _, keyword := range entry.Keywords {
+		keyword = strings.ToLower(keyword)
+		if utf8.RuneCountInString(keyword) >= 2 && !isASCII(keyword) && strings.Contains(query, keyword) {
+			score += 6
+		}
+	}
+	return score
+}
+
+func isASCII(text string) bool {
+	for _, r := range text {
+		if r > unicode.MaxASCII {
+			return false
+		}
+	}
+	return true
 }
 
 // PluginFilePath returns the path of a plugin file inside a registry directory.

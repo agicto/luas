@@ -18,6 +18,26 @@ entries in order.
 `plugin:list` lists external commands (`fastbuild-<name>` executables on `PATH`); the name now
 belongs to registry plugins. Use `command:list`; the alias will be removed in a later minor release.
 
+### Medium — New core migration for shared rate limiting
+
+Run migrations: `2026_10_11_000000_create_rate_limit_buckets_table` creates an empty UNLOGGED table
+for every starter selection. Nothing changes until `RATE_LIMIT_STORE=postgres` (which needs
+`DB_ENABLED=true`); then size `DB_MAX_OPEN_CONNS` for one extra round trip per rate-limited request.
+Code that calls `user.NewAuthAbuseGuard(cfg)` directly passes a `*ratelimit.Stores` (nil keeps the
+process-local stores); regenerate Wire.
+
+### Low — Slot markers in core files
+
+`api/internal/infra/config/starters.go`, `api/internal/starter/defaults.go`, several Web files, and
+both theme entry stylesheets now carry `fastbuild:slot` comments. Keep them: `plugin:add`,
+`plugin:remove`, and `make:module` insert and remove lines there. If a merge drops one,
+`plugin:slots` lists where it belongs.
+
+### Low — Admin tokens moved to `tokens.css`
+
+Custom Admin token edits in `admin/src/styles/globals.css` belong in
+`admin/src/styles/tokens.css`, which `globals.css` imports before the `admin.theme` slot.
+
 ### Low — Plugin error codes live in their module
 
 Error codes declared in `api/internal/modules/<name>/errors.go` count as API codes for the

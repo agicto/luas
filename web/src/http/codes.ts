@@ -86,6 +86,7 @@ export const ApiErrorCode = {
   OPERATOR_ORIGIN_REJECTED: 'OPERATOR.ORIGIN_REJECTED',
   OPERATOR_CSRF_REJECTED: 'OPERATOR.CSRF_REJECTED',
   OPERATOR_TARGET_PROTECTED: 'OPERATOR.TARGET_PROTECTED',
+  // fastbuild:slot web.http.error-codes
 } as const satisfies Readonly<Record<string, OpenAPIErrorCode>>;
 
 export type ApiErrorCodeValue = OpenAPIErrorCode;

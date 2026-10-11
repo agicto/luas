@@ -1,0 +1,15 @@
+{
+  "name": "block-pricing-table",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Pricing plans with feature lists, a highlighted plan, and call-to-action slots.",
+  "description": "A Web block that renders plan cards: name, description, a preformatted price and period, a feature list that announces included and missing features in words, a call-to-action slot, and one highlighted plan with a badge. Built from the Card and Badge primitives and theme tokens; prices and copy arrive through props and it fetches nothing.",
+  "keywords": ["block", "pricing", "plans", "tiers", "subscription", "billing", "price table", "compare plans", "定价", "价格", "套餐", "订阅", "方案"],
+  "use_when": [
+    "a public site or upgrade page must show plans and prices",
+    "the builder asks for a pricing table or plan comparison",
+    "one plan should be recommended with a highlight"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

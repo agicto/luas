@@ -1,0 +1,15 @@
+{
+  "name": "knowledge-portal",
+  "kind": "template",
+  "version": "0.1.0",
+  "summary": "A team knowledge portal: searchable articles with tags and comments in a reading-friendly theme.",
+  "description": "Starts an internal or customer-facing knowledge portal: the knowledge base with full-text and Chinese substring search, organization tags, threaded comments with mentions, the warm reading theme, and landing and empty-state blocks. Selects the organization and notification starters so mentions reach people.",
+  "keywords": ["knowledge portal", "wiki", "help center", "documentation site", "intranet", "知识门户", "知识库", "帮助中心", "文档中心", "内网"],
+  "use_when": [
+    "the builder wants a wiki, help center, or documentation portal as the starting point",
+    "a team needs searchable, tagged, and discussable articles"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization", "notification"] },
+  "includes": ["knowledge-base", "tags", "comments", "theme-warm", "block-landing-hero", "block-empty-state"]
+}

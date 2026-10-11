@@ -1,0 +1,15 @@
+{
+  "name": "block-auth-card",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Sign-in and sign-up card shell with logo, alternative actions, form slot, footer, and legal text.",
+  "description": "A Web block that frames authentication pages: brand mark, page heading, optional alternative sign-in actions with a divider, a slot for the caller's form, a footer line for switching between sign-in and sign-up, and legal text. It contains no authentication logic: the existing auth feature's forms and session handling stay in charge. Built from the Card and Separator primitives and theme tokens; all copy arrives through props.",
+  "keywords": ["block", "auth", "authentication", "sign in", "sign up", "login", "register", "card", "登录", "注册", "认证", "账号"],
+  "use_when": [
+    "sign-in, sign-up, or password pages need a consistent framed layout",
+    "the builder asks for a login or registration card design",
+    "single sign-on buttons should sit above the email form with a divider"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

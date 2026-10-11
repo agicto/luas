@@ -498,3 +498,20 @@ func TestEnv_GetInt64(t *testing.T) {
 		t.Errorf("Expected max int64, got %d", value)
 	}
 }
+
+func TestEnv_IgnoreEnvFilesSkipsEveryFileLayer(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile(".env", []byte("IGNORE_FILES_PROBE=from_file\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	mustLoadFresh(t)
+	if got := env.Get("IGNORE_FILES_PROBE"); got != "from_file" {
+		t.Fatalf("expected the .env value, got %q", got)
+	}
+
+	t.Setenv("FASTBUILD_IGNORE_ENV_FILES", "true")
+	mustLoadFresh(t)
+	if got := env.Get("IGNORE_FILES_PROBE"); got != "" {
+		t.Fatalf("expected no file value, got %q", got)
+	}
+}

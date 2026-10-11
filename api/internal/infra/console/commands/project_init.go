@@ -15,6 +15,7 @@ import (
 
 	"github.com/fastagi/fastbuild/api/internal/infra/config"
 	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/infra/pluginregistry"
 	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
@@ -39,6 +40,11 @@ type ProjectOptions struct {
 	Module     string
 	Repository string
 	Starters   []string
+	// Template installs a registry template's plugins and selects the starters they need.
+	Template string
+	// pluginStarters are the starters the template's plugins install; they are selected in the
+	// environment files but do not exist until the plugins are installed.
+	pluginStarters []string
 }
 
 // ProjectMarker records where a downstream project came from, so upgrades can be compared against
@@ -49,6 +55,7 @@ type ProjectMarker struct {
 	Module          string    `json:"module"`
 	Repository      string    `json:"repository"`
 	Starters        []string  `json:"starters"`
+	Template        string    `json:"template,omitempty"`
 	ScaffoldVersion string    `json:"scaffold_version"`
 	InitializedAt   time.Time `json:"initialized_at"`
 }
@@ -68,7 +75,7 @@ func (c *ProjectInitCommand) Description() string {
 }
 func (c *ProjectInitCommand) Usage() string {
 	return `project:init --name="Acme Platform" --slug=acme --module=github.com/acme/platform/api ` +
-		`[--repository=https://github.com/acme/platform] [--starters=organization,permission]`
+		`[--repository=https://github.com/acme/platform] [--starters=organization,permission] [--template=<name>]`
 }
 
 func (c *ProjectInitCommand) Run(args []string) error {
@@ -80,6 +87,7 @@ func (c *ProjectInitCommand) Run(args []string) error {
 	if raw, ok := flagValue(args, "starters"); ok {
 		options.Starters = splitList(raw)
 	}
+	options.Template, _ = flagValue(args, "template")
 	root, err := repositoryRoot()
 	if err != nil {
 		return err
@@ -89,7 +97,11 @@ func (c *ProjectInitCommand) Run(args []string) error {
 		return err
 	}
 	c.output.Success("Initialized %s (%s) from FastBuild %s", marker.Name, marker.Module, marker.ScaffoldVersion)
-	c.output.Line("Rewrote %d files. Next:", changed)
+	c.output.Line("Rewrote %d files.", changed)
+	if marker.Template != "" {
+		c.output.Line("Installed template %s; finish each plugin's INTEGRATION.md steps, then plugin:doctor.", marker.Template)
+	}
+	c.output.Line("Next:")
 	c.output.Line("  1. cd api && go mod tidy && go build ./... && cd .. && make check")
 	c.output.Line("  2. make dev, then sign in with the seeded accounts")
 	c.output.Line("  3. Remove examples and unused starters: .agents/skills/downstream-app-extraction/SKILL.md")
@@ -100,7 +112,11 @@ func (c *ProjectInitCommand) Run(args []string) error {
 // InitProject rewrites the scaffold identity in every tracked text file under root and writes the
 // project marker. It refuses to run twice or on invalid input, and returns the rewritten file count.
 func InitProject(root string, options ProjectOptions, version string, now time.Time) (*ProjectMarker, int, error) {
-	options, err := normalizeProjectOptions(options)
+	template, err := resolveTemplate(root, &options)
+	if err != nil {
+		return nil, 0, err
+	}
+	options, err = normalizeProjectOptions(options)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -112,32 +128,7 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		return nil, 0, err
 	}
 
-	replacer := strings.NewReplacer(
-		scaffoldModulePath, options.Module,
-		scaffoldRepository, options.Repository,
-		`"name": "`+scaffoldSlug+`-web"`, `"name": "`+options.Slug+`-web"`,
-		`"name": "`+scaffoldSlug+`-admin"`, `"name": "`+options.Slug+`-admin"`,
-		`"name": "@`+scaffoldSlug+`/contracts"`, `"name": "@`+options.Slug+`/contracts"`,
-	)
-	fileRewrites := map[string]func(string) string{
-		"api/.env.example":   setLine("APP_NAME=", options.Name),
-		"admin/.env.example": setLine("VITE_APP_NAME=", options.Name),
-		"compose.dev.yaml":   setLine("name: ", options.Slug+"-dev"),
-	}
-	if options.Starters != nil {
-		web, admin := browserFeatures(options.Starters)
-		fileRewrites["api/.env.example"] = chain(fileRewrites["api/.env.example"],
-			setLine("OPTIONAL_STARTERS=", strings.Join(options.Starters, ",")))
-		fileRewrites["web/.env.example"] = setLine("NEXT_PUBLIC_OPTIONAL_FEATURES=", strings.Join(web, ","))
-		fileRewrites["admin/.env.example"] = chain(fileRewrites["admin/.env.example"],
-			setLine("VITE_OPTIONAL_FEATURES=", strings.Join(admin, ",")))
-		fileRewrites["scripts/dev.sh"] = chain(
-			setShellDefault("FASTBUILD_DEV_STARTERS", strings.Join(options.Starters, ",")),
-			setShellDefault("FASTBUILD_DEV_WEB_FEATURES", strings.Join(web, ",")),
-			setShellDefault("FASTBUILD_DEV_ADMIN_FEATURES", strings.Join(admin, ",")),
-		)
-	}
-
+	rewrite := projectRewriter(options)
 	changed := 0
 	for _, relative := range files {
 		path := filepath.Join(root, relative)
@@ -148,10 +139,7 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		if bytes.IndexByte(content, 0) >= 0 {
 			continue // binary
 		}
-		updated := replacer.Replace(string(content))
-		if rewrite := fileRewrites[filepath.ToSlash(relative)]; rewrite != nil {
-			updated = rewrite(updated)
-		}
+		updated := string(rewrite(filepath.ToSlash(relative), content))
 		if updated == string(content) {
 			continue
 		}
@@ -165,6 +153,12 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		changed++
 	}
 
+	if template != nil {
+		if installErr := installTemplate(root, template.Name, version); installErr != nil {
+			return nil, changed, installErr
+		}
+	}
+
 	// A new project installs plugins from the release it started from instead of carrying the
 	// scaffold's registry; see plugin:add.
 	if removeErr := os.RemoveAll(filepath.Join(root, registryDir)); removeErr != nil {
@@ -176,7 +170,8 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		Slug:            options.Slug,
 		Module:          options.Module,
 		Repository:      options.Repository,
-		Starters:        options.Starters,
+		Starters:        append(append([]string{}, options.Starters...), options.pluginStarters...),
+		Template:        options.Template,
 		ScaffoldVersion: version,
 		InitializedAt:   now,
 	}
@@ -188,6 +183,90 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		return nil, changed, err
 	}
 	return marker, changed, nil
+}
+
+// resolveTemplate reads the template from the scaffold registry and adds the starters it needs to
+// the options: core starters to Starters, the starters its plugins install to pluginStarters.
+func resolveTemplate(root string, options *ProjectOptions) (*pluginregistry.IndexEntry, error) {
+	if options.Template == "" {
+		return nil, nil
+	}
+	index, err := pluginregistry.NewLocalSource(filepath.Join(root, registryDir), "local:registry").Index()
+	if err != nil {
+		return nil, fmt.Errorf("--template needs the scaffold registry: %w", err)
+	}
+	template, ok := index.Find(options.Template)
+	if !ok || template.PluginKind() != pluginregistry.KindTemplate {
+		return nil, fmt.Errorf("--template: %q is not a template in registry/; list them with plugin:search --kind=template", options.Template)
+	}
+	for _, starter := range template.Requires.Starters {
+		if !slices.Contains(options.Starters, starter) {
+			options.Starters = append(options.Starters, starter)
+		}
+	}
+	for _, include := range template.Includes {
+		if member, found := index.Find(include); found && member.Starter != nil {
+			options.pluginStarters = append(options.pluginStarters, member.Starter.Name)
+		}
+	}
+	return template, nil
+}
+
+// installTemplate installs a template's plugins from the scaffold registry. The lock records the
+// release the files came from, so plugin:update can later merge against it.
+func installTemplate(root, name, version string) error {
+	label := "local:registry"
+	if parsed, err := pluginregistry.ParseVersion(version); err == nil && version == "v"+parsed.String() {
+		label = "github:" + scaffoldGitHubRepository + "@" + version
+	}
+	installer, err := newProjectInstaller(root, pluginregistry.NewLocalSource(filepath.Join(root, registryDir), label))
+	if err != nil {
+		return err
+	}
+	_, err = installer.InstallTemplate(name)
+	return err
+}
+
+// projectRewriter returns the identity rewrite project:init applies to each scaffold file: module
+// path, repository, package names, application name, and starter selection. project:upgrade
+// applies the same rewrite to both releases so they compare with the project's files.
+func projectRewriter(options ProjectOptions) func(relative string, content []byte) []byte {
+	replacer := strings.NewReplacer(
+		scaffoldModulePath, options.Module,
+		scaffoldRepository, options.Repository,
+		`"name": "`+scaffoldSlug+`-web"`, `"name": "`+options.Slug+`-web"`,
+		`"name": "`+scaffoldSlug+`-admin"`, `"name": "`+options.Slug+`-admin"`,
+		`"name": "@`+scaffoldSlug+`/contracts"`, `"name": "@`+options.Slug+`/contracts"`,
+	)
+	fileRewrites := map[string]func(string) string{
+		"api/.env.example":   setLine("APP_NAME=", options.Name),
+		"admin/.env.example": setLine("VITE_APP_NAME=", options.Name),
+		"compose.dev.yaml":   setLine("name: ", options.Slug+"-dev"),
+	}
+	if options.Starters != nil {
+		starters := append(append([]string{}, options.Starters...), options.pluginStarters...)
+		web, admin := browserFeatures(starters)
+		fileRewrites["api/.env.example"] = chain(fileRewrites["api/.env.example"],
+			setLine("OPTIONAL_STARTERS=", strings.Join(starters, ",")))
+		fileRewrites["web/.env.example"] = setLine("NEXT_PUBLIC_OPTIONAL_FEATURES=", strings.Join(web, ","))
+		fileRewrites["admin/.env.example"] = chain(fileRewrites["admin/.env.example"],
+			setLine("VITE_OPTIONAL_FEATURES=", strings.Join(admin, ",")))
+		fileRewrites["scripts/dev.sh"] = chain(
+			setShellDefault("FASTBUILD_DEV_STARTERS", strings.Join(starters, ",")),
+			setShellDefault("FASTBUILD_DEV_WEB_FEATURES", strings.Join(web, ",")),
+			setShellDefault("FASTBUILD_DEV_ADMIN_FEATURES", strings.Join(admin, ",")),
+		)
+	}
+	return func(relative string, content []byte) []byte {
+		if bytes.IndexByte(content, 0) >= 0 {
+			return content // binary
+		}
+		updated := replacer.Replace(string(content))
+		if rewrite := fileRewrites[relative]; rewrite != nil {
+			updated = rewrite(updated)
+		}
+		return []byte(updated)
+	}
 }
 
 func normalizeProjectOptions(options ProjectOptions) (ProjectOptions, error) {

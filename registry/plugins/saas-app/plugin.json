@@ -1,0 +1,15 @@
+{
+  "name": "saas-app",
+  "kind": "template",
+  "version": "0.1.0",
+  "summary": "A multi-tenant SaaS starting point: organizations, roles, usage, settings, and the pages a product needs.",
+  "description": "Starts a subscription-style SaaS product: organizations with roles and permissions, usage metering, settings, and notifications, styled with the enterprise theme, with blocks for the landing page, pricing, sign-in, onboarding, dashboard, data tables, settings, and empty states. Billing stays a product decision and is not included.",
+  "keywords": ["saas", "multi-tenant", "subscription", "b2b", "startup", "product", "多租户", "订阅", "创业", "产品"],
+  "use_when": [
+    "the builder is starting a multi-tenant SaaS product",
+    "the product needs organizations, roles, usage, and the standard product pages from day one"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization", "permission", "notification", "setting", "usage"] },
+  "includes": ["theme-enterprise", "block-landing-hero", "block-pricing-table", "block-auth-card", "block-onboarding-steps", "block-dashboard-stats", "block-data-table", "block-settings-page", "block-empty-state"]
+}

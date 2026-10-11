@@ -1,34 +1,20 @@
 package pluginregistry
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
-	"time"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
-const (
-	maxArchiveBytes   = 50 << 20
-	maxArchiveEntries = 20_000
-	maxExtractedBytes = 100 << 20
-	downloadTimeout   = 2 * time.Minute
-)
-
-var (
-	remotePattern = regexp.MustCompile(`^github:([A-Za-z0-9-]+)/([A-Za-z0-9._-]+)@([A-Za-z0-9._/-]+)$`)
-	// ArchiveBaseURL is the GitHub archive endpoint; tests point it at a local server.
-	ArchiveBaseURL = "https://codeload.github.com"
-)
+var remotePattern = regexp.MustCompile(`^github:([A-Za-z0-9-]+)/([A-Za-z0-9._-]+)@([A-Za-z0-9._/-]+)$`)
 
 // RemoteSource reads the registry/ directory of a tagged GitHub release. The archive is fetched
 // over HTTPS once, bounded in size and entry count, and only regular files under registry/ are
@@ -109,111 +95,15 @@ func (s *RemoteSource) fetch() (*LocalSource, error) {
 }
 
 func (s *RemoteSource) download(dir string) error {
-	client := s.Client
-	if client == nil {
-		client = &http.Client{Timeout: downloadTimeout}
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
-	defer cancel()
-	url := fmt.Sprintf("%s/%s/%s/tar.gz/%s", strings.TrimSuffix(ArchiveBaseURL, "/"), s.Owner, s.Repo, s.Ref)
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return err
-	}
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("download returned HTTP %d", response.StatusCode)
-	}
-	return ExtractRegistry(io.LimitReader(response.Body, maxArchiveBytes+1), dir)
+	return projectfiles.FetchGitHubArchive(context.Background(), s.Client, s.Owner, s.Repo, s.Ref, "registry/", dir)
 }
 
-// ExtractRegistry extracts the registry/ directory of a GitHub tar.gz archive into dir. It rejects
-// archives that are too large, contain too many entries, or contain links or unsafe paths.
+// ExtractRegistry extracts the registry/ directory of a GitHub tar.gz archive into dir, with the
+// bounds of projectfiles.ExtractArchive.
 func ExtractRegistry(archive io.Reader, dir string) error {
-	counted := &countingReader{reader: archive, limit: maxArchiveBytes}
-	gz, err := gzip.NewReader(counted)
-	if err != nil {
-		return fmt.Errorf("archive is not gzip: %w", err)
-	}
-	defer gz.Close()
-	reader := tar.NewReader(gz)
-	var entries, extracted int64
-	found := false
-	for {
-		header, err := reader.Next()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-		if err != nil {
-			return fmt.Errorf("read archive: %w", err)
-		}
-		if entries++; entries > maxArchiveEntries {
-			return fmt.Errorf("archive has more than %d entries", maxArchiveEntries)
-		}
-		// GitHub archives wrap everything in one "<repo>-<ref>/" directory.
-		_, rest, ok := strings.Cut(header.Name, "/")
-		if !ok || !strings.HasPrefix(rest, "registry/") {
-			continue
-		}
-		relative := strings.TrimPrefix(rest, "registry/")
-		if relative == "" {
-			continue
-		}
-		switch header.Typeflag {
-		case tar.TypeDir:
-			continue
-		case tar.TypeReg:
-		default:
-			return fmt.Errorf("archive entry %s is not a regular file", rest)
-		}
-		clean := strings.TrimSuffix(relative, "/")
-		if !ValidFilePath(clean) || path.Clean(clean) != clean {
-			return fmt.Errorf("archive entry %s has an unsafe path", rest)
-		}
-		if extracted += header.Size; extracted > maxExtractedBytes || header.Size > maxPluginFileSize {
-			return fmt.Errorf("archive registry exceeds the size limit")
-		}
-		target := filepath.Join(dir, filepath.FromSlash(clean))
-		if mkdirErr := os.MkdirAll(filepath.Dir(target), 0o755); mkdirErr != nil {
-			return mkdirErr
-		}
-		file, err := os.OpenFile(target, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o644)
-		if err != nil {
-			return err
-		}
-		_, copyErr := io.Copy(file, io.LimitReader(reader, header.Size))
-		closeErr := file.Close()
-		if copyErr != nil || closeErr != nil {
-			return errors.Join(copyErr, closeErr)
-		}
-		found = true
-	}
-	if counted.exceeded {
-		return fmt.Errorf("archive exceeds %d bytes", maxArchiveBytes)
-	}
-	if !found {
+	err := projectfiles.ExtractArchive(archive, "registry/", dir)
+	if errors.Is(err, projectfiles.ErrPrefixMissing) {
 		return errors.New("archive has no registry/ directory; the release predates the plugin registry")
 	}
-	return nil
-}
-
-type countingReader struct {
-	reader   io.Reader
-	limit    int64
-	read     int64
-	exceeded bool
-}
-
-func (r *countingReader) Read(buffer []byte) (int, error) {
-	n, err := r.reader.Read(buffer)
-	r.read += int64(n)
-	if r.read > r.limit {
-		r.exceeded = true
-		return n, fmt.Errorf("archive exceeds %d bytes", r.limit)
-	}
-	return n, err
+	return err
 }

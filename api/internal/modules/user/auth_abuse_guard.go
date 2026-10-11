@@ -25,7 +25,7 @@ const (
 
 type authEndpointGuard struct {
 	perIP      gin.HandlerFunc
-	perSubject ratelimit.Limiter
+	perSubject ratelimit.Store
 }
 
 // AuthAbuseGuard applies independent source and subject quotas to public
@@ -37,15 +37,20 @@ type AuthAbuseGuard struct {
 }
 
 // NewAuthAbuseGuard resolves the user starter's route protection from global
-// configuration while keeping the policy enforcement owned by this module.
-func NewAuthAbuseGuard(cfg *config.Config) *AuthAbuseGuard {
+// configuration while keeping the policy enforcement owned by this module. The
+// stores factory decides whether quotas are process-local or shared across replicas.
+func NewAuthAbuseGuard(cfg *config.Config, stores *ratelimit.Stores) *AuthAbuseGuard {
 	if cfg == nil {
-		return newAuthAbuseGuard(config.AuthenticationRateLimitConfig{})
+		return newAuthAbuseGuardWithStores(config.AuthenticationRateLimitConfig{}, stores)
 	}
-	return newAuthAbuseGuard(cfg.Middleware.AuthenticationRateLimit)
+	return newAuthAbuseGuardWithStores(cfg.Middleware.AuthenticationRateLimit, stores)
 }
 
 func newAuthAbuseGuard(cfg config.AuthenticationRateLimitConfig) *AuthAbuseGuard {
+	return newAuthAbuseGuardWithStores(cfg, nil)
+}
+
+func newAuthAbuseGuardWithStores(cfg config.AuthenticationRateLimitConfig, stores *ratelimit.Stores) *AuthAbuseGuard {
 	guard := &AuthAbuseGuard{
 		enabled:   cfg.Enabled,
 		endpoints: make(map[authEndpoint]authEndpointGuard),
@@ -54,14 +59,19 @@ func newAuthAbuseGuard(cfg config.AuthenticationRateLimitConfig) *AuthAbuseGuard
 		return guard
 	}
 
-	guard.endpoints[authEndpointLogin] = buildAuthEndpointGuard(authEndpointLogin, cfg.Login, cfg.MaxBucketsPerRule)
-	guard.endpoints[authEndpointRegister] = buildAuthEndpointGuard(authEndpointRegister, cfg.Register, cfg.MaxBucketsPerRule)
-	guard.endpoints[authEndpointPasswordReset] = buildAuthEndpointGuard(authEndpointPasswordReset, cfg.PasswordReset, cfg.MaxBucketsPerRule)
-	guard.endpoints[authEndpointPasswordResetConfirm] = buildAuthEndpointGuard(authEndpointPasswordResetConfirm, cfg.PasswordResetConfirm, cfg.MaxBucketsPerRule)
+	guard.endpoints[authEndpointLogin] = buildAuthEndpointGuard(stores, authEndpointLogin, cfg.Login, cfg.MaxBucketsPerRule)
+	guard.endpoints[authEndpointRegister] = buildAuthEndpointGuard(stores, authEndpointRegister, cfg.Register, cfg.MaxBucketsPerRule)
+	guard.endpoints[authEndpointPasswordReset] = buildAuthEndpointGuard(stores, authEndpointPasswordReset, cfg.PasswordReset, cfg.MaxBucketsPerRule)
+	guard.endpoints[authEndpointPasswordResetConfirm] = buildAuthEndpointGuard(stores, authEndpointPasswordResetConfirm, cfg.PasswordResetConfirm, cfg.MaxBucketsPerRule)
 	return guard
 }
 
-func buildAuthEndpointGuard(endpoint authEndpoint, cfg config.AuthenticationEndpointRateLimitConfig, maxBuckets int) authEndpointGuard {
+func buildAuthEndpointGuard(
+	stores *ratelimit.Stores,
+	endpoint authEndpoint,
+	cfg config.AuthenticationEndpointRateLimitConfig,
+	maxBuckets int,
+) authEndpointGuard {
 	guard := authEndpointGuard{}
 	if cfg.PerIP.Max > 0 && cfg.PerIP.Window > 0 {
 		guard.perIP = ratelimit.Middleware(ratelimit.Config{
@@ -69,6 +79,12 @@ func buildAuthEndpointGuard(endpoint authEndpoint, cfg config.AuthenticationEndp
 			Duration:        cfg.PerIP.Window,
 			MaxBuckets:      maxBuckets,
 			SuppressHeaders: true,
+			Store: stores.New(ratelimit.Rule{
+				Name:       "auth_" + string(endpoint) + "_ip",
+				Max:        cfg.PerIP.Max,
+				Window:     cfg.PerIP.Window,
+				MaxBuckets: maxBuckets,
+			}),
 			KeyFunc: func(c *gin.Context) string {
 				return "auth:" + string(endpoint) + ":ip:" + c.ClientIP()
 			},
@@ -76,11 +92,12 @@ func buildAuthEndpointGuard(endpoint authEndpoint, cfg config.AuthenticationEndp
 		})
 	}
 	if cfg.PerSubject.Max > 0 && cfg.PerSubject.Window > 0 {
-		guard.perSubject = ratelimit.NewMemoryStore(
-			cfg.PerSubject.Max,
-			cfg.PerSubject.Window,
-			ratelimit.WithMaxBuckets(maxBuckets),
-		)
+		guard.perSubject = stores.New(ratelimit.Rule{
+			Name:       "auth_" + string(endpoint) + "_subject",
+			Max:        cfg.PerSubject.Max,
+			Window:     cfg.PerSubject.Window,
+			MaxBuckets: maxBuckets,
+		})
 	}
 	return guard
 }

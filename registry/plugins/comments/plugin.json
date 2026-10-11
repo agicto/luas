@@ -1,0 +1,22 @@
+{
+  "name": "comments",
+  "kind": "feature",
+  "version": "0.1.0",
+  "summary": "Threaded comments with @mentions on any organization resource the project registers.",
+  "description": "Adds a comment starter: members comment on and reply to organization resources such as tasks, documents, or tickets. Threads are one level deep, edits use optimistic concurrency (If-Match), deletes are soft so threads keep their shape, and owners and admins can moderate. Mentioned members get an idempotent notification when the notification starter is enabled. Each module decides which of its resources are commentable and who may read or comment through a small resource-type seam.",
+  "keywords": ["comments", "comment", "threads", "replies", "discussion", "mentions", "@mention", "feedback", "collaboration", "评论", "回复", "讨论", "提及", "@提及", "协作", "留言"],
+  "use_when": [
+    "members need to discuss a task, document, ticket, or any other organization record",
+    "users want to reply to comments and @mention teammates",
+    "a module needs a comment thread without building its own comments table"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization"] },
+  "starter": {
+    "name": "comment",
+    "const": "StarterComment",
+    "directory": "comment",
+    "handler": "Comment"
+  },
+  "fragment": "contracts/fragments/comments.yaml"
+}

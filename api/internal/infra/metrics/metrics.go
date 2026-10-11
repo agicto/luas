@@ -109,6 +109,14 @@ var (
 		[]string{"cache"},
 	)
 
+	rateLimitStoreFailures = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "rate_limit_store_failures_total",
+			Help: "Shared rate-limit store operations that failed or timed out, by rule, reason, and fallback decision",
+		},
+		[]string{"rule", "reason", "decision"},
+	)
+
 	workflowQueueTasks = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{Name: "workflow_queue_tasks", Help: "Workflow tasks by queue and bounded state"},
 		[]string{"queue", "state"},
@@ -201,6 +209,15 @@ func RecordCacheHit(cache string) {
 // RecordCacheMiss records a cache miss
 func RecordCacheMiss(cache string) {
 	cacheMissesTotal.WithLabelValues(cache).Inc()
+}
+
+// --- Rate-Limit Metrics ---
+
+// RecordRateLimitStoreFailure counts one shared-store failure. Every label must come from a
+// code-owned bounded set: the rule name, a reason such as timeout or error, and the fallback
+// decision (allow, deny, local, or reset).
+func RecordRateLimitStoreFailure(rule, reason, decision string) {
+	rateLimitStoreFailures.WithLabelValues(rule, reason, decision).Inc()
 }
 
 // SetWorkflowQueueStats publishes one bounded queue snapshot.

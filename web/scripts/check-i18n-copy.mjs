@@ -15,6 +15,7 @@ const coreSurfaceRoots = [
   'components/features/console',
   'components/theme-toggle.tsx',
   'components/common',
+  'components/blocks',
 ];
 const sourceExtensions = new Set(['.ts', '.tsx']);
 const userFacingAttributes = new Set([
@@ -40,7 +41,7 @@ function listSourceFiles(path) {
   const stat = statSync(path);
 
   if (stat.isFile()) {
-    return sourceExtensions.has(extname(path)) ? [path] : [];
+    return sourceExtensions.has(extname(path)) && !/\.test\.tsx?$/.test(path) ? [path] : [];
   }
 
   return readdirSync(path).flatMap(entry => listSourceFiles(resolve(path, entry)));
@@ -138,12 +139,15 @@ function inspectCopy(path) {
   return { allowedBrandCount, violations };
 }
 
+// Paths given on the command line replace the core surface roots, so the registry item check can
+// inspect plugin files before they are installed.
+const requestedRoots = process.argv.slice(2).map(path => resolve(process.cwd(), path));
 const files = [
   ...new Set(
-    coreSurfaceRoots.flatMap(path => {
-      const absolutePath = resolve(sourceRoot, path);
-      return existsSync(absolutePath) ? listSourceFiles(absolutePath) : [];
-    })
+    (requestedRoots.length > 0
+      ? requestedRoots
+      : coreSurfaceRoots.map(path => resolve(sourceRoot, path))
+    ).flatMap(absolutePath => (existsSync(absolutePath) ? listSourceFiles(absolutePath) : []))
   ),
 ].sort();
 const results = files.map(inspectCopy);

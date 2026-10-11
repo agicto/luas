@@ -3,7 +3,7 @@ import nextTypescript from 'eslint-config-next/typescript';
 
 const eslintConfig = [
   {
-    ignores: ['.next/**', 'coverage/**'],
+    ignores: ['.next/**', 'coverage/**', '.registry-check/**'],
   },
   ...nextCoreWebVitals,
   ...nextTypescript,

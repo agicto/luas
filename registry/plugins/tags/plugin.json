@@ -1,0 +1,22 @@
+{
+  "name": "tags",
+  "kind": "feature",
+  "version": "0.1.0",
+  "summary": "Organization tags with palette colors that other modules' resources can carry.",
+  "description": "Adds a tag starter: organization owners and admins create tags (unique names ignoring case, a fixed palette of color tokens, a short description) and attach up to 20 of them to any resource whose module registers a resource type; every member reads tags, a resource's tags, and the resources carrying a tag. Assignments are replaced idempotently, writes use optimistic concurrency (If-Match), and audit records tag IDs and names but never descriptions. Ships with no resource types; modules register theirs at assembly time without the tag module importing them.",
+  "keywords": ["tags", "tag", "labels", "label", "categories", "taxonomy", "tagging", "classification", "标签", "标记", "分类", "打标签"],
+  "use_when": [
+    "the team needs labels, tags, or categories on its records",
+    "members must filter or group resources by organization-defined tags",
+    "another module or plugin needs a shared, product-neutral way to label its resources"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization"] },
+  "starter": {
+    "name": "tag",
+    "const": "StarterTag",
+    "directory": "tag",
+    "handler": "Tag"
+  },
+  "fragment": "contracts/fragments/tags.yaml"
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/modules/user"
 	"github.com/fastagi/fastbuild/api/internal/modules/webhook"
 	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	// fastbuild:slot api.starter.imports
 )
 
 // ProviderSet wires every available starter provider and the configured registry.
@@ -35,6 +36,7 @@ var ProviderSet = wire.NewSet(
 	usage.ProviderSet,
 	webhook.ProviderSet,
 	operator.ProviderSet,
+	// fastbuild:slot api.starter.providers
 	wire.Struct(new(Handlers), "*"),
 	NewConfiguredRegistry,
 )
@@ -55,6 +57,7 @@ type Handlers struct {
 	Usage        *usage.Handler
 	Webhook      *webhook.Handler
 	Operator     *operator.Handler
+	// fastbuild:slot api.starter.handlers
 }
 
 func (h *Handlers) orMetadataOnly() *Handlers {
@@ -101,6 +104,7 @@ func OptionalManifests(handlers *Handlers) []assembly.StarterManifest {
 		usage.NewStarterManifest(h.Usage),
 		webhook.NewStarterManifest(h.Webhook),
 		operator.NewStarterManifest(h.Operator),
+		// fastbuild:slot api.starter.manifests
 	}
 }
 
@@ -166,8 +170,19 @@ func ConfiguredMigrations(cfg *config.Config) (map[string]migration.Migration, e
 	return registry.Migrations(), nil
 }
 
+// coreMigrations are owned by the HTTP kernel and infrastructure rather than by any starter.
+var coreMigrations = []string{
+	"2026_07_31_000000_create_workflow_tasks_table",
+	"2026_10_11_000000_create_rate_limit_buckets_table",
+}
+
 func registerCoreMigrations(registry *Registry) error {
-	return registry.RegisterMigrationByName("2026_07_31_000000_create_workflow_tasks_table")
+	for _, name := range coreMigrations {
+		if err := registry.RegisterMigrationByName(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // DefaultSeeders returns the seeders enabled by the default starters.

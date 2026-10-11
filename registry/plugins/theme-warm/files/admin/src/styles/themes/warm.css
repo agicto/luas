@@ -1,0 +1,64 @@
+/* FastBuild theme: Warm (theme-warm plugin). Content-first warm paper neutrals, ink-like text, a
+   terracotta accent, and softer radius. Overrides tokens.css only; every token set on :root that
+   tokens.css also sets on .dark is set again on .dark. */
+
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.975 0.008 80);
+  --foreground: oklch(0.24 0.02 60);
+  --card: oklch(0.995 0.004 85);
+  --card-foreground: oklch(0.24 0.02 60);
+  --popover: oklch(0.995 0.004 85);
+  --popover-foreground: oklch(0.24 0.02 60);
+  --primary: oklch(0.42 0.09 45);
+  --primary-foreground: oklch(0.98 0.01 80);
+  --secondary: oklch(0.95 0.012 80);
+  --secondary-foreground: oklch(0.3 0.03 55);
+  --muted: oklch(0.95 0.012 80);
+  --muted-foreground: oklch(0.47 0.02 60);
+  --accent: oklch(0.94 0.02 70);
+  --accent-foreground: oklch(0.3 0.03 55);
+  --border: oklch(0.9 0.015 75);
+  --input: oklch(0.87 0.018 75);
+  --sidebar: oklch(0.97 0.01 80 / 90%);
+  --sidebar-foreground: oklch(0.24 0.02 60);
+  --sidebar-border: oklch(0.9 0.015 75);
+  --brand: oklch(0.5 0.12 45);
+  --brand-foreground: oklch(0.98 0.01 80);
+  --brand-strong: oklch(0.42 0.11 45);
+  --brand-subtle: oklch(0.95 0.025 60);
+  --material: oklch(0.995 0.004 85 / 88%);
+  --material-strong: oklch(0.995 0.004 85 / 95%);
+  --material-edge: oklch(1 0 0 / 76%);
+  --material-shadow: 0 1px 2px oklch(0.3 0.03 60 / 5%), 0 8px 24px oklch(0.3 0.03 60 / 5%);
+}
+
+.dark {
+  --background: oklch(0.17 0.011 60);
+  --foreground: oklch(0.95 0.012 80);
+  --card: oklch(0.22 0.012 60);
+  --card-foreground: oklch(0.95 0.012 80);
+  --popover: oklch(0.22 0.012 60);
+  --popover-foreground: oklch(0.95 0.012 80);
+  --primary: oklch(0.82 0.08 60);
+  --primary-foreground: oklch(0.2 0.02 55);
+  --secondary: oklch(0.26 0.014 60);
+  --secondary-foreground: oklch(0.93 0.012 80);
+  --muted: oklch(0.26 0.014 60);
+  --muted-foreground: oklch(0.75 0.018 70);
+  --accent: oklch(0.28 0.02 55);
+  --accent-foreground: oklch(0.93 0.012 80);
+  --border: oklch(0.33 0.015 60);
+  --input: oklch(0.36 0.016 60);
+  --sidebar: oklch(0.2 0.012 60 / 90%);
+  --sidebar-foreground: oklch(0.95 0.012 80);
+  --sidebar-border: oklch(0.33 0.015 60);
+  --brand: oklch(0.72 0.12 55);
+  --brand-foreground: oklch(0.18 0.02 55);
+  --brand-strong: oklch(0.86 0.06 65);
+  --brand-subtle: oklch(0.29 0.04 55);
+  --material: oklch(0.22 0.012 60 / 86%);
+  --material-strong: oklch(0.24 0.012 60 / 94%);
+  --material-edge: oklch(1 0 0 / 8%);
+  --material-shadow: 0 1px 2px oklch(0 0 0 / 20%), 0 12px 30px oklch(0 0 0 / 18%);
+}

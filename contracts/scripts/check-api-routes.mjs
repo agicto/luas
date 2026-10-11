@@ -36,7 +36,8 @@ const baseEnvironment = {
   APP_ENV: 'development',
   AI_ENABLED: 'false',
   DB_ENABLED: 'false',
-  FASTBUILD_ENV_FILE: '',
+  // Local api/.env files must not change which starters validate.
+  FASTBUILD_IGNORE_ENV_FILES: 'true',
 };
 const starterCatalog = await fastbuild(['starter:list', '--format=json'], {
   ...baseEnvironment,
