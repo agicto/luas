@@ -57,6 +57,8 @@ def main() -> int:
     for path in candidate_files(sys.argv[1:]):
         if not path.is_file() or any(part in IGNORED_PARTS for part in path.parts):
             continue
+        if path.relative_to(ROOT).as_posix().startswith(".claude/worktrees/"):
+            continue  # local agent worktrees are separate checkouts
         if path.suffix != ".md" and path.suffix not in SOURCE_SUFFIXES and path.name != ".editorconfig":
             continue
 

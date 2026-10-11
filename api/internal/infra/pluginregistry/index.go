@@ -274,8 +274,8 @@ func termScore(entry IndexEntry, term string) int {
 	return score
 }
 
-// embeddedScore credits keywords and name words that appear inside the query itself, such as
-// "知识库" in "我们需要一个知识库".
+// embeddedScore credits non-ASCII keywords that appear inside the query itself, such as a
+// Chinese keyword inside a Chinese sentence written without spaces.
 func embeddedScore(entry IndexEntry, query string) int {
 	score := 0
 	for _, keyword := range entry.Keywords {
