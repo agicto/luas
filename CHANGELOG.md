@@ -6,6 +6,13 @@ Notable changes to Luas. Downstream migration steps for each change are in
 
 ## Unreleased
 
+### Removed
+
+- Offset pages (`page`) on `GET /v1/audit-logs` and `GET /v1/operator/audit-logs`, deprecated in
+  v0.23.0. Both endpoints return keyset pages only; a `page` parameter returns
+  `400 COMMON.INVALID_INPUT`. The Go `ListForUser`, `ListAuditLogs`, `FindByUserID`, and `FindAll`
+  audit methods are gone with them.
+
 ## v0.23.0 — 2026-10-10
 
 ### Added

@@ -40,14 +40,18 @@ echo "📋 Level 1: Checking pagination..."
 
 # Check if there's a List function
 if grep -q "func.*List.*gin.Context" "${HANDLER_FILE}"; then
-    # Two equivalent pagination patterns documented in api-development SKILL.md:
+    # Equivalent pagination patterns documented in api-development SKILL.md:
     #   1) pagination.PaginateFromContext[T](c, db)        — high-level helper
-    #   2) pagination.FromContext(c) + pagination.NewPaginator(...) — manual pair
+    #   2) pagination.FromContext(c) + pagination.NewPaginator(...) — manual offset pair
+    #   3) pagination.FromContext(c) + response.SuccessCursorPage(...) — keyset pages
     if grep -q "pagination.PaginateFromContext\|pagination.Paginate" "${HANDLER_FILE}"; then
         echo "✅ Pagination detected (PaginateFromContext pattern)"
     elif grep -q "pagination.FromContext" "${HANDLER_FILE}" && \
          grep -q "pagination.NewPaginator" "${HANDLER_FILE}"; then
         echo "✅ Pagination detected (FromContext + NewPaginator pattern)"
+    elif grep -q "pagination.FromContext" "${HANDLER_FILE}" && \
+         grep -q "response.SuccessCursorPage" "${HANDLER_FILE}"; then
+        echo "✅ Pagination detected (keyset cursor pattern)"
     else
         BOUNDED_LIST_MARKERS=$(grep -E '^[[:space:]]*// luas:bounded-list max=[1-9][0-9]{0,2} reason=[a-z0-9]+(-[a-z0-9]+)*[[:space:]]*$' "${HANDLER_FILE}" || true)
         BOUNDED_LIST_COUNT=$(awk 'NF { count++ } END { print count + 0 }' <<< "${BOUNDED_LIST_MARKERS}")

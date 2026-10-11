@@ -35,11 +35,11 @@ Optional exact-match filters are:
 | `request_id` | 80 characters | Correlation identifier |
 | `status_code` | 100-599 | Exact HTTP result status |
 
-Results are ordered newest first by audit identifier. Request keyset pages with `cursor`, as
-described under [Cursor pages](README.md#cursor-pages): `GET /v1/audit-logs?cursor=&per_page=15`
-returns the newest page, and each `meta.next_cursor` reads the next, older one. Offset pages
-(`page`) still work but are deprecated for this endpoint and will be removed in a later minor
-release: each one counts every matching record, which grows with the history.
+Results are ordered newest first by audit identifier, in keyset pages as described under
+[Cursor pages](README.md#cursor-pages): `GET /v1/audit-logs?per_page=15` returns the newest page,
+and each `meta.next_cursor`, passed back as `cursor`, reads the next, older one. Offset pages were
+removed in v0.24.0 because each counted every matching record; a `page` parameter returns
+`400 COMMON.INVALID_INPUT`.
 Each item may contain:
 
 ```json

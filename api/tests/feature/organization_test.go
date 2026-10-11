@@ -417,8 +417,8 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		WithToken(owner.Token).
 		Call().
 		AssertOk().
-		AssertJSONPath("meta.total", float64(2)).
 		JSON()
+	require.Len(t, roleAudit["data"], 2)
 	assertOrganizationAuditContainsNoProfileFields(t, roleAudit)
 
 	tc.Patch("/v1/organizations/"+organizationID+"/members/999999").
@@ -453,8 +453,8 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		WithToken(admin.Token).
 		Call().
 		AssertOk().
-		AssertJSONPath("meta.total", float64(1)).
 		JSON()
+	require.Len(t, removeAudit["data"], 1)
 	assertOrganizationAuditContainsNoProfileFields(t, removeAudit)
 	tc.Delete("/v1/users/account").
 		WithToken(member.Token).
@@ -488,8 +488,8 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 		WithToken(owner.Token).
 		Call().
 		AssertOk().
-		AssertJSONPath("meta.total", float64(1)).
 		JSON()
+	require.Len(t, transferAudit["data"], 1)
 	assertOrganizationAuditContainsNoProfileFields(t, transferAudit)
 
 	tc.Post("/v1/organizations/"+organizationID+"/ownership-transfer").

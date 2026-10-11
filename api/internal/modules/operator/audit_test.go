@@ -29,14 +29,6 @@ func (f *fakeAuditQuery) ListAuditLogsAfter(_ context.Context, filter domain.Aud
 	return items, &domain.AuditLogCursor{CreatedAt: time.Date(2026, 9, 2, 0, 0, 0, 0, time.UTC), ID: 9}, nil
 }
 
-func (f *fakeAuditQuery) ListAuditLogs(_ context.Context, filter domain.AuditLogFilter, _, _ int) ([]*domain.AuditLog, int64, error) {
-	f.filter = filter
-	if f.err != nil {
-		return nil, 0, f.err
-	}
-	return []*domain.AuditLog{{ID: 9, ActorType: "user", Action: "disable", Resource: "users", Method: "POST", Path: "/v1/operator/users/:id/disable", StatusCode: 200}}, 1, nil
-}
-
 func TestListAuditLogsPassesFiltersAndReturnsAuditShape(t *testing.T) {
 	f := newFixture(t)
 
@@ -72,10 +64,10 @@ func TestListAuditLogsRequiresOperator(t *testing.T) {
 	assert.Equal(t, domain.CodeOperatorForbidden, errorCode(t, recorder))
 }
 
-func TestListAuditLogsKeysetModeSkipsTheCountAndReturnsACursor(t *testing.T) {
+func TestListAuditLogsReturnsKeysetPagesWithoutACount(t *testing.T) {
 	f := newFixture(t)
 
-	first := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: "/v1/operator/audit-logs?cursor=&per_page=25"})
+	first := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: "/v1/operator/audit-logs?per_page=25"})
 	require.Equal(t, http.StatusOK, first.Code, first.Body.String())
 	var body struct {
 		Data []map[string]any `json:"data"`
@@ -88,7 +80,7 @@ func TestListAuditLogsKeysetModeSkipsTheCountAndReturnsACursor(t *testing.T) {
 		Links any `json:"links"`
 	}
 	require.NoError(t, json.Unmarshal(first.Body.Bytes(), &body))
-	assert.Nil(t, f.audit.after, "an empty cursor starts at the newest record")
+	assert.Nil(t, f.audit.after, "a request without a cursor starts at the newest record")
 	assert.Equal(t, 25, f.audit.limit)
 	assert.Len(t, body.Data, 1)
 	assert.Equal(t, 25, body.Meta.PerPage)
@@ -109,6 +101,7 @@ func TestListAuditLogsRejectsMalformedOrMixedCursors(t *testing.T) {
 	for _, path := range []string{
 		"/v1/operator/audit-logs?cursor=not*base64",
 		"/v1/operator/audit-logs?cursor=&page=2",
+		"/v1/operator/audit-logs?page=2",
 		"/v1/operator/audit-logs?cursor=a&cursor=b",
 	} {
 		recorder := f.do(t, call{method: http.MethodGet, cookie: testCredential, path: path})

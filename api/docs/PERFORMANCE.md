@@ -89,7 +89,7 @@ With 1,000,000 audit rows, 500,000 of them owned by the measured account, 16 con
 
 | Request | Throughput | p50 |
 |---|---|---|
-| Offset page 1 (`page=1`, deprecated) | ~170 req/s | ~92 ms |
+| Offset page 1 (`page=1`, removed in v0.24.0) | ~170 req/s | ~92 ms |
 | Keyset first page (`cursor=`) | ~6,500 req/s | ~2.3 ms |
 | Offset page 20,000 | — | 130–550 ms per request |
 | Keyset page at the same depth | — | ~2 ms per request |

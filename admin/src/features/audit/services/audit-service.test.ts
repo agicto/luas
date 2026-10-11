@@ -34,7 +34,7 @@ describe('auditService.list', () => {
     expect(url.searchParams.get('action')).toBe('disable');
   });
 
-  it('always requests keyset pages and passes the cursor through', async () => {
+  it('starts at the newest page and passes the cursor through', async () => {
     const fetchMock = vi.fn().mockImplementation(
       async () =>
         new Response(JSON.stringify(emptyPage), {
@@ -49,8 +49,7 @@ describe('auditService.list', () => {
 
     const first = new URL(String(fetchMock.mock.calls[0]?.[0]), 'http://localhost');
     const second = new URL(String(fetchMock.mock.calls[1]?.[0]), 'http://localhost');
-    expect(first.searchParams.has('cursor')).toBe(true);
-    expect(first.searchParams.get('cursor')).toBe('');
+    expect(first.searchParams.has('cursor')).toBe(false);
     expect(first.searchParams.has('page')).toBe(false);
     expect(second.searchParams.get('cursor')).toBe('abc');
   });

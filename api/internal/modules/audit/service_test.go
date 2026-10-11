@@ -28,22 +28,6 @@ func (m *mockRepository) CreateBatch(ctx context.Context, logs []*domain.AuditLo
 	return args.Error(0)
 }
 
-func (m *mockRepository) FindByUserID(ctx context.Context, userID uint, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	args := m.Called(ctx, userID, filter, page, pageSize)
-	if args.Get(0) == nil {
-		return nil, args.Get(1).(int64), args.Error(2)
-	}
-	return args.Get(0).([]*domain.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
-func (m *mockRepository) FindAll(ctx context.Context, filter domain.AuditLogFilter, page, pageSize int) ([]*domain.AuditLog, int64, error) {
-	args := m.Called(ctx, filter, page, pageSize)
-	if args.Get(0) == nil {
-		return nil, args.Get(1).(int64), args.Error(2)
-	}
-	return args.Get(0).([]*domain.AuditLog), args.Get(1).(int64), args.Error(2)
-}
-
 func (m *mockRepository) FindByUserIDAfter(ctx context.Context, userID uint, filter domain.AuditLogFilter, after *domain.AuditLogCursor, limit int) ([]*domain.AuditLog, *domain.AuditLogCursor, error) {
 	args := m.Called(ctx, userID, filter, after, limit)
 	next, _ := args.Get(1).(*domain.AuditLogCursor)
@@ -89,21 +73,26 @@ func TestServiceRecordDerivesActionAndActor(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
-func TestServiceListForUser(t *testing.T) {
+func TestServiceListForUserAfter(t *testing.T) {
 	repo := new(mockRepository)
 	svc := NewService(repo)
 	ctx := context.Background()
 	userID := uint(9)
 	filter := domain.AuditLogFilter{Action: "delete"}
-	expected := []*domain.AuditLog{{ID: 1, UserID: &userID, Action: "delete"}}
+	after := &domain.AuditLogCursor{ID: 40}
+	expected := []*domain.AuditLog{{ID: 39, UserID: &userID, Action: "delete"}}
 
-	repo.On("FindByUserID", ctx, userID, filter, 1, 15).Return(expected, int64(1), nil)
+	repo.On("FindByUserIDAfter", ctx, userID, filter, after, 15).Return(expected, (*domain.AuditLogCursor)(nil), nil)
 
-	items, total, err := svc.ListForUser(ctx, userID, filter, 1, 15)
+	items, next, err := svc.ListForUserAfter(ctx, userID, filter, after, 15)
 
 	assert.NoError(t, err)
 	assert.Len(t, items, 1)
-	assert.Equal(t, int64(1), total)
+	assert.Nil(t, next)
+	_, _, err = svc.ListForUserAfter(ctx, 0, filter, nil, 15)
+	assert.ErrorIs(t, err, domain.ErrInvalidInput)
+	_, _, err = svc.ListForUserAfter(ctx, userID, filter, nil, 101)
+	assert.ErrorIs(t, err, domain.ErrInvalidInput)
 	repo.AssertExpectations(t)
 }
 
@@ -204,15 +193,15 @@ func TestServiceRecordRedactsSensitiveBusinessMetadata(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
-func TestServiceListAuditLogsBoundsTheTimeRange(t *testing.T) {
+func TestServiceListAuditLogsAfterBoundsTheTimeRange(t *testing.T) {
 	repo := new(mockRepository)
 	svc := NewService(repo)
 	now := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 
-	repo.On("FindAll", mock.Anything, mock.MatchedBy(func(filter domain.AuditLogFilter) bool {
+	repo.On("FindAllAfter", mock.Anything, mock.MatchedBy(func(filter domain.AuditLogFilter) bool {
 		return filter.To.Sub(filter.From) == 30*24*time.Hour
-	}), 1, 50).Return([]*domain.AuditLog{}, int64(0), nil).Once()
-	_, _, err := svc.ListAuditLogs(context.Background(), domain.AuditLogFilter{To: now}, 1, 50)
+	}), (*domain.AuditLogCursor)(nil), 50).Return([]*domain.AuditLog{}, (*domain.AuditLogCursor)(nil), nil).Once()
+	_, _, err := svc.ListAuditLogsAfter(context.Background(), domain.AuditLogFilter{To: now}, nil, 50)
 	require.NoError(t, err, "a missing start defaults to 30 days before the end")
 
 	for name, filter := range map[string]domain.AuditLogFilter{
@@ -220,10 +209,10 @@ func TestServiceListAuditLogsBoundsTheTimeRange(t *testing.T) {
 		"empty range":    {From: now, To: now},
 		"range too long": {From: now.Add(-domain.MaxAuditQueryRange - time.Hour), To: now},
 	} {
-		_, _, rangeErr := svc.ListAuditLogs(context.Background(), filter, 1, 50)
+		_, _, rangeErr := svc.ListAuditLogsAfter(context.Background(), filter, nil, 50)
 		require.ErrorIs(t, rangeErr, domain.ErrInvalidInput, name)
 	}
-	_, _, err = svc.ListAuditLogs(context.Background(), domain.AuditLogFilter{}, 1, 101)
+	_, _, err = svc.ListAuditLogsAfter(context.Background(), domain.AuditLogFilter{}, nil, 101)
 	require.ErrorIs(t, err, domain.ErrInvalidInput)
 	repo.AssertExpectations(t)
 }

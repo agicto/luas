@@ -53,7 +53,8 @@ must move together.
    - Never expose provider details or branch public behavior on raw error text.
 
 5. **Implement list behavior**
-   - Paginate every unbounded list.
+   - Paginate every unbounded list. Use keyset pages (`response.SuccessCursorPage`) for
+     collections that grow without bound, such as history or events; offset pages count every row.
    - A finite code-owned catalog may use exactly one reviewed marker:
 
      ```go
