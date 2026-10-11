@@ -1,0 +1,584 @@
+# OpenAPI fragment of the tags plugin. plugin:add merges it into contracts/openapi.yaml.
+x-error-codes:
+  - TAG.NOT_FOUND
+  - TAG.INVALID
+  - TAG.NAME_TAKEN
+  - TAG.VERSION_CONFLICT
+  - TAG.PRECONDITION_REQUIRED
+  - TAG.RESOURCE_NOT_FOUND
+  - TAG.INVALID_ASSIGNMENT
+tags:
+  - name: Tags
+    description: Organization tags that resources of code-registered types can carry (tags plugin).
+paths:
+  /v1/tags:
+    get:
+      operationId: listTags
+      summary: List the active organization's tags by name
+      description: Keyset pages ordered by lowercase name; pass `meta.next_cursor` as `cursor` for the next page. Any member may read.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagCursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: One page of tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagPageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createTag
+      summary: Create a tag
+      description: Owners and admins only. Names are unique in the organization, ignoring case.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTagRequest'
+      responses:
+        '201':
+          description: The created tag.
+          headers:
+            ETag:
+              description: Tag validator `"tag-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: '`TAG.NAME_TAKEN`: another tag of the organization has this name, ignoring case.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors, or `TAG.INVALID` for a blank name or an unknown color.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/tags/{tag_id}:
+    get:
+      operationId: getTag
+      summary: Get a tag
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagID'
+      responses:
+        '200':
+          description: The tag.
+          headers:
+            ETag:
+              description: Tag validator `"tag-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.NOT_FOUND`, also for another organization''s tag.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      operationId: updateTag
+      summary: Update a tag's name, color, or description
+      description: Owners and admins only. `If-Match` must carry the `ETag` that was read.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagID'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTagRequest'
+      responses:
+        '200':
+          description: The updated tag.
+          headers:
+            ETag:
+              description: Tag validator `"tag-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.NOT_FOUND`, also for another organization''s tag.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: '`TAG.NAME_TAKEN`: another tag of the organization has this name, ignoring case.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '412':
+          description: '`TAG.VERSION_CONFLICT`: the tag changed since it was read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors, or `TAG.INVALID` for an empty update, a blank name, or an unknown color.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '428':
+          description: '`TAG.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deleteTag
+      summary: Delete a tag and remove it from every resource
+      description: Owners and admins only. `If-Match` must carry the `ETag` that was read.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagID'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: The tag and its assignments are deleted.
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.NOT_FOUND`, also for another organization''s tag.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '412':
+          description: '`TAG.VERSION_CONFLICT`: the tag changed since it was read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '428':
+          description: '`TAG.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/tags/{tag_id}/resources:
+    get:
+      operationId: listTaggedResources
+      summary: List the resources that carry a tag
+      description: Keyset pages, newest assignment first; pass `meta.next_cursor` as `cursor` for the next page. Any member may read.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagID'
+        - name: resource_type
+          in: query
+          description: Only resources of this type.
+          schema:
+            $ref: '#/components/schemas/TagResourceType'
+        - $ref: '#/components/parameters/TaggedResourceCursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: One page of tagged resources.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaggedResourcePageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.NOT_FOUND`, also for another organization''s tag.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/resource-tags/{resource_type}/{resource_id}:
+    get:
+      operationId: getResourceTags
+      summary: List the tags one resource carries
+      description: At most 20 tags, ordered by lowercase name. Any member may read.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagResourceTypePath'
+        - $ref: '#/components/parameters/TagResourceIDPath'
+      responses:
+        '200':
+          description: The resource's tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceTagsResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.RESOURCE_NOT_FOUND`: the type is not registered or the resource is not in the organization.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    put:
+      operationId: replaceResourceTags
+      summary: Replace the tags one resource carries
+      description: Owners and admins only. The request's tag IDs become the resource's complete tag set; an empty list
+        removes every tag, and repeating a request changes nothing.
+      tags:
+        - Tags
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/TagResourceTypePath'
+        - $ref: '#/components/parameters/TagResourceIDPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceResourceTagsRequest'
+      responses:
+        '200':
+          description: The resource's new tags.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceTagsResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`TAG.RESOURCE_NOT_FOUND`: the type is not registered or the resource is not in the organization.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors, or `TAG.INVALID_ASSIGNMENT` for a repeated tag, more than 20 tags,
+            or a tag that is not in the organization.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  parameters:
+    TagID:
+      name: tag_id
+      in: path
+      required: true
+      description: Positive tag identifier.
+      schema:
+        $ref: '#/components/schemas/PositiveID'
+    TagCursor:
+      name: cursor
+      in: query
+      description: Opaque keyset position from `meta.next_cursor`; absent or empty requests the first page.
+      schema:
+        type: string
+        maxLength: 267
+    TaggedResourceCursor:
+      name: cursor
+      in: query
+      description: Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest page.
+      schema:
+        type: string
+        maxLength: 32
+    TagResourceTypePath:
+      name: resource_type
+      in: path
+      required: true
+      description: A resource type registered in code by the module that owns the resource.
+      schema:
+        $ref: '#/components/schemas/TagResourceType'
+    TagResourceIDPath:
+      name: resource_id
+      in: path
+      required: true
+      description: The resource's identifier inside its module.
+      schema:
+        $ref: '#/components/schemas/TagResourceID'
+  schemas:
+    TagColor:
+      type: string
+      description: A palette token name; browsers map it to their theme.
+      enum:
+        - gray
+        - red
+        - orange
+        - yellow
+        - green
+        - blue
+        - purple
+        - pink
+    TagResourceType:
+      type: string
+      pattern: '^[a-z][a-z0-9_]{0,49}$'
+      maxLength: 50
+    TagResourceID:
+      type: string
+      pattern: '^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$'
+      maxLength: 64
+    Tag:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - color
+        - description
+        - version
+        - created_by
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          $ref: '#/components/schemas/TagColor'
+        description:
+          type: string
+          maxLength: 200
+        version:
+          type: integer
+          minimum: 1
+        created_by:
+          description: The creator, or null after the account was deleted.
+          oneOf:
+            - $ref: '#/components/schemas/PositiveID'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    TaggedResource:
+      type: object
+      additionalProperties: false
+      required:
+        - resource_type
+        - resource_id
+        - tagged_at
+      properties:
+        resource_type:
+          $ref: '#/components/schemas/TagResourceType'
+        resource_id:
+          $ref: '#/components/schemas/TagResourceID'
+        tagged_at:
+          type: string
+          format: date-time
+    CreateTagRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          $ref: '#/components/schemas/TagColor'
+        description:
+          type: string
+          maxLength: 200
+          description: Defaults to empty.
+    UpdateTagRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+        color:
+          $ref: '#/components/schemas/TagColor'
+        description:
+          type: string
+          maxLength: 200
+    ReplaceResourceTagsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - tag_ids
+      properties:
+        tag_ids:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PositiveID'
+    TagResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Tag'
+    TagPageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'
+    ResourceTagsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/Tag'
+    TaggedResourcePageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaggedResource'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'
