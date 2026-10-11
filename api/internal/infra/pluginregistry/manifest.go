@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // ManifestFile is the manifest name inside each plugin directory.
@@ -212,10 +214,5 @@ func (m Manifest) Validate() error {
 
 // ValidFilePath reports whether a plugin file path is a safe, repository-relative path.
 func ValidFilePath(name string) bool {
-	if name == "" || strings.Contains(name, "\\") || strings.HasPrefix(name, "/") {
-		return false
-	}
-	clean := path.Clean(name)
-	return clean == name && clean != "." && !strings.HasPrefix(clean, "../") && clean != ".." &&
-		!strings.HasPrefix(clean, ".git/")
+	return projectfiles.SafeRelativePath(name)
 }

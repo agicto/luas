@@ -13,6 +13,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 type archiveEntry struct {
@@ -74,9 +76,9 @@ func TestRemoteSourceDownloadsAndVerifiesTheReleaseRegistry(t *testing.T) {
 		_, _ = w.Write(archive)
 	}))
 	defer server.Close()
-	previous := ArchiveBaseURL
-	ArchiveBaseURL = server.URL
-	t.Cleanup(func() { ArchiveBaseURL = previous })
+	previous := projectfiles.GitHubArchiveBaseURL
+	projectfiles.GitHubArchiveBaseURL = server.URL
+	t.Cleanup(func() { projectfiles.GitHubArchiveBaseURL = previous })
 
 	source, err := ParseRemoteSource("github:fastagi/fastbuild@v0.25.0")
 	require.NoError(t, err)

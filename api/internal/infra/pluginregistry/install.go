@@ -10,6 +10,8 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // LockFile records installed plugins at the repository root.
@@ -101,16 +103,16 @@ func (l *Lock) encode() ([]byte, error) {
 }
 
 // save stages the lock, deleting it when no plugin remains.
-func (l *Lock) save(changes *changeSet) error {
+func (l *Lock) save(changes *projectfiles.ChangeSet) error {
 	if len(l.Plugins) == 0 {
-		changes.remove(LockFile)
+		changes.Remove(LockFile)
 		return nil
 	}
 	raw, err := l.encode()
 	if err != nil {
 		return err
 	}
-	changes.write(LockFile, raw)
+	changes.Write(LockFile, raw)
 	return nil
 }
 
@@ -201,13 +203,13 @@ func (installer *Installer) Install(name string) (*Result, error) {
 	}
 
 	result := &Result{Entry: entry}
-	changes := newChangeSet(installer.Root)
+	changes := projectfiles.NewChangeSet(installer.Root)
 	for _, file := range toWrite {
-		changes.write(file, contents[file])
+		changes.Write(file, contents[file])
 		result.Written = append(result.Written, file)
 	}
 	for _, insert := range inserts {
-		applied, err := changes.applyInsert(insert.slot, insert.lines)
+		applied, err := stageInsert(changes, insert.slot, insert.lines)
 		if err != nil {
 			return nil, fmt.Errorf("plugin %q: %w", name, err)
 		}
@@ -218,7 +220,7 @@ func (installer *Installer) Install(name string) (*Result, error) {
 	if installer.DryRun {
 		return result, nil
 	}
-	if err := changes.commit(); err != nil {
+	if err := changes.Commit(); err != nil {
 		return nil, err
 	}
 
@@ -232,7 +234,7 @@ func (installer *Installer) Install(name string) (*Result, error) {
 	if entry.Fragment != "" && installer.Contract != nil {
 		additions, mergeErr := installer.mergeFragment(changes, entry.Fragment)
 		if mergeErr != nil {
-			return nil, changes.fail(mergeErr)
+			return nil, changes.Fail(mergeErr)
 		}
 		result.FragmentMerged = true
 		locked.Fragment, locked.FragmentChecksum, locked.Contract = entry.Fragment, entry.Files[entry.Fragment], additions
@@ -245,9 +247,9 @@ func (installer *Installer) Install(name string) (*Result, error) {
 	}
 	lock.Plugins[name] = locked
 	if err := lock.save(changes); err != nil {
-		return nil, changes.fail(err)
+		return nil, changes.Fail(err)
 	}
-	if err := changes.commit(); err != nil {
+	if err := changes.Commit(); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -304,11 +306,11 @@ func (installer *Installer) inserts(entry *IndexEntry) ([]resolvedInsert, error)
 	return resolved, nil
 }
 
-func (installer *Installer) mergeFragment(changes *changeSet, fragment string) (*ContractAdditions, error) {
-	if err := changes.track(ContractFile); err != nil {
+func (installer *Installer) mergeFragment(changes *projectfiles.ChangeSet, fragment string) (*ContractAdditions, error) {
+	if err := changes.Track(ContractFile); err != nil {
 		return nil, err
 	}
-	if err := changes.track(fragment); err != nil {
+	if err := changes.Track(fragment); err != nil {
 		return nil, err
 	}
 	additions, err := installer.Contract.Merge(fragment)

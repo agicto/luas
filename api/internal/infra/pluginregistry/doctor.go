@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // ConflictMarker starts the local side of an unresolved merge written by update.
-const ConflictMarker = "<<<<<<< local"
+const ConflictMarker = projectfiles.ConflictMarker
 
 // Problem is one unfinished integration step and the command or edit that finishes it.
 type Problem struct {

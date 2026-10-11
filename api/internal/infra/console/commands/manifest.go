@@ -123,6 +123,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewStarterEnableCommand()},
 		Registration{Command: NewStarterDisableCommand()},
 		Registration{Command: NewProjectInitCommand()},
+		Registration{Command: NewProjectUpgradeCommand()},
 	)
 
 	pluginManifest := NewManifest(

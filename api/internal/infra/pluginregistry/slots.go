@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // SlotMarker starts every slot marker comment, for example `// fastbuild:slot api.starter.names`
@@ -256,14 +258,14 @@ func ScanSlotMarkers(root string, dirs ...string) (map[string][]string, error) {
 // returns the inserts it applied. make:module uses it to register a new starter exactly as
 // plugin:add does.
 func ApplyInserts(root string, inserts []Insert) ([]AppliedInsert, error) {
-	changes := newChangeSet(root)
+	changes := projectfiles.NewChangeSet(root)
 	var applied []AppliedInsert
 	for _, insert := range inserts {
 		slot, ok := FindSlot(insert.Slot)
 		if !ok {
 			return nil, fmt.Errorf("unknown slot %q", insert.Slot)
 		}
-		added, err := changes.applyInsert(slot, insert.Lines)
+		added, err := stageInsert(changes, slot, insert.Lines)
 		if err != nil {
 			return nil, err
 		}
@@ -271,5 +273,5 @@ func ApplyInserts(root string, inserts []Insert) ([]AppliedInsert, error) {
 			applied = append(applied, AppliedInsert{Slot: slot.Name, File: slot.File, Lines: insert.Lines})
 		}
 	}
-	return applied, changes.commit()
+	return applied, changes.Commit()
 }

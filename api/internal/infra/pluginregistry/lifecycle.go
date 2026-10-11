@@ -4,17 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/projectfiles"
 )
 
 // IncomingSuffix names the incoming version of a locally edited file when update cannot merge it
 // automatically because the version it was based on is unavailable.
-const IncomingSuffix = ".fastbuild-new"
+const IncomingSuffix = projectfiles.IncomingSuffix
 
 // RemoveOptions controls plugin removal.
 type RemoveOptions struct {
@@ -64,18 +63,18 @@ func (installer *Installer) Remove(name string, options RemoveOptions) (*RemoveR
 	}
 
 	result := &RemoveResult{Entry: entry}
-	changes := newChangeSet(installer.Root)
+	changes := projectfiles.NewChangeSet(installer.Root)
 	for _, file := range sortedFiles(entry.Files) {
-		if content, readErr := changes.read(file); readErr != nil {
+		if content, readErr := changes.Read(file); readErr != nil {
 			return nil, readErr
 		} else if content != nil {
-			changes.remove(file)
+			changes.Remove(file)
 			result.Deleted = append(result.Deleted, file)
 		}
 	}
 	for index := len(entry.Wiring) - 1; index >= 0; index-- {
 		applied := entry.Wiring[index]
-		removed, removeErr := changes.removeInsert(applied)
+		removed, removeErr := stageRemoval(changes, applied)
 		if removeErr != nil {
 			return nil, removeErr
 		}
@@ -93,18 +92,18 @@ func (installer *Installer) Remove(name string, options RemoveOptions) (*RemoveR
 	if installer.DryRun {
 		return result, nil
 	}
-	if err := changes.commit(); err != nil {
+	if err := changes.Commit(); err != nil {
 		return nil, err
 	}
 	if entry.Contract != nil {
 		if installer.Contract == nil {
 			result.Manual = append(result.Manual, "remove the plugin's paths and schemas from "+ContractFile)
 		} else {
-			if err := changes.track(ContractFile); err != nil {
-				return nil, changes.fail(err)
+			if err := changes.Track(ContractFile); err != nil {
+				return nil, changes.Fail(err)
 			}
 			if err := installer.Contract.Remove(*entry.Contract); err != nil {
-				return nil, changes.fail(fmt.Errorf("remove contract additions: %w", err))
+				return nil, changes.Fail(fmt.Errorf("remove contract additions: %w", err))
 			}
 		}
 	}
@@ -164,7 +163,7 @@ func (installer *Installer) Update(name string, base Source) (*UpdateResult, err
 	baseFiles := installer.baseFiles(base, name, locked.Version)
 
 	result := &UpdateResult{Entry: entry, FromVersion: locked.Version}
-	changes := newChangeSet(installer.Root)
+	changes := projectfiles.NewChangeSet(installer.Root)
 	next := LockedEntry{
 		Version: entry.Version, Kind: entry.Kind, Source: installer.Source.Describe(),
 		Requires: entry.Requires.Plugins, Files: map[string]string{},
@@ -194,26 +193,26 @@ func (installer *Installer) Update(name string, base Source) (*UpdateResult, err
 		return nil, err
 	}
 	if replaceContract && entry.Fragment != "" {
-		changes.write(entry.Fragment, incoming[entry.Fragment])
+		changes.Write(entry.Fragment, incoming[entry.Fragment])
 	}
 	if installer.DryRun {
 		result.ContractMerged = replaceContract
 		return result, nil
 	}
-	if err := changes.commit(); err != nil {
+	if err := changes.Commit(); err != nil {
 		return nil, err
 	}
 	if replaceContract {
-		if err := changes.track(ContractFile); err != nil {
-			return nil, changes.fail(err)
+		if err := changes.Track(ContractFile); err != nil {
+			return nil, changes.Fail(err)
 		}
 		if err := installer.Contract.Remove(*locked.Contract); err != nil {
-			return nil, changes.fail(fmt.Errorf("remove previous contract additions: %w", err))
+			return nil, changes.Fail(fmt.Errorf("remove previous contract additions: %w", err))
 		}
 		if entry.Fragment != "" {
 			additions, mergeErr := installer.mergeFragment(changes, entry.Fragment)
 			if mergeErr != nil {
-				return nil, changes.fail(mergeErr)
+				return nil, changes.Fail(mergeErr)
 			}
 			next.Fragment, next.FragmentChecksum, next.Contract = entry.Fragment, entry.Files[entry.Fragment], additions
 		}
@@ -221,9 +220,9 @@ func (installer *Installer) Update(name string, base Source) (*UpdateResult, err
 	}
 	lock.Plugins[name] = next
 	if err := lock.save(changes); err != nil {
-		return nil, changes.fail(err)
+		return nil, changes.Fail(err)
 	}
-	if err := changes.commit(); err != nil {
+	if err := changes.Commit(); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -232,10 +231,10 @@ func (installer *Installer) Update(name string, base Source) (*UpdateResult, err
 // updateFile decides one file: replace untouched files, merge edited ones, and keep local
 // deletions. lockedSum is "" for a file new in this version; incoming is nil for a file the
 // version no longer ships.
-func (installer *Installer) updateFile(changes *changeSet, result *UpdateResult, nextFiles map[string]string,
+func (installer *Installer) updateFile(changes *projectfiles.ChangeSet, result *UpdateResult, nextFiles map[string]string,
 	file, lockedSum string, base, incoming []byte,
 ) error {
-	local, err := changes.read(file)
+	local, err := changes.Read(file)
 	if err != nil {
 		return err
 	}
@@ -243,7 +242,7 @@ func (installer *Installer) updateFile(changes *changeSet, result *UpdateResult,
 	switch {
 	case incoming == nil && (untouched || local == nil):
 		if local != nil {
-			changes.remove(file)
+			changes.Remove(file)
 			result.Deleted = append(result.Deleted, file)
 		}
 		return nil
@@ -259,19 +258,19 @@ func (installer *Installer) updateFile(changes *changeSet, result *UpdateResult,
 	nextFiles[file] = Checksum(incoming)
 	switch {
 	case local == nil || untouched:
-		changes.write(file, incoming)
+		changes.Write(file, incoming)
 		result.Written = append(result.Written, file)
 	case bytes.Equal(local, incoming):
 		// The local edit already matches the new version.
 	case base == nil:
-		changes.write(file+IncomingSuffix, incoming)
+		changes.Write(file+IncomingSuffix, incoming)
 		result.Incoming = append(result.Incoming, file)
 	default:
 		merged, conflict, mergeErr := installer.merge3(local, base, incoming)
 		if mergeErr != nil {
 			return fmt.Errorf("merge %s: %w", file, mergeErr)
 		}
-		changes.write(file, merged)
+		changes.Write(file, merged)
 		if conflict {
 			result.Conflicts = append(result.Conflicts, file)
 		} else {
@@ -282,7 +281,7 @@ func (installer *Installer) updateFile(changes *changeSet, result *UpdateResult,
 }
 
 // updateWiring removes slot edits the new version dropped and applies the ones it added.
-func (installer *Installer) updateWiring(changes *changeSet, result *UpdateResult, entry *IndexEntry, locked LockedEntry, next *LockedEntry) error {
+func (installer *Installer) updateWiring(changes *projectfiles.ChangeSet, result *UpdateResult, entry *IndexEntry, locked LockedEntry, next *LockedEntry) error {
 	wanted, err := installer.inserts(entry)
 	if err != nil {
 		return err
@@ -305,7 +304,7 @@ func (installer *Installer) updateWiring(changes *changeSet, result *UpdateResul
 			next.Wiring = append(next.Wiring, applied)
 			continue
 		}
-		removed, removeErr := changes.removeInsert(applied)
+		removed, removeErr := stageRemoval(changes, applied)
 		if removeErr != nil {
 			return removeErr
 		}
@@ -320,7 +319,7 @@ func (installer *Installer) updateWiring(changes *changeSet, result *UpdateResul
 		if existing[key(insert.slot.Name, insert.lines)] {
 			continue
 		}
-		applied, applyErr := changes.applyInsert(insert.slot, insert.lines)
+		applied, applyErr := stageInsert(changes, insert.slot, insert.lines)
 		if applyErr != nil {
 			return fmt.Errorf("plugin %q: %w", entry.Name, applyErr)
 		}
@@ -362,34 +361,7 @@ func (installer *Installer) merge3(local, base, incoming []byte) ([]byte, bool, 
 	if installer.Merge3 != nil {
 		return installer.Merge3(local, base, incoming)
 	}
-	return GitMerge3(local, base, incoming)
-}
-
-// GitMerge3 merges with git merge-file and reports whether conflict markers remain.
-func GitMerge3(local, base, incoming []byte) ([]byte, bool, error) {
-	dir, err := os.MkdirTemp("", "fastbuild-merge-*")
-	if err != nil {
-		return nil, false, err
-	}
-	defer func() { _ = os.RemoveAll(dir) }()
-	paths := map[string][]byte{"local": local, "base": base, "incoming": incoming}
-	for name, content := range paths {
-		if writeErr := os.WriteFile(filepath.Join(dir, name), content, 0o600); writeErr != nil {
-			return nil, false, writeErr
-		}
-	}
-	command := exec.Command("git", "merge-file", "-p", "-L", "local", "-L", "installed", "-L", "update",
-		filepath.Join(dir, "local"), filepath.Join(dir, "base"), filepath.Join(dir, "incoming"))
-	merged, err := command.Output()
-	var exitErr *exec.ExitError
-	switch {
-	case err == nil:
-		return merged, false, nil
-	case errors.As(err, &exitErr) && exitErr.ExitCode() > 0 && exitErr.ExitCode() < 128:
-		return merged, true, nil // the exit code is the number of conflicts
-	default:
-		return nil, false, fmt.Errorf("git merge-file: %w", err)
-	}
+	return projectfiles.Merge3(local, base, incoming)
 }
 
 func unionFiles(locked map[string]string, incoming map[string][]byte) []string {
