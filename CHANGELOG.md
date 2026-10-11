@@ -19,13 +19,50 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
   plugins.
 - Every official plugin is installed into a copy of the API, built, and tested in tier 1, and its
   contract fragment is merged and linted by `make contract-check`.
-- [`docs/VISION.md`](docs/VISION.md) and the [plugin registry plan](docs/plans/plugin-registry.md).
+- [`docs/VISION.md`](docs/VISION.md), [`docs/ROADMAP.md`](docs/ROADMAP.md), and the
+  [plugin registry plan](docs/plans/plugin-registry.md).
+- **Slots and the plugin lifecycle.** Core files mark named extension points
+  (`fastbuild:slot <name>`, listed by `plugin:slots`); plugins and `make:module` edit core files only
+  there. The lock file records every file checksum, slot line, and contract addition, so
+  `plugin:update` replaces untouched files and merges edited ones three ways, `plugin:remove` restores
+  core files and `openapi.yaml` byte for byte, and `plugin:doctor` reports unfinished integration.
+  `plugin:pack` copies edits back into the registry for plugin authors.
+- **Plugin kinds and templates.** Plugins are `feature`, `theme` (one at a time), `block`, or
+  `template`; a template installs a set of plugins together or not at all, and
+  `make init-project TEMPLATE=<name>` starts a project from one.
+- **Official plugins:** `tags` and `comments` (organization-scoped, with code-owned resource-type
+  seams, If-Match concurrency, and audit without content; comments notify @mentions through the
+  notification starter); themes `theme-enterprise`, `theme-warm`, and `theme-midnight` for Web and
+  Admin; blocks `block-dashboard-stats`, `block-data-table`, `block-settings-page`,
+  `block-pricing-table`, `block-empty-state`, `block-auth-card`, `block-onboarding-steps`, and
+  `block-landing-hero`; templates `knowledge-portal`, `saas-app`, and `internal-tool`.
+- **`project:upgrade --to=<release>`** merges a newer FastBuild release into an initialized project:
+  untouched files are replaced, edited ones merged three ways, local deletions kept, and both releases
+  adapted to the project's module path and identity first.
+- **`fastbuild mcp`** serves read-only project and plugin tools to coding agents over the Model
+  Context Protocol. `plugin:search` understands sentences in any language and filters by `--kind`;
+  `registry/evals/search-cases.tsv` holds the plugin-selection evaluation.
+- **Community registries.** Any GitHub repository with a `registry/` can be a source; sources other
+  than FastBuild releases and local directories need `--trust`.
+- **Shared rate limiting.** `RATE_LIMIT_STORE=postgres` shares the global and authentication budgets
+  across replicas through an UNLOGGED table with one atomic upsert per decision and hashed keys;
+  `RATE_LIMIT_STORE_TIMEOUT` and `RATE_LIMIT_STORE_FAILURE=local|open|closed` control outages, and
+  `ratelimit:prune` removes expired buckets (ADR 0015).
+- **Plugins workflow** and `scripts/verify-plugin.sh`: every official plugin is installed into a copy
+  of the checkout, integrated, built and tested on each half it touches, checked by `plugin:doctor`,
+  and removed, on registry changes and nightly. Web registry items are type-checked, linted, and
+  tested by `pnpm lint`; theme presets pass the Web and Admin contrast guards.
+- `FASTBUILD_IGNORE_ENV_FILES=true` skips every env file layer for tools.
+- The 1.0 compatibility promise in [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 ### Changed
 
 - `merge-fragment` accepts `x-error-codes`, appended to the `ErrorCode` enum; the error-contract
   check counts error codes declared in a module's `errors.go`, so plugins never edit core files.
 - `make init-project` removes `registry/` from new projects.
+- Admin Console design tokens moved to `admin/src/styles/tokens.css`; the default muted and
+  destructive text colors are slightly darker to meet WCAG AA contrast.
+- Commands with `--format=json` no longer print a completion line after the JSON.
 
 ### Deprecated
 
