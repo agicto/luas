@@ -41,6 +41,7 @@ var ProjectSlots = []Slot{
 	{"api.starter.manifests", "api/internal/starter/defaults.go", "The module's manifest in OptionalManifests()"},
 	{"web.features", "web/src/config/optional-features.ts", "Optional Web feature name"},
 	{"web.feature-dependencies", "web/src/config/optional-features.ts", "Features an optional Web feature requires"},
+	{"web.http.error-codes", "web/src/http/codes.ts", "API error code constant from the plugin's contract fragment, so the Go API adapter forwards it"},
 	{"web.routes.console", "web/src/constants/routes.ts", "Console route constant"},
 	{"web.console.nav-icons", "web/src/app/(protected)/(console)/console/layout.tsx", "lucide-react icon import for a console navigation item"},
 	{"web.console.nav", "web/src/app/(protected)/(console)/console/layout.tsx", "Console navigation item guarded by its feature"},

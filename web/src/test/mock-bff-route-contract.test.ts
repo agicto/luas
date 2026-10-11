@@ -1,6 +1,8 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+
+import { PLUGIN_WEB_FEATURES, pascalCase } from './plugin-web-features';
 
 const appApiRoot = resolve(process.cwd(), 'src/app/api');
 const routeFileName = 'route.ts';
@@ -28,6 +30,29 @@ const assetRouteModule = resolve(process.cwd(), 'src/features/asset/server/asset
 const settingRouteModule = resolve(process.cwd(), 'src/features/setting/server/setting-route.ts');
 const usageRouteModule = resolve(process.cwd(), 'src/features/usage/server/usage-route.ts');
 const webhookRouteModule = resolve(process.cwd(), 'src/features/webhook/server/webhook-route.ts');
+
+/**
+ * Route modules of plugin features (see `plugin-web-features.ts`). Core features keep their
+ * hand-written rules above; a plugin feature is checked by naming convention instead.
+ */
+interface PluginRouteModule {
+  feature: string;
+  pascal: string;
+  importPath: string;
+  path: string;
+  source: string;
+}
+
+const pluginRouteModules: PluginRouteModule[] = PLUGIN_WEB_FEATURES.map(feature => {
+  const path = resolve(process.cwd(), `src/features/${feature}/server/${feature}-route.ts`);
+  return {
+    feature,
+    pascal: pascalCase(feature),
+    importPath: `@/features/${feature}/server/${feature}-route`,
+    path,
+    source: existsSync(path) ? readFileSync(path, 'utf8') : '',
+  };
+});
 
 const forbiddenRoutePatterns = [
   {
@@ -177,6 +202,47 @@ function delegatesWebhookGuard(path: string, handler: RouteHandlerSource): boole
   );
 }
 
+function pluginRouteModuleFor(path: string): PluginRouteModule | undefined {
+  const source = readRoute(path);
+  return pluginRouteModules.find(routeModule =>
+    source.includes(`from '${routeModule.importPath}'`)
+  );
+}
+
+/** Exported `*Route` handlers of a plugin route module, except its availability resolver. */
+function pluginRouteHandlers(routeModule: PluginRouteModule): string[] {
+  return Array.from(
+    routeModule.source.matchAll(/export async function (\w+Route)\b/g),
+    match => match[1]
+  );
+}
+
+/**
+ * A plugin route file delegates its guards when every module handler it calls awaits the module's
+ * read resolver (safe methods) or mutation resolver (any method) before anything else.
+ */
+function delegatesPluginGuard(path: string, handler: RouteHandlerSource): boolean {
+  const routeModule = pluginRouteModuleFor(path);
+  if (!routeModule) return false;
+  const delegates = pluginRouteHandlers(routeModule).filter(name =>
+    new RegExp(`\\b${name}\\(`).test(handler.source)
+  );
+  const resolvers = unsafeMethods.has(handler.method)
+    ? [`resolve${routeModule.pascal}MutationRoute(`]
+    : [`resolve${routeModule.pascal}ReadRoute(`, `resolve${routeModule.pascal}MutationRoute(`];
+  return (
+    delegates.length > 0 &&
+    delegates.every(name => {
+      const body = exportedFunction(routeModule.source, name);
+      const firstAwait = body.indexOf('await ');
+      return (
+        firstAwait >= 0 &&
+        resolvers.some(resolver => body.startsWith(resolver, firstAwait + 'await '.length))
+      );
+    })
+  );
+}
+
 interface RouteHandlerSource {
   method: string;
   source: string;
@@ -222,7 +288,8 @@ describe('mock BFF route contract', () => {
             !delegatesAssetGuard(path, handler) &&
             !delegatesSettingGuard(path, handler) &&
             !delegatesUsageGuard(path, handler) &&
-            !delegatesWebhookGuard(path, handler)
+            !delegatesWebhookGuard(path, handler) &&
+            !delegatesPluginGuard(path, handler)
         )
         .map(handler => `${relativeRoute(path)}:${handler.method}`)
     );
@@ -242,6 +309,7 @@ describe('mock BFF route contract', () => {
         .filter(handler => !delegatesSettingGuard(path, handler))
         .filter(handler => !delegatesUsageGuard(path, handler))
         .filter(handler => !delegatesWebhookGuard(path, handler))
+        .filter(handler => !delegatesPluginGuard(path, handler))
         .filter(handler => {
           const availabilityGuard = handler.source.indexOf(productionGuard(path));
           const originGuard = handler.source.indexOf('guardSameOriginMutation(');
@@ -361,6 +429,56 @@ describe('mock BFF route contract', () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it('finalizes every plugin feature route as a private no-store response', () => {
+    const offenders = routeFiles.flatMap(path => {
+      const routeModule = pluginRouteModuleFor(path);
+      if (!routeModule) return [];
+      return routeHandlers(path)
+        .filter(handler => !handler.source.includes(`private${routeModule.pascal}Response(`))
+        .map(handler => `${relativeRoute(path)}:${handler.method}`);
+    });
+
+    expect(offenders).toEqual([]);
+  });
+
+  for (const routeModule of pluginRouteModules) {
+    it(`keeps plugin feature ${routeModule.feature} routes ordered behind availability, origin, and authentication`, () => {
+      const { pascal, source } = routeModule;
+      expect(source, `${relative(process.cwd(), routeModule.path)} must exist`).not.toBe('');
+      expect(source).toContain(`export function resolve${pascal}Route(`);
+      expect(source).toContain(`export function private${pascal}Response`);
+
+      const read = internalFunction(source, `resolve${pascal}ReadRoute`);
+      const readAvailability = read.indexOf(`resolve${pascal}Route(`);
+      expect(readAvailability).toBeGreaterThanOrEqual(0);
+      expect(read.indexOf(`authenticate${pascal}Backend(`)).toBeGreaterThan(readAvailability);
+
+      const mutation = internalFunction(source, `resolve${pascal}MutationRoute`);
+      const availabilityGuard = mutation.indexOf(`resolve${pascal}Route(`);
+      const originGuard = mutation.indexOf('guardSameOriginMutation(');
+      const authentication = mutation.indexOf(`authenticate${pascal}Backend(`);
+      expect(availabilityGuard).toBeGreaterThanOrEqual(0);
+      expect(originGuard).toBeGreaterThan(availabilityGuard);
+      expect(authentication).toBeGreaterThan(originGuard);
+
+      // Every handler resolves first; a handler that reads JSON does so after a write resolver.
+      for (const name of pluginRouteHandlers(routeModule)) {
+        const handler = exportedFunction(source, name);
+        const firstAwait = handler.indexOf('await ');
+        const resolver = handler.slice(firstAwait + 'await '.length);
+        expect(firstAwait, name).toBeGreaterThanOrEqual(0);
+        expect(
+          resolver.startsWith(`resolve${pascal}ReadRoute(`) ||
+            resolver.startsWith(`resolve${pascal}MutationRoute(`),
+          name
+        ).toBe(true);
+        if (handler.includes('readJsonBody(')) {
+          expect(resolver.startsWith(`resolve${pascal}MutationRoute(`), name).toBe(true);
+        }
+      }
+    });
+  }
 
   it('keeps usage reads behind feature availability and authentication', () => {
     const source = readFileSync(usageRouteModule, 'utf8');

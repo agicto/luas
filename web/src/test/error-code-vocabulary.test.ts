@@ -7,8 +7,14 @@ import {
   normalizeLegacyErrorCode,
 } from '@/http/codes';
 
-const apiErrorCodePattern =
-  /^(?:COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE|NOTIFICATION|ASSET|SETTING|USAGE|WEBHOOK|OPERATOR)(?:\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$/;
+import { PLUGIN_WEB_FEATURES, errorNamespace } from './plugin-web-features';
+
+const coreNamespaces =
+  'COMMON|AUTH|USER|API_KEY|ORGANIZATION|PERMISSION|ROLE|NOTIFICATION|ASSET|SETTING|USAGE|WEBHOOK|OPERATOR';
+// A plugin feature adds codes under its own namespace only, for example `KNOWLEDGE.` for `knowledge`.
+const apiErrorCodePattern = new RegExp(
+  `^(?:${[coreNamespaces, ...PLUGIN_WEB_FEATURES.map(errorNamespace)].join('|')})(?:\\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)+$`
+);
 const clientErrorCodePattern = /^CLIENT\.[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*$/;
 const legacyErrorCodePattern = /^(?:SYS|AUTH|BIZ|VAL)_\d{3}$/;
 

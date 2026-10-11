@@ -1,7 +1,9 @@
-import { readdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { AxiosError, type AxiosAdapter, type InternalAxiosRequestConfig } from 'axios';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { PLUGIN_WEB_FEATURES, type ServiceParityContext } from './plugin-web-features';
 
 /**
  * Parity between the mock BFF and the browser services.
@@ -29,22 +31,45 @@ vi.mock('@/http/request', async importOriginal => {
   return { ...original, request: client, default: client };
 });
 
+/**
+ * A plugin feature with a browser service ships `src/test/mock-bff-parity/<feature>.ts`, whose
+ * `runServiceParity()` calls each service method once against the mock BFF with this harness.
+ */
+interface ServiceParityModule {
+  runServiceParity: (context: ServiceParityContext) => Promise<void>;
+}
+
+const pluginParityCases = PLUGIN_WEB_FEATURES.filter(feature =>
+  existsSync(join(process.cwd(), 'src', 'features', feature, 'services'))
+).map(feature => ({
+  feature,
+  path: join(process.cwd(), 'src', 'test', 'mock-bff-parity', `${feature}.ts`),
+}));
+
 const APP_ORIGIN = 'https://app.example.com';
 const ORGANIZATION_ID = 1;
 
-type RouteHandler = (request: Request, context: { params: Promise<Record<string, string>> }) => Promise<Response>;
+type RouteHandler = (
+  request: Request,
+  context: { params: Promise<Record<string, string>> }
+) => Promise<Response>;
 type RouteModule = Partial<Record<string, RouteHandler>>;
 
 const apiDirectory = join(process.cwd(), 'src', 'app', 'api');
 const routes = readdirSync(apiDirectory, { recursive: true, encoding: 'utf8' })
   .filter(file => file === 'route.ts' || file.endsWith(`${sep}route.ts`))
   .map(file => ({
-    segments: relative(apiDirectory, join(apiDirectory, file, '..')).split(sep).filter(Boolean),
+    segments: relative(apiDirectory, join(apiDirectory, file, '..'))
+      .split(sep)
+      .filter(Boolean),
     load: () => import(/* @vite-ignore */ join(apiDirectory, file)) as Promise<RouteModule>,
   }));
 
 function matchRoute(pathname: string) {
-  const parts = pathname.replace(/^\/api\/?/, '').split('/').filter(Boolean);
+  const parts = pathname
+    .replace(/^\/api\/?/, '')
+    .split('/')
+    .filter(Boolean);
   // Static segments win over dynamic ones, as in the Next.js router.
   const ranked = [...routes].sort(
     (left, right) =>
@@ -139,8 +164,10 @@ describe('mock BFF and browser service parity', () => {
     process.env.MOCK_BFF_ENABLED = 'true';
     process.env.NEXT_PUBLIC_API_URL = '/api';
     process.env.NEXT_PUBLIC_APP_URL = APP_ORIGIN;
-    process.env.NEXT_PUBLIC_OPTIONAL_FEATURES =
-      'organization,permission,setting,usage,webhook,notification,asset';
+    process.env.NEXT_PUBLIC_OPTIONAL_FEATURES = [
+      'organization,permission,setting,usage,webhook,notification,asset',
+      ...PLUGIN_WEB_FEATURES,
+    ].join(',');
   });
 
   afterEach(() => {
@@ -161,9 +188,8 @@ describe('mock BFF and browser service parity', () => {
   });
 
   it('organizations', async () => {
-    const { organizationService } = await import(
-      '@/features/organization/services/organization-service'
-    );
+    const { organizationService } =
+      await import('@/features/organization/services/organization-service');
 
     const page = await organizationService.list();
     expect(page.items.length).toBeGreaterThan(0);
@@ -208,9 +234,8 @@ describe('mock BFF and browser service parity', () => {
   });
 
   it('notifications', async () => {
-    const { notificationService } = await import(
-      '@/features/notification/services/notification-service'
-    );
+    const { notificationService } =
+      await import('@/features/notification/services/notification-service');
 
     await notificationService.list();
     await notificationService.status();
@@ -237,4 +262,13 @@ describe('mock BFF and browser service parity', () => {
     expect(page.items.map(item => item.id)).toContain(created.endpoint.id);
     await webhookService.deliveries(ORGANIZATION_ID);
   });
+
+  for (const { feature, path } of pluginParityCases) {
+    it(`${feature} (plugin)`, async () => {
+      expect(existsSync(path), `${relative(process.cwd(), path)} must exist`).toBe(true);
+      const parity = (await import(/* @vite-ignore */ path)) as ServiceParityModule;
+
+      await parity.runServiceParity({ organizationId: ORGANIZATION_ID });
+    });
+  }
 });
