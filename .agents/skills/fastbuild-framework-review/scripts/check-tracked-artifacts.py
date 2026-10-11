@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 
-"""Reject build output committed by accident: tracked files above a size limit or compiled binaries."""
+"""Reject artifacts committed by accident: oversized files, compiled binaries, unfinished plugin
+updates, and, in the scaffold itself, installed registry plugins, which belong to projects."""
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -32,12 +34,28 @@ def main() -> int:
             head = handle.read(4)
         if head.startswith(BINARY_MAGIC):
             failures.append(f"{relative} is a compiled executable; build output must not be committed")
+    tracked_set = {t for t in tracked if t}
+    for relative in sorted(tracked_set):
+        if relative.endswith(".fastbuild-new"):
+            failures.append(f"{relative} is an unmerged plugin or upgrade file; merge it and delete it")
+        elif (ROOT / relative).is_file() and b"\n<<<<<<< local\n" in b"\n" + (ROOT / relative).read_bytes()[:MAX_BYTES]:
+            failures.append(f"{relative} has unresolved plugin:update or project:upgrade conflict markers")
+    # The scaffold ships plugins only in registry/; project:init removes it, so this runs only here.
+    index_path = ROOT / "registry" / "index.json"
+    if index_path.is_file():
+        if "fastbuild.plugins.lock" in tracked_set:
+            failures.append("fastbuild.plugins.lock is tracked: the scaffold must not keep plugins installed")
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        for plugin in index.get("plugins", []):
+            for file in plugin.get("files", {}):
+                if file in tracked_set and not file.startswith("contracts/fragments/"):
+                    failures.append(f"{file} belongs to plugin {plugin['name']}; run plugin:remove {plugin['name']}")
     if failures:
         print("Tracked artifact check failed:", file=sys.stderr)
         for failure in failures:
             print(f"  {failure}", file=sys.stderr)
         return 1
-    print(f"Tracked artifact check passed ({len([t for t in tracked if t])} files, none over {MAX_BYTES // 1024} KiB or executable).")
+    print(f"Tracked artifact check passed ({len([t for t in tracked if t])} files, none over {MAX_BYTES // 1024} KiB, executable, or left by a plugin).")
     return 0
 
 
