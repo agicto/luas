@@ -64,7 +64,7 @@ requests can be rejected by the Go transport before Gin, so they do not use the 
 | `BodyLimit` | Limits request bodies to `MIDDLEWARE_BODY_LIMIT_MB`, default 10 MB. | `413` + `COMMON.REQUEST_TOO_LARGE`. |
 | `Timeout` | Adds a cooperative request context deadline from `MIDDLEWARE_REQUEST_TIMEOUT`, default 180 seconds. | `503` + `COMMON.TIMEOUT` when the handler respects context and has not written a response. |
 | `CORS` | Allows configured browser origins. Production must use explicit origins. | CORS headers and preflight handling. |
-| `RateLimit` | Enabled by default only when `APP_ENV=production`; default `600` requests per minute per client IP, with at most 10,000 active process-local buckets. | `429` + `COMMON.RATE_LIMITED`, `Retry-After`, and `X-RateLimit-*` headers. |
+| `RateLimit` | Enabled by default only when `APP_ENV=production`; default `600` requests per minute per client IP, with at most 10,000 active process-local buckets, or one budget shared by every replica with `RATE_LIMIT_STORE=postgres`. | `429` + `COMMON.RATE_LIMITED`, `Retry-After`, and `X-RateLimit-*` headers. |
 | `Metrics` | Enabled by default outside production and disabled by default in production. Unmatched routes share the bounded `unmatched` path label. | Prometheus text endpoint at `/metrics` when enabled. |
 
 Environment knobs:
@@ -160,18 +160,55 @@ AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_MAX=3
 AUTH_RATE_LIMIT_PASSWORD_RESET_SUBJECT_WINDOW=1h
 ```
 
-Each built-in store is a bounded, process-local fixed-window limiter. Expired buckets are removed
+By default each store is a bounded, process-local fixed-window limiter. Expired buckets are removed
 on the request path; no rule starts a cleanup goroutine. At the configured cardinality ceiling, the
 least recently used bucket is evicted to keep attacker-controlled identity churn from growing memory
-without bound. Eviction and fixed-window boundary bursts make this a single-replica baseline, not a
-distributed security control.
+without bound. With N replicas every budget is enforced N times, so the memory store is a
+single-replica baseline, not a distributed security control.
 
-Multi-replica deployments must enforce equivalent shared buckets in a WAF/gateway or add an explicit
-shared limiter adapter at composition time. FastBuild does not ship a built-in Redis rate-limit driver,
-and the Redis cache adapter does not activate one. A future shared driver must define its atomic
-algorithm, failure mode, readiness behavior, key privacy, and client lifecycle; it must never
-silently fall back to independent per-process buckets. Per-IP limiting is still only one layer;
-downstream products should add MFA, risk signals, and graduated challenges for their threat model.
+### Shared PostgreSQL Store
+
+`RATE_LIMIT_STORE=postgres` moves the global limiter and every authentication quota (per-IP,
+per-subject, and the login failure budget with its reset on success) to one shared budget per key
+across replicas, without Redis or new infrastructure:
+
+- **Algorithm.** Each decision is one atomic `INSERT ... ON CONFLICT DO UPDATE ... RETURNING` on the
+  `rate_limit_buckets` table, evaluated on the database clock. Fixed-window semantics match the
+  memory store: the same `allowed`, `remaining`, and reset values, and a window ending exactly now
+  has expired. Denied hits saturate at `max + 1`, so a flood never grows the counter.
+- **Key privacy.** Rows store only `SHA-256(rule name, window, key)`; raw client IPs, account
+  identifiers, and reset tokens are never persisted. The window is part of the digest, so changing a
+  window starts fresh buckets.
+- **Table lifecycle.** The core migration creates an `UNLOGGED` table: counters skip WAL, which
+  keeps the per-request write cheap, and a database crash or failover only resets the current
+  windows. Unlogged tables are not replicated to standbys, so a promoted replica starts empty. Each
+  process deletes at most 1,000 expired rows every 10 seconds (sooner while a backlog remains) in a
+  short-lived single-flight goroutine; `fastbuild ratelimit:prune [--batch=1000] [--max-batches=100]`
+  is the explicit operator equivalent. Unlike the memory store there is no cardinality cap: a
+  distributed attacker with many source IPs adds one small row per IP per window until it expires.
+- **Latency.** Every rate-limited request pays one PostgreSQL round trip (about 0.4-0.6 ms per
+  serial decision against local Docker PostgreSQL in `BenchmarkPostgresStoreTake`, versus about
+  45 ns in memory) and holds a pooled connection for it. Size `DB_MAX_OPEN_CONNS` for that load.
+  Requests for one hot key serialize on its row lock.
+- **Outage policy.** `RATE_LIMIT_STORE_TIMEOUT` (default `50ms`, at most `1s`) bounds each decision.
+  When the database errors or exceeds it, `RATE_LIMIT_STORE_FAILURE` decides: `local` (default)
+  enforces the same rule against a bounded process-local bucket, so limits degrade to per-replica
+  instead of disappearing or rejecting healthy traffic; `open` allows; `closed` denies with the
+  normal `429` + `COMMON.RATE_LIMITED` and `Retry-After: 1`. Fallbacks are never silent: each one
+  increments `rate_limit_store_failures_total{rule,reason,decision}` and a
+  `ratelimit.store_unavailable` warning is logged at most once per 10 seconds per process with the
+  suppressed count.
+
+FastBuild does not ship a built-in Redis rate-limit driver, and the Redis cache adapter does not
+activate one. A shared store must never silently fall back to independent per-process buckets: the
+`local` policy does so explicitly, observably, and only while the database is failing. See
+[ADR 0015](adr/0015-shared-postgresql-rate-limit-store.md).
+
+A shared PostgreSQL limiter protects application budgets; it does not absorb volumetric attacks.
+Every request it evaluates has already reached the API and costs a database write. Keep a
+gateway/WAF/CDN limit in front for flood protection, bot management, and per-route edge budgets.
+Per-IP limiting is still only one layer; downstream products should add MFA, risk signals, and
+graduated challenges for their threat model.
 
 ## Opt-In Middleware
 

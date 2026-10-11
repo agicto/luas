@@ -8,6 +8,7 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/infra/email"
 	"github.com/fastagi/fastbuild/api/internal/infra/events"
 	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/ratelimit"
 	"github.com/fastagi/fastbuild/api/internal/infra/storage"
 )
 
@@ -36,4 +37,7 @@ var ConfiguredProviderSet = wire.NewSet(
 
 	// Migration - depends on Database and EventBus
 	migration.ProviderSet,
+
+	// Rate-limit stores - process-local or shared PostgreSQL, from the typed config
+	ratelimit.ProvideStores,
 )

@@ -181,6 +181,30 @@ type MiddlewareConfig struct {
 	BodyLimit               int64                         // Max body size in bytes, default 10MB
 	RateLimit               RateLimitConfig               // Production default request rate guardrail
 	AuthenticationRateLimit AuthenticationRateLimitConfig // Public authentication abuse guardrails
+	RateLimitStore          RateLimitStoreConfig          // Backend shared by every rate-limit rule
+}
+
+// Rate-limit store backends and outage policies.
+const (
+	RateLimitStoreMemory   = "memory"
+	RateLimitStorePostgres = "postgres"
+
+	RateLimitStoreFailureLocal  = "local"
+	RateLimitStoreFailureOpen   = "open"
+	RateLimitStoreFailureClosed = "closed"
+
+	DefaultRateLimitStoreTimeout = 50 * time.Millisecond
+	MaxRateLimitStoreTimeout     = time.Second
+)
+
+// RateLimitStoreConfig selects where fixed-window counters live. The default memory store enforces
+// each budget per replica; postgres shares one budget across replicas at the cost of one database
+// round trip per decision. Failure decides what a decision does when that round trip fails or
+// exceeds Timeout: local (enforce a process-local budget), open (allow), or closed (deny).
+type RateLimitStoreConfig struct {
+	Driver  string
+	Timeout time.Duration
+	Failure string
 }
 
 // DefaultRateLimitMaxBuckets bounds one process-local limiter store by default.
@@ -587,6 +611,11 @@ func Load() (*Config, error) {
 					"/v1/health",
 				}),
 			},
+			RateLimitStore: RateLimitStoreConfig{
+				Driver:  strings.ToLower(strings.TrimSpace(env.Get("RATE_LIMIT_STORE", RateLimitStoreMemory))),
+				Timeout: env.GetDuration("RATE_LIMIT_STORE_TIMEOUT", DefaultRateLimitStoreTimeout),
+				Failure: strings.ToLower(strings.TrimSpace(env.Get("RATE_LIMIT_STORE_FAILURE", RateLimitStoreFailureLocal))),
+			},
 			AuthenticationRateLimit: AuthenticationRateLimitConfig{
 				Enabled:           env.GetBool("AUTH_RATE_LIMIT_ENABLED", isProd),
 				MaxBucketsPerRule: env.GetInt("AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE", DefaultRateLimitMaxBuckets),
@@ -897,6 +926,10 @@ func validate(cfg *Config) error {
 		if cfg.Middleware.RateLimit.MaxBuckets <= 0 {
 			return fmt.Errorf("MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS must be greater than 0 when rate limit is enabled")
 		}
+	}
+
+	if err := validateRateLimitStore(cfg.Middleware.RateLimitStore, cfg.Database.Enabled); err != nil {
+		return err
 	}
 
 	switch cfg.Audit.WriteMode {
@@ -1289,6 +1322,30 @@ func validateTrustedProxies(proxies []string) error {
 		if net.ParseIP(proxy) == nil {
 			return fmt.Errorf("SERVER_TRUSTED_PROXIES contains invalid IP %q", proxy)
 		}
+	}
+	return nil
+}
+
+func validateRateLimitStore(store RateLimitStoreConfig, databaseEnabled bool) error {
+	switch store.Driver {
+	case "", RateLimitStoreMemory:
+		// The timeout and failure policy only govern the shared store.
+		return nil
+	case RateLimitStorePostgres:
+		if !databaseEnabled {
+			return fmt.Errorf("RATE_LIMIT_STORE=postgres requires DB_ENABLED=true")
+		}
+	default:
+		return fmt.Errorf("RATE_LIMIT_STORE must be memory or postgres, got %q", store.Driver)
+	}
+	if store.Timeout <= 0 || store.Timeout > MaxRateLimitStoreTimeout {
+		return fmt.Errorf("RATE_LIMIT_STORE_TIMEOUT must be greater than 0 and at most %s, got %s",
+			MaxRateLimitStoreTimeout, store.Timeout)
+	}
+	switch store.Failure {
+	case RateLimitStoreFailureLocal, RateLimitStoreFailureOpen, RateLimitStoreFailureClosed:
+	default:
+		return fmt.Errorf("RATE_LIMIT_STORE_FAILURE must be local, open, or closed, got %q", store.Failure)
 	}
 	return nil
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Keep built-in rate limits bounded, process-local, and semantically honest."""
+"""Keep built-in rate limits bounded, semantically honest, and explicit about shared enforcement."""
 
 from __future__ import annotations
 
@@ -94,14 +94,49 @@ def main() -> int:
     require_all(
         failures,
         "api/internal/bootstrap/http.go",
-        ("MaxBuckets: cfg.Middleware.RateLimit.MaxBuckets",),
+        ("MaxBuckets: cfg.Middleware.RateLimit.MaxBuckets", "stores.New(ratelimit.Rule{"),
+    )
+
+    # The opt-in shared store must stay atomic, hashed, database-clocked, bounded, and observable.
+    require_all(
+        failures,
+        "api/internal/infra/ratelimit/postgres.go",
+        (
+            "ON CONFLICT (key_hash) DO UPDATE",
+            "statement_timestamp()",
+            "LEAST(bucket.hits + 1, $3::bigint)",
+            "sha256.New()",
+            "context.WithTimeout(ctx, s.backend.timeout)",
+            "metrics.RecordRateLimitStoreFailure",
+            "FOR UPDATE SKIP LOCKED",
+        ),
+    )
+    require_all(
+        failures,
+        "api/database/migrations/2026_10_11_000000_create_rate_limit_buckets_table.go",
+        ("CREATE UNLOGGED TABLE rate_limit_buckets", "octet_length(key_hash) = 32"),
+    )
+    require_all(
+        failures,
+        "api/internal/infra/config/config.go",
+        (
+            'env.Get("RATE_LIMIT_STORE", RateLimitStoreMemory)',
+            'env.Get("RATE_LIMIT_STORE_FAILURE", RateLimitStoreFailureLocal)',
+            "RATE_LIMIT_STORE=postgres requires DB_ENABLED=true",
+        ),
+    )
+    require_all(
+        failures,
+        "api/docs/adr/0015-shared-postgresql-rate-limit-store.md",
+        ("Shared PostgreSQL Rate-Limit Store", "not the silent fallback"),
     )
     require_all(
         failures,
         "api/internal/modules/user/auth_abuse_guard.go",
         (
             "cfg.MaxBucketsPerRule",
-            "ratelimit.WithMaxBuckets(maxBuckets)",
+            "MaxBuckets: maxBuckets",
+            "stores.New(ratelimit.Rule{",
             '"auth:" + string(endpoint) + ":ip:"',
             '"auth:" + string(endpoint) + ":subject:"',
         ),
@@ -112,6 +147,7 @@ def main() -> int:
         (
             "MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS=10000",
             "AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE=10000",
+            "RATE_LIMIT_STORE=memory",
         ),
     )
     env_example = read("api/.env.example")
@@ -156,7 +192,7 @@ def main() -> int:
             print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print("Rate-limit boundary check passed (bounded local baseline; shared enforcement explicit).")
+    print("Rate-limit boundary check passed (bounded local baseline; opt-in shared store is atomic, hashed, and observable).")
     return 0
 
 

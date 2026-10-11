@@ -112,6 +112,7 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewWorkflowRetryCommand()},
 		Registration{Command: NewWorkflowCancelCommand()},
 		Registration{Command: NewWorkflowPruneCommand()},
+		Registration{Command: NewRateLimitPruneCommand()},
 		Registration{Command: NewNotificationWorkCommand()},
 		Registration{Command: NewAssetPruneCommand()},
 	)

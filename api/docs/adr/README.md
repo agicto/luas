@@ -19,3 +19,4 @@ dated update section instead of rewriting history.
 | [0012](0012-cache-capability-boundary.md) | Cache Capability Boundary |
 | [0013](0013-database-runtime-and-query-baseline.md) | Database Runtime And Query Baseline |
 | [0014](0014-wire-maintenance-posture.md) | Wire Maintenance Posture |
+| [0015](0015-shared-postgresql-rate-limit-store.md) | Shared PostgreSQL Rate-Limit Store |
