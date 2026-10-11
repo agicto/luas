@@ -11,7 +11,7 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Renamed to FastBuild; audit offset pages removed
+## v0.24.0 — Renamed to FastBuild; audit offset pages removed
 
 ### High — Luas is now FastBuild
 

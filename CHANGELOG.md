@@ -6,6 +6,8 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
 
 ## Unreleased
 
+## v0.24.0 — 2026-10-11
+
 ### Changed
 
 - **Luas is now FastBuild**, maintained at [`fastagi/fastbuild`](https://github.com/fastagi/fastbuild).
