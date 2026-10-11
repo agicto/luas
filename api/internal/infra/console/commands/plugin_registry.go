@@ -98,7 +98,7 @@ func (c *PluginSearchCommand) Run(args []string) error {
 			out = append(out, result{match.Entry.Name, match.Entry.PluginKind(), match.Entry.Version, match.Entry.Summary,
 				match.Entry.UseWhen, match.Entry.Requires.Starters, match.Score})
 		}
-		return writeJSON(map[string]any{"source": source.Describe(), "plugins": out})
+		return writeJSON(map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugins": out})
 	}
 	if len(results) == 0 {
 		c.output.Info("No plugin in %s matches %q.", source.Describe(), strings.Join(words, " "))
@@ -139,14 +139,14 @@ func (c *PluginInfoCommand) Run(args []string) error {
 		return err
 	}
 	if format == "json" {
-		return writeJSON(map[string]any{"source": source.Describe(), "plugin": entry, "integration": string(integration)})
+		return writeJSON(map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugin": entry, "integration": string(integration)})
 	}
 	c.output.Title(entry.Name + " " + entry.Version + " (" + entry.PluginKind() + ")")
 	c.output.Line(entry.Summary)
 	c.output.NewLine()
 	c.output.Line(entry.Description)
 	c.output.NewLine()
-	c.output.TwoColumn("Source", source.Describe())
+	c.output.TwoColumn("Source", source.Describe()+" ("+sourceTrust(source)+")")
 	c.output.TwoColumn("Requires FastBuild", ">= "+entry.FastBuild)
 	c.output.TwoColumn("Requires starters", listOrDash(entry.Requires.Starters))
 	c.output.TwoColumn("Requires plugins", listOrDash(entry.Requires.Plugins))
@@ -222,6 +222,39 @@ func resolvePluginSource(args []string) (pluginregistry.Source, error) {
 		return pluginregistry.NewLocalSource(filepath.Join(root, registryDir), "local:registry"), nil
 	}
 	return projectReleaseSource(root)
+}
+
+// Source trust levels. Official plugins come from FastBuild releases; local ones from a directory
+// the builder controls; community ones from any other repository and need an explicit --trust.
+const (
+	trustOfficial  = "official"
+	trustLocal     = "local"
+	trustCommunity = "community"
+)
+
+func sourceTrust(source pluginregistry.Source) string {
+	label := source.Describe()
+	switch {
+	case label == "local:registry" || strings.HasPrefix(label, "github:"+scaffoldGitHubRepository+"@"):
+		return trustOfficial
+	case strings.HasPrefix(label, "path:"):
+		return trustLocal
+	default:
+		return trustCommunity
+	}
+}
+
+// requireTrust stops installs from community sources until the builder has reviewed them.
+func requireTrust(source pluginregistry.Source, args []string) error {
+	if sourceTrust(source) != trustCommunity || hasFlag(args, "trust") {
+		return nil
+	}
+	remote, ok := source.(*pluginregistry.RemoteSource)
+	where := source.Describe()
+	if ok {
+		where = fmt.Sprintf("https://github.com/%s/%s/tree/%s/registry", remote.Owner, remote.Repo, remote.Ref)
+	}
+	return fmt.Errorf("%s is a community source, not a FastBuild release: review %s, then pass --trust", source.Describe(), where)
 }
 
 func sourceFromFlag(raw string) (pluginregistry.Source, error) {
@@ -345,7 +378,7 @@ func (c *PluginAddCommand) Description() string {
 	return "Install a registry plugin into this project as source"
 }
 func (c *PluginAddCommand) Usage() string {
-	return "plugin:add <name> [--source=path|github:owner/repo@tag] [--dry-run]"
+	return "plugin:add <name> [--source=path|github:owner/repo@tag] [--trust] [--dry-run]"
 }
 
 func (c *PluginStatusCommand) Name() string { return "plugin:status" }
@@ -371,6 +404,9 @@ func (c *PluginAddCommand) Run(args []string) error {
 		return err
 	}
 	defer closeSource(source)
+	if err := requireTrust(source, args); err != nil {
+		return err
+	}
 	installer, err := newProjectInstaller(root, source)
 	if err != nil {
 		return err

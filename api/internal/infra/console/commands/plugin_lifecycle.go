@@ -37,7 +37,7 @@ func (c *PluginUpdateCommand) Description() string {
 	return "Update an installed plugin, merging the project's edits"
 }
 func (c *PluginUpdateCommand) Usage() string {
-	return "plugin:update <name> [--source=path|github:owner/repo@tag] [--dry-run]"
+	return "plugin:update <name> [--source=path|github:owner/repo@tag] [--trust] [--dry-run]"
 }
 
 func (c *PluginRemoveCommand) Name() string { return "plugin:remove" }
@@ -97,6 +97,9 @@ func (c *PluginUpdateCommand) Run(args []string) error {
 		return err
 	}
 	defer closeSource(source)
+	if trustErr := requireTrust(source, args); trustErr != nil {
+		return trustErr
+	}
 	installer, err := newProjectInstaller(root, source)
 	if err != nil {
 		return err

@@ -177,3 +177,18 @@ func TestProjectSlotsAreMarkedExactlyOnce(t *testing.T) {
 	}
 	assert.Empty(t, found, "markers without a catalog entry in pluginregistry.ProjectSlots")
 }
+
+func TestCommunitySourcesNeedExplicitTrust(t *testing.T) {
+	community, err := pluginregistry.ParseRemoteSource("github:someone/plugins@v1.0.0")
+	require.NoError(t, err)
+	official, err := pluginregistry.ParseRemoteSource("github:" + scaffoldGitHubRepository + "@v0.25.0")
+	require.NoError(t, err)
+	assert.Equal(t, trustCommunity, sourceTrust(community))
+	assert.Equal(t, trustOfficial, sourceTrust(official))
+	assert.Equal(t, trustLocal, sourceTrust(pluginregistry.NewLocalSource(t.TempDir(), "path:./mine")))
+
+	err = requireTrust(community, nil)
+	require.ErrorContains(t, err, "https://github.com/someone/plugins/tree/v1.0.0/registry")
+	assert.NoError(t, requireTrust(community, []string{"--trust"}))
+	assert.NoError(t, requireTrust(official, nil))
+}

@@ -16,7 +16,12 @@ go run ./cmd/fastbuild plugin:remove knowledge-base
 ```
 
 A project created with `make init-project` installs plugins from the FastBuild release it started
-from; this directory is not copied into new projects.
+from; this directory is not copied into new projects. `make init-project TEMPLATE=<name>` starts a
+project from a template: a set of plugins installed together.
+
+Any repository with the same `registry/` layout can serve plugins:
+`--source=github:<owner>/<repo>@<tag>`. Such community sources need `--trust` after the builder has
+reviewed them; official releases and local directories do not. Checksums are verified either way.
 
 ## For Coding Agents
 

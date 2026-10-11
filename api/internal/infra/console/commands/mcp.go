@@ -142,7 +142,7 @@ func pluginTools() []mcp.Tool {
 					matches = append(matches, match{result.Entry.Name, result.Entry.PluginKind(), result.Entry.Version,
 						result.Entry.Summary, result.Entry.UseWhen, result.Entry.Requires.Starters, result.Score})
 				}
-				return map[string]any{"source": source.Describe(), "plugins": matches}, nil
+				return map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugins": matches}, nil
 			},
 		},
 		{
@@ -167,7 +167,7 @@ func pluginTools() []mcp.Tool {
 				if docErr != nil && !errors.Is(docErr, os.ErrNotExist) {
 					return nil, docErr
 				}
-				return map[string]any{"source": source.Describe(), "plugin": entry, "integration": string(integration)}, nil
+				return map[string]any{"source": source.Describe(), "trust": sourceTrust(source), "plugin": entry, "integration": string(integration)}, nil
 			},
 		},
 		{
