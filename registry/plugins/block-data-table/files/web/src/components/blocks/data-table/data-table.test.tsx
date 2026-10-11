@@ -10,9 +10,21 @@ interface Member {
 }
 
 const columns: DataTableColumn<Member>[] = [
-  { id: 'name', header: 'Name', cell: (row) => row.name, sortValue: (row) => row.name, rowHeader: true },
-  { id: 'seats', header: 'Seats', cell: (row) => row.seats, sortValue: (row) => row.seats, align: 'end' },
-  { id: 'id', header: 'Identifier', cell: (row) => row.id },
+  {
+    id: 'name',
+    header: 'Name',
+    cell: row => row.name,
+    sortValue: row => row.name,
+    rowHeader: true,
+  },
+  {
+    id: 'seats',
+    header: 'Seats',
+    cell: row => row.seats,
+    sortValue: row => row.seats,
+    align: 'end',
+  },
+  { id: 'id', header: 'Identifier', cell: row => row.id },
 ];
 
 const rows: Member[] = [
@@ -30,7 +42,9 @@ const labels: DataTableLabels = {
 
 function bodyNames() {
   const [, body] = screen.getAllByRole('rowgroup');
-  return within(body).getAllByRole('rowheader').map((cell) => cell.textContent);
+  return within(body)
+    .getAllByRole('rowheader')
+    .map(cell => cell.textContent);
 }
 
 describe('DataTable block', () => {
@@ -40,7 +54,7 @@ describe('DataTable block', () => {
         caption="Members"
         columns={columns}
         rows={rows}
-        getRowId={(row) => row.id}
+        getRowId={row => row.id}
         labels={labels}
         emptyState="No members"
       />
@@ -48,7 +62,9 @@ describe('DataTable block', () => {
 
     expect(screen.getByRole('table', { name: 'Members' })).toBeInTheDocument();
     expect(bodyNames()).toEqual(['Charlie', 'alpha', 'Bravo']);
-    expect(screen.getByRole('columnheader', { name: 'Identifier' })).not.toHaveAttribute('aria-sort');
+    expect(screen.getByRole('columnheader', { name: 'Identifier' })).not.toHaveAttribute(
+      'aria-sort'
+    );
   });
 
   it('sorts with header buttons and exposes the order through aria-sort', () => {
@@ -58,7 +74,7 @@ describe('DataTable block', () => {
         caption="Members"
         columns={columns}
         rows={rows}
-        getRowId={(row) => row.id}
+        getRowId={row => row.id}
         labels={labels}
         emptyState="No members"
         onSortChange={onSortChange}
@@ -77,7 +93,9 @@ describe('DataTable block', () => {
     expect(bodyNames()).toEqual(['Charlie', 'Bravo', 'alpha']);
     expect(onSortChange).toHaveBeenLastCalledWith({ columnId: 'name', direction: 'desc' });
 
-    fireEvent.click(within(screen.getByRole('columnheader', { name: 'Seats' })).getByRole('button'));
+    fireEvent.click(
+      within(screen.getByRole('columnheader', { name: 'Seats' })).getByRole('button')
+    );
     expect(bodyNames()).toEqual(['Bravo', 'Charlie', 'alpha']);
   });
 
@@ -87,7 +105,7 @@ describe('DataTable block', () => {
         caption="Members"
         columns={columns}
         rows={rows}
-        getRowId={(row) => row.id}
+        getRowId={row => row.id}
         labels={labels}
         emptyState="No members"
         pageSize={2}
@@ -110,7 +128,7 @@ describe('DataTable block', () => {
         caption="Members"
         columns={columns}
         rows={[]}
-        getRowId={(row) => row.id}
+        getRowId={row => row.id}
         labels={labels}
         emptyState={<p>No members yet</p>}
       />

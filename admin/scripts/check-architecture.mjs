@@ -144,7 +144,12 @@ if (consoleLayout.includes('<aside')) {
   failures.push('console-layout.tsx must not replace the shared Sidebar with a manual aside');
 }
 
-const globalStyles = await read('src/styles/globals.css');
+// globals.css imports the design tokens from tokens.css; theme plugins override them afterwards.
+const globalStyles = `${await read('src/styles/globals.css')}
+${await read('src/styles/tokens.css')}`;
+if (!globalStyles.includes("@import './tokens.css'")) {
+  failures.push("src/styles/globals.css must import './tokens.css'");
+}
 for (const marker of [
   "@import 'tw-animate-css'",
   '--color-primary',
@@ -155,13 +160,13 @@ for (const marker of [
   '--sidebar-accent: var(--brand-subtle)',
 ]) {
   if (!globalStyles.includes(marker)) {
-    failures.push(`src/styles/globals.css must retain ${marker}`);
+    failures.push(`src/styles/globals.css or tokens.css must retain ${marker}`);
   }
 }
 for (const retiredBrandMarker of ['0.52 0.12 178', '0.68 0.11 178']) {
   if (globalStyles.includes(retiredBrandMarker)) {
     failures.push(
-      `src/styles/globals.css must use Rhine blue instead of retired green ${retiredBrandMarker}`,
+      `src/styles/globals.css and tokens.css must use Rhine blue instead of retired green ${retiredBrandMarker}`,
     );
   }
 }

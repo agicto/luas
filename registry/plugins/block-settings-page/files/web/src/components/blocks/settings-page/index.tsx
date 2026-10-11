@@ -7,13 +7,7 @@
  */
 import * as React from 'react';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { cn } from '@/utils';
 
 export interface SettingsSection {
@@ -62,7 +56,9 @@ export function SettingsPage({
     <div className={cn('flex flex-col gap-6', className)}>
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 flex-col gap-1">
-          <Heading className="text-2xl font-semibold tracking-tight text-foreground">{title}</Heading>
+          <Heading className="text-2xl font-semibold tracking-tight text-foreground">
+            {title}
+          </Heading>
           {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
         </div>
         {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
@@ -71,7 +67,7 @@ export function SettingsPage({
       <div className="grid gap-6 md:grid-cols-[12rem_minmax(0,1fr)] lg:grid-cols-[14rem_minmax(0,1fr)]">
         <nav aria-label={navLabel} className="min-w-0 md:sticky md:top-6 md:self-start">
           <ul className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-col md:overflow-visible md:px-0 md:pb-0">
-            {sections.map((section) => {
+            {sections.map(section => {
               const active = section.id === activeSectionId;
               return (
                 <li key={section.id} className="shrink-0">
@@ -92,7 +88,7 @@ export function SettingsPage({
         </nav>
 
         <div className="flex min-w-0 flex-col gap-6">
-          {sections.map((section) => {
+          {sections.map(section => {
             const headingId = `${idPrefix}-${section.id}`;
             return (
               <section

@@ -29,8 +29,8 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/auth-card/auth-card.test.tsx": "c6c7331fccc0d377533e9ad97879246afba79e8e89f8bc7da2b75baa07cd8a87",
-        "web/src/components/blocks/auth-card/index.tsx": "911ecd7a6a83c0235a7f22e7ffd7cc72b4a533494782604702368c8f354bafe2"
+        "web/src/components/blocks/auth-card/auth-card.test.tsx": "58140ed1d439b1b077503ce518200a434947b698e0742489458eaf8f2b87c03e",
+        "web/src/components/blocks/auth-card/index.tsx": "45ccc49ea5a45fb2908ad95381da17fceec98e07d05e7bca0aa7290b06e8d0b0"
       }
     },
     {
@@ -64,7 +64,7 @@
       "requires": {},
       "files": {
         "web/src/components/blocks/dashboard-stats/dashboard-stats.test.tsx": "66ff2f18644e46198634594ecbe1081a99926d0bb2f98a76db08ba307c6bf6f2",
-        "web/src/components/blocks/dashboard-stats/index.tsx": "58dc8af8d2c599f691a50247ed851833c74b9fb766d536c07b2d4684f54d8282"
+        "web/src/components/blocks/dashboard-stats/index.tsx": "51bb500c029a0aaa5fab52bd2333d94aa6f40f7641fa2cacbe1edeae35de2fce"
       }
     },
     {
@@ -97,8 +97,8 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/data-table/data-table.test.tsx": "b94a87637a138c3bf13ebed9abbbee2e0f97252726e891fa6372b73996b7f4fc",
-        "web/src/components/blocks/data-table/index.tsx": "defb20040f702007c4c592fade4f1dc8d88751070e2da718ee1de51c073166bf"
+        "web/src/components/blocks/data-table/data-table.test.tsx": "c61ff4b19a1d6d5bfb0b9c98ee407f3854c5f9639cfb69c7ec9cac726bdcd15b",
+        "web/src/components/blocks/data-table/index.tsx": "0ec3edbeb0b14dbb960659fffcca5484d7b9afbb9b3dcbfd9eae5ae87dc49f75"
       }
     },
     {
@@ -131,7 +131,7 @@
       "requires": {},
       "files": {
         "web/src/components/blocks/empty-state/empty-state.test.tsx": "f771a57c1b97fd641887d89907e43e70877469129d902b344b53cd92a1b9a059",
-        "web/src/components/blocks/empty-state/index.tsx": "db4c0ee1298612c1592b597d911469099f88de4224ccd03d9cebca1b32b42dfe"
+        "web/src/components/blocks/empty-state/index.tsx": "397994bfe1ff5beaca31dfe125d2bf6dbcba31430aa4a2d63dba83a6cd6212e3"
       }
     },
     {
@@ -163,8 +163,8 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/landing-hero/index.tsx": "9679be3415d43247fa7e5d7d3ca9000644a945ac910d834afe5f2efeb6eff476",
-        "web/src/components/blocks/landing-hero/landing-hero.test.tsx": "e3f59ce09524c1cc8ef98a4b9f2c28ed5f603e4993afc1101d3313f7d00aff3e"
+        "web/src/components/blocks/landing-hero/index.tsx": "5c7462101fe24a30ed56aad5717a87d940db2a2dc6fdd0e39e46b7cf449f1fdc",
+        "web/src/components/blocks/landing-hero/landing-hero.test.tsx": "bdbbe4f8ffdd8d04b8110887d6aa3934ff410abc629018ac1bd1029ea0750a9c"
       }
     },
     {
@@ -197,8 +197,8 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/onboarding-steps/index.tsx": "bc9158fa4ee04db8a4673ee8871faabf3396d985a61760c3369c7035c956f072",
-        "web/src/components/blocks/onboarding-steps/onboarding-steps.test.tsx": "e7afd67a5f960696adf025aaba62785591bdb7ccf63d958c508393c79317adc7"
+        "web/src/components/blocks/onboarding-steps/index.tsx": "b8cbbc384799d0bb84044f563a17c3de2017e6f43f3417e808fe49d3e2fa3cce",
+        "web/src/components/blocks/onboarding-steps/onboarding-steps.test.tsx": "09002e80944cb17ca97b1ee4cb23dae672ea2f4b9cb3509ebe026d28fcb86d03"
       }
     },
     {
@@ -230,7 +230,7 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/pricing-table/index.tsx": "012017e90172b06fdb14e64bb5ed763a5792da560c4d7e5111dda38b56a1dbc8",
+        "web/src/components/blocks/pricing-table/index.tsx": "99ee357955f28897e40a72e1878af329ab9c397dad09c4d7f94634cf4f1169bb",
         "web/src/components/blocks/pricing-table/pricing-table.test.tsx": "cb7d7c8b97a35122fcefa4c9fc7254f2479fdbcc595115cfa7ff786f30274f1a"
       }
     },
@@ -263,8 +263,8 @@
       "fastbuild": "0.25.0",
       "requires": {},
       "files": {
-        "web/src/components/blocks/settings-page/index.tsx": "6a5c8b54b311f7c7e20d63d7dff207ff23251ed0ae4350bc8252b68068f9debc",
-        "web/src/components/blocks/settings-page/settings-page.test.tsx": "7bfc0a4e50f688c933d7f0b92d67bc678394c784cc6e52786f2c4556bb785251"
+        "web/src/components/blocks/settings-page/index.tsx": "766ace710e194b93d703b4cb517487b1c4818f735507baa25f0f1f13606e4a64",
+        "web/src/components/blocks/settings-page/settings-page.test.tsx": "68b0f20c5afd04a76cb184424b48b9c6d59d0674ec028dc3f2f0d57e3839a0b5"
       }
     },
     {

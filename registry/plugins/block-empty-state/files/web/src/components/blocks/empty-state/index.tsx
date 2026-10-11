@@ -83,7 +83,9 @@ export function EmptyState({
           {title}
         </Heading>
         {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
-        {detail ? <p className="font-mono text-xs break-all text-muted-foreground">{detail}</p> : null}
+        {detail ? (
+          <p className="font-mono text-xs break-all text-muted-foreground">{detail}</p>
+        ) : null}
       </div>
       {action || secondaryAction ? (
         <div className="flex flex-col-reverse items-stretch gap-2 sm:flex-row sm:items-center sm:justify-center">

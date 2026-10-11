@@ -69,7 +69,7 @@ function readBlocks(file) {
 // Local stylesheets imported by a stylesheet, in order.
 function localImports(file) {
   const source = stripComments(readFileSync(file, 'utf8'));
-  return [...source.matchAll(/@import\s+['"](\.[^'"]+)['"]/g)].map((match) =>
+  return [...source.matchAll(/@import\s+['"](\.[^'"]+)['"]/g)].map(match =>
     resolve(dirname(file), match[1])
   );
 }
@@ -144,10 +144,10 @@ function checkLayers(label, files) {
 // give it a dark value; otherwise the preset's light value, imported later, wins in dark mode.
 function checkPresetShape(label, presetFile, coreFiles) {
   const coreDark = new Set(
-    coreFiles.flatMap((file) =>
+    coreFiles.flatMap(file =>
       readBlocks(file)
-        .filter((block) => block.selector === '.dark')
-        .flatMap((block) => [...block.declarations.keys()])
+        .filter(block => block.selector === '.dark')
+        .flatMap(block => [...block.declarations.keys()])
     )
   );
   const blocks = readBlocks(presetFile);
@@ -158,10 +158,10 @@ function checkPresetShape(label, presetFile, coreFiles) {
   }
   const presetDark = new Set(
     blocks
-      .filter((block) => block.selector === '.dark')
-      .flatMap((block) => [...block.declarations.keys()])
+      .filter(block => block.selector === '.dark')
+      .flatMap(block => [...block.declarations.keys()])
   );
-  for (const block of blocks.filter((candidate) => candidate.selector === ':root')) {
+  for (const block of blocks.filter(candidate => candidate.selector === ':root')) {
     for (const name of block.declarations.keys()) {
       if (coreDark.has(name) && !presetDark.has(name)) {
         failures.push(
@@ -173,9 +173,9 @@ function checkPresetShape(label, presetFile, coreFiles) {
 }
 
 const imported = localImports(join(themeRoot, 'index.css'));
-const coreFiles = imported.filter((file) => !file.startsWith(presetRoot + '/'));
+const coreFiles = imported.filter(file => !file.startsWith(presetRoot + '/'));
 checkLayers('web', imported);
-for (const file of imported.filter((candidate) => candidate.startsWith(presetRoot + '/'))) {
+for (const file of imported.filter(candidate => candidate.startsWith(presetRoot + '/'))) {
   checkPresetShape(relative(webRoot, file), file, coreFiles);
 }
 
@@ -186,7 +186,9 @@ if (existsSync(registryPlugins)) {
     if (!existsSync(presetDirectory)) {
       continue;
     }
-    for (const name of readdirSync(presetDirectory).filter((file) => file.endsWith('.css')).sort()) {
+    for (const name of readdirSync(presetDirectory)
+      .filter(file => file.endsWith('.css'))
+      .sort()) {
       const presetFile = join(presetDirectory, name);
       const label = relative(resolve(webRoot, '..'), presetFile);
       registryThemes += 1;
@@ -197,7 +199,7 @@ if (existsSync(registryPlugins)) {
 }
 
 function sourceFiles(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) {
       if (entry.name === 'test') {
@@ -222,7 +224,7 @@ for (const file of sourceFiles(sourceRoot)) {
 if (failures.length > 0) {
   console.error(
     `Theme contrast guard failed (minimum ${minimumTextContrast}:1):\n${failures
-      .map((failure) => `- ${failure}`)
+      .map(failure => `- ${failure}`)
       .join('\n')}`
   );
   process.exit(1);

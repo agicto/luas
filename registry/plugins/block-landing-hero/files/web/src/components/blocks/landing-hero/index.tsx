@@ -86,11 +86,16 @@ export function LandingHero({
             </div>
           ) : null}
         </div>
-        {media ? <div className="min-w-0 overflow-hidden rounded-xl border bg-muted">{media}</div> : null}
+        {media ? (
+          <div className="min-w-0 overflow-hidden rounded-xl border bg-muted">{media}</div>
+        ) : null}
       </section>
 
       {features && features.length > 0 ? (
-        <section aria-labelledby={featuresHeading ? featuresHeadingId : undefined} className="flex flex-col gap-8">
+        <section
+          aria-labelledby={featuresHeading ? featuresHeadingId : undefined}
+          className="flex flex-col gap-8"
+        >
           {featuresHeading ? (
             <h2
               id={featuresHeadingId}
@@ -103,7 +108,7 @@ export function LandingHero({
             </h2>
           ) : null}
           <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
+            {features.map(feature => (
               <li key={feature.id} className="flex flex-col gap-3 rounded-xl border bg-card p-6">
                 {feature.icon ? (
                   <span

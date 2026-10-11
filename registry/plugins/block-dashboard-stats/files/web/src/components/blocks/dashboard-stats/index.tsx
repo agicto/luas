@@ -58,7 +58,8 @@ const columnClasses: Record<NonNullable<DashboardStatsProps['columns']>, string>
 function TrendBadge({ trend }: { trend: StatTrend }) {
   const Icon =
     trend.direction === 'up' ? TrendingUp : trend.direction === 'down' ? TrendingDown : Minus;
-  const positive = trend.positive ?? (trend.direction === 'flat' ? undefined : trend.direction === 'up');
+  const positive =
+    trend.positive ?? (trend.direction === 'flat' ? undefined : trend.direction === 'up');
   const tone =
     positive === undefined ? 'text-muted-foreground' : positive ? 'text-success' : 'text-error';
 
@@ -121,7 +122,7 @@ export function DashboardStats({
         </div>
       ) : (
         <ul role="list" className={cn('grid grid-cols-1 gap-4', columnClasses[columns])}>
-          {items.map((item) => (
+          {items.map(item => (
             <li key={item.id} className="min-w-0">
               <Card className="h-full gap-3 py-5">
                 <CardHeader className="flex items-center justify-between gap-2 px-5">

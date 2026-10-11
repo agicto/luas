@@ -7,7 +7,7 @@ function SignInForm({ onSubmit }: { onSubmit: () => void }) {
   return (
     <form
       aria-label="Sign in form"
-      onSubmit={(event) => {
+      onSubmit={event => {
         event.preventDefault();
         onSubmit();
       }}
@@ -37,7 +37,10 @@ describe('AuthCard block', () => {
     expect(within(region).getByRole('heading', { level: 1 })).toHaveTextContent('Welcome back');
     expect(screen.getByText('Sign in to continue')).toBeInTheDocument();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/sign-up');
+    expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute(
+      'href',
+      '/sign-up'
+    );
     expect(screen.getByRole('link', { name: 'Terms' })).toBeInTheDocument();
 
     fireEvent.submit(screen.getByRole('form', { name: 'Sign in form' }));
@@ -55,7 +58,9 @@ describe('AuthCard block', () => {
       </AuthCard>
     );
 
-    expect(screen.getByRole('button', { name: 'Continue with single sign-on' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Continue with single sign-on' })
+    ).toBeInTheDocument();
     expect(screen.getByText('or')).toBeInTheDocument();
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
@@ -68,6 +73,8 @@ describe('AuthCard block', () => {
     );
 
     expect(screen.queryByText('or')).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Create your account' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Create your account' })
+    ).toBeInTheDocument();
   });
 });

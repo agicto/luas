@@ -24,7 +24,9 @@ describe('SettingsPage block', () => {
     expect(profile).toHaveAttribute('id', 'profile');
     expect(within(profile).getByText('How others see you')).toBeInTheDocument();
     expect(within(profile).getByRole('button', { name: 'Save profile' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Delete account' })).toHaveClass('text-error');
+    expect(screen.getByRole('heading', { level: 2, name: 'Delete account' })).toHaveClass(
+      'text-error'
+    );
   });
 
   it('links every navigation item to its section and marks the active one', () => {
@@ -39,7 +41,7 @@ describe('SettingsPage block', () => {
 
     const navigation = screen.getByRole('navigation', { name: 'Settings sections' });
     const links = within(navigation).getAllByRole('link');
-    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+    expect(links.map(link => link.getAttribute('href'))).toEqual([
       '#profile',
       '#notifications',
       '#danger',

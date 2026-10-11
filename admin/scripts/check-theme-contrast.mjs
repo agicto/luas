@@ -166,12 +166,16 @@ function checkDarkCoverage(label, themeFile, coreFiles) {
     }
   }
   const themeDark = new Set(
-    blocks.filter((block) => block.selector === '.dark').flatMap((block) => [...block.declarations.keys()]),
+    blocks
+      .filter((block) => block.selector === '.dark')
+      .flatMap((block) => [...block.declarations.keys()]),
   );
   for (const block of blocks.filter((candidate) => candidate.selector === ':root')) {
     for (const name of block.declarations.keys()) {
       if (coreDark.has(name) && !themeDark.has(name)) {
-        failures.push(`${label}: --${name} is set on :root but not on .dark, so it leaks into dark mode`);
+        failures.push(
+          `${label}: --${name} is set on :root but not on .dark, so it leaks into dark mode`,
+        );
       }
     }
   }
@@ -189,7 +193,9 @@ if (existsSync(registryPlugins)) {
     if (!existsSync(themeDirectory)) {
       continue;
     }
-    for (const name of readdirSync(themeDirectory).filter((file) => file.endsWith('.css')).sort()) {
+    for (const name of readdirSync(themeDirectory)
+      .filter((file) => file.endsWith('.css'))
+      .sort()) {
       const themeFile = join(themeDirectory, name);
       const label = relative(resolve(adminRoot, '..'), themeFile);
       themes += 1;

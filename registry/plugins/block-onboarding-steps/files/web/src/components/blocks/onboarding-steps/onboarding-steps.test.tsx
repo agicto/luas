@@ -46,7 +46,9 @@ describe('OnboardingSteps block', () => {
 
     const current = screen.getByRole('heading', { name: 'Invite your team (Current step)' });
     expect(current.closest('li')).toHaveAttribute('aria-current', 'step');
-    expect(screen.getByRole('heading', { name: 'Complete your profile (Completed)' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'Complete your profile (Completed)' })
+    ).toBeInTheDocument();
   });
 
   it('shows the action only on the current step', () => {

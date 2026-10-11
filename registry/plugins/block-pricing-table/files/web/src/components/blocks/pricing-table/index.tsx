@@ -8,13 +8,7 @@ import * as React from 'react';
 import { Check, X } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { cn } from '@/utils';
 
 export interface PricingFeature {
@@ -93,9 +87,12 @@ export function PricingTable({
 
       <ul
         role="list"
-        className={cn('grid w-full grid-cols-1 gap-6', gridColumns[plans.length] ?? 'md:grid-cols-2 xl:grid-cols-4')}
+        className={cn(
+          'grid w-full grid-cols-1 gap-6',
+          gridColumns[plans.length] ?? 'md:grid-cols-2 xl:grid-cols-4'
+        )}
       >
-        {plans.map((plan) => {
+        {plans.map(plan => {
           const planHeadingId = `${idPrefix}-${plan.id}`;
           return (
             <li key={plan.id} className="min-w-0">
@@ -127,7 +124,7 @@ export function PricingTable({
                 </CardHeader>
                 <CardContent className="flex-1">
                   <ul role="list" className="flex flex-col gap-3 text-sm">
-                    {plan.features.map((feature) => (
+                    {plan.features.map(feature => (
                       <li
                         key={feature.id}
                         className={cn(
@@ -136,7 +133,10 @@ export function PricingTable({
                         )}
                       >
                         {feature.included ? (
-                          <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
+                          <Check
+                            className="mt-0.5 size-4 shrink-0 text-success"
+                            aria-hidden="true"
+                          />
                         ) : (
                           <X className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                         )}
@@ -151,7 +151,9 @@ export function PricingTable({
                   </ul>
                 </CardContent>
                 {plan.action ? (
-                  <CardFooter className="flex-col items-stretch [&>*]:w-full">{plan.action}</CardFooter>
+                  <CardFooter className="flex-col items-stretch [&>*]:w-full">
+                    {plan.action}
+                  </CardFooter>
                 ) : null}
               </Card>
             </li>

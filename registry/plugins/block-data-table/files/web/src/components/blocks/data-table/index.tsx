@@ -97,7 +97,7 @@ export function DataTable<Row>({
   const [page, setPage] = React.useState(1);
 
   const sortedRows = React.useMemo(() => {
-    const column = sort ? columns.find((candidate) => candidate.id === sort.columnId) : undefined;
+    const column = sort ? columns.find(candidate => candidate.id === sort.columnId) : undefined;
     if (!sort || !column?.sortValue) return rows;
     const value = column.sortValue;
     const factor = sort.direction === 'asc' ? 1 : -1;
@@ -130,14 +130,17 @@ export function DataTable<Row>({
           <TableCaption className={cn('mb-3', captionHidden && 'sr-only')}>{caption}</TableCaption>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
-              {columns.map((column) => {
+              {columns.map(column => {
                 const direction = sort?.columnId === column.id ? sort.direction : undefined;
-                const SortIcon = direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ArrowUpDown;
+                const SortIcon =
+                  direction === 'asc' ? ArrowUp : direction === 'desc' ? ArrowDown : ArrowUpDown;
                 return (
                   <TableHead
                     key={column.id}
                     scope="col"
-                    aria-sort={column.sortValue ? (direction ? ariaSort[direction] : 'none') : undefined}
+                    aria-sort={
+                      column.sortValue ? (direction ? ariaSort[direction] : 'none') : undefined
+                    }
                     className={cn('px-3', column.align === 'end' && 'text-right', column.className)}
                   >
                     {column.sortValue ? (
@@ -146,7 +149,10 @@ export function DataTable<Row>({
                         variant="ghost"
                         size="sm"
                         noScale
-                        className={cn('-mx-2 text-foreground', column.align === 'end' && 'ml-auto flex')}
+                        className={cn(
+                          '-mx-2 text-foreground',
+                          column.align === 'end' && 'ml-auto flex'
+                        )}
                         onClick={() => toggleSort(column.id)}
                         icon={
                           <SortIcon
@@ -174,9 +180,9 @@ export function DataTable<Row>({
                 </TableCell>
               </TableRow>
             ) : (
-              visibleRows.map((row) => (
+              visibleRows.map(row => (
                 <TableRow key={getRowId(row)}>
-                  {columns.map((column) => {
+                  {columns.map(column => {
                     const cellClassName = cn(
                       'px-3',
                       column.align === 'end' && 'text-right tabular-nums',
@@ -187,7 +193,10 @@ export function DataTable<Row>({
                         key={column.id}
                         scope="row"
                         data-slot="table-cell"
-                        className={cn('p-2 text-left align-middle font-medium whitespace-nowrap', cellClassName)}
+                        className={cn(
+                          'p-2 text-left align-middle font-medium whitespace-nowrap',
+                          cellClassName
+                        )}
                       >
                         {column.cell(row)}
                       </th>
@@ -205,7 +214,10 @@ export function DataTable<Row>({
       </div>
 
       {paginated && sortedRows.length > 0 ? (
-        <nav aria-label={labels.pagination} className="flex flex-wrap items-center justify-between gap-2">
+        <nav
+          aria-label={labels.pagination}
+          className="flex flex-wrap items-center justify-between gap-2"
+        >
           <p className="text-sm text-muted-foreground" aria-live="polite">
             {labels.pageStatus(currentPage, pageCount)}
           </p>

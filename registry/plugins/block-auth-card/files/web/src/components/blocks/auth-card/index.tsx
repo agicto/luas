@@ -7,13 +7,7 @@
  */
 import * as React from 'react';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/utils';
 
@@ -59,7 +53,10 @@ export function AuthCard({
       <Card className="gap-6">
         <CardHeader className="flex flex-col items-center gap-2 text-center">
           {logo ? <div className="mb-2 flex justify-center">{logo}</div> : null}
-          <Heading id={headingId} className="text-xl font-semibold tracking-tight text-card-foreground">
+          <Heading
+            id={headingId}
+            className="text-xl font-semibold tracking-tight text-card-foreground"
+          >
             {title}
           </Heading>
           {description ? <CardDescription>{description}</CardDescription> : null}

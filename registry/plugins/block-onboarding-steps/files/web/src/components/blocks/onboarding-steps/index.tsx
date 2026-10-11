@@ -63,7 +63,7 @@ export function OnboardingSteps({
   const Heading = headingLevel;
   const StepHeading = headingLevel === 'h2' ? 'h3' : 'h4';
   const headingId = React.useId();
-  const completed = steps.filter((step) => step.status === 'complete').length;
+  const completed = steps.filter(step => step.status === 'complete').length;
   const percent = steps.length === 0 ? 0 : Math.round((completed / steps.length) * 100);
 
   return (
@@ -113,7 +113,10 @@ export function OnboardingSteps({
                     )}
                   />
                 ) : null}
-                <Icon className={cn('mt-0.5 size-6 shrink-0', statusTones[step.status])} aria-hidden="true" />
+                <Icon
+                  className={cn('mt-0.5 size-6 shrink-0', statusTones[step.status])}
+                  aria-hidden="true"
+                />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <StepHeading
                     className={cn(
