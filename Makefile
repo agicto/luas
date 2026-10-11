@@ -31,6 +31,7 @@ check: governance contract-check api-check web-check admin-check
 contract-check:
 	cd contracts && corepack pnpm check
 	cd contracts && corepack pnpm check:routes
+	cd contracts && corepack pnpm check:registry
 
 contract-generate:
 	cd contracts && corepack pnpm generate

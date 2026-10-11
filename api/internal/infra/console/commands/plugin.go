@@ -8,7 +8,8 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/infra/plugin"
 )
 
-// PluginListCommand lists all installed plugins
+// PluginListCommand lists external CLI commands: executables named fastbuild-<name> on PATH.
+// Registry plugins, which add source to the project, are managed by the plugin:* commands.
 type PluginListCommand struct {
 	output *console.Output
 }
@@ -20,15 +21,15 @@ func NewPluginListCommand() *PluginListCommand {
 }
 
 func (c *PluginListCommand) Name() string {
-	return "plugin:list"
+	return "command:list"
 }
 
 func (c *PluginListCommand) Description() string {
-	return "List all installed plugins"
+	return "List external CLI commands (fastbuild-<name> executables on PATH)"
 }
 
 func (c *PluginListCommand) Usage() string {
-	return "fastbuild plugin:list"
+	return "fastbuild command:list"
 }
 
 func (c *PluginListCommand) Run(args []string) error {
@@ -36,13 +37,13 @@ func (c *PluginListCommand) Run(args []string) error {
 	plugins := registry.List()
 
 	if len(plugins) == 0 {
-		c.output.Info("No plugins installed")
+		c.output.Info("No external commands installed")
 		c.output.Info("")
-		c.output.Info("A plugin is an executable named fastbuild-<name> on PATH that answers --version.")
+		c.output.Info("An external command is an executable named fastbuild-<name> on PATH that answers --version.")
 		return nil
 	}
 
-	c.output.Success(fmt.Sprintf("Found %d plugin(s):", len(plugins)))
+	c.output.Success(fmt.Sprintf("Found %d external command(s):", len(plugins)))
 	c.output.Info("")
 
 	// Print table header

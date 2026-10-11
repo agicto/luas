@@ -120,6 +120,22 @@ records the scaffold version in `.fastbuild-project.json` and refuses to run twi
 examples and starters you do not need with the
 [downstream extraction guide](.agents/skills/downstream-app-extraction/SKILL.md).
 
+### Add Capabilities From The Plugin Registry
+
+Plugins are reviewed capabilities installed as source: the code lands in your project and you own
+it. A coding agent can find and install them with the `plugin-integration` skill.
+
+```bash
+cd api
+go run ./cmd/fastbuild plugin:search knowledge
+go run ./cmd/fastbuild plugin:add knowledge-base
+```
+
+`plugin:add` verifies every file against the registry checksums, adapts imports to your module,
+wires the starter, merges the contract, and records the install in `fastbuild.plugins.lock`; the
+plugin's `INTEGRATION.md` lists the remaining steps. See [registry/README.md](registry/README.md)
+and [docs/VISION.md](docs/VISION.md).
+
 ### Start Everything
 
 ```bash
@@ -331,6 +347,7 @@ fastbuild/
 | Add an API starter or module | [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) |
 | Add a Next.js feature | [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) |
 | Add an Admin Console feature | [admin/docs/ADDING_FEATURE.md](admin/docs/ADDING_FEATURE.md) |
+| Long-term roadmap | [docs/ROADMAP.md](docs/ROADMAP.md) |
 | Starter capability matrix | [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 | CI and releases | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
 | Release notes | [CHANGELOG.md](CHANGELOG.md) |

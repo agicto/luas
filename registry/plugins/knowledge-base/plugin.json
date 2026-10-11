@@ -1,0 +1,21 @@
+{
+  "name": "knowledge-base",
+  "version": "0.1.0",
+  "summary": "Organization knowledge articles with full-text and substring search.",
+  "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
+  "keywords": ["knowledge", "knowledge base", "kb", "wiki", "docs", "articles", "search", "faq", "知识库", "文档", "文章", "搜索", "帮助中心"],
+  "use_when": [
+    "the team needs a knowledge base, wiki, FAQ, or help center",
+    "members must search shared documents, including Chinese text",
+    "a later AI feature needs a store of organization documents to answer from"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization"] },
+  "starter": {
+    "name": "knowledge",
+    "const": "StarterKnowledge",
+    "directory": "knowledge",
+    "handler": "Knowledge"
+  },
+  "fragment": "contracts/fragments/knowledge-base.yaml"
+}

@@ -93,6 +93,7 @@ func (c *ProjectInitCommand) Run(args []string) error {
 	c.output.Line("  1. cd api && go mod tidy && go build ./... && cd .. && make check")
 	c.output.Line("  2. make dev, then sign in with the seeded accounts")
 	c.output.Line("  3. Remove examples and unused starters: .agents/skills/downstream-app-extraction/SKILL.md")
+	c.output.Line("  4. Add capabilities from the plugin registry: cd api && go run ./cmd/fastbuild plugin:search <words>")
 	return nil
 }
 
@@ -162,6 +163,12 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 			return nil, changed, writeErr
 		}
 		changed++
+	}
+
+	// A new project installs plugins from the release it started from instead of carrying the
+	// scaffold's registry; see plugin:add.
+	if removeErr := os.RemoveAll(filepath.Join(root, registryDir)); removeErr != nil {
+		return nil, changed, removeErr
 	}
 
 	marker := &ProjectMarker{

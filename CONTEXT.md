@@ -39,6 +39,12 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 **Optional starter**
 : A starter-quality building block that exists in the repository but is disabled in the default scaffold. API optional starters are activated additively through the canonical starter catalog; they never replace or subtract the default starter set.
 
+**Plugin**
+: A versioned capability distributed as source from the plugin registry and installed with `fastbuild plugin:add`. A plugin usually installs one optional starter; once installed, the project owns its code, and `fastbuild.plugins.lock` records the installed version and file checksums. A plugin is not an external CLI command (`command:list`) and is never loaded at runtime.
+
+**Plugin registry**
+: The catalog plugins are installed from: `registry/` in the scaffold repository, or the `registry/` directory of the FastBuild release a project started from. Its `index.json` is generated and checksums every plugin file.
+
 **Capability**
 : A reusable technical integration or helper that does not own an application workflow. Examples include AI clients, crypto helpers, ID generation, tracing, storage, queueing, and workflow primitives.
 

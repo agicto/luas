@@ -48,6 +48,8 @@ after selecting it.
 - Use `fastbuild-framework-review` only for an explicit framework-wide audit.
 - Use `fastbuild-code-review` for an explicit diff/PR review, not as an automatic
   post-edit ritual.
+- Use `plugin-integration` when a requested capability may already exist in the
+  plugin registry (`fastbuild plugin:search`); install it instead of rebuilding it.
 - Use `business-implementation-planning` before building a new material
   business capability or cross-module workflow that lacks a complete plan.
 - Use `domain-modeling` only for global vocabulary or ownership boundaries,
@@ -74,7 +76,7 @@ The complete skill index and helper catalog are in
 | API implementation rules | [api/AGENTS.md](api/AGENTS.md) |
 | Web implementation rules | [web/AGENTS.md](web/AGENTS.md) |
 | Admin Console implementation rules | [admin/AGENTS.md](admin/AGENTS.md) |
-| Long-running priorities | [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md), [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
+| Long-running priorities | [docs/ROADMAP.md](docs/ROADMAP.md), [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md), [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 
 `CONTEXT.md` wins when terminology conflicts. The owning contract wins for
 public HTTP behavior. The nearest `AGENTS.md` wins for local implementation.
