@@ -546,7 +546,7 @@
         "web/src/test/knowledge-route.test.ts": "763708002962215a07d5ecaae2d15a90896d13668915243ae5a7279e532f24f4",
         "web/src/test/knowledge-service.test.ts": "541f5834201afd9d39c0a83e2e0c1907bc42d20dd23867e9a42999976aeb85e1",
         "web/src/test/knowledge-ui.test.tsx": "345e185c1a7faa86bebf161cf4f32ae2d1e6cd241435aae393a442ceaab4ed8c",
-        "web/src/test/mock-bff-parity/knowledge.ts": "0b4bdc951d88276b0a7d51e33847b7740b7608a6c04fb5ce59246174d7b37bae"
+        "web/src/test/mock-bff-parity/knowledge.ts": "97cb3a584d255a7c46e53cc20d564c904e6d0e994f17bfc2e31f2667ae9e5812"
       }
     },
     {

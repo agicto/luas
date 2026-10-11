@@ -11,7 +11,7 @@ export async function runServiceParity({ organizationId }: ServiceParityContext)
 
   const created = await knowledgeService.create(organizationId, {
     title: 'Parity article',
-    body: '# Parity\n\n知识库 parity body',
+    body: '知识库 parity body\n\n## Parity',
   });
   const second = await knowledgeService.create(organizationId, { title: 'Second article' });
   const firstPage = await knowledgeService.list(organizationId, { perPage: 1 });
