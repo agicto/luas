@@ -2,12 +2,14 @@
 
 # Turn a fresh copy of the scaffold into a named project (run once, before the first commit):
 #   make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform/api \
-#     [REPOSITORY=https://github.com/acme/platform] [STARTERS=organization,permission,operator]
+#     [REPOSITORY=https://github.com/acme/platform] [STARTERS=organization,permission,operator] \
+#     [TEMPLATE=<registry template, see plugin:search --kind=template>]
 init-project:
 	@test -n "$(NAME)" && test -n "$(SLUG)" && test -n "$(MODULE)" || \
-		{ echo 'usage: make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform/api [REPOSITORY=...] [STARTERS=...]' >&2; exit 2; }
+		{ echo 'usage: make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform/api [REPOSITORY=...] [STARTERS=...] [TEMPLATE=...]' >&2; exit 2; }
 	cd api && go run ./cmd/fastbuild project:init --name="$(NAME)" --slug="$(SLUG)" --module="$(MODULE)" \
-		$(if $(REPOSITORY),--repository="$(REPOSITORY)") $(if $(STARTERS),--starters="$(STARTERS)")
+		$(if $(REPOSITORY),--repository="$(REPOSITORY)") $(if $(STARTERS),--starters="$(STARTERS)") \
+		$(if $(TEMPLATE),--template="$(TEMPLATE)")
 	cd api && go mod tidy
 
 # Verify main is ready to tag; see docs/VERSIONING.md.

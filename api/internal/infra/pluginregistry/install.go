@@ -137,6 +137,9 @@ type Installer struct {
 	Merge3 func(local, base, incoming []byte) (merged []byte, conflict bool, err error)
 	// DryRun stops after verification and conflict checks and reports what would change.
 	DryRun bool
+
+	// planned names plugins a dry-run template counts as installed for requirement checks.
+	planned []string
 }
 
 // Result reports what an install changed.
@@ -338,7 +341,7 @@ func (installer *Installer) checkRequirements(entry *IndexEntry, lock *Lock, fre
 		problems = append(problems, fmt.Sprintf("the project already has a %q starter", entry.Starter.Name))
 	}
 	for _, plugin := range entry.Requires.Plugins {
-		if _, ok := lock.Plugins[plugin]; !ok {
+		if _, ok := lock.Plugins[plugin]; !ok && !slices.Contains(installer.planned, plugin) {
 			problems = append(problems, fmt.Sprintf("needs the %q plugin; install it first", plugin))
 		}
 	}

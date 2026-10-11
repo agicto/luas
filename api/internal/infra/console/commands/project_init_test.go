@@ -10,6 +10,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/pluginregistry"
 )
 
 func projectFixture(t *testing.T) string {
@@ -128,4 +130,40 @@ func TestInitProjectRejectsInvalidInputWithoutWriting(t *testing.T) {
 	assert.Contains(t, read(t, root, "api/go.mod"), scaffoldModulePath)
 	_, err := os.Stat(filepath.Join(root, projectMarkerFile))
 	assert.True(t, os.IsNotExist(err))
+}
+
+func TestInitProjectInstallsATemplateFromTheReleaseItStartsFrom(t *testing.T) {
+	root := projectFixture(t)
+	write := func(path, content string) {
+		full := filepath.Join(root, filepath.FromSlash(path))
+		require.NoError(t, os.MkdirAll(filepath.Dir(full), 0o755))
+		require.NoError(t, os.WriteFile(full, []byte(content), 0o644))
+	}
+	write("registry/plugins/block-hero/plugin.json", `{"name":"block-hero","kind":"block","version":"0.1.0",`+
+		`"summary":"Hero","description":"Hero block.","use_when":["landing page"],"fastbuild":"0.25.0","requires":{}}`)
+	write("registry/plugins/block-hero/files/web/src/components/blocks/hero/index.tsx", "export {};\n")
+	write("registry/plugins/starter-site/plugin.json", `{"name":"starter-site","kind":"template","version":"0.1.0",`+
+		`"summary":"Site","description":"A site template.","use_when":["a marketing site"],"fastbuild":"0.25.0",`+
+		`"requires":{"starters":["organization"]},"includes":["block-hero"]}`)
+	index, err := pluginregistry.BuildIndex(filepath.Join(root, registryDir))
+	require.NoError(t, err)
+	raw, err := index.Marshal()
+	require.NoError(t, err)
+	write("registry/index.json", string(raw))
+
+	marker, _, err := InitProject(root, ProjectOptions{
+		Name: "Acme Site", Slug: "acme", Module: "github.com/example-demo/site/api", Template: "starter-site",
+	}, "v0.25.0", time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, "starter-site", marker.Template)
+	assert.Equal(t, []string{"organization"}, marker.Starters, "the template's starters are selected")
+	assert.Contains(t, read(t, root, "api/.env.example"), "OPTIONAL_STARTERS=organization\n")
+	assert.FileExists(t, filepath.Join(root, "web/src/components/blocks/hero/index.tsx"))
+	lock, err := pluginregistry.ReadLock(root)
+	require.NoError(t, err)
+	assert.Equal(t, "github:"+scaffoldGitHubRepository+"@v0.25.0", lock.Plugins["block-hero"].Source)
+	assert.NoDirExists(t, filepath.Join(root, registryDir))
+
+	_, _, err = InitProject(projectFixture(t), ProjectOptions{Name: "X", Slug: "xyz", Module: "github.com/example-demo/x/api", Template: "missing"}, "v0.25.0", time.Now())
+	assert.ErrorContains(t, err, "is not a template")
 }

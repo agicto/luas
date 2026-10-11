@@ -379,3 +379,65 @@ func unionFiles(locked map[string]string, incoming map[string][]byte) []string {
 	sort.Strings(files)
 	return files
 }
+
+// TemplateResult reports the plugins a template installed.
+type TemplateResult struct {
+	Template *IndexEntry
+	// Installed holds one result per plugin installed now; plugins already installed are skipped.
+	Installed []*Result
+	Skipped   []string
+}
+
+// InstallTemplate installs every plugin a template includes, in order. If one fails, the plugins
+// installed by this call are removed again, so the project is unchanged.
+func (installer *Installer) InstallTemplate(name string) (*TemplateResult, error) {
+	template, err := installer.find(name)
+	if err != nil {
+		return nil, err
+	}
+	if template.PluginKind() != KindTemplate {
+		return nil, fmt.Errorf("%q is a %s, not a template", name, template.PluginKind())
+	}
+	lock, err := ReadLock(installer.Root)
+	if err != nil {
+		return nil, err
+	}
+	var missing []string
+	for _, starter := range template.Requires.Starters {
+		if !slices.Contains(installer.KnownStarters, starter) {
+			missing = append(missing, starter)
+		}
+	}
+	if len(missing) > 0 {
+		return nil, fmt.Errorf("template %q needs the starters %s", name, strings.Join(missing, ", "))
+	}
+	result := &TemplateResult{Template: template}
+	for _, include := range template.Includes {
+		if _, installed := lock.Plugins[include]; installed {
+			result.Skipped = append(result.Skipped, include)
+			continue
+		}
+		installed, installErr := installer.Install(include)
+		if installErr != nil && installer.DryRun {
+			return nil, fmt.Errorf("template %q: %w", name, installErr)
+		}
+		if installErr != nil {
+			return nil, errors.Join(fmt.Errorf("template %q: %w", name, installErr), installer.undoTemplate(result))
+		}
+		result.Installed = append(result.Installed, installed)
+		// A dry run writes nothing, so later plugins see earlier ones as planned, not installed.
+		installer.planned = append(installer.planned, include)
+	}
+	installer.planned = nil
+	return result, nil
+}
+
+func (installer *Installer) undoTemplate(result *TemplateResult) error {
+	var errs []error
+	for index := len(result.Installed) - 1; index >= 0; index-- {
+		if _, err := installer.Remove(result.Installed[index].Entry.Name, RemoveOptions{Force: true}); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}

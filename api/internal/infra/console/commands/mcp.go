@@ -112,7 +112,7 @@ func pluginTools() []mcp.Tool {
 			Description: "Rank registry plugins (features, themes, blocks) against a request in any language.",
 			InputSchema: object(map[string]any{
 				"query":  map[string]any{"type": "string", "description": "The builder's request or keywords."},
-				"kind":   map[string]any{"type": "string", "enum": []string{"feature", "theme", "block"}},
+				"kind":   map[string]any{"type": "string", "enum": []string{"feature", "theme", "block", "template"}},
 				"source": sourceProperty,
 			}),
 			Handle: func(_ context.Context, raw json.RawMessage) (any, error) {

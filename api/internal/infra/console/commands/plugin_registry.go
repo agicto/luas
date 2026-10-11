@@ -42,7 +42,7 @@ func (c *PluginSearchCommand) Description() string {
 	return "Search the plugin registry for a capability"
 }
 func (c *PluginSearchCommand) Usage() string {
-	return "plugin:search [words...] [--kind=feature|theme|block] [--source=path] [--format=table|json]"
+	return "plugin:search [words...] [--kind=feature|theme|block|template] [--source=path] [--format=table|json]"
 }
 
 func (c *PluginInfoCommand) Name() string { return "plugin:info" }
@@ -152,6 +152,9 @@ func (c *PluginInfoCommand) Run(args []string) error {
 	c.output.TwoColumn("Requires plugins", listOrDash(entry.Requires.Plugins))
 	if entry.Starter != nil {
 		c.output.TwoColumn("Installs starter", entry.Starter.Name)
+	}
+	if len(entry.Includes) > 0 {
+		c.output.TwoColumn("Installs plugins", strings.Join(entry.Includes, ", "))
 	}
 	c.output.Section("Use when")
 	for _, situation := range entry.UseWhen {
@@ -373,6 +376,11 @@ func (c *PluginAddCommand) Run(args []string) error {
 		return err
 	}
 	installer.DryRun = hasFlag(args, "dry-run")
+	if index, indexErr := source.Index(); indexErr == nil {
+		if entry, ok := index.Find(names[0]); ok && entry.PluginKind() == pluginregistry.KindTemplate {
+			return c.addTemplate(installer, source, names[0])
+		}
+	}
 
 	result, err := installer.Install(names[0])
 	if err != nil {
@@ -411,6 +419,41 @@ func (c *PluginAddCommand) Run(args []string) error {
 		c.output.Line(string(integration))
 	}
 	c.output.Line("Recorded in %s. Review the diff before committing.", pluginregistry.LockFile)
+	return nil
+}
+
+// addTemplate installs every plugin of a template and lists each one's integration steps.
+func (c *PluginAddCommand) addTemplate(installer *pluginregistry.Installer, source pluginregistry.Source, name string) error {
+	result, err := installer.InstallTemplate(name)
+	if err != nil {
+		return err
+	}
+	verb := "Installed"
+	if installer.DryRun {
+		verb = "Dry run: would install"
+	}
+	c.output.Success("%s template %s %s from %s", verb, name, result.Template.Version, source.Describe())
+	for _, skipped := range result.Skipped {
+		c.output.Line("  = %s (already installed)", skipped)
+	}
+	for _, installed := range result.Installed {
+		c.output.Line("  + %s %s: %d files, %d slot edits", installed.Entry.Name, installed.Entry.Version,
+			len(installed.Written), len(installed.Wiring))
+	}
+	if installer.DryRun {
+		return nil
+	}
+	c.output.Section("Integration steps")
+	for _, installed := range result.Installed {
+		if integration, docErr := source.ReadDocument(installed.Entry.Name, pluginregistry.IntegrationFile); docErr == nil {
+			c.output.Line("## %s", installed.Entry.Name)
+			c.output.Line(string(integration))
+		}
+	}
+	if len(result.Template.Requires.Starters) > 0 {
+		c.output.Line("Enable the starters %s and each plugin's starter in OPTIONAL_STARTERS.", strings.Join(result.Template.Requires.Starters, ", "))
+	}
+	c.output.Line("Finish when plugin:doctor and make check pass.")
 	return nil
 }
 

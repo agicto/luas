@@ -72,8 +72,12 @@ func BuildIndex(registryDir string) (*Index, error) {
 		if manifest.Name != entry.Name() {
 			return nil, fmt.Errorf("plugin directory %q declares name %q", entry.Name(), manifest.Name)
 		}
-		files, err := hashPluginFiles(filepath.Join(pluginDir, FilesDir))
-		if err != nil {
+		files := map[string]string{}
+		if manifest.PluginKind() == KindTemplate {
+			if _, statErr := os.Stat(filepath.Join(pluginDir, FilesDir)); statErr == nil {
+				return nil, fmt.Errorf("template %q ships files; templates only include plugins", manifest.Name)
+			}
+		} else if files, err = hashPluginFiles(filepath.Join(pluginDir, FilesDir)); err != nil {
 			return nil, fmt.Errorf("plugin %q: %w", manifest.Name, err)
 		}
 		if manifest.Fragment != "" {
@@ -84,6 +88,14 @@ func BuildIndex(registryDir string) (*Index, error) {
 		index.Plugins = append(index.Plugins, IndexEntry{Manifest: *manifest, Files: files})
 	}
 	sort.Slice(index.Plugins, func(a, b int) bool { return index.Plugins[a].Name < index.Plugins[b].Name })
+	for _, entry := range index.Plugins {
+		for _, include := range entry.Includes {
+			member, ok := index.Find(include)
+			if !ok || member.PluginKind() == KindTemplate {
+				return nil, fmt.Errorf("template %q includes %q, which is not a plugin in this registry", entry.Name, include)
+			}
+		}
+	}
 	return index, nil
 }
 

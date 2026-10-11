@@ -30,7 +30,7 @@ var (
 // whether the plugin fits is declared here.
 type Manifest struct {
 	Name string `json:"name"`
-	// Kind is feature (the default), theme, or block.
+	// Kind is feature (the default), theme, block, or template.
 	Kind        string   `json:"kind,omitempty"`
 	Version     string   `json:"version"`
 	Summary     string   `json:"summary"`
@@ -47,7 +47,9 @@ type Manifest struct {
 	Fragment string `json:"fragment,omitempty"`
 	// Wiring inserts lines at named slots in core files, for example a Web navigation item.
 	Wiring []Insert `json:"wiring,omitempty"`
-	Env    []EnvVar `json:"env,omitempty"`
+	// Includes lists, in install order, the plugins a template installs.
+	Includes []string `json:"includes,omitempty"`
+	Env      []EnvVar `json:"env,omitempty"`
 }
 
 // Plugin kinds.
@@ -58,6 +60,9 @@ const (
 	KindTheme = "theme"
 	// KindBlock is a reusable page section the builder places where it fits.
 	KindBlock = "block"
+	// KindTemplate is a starting point: a set of plugins installed together, plus the starters they
+	// need. It ships no files of its own.
+	KindTemplate = "template"
 )
 
 // PluginKind returns the manifest kind, defaulting to feature.
@@ -146,8 +151,22 @@ func (m Manifest) Validate() error {
 		problems = append(problems, "fastbuild must be the minimum scaffold version, for example 0.25.0")
 	}
 	kind := m.PluginKind()
-	if kind != KindFeature && kind != KindTheme && kind != KindBlock {
-		problems = append(problems, "kind must be feature, theme, or block")
+	if kind != KindFeature && kind != KindTheme && kind != KindBlock && kind != KindTemplate {
+		problems = append(problems, "kind must be feature, theme, block, or template")
+	}
+	if kind == KindTemplate {
+		if len(m.Includes) == 0 || len(m.Wiring) > 0 || len(m.Requires.Plugins) > 0 {
+			problems = append(problems, "a template lists its plugins in includes and has no wiring or required plugins")
+		}
+	} else if len(m.Includes) > 0 {
+		problems = append(problems, "only templates include plugins")
+	}
+	included := map[string]bool{}
+	for _, name := range m.Includes {
+		if !pluginNamePattern.MatchString(name) || name == m.Name || included[name] {
+			problems = append(problems, fmt.Sprintf("includes has an invalid or repeated name %q", name))
+		}
+		included[name] = true
 	}
 	if kind != KindFeature && (m.Starter != nil || m.Fragment != "") {
 		problems = append(problems, "only feature plugins install a starter or a contract fragment")

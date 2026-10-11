@@ -2,6 +2,7 @@ package pluginregistry
 
 import (
 	"encoding/json"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -300,4 +301,47 @@ func TestManifestValidatesKindsAndWiring(t *testing.T) {
 	unknown := base
 	unknown.Kind = "widget"
 	assert.ErrorContains(t, unknown.Validate(), "kind must be")
+}
+
+func TestTemplatesInstallTheirPluginsTogetherOrNotAtAll(t *testing.T) {
+	root := projectWithSlots(t)
+	writeFile(t, root, "web/src/themes/index.css", "/* fastbuild:slot web.theme */\n")
+	block := func(name string, requires ...string) fixturePlugin {
+		return fixturePlugin{
+			manifest: Manifest{Name: name, Kind: KindBlock, Version: "0.1.0", Summary: "Block", Description: "Block.",
+				UseWhen: []string{"page"}, FastBuild: "0.24.0", Requires: Requirements{Plugins: requires}},
+			files: map[string]string{"web/src/components/blocks/" + name + "/index.tsx": "export {};\n"},
+		}
+	}
+	template := fixturePlugin{manifest: Manifest{
+		Name: "portal", Kind: KindTemplate, Version: "0.1.0", Summary: "Portal", Description: "Portal template.",
+		UseWhen: []string{"portal"}, FastBuild: "0.24.0", Requires: Requirements{Starters: []string{"organization"}},
+		Includes: []string{"block-a", "block-b"},
+	}}
+	installer := &Installer{
+		Root: root, Source: registryWith(t, block("block-a"), block("block-b", "block-a"), template),
+		ScaffoldModule: testModule, KnownStarters: []string{"organization"},
+	}
+
+	installer.DryRun = true
+	planned, err := installer.InstallTemplate("portal")
+	require.NoError(t, err, "a dry run treats earlier plugins as installed")
+	assert.Len(t, planned.Installed, 2)
+	assert.NoFileExists(t, filepath.Join(root, LockFile))
+
+	installer.DryRun = false
+	writeFile(t, root, "web/src/components/blocks/block-b/index.tsx", "mine\n")
+	_, err = installer.InstallTemplate("portal")
+	require.ErrorContains(t, err, "would overwrite existing files")
+	assert.NoFileExists(t, filepath.Join(root, "web/src/components/blocks/block-a/index.tsx"), "block-a is removed again")
+	assert.NoFileExists(t, filepath.Join(root, LockFile))
+
+	require.NoError(t, os.Remove(filepath.Join(root, "web/src/components/blocks/block-b/index.tsx")))
+	result, err := installer.InstallTemplate("portal")
+	require.NoError(t, err)
+	assert.Len(t, result.Installed, 2)
+	assert.Len(t, mustLock(t, root).Plugins, 2)
+
+	_, err = installer.InstallTemplate("block-a")
+	assert.ErrorContains(t, err, "not a template")
 }
