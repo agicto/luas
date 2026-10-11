@@ -41,6 +41,7 @@ agent-check:
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/fastbuild-framework-review/scripts/check-english-source.py
 	@bash .agents/skills/scripts/validate-skill.sh --all
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/scripts/render-skill-index.py --check
+	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/fastbuild-framework-review/scripts/check-tracked-artifacts.py
 	@PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/scripts/check-skill-routing.py
 	@git diff --check
 
