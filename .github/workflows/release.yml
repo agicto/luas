@@ -49,7 +49,7 @@ jobs:
       - name: Dependency SBOM and vulnerability scan
         run: |
           mkdir -p dist
-          bash scripts/dependency-security.sh sbom "${PWD}/dist/luas-dependencies.cdx.json"
+          bash scripts/dependency-security.sh sbom "${PWD}/dist/fastbuild-dependencies.cdx.json"
           bash scripts/dependency-security.sh scan
 
       - name: API image, smoke test, SBOM, and scan
@@ -58,10 +58,10 @@ jobs:
           OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}
           OCI_REVISION: ${{ github.sha }}
           OCI_VERSION: ${{ github.ref_name }}
-          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/luas-api.build-metadata.json
+          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/fastbuild-api.build-metadata.json
         run: |
-          bash scripts/verify-container.sh luas-api:release
-          bash ../scripts/container-security.sh verify luas-api:release "${GITHUB_WORKSPACE}/dist/luas-api.cdx.json"
+          bash scripts/verify-container.sh fastbuild-api:release
+          bash ../scripts/container-security.sh verify fastbuild-api:release "${GITHUB_WORKSPACE}/dist/fastbuild-api.cdx.json"
 
       - name: Web image, smoke test, SBOM, and scan
         working-directory: web
@@ -69,10 +69,10 @@ jobs:
           OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}
           OCI_REVISION: ${{ github.sha }}
           OCI_VERSION: ${{ github.ref_name }}
-          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/luas-web.build-metadata.json
+          BUILD_METADATA_OUTPUT: ${{ github.workspace }}/dist/fastbuild-web.build-metadata.json
         run: |
-          bash scripts/verify-container.sh luas-web:release
-          bash ../scripts/container-security.sh verify luas-web:release "${GITHUB_WORKSPACE}/dist/luas-web.cdx.json"
+          bash scripts/verify-container.sh fastbuild-web:release
+          bash ../scripts/container-security.sh verify fastbuild-web:release "${GITHUB_WORKSPACE}/dist/fastbuild-web.cdx.json"
 
       - name: Attest build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2

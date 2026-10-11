@@ -12,7 +12,7 @@ const messages = {
   home: {
     defaultUser: 'there',
     welcomeDescription:
-      'This is the replaceable Luas console starter. Replace it with your business workspace.',
+      'This is the replaceable FastBuild console starter. Replace it with your business workspace.',
     open: 'Open',
     nextSteps: 'Next steps',
     quickLinks: {

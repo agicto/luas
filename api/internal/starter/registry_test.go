@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
 )
 
 type counters struct {

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
 )
 
 func TestLocalStoreRoundTripCopyAndDelete(t *testing.T) {

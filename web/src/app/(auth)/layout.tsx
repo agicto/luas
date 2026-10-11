@@ -69,7 +69,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
                 <Logo className="h-8 w-8 text-white" />
               </div>
             </div>
-            <span className="text-2xl font-bold tracking-tight drop-shadow-lg">Luas</span>
+            <span className="text-2xl font-bold tracking-tight drop-shadow-lg">FastBuild</span>
           </div>
           
           {/* Hero Text */}
@@ -124,7 +124,7 @@ export default async function AuthLayout({ children }: PropsWithChildren) {
               <div className="flex items-center space-x-3">
                 <Logo className="h-9 w-9 text-primary" />
                 <span className="text-2xl font-bold bg-linear-to-r from-primary to-primary-deeper bg-clip-text text-transparent">
-                  Luas
+                  FastBuild
                 </span>
               </div>
               <p className="text-center text-sm text-muted-foreground max-w-xs">

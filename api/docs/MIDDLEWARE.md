@@ -1,6 +1,6 @@
 # HTTP Middleware Catalog
 
-This catalog names the HTTP middleware that belongs to the Luas API core, the default starter set, optional route/starter behavior, and the deployment layer.
+This catalog names the HTTP middleware that belongs to the FastBuild API core, the default starter set, optional route/starter behavior, and the deployment layer.
 
 Use this document when changing `api/internal/bootstrap/http.go`, adding starter-owned middleware, or deciding whether a cross-cutting concern should become part of the default scaffold.
 
@@ -108,7 +108,7 @@ optional `RealIP` middleware follows the same deny-by-default rule when used by 
 - `/health/live` and `/health/ready` are always registered for deployment orchestration.
 - `/metrics` is registered only when `METRICS_ENABLED=true`. Production deployments must restrict it with network policy, a gateway, or a private listener.
 - The previous `/monitor` dashboard and `/swagger` route are not default surfaces. They were removed because the monitor depended on an unassembled global container and no generated Swagger contract existed.
-- `luas route:list --format=json` inventories core and starter routes through the server's real registration seam; see [ROUTE_DISCOVERY.md](ROUTE_DISCOVERY.md). It is a topology catalog, not an inferred OpenAPI contract.
+- `fastbuild route:list --format=json` inventories core and starter routes through the server's real registration seam; see [ROUTE_DISCOVERY.md](ROUTE_DISCOVERY.md). It is a topology catalog, not an inferred OpenAPI contract.
 - The machine-readable HTTP contract is [`../../contracts/openapi.yaml`](../../contracts/openapi.yaml), validated by `make contract-check`; it is published as a file, not served as a route. A dedicated management listener would be a separate verified slice.
 
 ## Starter-Owned Middleware
@@ -167,7 +167,7 @@ without bound. Eviction and fixed-window boundary bursts make this a single-repl
 distributed security control.
 
 Multi-replica deployments must enforce equivalent shared buckets in a WAF/gateway or add an explicit
-shared limiter adapter at composition time. Luas does not ship a built-in Redis rate-limit driver,
+shared limiter adapter at composition time. FastBuild does not ship a built-in Redis rate-limit driver,
 and the Redis cache adapter does not activate one. A future shared driver must define its atomic
 algorithm, failure mode, readiness behavior, key privacy, and client lifecycle; it must never
 silently fall back to independent per-process buckets. Per-IP limiting is still only one layer;

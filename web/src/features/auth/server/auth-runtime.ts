@@ -37,7 +37,7 @@ function targetsSameOriginApiRoute(apiUrl: string, appUrl: string): boolean {
 /**
  * Selects who can authoritatively resolve the current session.
  *
- * Luas can inspect its signed mock cookie or resolve the Go API cookie through
+ * FastBuild can inspect its signed mock cookie or resolve the Go API cookie through
  * the fixed production adapter. Other identity providers remain client-owned
  * unless a downstream app replaces this seam with its own server resolver.
  */

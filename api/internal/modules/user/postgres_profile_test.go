@@ -14,10 +14,10 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
-const postgresProfileDSNEnv = "LUAS_TEST_POSTGRES_DSN"
+const postgresProfileDSNEnv = "FASTBUILD_TEST_POSTGRES_DSN"
 
 type statementCounterContextKey struct{}
 
@@ -60,7 +60,7 @@ func newPostgresUserProfile(tb testing.TB) *postgresUserProfile {
 	}
 
 	admin := openPostgresProfileDB(tb, parsed.String())
-	schema := fmt.Sprintf("luas_user_profile_%d", time.Now().UnixNano())
+	schema := fmt.Sprintf("fastbuild_user_profile_%d", time.Now().UnixNano())
 	if err := admin.Exec("CREATE SCHEMA " + schema).Error; err != nil {
 		closeProfileDB(tb, admin)
 		tb.Fatalf("create isolated profile schema: %v", err)
@@ -76,7 +76,7 @@ func newPostgresUserProfile(tb testing.TB) *postgresUserProfile {
 
 	scoped := *parsed
 	parameters := scoped.Query()
-	parameters.Set("application_name", "luas-user-profile")
+	parameters.Set("application_name", "fastbuild-user-profile")
 	parameters.Set("search_path", schema)
 	scoped.RawQuery = parameters.Encode()
 	db = openPostgresProfileDB(tb, scoped.String())

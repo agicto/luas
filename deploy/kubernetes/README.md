@@ -1,8 +1,8 @@
 # Kubernetes Reference Baseline
 
-A production-shaped [kustomize](https://kustomize.io) baseline for the Luas API, its workers and
+A production-shaped [kustomize](https://kustomize.io) baseline for the FastBuild API, its workers and
 retention jobs, and the Next.js Web application. It is an **example surface**: copy it into the
-downstream deployment repository and own it there. Luas does not choose a cloud, ingress
+downstream deployment repository and own it there. FastBuild does not choose a cloud, ingress
 controller, secret store, rollout controller, or PostgreSQL provider. Those choices stay with the
 downstream team.
 
@@ -14,9 +14,9 @@ how the manifests map onto it.
 
 | Path | Contents |
 |---|---|
-| `config/` | `luas-api-config` ConfigMap: non-secret API runtime settings shared by every API pod, worker, and job |
+| `config/` | `fastbuild-api-config` ConfigMap: non-secret API runtime settings shared by every API pod, worker, and job |
 | `base/` | API Deployment + Service + PDB, workflow worker, Web Deployment + Service + PDB |
-| `migrate/` | Pre-deploy `luas migrate --force` Job, using the same image and configuration |
+| `migrate/` | Pre-deploy `fastbuild migrate --force` Job, using the same image and configuration |
 | `components/maintenance` | Retention CronJobs for authentication sessions and workflow tasks |
 | `components/notification` | `notification:work` delivery worker |
 | `components/webhook` | `webhook:work` delivery worker and `webhook:prune` retention job |
@@ -32,7 +32,7 @@ takes replicas out of traffic without restarting them.
 
 1. **Build and push images by digest.** Build `api/` and `web/` with their Dockerfiles, then set
    the digest in each kustomization's `images` entry (`kustomize edit set image
-   luas-api=registry.example.com/luas-api@sha256:...`). The Web image bakes in `NEXT_PUBLIC_*`
+   fastbuild-api=registry.example.com/fastbuild-api@sha256:...`). The Web image bakes in `NEXT_PUBLIC_*`
    at build time, so build it once per environment origin.
 
 2. **Create the secret outside this repository.** It needs at least `DB_USERNAME` and
@@ -41,7 +41,7 @@ takes replicas out of traffic without restarting them.
    operator. The imperative equivalent:
 
    ```bash
-   kubectl -n luas create secret generic luas-api-secrets --from-env-file=api.secrets.env
+   kubectl -n fastbuild create secret generic fastbuild-api-secrets --from-env-file=api.secrets.env
    ```
 
 3. **Set the configuration.** Edit `config/config.yaml` or patch it from an overlay: `APP_URL`,
@@ -53,14 +53,14 @@ takes replicas out of traffic without restarting them.
 4. **Migrate, then roll out.** Apply the migration job and wait for it to finish:
 
    ```bash
-   kubectl -n luas apply -k deploy/kubernetes/migrate
-   kubectl -n luas wait --for=condition=complete --timeout=10m job/luas-migrate
+   kubectl -n fastbuild apply -k deploy/kubernetes/migrate
+   kubectl -n fastbuild wait --for=condition=complete --timeout=10m job/fastbuild-migrate
    ```
 
    Then roll out the overlay:
 
    ```bash
-   kubectl -n luas apply -k deploy/kubernetes/overlays/example
+   kubectl -n fastbuild apply -k deploy/kubernetes/overlays/example
    ```
 
    The migration job must use the same `OPTIONAL_STARTERS` as the serving pods.

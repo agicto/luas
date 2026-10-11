@@ -7,19 +7,19 @@ describe('readJsonBody', () => {
     const request = new Request('https://app.example.com/api/example', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name: 'Luas' }),
+      body: JSON.stringify({ name: 'FastBuild' }),
     });
 
     await expect(readJsonBody(request, 64)).resolves.toEqual({
       ok: true,
-      data: { name: 'Luas' },
+      data: { name: 'FastBuild' },
     });
   });
 
   it('rejects a declared body that exceeds the budget without consuming it', async () => {
     const bodyRequest = new Request('https://app.example.com/api/example', {
       method: 'POST',
-      body: JSON.stringify({ name: 'Luas' }),
+      body: JSON.stringify({ name: 'FastBuild' }),
     });
     // happy-dom rewrites Content-Length on Request construction, so keep the
     // production Request body while supplying the ingress-declared headers.

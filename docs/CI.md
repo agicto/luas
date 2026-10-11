@@ -1,6 +1,6 @@
 # Continuous Integration
 
-Luas treats CI as part of the scaffold architecture. Workflows must be reproducible, least-privilege,
+FastBuild treats CI as part of the scaffold architecture. Workflows must be reproducible, least-privilege,
 compatible with supported runners, and reviewable without trusting a movable action tag.
 
 ## Workflow Roles
@@ -34,7 +34,7 @@ The API container workflow additionally requires a working Docker daemon with Co
 container workflow requires the same Docker/buildx contract but does not run Compose.
 
 The container job verifies one artifact identity. `verify-container.sh` builds and checks
-`luas-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
+`fastbuild-api:ci`; the following Compose step passes that tag explicitly and must fail if it is absent.
 The typed-setting Compose step reuses the same immutable image with
 `OPTIONAL_STARTERS=organization,setting` and exercises its PostgreSQL/API/CLI lifecycle.
 The usage-metering Compose step reuses that image with `OPTIONAL_STARTERS=organization,usage` and
@@ -127,10 +127,10 @@ explicit review and an allowlist update in `check-ci-actions.py`.
 ## Verification
 
 ```bash
-python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py
-python3 .agents/skills/luas-framework-review/scripts/check-dependency-supply-chain.py
-python3 .agents/skills/luas-framework-review/scripts/check-container-supply-chain.py
-python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py
+python3 .agents/skills/fastbuild-framework-review/scripts/check-ci-actions.py
+python3 .agents/skills/fastbuild-framework-review/scripts/check-dependency-supply-chain.py
+python3 .agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py
+python3 .agents/skills/fastbuild-framework-review/scripts/check-route-contract-discovery.py
 cd api && make route-catalog-check
 make dependency-scan
 make check

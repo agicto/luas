@@ -71,7 +71,7 @@ describe('webhook management workflow', () => {
     renderWithMessages(<WebhookManagement organizationId={7} />);
 
     expect(screen.getByText('Order processor')).toBeInTheDocument();
-    expect(screen.getByText('https://hooks.example.com/luas')).toBeInTheDocument();
+    expect(screen.getByText('https://hooks.example.com/fastbuild')).toBeInTheDocument();
     expect(screen.getAllByText('webhook.test')).not.toHaveLength(0);
     expect(screen.getByText('WEBHOOK.MOCK_NOT_DELIVERED')).toBeInTheDocument();
     expect(screen.queryByText(/whsec_/u)).not.toBeInTheDocument();
@@ -125,7 +125,7 @@ const endpoint = {
   id: 11,
   organization_id: 7,
   name: 'Order processor',
-  url: 'https://hooks.example.com/luas',
+  url: 'https://hooks.example.com/fastbuild',
   event_types: ['webhook.test'] as const,
   status: 'active' as const,
   disabled_reason: '',

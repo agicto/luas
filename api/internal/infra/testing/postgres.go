@@ -16,10 +16,10 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
-const TestPostgresDSNEnv = "LUAS_TEST_POSTGRES_DSN"
+const TestPostgresDSNEnv = "FASTBUILD_TEST_POSTGRES_DSN"
 
 var postgresResourceSequence atomic.Uint64
 
@@ -206,5 +206,5 @@ func closePostgres(tb testing.TB, db *gorm.DB) {
 
 func postgresResourceName(kind string) string {
 	sequence := postgresResourceSequence.Add(1)
-	return fmt.Sprintf("luas_%s_%d_%d_%d", kind, os.Getpid(), time.Now().UnixNano(), sequence)
+	return fmt.Sprintf("fastbuild_%s_%d_%d_%d", kind, os.Getpid(), time.Now().UnixNano(), sequence)
 }

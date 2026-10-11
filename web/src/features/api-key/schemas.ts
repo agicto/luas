@@ -37,7 +37,8 @@ export const apiKeySchema = strictObject({
   id: safeIdSchema,
   user_id: safeIdSchema,
   name: canonicalApiKeyNameSchema,
-  key_prefix: string().check(regex(/^luas_[a-z0-9_-]+$/)),
+  // Keys issued before a prefix rename keep their original lowercase prefix.
+  key_prefix: string().check(regex(/^[a-z][a-z0-9]*_[a-z0-9_-]+$/)),
   scopes: array(canonicalApiKeyScopeSchema).check(maxLength(32)),
   last_used_at: optional(timestampSchema),
   expires_at: optional(timestampSchema),

@@ -4,7 +4,7 @@ import { env } from '@/config/env';
 import { resolvePreferredLocale, supportedLocales } from './locale';
 import { resources, type SupportedLocale } from './resources';
 
-const localeStorageKey = 'luas-spa-locale';
+const localeStorageKey = 'fastbuild-spa-locale';
 
 function resolveInitialLocale(): SupportedLocale {
   const stored = window.localStorage.getItem(localeStorageKey);

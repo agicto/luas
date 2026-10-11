@@ -3,8 +3,8 @@ package asset
 import (
 	"time"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
-	"github.com/zgiai/luas/api/internal/domain"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 type createUploadIntentRequest struct {

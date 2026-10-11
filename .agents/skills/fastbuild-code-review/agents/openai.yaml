@@ -1,0 +1,6 @@
+interface:
+  display_name: "FastBuild Code Review"
+  short_description: "Review diffs on Standards and Spec"
+  default_prompt: "Use $fastbuild-code-review to review this FastBuild diff on separate Standards and Spec axes."
+policy:
+  allow_implicit_invocation: false

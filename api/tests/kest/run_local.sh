@@ -84,21 +84,21 @@ if ! command -v kest >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ -z "${LUAS_TEST_POSTGRES_DSN:-}" ]]; then
-  echo "LUAS_TEST_POSTGRES_DSN must point to a disposable PostgreSQL database" >&2
+if [[ -z "${FASTBUILD_TEST_POSTGRES_DSN:-}" ]]; then
+  echo "FASTBUILD_TEST_POSTGRES_DSN must point to a disposable PostgreSQL database" >&2
   exit 2
 fi
 
 POSTGRES_ENV=()
 while IFS= read -r entry; do
   POSTGRES_ENV+=("${entry}")
-done < <(python3 - "${LUAS_TEST_POSTGRES_DSN}" <<'PY'
+done < <(python3 - "${FASTBUILD_TEST_POSTGRES_DSN}" <<'PY'
 import sys
 from urllib.parse import parse_qs, unquote, urlparse
 
 value = urlparse(sys.argv[1])
 if value.scheme not in {"postgres", "postgresql"} or not value.hostname or not value.path.strip("/"):
-    raise SystemExit("LUAS_TEST_POSTGRES_DSN must be a PostgreSQL connection URI")
+    raise SystemExit("FASTBUILD_TEST_POSTGRES_DSN must be a PostgreSQL connection URI")
 query = parse_qs(value.query)
 print(f"DB_HOST={value.hostname}")
 print(f"DB_PORT={value.port or 5432}")
@@ -127,7 +127,7 @@ cd "${ROOT_DIR}"
 cp "${KEST_CONFIG_PATH}" "${KEST_CONFIG_BACKUP}"
 write_kest_config
 
-env "${COMMON_ENV[@]}" go run ./cmd/luas/main.go migrate >/dev/null
+env "${COMMON_ENV[@]}" go run ./cmd/fastbuild/main.go migrate >/dev/null
 env "${COMMON_ENV[@]}" go run ./cmd/server/main.go >"${SERVER_LOG}" 2>&1 &
 SERVER_PID=$!
 

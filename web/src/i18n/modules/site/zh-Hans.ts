@@ -8,14 +8,14 @@ const messages = {
   },
   footer: {
     tagline: 'AI 时代全栈脚手架',
-    copyright: '© {year} Luas。保留所有权利。',
+    copyright: '© {year} FastBuild。保留所有权利。',
   },
   hero: {
     eyebrow: '面向 AI 协作的企业脚手架',
     titlePrefix: '快速构建现代应用',
     titleAccent: '从清晰架构开始',
     description:
-      'Luas 将 Next.js Web 与 Go API 作为可独立部署、通过契约协作的两个部分，内置认证、国际化与工程治理。',
+      'FastBuild 将 Next.js Web 与 Go API 作为可独立部署、通过契约协作的两个部分，内置认证、国际化与工程治理。',
     primaryAction: '开始使用',
     secondaryAction: '查看控制台',
   },
@@ -45,7 +45,7 @@ const messages = {
   },
   cta: {
     title: '准备开始构建？',
-    description: '从 Luas 的契约、认证和可替换控制台开始你的下一个项目。',
+    description: '从 FastBuild 的契约、认证和可替换控制台开始你的下一个项目。',
     primaryAction: '免费开始',
     githubAction: '在 GitHub 查看',
   },

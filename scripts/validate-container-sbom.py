@@ -98,7 +98,7 @@ def fixture_subject(image: str, *, with_purl: bool) -> dict[str, Any]:
 
 
 def run_self_test() -> int:
-    image = "luas-web:ci"
+    image = "fastbuild-web:ci"
     base = {
         "bomFormat": "CycloneDX",
         "specVersion": "1.7",

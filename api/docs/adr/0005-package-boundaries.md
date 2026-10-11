@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Luas has four API homes that can plausibly host shared code or shared vocabulary:
+FastBuild has four API homes that can plausibly host shared code or shared vocabulary:
 
 - `pkg/` — currently houses `encryption`, `env`, `errors`, `events`, `handler`,
   `hash`, `logger`, `pagination`, `redact`, `request`, `resource`, `response`, `support`,
@@ -37,12 +37,12 @@ A package belongs in `pkg/` when **all** of the following hold:
 1. It has **no dependency** on `internal/...`, on `gin`, on `gorm`, or on
    any other framework-level choice this scaffold makes.
 2. It is a stable building block that other Go projects could vendor in
-   without inheriting Luas's architecture.
+   without inheriting FastBuild's architecture.
 3. It owns no global state, no init-time side effects, no DI wiring.
 
 Examples that fit: `pkg/env`, `pkg/pagination`, `pkg/errors`, `pkg/redact`.
 
-Smell test: would a Go developer outside Luas reasonably copy this file
+Smell test: would a Go developer outside FastBuild reasonably copy this file
 into their own project unchanged? If yes, `pkg/`.
 
 ### `internal/domain/` — framework-free starter vocabulary
@@ -68,22 +68,22 @@ A package belongs in `internal/capabilities/` when:
 
 1. It exposes a **provider-neutral surface** the rest of the app calls
    through (e.g. `ai.Provider`, `idgen.Generator`).
-2. The surface is **Luas-shaped**: it makes sense in *this* application's
-   world but may not generalize. (`capabilities/ai` is what Luas's
+2. The surface is **FastBuild-shaped**: it makes sense in *this* application's
+   world but may not generalize. (`capabilities/ai` is what FastBuild's
    modules and CLI need, not the OpenAI SDK reshape.)
 3. It can be **Wire-injected** into modules without leaking framework
    details (no `*gin.Context`, no `*gorm.DB` in its public API).
 
 Examples that fit: `capabilities/ai`, `capabilities/idgen`.
 
-Smell test: would another Luas-based app reuse this verbatim, but a
+Smell test: would another FastBuild-based app reuse this verbatim, but a
 plain Go service probably wouldn't bother? If yes, `internal/capabilities/`.
 
 ### `internal/infra/` — framework wiring + runtime glue
 
 A package belongs in `internal/infra/` when:
 
-1. It is **bound to specific framework / runtime decisions** Luas has
+1. It is **bound to specific framework / runtime decisions** FastBuild has
    made (Gin, GORM, OTel, our env-loader, our console framework).
 2. It exists to make the runtime work, not to be reused. Replacing the
    framework would replace this code.
@@ -130,7 +130,7 @@ import.
   flagged in review as boundary violations.
 - New PRs that make `internal/domain/` depend on runtime helpers are
   flagged before domain concepts become framework-coupled.
-- Luas-branded startup output belongs in `internal/bootstrap/`, not in
+- FastBuild-branded startup output belongs in `internal/bootstrap/`, not in
   reusable `pkg/` helpers.
 - The previous duplicate (`pkg/encryption` ↔ `internal/capabilities/crypto`)
   was resolved by keeping the capability-shaped `crypto`; the deprecated
@@ -140,7 +140,7 @@ import.
   truly belongs in one of these documented homes — and to point
   to this ADR when justifying the choice.
 - The boundary lint lives at
-  `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
+  `.agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`
   from the repository root. It blocks new reverse imports while any current
   baseline exceptions, if they exist, are tracked in
   [`../PACKAGE_BOUNDARIES.md`](../PACKAGE_BOUNDARIES.md).

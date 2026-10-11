@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 const (

@@ -11,7 +11,7 @@ interface GlobalErrorProps {
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   useEffect(() => {
-    console.error('[Luas] Uncaught root error', error, {
+    console.error('[FastBuild] Uncaught root error', error, {
       digest: error.digest,
     });
   }, [error]);
@@ -19,7 +19,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en">
       <head>
-        <title>Luas | Application error</title>
+        <title>FastBuild | Application error</title>
       </head>
       <body className="min-h-screen bg-bg-canvas text-text-main antialiased">
         <main

@@ -10,12 +10,12 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
 const (
-	starterCatalogKind          = "luas.starter_catalog"
+	starterCatalogKind          = "fastbuild.starter_catalog"
 	starterCatalogSchemaVersion = 1
 )
 
@@ -530,7 +530,7 @@ func writeFileAtomic(path string, content []byte, mode os.FileMode) error {
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return fmt.Errorf("create environment directory %s: %w", directory, err)
 	}
-	temporary, err := os.CreateTemp(directory, ".luas-env-*")
+	temporary, err := os.CreateTemp(directory, ".fastbuild-env-*")
 	if err != nil {
 		return fmt.Errorf("create temporary environment file: %w", err)
 	}

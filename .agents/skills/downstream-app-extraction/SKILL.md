@@ -1,11 +1,11 @@
 ---
 name: downstream-app-extraction
-description: Convert Luas into a downstream app safely. Use when deleting examples, replacing mock BFF routes, rebranding console surfaces, or checking product leakage.
+description: Convert FastBuild into a downstream app safely. Use when deleting examples, replacing mock BFF routes, rebranding console surfaces, or checking product leakage.
 ---
 
 # Downstream App Extraction
 
-Separate scaffold behavior from product behavior while keeping inherited Luas
+Separate scaffold behavior from product behavior while keeping inherited FastBuild
 contracts, starters, deployables, and verification coherent.
 
 ## Repository Mode
@@ -13,11 +13,11 @@ contracts, starters, deployables, and verification coherent.
 Choose the mode from `pwd`, `git remote -v`, and
 `git status --short --branch` before editing:
 
-- **Scaffold mode**: the worktree is Luas or `origin` points at its source
+- **Scaffold mode**: the worktree is FastBuild or `origin` points at its source
   remote. Make only reusable scaffold changes. Product names, routes, jobs,
   content, credentials, and deployment behavior belong elsewhere.
 - **Downstream mode**: the worktree is the derived application. Product
-  behavior is allowed, but inherited surfaces still use Luas classifications.
+  behavior is allowed, but inherited surfaces still use FastBuild classifications.
 
 If product work is requested in scaffold mode, stop before editing product
 files and move to the downstream repository or request its path.
@@ -60,7 +60,7 @@ Do not load references for starters outside the requested downstream slice.
 
 1. **Confirm the repository boundary.** Record the mode and, in downstream
    mode, the application name and product identifiers used for leakage checks.
-   A fresh downstream copy without `.luas-project.json` is renamed first with
+   A fresh downstream copy without `.fastbuild-project.json` is renamed first with
    `make init-project`; do not rename the module path or package names by hand.
 2. **Inventory inherited surfaces.** List every changing API module, Web or
    Admin feature, mock route, console page, devtool, example, environment
@@ -83,7 +83,7 @@ Do not load references for starters outside the requested downstream slice.
 5. **Clean leakage.** Search for downstream and legacy product names,
    deployment and job names, remote URLs, demo credentials, routes, and content
    terms. Scaffold mode contains none except deliberate placeholders;
-   downstream mode contains no user-visible Luas examples masquerading as
+   downstream mode contains no user-visible FastBuild examples masquerading as
    product behavior.
 6. **Verify the changed surfaces.** Use the nearest `AGENTS.md` and
    `docs/SCAFFOLD_SURFACES.md` matrix for focused proof. Use `make check` only
@@ -94,7 +94,7 @@ Do not load references for starters outside the requested downstream slice.
 
 ```bash
 bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh \
-  --expected-origin git@github.com:agicto/luas.git \
+  --expected-origin git@github.com:fastagi/fastbuild.git \
   --pattern "product-name" \
   --pattern "deployment-job-name"
 ```
@@ -114,7 +114,7 @@ from the current task.
 
 ## Anti-patterns
 
-- Editing product behavior while still in the Luas scaffold worktree.
+- Editing product behavior while still in the FastBuild scaffold worktree.
 - Treating devtools, examples, or mock BFF routes as production features.
 - Removing contracts because shared source or a generic proxy seems faster.
 - Rebranding source-scaffold documentation instead of the downstream app.

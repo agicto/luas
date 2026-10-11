@@ -36,7 +36,7 @@ The shipped catalog is intentionally small:
 
 | Scope | Key | Kind | Visibility | Default |
 |---|---|---|---|---|
-| app | `branding.display_name` | string | public | `Luas` |
+| app | `branding.display_name` | string | public | `FastBuild` |
 | app | `localization.locale` | enum | public | `en-US` |
 | organization | `localization.locale` | enum | private | `en-US` |
 | user | `localization.locale` | enum | private | `en-US` |
@@ -132,7 +132,7 @@ ETag: "settings-<sha256>"
 `If-None-Match` accepts that aggregate validator and returns HTTP 304 with no body when unchanged.
 Every authenticated setting response uses `Cache-Control: private, no-store`; user responses vary
 on `Cookie`, and organization responses vary on both `Cookie` and `Organization-Id` at the browser
-adapter boundary. Public organization settings are deliberately absent because Luas has no public
+adapter boundary. Public organization settings are deliberately absent because FastBuild has no public
 organization identity or enumeration contract.
 
 ## Persistence And Deletion

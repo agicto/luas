@@ -1,6 +1,6 @@
 ---
 name: module-creation
-description: Create a route-owning Luas API starter module. Use for new default or optional business starters, not technical capabilities, local helpers, or examples.
+description: Create a route-owning FastBuild API starter module. Use for new default or optional business starters, not technical capabilities, local helpers, or examples.
 ---
 
 # Module Creation
@@ -44,7 +44,7 @@ behavior.
 1. **Generate or create the package**
 
    ```bash
-   go run ./cmd/luas make:module <Name>
+   go run ./cmd/fastbuild make:module <Name>
    ```
 
    The default route-owning shape is:
@@ -103,8 +103,8 @@ behavior.
 ./.agents/skills/module-creation/scripts/validate-module.sh <name>
 go test ./internal/modules/<name>/... ./internal/starter/...
 
-DB_ENABLED=false go run ./cmd/luas route:list
-DB_ENABLED=false OPTIONAL_STARTERS=<name> go run ./cmd/luas route:list
+DB_ENABLED=false go run ./cmd/fastbuild route:list
+DB_ENABLED=false OPTIONAL_STARTERS=<name> go run ./cmd/fastbuild route:list
 
 make route-catalog-check
 ```
@@ -116,7 +116,7 @@ halves changed.
 
 - Canonical checklist:
   [`../../../docs/ADDING_MODULE.md`](../../../docs/ADDING_MODULE.md)
-- Generated shape: run `luas make:module <name>` in a scratch checkout and read its output; the
+- Generated shape: run `fastbuild make:module <name>` in a scratch checkout and read its output; the
   generator is tested to build and is the maintained example.
 - HTTP rules: [`../api-development/`](../api-development/)
 - Persistence rules: [`../database-design/`](../database-design/)

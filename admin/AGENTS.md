@@ -1,4 +1,4 @@
-# AGENTS.md - Luas Admin Console
+# AGENTS.md - FastBuild Admin Console
 
 Rules for the static React application under `admin/`.
 
@@ -10,7 +10,7 @@ shadcn/ui, i18next, Zod, and Vitest. It
 builds browser-only assets under `dist/`; no Node.js runtime or server function
 may be required in production.
 
-Inspect the owning route, feature, service, and tests first. Use root Luas
+Inspect the owning route, feature, service, and tests first. Use root FastBuild
 skills only when their trigger matches; this surface deliberately does not
 duplicate the Next-specific skills under `web/.agents/skills/`.
 
@@ -97,7 +97,7 @@ This is a static browser client, not a BFF:
 
 - Use the configured shadcn/ui New York primitives and semantic tokens before
   adding a new visual system.
-- Keep the Luas brand accent Rhine blue. Green is reserved for explicit
+- Keep the FastBuild brand accent Rhine blue. Green is reserved for explicit
   success state and must not become the logo, navigation, selection, or focus
   color.
 - Compose the console shell from `SidebarProvider`, `Sidebar`, and

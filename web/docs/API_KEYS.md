@@ -33,7 +33,7 @@ metadata, and never includes the hash in public list data.
   or DTOs; do not turn the adapter into a catch-all proxy.
 - Remove `src/features/api-key`, `src/app/api/api-keys`, the API tab, its route-owned translations,
   and API key tests together when the downstream product does not expose API keys.
-- Define product scope names in the downstream app. Do not add a fake global scope catalog to Luas.
+- Define product scope names in the downstream app. Do not add a fake global scope catalog to FastBuild.
 
 ## Verification
 

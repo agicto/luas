@@ -7,7 +7,7 @@ hybrid entry points: they select either this mock
 behavior or the shipped production API adapter. A route location under `/api` does not by itself
 make behavior mock or production.
 
-Use this guide when turning Luas into a downstream app.
+Use this guide when turning FastBuild into a downstream app.
 
 ## Runtime Modes
 
@@ -15,8 +15,8 @@ Use this guide when turning Luas into a downstream app.
 | --------------------------------- | --------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | Local scaffold development        | `/api`                                              | adapter off; mock unset/false                    | Uses mock route behavior.                                                                                      |
 | Demo deployment without a backend | `/api`                                              | `MOCK_BFF_ENABLED=true`                          | Demo-only. Also set a strong `SESSION_SECRET`.                                                                 |
-| Production Luas Go API            | `/api`                                              | `API_ADAPTER_ENABLED=true` plus adapter settings | Auth and explicitly enabled starter routes use fixed production handlers; unrelated mock routes stay disabled. |
-| Other production backend          | Contract-compatible endpoint or replacement adapter | adapter/mock off                                 | Uses the downstream production contract and keeps Luas mock behavior disabled.                                 |
+| Production FastBuild Go API            | `/api`                                              | `API_ADAPTER_ENABLED=true` plus adapter settings | Auth and explicitly enabled starter routes use fixed production handlers; unrelated mock routes stay disabled. |
+| Other production backend          | Contract-compatible endpoint or replacement adapter | adapter/mock off                                 | Uses the downstream production contract and keeps FastBuild mock behavior disabled.                                 |
 
 If production uses the same `/api` path, route that path to the real API at the deployment layer.
 If production calls a cross-origin API, the API must allow credentialed browser requests from the
@@ -42,7 +42,7 @@ cookie. See [`AUTHENTICATION.md`](AUTHENTICATION.md).
 2. Set `NEXT_PUBLIC_API_URL` to the production base URL or same-origin adapter path whose browser
    contract is documented.
 3. Keep feature services only when their endpoint paths and DTOs match that browser contract. For
-   the Luas Go auth starter, retain the browser service and configure the shipped adapter.
+   the FastBuild Go auth starter, retain the browser service and configure the shipped adapter.
 4. Replace mock server state:
    - `src/app/api/**/route.ts`
    - `src/app/api/_shared/*`

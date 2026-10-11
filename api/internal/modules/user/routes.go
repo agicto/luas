@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
 )
 
 // RegisterMiddleware registers the persistent authentication-session middleware.

@@ -32,7 +32,7 @@ const endpoint = {
   id: 5,
   organization_id: 7,
   name: 'Receiver',
-  url: 'https://hooks.example.test/luas',
+  url: 'https://hooks.example.test/fastbuild',
   event_types: ['webhook.test'],
   status: 'disabled',
   disabled_reason: 'consecutive_failures',
@@ -103,7 +103,7 @@ describe('WebhookDiagnostics', () => {
     stubApi(() => json({}));
     render(withQueryClient(<WebhookDiagnostics organizationId={7} />));
 
-    expect(await screen.findByText('https://hooks.example.test/luas')).toBeInTheDocument();
+    expect(await screen.findByText('https://hooks.example.test/fastbuild')).toBeInTheDocument();
     expect(screen.getByText('consecutive_failures')).toBeInTheDocument();
     expect(screen.getByText('8 consecutive failures')).toBeInTheDocument();
     expect(screen.queryByText(/abcd/)).not.toBeInTheDocument();

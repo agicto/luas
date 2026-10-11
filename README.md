@@ -1,6 +1,10 @@
-# Luas
+# FastBuild
 
-Luas is an open-source full-stack starter kit for building secure web applications with Go and
+**The enterprise application framework for the AI era.** Build complete business applications as
+fast as FastAPI builds APIs: a Go API, a Next.js application, and an Admin Console, with
+authentication, permissions, audit, deployment, and CI already working.
+
+FastBuild is an open-source full-stack starter kit for building secure web applications with Go and
 React. It combines a modular PostgreSQL API, production-ready business starters,
 a customer-facing Next.js application, and a lightweight Admin Console in one
 coherent architecture.
@@ -11,7 +15,7 @@ assets, settings, usage limits, and webhooks when the product needs them.
 
 ## What You Can Build
 
-Luas works well for SaaS products, internal platforms, developer tools, AI applications, operations
+FastBuild works well for SaaS products, internal platforms, developer tools, AI applications, operations
 consoles, and API-first services. The included foundations remove common setup work without forcing
 product-specific business rules.
 
@@ -32,7 +36,7 @@ The `user`, `apikey`, and `audit` starters are enabled by default. Other busines
 optional, so a small application does not inherit tenancy, RBAC, storage, or integration complexity
 until it needs those capabilities.
 
-## Why Luas Is Convenient
+## Why FastBuild Is Convenient
 
 - **One architecture from API to UI.** Contracts, error codes, request IDs, pagination, feature
   names, and ownership boundaries stay consistent across deployable units.
@@ -112,7 +116,7 @@ make init-project NAME="Acme Platform" SLUG=acme MODULE=github.com/acme/platform
 
 `project:init` rewrites the Go module path, package and container-project names, display name,
 repository URL, and the default starter selection for the API, Web, Admin, and `make dev`. It
-records the scaffold version in `.luas-project.json` and refuses to run twice. Then remove the
+records the scaffold version in `.fastbuild-project.json` and refuses to run twice. Then remove the
 examples and starters you do not need with the
 [downstream extraction guide](.agents/skills/downstream-app-extraction/SKILL.md).
 
@@ -134,7 +138,7 @@ database and `make dev-reset` also deletes its data.
 | API | `http://127.0.0.1:8025` | `POST /v1/login` |
 
 Ports and the starter selection are environment variables, for example
-`LUAS_API_PORT=18025 make dev`; run `scripts/dev.sh help` for the full list. The seeded accounts and
+`FASTBUILD_API_PORT=18025 make dev`; run `scripts/dev.sh help` for the full list. The seeded accounts and
 local secrets are for development only.
 
 With the stack running, `cd admin && corepack pnpm e2e` drives the Admin Console against the API in
@@ -158,9 +162,9 @@ Inspect and configure optional API starters with the CLI:
 
 ```bash
 cd api
-go run ./cmd/luas starter:list
-go run ./cmd/luas starter:enable permission
-go run ./cmd/luas starter:check
+go run ./cmd/fastbuild starter:list
+go run ./cmd/fastbuild starter:enable permission
+go run ./cmd/fastbuild starter:check
 ```
 
 `starter:enable` adds required dependencies, so enabling `permission` writes
@@ -227,19 +231,19 @@ translation, and shared domain code remains independent of Gin and GORM.
 
 ## API And Operator Tools
 
-The API includes a `luas` operator command:
+The API includes a `fastbuild` operator command:
 
 ```bash
 cd api
-go run ./cmd/luas version
-go run ./cmd/luas starter:list
-go run ./cmd/luas starter:check
-DB_ENABLED=false go run ./cmd/luas route:list
-DB_ENABLED=false go run ./cmd/luas route:list --format=json
-go run ./cmd/luas migrate
-go run ./cmd/luas seed
-go run ./cmd/luas auth-session:prune --batch=500
-go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
+go run ./cmd/fastbuild version
+go run ./cmd/fastbuild starter:list
+go run ./cmd/fastbuild starter:check
+DB_ENABLED=false go run ./cmd/fastbuild route:list
+DB_ENABLED=false go run ./cmd/fastbuild route:list --format=json
+go run ./cmd/fastbuild migrate
+go run ./cmd/fastbuild seed
+go run ./cmd/fastbuild auth-session:prune --batch=500
+go run ./cmd/fastbuild audit:prune --before=2026-04-01T00:00:00Z --batch=500
 ```
 
 Starter-specific commands manage notification workers, asset cleanup, setting overrides, usage
@@ -264,7 +268,7 @@ Runtime route discovery is deterministic and machine-readable:
 
 ```bash
 cd api
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/fastbuild route:list --format=json
 ```
 
 This makes active routes inspectable in local development, CI, and deployment tooling without
@@ -272,7 +276,7 @@ maintaining a second handwritten route inventory.
 
 ## Security And Production
 
-Luas includes practical application-security foundations:
+FastBuild includes practical application-security foundations:
 
 - hash-only authentication sessions and API keys;
 - same-origin HttpOnly credential custody in the Next.js adapter;
@@ -306,7 +310,7 @@ benchmark, container, and security commands.
 ## Project Layout
 
 ```text
-luas/
+fastbuild/
 |-- api/          # Go API, starters, workers, migrations, and CLI
 |-- web/          # Customer-facing Next.js application
 |-- admin/        # Vite and TanStack project management console
@@ -346,4 +350,4 @@ sensitive details in a public issue.
 
 ## License
 
-Luas is available under the [MIT License](LICENSE).
+FastBuild is available under the [MIT License](LICENSE).

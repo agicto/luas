@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 func captureSlog(t *testing.T) *bytes.Buffer {

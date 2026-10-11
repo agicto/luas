@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/zgiai/luas/api/database/migrations"
-	"github.com/zgiai/luas/api/database/seeders"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/database/migrations"
+	"github.com/fastagi/fastbuild/api/database/seeders"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // Registry is the single assembly point for active default and optional starters.

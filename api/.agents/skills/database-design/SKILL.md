@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: Design Luas persistence models, indexes, bounded queries, and table lifecycle. Use for schema or query-shape decisions; use sql-migration-review for rollout safety.
+description: Design FastBuild persistence models, indexes, bounded queries, and table lifecycle. Use for schema or query-shape decisions; use sql-migration-review for rollout safety.
 ---
 
 # Database Design
@@ -66,7 +66,7 @@ allocations as comparison evidence.
 Use the repository profile only when the changed seam matches it:
 
 ```bash
-LUAS_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/luas_profile?sslmode=disable' \
+FASTBUILD_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/fastbuild_profile?sslmode=disable' \
   make benchmark-database
 ```
 
@@ -78,7 +78,7 @@ statements globally without a transaction audit and deployment-pooler evidence.
 - Run `scripts/validate-db.sh <module-or-model-path>` for cheap PO checks.
 - Run the owning repository/module tests.
 - Verify constraints, transactions, locks, indexes, migrations, and query shape
-  against disposable PostgreSQL through `LUAS_TEST_POSTGRES_DSN`.
+  against disposable PostgreSQL through `FASTBUILD_TEST_POSTGRES_DSN`.
 - Use [examples/module_model_example.go](examples/module_model_example.go) only
   when a concrete PO/index example is needed; it is not a universal template.
 

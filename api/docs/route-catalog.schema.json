@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:luas:schema:route-catalog:v1",
-  "title": "Luas registered route catalog",
-  "description": "Deterministic inventory emitted by `luas route:list --format=json`. It describes active route topology, not HTTP payload or authorization semantics.",
+  "$id": "urn:fastbuild:schema:route-catalog:v1",
+  "title": "FastBuild registered route catalog",
+  "description": "Deterministic inventory emitted by `fastbuild route:list --format=json`. It describes active route topology, not HTTP payload or authorization semantics.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -13,7 +13,7 @@
   ],
   "properties": {
     "kind": {
-      "const": "luas.route_catalog"
+      "const": "fastbuild.route_catalog"
     },
     "schema_version": {
       "const": 1

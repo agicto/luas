@@ -1,11 +1,11 @@
-# AGENTS.md - Luas API
+# AGENTS.md - FastBuild API
 
 Rules for the Go backend under `api/`.
 
 ## Scope
 
 The API uses Gin, Wire, GORM, and DDD-flavored starter modules. Preserve the
-module identity `github.com/zgiai/luas/api`.
+module identity `github.com/fastagi/fastbuild/api`.
 
 For a routine change, inspect the owning package and tests first. Read only the
 document or skill that owns the active concern; do not load this entire
@@ -29,7 +29,7 @@ Root skills remain available. API-specific skills are:
 
 Choose at most one primary skill when its trigger clearly matches; routine
 local work may need none. Add another only when the change genuinely crosses
-its owning boundary. Root `luas-code-review` is the review workflow; API rules
+its owning boundary. Root `fastbuild-code-review` is the review workflow; API rules
 below and the owning docs supply the backend-specific standard.
 
 ## Architecture
@@ -108,7 +108,7 @@ Capabilities should not gain HTTP files merely to match that template.
 - Wrap sentinel errors with `%w` so central mapping remains reliable.
 - Use `handler.BindJSON()` and validation tags for request bodies.
 - Paginate unbounded lists. A finite code-owned catalog needs the reviewed
-  `// luas:bounded-list max=<n> reason=<reason>` marker.
+  `// fastbuild:bounded-list max=<n> reason=<reason>` marker.
 - Resource URLs use plural nouns, not action verbs.
 - Use `200` for reads/updates, `201` for creation, and `204` for successful
   bodyless deletion.

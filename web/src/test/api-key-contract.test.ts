@@ -13,7 +13,7 @@ const apiKey = {
   id: 42,
   user_id: 7,
   name: 'Deployment',
-  key_prefix: 'luas_ab-cd_123456',
+  key_prefix: 'fastbuild_ab-cd_123456',
   scopes: ['models:invoke', 'models:read'],
   created_at: timestamp,
   updated_at: timestamp,
@@ -28,7 +28,7 @@ describe('API key browser contract', () => {
     expect(
       parseCreateApiKeyResponse({
         api_key: apiKey,
-        plaintext_key: 'luas_ab-cd_123456.0123456789abcdef0123456789abcdef0123456789abcdef',
+        plaintext_key: 'fastbuild_ab-cd_123456.0123456789abcdef0123456789abcdef0123456789abcdef',
       })
     ).toMatchObject({ api_key: { id: 42 } });
   });
@@ -46,7 +46,7 @@ describe('API key browser contract', () => {
     expectInvalidResponse(() =>
       parseCreateApiKeyResponse({
         api_key: { ...apiKey, key_hash: 'server-secret-hash' },
-        plaintext_key: 'luas_ab-cd_123456.0123456789abcdef0123456789abcdef0123456789abcdef',
+        plaintext_key: 'fastbuild_ab-cd_123456.0123456789abcdef0123456789abcdef0123456789abcdef',
       })
     );
   });
@@ -62,7 +62,7 @@ describe('API key browser contract', () => {
       scopes: ['models:read'],
     });
 
-    expect(created.plaintext_key).toMatch(/^luas_[a-f0-9]+\.[a-f0-9]+$/);
+    expect(created.plaintext_key).toMatch(/^fastbuild_[a-f0-9]+\.[a-f0-9]+$/);
     expect(JSON.stringify(store)).not.toContain(created.plaintext_key);
     expect(JSON.stringify(store.list(actor, 1, 15))).not.toContain(created.plaintext_key);
     expect(JSON.stringify(store.list(actor, 1, 15))).not.toContain('key_hash');

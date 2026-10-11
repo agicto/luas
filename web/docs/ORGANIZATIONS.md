@@ -70,7 +70,7 @@ preserves stable status, `error_code`, field ownership, `request_id`, rate-limit
 ## Development Mock
 
 Outside production, or with an explicit demo deployment, the same routes use an in-memory mock
-store after verifying the mock session. It starts with one `Luas Demo` organization and seeded
+store after verifying the mock session. It starts with one `FastBuild Demo` organization and seeded
 owner, administrator, and member roles. It implements organization, context, member, ownership,
 invitation, and acceptance transitions with the production role matrix. It is development state
 only and resets with the Web process.
@@ -82,7 +82,7 @@ boundary instead of adding a mock-only secret response.
 
 ## Downstream Replacement
 
-- Keep the feature when the downstream product uses Luas organizations as its tenant/account owner.
+- Keep the feature when the downstream product uses FastBuild organizations as its tenant/account owner.
 - Replace only `src/server/api-adapter/` and the fixed Route Handlers when another backend owns the
   same browser contract.
 - Delete the route group, feature folder, i18n module, and `organization` feature selection together

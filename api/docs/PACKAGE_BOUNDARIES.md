@@ -15,7 +15,7 @@ pkg/ <- internal/capabilities/ <- internal/infra/ <- internal/modules/
 
 `cmd/`, `internal/bootstrap/`, and `internal/wiring/` are assembly layers and may wire the lower
 layers together. `internal/domain/` is the framework-free starter vocabulary layer; it is consumed
-by starter modules and selected assembly code, but it does not depend on Luas runtime packages.
+by starter modules and selected assembly code, but it does not depend on FastBuild runtime packages.
 
 ## Rules
 
@@ -33,7 +33,7 @@ by starter modules and selected assembly code, but it does not depend on Luas ru
 Run from the repository root:
 
 ```bash
-bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh
+bash .agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh
 ```
 
 The check uses `go list` direct imports. It blocks new reverse imports and reports the current
@@ -47,7 +47,7 @@ None.
 
 - `internal/domain/` is now guarded as a standard-library-only package so domain entities,
   domain errors, and repository seams do not pick up HTTP, database, runtime, or response helpers.
-- The Luas startup banner now lives in `internal/bootstrap/` instead of `pkg/support`, keeping
+- The FastBuild startup banner now lives in `internal/bootstrap/` instead of `pkg/support`, keeping
   application-branded console output out of reusable `pkg/` helpers.
 - Starter registry interfaces now live in `internal/starter/assembly` instead of the old
   top-level starter contract package, keeping HTTP contract vocabulary reserved for `contracts/`.
@@ -79,5 +79,5 @@ None.
 Do not add a new exception without also updating:
 
 - this document,
-- `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`,
+- `.agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`,
 - and the rationale in an ADR or roadmap entry.

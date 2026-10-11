@@ -170,7 +170,7 @@ func TestStoreContractMatchesMemoryAndRedis(t *testing.T) {
 			return store
 		},
 		"redis": func(t *testing.T) Store {
-			store, err := NewRedisStore(newFakeRedisClient(), RedisConfig{Namespace: "luas:test:cache:"})
+			store, err := NewRedisStore(newFakeRedisClient(), RedisConfig{Namespace: "fastbuild:test:cache:"})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -240,7 +240,7 @@ func assertStoreContract(t *testing.T, store Store) {
 
 func TestRedisStoreUsesNamespacedAtomicCommandsAndBorrowsClient(t *testing.T) {
 	client := newFakeRedisClient()
-	store, err := NewRedisStore(client, RedisConfig{Namespace: "luas:production:cache:"})
+	store, err := NewRedisStore(client, RedisConfig{Namespace: "fastbuild:production:cache:"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -281,14 +281,14 @@ func TestRedisStoreValidationAndBackendErrors(t *testing.T) {
 		config   RedisConfig
 		expected error
 	}{
-		"nil client":       {client: nil, config: RedisConfig{Namespace: "luas:test:"}, expected: ErrNilDependency},
-		"typed nil client": {client: typedNil, config: RedisConfig{Namespace: "luas:test:"}, expected: ErrNilDependency},
+		"nil client":       {client: nil, config: RedisConfig{Namespace: "fastbuild:test:"}, expected: ErrNilDependency},
+		"typed nil client": {client: typedNil, config: RedisConfig{Namespace: "fastbuild:test:"}, expected: ErrNilDependency},
 		"empty namespace":  {client: newFakeRedisClient(), config: RedisConfig{}, expected: ErrInvalidNamespace},
 		"missing separator": {
-			client: newFakeRedisClient(), config: RedisConfig{Namespace: "luas:test"}, expected: ErrInvalidNamespace,
+			client: newFakeRedisClient(), config: RedisConfig{Namespace: "fastbuild:test"}, expected: ErrInvalidNamespace,
 		},
 		"negative item limit": {
-			client: newFakeRedisClient(), config: RedisConfig{Namespace: "luas:test:", MaxItemBytes: -1}, expected: ErrInvalidCapacity,
+			client: newFakeRedisClient(), config: RedisConfig{Namespace: "fastbuild:test:", MaxItemBytes: -1}, expected: ErrInvalidCapacity,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -302,7 +302,7 @@ func TestRedisStoreValidationAndBackendErrors(t *testing.T) {
 	backendErr := errors.New("Redis unavailable")
 	client := newFakeRedisClient()
 	client.failure = backendErr
-	store, err := NewRedisStore(client, RedisConfig{Namespace: "luas:test:"})
+	store, err := NewRedisStore(client, RedisConfig{Namespace: "fastbuild:test:"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -311,7 +311,7 @@ func TestRedisStoreValidationAndBackendErrors(t *testing.T) {
 	}
 
 	limited, err := NewRedisStore(newFakeRedisClient(), RedisConfig{
-		Namespace:    "luas:test:",
+		Namespace:    "fastbuild:test:",
 		MaxItemBytes: 4,
 	})
 	if err != nil {
@@ -323,9 +323,9 @@ func TestRedisStoreValidationAndBackendErrors(t *testing.T) {
 }
 
 func TestRedisStoreRealServer(t *testing.T) {
-	address := os.Getenv("LUAS_TEST_REDIS_ADDR")
+	address := os.Getenv("FASTBUILD_TEST_REDIS_ADDR")
 	if address == "" {
-		t.Skip("LUAS_TEST_REDIS_ADDR is not set")
+		t.Skip("FASTBUILD_TEST_REDIS_ADDR is not set")
 	}
 	client := redis.NewClient(&redis.Options{Addr: address})
 	t.Cleanup(func() { _ = client.Close() })
@@ -335,7 +335,7 @@ func TestRedisStoreRealServer(t *testing.T) {
 		t.Fatalf("ping test Redis: %v", err)
 	}
 
-	namespace := fmt.Sprintf("luas:cache-integration:%d:", time.Now().UnixNano())
+	namespace := fmt.Sprintf("fastbuild:cache-integration:%d:", time.Now().UnixNano())
 	store, err := NewRedisStore(client, RedisConfig{Namespace: namespace})
 	if err != nil {
 		t.Fatal(err)
@@ -350,7 +350,7 @@ func TestRedisStoreRealServer(t *testing.T) {
 
 func TestRedisStoreAddIsAtomic(t *testing.T) {
 	client := newFakeRedisClient()
-	store, err := NewRedisStore(client, RedisConfig{Namespace: "luas:test:"})
+	store, err := NewRedisStore(client, RedisConfig{Namespace: "fastbuild:test:"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -390,7 +390,7 @@ func TestJSONHelpersPreserveConcreteTypesAcrossStores(t *testing.T) {
 		t.Fatal(err)
 	}
 	stores["memory"] = memory
-	redisStore, err := NewRedisStore(newFakeRedisClient(), RedisConfig{Namespace: "luas:test:"})
+	redisStore, err := NewRedisStore(newFakeRedisClient(), RedisConfig{Namespace: "fastbuild:test:"})
 	if err != nil {
 		t.Fatal(err)
 	}

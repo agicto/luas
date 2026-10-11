@@ -1,6 +1,6 @@
 ---
 name: webapp-testing
-description: Verify a running Luas UI through a real browser. Use for requested workflows, screenshots, responsive checks, or runtime DOM/console inspection, not routine component tests.
+description: Verify a running FastBuild UI through a real browser. Use for requested workflows, screenshots, responsive checks, or runtime DOM/console inspection, not routine component tests.
 ---
 
 # Web Application Testing
@@ -17,7 +17,7 @@ and rendered visual state.
    environment. Do not create a second Playwright process when a connected
    browser can inspect the target.
 2. Reuse an already running local server when it belongs to the current
-   workspace. Confirm the URL before treating another project as Luas.
+   workspace. Confirm the URL before treating another project as FastBuild.
 3. Start only the deployable unit needed for the workflow. Keep the process
    alive while verifying and stop it unless the user needs the URL afterward.
 4. Use `scripts/with_server.py` only for a self-contained headless CLI or CI

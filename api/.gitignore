@@ -12,7 +12,7 @@
 # Binaries (root directory only)
 bin/
 dist/
-/luas
+/fastbuild
 /migrate
 /server
 test_output.txt
@@ -97,7 +97,7 @@ _reference/
 .ref/
 
 # Built binaries
-luas
+fastbuild
 server
 
 # Examples (keep source code but ignore build artifacts)

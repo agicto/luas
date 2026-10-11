@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 func TestDefaultCatalogOwnsFiniteScopedDefinitions(t *testing.T) {
@@ -20,7 +20,7 @@ func TestDefaultCatalogOwnsFiniteScopedDefinitions(t *testing.T) {
 	definition, ok := catalog.Definition(domain.SettingScopeApp, "branding.display_name")
 	require.True(t, ok)
 	assert.Equal(t, domain.SettingVisibilityPublic, definition.Visibility)
-	assert.Equal(t, "Luas", definition.Default)
+	assert.Equal(t, "FastBuild", definition.Default)
 }
 
 func TestCatalogRejectsDuplicateAndPublicTenantDefinitions(t *testing.T) {
@@ -94,10 +94,10 @@ func TestCatalogNormalizesOnlyTypedBoundedScalars(t *testing.T) {
 
 	display, ok := catalog.Definition(domain.SettingScopeApp, "branding.display_name")
 	require.True(t, ok)
-	value, encoded, err := normalizeSettingValue(display, "  Luas Cloud  ")
+	value, encoded, err := normalizeSettingValue(display, "  FastBuild Cloud  ")
 	require.NoError(t, err)
-	assert.Equal(t, "Luas Cloud", value)
-	assert.Equal(t, `"Luas Cloud"`, encoded)
+	assert.Equal(t, "FastBuild Cloud", value)
+	assert.Equal(t, `"FastBuild Cloud"`, encoded)
 
 	locale, ok := catalog.Definition(domain.SettingScopeUser, "localization.locale")
 	require.True(t, ok)

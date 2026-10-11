@@ -114,7 +114,7 @@ llm/
 
 ```bash
 # Use CLI to generate
-./luas make:module Blog
+./fastbuild make:module Blog
 
 # After generation:
 # 1. Refine the generated internal/domain/<module>.go file with real framework-free fields
@@ -124,7 +124,7 @@ llm/
 # 5. Re-generate Wire output
 ```
 
-For new route-owning starter-style modules, prefer `./luas make:module <Name>`.
+For new route-owning starter-style modules, prefer `./fastbuild make:module <Name>`.
 The single-file generators such as `make:service` and `make:handler` are meant to fill missing files in an existing `internal/modules/<module>/` directory, not to start a module from scratch.
 
 ## Naming Conventions

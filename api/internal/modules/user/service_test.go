@@ -11,10 +11,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 type fakeRepo struct {

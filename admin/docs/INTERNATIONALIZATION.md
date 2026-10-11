@@ -19,7 +19,7 @@ normalized at the locale-resolution boundary.
 
 The initial locale is selected in this order:
 
-1. The `luas-spa-locale` browser preference.
+1. The `fastbuild-spa-locale` browser preference.
 2. `navigator.languages` in browser preference order.
 3. `VITE_DEFAULT_LOCALE`.
 

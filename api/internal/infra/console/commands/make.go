@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
 )
 
 // MakeModelCommand creates a new model
@@ -197,7 +197,7 @@ func (c *MakeSeederCommand) Run(args []string) error {
 	}
 
 	c.output.Success("Seeder created: %s", filename)
-	c.output.Info("Run with: ./luas db:seed")
+	c.output.Info("Run with: ./fastbuild db:seed")
 	return nil
 }
 
@@ -364,7 +364,7 @@ func (c *MakeModuleCommand) Run(args []string) error {
 		c.output.Info("  - Add %s to internal/infra/config/starters.go and the starter to internal/starter/defaults.go", data["StarterConst"])
 	}
 	c.output.Info("  1. make wire")
-	c.output.Info("  2. LUAS_UPDATE_GOLDEN_SCHEMA=1 go test ./database/migrations -run TestMigrationsProduceGoldenSchema (with LUAS_TEST_POSTGRES_DSN)")
+	c.output.Info("  2. FASTBUILD_UPDATE_GOLDEN_SCHEMA=1 go test ./database/migrations -run TestMigrationsProduceGoldenSchema (with FASTBUILD_TEST_POSTGRES_DSN)")
 	c.output.Info("  3. Review ../contracts/fragments/%s.yaml, then: cd ../contracts && corepack pnpm merge-fragment fragments/%s.yaml", snake, snake)
 	c.output.Info("  4. Set the starter summary in provider.go, then: make starter-catalog")
 	c.output.Info("  5. Enable it with OPTIONAL_STARTERS=%s and run go test ./...", data["PackageName"])
@@ -423,7 +423,7 @@ func wireOptionalStarter(data map[string]string) ([]string, error) {
 	updated = append(updated, startersPath)
 
 	err = editGoFile(defaultsPath, func(source string) (string, error) {
-		importPath := "\"github.com/zgiai/luas/api/internal/modules/" + dir + "\""
+		importPath := "\"github.com/fastagi/fastbuild/api/internal/modules/" + dir + "\""
 		importLine := "\t" + importPath + "\n"
 		if pkg != dir {
 			// goimports requires an alias when the package name differs from its directory.
@@ -432,7 +432,7 @@ func wireOptionalStarter(data map[string]string) ([]string, error) {
 		if strings.Contains(source, importLine) {
 			return source, nil
 		}
-		source, insertErr := insertBefore(source, "\t\"github.com/zgiai/luas/api/internal/starter/assembly\"", importLine)
+		source, insertErr := insertBefore(source, "\t\"github.com/fastagi/fastbuild/api/internal/starter/assembly\"", importLine)
 		if insertErr != nil {
 			return "", insertErr
 		}
@@ -560,7 +560,7 @@ func existingModuleScaffold(name string) (string, string, map[string]string, err
 		// failed or the path exists but is a file; the user's next action
 		// is the same.
 		return "", "", nil, fmt.Errorf(
-			"module %q does not exist in %s; run 'luas make:module %s' to scaffold a complete module",
+			"module %q does not exist in %s; run 'fastbuild make:module %s' to scaffold a complete module",
 			data["Package"],
 			dir,
 			data["ModelName"],
@@ -640,7 +640,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 // {{.ModelName}}PO is the persistent object for {{.ModelName}}.
@@ -689,7 +689,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 // Service defines the business interface for {{.ModelName}}.
@@ -771,11 +771,11 @@ const handlerTemplate = `package {{.PackageName}}
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/pagination"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // Handler handles HTTP requests for {{.ModelName}}.
@@ -886,7 +886,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 type repository struct {
@@ -971,7 +971,7 @@ const dtoTemplate = `package {{.PackageName}}
 import (
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 // Create{{.ModelName}}Request represents the request to create a {{.ModelName}}.
@@ -1046,7 +1046,7 @@ func init() {
 
 const routesTemplate = `package {{.PackageName}}
 
-import "github.com/zgiai/luas/api/internal/infra/router"
+import "github.com/fastagi/fastbuild/api/internal/infra/router"
 
 // RegisterRoutes registers HTTP routes for the {{.Package}} starter. Every route requires a signed-in
 // user; record ownership is not enforced yet and must be added before production use.
@@ -1071,7 +1071,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 type mockRepository struct {
@@ -1132,9 +1132,9 @@ const providerTemplate = `package {{.PackageName}}
 import (
 	"github.com/google/wire"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
 )
 
 // ProviderSet is the provider set for this starter.
@@ -1160,7 +1160,7 @@ func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 
 // openAPIFragmentTemplate describes the generated CRUD routes in the shared envelope and error
 // conventions. Merge it with `cd contracts && corepack pnpm merge-fragment <file>`.
-const openAPIFragmentTemplate = `# OpenAPI fragment generated by luas make:module for the {{.Package}} starter.
+const openAPIFragmentTemplate = `# OpenAPI fragment generated by fastbuild make:module for the {{.Package}} starter.
 # Review it, then merge it into contracts/openapi.yaml:
 #   cd contracts && corepack pnpm merge-fragment fragments/{{.Package}}.yaml
 tags:
@@ -1387,7 +1387,7 @@ components:
 
 const errorMappingsTemplate = `package {{.PackageName}}
 
-import "github.com/zgiai/luas/api/pkg/response"
+import "github.com/fastagi/fastbuild/api/pkg/response"
 
 // RegisterErrorMappings maps this starter's own domain errors to public status and error codes.
 // Shared errors such as domain.ErrNotFound and domain.ErrInvalidInput are already mapped by core.
@@ -1401,7 +1401,7 @@ const migrationTemplate = `package migrations
 import (
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
 )
 
 func init() {

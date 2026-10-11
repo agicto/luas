@@ -39,7 +39,7 @@
   --sidebar-ring: var(--brand);
   --surface: var(--card);
   --subtle: var(--muted-foreground);
-  /* Luas Rhine blue accent, aligned with the Next.js browser shell. */
+  /* FastBuild Rhine blue accent, aligned with the Next.js browser shell. */
   --brand: oklch(0.5 0.2 250);
   --brand-foreground: oklch(0.985 0 0);
   --brand-strong: oklch(0.4 0.18 250);

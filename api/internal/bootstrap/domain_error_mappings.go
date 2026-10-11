@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"net/http"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/starter"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // registerDomainErrorMappings installs the shared domain errors, then lets each active starter map

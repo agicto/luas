@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	infradatabase "github.com/fastagi/fastbuild/api/internal/infra/database"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 func TestRepositoryFindAllUsesStableOrderAndPreservesEmptyPageTotal(t *testing.T) {

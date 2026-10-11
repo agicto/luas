@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/pagination"
-	"github.com/zgiai/luas/api/pkg/response"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // OperatorHandler serves secret-free webhook diagnosis and delivery replay for one organization

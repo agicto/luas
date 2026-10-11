@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/starter"
-	"github.com/zgiai/luas/api/internal/wiring"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/wiring"
 )
 
 func main() {

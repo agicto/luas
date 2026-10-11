@@ -59,7 +59,7 @@ An internal publication contains:
 message and creates no duplicate deliveries. Reusing the tuple with different type, occurrence, or
 payload fails with `WEBHOOK.IDEMPOTENCY_CONFLICT`.
 
-The durable publisher honors Luas's transaction context. A business repository can therefore store
+The durable publisher honors FastBuild's transaction context. A business repository can therefore store
 its state and enqueue the webhook event in one database transaction. Publishing through the
 process-local event bus alone is best-effort and is not a durable outbox guarantee.
 
@@ -118,7 +118,7 @@ Each `POST` uses `Content-Type: application/json` and these exact headers:
 webhook-id: msg_01J...
 webhook-timestamp: 1784145600
 webhook-signature: v1,<base64-hmac> [v1,<previous-base64-hmac>]
-user-agent: Luas-Webhooks/1.0
+user-agent: FastBuild-Webhooks/1.0
 ```
 
 For each secret, HMAC-SHA256 signs the exact bytes
@@ -169,7 +169,7 @@ Configuration replacement accepts exactly:
 ```json
 {
   "name": "Order processor",
-  "url": "https://hooks.example.com/luas",
+  "url": "https://hooks.example.com/fastbuild",
   "event_types": ["webhook.test"]
 }
 ```

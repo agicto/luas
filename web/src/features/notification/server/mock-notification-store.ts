@@ -100,7 +100,7 @@ function stateFor(user: AuthUser): MockNotificationState {
       {
         id: nextNotificationId++,
         kind: 'starter.workspace_ready',
-        title: 'Your Luas workspace is ready',
+        title: 'Your FastBuild workspace is ready',
         body: 'Replace this development notification with your first downstream workflow.',
         action_url: '/console',
         is_read: true,

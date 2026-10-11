@@ -10,9 +10,9 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
-	"github.com/zgiai/luas/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	infradatabase "github.com/fastagi/fastbuild/api/internal/infra/database"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
 )
 
 const webhookPruneBatch = 1000

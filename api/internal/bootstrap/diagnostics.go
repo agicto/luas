@@ -7,7 +7,7 @@ import (
 	"net/http/pprof"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 // newDiagnosticsServer serves Go runtime profiles on SERVER_DIAGNOSTICS_ADDR, which configuration

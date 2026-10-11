@@ -11,12 +11,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/app"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	"github.com/zgiai/luas/api/internal/starter"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/app"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	infraMiddleware "github.com/fastagi/fastbuild/api/internal/infra/middleware"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 func init() {
@@ -128,7 +128,7 @@ func testHTTPConfigWithRateLimit() *config.Config {
 func TestHTTPKernelDoesNotExposeMetricsByDefaultInProduction(t *testing.T) {
 	cfg := testHTTPConfig()
 	cfg.App = config.AppConfig{
-		Name: "Luas",
+		Name: "FastBuild",
 		Env:  "production",
 	}
 	cfg.Server.Mode = gin.TestMode
@@ -150,7 +150,7 @@ func TestHTTPKernelDoesNotExposeMetricsByDefaultInProduction(t *testing.T) {
 func TestHTTPKernelExposesMetricsWhenEnabled(t *testing.T) {
 	cfg := testHTTPConfig()
 	cfg.App = config.AppConfig{
-		Name: "Luas",
+		Name: "FastBuild",
 		Env:  "development",
 	}
 	cfg.Server.Mode = gin.TestMode

@@ -1,7 +1,7 @@
 # Registered Route Discovery
 
 This document defines how humans, automation, and AI agents discover the HTTP routes assembled by
-one Luas API configuration. It separates active topology from HTTP semantics so a list of paths is
+one FastBuild API configuration. It separates active topology from HTTP semantics so a list of paths is
 not mistaken for a complete API contract.
 
 ## Authority
@@ -10,22 +10,22 @@ not mistaken for a complete API contract.
 |---|---|
 | [`../../contracts/`](../../contracts/) | Canonical request, response, status, `error_code`, `request_id`, pagination, authentication, and compatibility behavior. |
 | `bootstrap.RegisterHTTPRoutes` | One runtime registration seam shared by the HTTP server and route discovery. It owns core operational routes plus active starter routes. |
-| `luas route:list` | Human-readable inventory for the currently resolved configuration. |
-| `luas route:list --format=json` | Deterministic machine-readable inventory described by [`route-catalog.schema.json`](route-catalog.schema.json). |
+| `fastbuild route:list` | Human-readable inventory for the currently resolved configuration. |
+| `fastbuild route:list --format=json` | Deterministic machine-readable inventory described by [`route-catalog.schema.json`](route-catalog.schema.json). |
 
 The registered route catalog is not an OpenAPI Description. It deliberately contains no inferred
 request bodies, response schemas, status codes, authentication rules, middleware claims, or
 authorization policy. Those semantics remain in the owning Markdown and OpenAPI contracts plus
-implementation tests. Luas does not expose a runtime `/swagger` or `/openapi.json` endpoint.
+implementation tests. FastBuild does not expose a runtime `/swagger` or `/openapi.json` endpoint.
 
 ## Commands
 
 From `api/`:
 
 ```bash
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json | jq
-DB_ENABLED=false AI_ENABLED=false OPTIONAL_STARTERS=organization go run ./cmd/luas route:list --format=json | jq
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/fastbuild route:list
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/fastbuild route:list --format=json | jq
+DB_ENABLED=false AI_ENABLED=false OPTIONAL_STARTERS=organization go run ./cmd/fastbuild route:list --format=json | jq
 make route-catalog-check
 ```
 
@@ -42,7 +42,7 @@ default starters and selected optional starters.
 
 ```json
 {
-  "kind": "luas.route_catalog",
+  "kind": "fastbuild.route_catalog",
   "schema_version": 1,
   "active_starters": ["audit", "apikey", "user"],
   "routes": [

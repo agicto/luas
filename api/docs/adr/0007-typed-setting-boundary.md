@@ -5,7 +5,7 @@
 
 ## Context
 
-Luas had a replaceable Web settings page but no durable API-owned setting behavior. Repeated
+FastBuild had a replaceable Web settings page but no durable API-owned setting behavior. Repeated
 downstream projects need branding, locale defaults, user preferences, and organization policy, yet
 an unrestricted key/value table would erase schema ownership, permit secret misuse, weaken cache
 invalidation, and make clients branch on undocumented data.
@@ -44,7 +44,7 @@ changes. Adding a definition requires API and Web schema/UI work when browser ex
 
 The starter deliberately cannot store arbitrary product documents or secrets. Dynamic rollout,
 entitlements, and hot process configuration require separate systems. Public organization values
-remain unavailable until Luas defines a safe public organization identity contract.
+remain unavailable until FastBuild defines a safe public organization identity contract.
 
 ## Alternatives Rejected
 

@@ -3,11 +3,11 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPOSITORY_ROOT="$(git -C "${ROOT_DIR}" rev-parse --show-toplevel 2>/dev/null || dirname "${ROOT_DIR}")"
-IMAGE_TAG="${1:-luas-web:container-check}"
-CONTAINER_NAME="luas-web-container-check-$$"
+IMAGE_TAG="${1:-fastbuild-web:container-check}"
+CONTAINER_NAME="fastbuild-web-container-check-$$"
 TMP_DIR="$(mktemp -d)"
-BUILD_METADATA_OUTPUT="${BUILD_METADATA_OUTPUT:-${TMP_DIR}/luas-web.build-metadata.json}"
-OCI_SOURCE="${OCI_SOURCE:-https://github.com/zgiai/luas}"
+BUILD_METADATA_OUTPUT="${BUILD_METADATA_OUTPUT:-${TMP_DIR}/fastbuild-web.build-metadata.json}"
+OCI_SOURCE="${OCI_SOURCE:-https://github.com/fastagi/fastbuild}"
 OCI_REVISION="${OCI_REVISION:-$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD 2>/dev/null || printf 'unknown')}"
 OCI_VERSION="${OCI_VERSION:-$(git -C "${REPOSITORY_ROOT}" describe --tags --always 2>/dev/null || printf 'dev')}"
 
@@ -218,7 +218,7 @@ docker rm "${CONTAINER_NAME}" >/dev/null
 docker run --detach \
   --name "${CONTAINER_NAME}" \
   --env MOCK_BFF_ENABLED=true \
-  --env SESSION_SECRET=luas-container-mock-session-secret-32-bytes \
+  --env SESSION_SECRET=fastbuild-container-mock-session-secret-32-bytes \
   --publish 127.0.0.1::3000 \
   "${IMAGE_TAG}" >/dev/null
 

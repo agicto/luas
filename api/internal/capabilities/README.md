@@ -32,8 +32,8 @@ capabilities may depend on `pkg/` and the standard library, but must not depend 
 
 ```go
 import (
-    "github.com/zgiai/luas/api/internal/capabilities/crypto"
-    "github.com/zgiai/luas/api/internal/capabilities/idgen"
+    "github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+    "github.com/fastagi/fastbuild/api/internal/capabilities/idgen"
 )
 
 // ID generation

@@ -13,9 +13,9 @@ import (
 )
 
 func TestAddAuditRetentionIndexPostgres(t *testing.T) {
-	dsn := os.Getenv("LUAS_TEST_POSTGRES_DSN")
+	dsn := os.Getenv("FASTBUILD_TEST_POSTGRES_DSN")
 	if dsn == "" {
-		t.Skip("LUAS_TEST_POSTGRES_DSN is required for PostgreSQL migration evidence")
+		t.Skip("FASTBUILD_TEST_POSTGRES_DSN is required for PostgreSQL migration evidence")
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

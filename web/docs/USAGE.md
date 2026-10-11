@@ -61,5 +61,5 @@ pnpm type-check
 pnpm lint
 pnpm test -- --run src/test/usage-service.test.ts src/test/usage-route.test.ts
 pnpm build
-cd .. && python3 .agents/skills/luas-framework-review/scripts/check-usage-boundary.py
+cd .. && python3 .agents/skills/fastbuild-framework-review/scripts/check-usage-boundary.py
 ```

@@ -3,8 +3,8 @@ package usage
 import (
 	"time"
 
-	"github.com/zgiai/luas/api/internal/modules/organization"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 const (

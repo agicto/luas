@@ -29,7 +29,7 @@ development mock BFF is available.
 
 ## Ownership And Identity
 
-- Every asset belongs to exactly one authenticated Luas user.
+- Every asset belongs to exactly one authenticated FastBuild user.
 - Asset IDs are application-generated UUIDs and are the only object identifiers exposed over HTTP.
 - Owner user IDs, bucket names, object keys, local paths, checksums, and signed-token claims are not
   returned to the browser.

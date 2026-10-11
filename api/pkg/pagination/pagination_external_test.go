@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/zgiai/luas/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
 )
 
 func TestPaginatorSmoke(t *testing.T) {

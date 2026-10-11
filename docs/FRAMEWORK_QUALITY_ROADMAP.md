@@ -1,9 +1,9 @@
-# Luas Framework Quality Roadmap
+# FastBuild Framework Quality Roadmap
 
-This roadmap tracks long-running work to keep Luas professional, semantically clear, architecture-friendly, and AI-agent friendly.
+This roadmap tracks long-running work to keep FastBuild professional, semantically clear, architecture-friendly, and AI-agent friendly.
 
-Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. Use the `luas-framework-review` skill before adding or re-ranking items.
-Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day plan that keeps agent skills aligned with Luas vocabulary, contracts, and architecture.
+Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. Use the `fastbuild-framework-review` skill before adding or re-ranking items.
+Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day plan that keeps agent skills aligned with FastBuild vocabulary, contracts, and architecture.
 
 ## Quality Axes
 
@@ -28,7 +28,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   JavaScript/CSS budgets, validates public environment and API responses, and keeps protected auth
   explicitly behind a same-origin browser gateway rather than browser token storage.
 - Error contracts have been aligned around `code`, `error_code`, `message`, optional `errors`, and optional `request_id`.
-- Scaffold-level error contracts are guarded by `.agents/skills/luas-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
+- Scaffold-level error contracts are guarded by `.agents/skills/fastbuild-framework-review/scripts/check-error-contracts.py`, keeping `contracts/README.md`, API response constants, and Web status fallbacks aligned.
 - API default HTTP guardrails now include security headers, request body limit, cooperative request timeout, production-default rate limiting, CORS, and standard `error_code` responses for body-limit, timeout, and rate-limit failures. Process-local rate-limit stores are atomically enforced, cardinality-bounded with configurable LRU eviction, exact at window expiry, and own no cleanup goroutines; the misleading unassembled Redis limiter and inert `REDIS_*` runtime config were removed. Multi-replica enforcement remains an explicit gateway/WAF/shared-adapter responsibility.
 - The optional API cache capability now has one byte-oriented contract across memory and Redis, atomic `Add`/`Take`, explicit positive TTLs, typed JSON helpers, per-store request coalescing, bounded memory cardinality/payloads, and zero persistent cleanup goroutines. Redis requires a namespace and borrowed client; cache remains non-authoritative and unassembled until a downstream business seam owns invalidation and outage policy.
 - API transport configuration now owns the real socket boundary: local defaults bind to `127.0.0.1`,
@@ -120,7 +120,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   Lighthouse median moved from 94 to 96, LCP from 3,072 to 2,855 ms, transfer from 289.6 to 248.3
   kB, and main-thread work from 340.6 to 307.7 ms; TBT moved from 8 to 3.5 ms. The responsive public
   header now hides its redundant registration action below `sm` and uses link semantics without
-  nested buttons. These are build and local synthetic results, not field p75 evidence; Luas still
+  nested buttons. These are build and local synthetic results, not field p75 evidence; FastBuild still
   has no production RUM adapter.
 - Client-side i18n messages are now namespace-scoped: root serializes only `common` / `errors`, while auth, console, and the i18n devtool append their owned namespaces. In production HTML sampling, `/` fell from 69,703 to 64,642 raw bytes and from 14,758 to 12,264 gzip bytes (7.26% and 16.90%); `/login` fell from 42,455 to 40,765 raw bytes and from 9,486 to 8,695 gzip bytes (3.98% and 8.34%). The login client entry increased by 407 raw / 124 gzip bytes for the additive route provider, leaving a net first-load reduction of 1,283 raw / 667 gzip bytes. These are local production-build transfer measurements, not field Core Web Vitals.
 - Web i18n exposes `useT` through the client-safe `@/i18n` entry and `getT` through `@/i18n/server`; `src/test/i18n-runtime-boundary.test.ts` prevents server imports or the full auth shell from leaking back into the client graph.
@@ -143,24 +143,24 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
   full log paths, and configurable log tails for faster repair loops.
 - External GitHub Actions are pinned to reviewed full commit SHAs, use Node 24-compatible releases,
   and run with explicit token permissions. The runner and update contract lives in [`CI.md`](CI.md),
-  while `.agents/skills/luas-framework-review/scripts/check-ci-actions.py` prevents movable refs,
+  while `.agents/skills/fastbuild-framework-review/scripts/check-ci-actions.py` prevents movable refs,
   unreviewed action repositories, unsafe triggers, runtime drift, and duplicated pnpm version authority.
-- The root `luas-framework-review` skill now defines the long-running review loop.
-- `luas-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
+- The root `fastbuild-framework-review` skill now defines the long-running review loop.
+- `fastbuild-framework-review` can now generate optional HTML architecture review reports in `$TMPDIR` for multi-candidate or cross-turn recommendations.
 - HTTP contract changes now have a dedicated root `contract-evolution` skill that orders changes through `contracts/`, API behavior, Web services, mock BFF behavior, and verification.
 - Vocabulary and boundary decisions now have a dedicated root `domain-modeling` skill that routes new terms to `CONTEXT.md`, ADRs, local docs, skills, or nowhere.
-- Luas diff review now has a dedicated root `luas-code-review` skill that separates Standards findings from Spec findings.
+- FastBuild diff review now has a dedicated root `fastbuild-code-review` skill that separates Standards findings from Spec findings.
 - Bugs and contract-sensitive regressions now have a dedicated root `tdd-regression` skill that requires a failing test before production fixes.
 - Downstream extraction now has a dedicated root `downstream-app-extraction` skill with a product-leakage scan helper for keeping product behavior out of the source scaffold.
 - Scaffold surfaces are cataloged in [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md) with downstream actions and verification by surface type.
 - Skill governance now has a dedicated 30/60/90-day and long-term plan in [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md).
-- High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/luas-framework-review/scripts/check-vocabulary.sh` and CI.
-- Local Markdown links across docs and agent guidance are guarded by `.agents/skills/luas-framework-review/scripts/check-doc-links.py` and CI.
-- API package boundary drift is guarded by `.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
+- High-signal docs and every non-template `SKILL.md` are guarded by `.agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh` and CI.
+- Local Markdown links across docs and agent guidance are guarded by `.agents/skills/fastbuild-framework-review/scripts/check-doc-links.py` and CI.
+- API package boundary drift is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, starter registry interfaces live in `internal/starter/assembly`, and the grab-bag packages (`pkg/support`, `pkg/utils`, and the `internal/infra/{queue,schedule,retry,http}` compatibility wrappers) are deleted; `make governance` rejects new `support`, `utils`, `common`, or `helpers` packages under `pkg/` and `internal/infra/`. `pkg/response` does not import `internal/domain`, and queue, retry, and scheduler primitives are owned by `internal/capabilities/workflow`.
 - Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
-- Branch/release governance is guarded by `.agents/skills/luas-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
-- Scaffold surface classification is guarded by `.agents/skills/luas-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
+- Branch/release governance is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
+- Scaffold surface classification is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
 - Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell. The optional `operator` starter is the Admin Console's browser gateway and gives platform operators user, audit, app-setting, and system screens plus read-mostly organization, webhook, and notification-delivery support views; tenant self-service stays in Web. Billing and AI workspace remain planned.
 - API assembly is guarded against drift: released migrations are frozen SQL checked against a golden schema, starter names and handlers have one source (`config.Starter*`, `starter.Handlers`), each starter owns its error mappings through `assembly.ErrorModule`, `make wire-check` fails CI on a stale `wire_gen.go`, and `make:module` generates a wired optional starter. The decision to keep Wire and the deferred assembly changes, each with a revisit trigger, are recorded in [`../api/docs/adr/0014-wire-maintenance-posture.md`](../api/docs/adr/0014-wire-maintenance-posture.md) and [`../api/docs/adr/0003-starter-registry.md`](../api/docs/adr/0003-starter-registry.md).
 - Downstream-facing changes from each round are listed by impact in [`../UPGRADING.md`](../UPGRADING.md).
@@ -231,7 +231,7 @@ Verification:
 - red/green tests across `pkg/logger`, `pkg/errors`, `internal/infra/exception`, HTTP tracing,
   database diagnostics, and audit service
 - `cd api && go test ./pkg/redact -run '^$' -bench '^BenchmarkMap$' -benchmem -count=5`
-- `python3 .agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-sensitive-telemetry.py`
 - `make check`
 
 ### Completed P0 — API Key Revocation And One-Time Secret Boundary
@@ -248,7 +248,7 @@ Verification:
 
 - `cd api && go test ./internal/modules/apikey -count=1`
 - `cd web && pnpm vitest run src/test/api-key-contract.test.ts src/test/api-key-route.test.ts src/test/api-key-ui.test.tsx`
-- `python3 .agents/skills/luas-framework-review/scripts/check-api-key-boundary.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-api-key-boundary.py`
 - `make check`
 
 ### Completed P0 — HTTP Listen and Transport Configuration
@@ -320,7 +320,7 @@ green workflow with a runtime-deprecation warning is not considered clean.
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-ci-actions.py`
 - `make governance`
 - `make check`
 - GitHub CI, Container Contract, and Skill Self-Test runs, including annotation inspection.
@@ -417,7 +417,7 @@ Verification:
 ### Completed P1 — Typed Configuration Authority
 
 Environment resolution now implements its documented precedence explicitly: process values,
-`LUAS_ENV_FILE`, environment-local, local, environment, base file, then typed defaults. Test and
+`FASTBUILD_ENV_FILE`, environment-local, local, environment, base file, then typed defaults. Test and
 diagnostic reloads remove stale file-owned values, malformed files fail configuration loading, and a
 missing explicitly selected file is no longer ignored. The server gives one validated `*Config`
 snapshot to both logging and Wire; capability utilities use typed subset loaders rather than reading
@@ -444,7 +444,7 @@ Verification:
 
 - `cd api && go test ./pkg/env ./pkg/logger ./pkg/errors ./internal/infra/config ./internal/bootstrap ./internal/infra/console/commands ./tests/unit`
 - `cd api && go test -race ./tests/unit ./internal/infra/config ./internal/infra/console/commands ./internal/bootstrap ./pkg/env ./pkg/logger ./pkg/errors`
-- `cd api && env DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas doctor`
+- `cd api && env DB_ENABLED=false AI_ENABLED=false go run ./cmd/fastbuild doctor`
 - `make governance`, `make check`, `cd api && make container-check`, and `cd api && make compose-check`
 
 ### Completed P1 — Database-Disabled Runtime Degradation
@@ -515,7 +515,7 @@ Verification:
 - `cd api && go test ./internal/infra/cache -count=20`
 - `cd api && go test -race ./internal/infra/cache -count=10`
 - `cd api && make benchmark-cache`
-- Real Redis contract run through `LUAS_TEST_REDIS_ADDR`.
+- Real Redis contract run through `FASTBUILD_TEST_REDIS_ADDR`.
 - `make governance` and `make check`
 
 ### Completed P0 — Database Runtime And Query Budget
@@ -529,7 +529,7 @@ invariants, and idle connections had no independent maximum idle time.
 The core database runtime now validates exact drivers, required connection fields, finite open/idle
 limits, idle/lifetime policy, startup timeout, logging policy, and production TLS before creating
 resources. PostgreSQL uses a percent-encoded URI with application identity and a server connection
-timeout. Luas disables GORM automatic ping, applies all four `database/sql` pool controls, performs
+timeout. FastBuild disables GORM automatic ping, applies all four `database/sql` pool controls, performs
 one deadline-bound `PingContext`, and closes a failed startup pool. A real PostgreSQL test observes
 the configured application name, timezone, open-connection ceiling, and idle-time closure.
 
@@ -551,7 +551,7 @@ change. These are host-local comparison measurements, not an SLO or CI timing bu
 Verification:
 
 - `cd api && go test ./internal/infra/config ./internal/infra/database ./internal/modules/user`
-- `cd api && LUAS_TEST_POSTGRES_DSN=... make benchmark-database`
+- `cd api && FASTBUILD_TEST_POSTGRES_DSN=... make benchmark-database`
 - `make governance` and `make check`
 
 ### Completed P1 — Web Route Bundle Budget And Public Shell
@@ -586,14 +586,14 @@ Three comparable local mobile Lighthouse runs on the final build produced a medi
 of 905 ms, LCP of 2,855 ms, CLS of 0, TBT of 3.5 ms, 248.3 kB transferred, and 307.7 ms of
 main-thread work. The prior three-run median was 94, 906 ms, 3,072 ms, 0, 8 ms, 289.6 kB, and 340.6
 ms respectively. LCP remains above the 2.5-second field-good threshold, INP was not established, and
-Luas has no production RUM adapter. These results are synthetic comparison evidence, not field p75,
+FastBuild has no production RUM adapter. These results are synthetic comparison evidence, not field p75,
 an SLO, or a CI timing budget.
 
 Verification:
 
 - `cd web && pnpm build && pnpm bundle:check`
 - `cd web && pnpm bundle:analyze`
-- `cd web && docker build --tag luas-web:local .`
+- `cd web && docker build --tag fastbuild-web:local .`
 - `cd web && pnpm type-check && pnpm lint && pnpm test -- --run`
 - Three production Lighthouse runs plus desktop and 390 by 844 browser interaction/overflow checks
 - `make governance` and `make check`
@@ -624,7 +624,7 @@ rendered. Routes whose client graph already hydrates `Button` gained 1,133 raw b
 Verification:
 
 - `cd web && pnpm vitest run src/test/button-composition.test.tsx`
-- `python3 .agents/skills/luas-framework-review/scripts/check-web-ui-primitive-boundary.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-web-ui-primitive-boundary.py`
 - `cd web && pnpm type-check && pnpm lint && pnpm build`
 - `make governance` and `make check`
 
@@ -644,7 +644,7 @@ readiness. Fetch directives remain intentionally absent so the scaffold does not
 identity, analytics, image, or font origins.
 
 The auth navigation interceptor is now `proxy.ts` with the Next.js 16 named `proxy` export. It keeps
-the existing narrow matcher and only interprets signed Luas mock sessions; authorization remains at
+the existing narrow matcher and only interprets signed FastBuild mock sessions; authorization remains at
 the operation owner. Every build now validates `.next/server/functions-config-manifest.json` so a
 misplaced convention or matcher drift fails instead of shipping an inert Proxy. Unit tests enforce
 unique injection-safe values, exact structural CSP, the production-only HSTS boundary, and removal
@@ -669,13 +669,13 @@ Verification:
 
 - `cd web && pnpm vitest run src/test/security-headers.test.ts src/test/auth-runtime-boundary.test.ts`
 - `cd web && pnpm type-check && pnpm lint && pnpm build`
-- `cd web && bash scripts/verify-container.sh luas-web:container-check`
-- `python3 .agents/skills/luas-framework-review/scripts/check-web-security-boundary.py`
+- `cd web && bash scripts/verify-container.sh fastbuild-web:container-check`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-web-security-boundary.py`
 - `make governance` and `make check`
 
 ### P1 — Measured Performance Baseline
 
-Problem: Luas now guards Web route bundles and has measured HTTP, queue, rate-limit, cache, database,
+Problem: FastBuild now guards Web route bundles and has measured HTTP, queue, rate-limit, cache, database,
 and local Web baselines. It does not yet own a vendor-neutral production RUM adapter, field p75 Core
 Web Vitals, or a stable cross-runner browser metric suitable for CI.
 
@@ -699,7 +699,7 @@ Verification:
 
 - `cd api && go test -run '^$' -bench . -benchmem ./internal/bootstrap/... ./internal/infra/metrics/...`
 - `cd api && make benchmark-cache`
-- `cd api && go build -trimpath -ldflags='-s -w' -o /tmp/luas-server ./cmd/server`
+- `cd api && go build -trimpath -ldflags='-s -w' -o /tmp/fastbuild-server ./cmd/server`
 - `cd web && pnpm build && pnpm bundle:check`
 
 ### P1 — Web Hydration Boundaries
@@ -760,13 +760,13 @@ Problem: scaffold-level HTTP status and `error_code` behavior spans `contracts/R
 
 Recommended slice:
 
-1. Keep `.agents/skills/luas-framework-review/scripts/check-error-contracts.py` aligned with the scaffold-level errors documented in `contracts/README.md`.
+1. Keep `.agents/skills/fastbuild-framework-review/scripts/check-error-contracts.py` aligned with the scaffold-level errors documented in `contracts/README.md`.
 2. Add new scaffold-level `error_code` values to the contract first, then API response constants, then Web `ApiErrorCode` and status fallback behavior.
 3. Keep domain-specific codes out of the scaffold-level table until they become shared HTTP contract behavior.
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-error-contracts.py`
 - `cd web && pnpm vitest run src/test/error-code-vocabulary.test.ts src/test/api-error-contract.test.ts`
 - `make check`
 
@@ -775,12 +775,12 @@ Verification:
 Route inventory previously had three conflicting meanings. The canonical CLI registered only
 starter/application routes and omitted core health and metrics endpoints; two separate source-parser
 tools targeted a deleted route file, and one could print an error while exiting successfully. The
-console also claimed an OpenAPI description existed even though Luas intentionally ships reviewed
+console also claimed an OpenAPI description existed even though FastBuild intentionally ships reviewed
 Markdown contracts rather than a generated specification.
 
 The server and `route:list` now share `bootstrap.RegisterHTTPRoutes`, so core operational routes,
 conditional metrics, default starters, and selected optional starters come from one resolved runtime
-assembly. `route:list --format=json` emits a deterministic, pipe-safe `luas.route_catalog` version 1
+assembly. `route:list --format=json` emits a deterministic, pipe-safe `fastbuild.route_catalog` version 1
 document with closed objects, canonical starter names, unique method/path pairs, and stable ordering.
 The JSON Schema, strict dependency-free validator, real CLI verifier, unit tests, root governance,
 and CI step make the boundary executable. The 1,509 lines of inactive route/API-doc parser tooling
@@ -792,19 +792,19 @@ OpenAPI Description must be delivered as its own complete and validated slice.
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-route-contract-discovery.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-route-contract-discovery.py`
 - `cd api && make route-catalog-check`
 - `cd api && go test ./internal/bootstrap ./internal/infra/console ./internal/infra/console/commands`
 - `cd web && pnpm vitest run src/test/console-public-boundary.test.ts`
 
 ### Completed P1 — Open-Source Project Entry Point
 
-The root README previously described Luas through repository-merger history, retired brands, module
+The root README previously described FastBuild through repository-merger history, retired brands, module
 renames, and inherited licensing. That information did not help a new adopter understand the
 scaffold and made the project look like an internal migration artifact rather than an independent
 open-source starter kit.
 
-The public entry point now starts with Luas's purpose, included foundations, executable quick start,
+The public entry point now starts with FastBuild's purpose, included foundations, executable quick start,
 starter selection, architecture, contract discovery, production ownership, agent workflow,
 downstream extraction, and curated documentation. A root MIT license, contribution guide, and
 project-wide security policy replace directory-local placeholders, while Web governance files point
@@ -813,8 +813,8 @@ returning to the public README.
 
 Verification:
 
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- `python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-doc-links.py`
 - `git diff --check`
 
 ### P1 — Branch and Release Discipline
@@ -831,8 +831,8 @@ Recommended slice:
 Verification:
 
 - `make check`
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- `bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh`
 - Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
 
 ### Completed P1 — Additive Optional Starter Assembly
@@ -881,7 +881,7 @@ Container verification now preserves artifact identity: standalone `make compose
 current worktree, while CI may explicitly reuse only the image verified by the preceding container
 step. An `OPTIONAL_STARTERS=organization` PostgreSQL run exercises organization/invitation statuses
 `201/201/409/200/204/201` for create, invite, duplicate, list, revoke, and replacement, respectively.
-This closes the prior false-green path where a stale local `luas-api:compose-check` tag could bypass
+This closes the prior false-green path where a stale local `fastbuild-api:compose-check` tag could bypass
 the current source tree.
 
 The member-lifecycle slice keeps the default assembly at 14 routes and seven migrations, raises
@@ -1061,7 +1061,7 @@ Verification:
 - Browser organization create/select/context/rename/member/invitation flows at desktop and mobile widths
 - Browser notification list/read/preferences flows at desktop and mobile widths
 - Standalone production login, member-directory, invitation-create, and invitation-revoke HTTP flow
-- Disabled/enabled `go run ./cmd/luas route:list` comparison
+- Disabled/enabled `go run ./cmd/fastbuild route:list` comparison
 - Real PostgreSQL invitation/member HTTP flows plus ownership-transfer and account-deletion races
 - Real PostgreSQL notification HTTP, worker-failure, privacy-schema, and migration rollback/reapply flow
 - Real PostgreSQL webhook create/idempotency/worker/privacy-ledger and migration rollback/reapply flow
@@ -1081,7 +1081,7 @@ Enforcement:
 - Root and API agent rules require SQLite support to remain absent.
 - A shared disposable-PostgreSQL harness isolates repository and migration
   tests by schema and full application feature tests by database.
-- CI supplies `LUAS_TEST_POSTGRES_DSN` to the complete API verification tier.
+- CI supplies `FASTBUILD_TEST_POSTGRES_DSN` to the complete API verification tier.
 - `check-database-boundary.py` is a zero-reference source guard, so a driver,
   dependency, dialect branch, fixture, or test cannot silently return.
 - Database-free unit tests continue to use existing seams and test doubles,
@@ -1089,7 +1089,7 @@ Enforcement:
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-database-boundary.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-database-boundary.py`
 - `cd api && go test ./...`
 - PostgreSQL integration tier against a disposable database
 - `make check`
@@ -1133,14 +1133,14 @@ the `pkg/support` item of the package-deepening candidate is closed by deletion.
 
 Verification:
 
-- `bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`
 - `cd api && bash ../.agents/skills/verification-before-completion/scripts/run-tiers.sh 1 ./...`
 - `cd web && corepack pnpm type-check && corepack pnpm vitest run`
 
 ### Completed P1 — Platform Operator Starter And Admin Console
 
 The Admin Console shipped no protected feature because a static client cannot hold a server
-credential and Luas had no platform-operator identity. The optional `operator` starter adds
+credential and FastBuild had no platform-operator identity. The optional `operator` starter adds
 CLI-managed operator grants (`platform_operators`), a Go-issued HttpOnly `SameSite=Strict` session
 cookie with exact-Origin checks and a session-bound CSRF token, and `/v1/operator` routes. A verified
 non-operator receives no session, and operators cannot change accounts that hold a grant.
@@ -1307,7 +1307,7 @@ deprecated `ROLE.NOT_FOUND` code was removed under the new process.
 Verification:
 
 - `bash scripts/release-check.sh vX.Y.Z` failure paths
-- `python3 .agents/skills/luas-framework-review/scripts/check-ci-actions.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-ci-actions.py`
 
 ### P1 — Starter Business Readiness
 
@@ -1317,18 +1317,18 @@ Recommended slice:
 
 1. Use [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md) as the starter readiness matrix before adding new route-owning behavior.
 2. Keep the complete optional `organization` lifecycle and its production/mock adapter parity under executable contract and browser regression coverage.
-3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/luas-framework-review/scripts/check-permission-boundary.py`.
-4. Keep the delivered `notification` starter user-scoped, idempotent, lease-driven, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-notification-boundary.py`.
-5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/luas-framework-review/scripts/check-asset-boundary.py`.
-6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/luas-framework-review/scripts/check-setting-boundary.py`; split the app/user base from its organization extension and converge integration tests on PostgreSQL before considering default promotion.
-7. Keep the delivered `usage` starter finite, trusted, idempotent, atomic, retention-bounded, and covered by `.agents/skills/luas-framework-review/scripts/check-usage-boundary.py`.
-8. Keep the delivered `webhook` starter organization-owned, finite, signed, SSRF-resistant, lease-safe, privacy-minimized, and covered by `.agents/skills/luas-framework-review/scripts/check-webhook-boundary.py`.
+3. Keep the delivered `permission` starter optional, organization-dependent, exact-match, fail-closed, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-permission-boundary.py`.
+4. Keep the delivered `notification` starter user-scoped, idempotent, lease-driven, privacy-minimized, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-notification-boundary.py`.
+5. Keep the delivered `asset` starter user-scoped, private, bounded, provider-neutral, cleanup-safe, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-asset-boundary.py`.
+6. Keep the delivered `setting` starter finite, typed, versioned, privacy-aware, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-setting-boundary.py`; split the app/user base from its organization extension and converge integration tests on PostgreSQL before considering default promotion.
+7. Keep the delivered `usage` starter finite, trusted, idempotent, atomic, retention-bounded, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-usage-boundary.py`.
+8. Keep the delivered `webhook` starter organization-owned, finite, signed, SSRF-resistant, lease-safe, privacy-minimized, and covered by `.agents/skills/fastbuild-framework-review/scripts/check-webhook-boundary.py`.
 9. Run semantic discovery for an optional AI workspace next; promote any starter into the default scaffold only after its deletion path, contract, security defaults, and downstream value are proven.
 
 Verification:
 
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
+- `PYTHONDONTWRITEBYTECODE=1 python3 .agents/skills/fastbuild-framework-review/scripts/check-doc-links.py`
 - `make governance`
 
 ### P2 — Architecture Vocabulary Cleanup
@@ -1343,7 +1343,7 @@ Recommended slice:
 
 Verification:
 
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
 - `git diff --check`
 - Targeted `rg` scans for old terminology.
 
@@ -1361,7 +1361,7 @@ Recommended slice:
 
 Verification:
 
-- `bash .agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`
 - Targeted tests for the selected seam.
 - Full affected-half type/lint/test command.
 
@@ -1371,7 +1371,7 @@ Problem: root, API, and Web skills are useful but can be hard to choose during b
 
 Recommended slice:
 
-1. Use `luas-framework-review` as the router for global optimization.
+1. Use `fastbuild-framework-review` as the router for global optimization.
 2. Add pairings from relevant half-specific skills back to this root skill only where useful.
 3. Keep descriptions short to avoid context bloat.
 
@@ -1382,7 +1382,7 @@ Verification:
 
 ### P2 — Skill Governance Plan
 
-Problem: skill semantic drift is now guarded across every non-template `SKILL.md`, but the skills still need steady cleanup as Luas vocabulary and architecture rules evolve.
+Problem: skill semantic drift is now guarded across every non-template `SKILL.md`, but the skills still need steady cleanup as FastBuild vocabulary and architecture rules evolve.
 
 Recommended slice:
 
@@ -1394,12 +1394,12 @@ Recommended slice:
 Verification:
 
 - `bash .agents/skills/scripts/validate-skill.sh --all`
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
 - `git diff --check`
 
 ### P2 — Root Governance Entry Point
 
-Problem: Luas now has multiple root guardrails for vocabulary, docs, contracts, surfaces, branch discipline, package direction, and skill metadata; if they stay as separate remembered commands, agents and humans will eventually run only part of the governance set.
+Problem: FastBuild now has multiple root guardrails for vocabulary, docs, contracts, surfaces, branch discipline, package direction, and skill metadata; if they stay as separate remembered commands, agents and humans will eventually run only part of the governance set.
 
 Recommended slice:
 
@@ -1416,36 +1416,36 @@ Verification:
 
 ### P2 — Documentation Link Integrity
 
-Problem: Luas relies on AGENTS files, skills, architecture docs, and feature/starter guides as navigation rails; stale local links make both humans and agents choose the wrong seam.
+Problem: FastBuild relies on AGENTS files, skills, architecture docs, and feature/starter guides as navigation rails; stale local links make both humans and agents choose the wrong seam.
 
 Recommended slice:
 
-1. Keep `.agents/skills/luas-framework-review/scripts/check-doc-links.py` aligned with the docs and generated/vendor exclusions.
+1. Keep `.agents/skills/fastbuild-framework-review/scripts/check-doc-links.py` aligned with the docs and generated/vendor exclusions.
 2. Run it whenever Markdown docs, skill bodies, AGENTS files, or README navigation change.
 3. Prefer fixing stale links over widening exclusions, except for intentional templates and generated/vendor trees.
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-doc-links.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-doc-links.py`
 - `bash .agents/skills/scripts/validate-skill.sh --all`
 - `git diff --check`
 
 ### P2 — Downstream Extraction Guardrails
 
-Problem: Luas now has a downstream extraction workflow, but future scaffold changes still need to keep examples, devtools, mock BFF routes, console surfaces, and product-specific behavior clearly classified.
+Problem: FastBuild now has a downstream extraction workflow, but future scaffold changes still need to keep examples, devtools, mock BFF routes, console surfaces, and product-specific behavior clearly classified.
 
 Recommended slice:
 
 1. Keep [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md), `downstream-app-extraction`, `CONTEXT.md`, `web/docs/MOCK_BFF.md`, `api/docs/ADDING_MODULE.md`, and `web/docs/ADDING_FEATURE.md` aligned.
 2. Run the product-leakage helper with task-specific identifiers before committing scaffold-mode changes that touched downstream examples or docs.
-3. Keep surface classification checks in CI; avoid baking product names into Luas.
+3. Keep surface classification checks in CI; avoid baking product names into FastBuild.
 
 Verification:
 
-- `python3 .agents/skills/luas-framework-review/scripts/check-surface-catalog.py`
+- `python3 .agents/skills/fastbuild-framework-review/scripts/check-surface-catalog.py`
 - `bash .agents/skills/scripts/validate-skill.sh --all`
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-- `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:agicto/luas.git --pattern "<task-product-identifier>"`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/downstream-app-extraction/scripts/check-downstream-contamination.sh --expected-origin git@github.com:fastagi/fastbuild.git --pattern "<task-product-identifier>"`
 
 ### P2 — Architecture Review Reports
 
@@ -1461,7 +1461,7 @@ Verification:
 
 - generate a sample report in `$TMPDIR`
 - `bash .agents/skills/scripts/validate-skill.sh --all`
-- `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
+- `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
 
 ## Iteration Rules
 

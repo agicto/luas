@@ -1,5 +1,5 @@
 // Package migration provides a Laravel-inspired database migration system
-// for the Luas framework.
+// for the FastBuild framework.
 //
 // The migration system consists of several interconnected components:
 //

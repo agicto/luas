@@ -154,7 +154,7 @@ describe('mock BFF and browser service parity', () => {
   it('api keys', async () => {
     const { apiKeyService } = await import('@/features/api-key/services/api-key-service');
 
-    const created = await apiKeyService.create({ name: 'parity', scopes: ['luas:read'] });
+    const created = await apiKeyService.create({ name: 'parity', scopes: ['fastbuild:read'] });
     const page = await apiKeyService.list();
     expect(page.items.map(item => item.id)).toContain(created.api_key.id);
     await apiKeyService.revoke(created.api_key.id);
@@ -230,7 +230,7 @@ describe('mock BFF and browser service parity', () => {
     await webhookService.eventTypes(ORGANIZATION_ID);
     const created = await webhookService.create(ORGANIZATION_ID, {
       name: 'parity',
-      url: 'https://hooks.example.com/luas',
+      url: 'https://hooks.example.com/fastbuild',
       event_types: ['webhook.test'],
     });
     const page = await webhookService.endpoints(ORGANIZATION_ID);

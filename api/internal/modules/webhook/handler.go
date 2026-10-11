@@ -12,12 +12,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/pagination"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 const maxWebhookManagementBodyBytes = 16 * 1024
@@ -42,7 +42,7 @@ func NewHandler(service *service) *Handler {
 func (h *Handler) Name() string { return config.StarterWebhook }
 
 // EventTypes returns the finite code-owned subscription catalog.
-// luas:bounded-list max=128 reason=finite-code-owned-catalog
+// fastbuild:bounded-list max=128 reason=finite-code-owned-catalog
 func (h *Handler) EventTypes(c *gin.Context) {
 	organization, _, ok := webhookManager(c)
 	if !ok {

@@ -18,11 +18,11 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/email"
-	infraevents "github.com/zgiai/luas/api/internal/infra/events"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/email"
+	infraevents "github.com/fastagi/fastbuild/api/internal/infra/events"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
 )
 
 const (

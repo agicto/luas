@@ -49,12 +49,12 @@ create response:
       "id": 42,
       "user_id": 7,
       "name": "Deployment automation",
-      "key_prefix": "luas_ab12cd34",
+      "key_prefix": "fastbuild_ab12cd34",
       "scopes": ["models:invoke", "models:read"],
       "created_at": "2026-07-15T12:00:00Z",
       "updated_at": "2026-07-15T12:00:00Z"
     },
-    "plaintext_key": "luas_ab12cd34.<secret>"
+    "plaintext_key": "fastbuild_ab12cd34.<secret>"
   }
 }
 ```
@@ -106,7 +106,7 @@ atomic, and throttled to at most once per minute per active key.
 ## Deliberate Deferrals
 
 - Rotation is create-new, migrate callers, then revoke-old; there is no rotate endpoint.
-- Scope names belong to downstream product resource vocabulary; Luas defines grammar, not a catalog.
+- Scope names belong to downstream product resource vocabulary; FastBuild defines grammar, not a catalog.
 - Usage metering, quotas, billing, key-level rate plans, and organization-owned keys remain separate
   starter decisions.
 - Organization roles (`owner`, `admin`, `member`) are not API key scopes or generalized RBAC roles.

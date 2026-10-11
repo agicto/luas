@@ -48,10 +48,10 @@ fi
 
 cd "$ROOT"
 if [ "$KIND" = "go" ] && [ -n "${CODEX_SANDBOX:-}" ] && [ -z "${GOCACHE:-}" ]; then
-    export GOCACHE="${TMPDIR:-/tmp}/luas-go-build-cache"
+    export GOCACHE="${TMPDIR:-/tmp}/fastbuild-go-build-cache"
     mkdir -p "$GOCACHE"
     if [ -z "${GOLANGCI_LINT_CACHE:-}" ]; then
-        export GOLANGCI_LINT_CACHE="${TMPDIR:-/tmp}/luas-golangci-lint-cache"
+        export GOLANGCI_LINT_CACHE="${TMPDIR:-/tmp}/fastbuild-golangci-lint-cache"
         mkdir -p "$GOLANGCI_LINT_CACHE"
     fi
 fi
@@ -78,7 +78,7 @@ if [ -n "${RUN_TIERS_LOG_DIR:-}" ]; then
 else
     TMP_ROOT=${TMPDIR:-/tmp}
     TMP_ROOT=${TMP_ROOT%/}
-    LOG_DIR="$TMP_ROOT/luas-run-tiers.$(date +%Y%m%d%H%M%S).$$"
+    LOG_DIR="$TMP_ROOT/fastbuild-run-tiers.$(date +%Y%m%d%H%M%S).$$"
 fi
 mkdir -p "$LOG_DIR"
 

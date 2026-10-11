@@ -34,7 +34,7 @@ const userFacingObjectKeys = new Set([
   'text',
   'title',
 ]);
-const allowedBrandLiterals = new Set(['GitHub', 'Luas', 'Luas Console']);
+const allowedBrandLiterals = new Set(['GitHub', 'FastBuild', 'FastBuild Console']);
 
 function listSourceFiles(path) {
   const stat = statSync(path);

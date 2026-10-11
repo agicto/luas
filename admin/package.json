@@ -1,7 +1,7 @@
 {
-  "name": "luas-admin",
+  "name": "fastbuild-admin",
   "version": "0.1.0",
-  "description": "Luas project management system, delivered as a static Vite application.",
+  "description": "FastBuild project management system, delivered as a static Vite application.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -27,9 +27,9 @@
     "spa",
     "static",
     "cdn",
-    "luas"
+    "fastbuild"
   ],
-  "author": "Luas Team",
+  "author": "FastBuild Team",
   "license": "MIT",
   "engines": {
     "node": "^22.12.0 || ^24.0.0",

@@ -27,13 +27,13 @@ jobs:
       postgres:
         image: postgres@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777 # 16.14-alpine3.24
         env:
-          POSTGRES_DB: luas_perf
-          POSTGRES_USER: luas
-          POSTGRES_PASSWORD: luas_perf
+          POSTGRES_DB: fastbuild_perf
+          POSTGRES_USER: fastbuild
+          POSTGRES_PASSWORD: fastbuild_perf
         ports:
           - 5432/tcp
         options: >-
-          --health-cmd "pg_isready -U luas -d luas_perf"
+          --health-cmd "pg_isready -U fastbuild -d fastbuild_perf"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -61,8 +61,8 @@ jobs:
 
       - name: Run the baseline
         env:
-          LUAS_PERF_POSTGRES_DSN: postgres://luas:luas_perf@127.0.0.1:${{ job.services.postgres.ports[5432] }}/luas_perf?sslmode=disable
-          LUAS_PERF_OUTPUT: ${{ runner.temp }}/perf/summary.json
+          FASTBUILD_PERF_POSTGRES_DSN: postgres://fastbuild:fastbuild_perf@127.0.0.1:${{ job.services.postgres.ports[5432] }}/fastbuild_perf?sslmode=disable
+          FASTBUILD_PERF_OUTPUT: ${{ runner.temp }}/perf/summary.json
         run: make perf
 
       - name: Upload k6 summary

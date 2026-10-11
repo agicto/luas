@@ -100,7 +100,7 @@ const messages = {
   signUpWithGithub: '使用 GitHub 注册',
 
   // Footer
-  copyright: '© {year} Luas。保留所有权利。',
+  copyright: '© {year} FastBuild。保留所有权利。',
 } as const satisfies LocaleMessageShape<AuthMessages>;
 
 export default messages;

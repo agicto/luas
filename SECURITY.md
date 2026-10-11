@@ -26,7 +26,7 @@ Reports will be triaged for reproducibility, severity, affected versions, and co
 
 ## Security Boundaries
 
-Luas provides secure defaults and executable checks, but a downstream deployment still owns:
+FastBuild provides secure defaults and executable checks, but a downstream deployment still owns:
 
 - secrets and key rotation;
 - TLS, ingress, proxy trust, and network policy;

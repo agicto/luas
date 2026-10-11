@@ -81,7 +81,7 @@ describe('i18n type contracts', () => {
     const baseTranslator: BaseTranslator = key => key;
     const globalT = createTranslator(baseTranslator);
     const scopedT = createTranslator(baseTranslator, 'console.greeting');
-    const valuesWithExtraProperty = { name: 'Ada', tenant: 'Luas' };
+    const valuesWithExtraProperty = { name: 'Ada', tenant: 'FastBuild' };
 
     globalT('console.greeting.hello', { name: 'Ada' });
     globalT.auth('welcomeBackUser', { name: 'Ada' });

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
 )
 
 // InitLogger initializes logging from the same typed configuration snapshot

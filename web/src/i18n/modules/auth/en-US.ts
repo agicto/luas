@@ -98,7 +98,7 @@ const messages = {
   signUpWithGithub: 'Sign up with GitHub',
 
   // Footer
-  copyright: '© {year} Luas. All rights reserved.',
+  copyright: '© {year} FastBuild. All rights reserved.',
 } as const;
 
 export default messages;

@@ -1,6 +1,6 @@
 # Performance Baseline
 
-Luas measures performance at two levels. Go benchmarks isolate one component; the k6 baseline
+FastBuild measures performance at two levels. Go benchmarks isolate one component; the k6 baseline
 drives a release build of the whole API against PostgreSQL and fails when a hot path leaves its
 latency budget. Neither is a capacity plan: a downstream product sizes its own deployment from its
 own traffic.
@@ -23,7 +23,7 @@ Compare runs with `benchstat` on the same machine; absolute numbers across machi
 mode with JSON logs at warning level, and runs [`perf/k6/baseline.js`](../perf/k6/baseline.js):
 
 ```bash
-LUAS_PERF_POSTGRES_DSN=postgres://user:pass@127.0.0.1:5432/luas_perf?sslmode=disable make perf
+FASTBUILD_PERF_POSTGRES_DSN=postgres://user:pass@127.0.0.1:5432/fastbuild_perf?sslmode=disable make perf
 ```
 
 Each scenario holds a constant arrival rate, below saturation, so the numbers track per-request
@@ -47,10 +47,10 @@ controls. Settings:
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `LUAS_PERF_DURATION` | `30s` | Length of each scenario |
-| `LUAS_PERF_BUDGET_SCALE` | `1` | Multiplies every p95 budget, for slower hardware; error budgets are unchanged |
-| `LUAS_PERF_AUDIT_ROWS` | `1000000` | Audit rows seeded with `psql` (half owned by the measured account); `0` skips seeding |
-| `LUAS_PERF_OUTPUT` | `perf/results/summary.json` | k6 summary export |
+| `FASTBUILD_PERF_DURATION` | `30s` | Length of each scenario |
+| `FASTBUILD_PERF_BUDGET_SCALE` | `1` | Multiplies every p95 budget, for slower hardware; error budgets are unchanged |
+| `FASTBUILD_PERF_AUDIT_ROWS` | `1000000` | Audit rows seeded with `psql` (half owned by the measured account); `0` skips seeding |
+| `FASTBUILD_PERF_OUTPUT` | `perf/results/summary.json` | k6 summary export |
 | `K6` | `k6` on `PATH` | k6 binary |
 
 `.github/workflows/perf.yml` runs the baseline nightly and on demand, and keeps the summary as an
@@ -64,7 +64,7 @@ address, because profiles expose goroutine stacks, memory contents, and command-
 Reach it through a tunnel, never the public port:
 
 ```bash
-kubectl port-forward deploy/luas-api 6060:6060
+kubectl port-forward deploy/fastbuild-api 6060:6060
 go tool pprof -top http://127.0.0.1:6060/debug/pprof/profile?seconds=15
 ```
 

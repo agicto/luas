@@ -130,9 +130,9 @@ func TestPostgresDriverDeadLettersAnExpiredFinalAttempt(t *testing.T) {
 
 func openWorkflowPostgres(t *testing.T) *gorm.DB {
 	t.Helper()
-	dsn := os.Getenv("LUAS_TEST_POSTGRES_DSN")
+	dsn := os.Getenv("FASTBUILD_TEST_POSTGRES_DSN")
 	if dsn == "" {
-		t.Skip("LUAS_TEST_POSTGRES_DSN is required for PostgreSQL workflow evidence")
+		t.Skip("FASTBUILD_TEST_POSTGRES_DSN is required for PostgreSQL workflow evidence")
 	}
 	admin, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	require.NoError(t, err)

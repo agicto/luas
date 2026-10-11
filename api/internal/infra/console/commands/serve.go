@@ -5,12 +5,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/capabilities/workflow"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/starter"
-	"github.com/zgiai/luas/api/internal/wiring"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/workflow"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/wiring"
 )
 
 // ServeCommand starts the HTTP server
@@ -81,7 +81,7 @@ func validateServeRuntime(options serveOptions, cfg *config.Config) error {
 		return fmt.Errorf("config is required")
 	}
 	if options.migrate && cfg.IsProduction() {
-		return fmt.Errorf("startup migrations are disabled in production; run `luas migrate --force` as a pre-deploy job")
+		return fmt.Errorf("startup migrations are disabled in production; run `fastbuild migrate --force` as a pre-deploy job")
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func parseServeOptions(args []string) (serveOptions, error) {
 				return serveOptions{}, fmt.Errorf("%s requires a value", argument)
 			}
 		case strings.HasPrefix(argument, "--env=") || strings.HasPrefix(argument, "--env-file="):
-			// Global options are applied by cmd/luas before command dispatch.
+			// Global options are applied by cmd/fastbuild before command dispatch.
 		default:
 			return serveOptions{}, fmt.Errorf("unknown serve option %q", argument)
 		}
@@ -183,6 +183,6 @@ func (c *VersionCommand) Description() string { return "Display application vers
 func (c *VersionCommand) Usage() string       { return "version" }
 
 func (c *VersionCommand) Run(args []string) error {
-	c.output.Info("Luas v%s", c.version)
+	c.output.Info("FastBuild v%s", c.version)
 	return nil
 }

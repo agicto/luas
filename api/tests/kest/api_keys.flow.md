@@ -1,6 +1,6 @@
 ```flow
-@flow id=luas-api-keys-starter
-@name Luas API Key Starter Flow
+@flow id=fastbuild-api-keys-starter
+@name FastBuild API Key Starter Flow
 @version 1.0
 @tags apikey, starter
 @env local

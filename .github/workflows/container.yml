@@ -7,7 +7,7 @@ on:
       - "scripts/container-security.sh"
       - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
-      - ".agents/skills/luas-framework-review/scripts/check-container-supply-chain.py"
+      - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/container.yml"
   push:
     branches:
@@ -19,7 +19,7 @@ on:
       - "scripts/container-security.sh"
       - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
-      - ".agents/skills/luas-framework-review/scripts/check-container-supply-chain.py"
+      - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/container.yml"
   workflow_dispatch:
 
@@ -44,40 +44,40 @@ jobs:
 
       - name: Verify production image contract
         env:
-          BUILD_METADATA_OUTPUT: ${{ runner.temp }}/luas-api.build-metadata.json
+          BUILD_METADATA_OUTPUT: ${{ runner.temp }}/fastbuild-api.build-metadata.json
           OCI_SOURCE: ${{ github.server_url }}/${{ github.repository }}
           OCI_REVISION: ${{ github.sha }}
           OCI_VERSION: ${{ github.sha }}
-        run: bash scripts/verify-container.sh luas-api:ci
+        run: bash scripts/verify-container.sh fastbuild-api:ci
 
       - name: Export SBOM and scan production image
-        run: bash ../scripts/container-security.sh verify luas-api:ci "${RUNNER_TEMP}/luas-api.cdx.json"
+        run: bash ../scripts/container-security.sh verify fastbuild-api:ci "${RUNNER_TEMP}/fastbuild-api.cdx.json"
 
       - name: Upload API container evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: luas-api-container-security-${{ github.sha }}
+          name: fastbuild-api-container-security-${{ github.sha }}
           path: |
-            ${{ runner.temp }}/luas-api.build-metadata.json
-            ${{ runner.temp }}/luas-api.cdx.json
+            ${{ runner.temp }}/fastbuild-api.build-metadata.json
+            ${{ runner.temp }}/fastbuild-api.cdx.json
           if-no-files-found: warn
           retention-days: 14
 
       - name: Verify local Compose lifecycle
-        run: bash scripts/verify-compose.sh luas-api:ci
+        run: bash scripts/verify-compose.sh fastbuild-api:ci
 
       - name: Verify typed setting Compose lifecycle
         env:
           OPTIONAL_STARTERS: organization,setting
-        run: bash scripts/verify-compose.sh luas-api:ci
+        run: bash scripts/verify-compose.sh fastbuild-api:ci
 
       - name: Verify usage metering Compose lifecycle
         env:
           OPTIONAL_STARTERS: organization,usage
-        run: bash scripts/verify-compose.sh luas-api:ci
+        run: bash scripts/verify-compose.sh fastbuild-api:ci
 
       - name: Verify webhook delivery Compose lifecycle
         env:
           OPTIONAL_STARTERS: organization,webhook
-        run: bash scripts/verify-compose.sh luas-api:ci
+        run: bash scripts/verify-compose.sh fastbuild-api:ci

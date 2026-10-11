@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/modules/organization"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 func TestCreateOrganizationInvitationsTableUpAndDown(t *testing.T) {

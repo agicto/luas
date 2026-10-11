@@ -107,7 +107,7 @@ Standard fixes for Next.js 16 / React 19:
 - [ ] Verify no regression in other metrics. INP fixes sometimes hurt LCP.
 - [ ] Verify the changed interaction at desktop and mobile widths, including horizontal overflow.
 - [ ] If the downstream product owns RUM, compare field p75 after rollout and alert through its chosen
-      vendor. Luas itself stays vendor-neutral.
+      vendor. FastBuild itself stays vendor-neutral.
 
 ## Anti-patterns
 
@@ -133,7 +133,7 @@ Standard fixes for Next.js 16 / React 19:
 
 Before auditing, read:
 
-1. [`../../../docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) for Luas terminology, budgets, and commands.
+1. [`../../../docs/PERFORMANCE.md`](../../../docs/PERFORMANCE.md) for FastBuild terminology, budgets, and commands.
 2. `vercel-react-best-practices` skill for code patterns (memoization, RSC boundaries).
 3. The page's data-fetching strategy (`async` Server Component vs client-side fetching).
 4. `next.config.ts` and the current official analyzer output.

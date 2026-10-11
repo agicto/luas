@@ -16,7 +16,7 @@ Browser SPA
   -> same-origin /api operation
   -> reviewed browser gateway or Go adapter
   -> HttpOnly session cookie / fixed upstream mapping
-  -> Luas API authorization
+  -> FastBuild API authorization
 ```
 
 The gateway owns:
@@ -49,7 +49,7 @@ console has no sign-in and no protected feature:
   guard is UX only; the API authorizes every operator request.
 - The console origin must be listed in `OPERATOR_ALLOWED_ORIGINS`, and `/api/*`
   must reach the Go API on the same origin so the cookie stays first-party.
-- Operator access is granted only with `luas operator:grant <email>`.
+- Operator access is granted only with `fastbuild operator:grant <email>`.
 - `organization`, `webhook`, and `notification` in `VITE_OPTIONAL_FEATURES` add operator screens
   for those API starters. They are support views, not tenant self-service: an operator reads any
   organization's members, webhook endpoints, and deliveries, and the notification delivery ledger,

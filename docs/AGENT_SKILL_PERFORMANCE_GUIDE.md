@@ -1,7 +1,7 @@
 # Agent Skill Performance Guide
 
-This guide captures the reusable lessons from reducing agent overhead in Luas.
-It is intended for repositories derived from Luas and for unrelated projects
+This guide captures the reusable lessons from reducing agent overhead in FastBuild.
+It is intended for repositories derived from FastBuild and for unrelated projects
 that use `AGENTS.md` plus discoverable `SKILL.md` workflows.
 
 ## Executive Rule
@@ -53,7 +53,7 @@ Each skill should satisfy these constraints:
 - Own one repeatable workflow with a clear boundary.
 - Use a precise positive trigger and an important negative boundary.
 - Keep `SKILL.md` under 200 lines.
-- Put a byte budget on automatic entrypoints; Luas uses 6,000 bytes for
+- Put a byte budget on automatic entrypoints; FastBuild uses 6,000 bytes for
   implicit skills and 7,000 bytes for explicit-only workflows.
 - Move optional examples and tutorials to `examples/` or `references/`.
 - Load those resources only when nearby production code is insufficient.
@@ -136,7 +136,7 @@ rg -n '\b(always|every task|must load|pair with|make check|pnpm test)\b' \
   --glob 'AGENTS.md' --glob 'SKILL.md' .
 ```
 
-Adapt paths and commands to the repository. Do not copy Luas-specific skill
+Adapt paths and commands to the repository. Do not copy FastBuild-specific skill
 names, package boundaries, or verification commands into a different stack.
 
 ## Acceptance Criteria
@@ -156,7 +156,7 @@ A migrated repository should meet all of these conditions:
   workflow, and its checker reports false positives, false negatives, and
   misroutes separately.
 
-For reference, the Luas review covered 32 skills. Its 48-case recorded routing
+For reference, the FastBuild review covered 32 skills. Its 48-case recorded routing
 review covers every skill, all 11 explicit-only boundaries, and five routine
 no-skill requests. These fixtures test repository routing policy; use an
 independent model evaluation when one is separately authorized and available.

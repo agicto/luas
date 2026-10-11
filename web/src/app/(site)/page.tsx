@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 /**
- * Luas Homepage
+ * FastBuild Homepage
  * Unified design language with Auth and Console sections
  */
 export default async function HomePage() {
@@ -195,7 +195,7 @@ export default async function HomePage() {
               className="h-12 px-8 bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
             >
               <a
-                href="https://github.com/zgiai/luas"
+                href="https://github.com/fastagi/fastbuild"
                 target="_blank"
                 rel="noopener noreferrer"
               >

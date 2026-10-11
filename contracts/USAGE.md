@@ -13,7 +13,7 @@ NEXT_PUBLIC_OPTIONAL_FEATURES=organization,usage
 
 Usage is not request telemetry, an HTTP rate limiter, a feature entitlement, a plan, a price, an
 invoice, or a payment-provider event. The starter has no public or browser ingestion endpoint.
-Application services report trusted events through the Go domain seams; operators can use the Luas
+Application services report trusted events through the Go domain seams; operators can use the FastBuild
 CLI for reconciliation and quota administration.
 
 ## Vocabulary And Catalog

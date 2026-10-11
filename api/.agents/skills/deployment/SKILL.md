@@ -1,14 +1,14 @@
 ---
 name: deployment
-description: Deploy and verify the Luas API image, local Compose stack, health probes, logs, migrations, and runtime configuration.
+description: Deploy and verify the FastBuild API image, local Compose stack, health probes, logs, migrations, and runtime configuration.
 ---
 
-# Luas API Deployment
+# FastBuild API Deployment
 
 ## Purpose
 
 Use the repository's actual container contract when changing the Dockerfile, Compose stack, runtime
-environment, probes, migrations, container logging, or deployment CI. Luas supplies a scaffold image;
+environment, probes, migrations, container logging, or deployment CI. FastBuild supplies a scaffold image;
 downstream apps own their cloud, registry, secret store, rollout, and rollback.
 
 ## Read First
@@ -70,8 +70,8 @@ docker compose up --build --wait
 docker compose down
 go test ./internal/infra/console/commands ./pkg/logger ./internal/infra/config
 cd ..
-IMAGE=luas-api:container-check make container-scan
-IMAGE=luas-api:container-check make container-sbom
+IMAGE=fastbuild-api:container-check make container-scan
+IMAGE=fastbuild-api:container-check make container-sbom
 ```
 
 `make container-check` must prove all of the following:

@@ -67,7 +67,7 @@ run in deterministic order inside the locked user transaction before soft delete
 cleaner physically removes user-scope rows. A guard failure runs no cleaner; any cleaner failure
 rolls back earlier cleanup and account deletion.
 
-Organization rows remain until Luas defines organization deletion. Their foreign key uses physical
+Organization rows remain until FastBuild defines organization deletion. Their foreign key uses physical
 cascade as a future last line of integrity; no current route physically deletes an organization.
 
 ## Audit And Operations
@@ -78,12 +78,12 @@ and source. It never includes request values, stored JSON, defaults, or enum opt
 App-scope operations are intentionally CLI/internal-only:
 
 ```bash
-go run ./cmd/luas setting:list
-go run ./cmd/luas setting:set \
+go run ./cmd/fastbuild setting:list
+go run ./cmd/fastbuild setting:set \
   --key=branding.display_name \
-  --value='"Luas Cloud"' \
+  --value='"FastBuild Cloud"' \
   --expected-version=0
-go run ./cmd/luas setting:reset \
+go run ./cmd/fastbuild setting:reset \
   --key=branding.display_name \
   --expected-version=1
 ```
@@ -100,6 +100,6 @@ authority documented in [`CONFIGURATION.md`](CONFIGURATION.md).
 ```bash
 go test ./internal/modules/setting ./internal/modules/user
 go test ./internal/infra/console/commands ./internal/starter ./internal/bootstrap
-go run ./cmd/luas route:list
-python3 ../.agents/skills/luas-framework-review/scripts/check-setting-boundary.py
+go run ./cmd/fastbuild route:list
+python3 ../.agents/skills/fastbuild-framework-review/scripts/check-setting-boundary.py
 ```

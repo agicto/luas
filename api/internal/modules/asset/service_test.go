@@ -13,12 +13,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	infrastorage "github.com/zgiai/luas/api/internal/infra/storage"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	infrastorage "github.com/fastagi/fastbuild/api/internal/infra/storage"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 func newAssetServiceTest(t *testing.T) (*service, uint) {

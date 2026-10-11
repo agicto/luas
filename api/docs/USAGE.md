@@ -72,12 +72,12 @@ Run commands from `api/` with the same `OPTIONAL_STARTERS` selection and databas
 the deployed API:
 
 ```bash
-go run ./cmd/luas usage:list --scope=user --subject-id=1
-go run ./cmd/luas usage:record --source=ops.reconcile --event-id=evt-1 --scope=user --subject-id=1 --metric=api.requests --quantity=1 --occurred-at=2026-07-15T12:00:00Z
-go run ./cmd/luas usage:consume --source=worker.dispatch --event-id=evt-2 --scope=user --subject-id=1 --metric=workflow.runs --quantity=1
-go run ./cmd/luas usage:quota:set --scope=user --subject-id=1 --metric=api.requests --limit=1000 --expected-version=0
-go run ./cmd/luas usage:quota:reset --scope=user --subject-id=1 --metric=api.requests --expected-version=1
-go run ./cmd/luas usage:prune --before=2026-04-01T00:00:00Z
+go run ./cmd/fastbuild usage:list --scope=user --subject-id=1
+go run ./cmd/fastbuild usage:record --source=ops.reconcile --event-id=evt-1 --scope=user --subject-id=1 --metric=api.requests --quantity=1 --occurred-at=2026-07-15T12:00:00Z
+go run ./cmd/fastbuild usage:consume --source=worker.dispatch --event-id=evt-2 --scope=user --subject-id=1 --metric=workflow.runs --quantity=1
+go run ./cmd/fastbuild usage:quota:set --scope=user --subject-id=1 --metric=api.requests --limit=1000 --expected-version=0
+go run ./cmd/fastbuild usage:quota:reset --scope=user --subject-id=1 --metric=api.requests --expected-version=1
+go run ./cmd/fastbuild usage:prune --before=2026-04-01T00:00:00Z
 ```
 
 Manual mutations and pruning emit minimized system-actor audit metadata. Event IDs, fingerprints,
@@ -98,5 +98,5 @@ go test ./internal/modules/usage ./internal/bootstrap/operatorcommands ./interna
 go test ./...
 go vet ./...
 bash .agents/skills/sql-migration-review/scripts/check-migration.sh database/migrations/2026_07_15_050000_create_usage_tables.go
-cd .. && python3 .agents/skills/luas-framework-review/scripts/check-usage-boundary.py
+cd .. && python3 .agents/skills/fastbuild-framework-review/scripts/check-usage-boundary.py
 ```

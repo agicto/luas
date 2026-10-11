@@ -1,14 +1,14 @@
 ---
 name: frontend-design
-description: Design or substantially restyle a Luas page or component. Use for visual-direction work, not small copy, state, data, or bug-only edits.
+description: Design or substantially restyle a FastBuild page or component. Use for visual-direction work, not small copy, state, data, or bug-only edits.
 ---
 
-# Luas Frontend Design
+# FastBuild Frontend Design
 
 ## Purpose
 
 Establish a coherent visual direction for a substantial surface while keeping
-Luas a product-neutral enterprise scaffold. This skill is not required for a
+FastBuild a product-neutral enterprise scaffold. This skill is not required for a
 small component fix or an edit that already has a clear local pattern.
 
 ## Start With Context
@@ -23,7 +23,7 @@ small component fix or an edit that already has a clear local pattern.
 
 ## Direction Rules
 
-For Luas console and operational tools:
+For FastBuild console and operational tools:
 
 - prioritize scanning, comparison, repeated action, and predictable hierarchy;
 - use restrained surfaces, compact headings, stable toolbars, and clear state;

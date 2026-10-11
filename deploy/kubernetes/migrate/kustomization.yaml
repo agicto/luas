@@ -1,5 +1,5 @@
 # Pre-deploy migration job. Apply it, wait for completion, then roll out the base:
-#   kubectl apply -k deploy/kubernetes/migrate && kubectl wait --for=condition=complete job/luas-migrate
+#   kubectl apply -k deploy/kubernetes/migrate && kubectl wait --for=condition=complete job/fastbuild-migrate
 # Jobs are immutable: delete the finished job (ttlSecondsAfterFinished does it for you) or use a
 # per-release name before the next run.
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -10,6 +10,6 @@ resources:
   - job.yaml
 
 images:
-  - name: luas-api
-    newName: registry.example.com/luas-api
+  - name: fastbuild-api
+    newName: registry.example.com/fastbuild-api
     newTag: replace-with-a-digest

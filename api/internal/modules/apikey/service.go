@@ -12,10 +12,10 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/capabilities/idgen"
-	"github.com/zgiai/luas/api/internal/domain"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/idgen"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
 )
 
 // lastUsedAtThrottle skips the LastUsedAt write if the previous update is
@@ -75,7 +75,7 @@ func (s *service) CreateForUser(ctx context.Context, userID uint, req *APIKeyCre
 		return nil, fmt.Errorf("failed to generate api key secret: %w", err)
 	}
 
-	keyPrefix := "luas_" + strings.ToLower(idgen.ShortID())
+	keyPrefix := "fastbuild_" + strings.ToLower(idgen.ShortID())
 	plaintext := keyPrefix + "." + secret
 
 	apiKey := &domain.APIKey{

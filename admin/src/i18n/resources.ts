@@ -5,7 +5,7 @@ type LocaleResourceShape<T> = T extends string
 const enUS = {
   translation: {
     app: {
-      name: 'Luas',
+      name: 'FastBuild',
       shell: 'Admin Console',
     },
     navigation: {
@@ -346,7 +346,7 @@ const enUS = {
 const zhHans = {
   translation: {
     app: {
-      name: 'Luas',
+      name: 'FastBuild',
       shell: '管理后台',
     },
     navigation: {

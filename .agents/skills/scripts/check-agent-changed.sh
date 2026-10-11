@@ -11,15 +11,15 @@ REPO_ROOT=${REPO_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}
 BASE_REF=${AGENT_CHECK_BASE_REF:-main}
 cd "$REPO_ROOT"
 
-VOCABULARY_CHECK=.agents/skills/luas-framework-review/scripts/check-vocabulary.sh
-LINK_CHECK=.agents/skills/luas-framework-review/scripts/check-doc-links.py
-ENGLISH_CHECK=.agents/skills/luas-framework-review/scripts/check-english-source.py
+VOCABULARY_CHECK=.agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh
+LINK_CHECK=.agents/skills/fastbuild-framework-review/scripts/check-doc-links.py
+ENGLISH_CHECK=.agents/skills/fastbuild-framework-review/scripts/check-english-source.py
 SKILL_CHECK=.agents/skills/scripts/validate-skill.sh
 ROUTING_CHECK=.agents/skills/scripts/check-skill-routing.py
 INDEX_CHECK=.agents/skills/scripts/render-skill-index.py
 
-CHANGED_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-agent-changed.XXXXXX")
-UNTRACKED_FILE=$(mktemp "${TMPDIR:-/tmp}/luas-agent-untracked.XXXXXX")
+CHANGED_FILE=$(mktemp "${TMPDIR:-/tmp}/fastbuild-agent-changed.XXXXXX")
+UNTRACKED_FILE=$(mktemp "${TMPDIR:-/tmp}/fastbuild-agent-untracked.XXXXXX")
 trap 'rm -f "$CHANGED_FILE" "$UNTRACKED_FILE"' EXIT
 
 FULL_REASON=""

@@ -82,11 +82,11 @@ default.
 
 ## Retention
 
-Luas does not choose a universal retention period. Downstream legal, security, privacy, and storage
+FastBuild does not choose a universal retention period. Downstream legal, security, privacy, and storage
 requirements own that decision. Operators delete only an explicit bounded batch:
 
 ```bash
-luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
+fastbuild audit:prune --before=2026-04-01T00:00:00Z --batch=500
 ```
 
 - `--before` is required, uses RFC3339, and must be in the past.

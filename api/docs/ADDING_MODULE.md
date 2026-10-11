@@ -5,7 +5,7 @@ Use this path for starter-style, route-owning backend behavior.
 ## Generate A Wired Starter
 
 ```bash
-go run ./cmd/luas make:module BlogPost
+go run ./cmd/fastbuild make:module BlogPost
 ```
 
 The generator creates `internal/modules/blog_post/` (package `blogpost`) with the domain entity,
@@ -15,7 +15,7 @@ optional starter in `internal/starter/defaults.go`. A generator test compiles th
 real module and runs its tests. Then:
 
 1. Run `make wire`.
-2. Regenerate the golden schema (`LUAS_UPDATE_GOLDEN_SCHEMA=1`) and review the diff.
+2. Regenerate the golden schema (`FASTBUILD_UPDATE_GOLDEN_SCHEMA=1`) and review the diff.
 3. Write the HTTP contract, replace the placeholder `name` field with real business fields, and add
    record ownership: generated routes only require a signed-in user.
 4. Enable it with `OPTIONAL_STARTERS=blogpost`.
@@ -45,7 +45,7 @@ service_test.go
    Map the starter's domain errors in `error_mappings.go` with `(h *Handler) RegisterErrorMappings`; the registry installs them when the starter is active. Only errors shared by several starters or core code belong in `internal/bootstrap/domain_error_mappings.go`.
 7. In `internal/starter/defaults.go`, add the module `ProviderSet`, one `Handlers` field, and one manifest line in `DefaultManifests` (default starter) or `OptionalManifests` (optional starter). Do not edit `routes/api.go` or add positional parameters.
 8. Generate Wire with `make wire` and commit `wire_gen.go`; CI runs `make wire-check`. Routes register through the selected manifest's module.
-9. Write versioned migrations as frozen SQL or migration-local snapshot structs, never `AutoMigrate` on the module's live persistence structs. Regenerate `database/migrations/testdata/schema.golden.sql` with `LUAS_UPDATE_GOLDEN_SCHEMA=1` only when adding a migration, and review the diff.
+9. Write versioned migrations as frozen SQL or migration-local snapshot structs, never `AutoMigrate` on the module's live persistence structs. Regenerate `database/migrations/testdata/schema.golden.sql` with `FASTBUILD_UPDATE_GOLDEN_SCHEMA=1` only when adding a migration, and review the diff.
 10. Verify both disabled and enabled assembly, including route and migration parity.
 11. Run `make test` in `api/`, or `make check` from the repo root.
 
@@ -68,9 +68,9 @@ service_test.go
 ## Optional Starter Verification
 
 ```bash
-DB_ENABLED=false go run ./cmd/luas route:list
+DB_ENABLED=false go run ./cmd/fastbuild route:list
 
-DB_ENABLED=false OPTIONAL_STARTERS=<name> go run ./cmd/luas route:list
+DB_ENABLED=false OPTIONAL_STARTERS=<name> go run ./cmd/fastbuild route:list
 
 go test ./internal/starter/... ./internal/modules/<name>/...
 ```

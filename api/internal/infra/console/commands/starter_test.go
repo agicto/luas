@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zgiai/luas/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
 func TestParseStarterCommandOptions(t *testing.T) {
@@ -66,7 +66,7 @@ func TestStarterCatalogDocumentHasStableJSONIdentity(t *testing.T) {
 }
 
 func TestEnableStartersAddsDependenciesAndWritesAtomically(t *testing.T) {
-	path := writeStarterEnvironment(t, "APP_NAME=Luas\nOPTIONAL_STARTERS=\n")
+	path := writeStarterEnvironment(t, "APP_NAME=FastBuild\nOPTIONAL_STARTERS=\n")
 	options := starterCommandOptions{envFile: path, names: []string{"permission"}}
 	if err := changeStarterSelection(NewStarterEnableCommand().output, options, true); err != nil {
 		t.Fatalf("changeStarterSelection() error = %v", err)

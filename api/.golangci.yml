@@ -59,7 +59,7 @@ formatters:
       simplify: true
     goimports:
       local-prefixes:
-        - github.com/zgiai/luas/api
+        - github.com/fastagi/fastbuild/api
   exclusions:
     generated: lax
     paths:

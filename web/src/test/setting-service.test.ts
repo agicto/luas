@@ -10,7 +10,7 @@ describe('setting service contract parsing', () => {
   it('accepts the exact shipped app, organization, and user definitions', () => {
     expect(
       parseAppSettings([
-        setting('app', 'branding.display_name', 'string', 'public', 'Luas'),
+        setting('app', 'branding.display_name', 'string', 'public', 'FastBuild'),
         setting('app', 'localization.locale', 'enum', 'public', 'en-US', {
           options: ['en-US', 'zh-Hans'],
         }),
@@ -66,7 +66,7 @@ describe('setting service contract parsing', () => {
 
     expect(() =>
       parseAppSettings([
-        setting('app', 'branding.display_name', 'string', 'public', 'Luas'),
+        setting('app', 'branding.display_name', 'string', 'public', 'FastBuild'),
         setting('app', 'localization.locale', 'enum', 'public', 'en-US', {
           options: ['zh-Hans', 'en-US'],
         }),

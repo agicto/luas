@@ -1,5 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1.24.0@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
-ARG OCI_SOURCE=https://github.com/zgiai/luas
+ARG OCI_SOURCE=https://github.com/fastagi/fastbuild
 ARG OCI_REVISION=unknown
 ARG OCI_VERSION=dev
 
@@ -43,8 +43,8 @@ ARG OCI_SOURCE
 ARG OCI_REVISION
 ARG OCI_VERSION
 
-LABEL org.opencontainers.image.title="Luas Web" \
-    org.opencontainers.image.description="Production runtime for the Luas Next.js scaffold" \
+LABEL org.opencontainers.image.title="FastBuild Web" \
+    org.opencontainers.image.description="Production runtime for the FastBuild Next.js scaffold" \
     org.opencontainers.image.source="${OCI_SOURCE}" \
     org.opencontainers.image.revision="${OCI_REVISION}" \
     org.opencontainers.image.version="${OCI_VERSION}" \

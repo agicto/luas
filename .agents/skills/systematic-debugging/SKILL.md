@@ -109,4 +109,4 @@ When done, summarize in this shape:
 Select another skill only when its distinct concern is active.
 
 - `tdd-regression` after the failure is reproducible and the fix needs a permanent regression guard.
-- `luas-code-review` only when the user explicitly requests review after the fix.
+- `fastbuild-code-review` only when the user explicitly requests review after the fix.

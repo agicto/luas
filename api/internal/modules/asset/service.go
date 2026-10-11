@@ -15,11 +15,11 @@ import (
 
 	"github.com/google/uuid"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 const (

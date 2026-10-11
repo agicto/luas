@@ -1,6 +1,6 @@
 ---
 name: i18n-handler
-description: Change Luas next-intl messages or translation boundaries. Use for locale keys, namespaces, server/client translation APIs, or locale routing.
+description: Change FastBuild next-intl messages or translation boundaries. Use for locale keys, namespaces, server/client translation APIs, or locale routing.
 ---
 
 # Internationalization Handler

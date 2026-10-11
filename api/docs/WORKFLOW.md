@@ -44,7 +44,7 @@ at-most-once after `Pop`: a process crash can lose queued or running work.
 ## PostgreSQL Driver Contract
 
 Set `QUEUE_DRIVER=postgres`, run migrations, and start one or more workers with
-`luas workflow:work`. Producers and workers may run in different replicas.
+`fastbuild workflow:work`. Producers and workers may run in different replicas.
 
 - Dispatch writes a `workflow_tasks` ledger row before returning.
 - Delayed tasks become claimable at `available_at`.
@@ -65,8 +65,8 @@ PostgreSQL remains the only relational database target. The durable driver requi
 nor a separate broker.
 
 ```bash
-QUEUE_DRIVER=postgres ./bin/luas migrate
-QUEUE_DRIVER=postgres ./bin/luas workflow:work --queue=default --concurrency=4
+QUEUE_DRIVER=postgres ./bin/fastbuild migrate
+QUEUE_DRIVER=postgres ./bin/fastbuild workflow:work --queue=default --concurrency=4
 ```
 
 Keep `QUEUE_LEASE_DURATION` greater than `QUEUE_WORKER_TIMEOUT`. The heartbeat interval must be
@@ -120,6 +120,6 @@ independent queue, so producers and consumers in different replicas cannot see o
 ```bash
 make test-race-critical
 make benchmark-workflow
-LUAS_TEST_POSTGRES_DSN='postgres://...' go test ./internal/capabilities/workflow -run Postgres
+FASTBUILD_TEST_POSTGRES_DSN='postgres://...' go test ./internal/capabilities/workflow -run Postgres
 go test ./...
 ```

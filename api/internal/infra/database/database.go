@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 // NewDB creates a new database connection via Wire DI.
@@ -91,7 +91,7 @@ func postgresDSN(cfg *config.Config) (string, error) {
 	host := strings.TrimSuffix(strings.TrimPrefix(dbCfg.Host, "["), "]")
 	applicationName := strings.TrimSpace(cfg.App.Name)
 	if applicationName == "" {
-		applicationName = "luas"
+		applicationName = "fastbuild"
 	}
 
 	dsn := &url.URL{

@@ -1,6 +1,6 @@
 # AI Capability
 
-Luas ships a provider-neutral technical capability at
+FastBuild ships a provider-neutral technical capability at
 [`internal/capabilities/ai`](../internal/capabilities/ai). It owns bounded provider execution. It is
 not an AI product starter and does not own prompts, conversations, runs, evaluations, billing,
 routes, persistence, permissions, or user workflows.
@@ -30,7 +30,7 @@ the capability and composes the existing workflow, usage, organization, permissi
 ## Configuration
 
 The capability is disabled by default. Enabling it requires an explicit provider, explicit provider-
-owned model ID, and provider secret. Luas deliberately has no fast-moving default model.
+owned model ID, and provider secret. FastBuild deliberately has no fast-moving default model.
 
 | Key | Default | Validation when enabled |
 |---|---:|---|
@@ -54,7 +54,7 @@ values are immutable for the process lifetime; changing them requires restart.
 - `Input` is required.
 - `Input` plus `Instructions` must fit `AI_MAX_INPUT_BYTES` and contain valid UTF-8.
 - `Provider` and `Model` are opaque identifiers, not framework enums.
-- `ReasoningEffort` is an optional provider-owned identifier. Luas validates its shape but does not
+- `ReasoningEffort` is an optional provider-owned identifier. FastBuild validates its shape but does not
   freeze a model-specific value list that would become stale.
 
 The manager trims surrounding whitespace, applies configured defaults, validates the request, and
@@ -91,7 +91,7 @@ entire stream, including callers that pass `context.Background()`. A clean provi
 `[DONE]` closes the channel; malformed, truncated, oversized, timed-out, and provider-failed streams
 surface a terminal error.
 
-Luas does not automatically retry generation. Retrying after a timeout or partial stream can create
+FastBuild does not automatically retry generation. Retrying after a timeout or partial stream can create
 duplicate work and cost, and a transport failure does not prove the provider did not execute the
 request. A durable product workflow must define its own idempotency, attempt ledger, partial-output
 policy, and provider-specific retry budget.

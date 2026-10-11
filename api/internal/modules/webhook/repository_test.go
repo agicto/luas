@@ -12,11 +12,11 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	infradatabase "github.com/zgiai/luas/api/internal/infra/database"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/modules/organization"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	infradatabase "github.com/fastagi/fastbuild/api/internal/infra/database"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 func TestRepositoryDurableDeliveryLifecycle(t *testing.T) {

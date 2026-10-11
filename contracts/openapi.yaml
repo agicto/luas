@@ -1,8 +1,8 @@
 openapi: 3.1.0
 info:
-  title: Luas HTTP API
+  title: FastBuild HTTP API
   version: 0.1.0
-  description: Machine-readable contracts for reviewed Luas HTTP surfaces. A path is authoritative only
+  description: Machine-readable contracts for reviewed FastBuild HTTP surfaces. A path is authoritative only
     after it is included here. Markdown contracts continue to own semantic and security behavior that
     cannot be represented completely by OpenAPI.
   license:
@@ -10,7 +10,7 @@ info:
     identifier: MIT
 servers:
   - url: /
-    description: Current Luas API origin
+    description: Current FastBuild API origin
 tags:
   - name: Health
     description: Process probes for load balancers and orchestrators. They return raw JSON, not the API
@@ -3395,13 +3395,13 @@ components:
       type: http
       scheme: bearer
       bearerFormat: opaque-session
-      description: Opaque server-side session credential returned by the Luas login API.
+      description: Opaque server-side session credential returned by the FastBuild login API.
     operatorSession:
       type: apiKey
       in: cookie
-      name: __Host-luas_operator
+      name: __Host-fastbuild_operator
       description: HttpOnly platform-operator session cookie issued by POST /v1/operator/session. The
-        name is `luas_operator` outside production or `OPERATOR_SESSION_COOKIE_NAME` when configured.
+        name is `fastbuild_operator` outside production or `OPERATOR_SESSION_COOKIE_NAME` when configured.
         Unsafe methods also require an allowed `Origin` and the `X-CSRF-Token` header; see OPERATORS.md.
   parameters:
     Page:
@@ -4111,7 +4111,8 @@ components:
           maxLength: 100
         key_prefix:
           type: string
-          pattern: ^luas_[a-z0-9_-]+$
+          description: Issued with the `fastbuild_` prefix; keys created before the rename keep their original lowercase prefix.
+          pattern: ^[a-z][a-z0-9]*_[a-z0-9_-]+$
         scopes:
           type: array
           maxItems: 32

@@ -1,11 +1,11 @@
 # Versioning, Deprecation, and Releases
 
-Luas is a scaffold that downstream projects copy and then upgrade by merging newer versions. Its
+FastBuild is a scaffold that downstream projects copy and then upgrade by merging newer versions. Its
 version tells a downstream team how much work an upgrade is.
 
 ## Version Numbers
 
-Luas uses semantic versioning on the `0.y.z` line:
+FastBuild uses semantic versioning on the `0.y.z` line:
 
 | Change | Version part | Requirement |
 |---|---|---|
@@ -39,6 +39,6 @@ verifies that the tag is on `main` and has a changelog section, builds and scans
 images, exports dependency and image SBOMs, records build provenance attestations for them, and
 publishes the GitHub release with the changelog section as its notes.
 
-Luas does not publish container images: downstream projects build and sign their own. See
+FastBuild does not publish container images: downstream projects build and sign their own. See
 [`CONTAINER_SECURITY.md`](CONTAINER_SECURITY.md) for the image evidence a downstream registry
 pipeline should keep.

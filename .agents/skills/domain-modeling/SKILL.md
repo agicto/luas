@@ -1,6 +1,6 @@
 ---
 name: domain-modeling
-description: Resolve global Luas vocabulary or ownership boundaries. Use for starter/feature/capability/module classification or CONTEXT/ADR changes, not local symbol naming.
+description: Resolve global FastBuild vocabulary or ownership boundaries. Use for starter/feature/capability/module classification or CONTEXT/ADR changes, not local symbol naming.
 ---
 
 # Domain Modeling
@@ -16,7 +16,7 @@ follow nearby code without loading this workflow.
 1. Read the relevant section of `CONTEXT.md`.
 2. Inspect the existing code/docs that already use the concept.
 3. Classify its scope:
-   - `core`: required runtime/infrastructure for every Luas app.
+   - `core`: required runtime/infrastructure for every FastBuild app.
    - `starter`: reusable business starting point shipped by default.
    - `optional starter`: production-quality business starting point activated
      explicitly.
@@ -64,5 +64,5 @@ authority updated:
 ```
 
 Use `contract-evolution` only when the decision changes public HTTP behavior.
-Use `luas-framework-review` only when the user requested a broader scaffold
+Use `fastbuild-framework-review` only when the user requested a broader scaffold
 audit beyond this vocabulary decision.

@@ -45,7 +45,7 @@ multi-category audit.
 
 1. Name the observed metric, trace, bundle, or code-path risk.
 2. Read the nearest implementation and the smallest matching rule file.
-3. Confirm the rule fits Luas ownership and React 19/Next.js 16 behavior.
+3. Confirm the rule fits FastBuild ownership and React 19/Next.js 16 behavior.
 4. Implement the narrow change without speculative memoization or caching.
 5. Re-run the same measurement or deterministic budget that identified the
    problem.

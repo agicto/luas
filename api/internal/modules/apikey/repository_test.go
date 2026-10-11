@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 func newAPIKeyRepositoryTestDB(t *testing.T) *gorm.DB {
@@ -24,7 +24,7 @@ func TestRepositoryStaleUsageWriteCannotClearRevocation(t *testing.T) {
 	key := &domain.APIKey{
 		UserID:    7,
 		Name:      "deploy",
-		KeyPrefix: "luas_test",
+		KeyPrefix: "fastbuild_test",
 		KeyHash:   "hash",
 		Scopes:    []string{"models:invoke"},
 	}
@@ -101,7 +101,7 @@ func TestRepositoryRecordUseIsThrottled(t *testing.T) {
 	key := &domain.APIKey{
 		UserID:    7,
 		Name:      "deploy",
-		KeyPrefix: "luas_throttle",
+		KeyPrefix: "fastbuild_throttle",
 		KeyHash:   "throttle-hash",
 		Scopes:    []string{"models:invoke"},
 	}
@@ -124,7 +124,7 @@ func TestRepositoryRevokeIsOwnedAndIdempotent(t *testing.T) {
 	key := &domain.APIKey{
 		UserID:    7,
 		Name:      "deploy",
-		KeyPrefix: "luas_owned",
+		KeyPrefix: "fastbuild_owned",
 		KeyHash:   "owned-hash",
 		Scopes:    []string{"models:invoke"},
 	}

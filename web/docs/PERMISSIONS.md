@@ -57,7 +57,7 @@ It is process-local demonstration state and never substitutes for production per
 
 ## Remove Or Replace
 
-- Keep both optional Web features when Luas organizations and access roles match the product domain.
+- Keep both optional Web features when FastBuild organizations and access roles match the product domain.
 - Replace the fixed Route Handlers only when another backend preserves the same browser contract.
 - Delete `src/features/permission`, its `/api` routes, i18n module, feature selection, tests, and
   organization tab together when the product uses another authorization system.

@@ -1,4 +1,4 @@
-BINARY_NAME=luas
+BINARY_NAME=fastbuild
 SERVER_BINARY=server
 OUTPUT_DIR=bin
 
@@ -33,7 +33,7 @@ $(OUTPUT_DIR):
 # Build CLI binary for current platform (auto-runs wire first)
 build: wire $(OUTPUT_DIR)
 	@echo "Building $(BINARY_NAME)..."
-	go build $(LDFLAGS) -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/luas/main.go
+	go build $(LDFLAGS) -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/fastbuild/main.go
 
 # Build server binary for current platform
 build-server: $(OUTPUT_DIR)
@@ -59,23 +59,23 @@ route-catalog-check:
 # Build Windows binaries
 build-windows: $(OUTPUT_DIR)
 	@echo "Building Windows binaries..."
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME).exe cmd/luas/main.go
+	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME).exe cmd/fastbuild/main.go
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY).exe cmd/server/main.go
 	@echo "✅ Windows binaries built successfully"
 
 # Build Linux binaries
 build-linux: $(OUTPUT_DIR)
 	@echo "Building Linux binaries..."
-	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-linux cmd/luas/main.go
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-linux cmd/fastbuild/main.go
 	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-linux cmd/server/main.go
 	@echo "✅ Linux binaries built successfully"
 
 # Build macOS binaries (both Intel and Apple Silicon)
 build-darwin: $(OUTPUT_DIR)
 	@echo "Building macOS binaries..."
-	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64 cmd/luas/main.go
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-amd64 cmd/fastbuild/main.go
 	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-darwin-amd64 cmd/server/main.go
-	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-arm64 cmd/luas/main.go
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(BINARY_NAME)-darwin-arm64 cmd/fastbuild/main.go
 	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o $(OUTPUT_DIR)/$(SERVER_BINARY)-darwin-arm64 cmd/server/main.go
 	@echo "✅ macOS binaries built successfully"
 
@@ -86,7 +86,7 @@ build-all-platforms: build-windows build-linux build-darwin
 # Production build with optimizations
 build-prod: wire $(OUTPUT_DIR)
 	@echo "Building production binaries..."
-	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/luas/main.go
+	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) cmd/fastbuild/main.go
 	go build -ldflags="-s -w" -o $(OUTPUT_DIR)$(PATH_SEP)$(SERVER_BINARY)$(BINARY_EXT) cmd/server/main.go
 	@echo "✅ Production binaries built successfully"
 
@@ -94,9 +94,9 @@ build-prod: wire $(OUTPUT_DIR)
 install: build
 	@echo "Installing $(BINARY_NAME)..."
 ifeq ($(OS),Windows_NT)
-	go install $(LDFLAGS) ./cmd/luas
+	go install $(LDFLAGS) ./cmd/fastbuild
 else
-	go install $(LDFLAGS) ./cmd/luas
+	go install $(LDFLAGS) ./cmd/fastbuild
 endif
 	@echo "✅ $(BINARY_NAME) installed successfully"
 
@@ -134,7 +134,7 @@ test-race-critical:
 
 # Verify every SQL-owning package against one caller-provided PostgreSQL version.
 test-postgres-compatibility:
-	@test -n "$${LUAS_TEST_POSTGRES_DSN}" || { echo "LUAS_TEST_POSTGRES_DSN is required" >&2; exit 2; }
+	@test -n "$${FASTBUILD_TEST_POSTGRES_DSN}" || { echo "FASTBUILD_TEST_POSTGRES_DSN is required" >&2; exit 2; }
 	go test -count=1 \
 		./database/migrations \
 		./internal/capabilities/workflow \
@@ -167,15 +167,15 @@ benchmark-cache:
 # Profile default user repository paths against an isolated PostgreSQL schema.
 # Regenerate the starter table in internal/modules/README.md from the starter manifests
 starter-catalog:
-	LUAS_UPDATE_STARTER_CATALOG=1 go test ./internal/infra/console/commands -run '^TestModulesReadmeStarterCatalogIsGenerated$$' -count=1
+	FASTBUILD_UPDATE_STARTER_CATALOG=1 go test ./internal/infra/console/commands -run '^TestModulesReadmeStarterCatalogIsGenerated$$' -count=1
 
 # k6 load baseline with p95 budgets against a release build (needs k6 and a disposable database)
 perf:
-	@test -n "$$LUAS_PERF_POSTGRES_DSN" || (echo "LUAS_PERF_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
+	@test -n "$$FASTBUILD_PERF_POSTGRES_DSN" || (echo "FASTBUILD_PERF_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
 	bash scripts/perf.sh
 
 benchmark-database:
-	@test -n "$$LUAS_TEST_POSTGRES_DSN" || (echo "LUAS_TEST_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
+	@test -n "$$FASTBUILD_TEST_POSTGRES_DSN" || (echo "FASTBUILD_TEST_POSTGRES_DSN must be a disposable PostgreSQL connection URI" >&2; exit 2)
 	go test ./internal/infra/database ./internal/modules/user -run 'TestNewDB_PostgresAppliesRuntimeConnectionPolicy|TestPostgresUserRepository(QueryShape|PerformanceProfile)' -v -count=1
 	go test ./internal/modules/user -run '^$$' -bench '^BenchmarkPostgresUserRepository(List|Create)$$' -benchmem -benchtime=2s -count=5
 
@@ -242,34 +242,34 @@ server: dev
 migrate:
 	@echo "Running migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate) else (go run cmd/luas/main.go migrate)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate) else (go run cmd/fastbuild/main.go migrate)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate; else go run cmd/luas/main.go migrate; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate; else go run cmd/fastbuild/main.go migrate; fi
 endif
 
 migrate-fresh:
 	@echo "Running fresh migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:fresh) else (go run cmd/luas/main.go migrate:fresh)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:fresh) else (go run cmd/fastbuild/main.go migrate:fresh)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:fresh; else go run cmd/luas/main.go migrate:fresh; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:fresh; else go run cmd/fastbuild/main.go migrate:fresh; fi
 endif
 
 migrate-rollback:
 	@echo "Rolling back migrations..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:rollback) else (go run cmd/luas/main.go migrate:rollback)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) migrate:rollback) else (go run cmd/fastbuild/main.go migrate:rollback)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:rollback; else go run cmd/luas/main.go migrate:rollback; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) migrate:rollback; else go run cmd/fastbuild/main.go migrate:rollback; fi
 endif
 
 # Database seeding
 seed:
 	@echo "Running seeders..."
 ifeq ($(OS),Windows_NT)
-	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) db:seed) else (go run cmd/luas/main.go db:seed)
+	@if exist $(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) ($(OUTPUT_DIR)$(PATH_SEP)$(BINARY_NAME)$(BINARY_EXT) db:seed) else (go run cmd/fastbuild/main.go db:seed)
 else
-	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) db:seed; else go run cmd/luas/main.go db:seed; fi
+	@if [ -f $(OUTPUT_DIR)/$(BINARY_NAME) ]; then ./$(OUTPUT_DIR)/$(BINARY_NAME) db:seed; else go run cmd/fastbuild/main.go db:seed; fi
 endif
 
 # Tidy dependencies
@@ -301,7 +301,7 @@ else
 	@echo "✅ Git hooks configured"
 endif
 	@echo "✅ Dependencies downloaded"
-	@echo "Run 'make install' to install luas CLI globally"
+	@echo "Run 'make install' to install fastbuild CLI globally"
 
 # Show help
 help:
@@ -329,7 +329,7 @@ help:
 	@echo "  make benchmark-cache    - Benchmark bounded memory-cache reads and churn"
 	@echo "  make benchmark-database - Profile user repository paths on disposable PostgreSQL"
 	@echo "  make starter-catalog    - Regenerate the starter table in internal/modules/README.md"
-	@echo "  make perf               - k6 load baseline with p95 budgets (LUAS_PERF_POSTGRES_DSN, k6)"
+	@echo "  make perf               - k6 load baseline with p95 budgets (FASTBUILD_PERF_POSTGRES_DSN, k6)"
 	@echo "  make benchmark-workflow - Benchmark memory queue round trips"
 	@echo "  make cover              - Run tests with coverage report"
 	@echo ""

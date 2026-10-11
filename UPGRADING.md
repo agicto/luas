@@ -1,6 +1,6 @@
-# Upgrading Luas
+# Upgrading FastBuild
 
-This guide lists changes that a downstream fork must review when it pulls a newer Luas. Each entry
+This guide lists changes that a downstream fork must review when it pulls a newer FastBuild. Each entry
 has an impact level:
 
 - **High**: the fork fails to build, or behavior changes, until it acts.
@@ -11,7 +11,32 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Audit offset pages removed
+## Unreleased — Renamed to FastBuild; audit offset pages removed
+
+### High — Luas is now FastBuild
+
+The project moved to `fastagi/fastbuild` and every identifier changed with the name. GitHub
+redirects the old repository URL, but code and configuration must use the new names:
+
+| Area | Before | After |
+|---|---|---|
+| Go module | `github.com/zgiai/luas/api` | `github.com/fastagi/fastbuild/api` |
+| CLI and image binary | `luas`, `/app/luas` | `fastbuild`, `/app/fastbuild` |
+| Environment variable prefix | `LUAS_` (for example `LUAS_ENV_FILE`) | `FASTBUILD_` |
+| Operator session cookie | `__Host-luas_operator` / `luas_operator` | `__Host-fastbuild_operator` / `fastbuild_operator` |
+| New API key prefix | `luas_` | `fastbuild_` |
+| Project marker | `.luas-project.json` | `.fastbuild-project.json` |
+| Images and Kubernetes objects | `luas-api`, `luas-web`, `luas-*` | `fastbuild-api`, `fastbuild-web`, `fastbuild-*` |
+| Default database and Compose project | `luas`, `luas-dev` | `fastbuild`, `fastbuild-dev` |
+| Packages | `luas-web`, `luas-admin`, `@luas/contracts` | `fastbuild-web`, `fastbuild-admin`, `@fastbuild/contracts` |
+
+A fork updates its Go imports (`go mod edit -module` plus a replace of the import prefix), renames
+`LUAS_*` variables in every environment, and rebuilds its images. Operators sign in again because
+the cookie name changed. Existing API keys keep working: lookup uses the key hash, and only keys
+issued from now on carry the `fastbuild_` prefix. A local `make dev` stack starts with a fresh
+database because the Compose project name changed; `make dev-reset` under the old checkout removes
+the old one.
+
 
 ### High — Audit history endpoints return keyset pages only
 
@@ -90,7 +115,7 @@ migration. Public sessions are unaffected. Code that implements `domain.Credenti
 ### Medium — Production operator cookie names keep `__Host-`
 
 Configuration validation rejects a production `OPERATOR_SESSION_COOKIE_NAME` without the `__Host-`
-prefix. Unset it to use `__Host-luas_operator`, or rename the custom value.
+prefix. Unset it to use `__Host-fastbuild_operator`, or rename the custom value.
 
 ### Low — Login throttling counts failures per account
 
@@ -271,7 +296,7 @@ Opt-in only; nothing changes unless `operator` is added to `OPTIONAL_STARTERS`.
 
 - Selecting it requires `OPERATOR_ALLOWED_ORIGINS` (exact Admin Console origins) and adds the
   `platform_operators` migration, `/v1/operator/*` routes, and `operator:grant`, `operator:revoke`,
-  and `operator:list` commands. Grant the first operator with `luas operator:grant <email>`.
+  and `operator:list` commands. Grant the first operator with `fastbuild operator:grant <email>`.
 - To require operator sign-in in the Admin Console, build it with `VITE_OPTIONAL_FEATURES=operator`
   and route the Admin origin's `/api/*` to the Go API on the same origin. Without the flag the
   console is unchanged.
@@ -336,7 +361,7 @@ need no action: migration names are unchanged and the schema is byte-identical.
   `internal/modules` or `internal/capabilities` from `database/migrations`.
 - `TestMigrationsProduceGoldenSchema` compares a fresh database with
   `database/migrations/testdata/schema.golden.sql`. When you add a migration, regenerate it with
-  `LUAS_UPDATE_GOLDEN_SCHEMA=1` and review the diff.
+  `FASTBUILD_UPDATE_GOLDEN_SCHEMA=1` and review the diff.
 
 ### High — Starter handlers injected as one struct
 

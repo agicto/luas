@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 func configuredEmailService(client httpDoer, endpoint string, timeout time.Duration) *Service {
 	return newService(config.EmailConfig{
-		From:           "Luas <noreply@example.com>",
+		From:           "FastBuild <noreply@example.com>",
 		ResendAPIKey:   "resend-test-key",
 		RequestTimeout: timeout,
 	}, client, endpoint)
@@ -74,7 +74,7 @@ func TestServiceSendEmailUsesDocumentedProviderContract(t *testing.T) {
 	if request.method != http.MethodPost || request.path != "/emails" {
 		t.Fatalf("request target = %s %s, want POST /emails", request.method, request.path)
 	}
-	if request.payload.From != "Luas <noreply@example.com>" {
+	if request.payload.From != "FastBuild <noreply@example.com>" {
 		t.Fatalf("From = %q", request.payload.From)
 	}
 	if len(request.payload.To) != 1 || request.payload.To[0] != "alice@example.com" {

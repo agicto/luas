@@ -14,9 +14,9 @@ A platform operator is a user with a current operator grant. Grants are created 
 from the CLI on a host with database access:
 
 ```bash
-luas operator:grant <email>
-luas operator:revoke <email>
-luas operator:list
+fastbuild operator:grant <email>
+fastbuild operator:revoke <email>
+fastbuild operator:list
 ```
 
 Granting or revoking twice is a no-op. Each change writes an audit record with the system as actor
@@ -31,7 +31,7 @@ origin so the cookie is first-party.
 
 | Rule | Value |
 |---|---|
-| Cookie name | `OPERATOR_SESSION_COOKIE_NAME`; default `__Host-luas_operator` in production, `luas_operator` otherwise |
+| Cookie name | `OPERATOR_SESSION_COOKIE_NAME`; default `__Host-fastbuild_operator` in production, `fastbuild_operator` otherwise |
 | Cookie attributes | HttpOnly, `Secure` in production or whenever every allowed origin is `https`, `SameSite=Strict`, `Path=/`, no `Domain`, `Max-Age` = session lifetime |
 | Credential | The opaque authentication session from the `user` starter, issued with the `operator` audience; never returned in a response body |
 | Session lifetime | The existing absolute and idle session limits |

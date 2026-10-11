@@ -53,7 +53,7 @@ if grep -q "func.*List.*gin.Context" "${HANDLER_FILE}"; then
          grep -q "response.SuccessCursorPage" "${HANDLER_FILE}"; then
         echo "✅ Pagination detected (keyset cursor pattern)"
     else
-        BOUNDED_LIST_MARKERS=$(grep -E '^[[:space:]]*// luas:bounded-list max=[1-9][0-9]{0,2} reason=[a-z0-9]+(-[a-z0-9]+)*[[:space:]]*$' "${HANDLER_FILE}" || true)
+        BOUNDED_LIST_MARKERS=$(grep -E '^[[:space:]]*// fastbuild:bounded-list max=[1-9][0-9]{0,2} reason=[a-z0-9]+(-[a-z0-9]+)*[[:space:]]*$' "${HANDLER_FILE}" || true)
         BOUNDED_LIST_COUNT=$(awk 'NF { count++ } END { print count + 0 }' <<< "${BOUNDED_LIST_MARKERS}")
         if [ "${BOUNDED_LIST_COUNT}" -eq 1 ]; then
             BOUNDED_LIST_MAX=$(sed -E 's/.* max=([0-9]+) .*/\1/' <<< "${BOUNDED_LIST_MARKERS}")
@@ -66,9 +66,9 @@ if grep -q "func.*List.*gin.Context" "${HANDLER_FILE}"; then
         elif [ "${BOUNDED_LIST_COUNT}" -gt 1 ]; then
             echo "❌ Multiple bounded list declarations found; use one module-level declaration"
             ERRORS=$((ERRORS + 1))
-        elif grep -q "luas:bounded-list" "${HANDLER_FILE}"; then
+        elif grep -q "fastbuild:bounded-list" "${HANDLER_FILE}"; then
             echo "❌ Malformed bounded list declaration"
-            echo "   Expected: // luas:bounded-list max=<1..100> reason=<kebab-case>"
+            echo "   Expected: // fastbuild:bounded-list max=<1..100> reason=<kebab-case>"
             ERRORS=$((ERRORS + 1))
         else
             echo "❌ List endpoint found but no pagination detected!"
@@ -216,7 +216,7 @@ echo "=============================================="
 if [ $ERRORS -eq 0 ]; then
     echo "✅ All API standards checks passed!"
     echo ""
-    echo "Module '${MODULE}' follows Luas API development standards."
+    echo "Module '${MODULE}' follows FastBuild API development standards."
     exit 0
 else
     echo "❌ Found $ERRORS error(s)"

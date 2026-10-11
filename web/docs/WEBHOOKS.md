@@ -78,5 +78,5 @@ pnpm type-check
 pnpm lint
 pnpm exec vitest run src/test/webhook-route.test.ts src/test/webhook-ui.test.tsx
 pnpm build
-cd .. && python3 .agents/skills/luas-framework-review/scripts/check-webhook-boundary.py
+cd .. && python3 .agents/skills/fastbuild-framework-review/scripts/check-webhook-boundary.py
 ```

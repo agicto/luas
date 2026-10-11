@@ -3,13 +3,13 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/luas-route-catalog.XXXXXX")"
-CLI_FILE="${WORK_DIR}/luas"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/tmp}/fastbuild-route-catalog.XXXXXX")"
+CLI_FILE="${WORK_DIR}/fastbuild"
 CATALOG_FILE="${WORK_DIR}/catalog.json"
 trap 'rm -f "${CATALOG_FILE}" "${CLI_FILE}"; rmdir "${WORK_DIR}"' EXIT
 
 cd "${ROOT_DIR}"
-go build -o "${CLI_FILE}" ./cmd/luas
+go build -o "${CLI_FILE}" ./cmd/fastbuild
 
 (
   cd "${WORK_DIR}"

@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 // testMigration is a simple migration for testing

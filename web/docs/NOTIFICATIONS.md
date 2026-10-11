@@ -18,7 +18,7 @@ OPTIONAL_STARTERS=notification
 NEXT_PUBLIC_OPTIONAL_FEATURES=notification
 ```
 
-For production against the Luas API, also configure `API_ADAPTER_ENABLED=true` and the server-only
+For production against the FastBuild API, also configure `API_ADAPTER_ENABLED=true` and the server-only
 adapter settings from [`AUTHENTICATION.md`](AUTHENTICATION.md). Local development can use the mock
 BFF. An enabled feature with neither backend returns `503 COMMON.SERVICE_UNAVAILABLE`; it never
 invents production state.

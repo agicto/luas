@@ -11,13 +11,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/wiring"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/wiring"
 )
 
 const (
-	routeCatalogKind          = "luas.route_catalog"
+	routeCatalogKind          = "fastbuild.route_catalog"
 	routeCatalogSchemaVersion = 1
 )
 
@@ -148,7 +148,7 @@ func parseRouteListOptions(args []string) (routeListOptions, error) {
 				return routeListOptions{}, fmt.Errorf("%s requires a value", argument)
 			}
 		case strings.HasPrefix(argument, "--env=") || strings.HasPrefix(argument, "--env-file="):
-			// Global options are resolved by cmd/luas before command dispatch.
+			// Global options are resolved by cmd/fastbuild before command dispatch.
 		default:
 			return routeListOptions{}, fmt.Errorf("unknown route:list option %q", argument)
 		}

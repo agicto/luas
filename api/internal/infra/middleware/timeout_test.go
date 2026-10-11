@@ -9,7 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 func TestTimeoutWithConfig_UsesErrorContract(t *testing.T) {

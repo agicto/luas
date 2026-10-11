@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	infracommands "github.com/zgiai/luas/api/internal/infra/console/commands"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	infracommands "github.com/fastagi/fastbuild/api/internal/infra/console/commands"
 )
 
 type settingAuditRecorder struct {
@@ -25,12 +25,12 @@ func (r *settingAuditRecorder) Record(_ context.Context, entry *domain.AuditLog)
 func TestParseSettingSetArgumentsRequiresExplicitTypedFields(t *testing.T) {
 	parsed, err := parseSettingSetArguments([]string{
 		"--key=branding.display_name",
-		`--value="Luas Cloud"`,
+		`--value="FastBuild Cloud"`,
 		"--expected-version=2",
 	})
 	require.NoError(t, err)
 	assert.Equal(t, "branding.display_name", parsed.key)
-	assert.Equal(t, "Luas Cloud", parsed.value)
+	assert.Equal(t, "FastBuild Cloud", parsed.value)
 	assert.Equal(t, uint64(2), parsed.expectedVersion)
 
 	_, err = parseSettingSetArguments([]string{
@@ -41,7 +41,7 @@ func TestParseSettingSetArgumentsRequiresExplicitTypedFields(t *testing.T) {
 	assert.Error(t, err)
 	_, err = parseSettingSetArguments([]string{
 		"--key=branding.display_name",
-		`--value="Luas"`,
+		`--value="FastBuild"`,
 	})
 	assert.Error(t, err)
 }
@@ -108,7 +108,7 @@ func TestRecordSettingCommandAuditContainsMetadataOnly(t *testing.T) {
 }
 
 func TestSettingOperatorManifestRegistersAllCommands(t *testing.T) {
-	app := console.New("luas", "test")
+	app := console.New("fastbuild", "test")
 	infracommands.RegisterManifest(app, Manifest())
 
 	assert.True(t, app.HasCommand("setting:list"))

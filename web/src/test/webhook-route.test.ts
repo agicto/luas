@@ -324,7 +324,7 @@ function request(
 function endpointBody(name: string): string {
   return JSON.stringify({
     name,
-    url: 'https://hooks.example.com/luas',
+    url: 'https://hooks.example.com/fastbuild',
     event_types: ['webhook.test'],
   });
 }

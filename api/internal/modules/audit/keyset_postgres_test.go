@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 // Keyset pages must visit every matching record exactly once, newest first, including records

@@ -7,7 +7,7 @@ product: find and disable users, force a user's sessions to end, read the global
 app-scoped settings, and see system status. Every protected operation is authorized by the Go API.
 
 **Problem.** The Admin Console ships no protected feature. It is static, so it cannot hold a server
-credential, and Luas has no platform-operator identity: app-scoped settings can only be changed
+credential, and FastBuild has no platform-operator identity: app-scoped settings can only be changed
 through the CLI.
 
 **In scope.** An optional `operator` starter (API), a Go-issued browser session for the Admin
@@ -20,7 +20,7 @@ webhook, notification, or asset administration; multi-factor authentication; Web
 
 **Deployable units.** `api/` and `admin/`, joined by `contracts/OPERATORS.md` and `openapi.yaml`.
 
-**Success signal.** With `OPTIONAL_STARTERS=operator`, a user granted by `luas operator:grant`
+**Success signal.** With `OPTIONAL_STARTERS=operator`, a user granted by `fastbuild operator:grant`
 signs in to the Admin Console, disables another user (whose next API call fails with
 `401 AUTH.UNAUTHORIZED`), finds that action in the global audit log, and signs out; a non-operator
 with valid credentials cannot sign in.
@@ -39,7 +39,7 @@ with valid credentials cannot sign in.
 | Actor | Goal | Entry points | Read scope | Mutation scope | Approval boundary | Denial behavior |
 |---|---|---|---|---|---|---|
 | Platform operator | Operate the deployment | Admin Console via `/v1/operator/*` | All users (minimized fields), all audit logs, app settings, system status | Disable/enable and end sessions of non-operator users; set/reset app settings | None; every action is audited | `403 OPERATOR.FORBIDDEN` when the grant is missing |
-| Deployment owner | Decide who operates | `luas operator:grant`, `operator:revoke`, `operator:list` on a host with database access | Operator grants | Create/delete grants | Shell access to the deployment | Command exits non-zero |
+| Deployment owner | Decide who operates | `fastbuild operator:grant`, `operator:revoke`, `operator:list` on a host with database access | Operator grants | Create/delete grants | Shell access to the deployment | Command exits non-zero |
 | Signed-in user without a grant | Use the product | Web, public API | Own data only | Own data only | — | `403 OPERATOR.FORBIDDEN` on operator routes, before any resource lookup |
 | Anonymous caller | — | Public routes | Public data | None | — | `401 AUTH.UNAUTHORIZED` |
 
@@ -184,10 +184,10 @@ Settings routes are registered only when the `setting` starter is selected; othe
 
 ### Cookie and CSRF
 
-- Cookie `OPERATOR_SESSION_COOKIE_NAME` (default `__Host-luas_operator` in production,
-  `luas_operator` otherwise): HttpOnly, `Secure` in production, `SameSite=Strict`, `Path=/`, no
+- Cookie `OPERATOR_SESSION_COOKIE_NAME` (default `__Host-fastbuild_operator` in production,
+  `fastbuild_operator` otherwise): HttpOnly, `Secure` in production, `SameSite=Strict`, `Path=/`, no
   `Domain`, `Max-Age` equal to the session's absolute lifetime.
-- CSRF token: `base64url(HMAC-SHA256(key = session credential, "luas-operator-csrf/v1"))`. It is
+- CSRF token: `base64url(HMAC-SHA256(key = session credential, "fastbuild-operator-csrf/v1"))`. It is
   bound to one session, needs no server storage, and cannot be computed cross-site. Unsafe methods
   require header `X-CSRF-Token`, compared in constant time.
 - `OPERATOR_ALLOWED_ORIGINS`: exact origins. Required and validated when the starter is selected;
@@ -228,7 +228,7 @@ LOAD grant FROM operator.platform_operators USING user.id
 BEGIN TRANSACTION user.sessions
   INSERT authentication session FOR user
 COMMIT
-DERIVE csrf_token = HMAC(credential, "luas-operator-csrf/v1")
+DERIVE csrf_token = HMAC(credential, "fastbuild-operator-csrf/v1")
 RETURN 200 { operator: { id, username, email, nickname }, csrf_token } WITH Set-Cookie
 ```
 
@@ -245,7 +245,7 @@ LOAD identity FROM user.SessionAuthenticator USING credential
   OR ELSE AUTH.UNAUTHORIZED (unknown, expired, revoked) | AUTH.ACCOUNT_DISABLED
 LOAD grant FROM operator.platform_operators USING identity.user_id OR ELSE OPERATOR.FORBIDDEN
 LOAD user FROM user.UserAdministrator USING identity.user_id
-DERIVE csrf_token = HMAC(credential, "luas-operator-csrf/v1")
+DERIVE csrf_token = HMAC(credential, "fastbuild-operator-csrf/v1")
 RETURN 200 { operator: { id, username, email, nickname }, csrf_token }
 ```
 

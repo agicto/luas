@@ -1,11 +1,11 @@
-// Package migrations provides database migration files for the Luas scaffold.
+// Package migrations provides database migration files for the FastBuild scaffold.
 // Migrations are registered using the new Migration interface from internal/infra/migration.
 package migrations
 
 import (
 	"slices"
 
-	"github.com/zgiai/luas/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
 )
 
 // registry holds all registered migrations

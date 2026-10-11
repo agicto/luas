@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/capabilities/ai"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/ai"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
 )
 
 // AIChatCommand sends a prompt to the configured AI provider.

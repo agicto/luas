@@ -12,8 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 var organizationInvitationTokenPattern = regexp.MustCompile(`oinv_[a-z0-9_-]+\.[a-f0-9]{48}`)
@@ -191,7 +191,7 @@ func TestOrganizationInvitationHTTPContract(t *testing.T) {
 	http.DefaultTransport = &organizationEmailTransport{invitationTokens: invitationTokens}
 	t.Cleanup(func() { http.DefaultTransport = previousTransport })
 	engine := setupApp(t, func(cfg *config.Config) {
-		cfg.Email.From = "Luas <noreply@example.com>"
+		cfg.Email.From = "FastBuild <noreply@example.com>"
 		cfg.Email.ResendAPIKey = "feature-test-key"
 		cfg.Email.RequestTimeout = time.Second
 	}, "organization")
@@ -333,7 +333,7 @@ func TestOrganizationMemberLifecycleHTTPContract(t *testing.T) {
 	http.DefaultTransport = &organizationEmailTransport{invitationTokens: invitationTokens}
 	t.Cleanup(func() { http.DefaultTransport = previousTransport })
 	engine := setupApp(t, func(cfg *config.Config) {
-		cfg.Email.From = "Luas <noreply@example.com>"
+		cfg.Email.From = "FastBuild <noreply@example.com>"
 		cfg.Email.ResendAPIKey = "feature-test-key"
 		cfg.Email.RequestTimeout = time.Second
 	}, "organization")

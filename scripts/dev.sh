@@ -9,31 +9,31 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-STATE_DIR="${ROOT_DIR}/.luas-dev"
+STATE_DIR="${ROOT_DIR}/.fastbuild-dev"
 COMPOSE=(docker compose --file "${ROOT_DIR}/compose.dev.yaml")
 
-API_PORT="${LUAS_API_PORT:-8025}"
-WEB_PORT="${LUAS_WEB_PORT:-3000}"
-ADMIN_PORT="${LUAS_ADMIN_PORT:-4173}"
-export LUAS_DB_PORT="${LUAS_DB_PORT:-55432}"
-SERVICES="${LUAS_DEV_SERVICES:-api,web,admin}"
-STARTERS="${LUAS_DEV_STARTERS:-organization,permission,notification,asset,setting,usage,webhook,operator}"
-WEB_FEATURES="${LUAS_DEV_WEB_FEATURES:-organization,permission,notification,asset,setting,usage,webhook}"
-ADMIN_FEATURES="${LUAS_DEV_ADMIN_FEATURES:-operator,organization,webhook,notification}"
+API_PORT="${FASTBUILD_API_PORT:-8025}"
+WEB_PORT="${FASTBUILD_WEB_PORT:-3000}"
+ADMIN_PORT="${FASTBUILD_ADMIN_PORT:-4173}"
+export FASTBUILD_DB_PORT="${FASTBUILD_DB_PORT:-55432}"
+SERVICES="${FASTBUILD_DEV_SERVICES:-api,web,admin}"
+STARTERS="${FASTBUILD_DEV_STARTERS:-organization,permission,notification,asset,setting,usage,webhook,operator}"
+WEB_FEATURES="${FASTBUILD_DEV_WEB_FEATURES:-organization,permission,notification,asset,setting,usage,webhook}"
+ADMIN_FEATURES="${FASTBUILD_DEV_ADMIN_FEATURES:-operator,organization,webhook,notification}"
 
 print_usage() {
   cat <<USAGE
 Usage: scripts/dev.sh [up|down|reset]
 
 Environment:
-  LUAS_API_PORT            API port (default 8025)
-  LUAS_WEB_PORT            Web port (default 3000)
-  LUAS_ADMIN_PORT          Admin Console port (default 4173)
-  LUAS_DB_PORT             PostgreSQL host port (default 55432)
-  LUAS_DEV_SERVICES        Comma list of api, web, admin (default all)
-  LUAS_DEV_STARTERS        API OPTIONAL_STARTERS (default every optional starter)
-  LUAS_DEV_WEB_FEATURES    Web NEXT_PUBLIC_OPTIONAL_FEATURES
-  LUAS_DEV_ADMIN_FEATURES  Admin VITE_OPTIONAL_FEATURES
+  FASTBUILD_API_PORT            API port (default 8025)
+  FASTBUILD_WEB_PORT            Web port (default 3000)
+  FASTBUILD_ADMIN_PORT          Admin Console port (default 4173)
+  FASTBUILD_DB_PORT             PostgreSQL host port (default 55432)
+  FASTBUILD_DEV_SERVICES        Comma list of api, web, admin (default all)
+  FASTBUILD_DEV_STARTERS        API OPTIONAL_STARTERS (default every optional starter)
+  FASTBUILD_DEV_WEB_FEATURES    Web NEXT_PUBLIC_OPTIONAL_FEATURES
+  FASTBUILD_DEV_ADMIN_FEATURES  Admin VITE_OPTIONAL_FEATURES
 
 Seeded accounts (password "secret"): admin@example.com is a platform operator, user@example.com is
 a regular user.
@@ -69,30 +69,30 @@ require_ports() {
       WEB) wants web || continue; port="${WEB_PORT}" ;;
       ADMIN) wants admin || continue; port="${ADMIN_PORT}" ;;
     esac
-    port_free "${port}" || fail "Port ${port} is in use. Choose another with LUAS_${name}_PORT=<port>."
+    port_free "${port}" || fail "Port ${port} is in use. Choose another with FASTBUILD_${name}_PORT=<port>."
   done
 }
 
 start_database() {
-  log "Starting PostgreSQL on 127.0.0.1:${LUAS_DB_PORT}"
+  log "Starting PostgreSQL on 127.0.0.1:${FASTBUILD_DB_PORT}"
   "${COMPOSE[@]}" up --detach --wait postgres >/dev/null
 }
 
 api_environment() {
   export APP_ENV=development
-  export LUAS_ENV_FILE=
+  export FASTBUILD_ENV_FILE=
   export SERVER_HOST=127.0.0.1
   export SERVER_PORT="${API_PORT}"
-  export DB_ENABLED=true DB_DRIVER=postgres DB_HOST=127.0.0.1 DB_PORT="${LUAS_DB_PORT}"
-  export DB_NAME=luas DB_USERNAME=luas DB_PASSWORD=luas-local-only DB_SSLMODE=disable
+  export DB_ENABLED=true DB_DRIVER=postgres DB_HOST=127.0.0.1 DB_PORT="${FASTBUILD_DB_PORT}"
+  export DB_NAME=fastbuild DB_USERNAME=fastbuild DB_PASSWORD=fastbuild-local-only DB_SSLMODE=disable
   export OPTIONAL_STARTERS="${STARTERS}"
   export AI_ENABLED=false
   export QUEUE_DRIVER=postgres
   export CORS_ALLOW_ORIGINS="http://localhost:${WEB_PORT},http://127.0.0.1:${WEB_PORT}"
   export OPERATOR_ALLOWED_ORIGINS="http://127.0.0.1:${ADMIN_PORT},http://localhost:${ADMIN_PORT}"
   export OBJECT_STORAGE_LOCAL_ROOT="${STATE_DIR}/objects"
-  export ASSET_TRANSFER_SIGNING_KEY=luas-local-only-asset-transfer-signing-key-0123456789
-  export WEBHOOK_ENCRYPTION_KEY=luas-local-only-webhook-encryption-key-0123456789
+  export ASSET_TRANSFER_SIGNING_KEY=fastbuild-local-only-asset-transfer-signing-key-0123456789
+  export WEBHOOK_ENCRYPTION_KEY=fastbuild-local-only-webhook-encryption-key-0123456789
   export WEBHOOK_ALLOW_INSECURE_HTTP=true
   export WEBHOOK_ALLOW_PRIVATE_TARGETS=true
 }
@@ -100,15 +100,15 @@ api_environment() {
 prepare_api() {
   log "Building the API and preparing the database"
   mkdir -p "${STATE_DIR}/bin" "${STATE_DIR}/objects"
-  (cd "${ROOT_DIR}/api" && go build -o "${STATE_DIR}/bin/luas" ./cmd/luas)
+  (cd "${ROOT_DIR}/api" && go build -o "${STATE_DIR}/bin/fastbuild" ./cmd/fastbuild)
   api_environment
   # The API resolves runtime paths such as storage/logs from its working directory.
   (
     cd "${ROOT_DIR}/api"
-    "${STATE_DIR}/bin/luas" migrate >/dev/null
-    "${STATE_DIR}/bin/luas" seed >/dev/null
+    "${STATE_DIR}/bin/fastbuild" migrate >/dev/null
+    "${STATE_DIR}/bin/fastbuild" seed >/dev/null
     if [[ ",${STARTERS}," == *",operator,"* ]]; then
-      "${STATE_DIR}/bin/luas" operator:grant admin@example.com >/dev/null
+      "${STATE_DIR}/bin/fastbuild" operator:grant admin@example.com >/dev/null
     fi
   )
 }
@@ -175,7 +175,7 @@ up() {
   trap stop_processes EXIT
   trap 'stop_processes; exit 0' INT TERM
   if wants api; then
-    run_prefixed api bash -c "cd '${ROOT_DIR}/api' && exec '${STATE_DIR}/bin/luas' serve"
+    run_prefixed api bash -c "cd '${ROOT_DIR}/api' && exec '${STATE_DIR}/bin/fastbuild' serve"
     wait_for API "http://127.0.0.1:${API_PORT}/health/ready"
   fi
   if wants web; then

@@ -1,10 +1,17 @@
 # Changelog
 
-Notable changes to Luas. Downstream migration steps for each change are in
+Notable changes to FastBuild. Downstream migration steps for each change are in
 [`UPGRADING.md`](UPGRADING.md); the long-running quality record is in
 [`docs/FRAMEWORK_QUALITY_ROADMAP.md`](docs/FRAMEWORK_QUALITY_ROADMAP.md).
 
 ## Unreleased
+
+### Changed
+
+- **Luas is now FastBuild**, maintained at [`fastagi/fastbuild`](https://github.com/fastagi/fastbuild).
+  The Go module is `github.com/fastagi/fastbuild/api`, the CLI is `fastbuild`, environment
+  variables use the `FASTBUILD_` prefix, and API keys start with `fastbuild_`. See `UPGRADING.md`
+  for the full mapping.
 
 ### Removed
 
@@ -62,9 +69,9 @@ Notable changes to Luas. Downstream migration steps for each change are in
 
 ### Added
 
-- `make init-project` (`luas project:init`) renames a fresh scaffold copy: Go module path, package
+- `make init-project` (`fastbuild project:init`) renames a fresh scaffold copy: Go module path, package
   and Compose project names, display name, repository URL, and the default starter selection for the
-  API, Web, Admin, and `make dev`. It records the source version in `.luas-project.json`.
+  API, Web, Admin, and `make dev`. It records the source version in `.fastbuild-project.json`.
 
 - Tag-driven releases: pushing `vX.Y.Z` runs `release.yml`, which requires the tag on `main` with
   a changelog section, builds and scans both images, attests the dependency and image SBOMs, and

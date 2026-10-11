@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/pkg/logger"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // Recovery middleware handles panic recovery

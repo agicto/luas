@@ -36,16 +36,16 @@ const baseEnvironment = {
   APP_ENV: 'development',
   AI_ENABLED: 'false',
   DB_ENABLED: 'false',
-  LUAS_ENV_FILE: '',
+  FASTBUILD_ENV_FILE: '',
 };
-const starterCatalog = await luas(['starter:list', '--format=json'], {
+const starterCatalog = await fastbuild(['starter:list', '--format=json'], {
   ...baseEnvironment,
   OPTIONAL_STARTERS: '',
 });
 const optionalStarters = starterCatalog.starters
   .filter(starter => starter.mode === 'optional')
   .map(starter => starter.name);
-const runtimeCatalog = await luas(['route:list', '--format=json'], {
+const runtimeCatalog = await fastbuild(['route:list', '--format=json'], {
   ...baseEnvironment,
   OPTIONAL_STARTERS: optionalStarters.join(','),
   OPERATOR_ALLOWED_ORIGINS: 'http://127.0.0.1:4173',
@@ -74,8 +74,8 @@ console.log(
     `with ${optionalStarters.length} optional starters, ${undocumentedRoutes.size} intentionally undocumented).`,
 );
 
-async function luas(args, env) {
-  const { stdout } = await execute('go', ['run', './cmd/luas', ...args], {
+async function fastbuild(args, env) {
+  const { stdout } = await execute('go', ['run', './cmd/fastbuild', ...args], {
     cwd: apiDirectory,
     env,
     maxBuffer: 4 * 1024 * 1024,

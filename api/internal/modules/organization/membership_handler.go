@@ -3,9 +3,9 @@ package organization
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/pagination"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // ListMembers returns the PII-minimized directory visible to organization members.

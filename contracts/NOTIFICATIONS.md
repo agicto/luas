@@ -6,7 +6,7 @@ single-user applications can enable it without adopting organizations or general
 
 The starter keeps two concepts separate:
 
-- a **notification** is one immutable application event addressed to one Luas user;
+- a **notification** is one immutable application event addressed to one FastBuild user;
 - a **delivery** is that notification's channel-specific execution record.
 
 One notification may therefore have an immediately delivered `in_app` delivery and an independently
@@ -38,7 +38,7 @@ browser or public HTTP endpoint that can create notifications. A publication con
 
 | Field | Rule |
 |---|---|
-| `user_id` | Existing Luas user; delivery routing always resolves the current user record |
+| `user_id` | Existing FastBuild user; delivery routing always resolves the current user record |
 | `idempotency_key` | Required, caller-owned, 1-128 ASCII letters, digits, `.`, `_`, `:`, or `-` |
 | `kind` | Required lowercase dotted identifier, 3-100 bytes, such as `billing.invoice_paid` |
 | `title` | Plain text, 1-160 Unicode characters |
@@ -79,7 +79,7 @@ delivery. Security-sensitive downstream workflows may declare reviewed required 
 ## Delivery Lifecycle
 
 `in_app` delivery is committed atomically with the notification and begins as `delivered`. An email
-delivery begins as `pending` and is processed by `luas notification:work`.
+delivery begins as `pending` and is processed by `fastbuild notification:work`.
 
 Email delivery states are:
 

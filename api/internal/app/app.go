@@ -3,12 +3,12 @@ package app
 import (
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/email"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/email"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
 // Application holds all application dependencies injected via Wire.

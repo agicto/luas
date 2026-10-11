@@ -1,4 +1,4 @@
-# Contributing To Luas Web
+# Contributing To FastBuild Web
 
 The project-wide contribution policy lives in [../CONTRIBUTING.md](../CONTRIBUTING.md). Read it together with [AGENTS.md](AGENTS.md) and [docs/ADDING_FEATURE.md](docs/ADDING_FEATURE.md) before changing the Web app.
 

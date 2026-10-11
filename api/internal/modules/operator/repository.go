@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 // grantPO is one platform-operator grant. The row either exists or it does not; it is never updated.

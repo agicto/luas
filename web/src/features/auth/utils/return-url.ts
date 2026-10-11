@@ -1,6 +1,6 @@
 import { authConfig } from '@/config/auth';
 
-const SAME_ORIGIN_BASE = 'https://luas.local';
+const SAME_ORIGIN_BASE = 'https://fastbuild.local';
 
 /**
  * @util resolveReturnUrl

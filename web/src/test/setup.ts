@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
-process.env.SESSION_SECRET ??= 'luas-test-session-secret-at-least-32-chars'
+process.env.SESSION_SECRET ??= 'fastbuild-test-session-secret-at-least-32-chars'
 
 vi.mock('server-only', () => ({}))
 

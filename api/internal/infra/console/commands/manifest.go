@@ -1,6 +1,6 @@
 package commands
 
-import "github.com/zgiai/luas/api/internal/infra/console"
+import "github.com/fastagi/fastbuild/api/internal/infra/console"
 
 // Registration pairs a command with an optional alias name.
 type Registration struct {

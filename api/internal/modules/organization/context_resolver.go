@@ -9,10 +9,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // OrganizationIDHeader selects the organization for one context-protected request.

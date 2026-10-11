@@ -118,7 +118,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground transition-transform group-hover:scale-110">
               <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="hidden text-xl font-bold sm:inline">Luas Console</span>
+            <span className="hidden text-xl font-bold sm:inline">FastBuild Console</span>
           </Link>
           {organizationEnabled ? (
             <Suspense

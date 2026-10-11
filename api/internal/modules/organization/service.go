@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/domain"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 // Service defines the organization ownership kernel.

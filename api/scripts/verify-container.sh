@@ -3,11 +3,11 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPOSITORY_ROOT="$(git -C "${ROOT_DIR}" rev-parse --show-toplevel 2>/dev/null || dirname "${ROOT_DIR}")"
-IMAGE_TAG="${1:-luas-api:container-check}"
-CONTAINER_NAME="luas-api-container-check-$$"
+IMAGE_TAG="${1:-fastbuild-api:container-check}"
+CONTAINER_NAME="fastbuild-api-container-check-$$"
 TMP_DIR="$(mktemp -d)"
-BUILD_METADATA_OUTPUT="${BUILD_METADATA_OUTPUT:-${TMP_DIR}/luas-api.build-metadata.json}"
-OCI_SOURCE="${OCI_SOURCE:-https://github.com/zgiai/luas}"
+BUILD_METADATA_OUTPUT="${BUILD_METADATA_OUTPUT:-${TMP_DIR}/fastbuild-api.build-metadata.json}"
+OCI_SOURCE="${OCI_SOURCE:-https://github.com/fastagi/fastbuild}"
 OCI_REVISION="${OCI_REVISION:-$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD 2>/dev/null || printf 'unknown')}"
 OCI_VERSION="${OCI_VERSION:-$(git -C "${REPOSITORY_ROOT}" describe --tags --always 2>/dev/null || printf 'dev')}"
 

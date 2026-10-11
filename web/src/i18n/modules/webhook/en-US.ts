@@ -52,7 +52,7 @@ const messages = {
     name: 'Name',
     namePlaceholder: 'For example, Order processor',
     url: 'Target URL',
-    urlPlaceholder: 'https://hooks.example.com/luas',
+    urlPlaceholder: 'https://hooks.example.com/fastbuild',
     eventTypes: 'Event types',
     invalid: 'Check the name, HTTPS target, and event selection.',
   },
@@ -61,7 +61,7 @@ const messages = {
     description: 'This plaintext secret cannot be viewed again after closing.',
     warningTitle: 'Store it securely now',
     warning:
-      'Luas persists only encrypted material; lists and delivery records never return plaintext.',
+      'FastBuild persists only encrypted material; lists and delivery records never return plaintext.',
     label: 'Signing secret',
     overlap: 'The previous secret will stop signing after {time}.',
   },

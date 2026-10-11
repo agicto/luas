@@ -1,6 +1,6 @@
 package asset
 
-import "github.com/zgiai/luas/api/internal/infra/router"
+import "github.com/fastagi/fastbuild/api/internal/infra/router"
 
 // RegisterRoutes attaches private asset management and local transfer endpoints.
 func (h *Handler) RegisterRoutes(r *router.Router) {

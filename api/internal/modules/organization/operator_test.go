@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/modules/user"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 func TestOperatorDirectoryListsEveryOrganizationWithoutMembership(t *testing.T) {

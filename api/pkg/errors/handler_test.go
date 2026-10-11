@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
 )
 
 func TestDefaultConfigDoesNotExposeDebugDetails(t *testing.T) {

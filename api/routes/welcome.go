@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 const welcomeHTML = `<!DOCTYPE html>
@@ -573,7 +573,7 @@ const welcomeHTML = `<!DOCTYPE html>
 				</p>
 				<div class="cta-row">
 					<a href="/v1/health" class="button button-primary">Check Health</a>
-					<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer" class="button button-secondary">Read GitHub Docs</a>
+					<a href="https://github.com/fastagi/fastbuild/api" target="_blank" rel="noreferrer" class="button button-secondary">Read GitHub Docs</a>
 				</div>
 				<div class="signal-row">
 					<div class="signal">
@@ -629,9 +629,9 @@ make wire
 go run ./cmd/server
 
 <span class="dim"># explore the scaffold</span>
-go run ./cmd/luas route:list
-go run ./cmd/luas migrate
-go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
+go run ./cmd/fastbuild route:list
+go run ./cmd/fastbuild migrate
+go run ./cmd/fastbuild ai:chat "Summarize this scaffold"</pre>
 				</div>
 			</aside>
 		</section>
@@ -652,13 +652,13 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 					<div class="step-kicker">Step 02</div>
 					<h3>Explore the default API</h3>
 					<p>The default scaffold includes authentication, API key management, and global audit logging. Inspect the registered routes before adding another starter.</p>
-					<div class="command-snippet">go run ./cmd/luas route:list</div>
+					<div class="command-snippet">go run ./cmd/fastbuild route:list</div>
 				</article>
 				<article class="surface">
 					<div class="step-kicker">Step 03</div>
 					<h3>Generate the next module</h3>
 					<p>Start with a complete module scaffold instead of assembling unrelated files. Use single-file generators only to extend an existing module.</p>
-					<div class="command-snippet">go run ./cmd/luas make:module Invoice</div>
+					<div class="command-snippet">go run ./cmd/fastbuild make:module Invoice</div>
 				</article>
 			</div>
 		</section>
@@ -696,7 +696,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 				<article class="arch-card">
 					<div class="arch-kicker">Core</div>
 					<h3>Runtime and infra</h3>
-					<p>Bootstrap, routing, responses, migrations, testing, and shared packages form the foundation used by every Luas application.</p>
+					<p>Bootstrap, routing, responses, migrations, testing, and shared packages form the foundation used by every FastBuild application.</p>
 				</article>
 				<article class="arch-card">
 					<div class="arch-kicker">Starter</div>
@@ -738,8 +738,8 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 					<ul class="bullet-list">
 						<li><a href="/v1/health">Health endpoint</a><code>/v1/health</code></li>
 						<li><a href="/health/ready">Readiness probe</a><code>/health/ready</code></li>
-						<li><a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub repository</a><code>README + source</code></li>
-						<li><span>CLI route listing</span><code>go run ./cmd/luas route:list</code></li>
+						<li><a href="https://github.com/fastagi/fastbuild/api" target="_blank" rel="noreferrer">GitHub repository</a><code>README + source</code></li>
+						<li><span>CLI route listing</span><code>go run ./cmd/fastbuild route:list</code></li>
 					</ul>
 				</article>
 			</div>
@@ -748,7 +748,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 		<footer class="footer reveal reveal-delay-3">
 			<div>{{APP_NAME}} is a modular Go API scaffold focused on fast product starts and clean architecture seams.</div>
 			<div class="footer-links">
-				<a href="https://github.com/zgiai/luas/api" target="_blank" rel="noreferrer">GitHub</a>
+				<a href="https://github.com/fastagi/fastbuild/api" target="_blank" rel="noreferrer">GitHub</a>
 				<a href="/v1/health">Health</a>
 			</div>
 		</footer>
@@ -759,7 +759,7 @@ go run ./cmd/luas ai:chat "Summarize this scaffold"</pre>
 // RegisterWelcome registers the welcome page route.
 func RegisterWelcome(r *gin.Engine) {
 	r.GET("/", func(c *gin.Context) {
-		appName := "Luas"
+		appName := "FastBuild"
 		appEnv := "development"
 		appURL := "http://localhost:8025"
 		aiProvider := "disabled"

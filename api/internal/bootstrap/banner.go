@@ -6,12 +6,12 @@ import (
 	"github.com/fatih/color"
 )
 
-// printBanner prints the Luas startup banner.
+// printBanner prints the FastBuild startup banner.
 func printBanner(version string) {
 	bannerColor := color.New(color.FgCyan, color.Bold)
 	secondaryColor := color.New(color.FgHiBlue)
 
-	bannerColor.Println("Luas")
+	bannerColor.Println("FastBuild")
 	secondaryColor.Printf("Modular Go API Scaffold %s\n", version)
 	fmt.Println()
 }

@@ -13,18 +13,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
 // The scaffold identity is assembled from parts so project:init never rewrites its own search
 // strings, which keeps this command and its tests valid in an initialized project.
 const (
-	scaffoldSlug       = "lu" + "as"
-	scaffoldModulePath = "github.com/zgiai/" + scaffoldSlug + "/api"
-	scaffoldRepository = "https://github.com/zgiai/" + scaffoldSlug
-	projectMarkerFile  = ".luas-project.json"
+	scaffoldSlug       = "fast" + "build"
+	scaffoldModulePath = "github.com/fastagi/" + scaffoldSlug + "/api"
+	scaffoldRepository = "https://github.com/fastagi/" + scaffoldSlug
+	projectMarkerFile  = ".fastbuild-project.json"
 )
 
 var (
@@ -88,7 +88,7 @@ func (c *ProjectInitCommand) Run(args []string) error {
 	if err != nil {
 		return err
 	}
-	c.output.Success("Initialized %s (%s) from Luas %s", marker.Name, marker.Module, marker.ScaffoldVersion)
+	c.output.Success("Initialized %s (%s) from FastBuild %s", marker.Name, marker.Module, marker.ScaffoldVersion)
 	c.output.Line("Rewrote %d files. Next:", changed)
 	c.output.Line("  1. cd api && go mod tidy && go build ./... && cd .. && make check")
 	c.output.Line("  2. make dev, then sign in with the seeded accounts")
@@ -131,9 +131,9 @@ func InitProject(root string, options ProjectOptions, version string, now time.T
 		fileRewrites["admin/.env.example"] = chain(fileRewrites["admin/.env.example"],
 			setLine("VITE_OPTIONAL_FEATURES=", strings.Join(admin, ",")))
 		fileRewrites["scripts/dev.sh"] = chain(
-			setShellDefault("LUAS_DEV_STARTERS", strings.Join(options.Starters, ",")),
-			setShellDefault("LUAS_DEV_WEB_FEATURES", strings.Join(web, ",")),
-			setShellDefault("LUAS_DEV_ADMIN_FEATURES", strings.Join(admin, ",")),
+			setShellDefault("FASTBUILD_DEV_STARTERS", strings.Join(options.Starters, ",")),
+			setShellDefault("FASTBUILD_DEV_WEB_FEATURES", strings.Join(web, ",")),
+			setShellDefault("FASTBUILD_DEV_ADMIN_FEATURES", strings.Join(admin, ",")),
 		)
 	}
 
@@ -286,7 +286,7 @@ func repositoryRoot() (string, error) {
 	root := strings.TrimSpace(string(output))
 	for _, required := range []string{"api/go.mod", "contracts/openapi.yaml"} {
 		if _, err := os.Stat(filepath.Join(root, required)); err != nil {
-			return "", fmt.Errorf("%s is not a Luas repository: %s is missing", root, required)
+			return "", fmt.Errorf("%s is not a FastBuild repository: %s is missing", root, required)
 		}
 	}
 	return root, nil

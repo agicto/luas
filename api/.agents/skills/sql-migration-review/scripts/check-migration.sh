@@ -49,14 +49,14 @@ fi
 if grep -qE "Down\(|DOWN|-- down|down:" "$FILE"; then
     report_ok "Down / rollback path detected"
 else
-    report_err "No Down path detected — Luas migrations must implement the repository migration interface"
+    report_err "No Down path detected — FastBuild migrations must implement the repository migration interface"
 fi
 
 # -----------------------------------------------------------------------------
 # 3. High-risk patterns
 # -----------------------------------------------------------------------------
 if grep -qiE "ALGORITHM[[:space:]]*=|LOCK[[:space:]]*=[[:space:]]*NONE|ENGINE[[:space:]]*=[[:space:]]*InnoDB" "$FILE"; then
-    report_err "Found MySQL migration syntax — Luas supports PostgreSQL only"
+    report_err "Found MySQL migration syntax — FastBuild supports PostgreSQL only"
 fi
 
 if grep -qiE "ALTER TABLE[^;]+ADD COLUMN[^;]+DEFAULT[^;]+NOT NULL" "$FILE"; then
@@ -86,7 +86,7 @@ fi
 # 4. Index strategy hints
 # -----------------------------------------------------------------------------
 if grep -qiE "CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX" "$FILE" &&
-   ! grep -qiE "CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX[[:space:]]+CONCURRENTLY|--[[:space:]]*luas:[[:space:]]*blocking-index-reviewed" "$FILE"; then
+   ! grep -qiE "CREATE[[:space:]]+(UNIQUE[[:space:]]+)?INDEX[[:space:]]+CONCURRENTLY|--[[:space:]]*fastbuild:[[:space:]]*blocking-index-reviewed" "$FILE"; then
     report_warn "CREATE INDEX without CONCURRENTLY may block writes; use CONCURRENTLY for hot tables or add a reviewed blocking-index annotation"
 fi
 

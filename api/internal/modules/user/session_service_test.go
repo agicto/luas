@@ -15,13 +15,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 func TestAuthenticationSessionCarriesItsSignInAudience(t *testing.T) {

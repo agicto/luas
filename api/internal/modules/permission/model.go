@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
 )
 
 // AccessRolePO is an organization-scoped role persistence model.

@@ -19,7 +19,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setTheme: (theme) => set({ theme }),
     }),
     {
-      name: 'luas-spa-preferences',
+      name: 'fastbuild-spa-preferences',
       storage: createJSONStorage(() => window.localStorage),
       partialize: (state) => ({
         sidebarOpen: state.sidebarOpen,

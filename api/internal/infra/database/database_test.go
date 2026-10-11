@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/exception"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/exception"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 func TestResolveGormLogLevel_DefaultsToInfoForDebugAndTest(t *testing.T) {
@@ -134,8 +134,8 @@ func TestNewDB_RejectsNonTLSPostgresInProduction(t *testing.T) {
 			Driver:               "postgres",
 			Host:                 "db.internal",
 			Port:                 5432,
-			Name:                 "luas",
-			Username:             "luas",
+			Name:                 "fastbuild",
+			Username:             "fastbuild",
 			Password:             "secret",
 			SSLMode:              "disable",
 			Timezone:             "UTC",
@@ -188,7 +188,7 @@ func TestPostgresDSN_EncodesCredentialsAndConnectionPolicy(t *testing.T) {
 	assert.Equal(t, "verify-full", parsed.Query().Get("sslmode"))
 	assert.Equal(t, "Europe/Dublin", parsed.Query().Get("timezone"))
 	assert.Equal(t, "7", parsed.Query().Get("connect_timeout"))
-	assert.Equal(t, "luas", parsed.Query().Get("application_name"))
+	assert.Equal(t, "fastbuild", parsed.Query().Get("application_name"))
 	assert.NotContains(t, dsn, "p@ss word:/?#[]")
 	assert.False(t, parsed.Query().Has("default_query_exec_mode"), "the simple protocol is the default")
 }
@@ -213,9 +213,9 @@ func TestPostgresDSN_PassesAnOptInQueryExecMode(t *testing.T) {
 }
 
 func TestNewDB_PostgresAppliesRuntimeConnectionPolicy(t *testing.T) {
-	rawDSN := os.Getenv("LUAS_TEST_POSTGRES_DSN")
+	rawDSN := os.Getenv("FASTBUILD_TEST_POSTGRES_DSN")
 	if rawDSN == "" {
-		t.Skip("LUAS_TEST_POSTGRES_DSN is not set")
+		t.Skip("FASTBUILD_TEST_POSTGRES_DSN is not set")
 	}
 	parsed, err := url.Parse(rawDSN)
 	require.NoError(t, err)
@@ -228,7 +228,7 @@ func TestNewDB_PostgresAppliesRuntimeConnectionPolicy(t *testing.T) {
 	}
 
 	db, err := NewDB(&config.Config{
-		App: config.AppConfig{Name: "luas-database-test", Env: "test"},
+		App: config.AppConfig{Name: "fastbuild-database-test", Env: "test"},
 		Database: config.DatabaseConfig{
 			Enabled:              true,
 			Driver:               "postgres",
@@ -259,7 +259,7 @@ func TestNewDB_PostgresAppliesRuntimeConnectionPolicy(t *testing.T) {
 	defer cancel()
 	var applicationName string
 	require.NoError(t, db.WithContext(ctx).Raw("SHOW application_name").Scan(&applicationName).Error)
-	assert.Equal(t, "luas-database-test", applicationName)
+	assert.Equal(t, "fastbuild-database-test", applicationName)
 	var timezone string
 	require.NoError(t, db.WithContext(ctx).Raw("SHOW timezone").Scan(&timezone).Error)
 	assert.Equal(t, "UTC", timezone)

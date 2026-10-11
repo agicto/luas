@@ -1,7 +1,7 @@
 # Organization Contract
 
 The `organization` optional starter establishes the tenant/account ownership boundary for
-downstream applications. In Luas vocabulary, an organization is not a synonym for a workspace:
+downstream applications. In FastBuild vocabulary, an organization is not a synonym for a workspace:
 a product may add workspaces beneath an organization later, but must not silently alternate the
 two terms in routes, tables, DTOs, or authorization checks.
 
@@ -234,7 +234,7 @@ An invitation view contains no plaintext token:
 - Invitation email is trimmed and lower-cased. An existing member or a second unexpired pending
   invitation for the same organization and email is rejected. Expired invitations remain immutable
   history while releasing the active-invitation uniqueness slot for a replacement.
-- Invitation tokens are high-entropy bearer secrets. Luas returns them only to the organization
+- Invitation tokens are high-entropy bearer secrets. FastBuild returns them only to the organization
   mail adapter in process, stores only their SHA-256 hash, and never places them in URLs, API
   responses, audit metadata, or logs.
 - `ORGANIZATION_INVITATION_TTL` defaults to `168h` (7 days) and must be positive. A token is
