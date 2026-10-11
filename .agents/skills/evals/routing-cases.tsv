@@ -49,3 +49,5 @@ routine-copy-edit	implicit	none	none	-	Change one typo in user-facing copy and u
 routine-lockfile	implicit	none	none	-	Refresh the lockfile after an already approved patch dependency update.
 routine-doc-link	implicit	none	none	-	Repair a local Markdown link in one feature document.
 routine-css-copy	implicit	none	none	-	Correct a comment in a CSS file without changing styles.
+positive-plugin-integration	implicit	plugin-integration	plugin-integration	-	Our team needs a searchable knowledge base for internal documents; add it to this FastBuild project.
+neighbor-plugin-integration-no-plugin	implicit	business-implementation-planning	business-implementation-planning	-	Build our custom loan-approval workflow with multi-stage underwriting; no registry plugin covers it.

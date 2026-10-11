@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plugin Integration"
+  short_description: "Install and integrate registry plugins"
+  default_prompt: "Use $plugin-integration to find a FastBuild plugin for this capability, install it, complete its integration steps, and verify the result."

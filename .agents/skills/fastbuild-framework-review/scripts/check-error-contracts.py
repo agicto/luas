@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[4]
 CONTRACTS_README = ROOT / "contracts" / "README.md"
 API_RESPONSE_CODES = ROOT / "api" / "pkg" / "response" / "error_codes.go"
 API_DOMAIN_CODES = ROOT / "api" / "internal" / "domain" / "error_codes.go"
+# Plugins keep their codes inside their module, so installing one never edits core files.
+API_MODULE_CODE_FILES = sorted((ROOT / "api" / "internal" / "modules").glob("*/errors.go"))
 OPENAPI_CONTRACT = ROOT / "contracts" / "openapi.yaml"
 BROWSER_CODE_PATHS = {
     "web": ROOT / "web" / "src" / "http" / "codes.ts",
@@ -143,6 +145,9 @@ def main() -> int:
     contract_codes = {error.error_code for error in contract_errors}
     api_response_codes = set(parse_go_codes(API_RESPONSE_CODES).values())
     api_domain_codes = set(parse_go_codes(API_DOMAIN_CODES).values())
+    plugin_codes: set[str] = set()
+    for path in API_MODULE_CODE_FILES:
+        plugin_codes |= set(parse_go_codes(path).values())
     openapi_codes = parse_openapi_error_codes()
     browser_api_codes = {
         name: set(parse_browser_api_codes(path).values())
@@ -154,7 +159,7 @@ def main() -> int:
     }
     documented_by_status: dict[int, set[str]] = {}
 
-    expected_openapi_codes = api_response_codes | api_domain_codes
+    expected_openapi_codes = api_response_codes | api_domain_codes | plugin_codes
     missing_openapi = sorted(expected_openapi_codes - openapi_codes)
     extra_openapi = sorted(openapi_codes - expected_openapi_codes)
     if missing_openapi:
@@ -195,9 +200,11 @@ def main() -> int:
                 + ", ".join(missing_domain)
             )
 
-        if api_codes != openapi_codes:
-            missing_schema = sorted(openapi_codes - api_codes)
-            extra_schema = sorted(api_codes - openapi_codes)
+        # Browser shells list the codes they handle; plugin codes arrive with the plugin's own UI.
+        browser_openapi_codes = openapi_codes - plugin_codes
+        if api_codes != browser_openapi_codes:
+            missing_schema = sorted(browser_openapi_codes - api_codes)
+            extra_schema = sorted(api_codes - browser_openapi_codes)
             if missing_schema:
                 failures.append(
                     f"{relative_path} ApiErrorCode is missing OpenAPI values: " + ", ".join(missing_schema)

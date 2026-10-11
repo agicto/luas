@@ -48,6 +48,8 @@ after selecting it.
 - Use `fastbuild-framework-review` only for an explicit framework-wide audit.
 - Use `fastbuild-code-review` for an explicit diff/PR review, not as an automatic
   post-edit ritual.
+- Use `plugin-integration` when a requested capability may already exist in the
+  plugin registry (`fastbuild plugin:search`); install it instead of rebuilding it.
 - Use `business-implementation-planning` before building a new material
   business capability or cross-module workflow that lacks a complete plan.
 - Use `domain-modeling` only for global vocabulary or ownership boundaries,

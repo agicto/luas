@@ -160,16 +160,17 @@ code and never modifies files outside the checkout.
 | `id` | `bigserial` | Primary key |
 | `organization_id` | `bigint` | Not null; FK `organizations(id) ON DELETE CASCADE` |
 | `title` | `varchar(200)` | Not null; check `char_length(title) BETWEEN 1 AND 200` |
-| `body` | `text` | Not null; check `octet_length(body) <= 200000` |
+| `body` | `text` | Not null, default empty; check `char_length(body) <= 200000` |
 | `created_by`, `updated_by` | `bigint` | Nullable; FK `users(id) ON DELETE SET NULL` |
 | `version` | `bigint` | Not null, default 1; optimistic concurrency |
 | `created_at`, `updated_at` | `timestamptz` | Not null, UTC |
 | `search_vector` | `tsvector` | Generated stored: weighted `simple` configuration of title (A) and body (B) |
 
-Indexes: `(organization_id, id)` for keyset pages; GIN on `search_vector`; GIN trigram
-(`pg_trgm`, a trusted extension created by the migration) on `title` and `body` for substring search
-in languages without word spacing, such as Chinese. Rollback drops the table and leaves the
-extension, which other schemas may use. No seed data. Deleting an organization deletes its articles.
+Indexes: `(organization_id, id)` for keyset pages and GIN on `search_vector`. Substring search for
+languages without word spacing, such as Chinese, uses `ILIKE` within the organization's own rows
+and needs no database extension, so the plugin installs on managed PostgreSQL without extra
+privileges; very large collections move to vector search in phase 2. Rollback drops the table. No
+seed data. Deleting an organization deletes its articles.
 
 ## 7. State Machines
 
@@ -195,12 +196,15 @@ contract on install. All routes require `auth` and `organization_context`.
 
 Errors: `400 COMMON.INVALID_INPUT`, `401 AUTH.UNAUTHORIZED`, `403 PERMISSION.DENIED`,
 `404 KNOWLEDGE.ARTICLE_NOT_FOUND` (also for other organizations' IDs), `412 KNOWLEDGE.VERSION_CONFLICT`,
-`422 COMMON.VALIDATION_FAILED`, `428 KNOWLEDGE.PRECONDITION_REQUIRED`, `503 COMMON.SERVICE_UNAVAILABLE`.
+`422 COMMON.VALIDATION_FAILED`, `422 KNOWLEDGE.INVALID_ARTICLE`, `428 KNOWLEDGE.PRECONDITION_REQUIRED`,
+`503 COMMON.SERVICE_UNAVAILABLE`. Plugin error codes live in the plugin's module and reach the
+contract through the fragment's `x-error-codes`, so installing a plugin never edits core files.
 
 ```text
 COMMAND UpdateArticle(actor, id, request, if_match)
 BIND actor, organization FROM authenticated_context
-VALIDATE request: title 1-200 chars when present, body <= 200000 bytes when present, at least one field
+VALIDATE request: title 1-200 chars after trimming when present, body <= 200000 chars when present,
+  at least one field ELSE KNOWLEDGE.INVALID_ARTICLE
 REQUIRE organization.role IN {owner, admin} ELSE PERMISSION.DENIED
 REQUIRE if_match PRESENT ELSE KNOWLEDGE.PRECONDITION_REQUIRED
 DERIVE expected_version = parse(if_match) OR ELSE COMMON.INVALID_INPUT

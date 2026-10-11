@@ -11,6 +11,19 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
+## Unreleased — Plugin registry
+
+### Scheduled — `plugin:list` becomes `command:list`
+
+`plugin:list` lists external commands (`fastbuild-<name>` executables on `PATH`); the name now
+belongs to registry plugins. Use `command:list`; the alias will be removed in a later minor release.
+
+### Low — Plugin error codes live in their module
+
+Error codes declared in `api/internal/modules/<name>/errors.go` count as API codes for the
+error-contract check, and browser code lists no longer need codes owned by such modules. Add
+`x-error-codes` to a contract fragment that introduces codes.
+
 ## v0.24.0 — Renamed to FastBuild; audit offset pages removed
 
 ### High — Luas is now FastBuild

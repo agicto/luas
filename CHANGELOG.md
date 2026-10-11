@@ -6,6 +6,32 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
 
 ## Unreleased
 
+### Added
+
+- **Plugin registry.** Reviewed capabilities distributed as source: `plugin:search` and
+  `plugin:info` (with `--format=json` for agents), `plugin:add` (checksum-verified, atomic with
+  rollback, `--dry-run`, imports rewritten to the project's module), `plugin:status`, and
+  `plugin:index` for maintainers. Installs are recorded in `fastbuild.plugins.lock`. Projects created
+  with `make init-project` install from the FastBuild release they started from.
+- **`knowledge-base` plugin**, the first official plugin: organization knowledge articles with
+  full-text search and substring search that works for Chinese.
+- **`plugin-integration` skill** that teaches coding agents to find, install, integrate, and verify
+  plugins.
+- Every official plugin is installed into a copy of the API, built, and tested in tier 1, and its
+  contract fragment is merged and linted by `make contract-check`.
+- [`docs/VISION.md`](docs/VISION.md) and the [plugin registry plan](docs/plans/plugin-registry.md).
+
+### Changed
+
+- `merge-fragment` accepts `x-error-codes`, appended to the `ErrorCode` enum; the error-contract
+  check counts error codes declared in a module's `errors.go`, so plugins never edit core files.
+- `make init-project` removes `registry/` from new projects.
+
+### Deprecated
+
+- `plugin:list`, which lists external CLI commands, is renamed `command:list`; the old name remains
+  an alias until a later minor release.
+
 ## v0.24.0 — 2026-10-11
 
 ### Changed

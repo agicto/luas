@@ -1,4 +1,58 @@
 {
   "version": 1,
-  "plugins": []
+  "plugins": [
+    {
+      "name": "knowledge-base",
+      "version": "0.1.0",
+      "summary": "Organization knowledge articles with full-text and substring search.",
+      "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
+      "keywords": [
+        "knowledge",
+        "knowledge base",
+        "kb",
+        "wiki",
+        "docs",
+        "articles",
+        "search",
+        "faq",
+        "知识库",
+        "文档",
+        "文章",
+        "搜索",
+        "帮助中心"
+      ],
+      "use_when": [
+        "the team needs a knowledge base, wiki, FAQ, or help center",
+        "members must search shared documents, including Chinese text",
+        "a later AI feature needs a store of organization documents to answer from"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization"
+        ]
+      },
+      "starter": {
+        "name": "knowledge",
+        "const": "StarterKnowledge",
+        "directory": "knowledge",
+        "handler": "Knowledge"
+      },
+      "fragment": "contracts/fragments/knowledge-base.yaml",
+      "files": {
+        "api/database/migrations/2026_10_11_000000_create_knowledge_articles_table.go": "be83d50eadb9511760c2f6d58187bb582773f5ee4c182e714ecb4cc1ce9537ff",
+        "api/internal/modules/knowledge/errors.go": "1d4bb9507bfdd72079df626c59c968f8424559c793744c34f6d6011b702f5bf9",
+        "api/internal/modules/knowledge/handler.go": "b7dbe1c5f6d0d9a3d4095dd97f9a2ba28f8fda122a6d356174e6896efd0dca2f",
+        "api/internal/modules/knowledge/handler_test.go": "d89e115544dc5c08ad788d067259b9b296c8dc6d7a626d7874e8a593cf8d7ac7",
+        "api/internal/modules/knowledge/model.go": "3272180c4c463f2bfc32d2d967ab62bf4599335eb4f806db2e066e097cd78481",
+        "api/internal/modules/knowledge/provider.go": "e319fce77da6c7c026ece5e8dc9eda572099e472e6c66d8e726ed76766f311e0",
+        "api/internal/modules/knowledge/repository.go": "85a855424687aff95e98db289cb93845b8bd7d71e9962a8c8740e8edbe6c9556",
+        "api/internal/modules/knowledge/repository_postgres_test.go": "19a1be63117f01aa640f6c169e8d46f64257edddb3bc52fa0587658e00fee279",
+        "api/internal/modules/knowledge/routes.go": "84d94432f8f4dfd7ba1d9918864ddfc072c7a53bd5edd3b327a2dc63c79bd944",
+        "api/internal/modules/knowledge/service.go": "1f9bdd3e9cc1a676d4d9e57088de74fcd9e20c89f3cd959f6ad6a7facf9680fc",
+        "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
+        "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
+      }
+    }
+  ]
 }

@@ -1,0 +1,443 @@
+# OpenAPI fragment of the knowledge-base plugin. plugin:add merges it into contracts/openapi.yaml.
+x-error-codes:
+  - KNOWLEDGE.ARTICLE_NOT_FOUND
+  - KNOWLEDGE.INVALID_ARTICLE
+  - KNOWLEDGE.VERSION_CONFLICT
+  - KNOWLEDGE.PRECONDITION_REQUIRED
+tags:
+  - name: Knowledge
+    description: Organization knowledge articles with full-text and substring search (knowledge-base plugin).
+paths:
+  /v1/knowledge-articles:
+    get:
+      operationId: listKnowledgeArticles
+      summary: List the active organization's knowledge articles, newest first
+      description: Keyset pages; pass `meta.next_cursor` as `cursor` for the next, older page. Any member may read.
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/KnowledgeCursor'
+        - $ref: '#/components/parameters/PerPage'
+      responses:
+        '200':
+          description: One page of article summaries without bodies.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeArticlePageResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    post:
+      operationId: createKnowledgeArticle
+      summary: Create a knowledge article
+      description: Owners and admins only.
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateKnowledgeArticleRequest'
+      responses:
+        '201':
+          description: The created article.
+          headers:
+            ETag:
+              description: Article validator `"knowledge-article-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeArticleResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors, or `KNOWLEDGE.INVALID_ARTICLE` for a blank title.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/knowledge-articles/{knowledge_article_id}:
+    get:
+      operationId: getKnowledgeArticle
+      summary: Get a knowledge article
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/KnowledgeArticleID'
+      responses:
+        '200':
+          description: The article.
+          headers:
+            ETag:
+              description: Article validator `"knowledge-article-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeArticleResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`KNOWLEDGE.ARTICLE_NOT_FOUND`, also for another organization''s article.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    patch:
+      operationId: updateKnowledgeArticle
+      summary: Update a knowledge article's title or body
+      description: Owners and admins only. `If-Match` must carry the `ETag` that was read.
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/KnowledgeArticleID'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateKnowledgeArticleRequest'
+      responses:
+        '200':
+          description: The updated article.
+          headers:
+            ETag:
+              description: Article validator `"knowledge-article-v<version>"` for the next `If-Match`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeArticleResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`KNOWLEDGE.ARTICLE_NOT_FOUND`, also for another organization''s article.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '412':
+          description: '`KNOWLEDGE.VERSION_CONFLICT`: the article changed since it was read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          $ref: '#/components/responses/RequestTooLarge'
+        '422':
+          description: '`COMMON.VALIDATION_FAILED` for field errors, or `KNOWLEDGE.INVALID_ARTICLE` for an empty update or a blank title.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '428':
+          description: '`KNOWLEDGE.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+    delete:
+      operationId: deleteKnowledgeArticle
+      summary: Delete a knowledge article
+      description: Owners and admins only. `If-Match` must carry the `ETag` that was read.
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - $ref: '#/components/parameters/KnowledgeArticleID'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '204':
+          description: The article is deleted.
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: '`KNOWLEDGE.ARTICLE_NOT_FOUND`, also for another organization''s article.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '412':
+          description: '`KNOWLEDGE.VERSION_CONFLICT`: the article changed since it was read.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '428':
+          description: '`KNOWLEDGE.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/knowledge-search:
+    get:
+      operationId: searchKnowledgeArticles
+      summary: Search the active organization's knowledge articles
+      description: Up to 20 results, ranked by full-text relevance and then recency. Matches words and plain
+        substrings, so it works for languages written without spaces, such as Chinese. Any member may search.
+      tags:
+        - Knowledge
+      security:
+        - bearerSession: []
+      parameters:
+        - $ref: '#/components/parameters/OrganizationContext'
+        - name: q
+          in: query
+          required: true
+          description: Words or a substring to find, 1-200 characters.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+      responses:
+        '200':
+          description: Ranked results with a body excerpt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KnowledgeSearchResponse'
+        '400':
+          $ref: '#/components/responses/InvalidInput'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+components:
+  parameters:
+    KnowledgeArticleID:
+      name: knowledge_article_id
+      in: path
+      required: true
+      description: Positive knowledge article identifier.
+      schema:
+        $ref: '#/components/schemas/PositiveID'
+    KnowledgeCursor:
+      name: cursor
+      in: query
+      description: Opaque keyset position from `meta.next_cursor`; absent or empty requests the newest page.
+      schema:
+        type: string
+        maxLength: 32
+  schemas:
+    KnowledgeArticle:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - body
+        - version
+        - created_by
+        - updated_by
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 200000
+          description: Markdown.
+        version:
+          type: integer
+          minimum: 1
+        created_by:
+          description: The author, or null after the account was deleted.
+          oneOf:
+            - $ref: '#/components/schemas/PositiveID'
+            - type: 'null'
+        updated_by:
+          description: The last editor, or null after the account was deleted.
+          oneOf:
+            - $ref: '#/components/schemas/PositiveID'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    KnowledgeArticleSummary:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - version
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        version:
+          type: integer
+          minimum: 1
+        updated_at:
+          type: string
+          format: date-time
+    KnowledgeSearchHit:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - excerpt
+        - version
+        - updated_at
+      properties:
+        id:
+          $ref: '#/components/schemas/PositiveID'
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        excerpt:
+          type: string
+          maxLength: 240
+          description: The first 240 characters of the body.
+        version:
+          type: integer
+          minimum: 1
+        updated_at:
+          type: string
+          format: date-time
+    CreateKnowledgeArticleRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 200000
+          description: Markdown; defaults to empty.
+    UpdateKnowledgeArticleRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 200000
+    KnowledgeArticleResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/KnowledgeArticle'
+    KnowledgeArticlePageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+        - meta
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/KnowledgeArticleSummary'
+        meta:
+          $ref: '#/components/schemas/CursorPageMeta'
+    KnowledgeSearchResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - message
+        - data
+      properties:
+        code:
+          const: 0
+        message:
+          type: string
+        data:
+          type: array
+          maxItems: 20
+          items:
+            $ref: '#/components/schemas/KnowledgeSearchHit'
