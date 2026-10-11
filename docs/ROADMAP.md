@@ -18,9 +18,17 @@ Review this roadmap at every minor release and move finished items into the chan
 - **Foundation (done, v0.1–v0.24):** contract-first API, Web, and Admin Console; revocable sessions,
   RBAC, audit, organizations, notifications, assets, settings, usage, webhooks, operators; security
   defaults, performance budgets, container and supply-chain checks, release automation.
-- **Plugin registry phase 1 (in review):** `plugin:search|info|add|status`, checksummed index, lock
-  file, module-path adaptation, atomic install, the `knowledge-base` plugin, and the
-  `plugin-integration` skill. See [plans/plugin-registry.md](plans/plugin-registry.md).
+- **v0.25 (ready to release):** the plugin system and most of the engineering in stages 1–7 below.
+
+| Stage | Done | Remaining |
+|---|---|---|
+| 1 Plugin registry | Everything | Release v0.25.0 |
+| 2 Full-stack plugins and lifecycle | Slots, `plugin:update` / `remove` / `doctor` / `pack`, knowledge-base Web UI, `scripts/verify-plugin.sh` | Plugin authoring guide and a `make:plugin` generator |
+| 3 Themes and blocks | 3 themes, 8 blocks, contrast and registry guards | Screenshot tests in a browser |
+| 4 Official plugins | `knowledge-base`, `tags`, `comments`; nightly Plugins workflow | `ai-gateway`, `knowledge-vector`, `billing-stripe`, `forms`, `pages`, `import-export` |
+| 5 v1.0 enterprise ready | Shared rate limiting, `project:upgrade`, compatibility promise | OIDC, MFA, current GORM, external security review, documentation site, three production projects |
+| 6 Templates and agent-native building | 3 templates, `project:init --template`, `fastbuild mcp`, plugin-selection evaluation (32/32) | An agent evaluation that runs whole describe-to-deploy tasks |
+| 7 Community ecosystem | Third-party registries with `--trust`, compatibility matrix workflow | Signed indexes, Admin plugin page, contribution program |
 
 ## Ordering Rules
 
