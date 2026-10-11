@@ -1,0 +1,15 @@
+{
+  "name": "block-landing-hero",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Landing page hero with eyebrow, heading, calls to action, optional media, and a feature grid.",
+  "description": "A Web block for the top of a public landing page: an eyebrow badge, the page heading, supporting copy, primary and secondary calls to action, optional media beside the copy on wide screens, and a responsive feature grid with decorative icons. Built from the Badge primitive and theme tokens; all copy and actions arrive through props and it fetches nothing.",
+  "keywords": ["block", "landing", "hero", "homepage", "marketing", "cta", "call to action", "features", "首页", "落地页", "营销", "主视觉", "功能介绍"],
+  "use_when": [
+    "a public home or product page needs a headline section with calls to action",
+    "the builder asks for a landing page, hero, or marketing section",
+    "key features should be presented in a grid under the headline"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

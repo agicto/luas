@@ -138,3 +138,6 @@ jspm_packages/
 # Playwright
 /test-results/
 /playwright-report/
+
+# registry item check overlay (scripts/check-registry-items.mjs)
+/.registry-check/

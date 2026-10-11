@@ -2,6 +2,272 @@
   "version": 1,
   "plugins": [
     {
+      "name": "block-auth-card",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sign-in and sign-up card shell with logo, alternative actions, form slot, footer, and legal text.",
+      "description": "A Web block that frames authentication pages: brand mark, page heading, optional alternative sign-in actions with a divider, a slot for the caller's form, a footer line for switching between sign-in and sign-up, and legal text. It contains no authentication logic: the existing auth feature's forms and session handling stay in charge. Built from the Card and Separator primitives and theme tokens; all copy arrives through props.",
+      "keywords": [
+        "block",
+        "auth",
+        "authentication",
+        "sign in",
+        "sign up",
+        "login",
+        "register",
+        "card",
+        "登录",
+        "注册",
+        "认证",
+        "账号"
+      ],
+      "use_when": [
+        "sign-in, sign-up, or password pages need a consistent framed layout",
+        "the builder asks for a login or registration card design",
+        "single sign-on buttons should sit above the email form with a divider"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/auth-card/auth-card.test.tsx": "58140ed1d439b1b077503ce518200a434947b698e0742489458eaf8f2b87c03e",
+        "web/src/components/blocks/auth-card/index.tsx": "45ccc49ea5a45fb2908ad95381da17fceec98e07d05e7bca0aa7290b06e8d0b0"
+      }
+    },
+    {
+      "name": "block-dashboard-stats",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "KPI cards with values, accessible trends, icons, and a loading state for dashboards.",
+      "description": "A Web block that renders a responsive grid of KPI cards: label, value, optional icon, an optional trend whose color follows whether the change is good news, a secondary line, and skeleton cards while loading. Built from the Card and Skeleton primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "dashboard",
+        "stats",
+        "kpi",
+        "metrics",
+        "cards",
+        "analytics",
+        "overview",
+        "trend",
+        "仪表盘",
+        "统计",
+        "指标",
+        "卡片",
+        "概览"
+      ],
+      "use_when": [
+        "a dashboard or overview page needs headline numbers",
+        "the builder asks for KPI, metric, or stat cards with a trend",
+        "a console home page should summarize usage, revenue, or activity"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/dashboard-stats/dashboard-stats.test.tsx": "66ff2f18644e46198634594ecbe1081a99926d0bb2f98a76db08ba307c6bf6f2",
+        "web/src/components/blocks/dashboard-stats/index.tsx": "51bb500c029a0aaa5fab52bd2333d94aa6f40f7641fa2cacbe1edeae35de2fce"
+      }
+    },
+    {
+      "name": "block-data-table",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sortable, paginated table shell generic over the row type, with aria-sort and an empty state.",
+      "description": "A Web client block that renders typed columns over the rows passed in: sortable headers with aria-sort, optional row-header cells, client-side pagination with labelled controls and an announced page status, and an empty state across all columns. Built from the Table and Button primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "table",
+        "data table",
+        "grid",
+        "list",
+        "sort",
+        "sortable",
+        "pagination",
+        "paginated",
+        "表格",
+        "数据表",
+        "排序",
+        "分页",
+        "列表"
+      ],
+      "use_when": [
+        "a page lists records such as members, orders, invoices, or audit entries",
+        "the builder asks for a sortable or paginated table",
+        "a list needs an empty state and accessible sorting without a heavy grid library"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/data-table/data-table.test.tsx": "c61ff4b19a1d6d5bfb0b9c98ee407f3854c5f9639cfb69c7ec9cac726bdcd15b",
+        "web/src/components/blocks/data-table/index.tsx": "0ec3edbeb0b14dbb960659fffcca5484d7b9afbb9b3dcbfd9eae5ae87dc49f75"
+      }
+    },
+    {
+      "name": "block-empty-state",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Empty, no-results, error, and no-access state panels with recovery actions.",
+      "description": "A Web block for the moments a page has nothing to show: empty collections, empty search results, failed loads (announced as an alert, with an optional request id), and missing access. Each variant has its own decorative icon and tone; title, description, and actions arrive through props, and a bare mode fits inside cards and table cells. Built from theme tokens and lucide-react icons; it fetches nothing.",
+      "keywords": [
+        "block",
+        "empty state",
+        "error state",
+        "no results",
+        "no access",
+        "forbidden",
+        "zero state",
+        "placeholder",
+        "空状态",
+        "错误",
+        "无权限",
+        "无结果",
+        "占位"
+      ],
+      "use_when": [
+        "a list, table, or search can be empty and should guide the user to a next step",
+        "a page needs a consistent error or no-access panel with a retry action",
+        "the builder asks for empty, error, or permission states"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/empty-state/empty-state.test.tsx": "f771a57c1b97fd641887d89907e43e70877469129d902b344b53cd92a1b9a059",
+        "web/src/components/blocks/empty-state/index.tsx": "397994bfe1ff5beaca31dfe125d2bf6dbcba31430aa4a2d63dba83a6cd6212e3"
+      }
+    },
+    {
+      "name": "block-landing-hero",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Landing page hero with eyebrow, heading, calls to action, optional media, and a feature grid.",
+      "description": "A Web block for the top of a public landing page: an eyebrow badge, the page heading, supporting copy, primary and secondary calls to action, optional media beside the copy on wide screens, and a responsive feature grid with decorative icons. Built from the Badge primitive and theme tokens; all copy and actions arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "landing",
+        "hero",
+        "homepage",
+        "marketing",
+        "cta",
+        "call to action",
+        "features",
+        "首页",
+        "落地页",
+        "营销",
+        "主视觉",
+        "功能介绍"
+      ],
+      "use_when": [
+        "a public home or product page needs a headline section with calls to action",
+        "the builder asks for a landing page, hero, or marketing section",
+        "key features should be presented in a grid under the headline"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/landing-hero/index.tsx": "5c7462101fe24a30ed56aad5717a87d940db2a2dc6fdd0e39e46b7cf449f1fdc",
+        "web/src/components/blocks/landing-hero/landing-hero.test.tsx": "bdbbe4f8ffdd8d04b8110887d6aa3934ff410abc629018ac1bd1029ea0750a9c"
+      }
+    },
+    {
+      "name": "block-onboarding-steps",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Onboarding checklist with a progress bar, step states, and an action on the current step.",
+      "description": "A Web block that renders an onboarding checklist: a progress bar with an accessible label, an ordered list of complete, current, and upcoming steps announced in words, aria-current on the current step, and an action slot on that step. Step status comes from the caller; built from the Card primitives, theme tokens, and lucide-react icons; all copy arrives through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "onboarding",
+        "stepper",
+        "steps",
+        "checklist",
+        "getting started",
+        "setup",
+        "progress",
+        "wizard",
+        "引导",
+        "新手",
+        "步骤",
+        "清单",
+        "进度"
+      ],
+      "use_when": [
+        "new users or organizations should see what to set up next",
+        "the builder asks for a getting-started checklist or stepper",
+        "a console home page needs setup progress until the account is ready"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/onboarding-steps/index.tsx": "b8cbbc384799d0bb84044f563a17c3de2017e6f43f3417e808fe49d3e2fa3cce",
+        "web/src/components/blocks/onboarding-steps/onboarding-steps.test.tsx": "09002e80944cb17ca97b1ee4cb23dae672ea2f4b9cb3509ebe026d28fcb86d03"
+      }
+    },
+    {
+      "name": "block-pricing-table",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Pricing plans with feature lists, a highlighted plan, and call-to-action slots.",
+      "description": "A Web block that renders plan cards: name, description, a preformatted price and period, a feature list that announces included and missing features in words, a call-to-action slot, and one highlighted plan with a badge. Built from the Card and Badge primitives and theme tokens; prices and copy arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "pricing",
+        "plans",
+        "tiers",
+        "subscription",
+        "billing",
+        "price table",
+        "compare plans",
+        "定价",
+        "价格",
+        "套餐",
+        "订阅",
+        "方案"
+      ],
+      "use_when": [
+        "a public site or upgrade page must show plans and prices",
+        "the builder asks for a pricing table or plan comparison",
+        "one plan should be recommended with a highlight"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/pricing-table/index.tsx": "99ee357955f28897e40a72e1878af329ab9c397dad09c4d7f94634cf4f1169bb",
+        "web/src/components/blocks/pricing-table/pricing-table.test.tsx": "cb7d7c8b97a35122fcefa4c9fc7254f2479fdbcc595115cfa7ff786f30274f1a"
+      }
+    },
+    {
+      "name": "block-settings-page",
+      "kind": "block",
+      "version": "0.1.0",
+      "summary": "Sectioned settings layout with page header, section navigation, and framed sections with footers.",
+      "description": "A Web block that lays out a settings page: a heading with optional actions, a section navigation that is a sticky sidebar on wide screens and a horizontal strip on phones, and one labelled card per section with an optional action footer and a danger tone for irreversible settings. Built from the Card primitives and theme tokens; forms and copy arrive through props and it fetches nothing.",
+      "keywords": [
+        "block",
+        "settings",
+        "preferences",
+        "account",
+        "profile",
+        "configuration",
+        "layout",
+        "sections",
+        "设置",
+        "偏好",
+        "账户",
+        "配置",
+        "个人资料"
+      ],
+      "use_when": [
+        "a product needs an account, workspace, or organization settings page",
+        "several groups of preferences should share one page with navigation",
+        "the builder asks for a settings layout with a danger zone"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "files": {
+        "web/src/components/blocks/settings-page/index.tsx": "766ace710e194b93d703b4cb517487b1c4818f735507baa25f0f1f13606e4a64",
+        "web/src/components/blocks/settings-page/settings-page.test.tsx": "68b0f20c5afd04a76cb184424b48b9c6d59d0674ec028dc3f2f0d57e3839a0b5"
+      }
+    },
+    {
       "name": "comments",
       "kind": "feature",
       "version": "0.1.0",
@@ -168,6 +434,147 @@
         "api/internal/modules/tag/service_test.go": "28ea96d9da0116b664bd8f1484f6d3144454c092c89c571a2fe93f939128d6e6",
         "contracts/TAGS.md": "67dea9170f72366892a99cb00b6448fce793620f0d4c08f6a7a4ec38a8e9b4cf",
         "contracts/fragments/tags.yaml": "2578d9391007b0fd94665f37acc9d33fd38293bc52ad42a9b124b22fbe01754b"
+      }
+    },
+    {
+      "name": "theme-enterprise",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Calm blue enterprise theme for Web and Admin: denser spacing, smaller radius, crisp borders.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: a calm blue primary and brand, cool neutral surfaces, opaque crisp borders, a 0.375rem radius, a 4% denser Tailwind spacing unit, and less translucent Admin material. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "enterprise",
+        "corporate",
+        "business",
+        "blue",
+        "dense",
+        "compact",
+        "dashboard",
+        "主题",
+        "企业",
+        "商务",
+        "蓝色",
+        "紧凑"
+      ],
+      "use_when": [
+        "the product is a business or internal tool and should look calm, trustworthy, and information dense",
+        "the builder asks for a corporate, enterprise, or blue look",
+        "tables and dashboards need slightly tighter spacing without changing components"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/enterprise.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/enterprise.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/enterprise.css": "acd7500a7b5b3b464bb18e12338d391c0ec34ff90808d4e580f3f41750f3d006",
+        "web/src/themes/presets/enterprise.css": "90f343176af630dc0d8b638f6a7c850a4f27a280a1c5d7ddcbae863732a6bb31"
+      }
+    },
+    {
+      "name": "theme-midnight",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Dark-leaning, high-contrast theme for Web and Admin: near-black navy and a vivid violet accent.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: near-black navy surfaces, bright high-contrast text, clearly visible borders, and a vivid violet accent in dark mode; light mode keeps the identity with midnight-navy controls and deep ink text. Every checked readable pair meets WCAG AA 4.5:1 in both modes. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "midnight",
+        "dark",
+        "dark mode",
+        "high contrast",
+        "violet",
+        "developer",
+        "night",
+        "主题",
+        "暗色",
+        "深色",
+        "高对比度",
+        "夜间"
+      ],
+      "use_when": [
+        "the product targets developers or night-time use and should look dark and bold",
+        "the builder asks for a dark, midnight, neon, or high-contrast look",
+        "the brand needs a vivid accent that stays readable on dark surfaces"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/midnight.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/midnight.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/midnight.css": "4e724366a092b59f19d1ca8d01b02e5d4be18538548045bf1d2f626fb9b3b294",
+        "web/src/themes/presets/midnight.css": "085c9773c7986fdd9818b684e7e297e1b246a62329f6422a5467c77625c123a4"
+      }
+    },
+    {
+      "name": "theme-warm",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Content-first warm theme for Web and Admin: paper neutrals, ink text, terracotta accent, soft radius.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: warm paper-like neutrals, ink-like text, a terracotta brand accent, and a softer radius suited to long-form reading such as documentation, knowledge bases, and content sites. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "warm",
+        "content",
+        "reading",
+        "editorial",
+        "docs",
+        "blog",
+        "soft",
+        "主题",
+        "温暖",
+        "阅读",
+        "内容",
+        "文档"
+      ],
+      "use_when": [
+        "the product is content-first: documentation, a knowledge base, a blog, or a community",
+        "the builder asks for a warm, friendly, soft, or editorial look",
+        "long text should be comfortable to read in light and dark mode"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/warm.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/warm.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/warm.css": "da4caef8689352e67829c475fc59e104248d7190e070df7298b2cb12207aff89",
+        "web/src/themes/presets/warm.css": "7063b03af3b554256475572783910afe6f948705e13511f9127339642b828557"
       }
     }
   ]

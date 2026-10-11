@@ -1,0 +1,15 @@
+{
+  "name": "block-onboarding-steps",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Onboarding checklist with a progress bar, step states, and an action on the current step.",
+  "description": "A Web block that renders an onboarding checklist: a progress bar with an accessible label, an ordered list of complete, current, and upcoming steps announced in words, aria-current on the current step, and an action slot on that step. Step status comes from the caller; built from the Card primitives, theme tokens, and lucide-react icons; all copy arrives through props and it fetches nothing.",
+  "keywords": ["block", "onboarding", "stepper", "steps", "checklist", "getting started", "setup", "progress", "wizard", "引导", "新手", "步骤", "清单", "进度"],
+  "use_when": [
+    "new users or organizations should see what to set up next",
+    "the builder asks for a getting-started checklist or stepper",
+    "a console home page needs setup progress until the account is ready"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

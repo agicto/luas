@@ -1,0 +1,15 @@
+{
+  "name": "block-settings-page",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Sectioned settings layout with page header, section navigation, and framed sections with footers.",
+  "description": "A Web block that lays out a settings page: a heading with optional actions, a section navigation that is a sticky sidebar on wide screens and a horizontal strip on phones, and one labelled card per section with an optional action footer and a danger tone for irreversible settings. Built from the Card primitives and theme tokens; forms and copy arrive through props and it fetches nothing.",
+  "keywords": ["block", "settings", "preferences", "account", "profile", "configuration", "layout", "sections", "设置", "偏好", "账户", "配置", "个人资料"],
+  "use_when": [
+    "a product needs an account, workspace, or organization settings page",
+    "several groups of preferences should share one page with navigation",
+    "the builder asks for a settings layout with a danger zone"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

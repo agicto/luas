@@ -1,0 +1,95 @@
+/**
+ * FastBuild theme: Midnight (theme-midnight plugin).
+ * Dark-leaning and high contrast: near-black navy surfaces, bright text, and a vivid violet accent.
+ * Light mode keeps the same identity with midnight-navy controls and deep ink text.
+ * Overrides semantic tokens only; imported after light.css and dark.css by index.css.
+ * Every token set on :root that dark.css also sets is set again on .dark.
+ */
+
+:root {
+  --radius: 0.5rem;
+
+  --background: oklch(0.995 0.003 275);
+  --foreground: oklch(0.13 0.03 275);
+  --card: oklch(0.995 0.003 275);
+  --card-foreground: oklch(0.13 0.03 275);
+  --popover: oklch(0.995 0.003 275);
+  --popover-foreground: oklch(0.13 0.03 275);
+  --primary: oklch(0.22 0.06 275);
+  --primary-foreground: oklch(0.98 0.005 275);
+  --secondary: oklch(0.93 0.018 275);
+  --secondary-foreground: oklch(0.22 0.06 275);
+  --muted: oklch(0.93 0.018 275);
+  --muted-foreground: oklch(0.4 0.04 275);
+  --accent: oklch(0.93 0.03 300);
+  --accent-foreground: oklch(0.22 0.06 275);
+  --border: oklch(0.84 0.025 275);
+  --input: oklch(0.8 0.03 275);
+  --ring: oklch(0.55 0.25 300);
+
+  --bg-canvas: oklch(0.96 0.01 275);
+  --bg-surface: oklch(0.995 0.003 275);
+  --bg-subtle: oklch(0.93 0.018 275);
+  --surface-3: var(--bg-subtle);
+
+  --text-main: oklch(0.13 0.03 275);
+  --text-subtle: oklch(0.3 0.04 275);
+  --text-muted: oklch(0.4 0.04 275);
+
+  --border-main: oklch(0.84 0.025 275);
+  --border-strong: oklch(0.6 0.05 275);
+
+  --brand-main: oklch(0.52 0.25 300);
+  --brand-subtle: oklch(0.95 0.03 300);
+  --brand-strong: oklch(0.42 0.22 300);
+  --highlight: oklch(0.52 0.25 300);
+
+  --primary-deeper: oklch(0.16 0.05 275);
+  --secondary-deeper: oklch(0.86 0.025 275);
+
+  --error: oklch(0.5 0.2 27);
+  --success: oklch(0.46 0.13 150);
+}
+
+.dark {
+  --background: oklch(0.13 0.03 275);
+  --foreground: oklch(0.985 0.005 275);
+  --card: oklch(0.17 0.035 275);
+  --card-foreground: oklch(0.985 0.005 275);
+  --popover: oklch(0.17 0.035 275);
+  --popover-foreground: oklch(0.985 0.005 275);
+  --primary: oklch(0.8 0.15 300);
+  --primary-foreground: oklch(0.13 0.03 275);
+  --secondary: oklch(0.22 0.04 275);
+  --secondary-foreground: oklch(0.97 0.01 275);
+  --muted: oklch(0.22 0.04 275);
+  --muted-foreground: oklch(0.8 0.025 275);
+  --accent: oklch(0.25 0.06 295);
+  --accent-foreground: oklch(0.97 0.01 275);
+  --border: oklch(0.36 0.05 275);
+  --input: oklch(0.4 0.055 275);
+  --ring: oklch(0.75 0.18 300);
+
+  --bg-canvas: oklch(0.11 0.025 275);
+  --bg-surface: oklch(0.13 0.03 275);
+  --bg-subtle: oklch(0.2 0.04 275);
+  --surface-3: var(--bg-subtle);
+
+  --text-main: oklch(0.985 0.005 275);
+  --text-subtle: oklch(0.9 0.015 275);
+  --text-muted: oklch(0.8 0.025 275);
+
+  --border-main: oklch(0.36 0.05 275);
+  --border-strong: oklch(0.55 0.06 275);
+
+  --brand-main: oklch(0.74 0.18 300);
+  --brand-subtle: oklch(from var(--brand-main) l c h / 0.18);
+  --brand-strong: oklch(0.88 0.08 300);
+  --highlight: oklch(0.74 0.18 300);
+
+  --primary-deeper: oklch(0.92 0.05 300);
+  --secondary-deeper: oklch(0.3 0.045 275);
+
+  --error: var(--red-400);
+  --success: var(--green-500);
+}

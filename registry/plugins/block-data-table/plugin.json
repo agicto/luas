@@ -1,0 +1,15 @@
+{
+  "name": "block-data-table",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Sortable, paginated table shell generic over the row type, with aria-sort and an empty state.",
+  "description": "A Web client block that renders typed columns over the rows passed in: sortable headers with aria-sort, optional row-header cells, client-side pagination with labelled controls and an announced page status, and an empty state across all columns. Built from the Table and Button primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+  "keywords": ["block", "table", "data table", "grid", "list", "sort", "sortable", "pagination", "paginated", "表格", "数据表", "排序", "分页", "列表"],
+  "use_when": [
+    "a page lists records such as members, orders, invoices, or audit entries",
+    "the builder asks for a sortable or paginated table",
+    "a list needs an empty state and accessible sorting without a heavy grid library"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}
