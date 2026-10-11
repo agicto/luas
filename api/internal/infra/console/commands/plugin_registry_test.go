@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -191,4 +192,36 @@ func TestCommunitySourcesNeedExplicitTrust(t *testing.T) {
 	require.ErrorContains(t, err, "https://github.com/someone/plugins/tree/v1.0.0/registry")
 	assert.NoError(t, requireTrust(community, []string{"--trust"}))
 	assert.NoError(t, requireTrust(official, nil))
+}
+
+// TestPluginSearchSelectsTheRightPlugin replays real requests, in English and Chinese, against the
+// official registry: an agent that installs the top result must pick the expected plugin. Add a
+// case whenever a plugin is added or a request was matched wrongly.
+func TestPluginSearchSelectsTheRightPlugin(t *testing.T) {
+	repoRoot, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".."))
+	require.NoError(t, err)
+	index, err := pluginregistry.NewLocalSource(filepath.Join(repoRoot, registryDir), "local:registry").Index()
+	require.NoError(t, err)
+	raw, err := os.ReadFile(filepath.Join(repoRoot, registryDir, "evals", "search-cases.tsv"))
+	require.NoError(t, err)
+
+	cases, correct := 0, 0
+	for _, line := range strings.Split(strings.TrimSpace(string(raw)), "\n")[1:] {
+		query, expected, ok := strings.Cut(line, "\t")
+		require.True(t, ok, "malformed case %q", line)
+		_, known := index.Find(expected)
+		require.True(t, known, "case expects unknown plugin %q", expected)
+		cases++
+		results := index.Search(query)
+		if len(results) > 0 && results[0].Entry.Name == expected {
+			correct++
+			continue
+		}
+		top := "nothing"
+		if len(results) > 0 {
+			top = results[0].Entry.Name
+		}
+		t.Errorf("%q: want %s, top result %s", query, expected, top)
+	}
+	t.Logf("plugin selection: %d/%d correct", correct, cases)
 }

@@ -177,6 +177,9 @@ func (installer *Installer) Install(name string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	if entry.PluginKind() == KindTemplate {
+		return nil, fmt.Errorf("%q is a template; install it with InstallTemplate (plugin:add handles both)", name)
+	}
 	if requirementErr := installer.checkRequirements(entry, lock, true); requirementErr != nil {
 		return nil, requirementErr
 	}

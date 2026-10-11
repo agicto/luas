@@ -1,0 +1,15 @@
+{
+  "name": "internal-tool",
+  "kind": "template",
+  "version": "0.1.0",
+  "summary": "An internal operations tool: roles, admin console, tags, comments, dashboards, and data tables.",
+  "description": "Starts a back-office or operations tool: organizations with roles and permissions, the operator Admin Console, tags and threaded comments for records, and dashboard, data table, settings, and empty-state blocks in the enterprise theme.",
+  "keywords": ["internal tool", "back office", "admin", "operations", "crm", "erp", "dashboard", "内部工具", "后台", "运营", "管理系统"],
+  "use_when": [
+    "the builder needs an internal back-office, operations, or admin tool",
+    "staff manage records with tags, comments, and dashboards"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": { "starters": ["organization", "permission", "operator"] },
+  "includes": ["tags", "comments", "theme-enterprise", "block-dashboard-stats", "block-data-table", "block-settings-page", "block-empty-state"]
+}

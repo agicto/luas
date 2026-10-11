@@ -46,13 +46,24 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 			installer, setupErr := newProjectInstaller(scratch, source)
 			require.NoError(t, setupErr)
 			installer.Contract = nil // the contracts check merges, lints, and removes fragments
-			result, installErr := installer.Install(entry.Name)
-			require.NoError(t, installErr)
+			// A template installs all of its plugins together, which proves they compile side by side.
+			var results []*pluginregistry.Result
+			if entry.PluginKind() == pluginregistry.KindTemplate {
+				template, installErr := installer.InstallTemplate(entry.Name)
+				require.NoError(t, installErr)
+				results = template.Installed
+			} else {
+				result, installErr := installer.Install(entry.Name)
+				require.NoError(t, installErr)
+				results = []*pluginregistry.Result{result}
+			}
 
 			replace := map[string]string{}
-			for _, file := range append(append([]string{}, result.Written...), result.Edited()...) {
-				if strings.HasPrefix(file, "api/") {
-					replace[filepath.Join(repoRoot, filepath.FromSlash(file))] = filepath.Join(scratch, filepath.FromSlash(file))
+			for _, result := range results {
+				for _, file := range append(append([]string{}, result.Written...), result.Edited()...) {
+					if strings.HasPrefix(file, "api/") {
+						replace[filepath.Join(repoRoot, filepath.FromSlash(file))] = filepath.Join(scratch, filepath.FromSlash(file))
+					}
 				}
 			}
 			overlay, marshalErr := json.Marshal(map[string]any{"Replace": replace})
@@ -61,10 +72,14 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 			require.NoError(t, os.WriteFile(overlayPath, overlay, 0o644))
 
 			packages := []string{"./internal/starter", "./internal/infra/config", "./database/migrations", "./internal/wiring"}
+			for _, result := range results {
+				if result.Entry.Starter != nil {
+					packages = append(packages, "./internal/modules/"+result.Entry.Starter.Directory)
+				}
+			}
 			var pluginPackage string
 			if entry.Starter != nil {
 				pluginPackage = "./internal/modules/" + entry.Starter.Directory
-				packages = append(packages, pluginPackage)
 			}
 			run := func(args ...string) {
 				command := exec.Command("go", args...)
@@ -74,8 +89,10 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 			}
 			run(append([]string{"build", "-overlay=" + overlayPath}, packages...)...)
 			defer func() {
-				_, removeErr := installer.Remove(entry.Name, pluginregistry.RemoveOptions{})
-				require.NoError(t, removeErr)
+				for index := len(results) - 1; index >= 0; index-- {
+					_, removeErr := installer.Remove(results[index].Entry.Name, pluginregistry.RemoveOptions{})
+					require.NoError(t, removeErr)
+				}
 				for file, original := range originals {
 					current, readErr := os.ReadFile(filepath.Join(scratch, filepath.FromSlash(file)))
 					require.NoError(t, readErr)

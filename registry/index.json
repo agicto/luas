@@ -328,6 +328,48 @@
       }
     },
     {
+      "name": "internal-tool",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "An internal operations tool: roles, admin console, tags, comments, dashboards, and data tables.",
+      "description": "Starts a back-office or operations tool: organizations with roles and permissions, the operator Admin Console, tags and threaded comments for records, and dashboard, data table, settings, and empty-state blocks in the enterprise theme.",
+      "keywords": [
+        "internal tool",
+        "back office",
+        "admin",
+        "operations",
+        "crm",
+        "erp",
+        "dashboard",
+        "内部工具",
+        "后台",
+        "运营",
+        "管理系统"
+      ],
+      "use_when": [
+        "the builder needs an internal back-office, operations, or admin tool",
+        "staff manage records with tags, comments, and dashboards"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "permission",
+          "operator"
+        ]
+      },
+      "includes": [
+        "tags",
+        "comments",
+        "theme-enterprise",
+        "block-dashboard-stats",
+        "block-data-table",
+        "block-settings-page",
+        "block-empty-state"
+      ],
+      "files": {}
+    },
+    {
       "name": "knowledge-base",
       "version": "0.1.0",
       "summary": "Organization knowledge articles with full-text and substring search.",
@@ -379,6 +421,90 @@
         "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
         "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
       }
+    },
+    {
+      "name": "knowledge-portal",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "A team knowledge portal: searchable articles with tags and comments in a reading-friendly theme.",
+      "description": "Starts an internal or customer-facing knowledge portal: the knowledge base with full-text and Chinese substring search, organization tags, threaded comments with mentions, the warm reading theme, and landing and empty-state blocks. Selects the organization and notification starters so mentions reach people.",
+      "keywords": [
+        "knowledge portal",
+        "wiki",
+        "help center",
+        "documentation site",
+        "intranet",
+        "知识门户",
+        "知识库",
+        "帮助中心",
+        "文档中心",
+        "内网"
+      ],
+      "use_when": [
+        "the builder wants a wiki, help center, or documentation portal as the starting point",
+        "a team needs searchable, tagged, and discussable articles"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "notification"
+        ]
+      },
+      "includes": [
+        "knowledge-base",
+        "tags",
+        "comments",
+        "theme-warm",
+        "block-landing-hero",
+        "block-empty-state"
+      ],
+      "files": {}
+    },
+    {
+      "name": "saas-app",
+      "kind": "template",
+      "version": "0.1.0",
+      "summary": "A multi-tenant SaaS starting point: organizations, roles, usage, settings, and the pages a product needs.",
+      "description": "Starts a subscription-style SaaS product: organizations with roles and permissions, usage metering, settings, and notifications, styled with the enterprise theme, with blocks for the landing page, pricing, sign-in, onboarding, dashboard, data tables, settings, and empty states. Billing stays a product decision and is not included.",
+      "keywords": [
+        "saas",
+        "multi-tenant",
+        "subscription",
+        "b2b",
+        "startup",
+        "product",
+        "多租户",
+        "订阅",
+        "创业",
+        "产品"
+      ],
+      "use_when": [
+        "the builder is starting a multi-tenant SaaS product",
+        "the product needs organizations, roles, usage, and the standard product pages from day one"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization",
+          "permission",
+          "notification",
+          "setting",
+          "usage"
+        ]
+      },
+      "includes": [
+        "theme-enterprise",
+        "block-landing-hero",
+        "block-pricing-table",
+        "block-auth-card",
+        "block-onboarding-steps",
+        "block-dashboard-stats",
+        "block-data-table",
+        "block-settings-page",
+        "block-empty-state"
+      ],
+      "files": {}
     },
     {
       "name": "tags",
