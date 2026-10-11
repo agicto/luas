@@ -8,6 +8,7 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/infra/email"
 	"github.com/fastagi/fastbuild/api/internal/infra/events"
 	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/ratelimit"
 	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
@@ -19,6 +20,7 @@ type Application struct {
 	EmailService           *email.Service
 	EventBus               *events.EventBus
 	Migrator               *migration.Migrator
+	RateLimitStores        *ratelimit.Stores
 	Starters               *starter.Registry
 	AuditRecorder          domain.AuditLogRecorder
 	AuditMaintainer        domain.AuditLogMaintainer

@@ -152,6 +152,7 @@ DB_ENABLED=false go run ./cmd/fastbuild route:list
 go run ./cmd/fastbuild migrate
 go run ./cmd/fastbuild seed
 go run ./cmd/fastbuild auth-session:prune --batch=500
+go run ./cmd/fastbuild ratelimit:prune --batch=1000
 go run ./cmd/fastbuild audit:prune --before=2026-04-01T00:00:00Z --batch=500
 go run ./cmd/fastbuild ai:chat "Summarize this scaffold in one sentence"
 ```

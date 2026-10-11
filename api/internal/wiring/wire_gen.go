@@ -13,6 +13,7 @@ import (
 	"github.com/fastagi/fastbuild/api/internal/infra/email"
 	"github.com/fastagi/fastbuild/api/internal/infra/events"
 	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/ratelimit"
 	"github.com/fastagi/fastbuild/api/internal/infra/storage"
 	"github.com/fastagi/fastbuild/api/internal/modules/apikey"
 	"github.com/fastagi/fastbuild/api/internal/modules/asset"
@@ -45,6 +46,10 @@ func InitApplication() (*app.Application, error) {
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
+	stores, err := ratelimit.ProvideStores(configConfig, db)
+	if err != nil {
+		return nil, err
+	}
 	auditRepository := audit.NewRepository(db)
 	auditService := audit.ProvideService(auditRepository, configConfig)
 	handler := audit.NewHandler(auditService)
@@ -55,7 +60,7 @@ func InitApplication() (*app.Application, error) {
 	sessionService := user.NewSessionService(userRepository, configConfig)
 	userMailer := user.NewUserMailer(service)
 	accountDeletionPolicy := user.NewAccountDeletionPolicy()
-	authAbuseGuard := user.NewAuthAbuseGuard(configConfig)
+	authAbuseGuard := user.NewAuthAbuseGuard(configConfig, stores)
 	userService := user.ProvideService(userRepository, userRepository, sessionService, eventBus, userMailer, accountDeletionPolicy, authAbuseGuard)
 	userHandler := user.NewHandler(userService, userService, userService, sessionService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
@@ -151,6 +156,7 @@ func InitApplication() (*app.Application, error) {
 		EmailService:           service,
 		EventBus:               eventBus,
 		Migrator:               migrator,
+		RateLimitStores:        stores,
 		Starters:               registry,
 		AuditRecorder:          auditService,
 		AuditMaintainer:        auditService,
@@ -187,6 +193,10 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	eventBus := events.NewEventBus()
 	repository := migration.NewDatabaseRepositoryProvider(db)
 	migrator := migration.NewMigratorProvider(repository, db, eventBus)
+	stores, err := ratelimit.ProvideStores(cfg, db)
+	if err != nil {
+		return nil, err
+	}
 	auditRepository := audit.NewRepository(db)
 	auditService := audit.ProvideService(auditRepository, cfg)
 	handler := audit.NewHandler(auditService)
@@ -197,7 +207,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 	sessionService := user.NewSessionService(userRepository, cfg)
 	userMailer := user.NewUserMailer(service)
 	accountDeletionPolicy := user.NewAccountDeletionPolicy()
-	authAbuseGuard := user.NewAuthAbuseGuard(cfg)
+	authAbuseGuard := user.NewAuthAbuseGuard(cfg, stores)
 	userService := user.ProvideService(userRepository, userRepository, sessionService, eventBus, userMailer, accountDeletionPolicy, authAbuseGuard)
 	userHandler := user.NewHandler(userService, userService, userService, sessionService, userMailer, authAbuseGuard)
 	organizationRepository := organization.NewRepository(db)
@@ -293,6 +303,7 @@ func InitApplicationWithConfig(cfg *config.Config) (*app.Application, error) {
 		EmailService:           service,
 		EventBus:               eventBus,
 		Migrator:               migrator,
+		RateLimitStores:        stores,
 		Starters:               registry,
 		AuditRecorder:          auditService,
 		AuditMaintainer:        auditService,

@@ -166,8 +166,19 @@ func ConfiguredMigrations(cfg *config.Config) (map[string]migration.Migration, e
 	return registry.Migrations(), nil
 }
 
+// coreMigrations are owned by the HTTP kernel and infrastructure rather than by any starter.
+var coreMigrations = []string{
+	"2026_07_31_000000_create_workflow_tasks_table",
+	"2026_10_11_000000_create_rate_limit_buckets_table",
+}
+
 func registerCoreMigrations(registry *Registry) error {
-	return registry.RegisterMigrationByName("2026_07_31_000000_create_workflow_tasks_table")
+	for _, name := range coreMigrations {
+		if err := registry.RegisterMigrationByName(name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // DefaultSeeders returns the seeders enabled by the default starters.

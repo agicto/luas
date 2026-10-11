@@ -92,7 +92,7 @@ func NewHttpKernel(application *app.Application) *HttpKernel {
 	// Apply global HTTP guardrails: security headers, request limits,
 	// cooperative timeout, CORS, and rate limit. Auth/audit middleware remains
 	// starter-owned and route-scoped.
-	applyGlobalMiddleware(r, application.Config)
+	applyGlobalMiddleware(r, application.Config, application.RateLimitStores)
 
 	// Let event-aware starters attach subscribers without exposing that dispatch to callers.
 	application.Starters.RegisterEvents(application.EventBus)
@@ -260,7 +260,7 @@ func configureTrustedProxies(r *gin.Engine, cfg *config.Config) {
 	}
 }
 
-func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config) {
+func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config, stores *ratelimit.Stores) {
 	cfg = effectiveHTTPConfig(cfg)
 
 	r.Use(infraMiddleware.Helmet())
@@ -274,6 +274,13 @@ func applyGlobalMiddleware(r *gin.Engine, cfg *config.Config) {
 			Max:        cfg.Middleware.RateLimit.Max,
 			Duration:   cfg.Middleware.RateLimit.Window,
 			MaxBuckets: cfg.Middleware.RateLimit.MaxBuckets,
+			// A nil factory yields the process-local store.
+			Store: stores.New(ratelimit.Rule{
+				Name:       "global",
+				Max:        cfg.Middleware.RateLimit.Max,
+				Window:     cfg.Middleware.RateLimit.Window,
+				MaxBuckets: cfg.Middleware.RateLimit.MaxBuckets,
+			}),
 			SkipFunc: func(c *gin.Context) bool {
 				return pathInList(c.Request.URL.Path, cfg.Middleware.RateLimit.SkipPaths)
 			},

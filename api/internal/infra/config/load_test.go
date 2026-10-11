@@ -315,6 +315,26 @@ func TestLoad_EnvironmentAliasUsesProductionDefaults(t *testing.T) {
 	}
 }
 
+func TestLoad_RateLimitStoreDefaultsAndOverrides(t *testing.T) {
+	withoutEnv(t, "RATE_LIMIT_STORE", "RATE_LIMIT_STORE_TIMEOUT", "RATE_LIMIT_STORE_FAILURE")
+	cfg := loadConfigForRateLimitDefault(t, "production")
+	want := RateLimitStoreConfig{
+		Driver:  RateLimitStoreMemory,
+		Timeout: DefaultRateLimitStoreTimeout,
+		Failure: RateLimitStoreFailureLocal,
+	}
+	if cfg.Middleware.RateLimitStore != want {
+		t.Fatalf("default rate limit store = %+v, want %+v", cfg.Middleware.RateLimitStore, want)
+	}
+
+	t.Setenv("RATE_LIMIT_STORE", " Postgres ")
+	t.Setenv("RATE_LIMIT_STORE_TIMEOUT", "80ms")
+	t.Setenv("RATE_LIMIT_STORE_FAILURE", "CLOSED")
+	if _, err := LoadFresh(); err == nil || !strings.Contains(err.Error(), "RATE_LIMIT_STORE=postgres requires DB_ENABLED=true") {
+		t.Fatalf("postgres store without database error = %v", err)
+	}
+}
+
 func TestLoad_RateLimitExplicitEnvOverridesDefault(t *testing.T) {
 	withoutEnv(
 		t,

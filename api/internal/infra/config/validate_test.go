@@ -251,6 +251,58 @@ func TestValidate_AllowsDisabledRateLimitWithoutValues(t *testing.T) {
 	}
 }
 
+func TestValidate_RateLimitStorePolicy(t *testing.T) {
+	sharedStore := RateLimitStoreConfig{
+		Driver:  RateLimitStorePostgres,
+		Timeout: DefaultRateLimitStoreTimeout,
+		Failure: RateLimitStoreFailureLocal,
+	}
+	tests := []struct {
+		name     string
+		store    RateLimitStoreConfig
+		database bool
+		want     string
+	}{
+		{name: "zero value is the memory store"},
+		{name: "memory ignores shared-store policy", store: RateLimitStoreConfig{Driver: RateLimitStoreMemory, Failure: "bogus"}},
+		{name: "valid postgres", store: sharedStore, database: true},
+		{name: "unknown driver", store: RateLimitStoreConfig{Driver: "redis"}, want: "RATE_LIMIT_STORE must be memory or postgres"},
+		{name: "postgres without database", store: sharedStore, want: "RATE_LIMIT_STORE=postgres requires DB_ENABLED=true"},
+		{
+			name:     "zero timeout",
+			store:    RateLimitStoreConfig{Driver: RateLimitStorePostgres, Failure: RateLimitStoreFailureOpen},
+			database: true,
+			want:     "RATE_LIMIT_STORE_TIMEOUT",
+		},
+		{
+			name:     "unbounded timeout",
+			store:    RateLimitStoreConfig{Driver: RateLimitStorePostgres, Timeout: 2 * time.Second, Failure: RateLimitStoreFailureOpen},
+			database: true,
+			want:     "RATE_LIMIT_STORE_TIMEOUT",
+		},
+		{
+			name:     "unknown failure policy",
+			store:    RateLimitStoreConfig{Driver: RateLimitStorePostgres, Timeout: time.Millisecond, Failure: "retry"},
+			database: true,
+			want:     "RATE_LIMIT_STORE_FAILURE must be local, open, or closed",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateRateLimitStore(tt.store, tt.database)
+			if tt.want == "" {
+				if err != nil {
+					t.Fatalf("expected valid store policy, got %v", err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("expected %q error, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
 func TestValidate_RejectsUnsafeOrInvalidTrustedProxies(t *testing.T) {
 	tests := []struct {
 		name  string

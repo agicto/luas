@@ -1,6 +1,6 @@
 # ADR 0011: Rate-Limit Runtime Boundary
 
-- Status: Accepted
+- Status: Accepted; decisions 1 and 6 amended by [ADR 0015](0015-shared-postgresql-rate-limit-store.md)
 - Date: 2026-07-15
 
 ## Context
@@ -40,6 +40,14 @@ snapshot's promise that documented settings have observable behavior.
 - Removing inert Redis settings is a configuration cleanup, not removal of an active runtime feature.
 - A future shared driver is a deliberate architecture change with integration and failure-mode tests,
   rather than a hidden switch behind generic Redis environment variables.
+
+## Update 2026-10-11
+
+[ADR 0015](0015-shared-postgresql-rate-limit-store.md) adds an opt-in shared PostgreSQL store
+(`RATE_LIMIT_STORE=postgres`) that satisfies decision 6's checklist. The memory store remains the
+default single-process baseline. Its `local` outage policy degrades explicitly and observably to the
+process-local baseline, with a metric and a rate-limited warning, so it is not the silent fallback
+this ADR prohibits.
 
 ## References
 

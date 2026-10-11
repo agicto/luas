@@ -149,15 +149,28 @@ The production-default global and authentication limiters are process-local fixe
 `MIDDLEWARE_RATE_LIMIT_MAX_BUCKETS` caps active client-IP buckets for the global store;
 `AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE` caps each endpoint/dimension store. Both default to 10,000
 and must be positive when their limiter is enabled. Reaching the cap evicts the least recently used
-bucket, bounding memory while preserving hot abusive identities.
+bucket, bounding memory while preserving hot abusive identities. With N replicas, process-local
+stores admit up to N times every configured budget.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `RATE_LIMIT_STORE` | `memory` | `memory` keeps per-replica buckets; `postgres` shares one budget per key across replicas through the `rate_limit_buckets` table and requires `DB_ENABLED=true` plus migrations |
+| `RATE_LIMIT_STORE_TIMEOUT` | `50ms` | Budget for one shared decision, greater than 0 and at most `1s`; checked only for `postgres` |
+| `RATE_LIMIT_STORE_FAILURE` | `local` | Decision when PostgreSQL errors or times out: `local` enforces a process-local budget, `open` allows, `closed` denies with `429`; checked only for `postgres` |
+
+The shared store costs one PostgreSQL round trip and one pooled connection per rate-limited request,
+stores only SHA-256 key digests, and needs no cleanup job: each process deletes bounded batches of
+expired rows opportunistically, and `fastbuild ratelimit:prune` does the same on demand. The
+`MAX_BUCKETS` keys still bound the `local` fallback buckets. See
+[`MIDDLEWARE.md`](MIDDLEWARE.md#shared-postgresql-store) for the algorithm, outage metrics, and why a
+gateway/WAF remains the flood-protection layer.
 
 There is no automatic Redis activation. The removed `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`,
 and `REDIS_DB` keys had no assembled runtime consumer and therefore violated the typed configuration
 authority. The generic Redis cache adapter remains available for explicit downstream composition;
 it receives a borrowed client and typed adapter config directly, does not read environment variables,
 and is documented in [`CACHE.md`](CACHE.md). It is not a rate-limit driver. Multi-replica rate
-limiting belongs to the gateway/WAF or a deliberately assembled shared adapter with atomic decisions,
-explicit outage semantics, and owned lifecycle.
+limiting uses `RATE_LIMIT_STORE=postgres` or the gateway/WAF.
 
 ## Platform Operator Configuration
 

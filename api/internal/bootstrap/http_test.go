@@ -178,7 +178,7 @@ func TestApplyGlobalMiddleware_AddsSecurityAndCORSHeaders(t *testing.T) {
 	router.Use(infraMiddleware.RequestIDWithConfig(infraMiddleware.RequestIDConfig{
 		Generator: func() string { return "req_test" },
 	}))
-	applyGlobalMiddleware(router, testHTTPConfig())
+	applyGlobalMiddleware(router, testHTTPConfig(), nil)
 	router.GET("/ok", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
 	})
@@ -214,7 +214,7 @@ func TestApplyGlobalMiddleware_BodyLimitUsesErrorContract(t *testing.T) {
 	router.Use(infraMiddleware.RequestIDWithConfig(infraMiddleware.RequestIDConfig{
 		Generator: func() string { return "req_body_limit" },
 	}))
-	applyGlobalMiddleware(router, testHTTPConfig())
+	applyGlobalMiddleware(router, testHTTPConfig(), nil)
 	router.POST("/echo", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
 	})
@@ -243,7 +243,7 @@ func TestApplyGlobalMiddleware_BodyLimitUsesErrorContract(t *testing.T) {
 
 func TestApplyGlobalMiddleware_AddsRequestDeadline(t *testing.T) {
 	router := gin.New()
-	applyGlobalMiddleware(router, testHTTPConfig())
+	applyGlobalMiddleware(router, testHTTPConfig(), nil)
 	router.GET("/deadline", func(c *gin.Context) {
 		deadline, ok := c.Request.Context().Deadline()
 		if !ok {
@@ -272,7 +272,7 @@ func TestApplyGlobalMiddleware_RateLimitUsesErrorContract(t *testing.T) {
 	router.Use(infraMiddleware.RequestIDWithConfig(infraMiddleware.RequestIDConfig{
 		Generator: func() string { return "req_rate_limit" },
 	}))
-	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit())
+	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit(), nil)
 	router.GET("/limited", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
@@ -309,7 +309,7 @@ func TestApplyGlobalMiddleware_RateLimitUsesErrorContract(t *testing.T) {
 
 func TestApplyGlobalMiddleware_RateLimitSkipsConfiguredPaths(t *testing.T) {
 	router := gin.New()
-	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit())
+	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit(), nil)
 	router.GET("/health", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
@@ -327,7 +327,7 @@ func TestApplyGlobalMiddleware_RateLimitSkipsConfiguredPaths(t *testing.T) {
 
 func TestApplyGlobalMiddleware_CORSPreflightDoesNotConsumeRateLimit(t *testing.T) {
 	router := gin.New()
-	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit())
+	applyGlobalMiddleware(router, testHTTPConfigWithRateLimit(), nil)
 	router.GET("/limited", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
@@ -368,7 +368,7 @@ func TestConfigureTrustedProxies_RejectsSpoofedForwardingHeadersByDefault(t *tes
 	cfg := testHTTPConfigWithRateLimit()
 	cfg.Server.TrustedProxies = nil
 	configureTrustedProxies(router, cfg)
-	applyGlobalMiddleware(router, cfg)
+	applyGlobalMiddleware(router, cfg, nil)
 	router.GET("/limited", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
@@ -398,7 +398,7 @@ func TestConfigureTrustedProxies_UsesForwardedClientIPFromConfiguredProxy(t *tes
 	cfg := testHTTPConfigWithRateLimit()
 	cfg.Server.TrustedProxies = []string{"198.51.100.10"}
 	configureTrustedProxies(router, cfg)
-	applyGlobalMiddleware(router, cfg)
+	applyGlobalMiddleware(router, cfg, nil)
 	router.GET("/limited", func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
 	})
