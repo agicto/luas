@@ -2,20 +2,144 @@
   "name": "knowledge-base",
   "version": "0.1.0",
   "summary": "Organization knowledge articles with full-text and substring search.",
-  "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
-  "keywords": ["knowledge", "knowledge base", "kb", "wiki", "docs", "articles", "search", "faq", "知识库", "文档", "文章", "搜索", "帮助中心"],
+  "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. The Web console gets a Knowledge page to list, search, read, and edit articles. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
+  "keywords": [
+    "knowledge",
+    "knowledge base",
+    "kb",
+    "wiki",
+    "docs",
+    "articles",
+    "search",
+    "faq",
+    "知识库",
+    "文档",
+    "文章",
+    "搜索",
+    "帮助中心"
+  ],
   "use_when": [
     "the team needs a knowledge base, wiki, FAQ, or help center",
     "members must search shared documents, including Chinese text",
     "a later AI feature needs a store of organization documents to answer from"
   ],
   "fastbuild": "0.25.0",
-  "requires": { "starters": ["organization"] },
+  "requires": {
+    "starters": [
+      "organization"
+    ]
+  },
   "starter": {
     "name": "knowledge",
     "const": "StarterKnowledge",
     "directory": "knowledge",
     "handler": "Knowledge"
   },
-  "fragment": "contracts/fragments/knowledge-base.yaml"
+  "fragment": "contracts/fragments/knowledge-base.yaml",
+  "wiring": [
+    {
+      "slot": "web.features",
+      "lines": [
+        "'knowledge',"
+      ]
+    },
+    {
+      "slot": "web.feature-dependencies",
+      "lines": [
+        "knowledge: ['organization'],"
+      ]
+    },
+    {
+      "slot": "web.http.error-codes",
+      "lines": [
+        "KNOWLEDGE_ARTICLE_NOT_FOUND: 'KNOWLEDGE.ARTICLE_NOT_FOUND',",
+        "KNOWLEDGE_INVALID_ARTICLE: 'KNOWLEDGE.INVALID_ARTICLE',",
+        "KNOWLEDGE_VERSION_CONFLICT: 'KNOWLEDGE.VERSION_CONFLICT',",
+        "KNOWLEDGE_PRECONDITION_REQUIRED: 'KNOWLEDGE.PRECONDITION_REQUIRED',"
+      ]
+    },
+    {
+      "slot": "web.routes.console",
+      "lines": [
+        "KNOWLEDGE: '/console/knowledge',"
+      ]
+    },
+    {
+      "slot": "web.console.nav-icons",
+      "lines": [
+        "BookOpen,"
+      ]
+    },
+    {
+      "slot": "web.console.nav",
+      "lines": [
+        "...(isWebFeatureEnabled('knowledge')",
+        "  ? [",
+        "      {",
+        "        titleKey: 'nav.knowledge' as const,",
+        "        href: ROUTES.CONSOLE.KNOWLEDGE,",
+        "        icon: BookOpen,",
+        "      },",
+        "    ]",
+        "  : []),"
+      ]
+    },
+    {
+      "slot": "web.i18n.modules",
+      "lines": [
+        "'knowledge',"
+      ]
+    },
+    {
+      "slot": "web.i18n.loaders",
+      "lines": [
+        "knowledge: {",
+        "  'zh-Hans': () => import('./modules/knowledge/zh-Hans'),",
+        "  'en-US': () => import('./modules/knowledge/en-US'),",
+        "},"
+      ]
+    },
+    {
+      "slot": "web.i18n.message-imports",
+      "lines": [
+        "import knowledge, { type KnowledgeMessages } from './knowledge/en-US';"
+      ]
+    },
+    {
+      "slot": "web.i18n.messages",
+      "lines": [
+        "knowledge,"
+      ]
+    },
+    {
+      "slot": "web.i18n.message-schema",
+      "lines": [
+        "knowledge: KnowledgeMessages;"
+      ]
+    },
+    {
+      "slot": "web.i18n.zh-hans-schema",
+      "lines": [
+        "knowledge: typeof import('./knowledge/zh-Hans').default;"
+      ]
+    },
+    {
+      "slot": "web.i18n.client-namespaces",
+      "lines": [
+        "knowledge: ['knowledge'],"
+      ]
+    },
+    {
+      "slot": "web.i18n.nav.en-us",
+      "lines": [
+        "knowledge: 'Knowledge',"
+      ]
+    },
+    {
+      "slot": "web.i18n.nav.zh-hans",
+      "lines": [
+        "knowledge: '知识库',"
+      ]
+    }
+  ]
 }

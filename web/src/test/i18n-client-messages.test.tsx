@@ -1,5 +1,5 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, resolve, sep } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { NextIntlClientProvider, useTranslations } from 'next-intl';
 import { describe, expect, it } from 'vitest';
@@ -8,6 +8,8 @@ import { CLIENT_MESSAGE_NAMESPACES } from '@/i18n/client-message-namespaces';
 import { selectMessageNamespaces } from '@/i18n/message-selection';
 import { messages } from '@/i18n/modules';
 import { RouteMessagesProvider } from '@/i18n/route-messages-provider';
+
+import { PLUGIN_WEB_FEATURES } from './plugin-web-features';
 
 const sourceRoot = resolve(process.cwd(), 'src');
 
@@ -23,7 +25,18 @@ function TranslationProbe() {
 
 describe('client i18n message boundaries', () => {
   it('keeps global and route-owned namespaces explicit', () => {
-    expect(CLIENT_MESSAGE_NAMESPACES).toEqual({
+    // A plugin feature owns exactly one namespace named after it; every other scope is listed here.
+    const pluginFeatures = new Set(PLUGIN_WEB_FEATURES);
+    const coreNamespaces = Object.fromEntries(
+      Object.entries(CLIENT_MESSAGE_NAMESPACES).filter(([scope]) => !pluginFeatures.has(scope))
+    );
+    const pluginNamespaces = Object.fromEntries(
+      Object.entries(CLIENT_MESSAGE_NAMESPACES).filter(([scope]) => pluginFeatures.has(scope))
+    );
+    expect(pluginNamespaces).toEqual(
+      Object.fromEntries(Object.keys(pluginNamespaces).map(feature => [feature, [feature]]))
+    );
+    expect(coreNamespaces).toEqual({
       global: ['common', 'errors'],
       auth: ['auth'],
       console: ['auth', 'nav', 'console'],
@@ -91,5 +104,20 @@ describe('client i18n message boundaries', () => {
     expect(organizationLayout).toContain('CLIENT_MESSAGE_NAMESPACES.webhook');
     expect(usageLayout).toContain('CLIENT_MESSAGE_NAMESPACES.usage');
     expect(i18nTestLayout).toContain('CLIENT_MESSAGE_NAMESPACES.i18nTest');
+  });
+
+  it('provides each plugin feature namespace from a console route layout', () => {
+    const consoleRoot = resolve(sourceRoot, 'app/(protected)/(console)/console');
+    const layouts = readdirSync(consoleRoot, { recursive: true, encoding: 'utf8' })
+      .filter(file => file === 'layout.tsx' || file.endsWith(`${sep}layout.tsx`))
+      .map(file => readFileSync(join(consoleRoot, file), 'utf8'));
+    const namespaces = CLIENT_MESSAGE_NAMESPACES as Record<string, readonly string[]>;
+
+    for (const feature of PLUGIN_WEB_FEATURES.filter(name => name in namespaces)) {
+      expect(
+        layouts.some(layout => layout.includes(`CLIENT_MESSAGE_NAMESPACES.${feature}`)),
+        `no console layout provides CLIENT_MESSAGE_NAMESPACES.${feature}`
+      ).toBe(true);
+    }
   });
 });

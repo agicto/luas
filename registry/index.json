@@ -5,7 +5,7 @@
       "name": "knowledge-base",
       "version": "0.1.0",
       "summary": "Organization knowledge articles with full-text and substring search.",
-      "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
+      "description": "Adds a knowledge starter: organization owners and admins write Markdown articles, every member reads and searches them. Search ranks full-text matches and also finds substrings, so it works for languages written without spaces, such as Chinese. The Web console gets a Knowledge page to list, search, read, and edit articles. Writes use optimistic concurrency (If-Match) and record audit changes without article text.",
       "keywords": [
         "knowledge",
         "knowledge base",
@@ -39,6 +39,112 @@
         "handler": "Knowledge"
       },
       "fragment": "contracts/fragments/knowledge-base.yaml",
+      "wiring": [
+        {
+          "slot": "web.features",
+          "lines": [
+            "'knowledge',"
+          ]
+        },
+        {
+          "slot": "web.feature-dependencies",
+          "lines": [
+            "knowledge: ['organization'],"
+          ]
+        },
+        {
+          "slot": "web.http.error-codes",
+          "lines": [
+            "KNOWLEDGE_ARTICLE_NOT_FOUND: 'KNOWLEDGE.ARTICLE_NOT_FOUND',",
+            "KNOWLEDGE_INVALID_ARTICLE: 'KNOWLEDGE.INVALID_ARTICLE',",
+            "KNOWLEDGE_VERSION_CONFLICT: 'KNOWLEDGE.VERSION_CONFLICT',",
+            "KNOWLEDGE_PRECONDITION_REQUIRED: 'KNOWLEDGE.PRECONDITION_REQUIRED',"
+          ]
+        },
+        {
+          "slot": "web.routes.console",
+          "lines": [
+            "KNOWLEDGE: '/console/knowledge',"
+          ]
+        },
+        {
+          "slot": "web.console.nav-icons",
+          "lines": [
+            "BookOpen,"
+          ]
+        },
+        {
+          "slot": "web.console.nav",
+          "lines": [
+            "...(isWebFeatureEnabled('knowledge')",
+            "  ? [",
+            "      {",
+            "        titleKey: 'nav.knowledge' as const,",
+            "        href: ROUTES.CONSOLE.KNOWLEDGE,",
+            "        icon: BookOpen,",
+            "      },",
+            "    ]",
+            "  : []),"
+          ]
+        },
+        {
+          "slot": "web.i18n.modules",
+          "lines": [
+            "'knowledge',"
+          ]
+        },
+        {
+          "slot": "web.i18n.loaders",
+          "lines": [
+            "knowledge: {",
+            "  'zh-Hans': () =\u003e import('./modules/knowledge/zh-Hans'),",
+            "  'en-US': () =\u003e import('./modules/knowledge/en-US'),",
+            "},"
+          ]
+        },
+        {
+          "slot": "web.i18n.message-imports",
+          "lines": [
+            "import knowledge, { type KnowledgeMessages } from './knowledge/en-US';"
+          ]
+        },
+        {
+          "slot": "web.i18n.messages",
+          "lines": [
+            "knowledge,"
+          ]
+        },
+        {
+          "slot": "web.i18n.message-schema",
+          "lines": [
+            "knowledge: KnowledgeMessages;"
+          ]
+        },
+        {
+          "slot": "web.i18n.zh-hans-schema",
+          "lines": [
+            "knowledge: typeof import('./knowledge/zh-Hans').default;"
+          ]
+        },
+        {
+          "slot": "web.i18n.client-namespaces",
+          "lines": [
+            "knowledge: ['knowledge'],"
+          ]
+        },
+        {
+          "slot": "web.i18n.nav.en-us",
+          "lines": [
+            "knowledge: 'Knowledge',"
+          ]
+        },
+        {
+          "slot": "web.i18n.nav.zh-hans",
+          "lines": [
+            "knowledge: '知识库',"
+          ]
+        }
+      ],
       "files": {
         "api/database/migrations/2026_10_11_000000_create_knowledge_articles_table.go": "be83d50eadb9511760c2f6d58187bb582773f5ee4c182e714ecb4cc1ce9537ff",
         "api/internal/modules/knowledge/errors.go": "1d4bb9507bfdd72079df626c59c968f8424559c793744c34f6d6011b702f5bf9",
@@ -51,7 +157,28 @@
         "api/internal/modules/knowledge/routes.go": "84d94432f8f4dfd7ba1d9918864ddfc072c7a53bd5edd3b327a2dc63c79bd944",
         "api/internal/modules/knowledge/service.go": "1f9bdd3e9cc1a676d4d9e57088de74fcd9e20c89f3cd959f6ad6a7facf9680fc",
         "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
-        "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
+        "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd",
+        "web/src/app/(protected)/(console)/console/knowledge/layout.tsx": "11cdf2bd72bd30c845cc0f4233a8b1de1e9c619e49bcc7f1d32da89ad8c7c6ac",
+        "web/src/app/(protected)/(console)/console/knowledge/page.tsx": "b3108daef839b5d559574ba19215f8593ffab82174c486d376a4ff87cf1dc09b",
+        "web/src/app/api/knowledge-articles/[id]/route.ts": "654f00365d79a673a95967dc2d24981eba28712522ae6fdfc272f5f8d7e79792",
+        "web/src/app/api/knowledge-articles/route.ts": "78fbff48575942621a6fd5df647e2b30e6cca1c84eded345f80caf7a1c0d4688",
+        "web/src/app/api/knowledge-search/route.ts": "f332b7b5ab61ad7bddf506652001f8458cda1ed44d28358f0e519193f54e5f4b",
+        "web/src/features/knowledge/components/knowledge-workspace.tsx": "244447610b3e29583104998d5c8debdb948fde65e6b972a6497cc8637999dfd7",
+        "web/src/features/knowledge/hooks/use-knowledge.ts": "223a4ff2e4a39a53e0cc9239771b4c9bb2b287001ce09e2f86f6b2773484a196",
+        "web/src/features/knowledge/index.ts": "edb4a8ff50a05751a062859ad9e52a05f8710070587b542b6c2720ba712d13ef",
+        "web/src/features/knowledge/schemas.ts": "0333e4128a740e2386b748a10a7d1bb60934b00361d457b33046e2edb28c27b4",
+        "web/src/features/knowledge/server/knowledge-route.ts": "32a1d744e8ed5c63e8f8e30f97cd63f5ea53ca591704b8f18b7f55374bc9a069",
+        "web/src/features/knowledge/server/mock-knowledge-store.ts": "cc92ea015f07be7333fd8d0d7bd9e2fb15f59d72c96d8499aed352192b0bea7b",
+        "web/src/features/knowledge/services/knowledge-service.ts": "647ea3aeceb1e4bfacfa9563366c36648aa7efe028e5396522452a26e8807c62",
+        "web/src/features/knowledge/types.ts": "dc12124e5502677c019dc20a3816b369042e6a55a6aeca6f4b916f8d354d73f8",
+        "web/src/features/knowledge/utils/knowledge-error.ts": "bf3550b268b2eb7c0dd180aa389e0916b1949f1373ce9e3bdc1cc03d94be0c82",
+        "web/src/i18n/modules/knowledge/en-US.ts": "5adb82ae95a63aed4198dc1a033172ac4b3fa9ec614fbb1fa4b964c1de087d04",
+        "web/src/i18n/modules/knowledge/index.ts": "7141b9bda2c177dca8bb3bb4a335b74a94f323b34eda731ada47b74c7011360d",
+        "web/src/i18n/modules/knowledge/zh-Hans.ts": "41b59b2700572d481d7bc39a9433089b50e069a48321c8481e81d8f8c9036a45",
+        "web/src/test/knowledge-route.test.ts": "763708002962215a07d5ecaae2d15a90896d13668915243ae5a7279e532f24f4",
+        "web/src/test/knowledge-service.test.ts": "541f5834201afd9d39c0a83e2e0c1907bc42d20dd23867e9a42999976aeb85e1",
+        "web/src/test/knowledge-ui.test.tsx": "345e185c1a7faa86bebf161cf4f32ae2d1e6cd241435aae393a442ceaab4ed8c",
+        "web/src/test/mock-bff-parity/knowledge.ts": "0b4bdc951d88276b0a7d51e33847b7740b7608a6c04fb5ce59246174d7b37bae"
       }
     }
   ]
