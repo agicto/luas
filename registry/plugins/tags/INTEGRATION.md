@@ -26,18 +26,18 @@ order; each has a check that must pass.
    ```go
    // api/internal/modules/knowledge/service.go
    func NewService(store store, tagTypes *tag.ResourceTypes) (*service, error) {
-   	err := tagTypes.Register("knowledge_article", func(ctx context.Context, organizationID uint, resourceID string) (bool, error) {
-   		id, parseErr := strconv.ParseUint(resourceID, 10, 64)
-   		if parseErr != nil || id == 0 || uint64(uint(id)) != id {
-   			return false, nil
-   		}
-   		_, getErr := store.Get(ctx, organizationID, uint(id))
-   		if errors.Is(getErr, ErrArticleNotFound) {
-   			return false, nil
-   		}
-   		return getErr == nil, getErr
-   	})
-   	return &service{store: store}, err
+       err := tagTypes.Register("knowledge_article", func(ctx context.Context, organizationID uint, resourceID string) (bool, error) {
+           id, parseErr := strconv.ParseUint(resourceID, 10, 64)
+           if parseErr != nil || id == 0 || uint64(uint(id)) != id {
+               return false, nil
+           }
+           _, getErr := store.Get(ctx, organizationID, uint(id))
+           if errors.Is(getErr, ErrArticleNotFound) {
+               return false, nil
+           }
+           return getErr == nil, getErr
+       })
+       return &service{store: store}, err
    }
    ```
 
