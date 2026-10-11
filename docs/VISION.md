@@ -59,6 +59,8 @@ Checks    (guardrails)  every change is verified before it ships
 
 ## Milestones
 
+The stages, deliverables, and exit criteria are in [ROADMAP.md](ROADMAP.md).
+
 | Stage | Goal | Key work |
 |---|---|---|
 | v0.x | A solid foundation | Contracts, security, performance, deployment, release automation (done) |

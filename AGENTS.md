@@ -76,7 +76,7 @@ The complete skill index and helper catalog are in
 | API implementation rules | [api/AGENTS.md](api/AGENTS.md) |
 | Web implementation rules | [web/AGENTS.md](web/AGENTS.md) |
 | Admin Console implementation rules | [admin/AGENTS.md](admin/AGENTS.md) |
-| Long-running priorities | [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md), [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
+| Long-running priorities | [docs/ROADMAP.md](docs/ROADMAP.md), [docs/FRAMEWORK_QUALITY_ROADMAP.md](docs/FRAMEWORK_QUALITY_ROADMAP.md), [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 
 `CONTEXT.md` wins when terminology conflicts. The owning contract wins for
 public HTTP behavior. The nearest `AGENTS.md` wins for local implementation.

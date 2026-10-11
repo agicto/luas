@@ -347,6 +347,7 @@ fastbuild/
 | Add an API starter or module | [api/docs/ADDING_MODULE.md](api/docs/ADDING_MODULE.md) |
 | Add a Next.js feature | [web/docs/ADDING_FEATURE.md](web/docs/ADDING_FEATURE.md) |
 | Add an Admin Console feature | [admin/docs/ADDING_FEATURE.md](admin/docs/ADDING_FEATURE.md) |
+| Long-term roadmap | [docs/ROADMAP.md](docs/ROADMAP.md) |
 | Starter capability matrix | [docs/STARTER_BUSINESS_ROADMAP.md](docs/STARTER_BUSINESS_ROADMAP.md) |
 | CI and releases | [docs/CI.md](docs/CI.md) and [docs/BRANCHING_AND_RELEASES.md](docs/BRANCHING_AND_RELEASES.md) |
 | Release notes | [CHANGELOG.md](CHANGELOG.md) |
