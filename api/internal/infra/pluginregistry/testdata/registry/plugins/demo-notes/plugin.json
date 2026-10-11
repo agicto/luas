@@ -1,0 +1,13 @@
+{
+  "name": "demo-notes",
+  "version": "0.1.0",
+  "summary": "Organization notes used to test the registry.",
+  "description": "A fixture plugin that installs a tiny notes starter.",
+  "keywords": ["notes", "memo", "笔记"],
+  "use_when": ["the team wants to keep short shared notes"],
+  "fastbuild": "0.24.0",
+  "requires": { "starters": ["organization"] },
+  "starter": { "name": "demonotes", "const": "StarterDemoNotes", "directory": "demonotes", "handler": "DemoNotes" },
+  "fragment": "contracts/fragments/demo-notes.yaml",
+  "env": [{ "name": "DEMO_NOTES_LIMIT", "description": "Maximum notes per organization.", "default": "100" }]
+}

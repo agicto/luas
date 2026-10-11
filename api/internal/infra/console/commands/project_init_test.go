@@ -31,6 +31,7 @@ func projectFixture(t *testing.T) string {
 		"docs/untracked-is-ignored.md": scaffoldModulePath,
 		"api/assets/binary.bin":        "\x00" + scaffoldModulePath,
 		"README.md":                    "FastBuild scaffold docs stay as written.\n",
+		"registry/index.json":          "{\"version\": 1, \"plugins\": []}\n",
 	}
 	for path, content := range files {
 		full := filepath.Join(root, path)
@@ -95,6 +96,8 @@ func TestInitProjectRewritesIdentityAndSelectsStarters(t *testing.T) {
 
 	_, _, err = InitProject(root, ProjectOptions{Name: "Again", Slug: "again", Module: "github.com/example-again/x/api"}, "v0.21.1", now)
 	require.ErrorContains(t, err, "already initialized")
+	_, err = os.Stat(filepath.Join(root, registryDir))
+	assert.True(t, os.IsNotExist(err), "new projects fetch plugins from their release instead of carrying the registry")
 }
 
 func TestInitProjectKeepsStarterDefaultsWhenNoneAreGiven(t *testing.T) {

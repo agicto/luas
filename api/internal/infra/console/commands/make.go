@@ -402,8 +402,14 @@ func isLowerAlnum(value string) bool {
 // catalog. Each edit is a small, anchored insertion followed by gofmt; if an anchor is missing the
 // file is left untouched and the caller prints manual steps.
 func wireOptionalStarter(data map[string]string) ([]string, error) {
-	startersPath := filepath.Join("internal", "infra", "config", "starters.go")
-	defaultsPath := filepath.Join("internal", "starter", "defaults.go")
+	return wireOptionalStarterIn(".", data)
+}
+
+// wireOptionalStarterIn registers a starter in the API at apiDir: its config constant, provider
+// set, handler field, and manifest. It is shared by make:module and plugin:add.
+func wireOptionalStarterIn(apiDir string, data map[string]string) ([]string, error) {
+	startersPath := filepath.Join(apiDir, "internal", "infra", "config", "starters.go")
+	defaultsPath := filepath.Join(apiDir, "internal", "starter", "defaults.go")
 	pkg, dir, model, constant := data["PackageName"], data["Package"], data["ModelName"], data["StarterConst"]
 
 	var updated []string

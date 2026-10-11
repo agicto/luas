@@ -103,6 +103,8 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewVersionCommand(version)},
 		Registration{Command: NewRouteListCommand()},
 		Registration{Command: NewPluginListCommand()},
+		// Deprecated alias for command:list; removed in a later minor release.
+		Registration{Name: "plugin:list", Command: NewPluginListCommand()},
 		Registration{Command: NewWorkflowWorkCommand()},
 		Registration{Command: NewWorkflowScheduleRunCommand()},
 		Registration{Command: NewWorkflowScheduleWorkCommand()},
@@ -123,5 +125,14 @@ func DefaultManifests(version string) []Manifest {
 		Registration{Command: NewProjectInitCommand()},
 	)
 
-	return []Manifest{makeManifest, databaseManifest, starterManifest, coreManifest}
+	pluginManifest := NewManifest(
+		"plugin",
+		Registration{Command: NewPluginSearchCommand()},
+		Registration{Command: NewPluginInfoCommand()},
+		Registration{Command: NewPluginIndexCommand()},
+		Registration{Command: NewPluginAddCommand()},
+		Registration{Command: NewPluginStatusCommand()},
+	)
+
+	return []Manifest{makeManifest, databaseManifest, starterManifest, pluginManifest, coreManifest}
 }

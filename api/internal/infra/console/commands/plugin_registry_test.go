@@ -1,0 +1,149 @@
+package commands
+
+import (
+	"encoding/json"
+	"io"
+	"os"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/fastagi/fastbuild/api/internal/infra/pluginregistry"
+)
+
+// The committed registry/index.json must match the plugin manifests and files it describes.
+func TestPluginRegistryIndexIsCurrent(t *testing.T) {
+	dir := filepath.Join("..", "..", "..", "..", "..", registryDir)
+	index, err := pluginregistry.BuildIndex(dir)
+	require.NoError(t, err)
+	want, err := index.Marshal()
+	require.NoError(t, err)
+	got, err := os.ReadFile(filepath.Join(dir, pluginregistry.IndexFile))
+	require.NoError(t, err)
+	require.Equal(t, string(want), string(got), "registry/index.json is stale; run: cd api && go run ./cmd/fastbuild plugin:index")
+}
+
+// fixtureRegistry copies the pluginregistry test registry and writes its index.
+func fixtureRegistry(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	require.NoError(t, os.CopyFS(dir, os.DirFS(filepath.Join("..", "..", "pluginregistry", "testdata", "registry"))))
+	index, err := pluginregistry.BuildIndex(dir)
+	require.NoError(t, err)
+	raw, err := index.Marshal()
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(filepath.Join(dir, pluginregistry.IndexFile), raw, 0o644))
+	return dir
+}
+
+func captureStdout(t *testing.T, run func() error) string {
+	t.Helper()
+	previous := os.Stdout
+	reader, writer, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = writer
+	runErr := run()
+	require.NoError(t, writer.Close())
+	os.Stdout = previous
+	out, err := io.ReadAll(reader)
+	require.NoError(t, err)
+	require.NoError(t, runErr)
+	return string(out)
+}
+
+func TestPluginSearchReturnsRankedJSONForAgents(t *testing.T) {
+	registry := fixtureRegistry(t)
+	out := captureStdout(t, func() error {
+		return NewPluginSearchCommand().Run([]string{"笔记", "--source=" + registry, "--format=json"})
+	})
+	var body struct {
+		Source  string `json:"source"`
+		Plugins []struct {
+			Name     string   `json:"name"`
+			UseWhen  []string `json:"use_when"`
+			Requires []string `json:"requires_starters"`
+		} `json:"plugins"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &body))
+	require.Len(t, body.Plugins, 1)
+	assert.Equal(t, "demo-notes", body.Plugins[0].Name)
+	assert.Equal(t, []string{"organization"}, body.Plugins[0].Requires)
+	assert.NotEmpty(t, body.Plugins[0].UseWhen)
+}
+
+func TestPluginInfoIncludesIntegrationSteps(t *testing.T) {
+	registry := fixtureRegistry(t)
+	out := captureStdout(t, func() error {
+		return NewPluginInfoCommand().Run([]string{"demo-notes", "--source=" + registry, "--format=json"})
+	})
+	var body struct {
+		Plugin      pluginregistry.IndexEntry `json:"plugin"`
+		Integration string                    `json:"integration"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &body))
+	assert.Equal(t, "demonotes", body.Plugin.Starter.Name)
+	assert.Contains(t, body.Integration, "Enable the starter")
+	assert.Error(t, NewPluginInfoCommand().Run([]string{"missing", "--source=" + registry}))
+}
+
+// downstreamProject builds a minimal checkout of a project renamed by project:init, with the real
+// starter wiring files so plugin:add edits them exactly as it would in a project.
+func downstreamProject(t *testing.T) string {
+	t.Helper()
+	root := t.TempDir()
+	write := func(relative, content string) {
+		path := filepath.Join(root, filepath.FromSlash(relative))
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
+		require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
+	}
+	write("api/go.mod", "module github.com/example-demo/platform/api\n\ngo 1.26.9\n")
+	write("contracts/openapi.yaml", "openapi: 3.1.0\npaths: {}\n")
+	for _, file := range []string{"internal/infra/config/starters.go", "internal/starter/defaults.go"} {
+		raw, err := os.ReadFile(filepath.Join("..", "..", "..", "..", filepath.FromSlash(file)))
+		require.NoError(t, err)
+		write("api/"+file, string(raw))
+	}
+	return root
+}
+
+func TestPluginAddInstallsAdaptsWiresAndLocks(t *testing.T) {
+	registry := fixtureRegistry(t)
+	root := downstreamProject(t)
+	t.Chdir(filepath.Join(root, "api"))
+
+	require.NoError(t, NewPluginAddCommand().Run([]string{"demo-notes", "--source=" + registry, "--dry-run"}))
+	assert.NoFileExists(t, filepath.Join(root, "api/internal/modules/demonotes/doc.go"), "dry run writes nothing")
+
+	captureStdout(t, func() error {
+		return NewPluginAddCommand().Run([]string{"demo-notes", "--source=" + registry})
+	})
+
+	doc, err := os.ReadFile(filepath.Join(root, "api/internal/modules/demonotes/doc.go"))
+	require.NoError(t, err)
+	assert.Contains(t, string(doc), `"github.com/example-demo/platform/api/internal/domain"`, "imports follow the project's module")
+	assert.NotContains(t, string(doc), "fastagi/fastbuild")
+
+	starters, _ := os.ReadFile(filepath.Join(root, "api/internal/infra/config/starters.go"))
+	assert.Contains(t, string(starters), `StarterDemoNotes`)
+	defaults, _ := os.ReadFile(filepath.Join(root, "api/internal/starter/defaults.go"))
+	assert.Contains(t, string(defaults), "demonotes.ProviderSet")
+	assert.Contains(t, string(defaults), "demonotes.NewStarterManifest(h.DemoNotes)")
+
+	out := captureStdout(t, func() error { return NewPluginStatusCommand().Run([]string{"--format=json"}) })
+	var status struct {
+		Plugins []struct {
+			Name  string                      `json:"name"`
+			Files []pluginregistry.FileStatus `json:"files"`
+		} `json:"plugins"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(out), &status))
+	require.Len(t, status.Plugins, 1)
+	for _, file := range status.Plugins[0].Files {
+		assert.Equal(t, "unchanged", file.State, file.Path)
+	}
+
+	err = NewPluginAddCommand().Run([]string{"demo-notes", "--source=" + registry})
+	assert.ErrorContains(t, err, "already installed")
+}
