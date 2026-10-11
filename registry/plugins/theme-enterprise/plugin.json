@@ -1,0 +1,19 @@
+{
+  "name": "theme-enterprise",
+  "kind": "theme",
+  "version": "0.1.0",
+  "summary": "Calm blue enterprise theme for Web and Admin: denser spacing, smaller radius, crisp borders.",
+  "description": "Restyles the Web application and the Admin Console through design tokens only: a calm blue primary and brand, cool neutral surfaces, opaque crisp borders, a 0.375rem radius, a 4% denser Tailwind spacing unit, and less translucent Admin material. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+  "keywords": ["theme", "enterprise", "corporate", "business", "blue", "dense", "compact", "dashboard", "主题", "企业", "商务", "蓝色", "紧凑"],
+  "use_when": [
+    "the product is a business or internal tool and should look calm, trustworthy, and information dense",
+    "the builder asks for a corporate, enterprise, or blue look",
+    "tables and dashboards need slightly tighter spacing without changing components"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {},
+  "wiring": [
+    { "slot": "web.theme", "lines": ["@import \"./presets/enterprise.css\";"] },
+    { "slot": "admin.theme", "lines": ["@import './themes/enterprise.css';"] }
+  ]
+}

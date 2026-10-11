@@ -53,6 +53,147 @@
         "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
         "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
       }
+    },
+    {
+      "name": "theme-enterprise",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Calm blue enterprise theme for Web and Admin: denser spacing, smaller radius, crisp borders.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: a calm blue primary and brand, cool neutral surfaces, opaque crisp borders, a 0.375rem radius, a 4% denser Tailwind spacing unit, and less translucent Admin material. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "enterprise",
+        "corporate",
+        "business",
+        "blue",
+        "dense",
+        "compact",
+        "dashboard",
+        "主题",
+        "企业",
+        "商务",
+        "蓝色",
+        "紧凑"
+      ],
+      "use_when": [
+        "the product is a business or internal tool and should look calm, trustworthy, and information dense",
+        "the builder asks for a corporate, enterprise, or blue look",
+        "tables and dashboards need slightly tighter spacing without changing components"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/enterprise.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/enterprise.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/enterprise.css": "acd7500a7b5b3b464bb18e12338d391c0ec34ff90808d4e580f3f41750f3d006",
+        "web/src/themes/presets/enterprise.css": "90f343176af630dc0d8b638f6a7c850a4f27a280a1c5d7ddcbae863732a6bb31"
+      }
+    },
+    {
+      "name": "theme-midnight",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Dark-leaning, high-contrast theme for Web and Admin: near-black navy and a vivid violet accent.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: near-black navy surfaces, bright high-contrast text, clearly visible borders, and a vivid violet accent in dark mode; light mode keeps the identity with midnight-navy controls and deep ink text. Every checked readable pair meets WCAG AA 4.5:1 in both modes. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "midnight",
+        "dark",
+        "dark mode",
+        "high contrast",
+        "violet",
+        "developer",
+        "night",
+        "主题",
+        "暗色",
+        "深色",
+        "高对比度",
+        "夜间"
+      ],
+      "use_when": [
+        "the product targets developers or night-time use and should look dark and bold",
+        "the builder asks for a dark, midnight, neon, or high-contrast look",
+        "the brand needs a vivid accent that stays readable on dark surfaces"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/midnight.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/midnight.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/midnight.css": "4e724366a092b59f19d1ca8d01b02e5d4be18538548045bf1d2f626fb9b3b294",
+        "web/src/themes/presets/midnight.css": "085c9773c7986fdd9818b684e7e297e1b246a62329f6422a5467c77625c123a4"
+      }
+    },
+    {
+      "name": "theme-warm",
+      "kind": "theme",
+      "version": "0.1.0",
+      "summary": "Content-first warm theme for Web and Admin: paper neutrals, ink text, terracotta accent, soft radius.",
+      "description": "Restyles the Web application and the Admin Console through design tokens only: warm paper-like neutrals, ink-like text, a terracotta brand accent, and a softer radius suited to long-form reading such as documentation, knowledge bases, and content sites. Light and dark mode are both covered and every checked readable pair meets WCAG AA 4.5:1. No component changes; remove the plugin to return to the default tokens.",
+      "keywords": [
+        "theme",
+        "warm",
+        "content",
+        "reading",
+        "editorial",
+        "docs",
+        "blog",
+        "soft",
+        "主题",
+        "温暖",
+        "阅读",
+        "内容",
+        "文档"
+      ],
+      "use_when": [
+        "the product is content-first: documentation, a knowledge base, a blog, or a community",
+        "the builder asks for a warm, friendly, soft, or editorial look",
+        "long text should be comfortable to read in light and dark mode"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {},
+      "wiring": [
+        {
+          "slot": "web.theme",
+          "lines": [
+            "@import \"./presets/warm.css\";"
+          ]
+        },
+        {
+          "slot": "admin.theme",
+          "lines": [
+            "@import './themes/warm.css';"
+          ]
+        }
+      ],
+      "files": {
+        "admin/src/styles/themes/warm.css": "da4caef8689352e67829c475fc59e104248d7190e070df7298b2cb12207aff89",
+        "web/src/themes/presets/warm.css": "7063b03af3b554256475572783910afe6f948705e13511f9127339642b828557"
+      }
     }
   ]
 }

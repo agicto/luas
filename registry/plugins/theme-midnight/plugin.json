@@ -1,0 +1,19 @@
+{
+  "name": "theme-midnight",
+  "kind": "theme",
+  "version": "0.1.0",
+  "summary": "Dark-leaning, high-contrast theme for Web and Admin: near-black navy and a vivid violet accent.",
+  "description": "Restyles the Web application and the Admin Console through design tokens only: near-black navy surfaces, bright high-contrast text, clearly visible borders, and a vivid violet accent in dark mode; light mode keeps the identity with midnight-navy controls and deep ink text. Every checked readable pair meets WCAG AA 4.5:1 in both modes. No component changes; remove the plugin to return to the default tokens.",
+  "keywords": ["theme", "midnight", "dark", "dark mode", "high contrast", "violet", "developer", "night", "主题", "暗色", "深色", "高对比度", "夜间"],
+  "use_when": [
+    "the product targets developers or night-time use and should look dark and bold",
+    "the builder asks for a dark, midnight, neon, or high-contrast look",
+    "the brand needs a vivid accent that stays readable on dark surfaces"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {},
+  "wiring": [
+    { "slot": "web.theme", "lines": ["@import \"./presets/midnight.css\";"] },
+    { "slot": "admin.theme", "lines": ["@import './themes/midnight.css';"] }
+  ]
+}
