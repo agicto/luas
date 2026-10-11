@@ -53,6 +53,62 @@
         "contracts/KNOWLEDGE.md": "92f5e41ed46768ab0075fd18831852ddf97414d14b2fd80fc2918b6792065d4f",
         "contracts/fragments/knowledge-base.yaml": "7a9c5aaf3e817effe944a738686deadc5657d32c9481be32ee1b1b8a33c131fd"
       }
+    },
+    {
+      "name": "tags",
+      "kind": "feature",
+      "version": "0.1.0",
+      "summary": "Organization tags with palette colors that other modules' resources can carry.",
+      "description": "Adds a tag starter: organization owners and admins create tags (unique names ignoring case, a fixed palette of color tokens, a short description) and attach up to 20 of them to any resource whose module registers a resource type; every member reads tags, a resource's tags, and the resources carrying a tag. Assignments are replaced idempotently, writes use optimistic concurrency (If-Match), and audit records tag IDs and names but never descriptions. Ships with no resource types; modules register theirs at assembly time without the tag module importing them.",
+      "keywords": [
+        "tags",
+        "tag",
+        "labels",
+        "label",
+        "categories",
+        "taxonomy",
+        "tagging",
+        "classification",
+        "标签",
+        "标记",
+        "分类",
+        "打标签"
+      ],
+      "use_when": [
+        "the team needs labels, tags, or categories on its records",
+        "members must filter or group resources by organization-defined tags",
+        "another module or plugin needs a shared, product-neutral way to label its resources"
+      ],
+      "fastbuild": "0.25.0",
+      "requires": {
+        "starters": [
+          "organization"
+        ]
+      },
+      "starter": {
+        "name": "tag",
+        "const": "StarterTag",
+        "directory": "tag",
+        "handler": "Tag"
+      },
+      "fragment": "contracts/fragments/tags.yaml",
+      "files": {
+        "api/database/migrations/2026_10_11_000100_create_tags_tables.go": "6af335728ccb9f5116c05a4493c4adae9dd2abdf966e7746fd40cea8dd62fc07",
+        "api/internal/modules/tag/errors.go": "8bf3bcd42288464f161438b716caba1ba13bd619eda630cbe18c712f8411fc74",
+        "api/internal/modules/tag/handler.go": "5ba06cb5180919642c09971d64b048b260c89f0c5a17fb0b9bf0b6790e3a2870",
+        "api/internal/modules/tag/handler_test.go": "2cd151b19d0c15da4527165585b251dcbe72d3c1c0bc22e1a08401db841543ec",
+        "api/internal/modules/tag/memory_store_test.go": "01cd00b2c5b62f174fa6c3f01b4bdee7c4249a3fe6eaea399bc2bd3dacfa189f",
+        "api/internal/modules/tag/model.go": "baf8710d2a45ce1bda83111c68c821eab79c68b8f64893ed9da6fa4bdd1c51f0",
+        "api/internal/modules/tag/provider.go": "6aa5ce558253885e80a5360aedd068d3898afdff2272899c5511b38973bdcaa3",
+        "api/internal/modules/tag/repository.go": "d2e159aa30c8e1e79073f299838f94b76d356c01b7020baec7bf5141ad7d68cc",
+        "api/internal/modules/tag/repository_postgres_test.go": "9d7ed7884f883e1f3b8c59bf6ff378e964f90678d1696b154cee110558803a72",
+        "api/internal/modules/tag/resource_types.go": "76cdb9bcb64023a4983aa2d53e6dd459cab651e9d2d2bdbf1e8cc07f4b57edd8",
+        "api/internal/modules/tag/routes.go": "82e413d55c4e570408fd754dad8d964d4040787d777c73965405c9ef36a02e2a",
+        "api/internal/modules/tag/service.go": "d0794bc4eb476cfbcd228fbcc85a44df79f11577cebf2b8e71b327c0ff590885",
+        "api/internal/modules/tag/service_test.go": "28ea96d9da0116b664bd8f1484f6d3144454c092c89c571a2fe93f939128d6e6",
+        "contracts/TAGS.md": "67dea9170f72366892a99cb00b6448fce793620f0d4c08f6a7a4ec38a8e9b4cf",
+        "contracts/fragments/tags.yaml": "2578d9391007b0fd94665f37acc9d33fd38293bc52ad42a9b124b22fbe01754b"
+      }
     }
   ]
 }
