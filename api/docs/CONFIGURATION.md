@@ -37,6 +37,8 @@ From highest to lowest:
 7. Defaults in `config.Load()`.
 
 An explicitly present process value, including an empty string, wins over every file value.
+`FASTBUILD_IGNORE_ENV_FILES=true` in the process environment skips layers 2–6, so tools such as the
+contract route check assemble the application from explicit values only.
 `APP_ENV` file selection is resolved from the process environment first, then `FASTBUILD_ENV_FILE`, then
 the base `.env`. `GO_ENV` and `GIN_MODE` are accepted as fallback inputs and normalized to the same
 application environment. Environment-specific and local files cannot change the identity after file

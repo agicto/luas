@@ -21,6 +21,8 @@ import (
 // 5. .env.{APP_ENV} (environment-specific, e.g., .env.production)
 // 6. .env (base configuration)
 // 7. Default values in code
+//
+// FASTBUILD_IGNORE_ENV_FILES=true in the process environment skips every file layer.
 
 var (
 	loadMu           sync.Mutex
@@ -63,6 +65,11 @@ func loadEnvFiles() error {
 	// value, is authoritative over every file layer.
 	systemEnv := captureSystemEnv()
 	appEnv = firstNonEmpty(systemEnv["APP_ENV"], systemEnv["GO_ENV"], systemEnv["GIN_MODE"])
+	if systemEnv["FASTBUILD_IGNORE_ENV_FILES"] == "true" {
+		// Tools that assemble the application from explicit values, such as the contract route
+		// check, must not inherit a developer's local files.
+		return nil
+	}
 
 	baseValues, err := readEnvFile(".env", false)
 	if err != nil {
