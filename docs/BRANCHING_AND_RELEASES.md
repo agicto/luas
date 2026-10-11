@@ -1,7 +1,7 @@
 # Branching and Release Governance
 
-This document defines how Luas branches map to testing, deployment, and release decisions.
-It is process guidance for the scaffold itself and for teams using Luas as a starter kit.
+This document defines how FastBuild branches map to testing, deployment, and release decisions.
+It is process guidance for the scaffold itself and for teams using FastBuild as a starter kit.
 
 ## Goals
 
@@ -61,7 +61,7 @@ main
 Run the branch governance check after changing branch names, deployment branch mappings, or release process guidance:
 
 ```bash
-bash .agents/skills/luas-framework-review/scripts/check-branch-governance.sh
+bash .agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh
 ```
 
 The check keeps this document aligned with `.github/workflows/sync-deploy-branches.yml`.
@@ -74,7 +74,7 @@ remain CI-owned deployment trigger branches, and `release/*` starts from `main` 
 - Block direct pushes to `main` except for emergency repository-owner actions.
 - Protect `release/*` with the same verification requirements as `main`.
 - Allow `dev` to move quickly, but keep its role explicit: it proves compatibility, not release readiness.
-- When a branch contains product-specific downstream app work, it must stay outside the Luas scaffold repository unless the work is a generic starter-kit improvement.
+- When a branch contains product-specific downstream app work, it must stay outside the FastBuild scaffold repository unless the work is a generic starter-kit improvement.
 
 ## Verification Before Release
 
@@ -98,4 +98,4 @@ For contract-sensitive changes, also verify the affected API and mock BFF behavi
 - Treating `dev` as a release candidate after unrelated work has entered it.
 - Using deployment trigger branches as human working branches.
 - Releasing a branch because it is green while ignoring whether its content was selected.
-- Hiding product-specific downstream app behavior inside Luas scaffold branches.
+- Hiding product-specific downstream app behavior inside FastBuild scaffold branches.

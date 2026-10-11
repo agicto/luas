@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
 )
 
 func (s *service) ListMembers(

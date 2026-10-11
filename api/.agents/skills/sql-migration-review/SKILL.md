@@ -1,6 +1,6 @@
 ---
 name: sql-migration-review
-description: Review a Luas PostgreSQL migration for deploy compatibility, lock duration, backfill safety, index strategy, and recovery before it ships.
+description: Review a FastBuild PostgreSQL migration for deploy compatibility, lock duration, backfill safety, index strategy, and recovery before it ships.
 ---
 
 # PostgreSQL Migration Review
@@ -52,7 +52,7 @@ schema itself remains unresolved.
 
 ### Recovery
 
-- Every Luas migration implements its required `Down` path and is tested in the
+- Every FastBuild migration implements its required `Down` path and is tested in the
   repository's rollback/reapply cycle.
 - A `Down` implementation is not automatically the production recovery plan.
   Prefer rolling the application back against the compatible expanded schema;
@@ -72,7 +72,7 @@ schema itself remains unresolved.
   edit would silently change what the old migration creates.
   `TestMigrationsProduceGoldenSchema` compares a fresh schema with
   `database/migrations/testdata/schema.golden.sql`. Regenerate that file with
-  `LUAS_UPDATE_GOLDEN_SCHEMA=1` only in a change that adds a migration, and
+  `FASTBUILD_UPDATE_GOLDEN_SCHEMA=1` only in a change that adds a migration, and
   review its diff as the schema change.
 
 ## Static First Pass

@@ -5,14 +5,14 @@ const messages = {
   },
   footer: {
     tagline: 'Full-stack scaffold for the AI era',
-    copyright: '© {year} Luas. All rights reserved.',
+    copyright: '© {year} FastBuild. All rights reserved.',
   },
   hero: {
     eyebrow: 'Enterprise scaffold for AI-assisted teams',
     titlePrefix: 'Build modern applications faster',
     titleAccent: 'with clear architecture',
     description:
-      'Luas keeps the Next.js Web and Go API independently deployable and aligned through explicit contracts, with authentication, internationalization, and engineering governance built in.',
+      'FastBuild keeps the Next.js Web and Go API independently deployable and aligned through explicit contracts, with authentication, internationalization, and engineering governance built in.',
     primaryAction: 'Get started',
     secondaryAction: 'View console',
   },
@@ -47,7 +47,7 @@ const messages = {
   cta: {
     title: 'Ready to start building?',
     description:
-      'Begin your next project with Luas contracts, authentication, and a replaceable console.',
+      'Begin your next project with FastBuild contracts, authentication, and a replaceable console.',
     primaryAction: 'Start for free',
     githubAction: 'View on GitHub',
   },

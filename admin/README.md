@@ -1,6 +1,6 @@
-# Luas Admin
+# FastBuild Admin
 
-`admin/` is Luas's project management system. It owns operator and
+`admin/` is FastBuild's project management system. It owns operator and
 administrator workflows and is implemented as a lightweight Vite SPA. It
 produces static assets that can be uploaded directly to OSS/S3-compatible
 object storage and served through a CDN.
@@ -35,7 +35,7 @@ browser implementation and deployment model; it is not the product name.
 | Styling          | Tailwind CSS 4 + shadcn/ui New York theme + Lucide                 |
 | Localization     | i18next + react-i18next                                            |
 | Tests            | Vitest + Testing Library                                           |
-| Transport        | Native Fetch with Luas envelope/error normalization                |
+| Transport        | Native Fetch with FastBuild envelope/error normalization                |
 
 TanStack Start is intentionally not used. It is a full-stack framework for SSR,
 server functions, API routes, and client/server builds. This surface knows that
@@ -117,7 +117,7 @@ messages, locales, localized formatting, or locale persistence.
 Static hosting removes the Next.js BFF. It does not make browser credential
 storage safe. Protected production applications should route same-origin
 `/api` requests to a gateway or Go browser adapter that owns HttpOnly cookies,
-CSRF/Origin checks, and fixed upstream operations. Never persist Luas bearer
+CSRF/Origin checks, and fixed upstream operations. Never persist FastBuild bearer
 session tokens or API keys in browser storage.
 
 The optional `operator` API starter is the shipped Go browser adapter: it sets an

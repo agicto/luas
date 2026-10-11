@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mechanical lint for Luas business implementation plans.
+"""Mechanical lint for FastBuild business implementation plans.
 
 This intentionally checks structure and obvious placeholders only. It cannot
 decide whether product rules, ownership, contracts, or recovery are correct.

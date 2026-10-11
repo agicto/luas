@@ -4,7 +4,7 @@ The Web shell owns one browser authentication contract with three resolution mod
 who can authoritatively resolve the current browser session; it does not change the Web `/auth/*`
 contract.
 
-The Go `user` starter owns a separate opaque authentication-session contract. Luas ships an explicit same-origin production
+The Go `user` starter owns a separate opaque authentication-session contract. FastBuild ships an explicit same-origin production
 adapter between them; pointing the browser directly at Go remains incorrect because paths, DTOs,
 user views, and credential ownership still differ. See
 [`../../contracts/AUTHENTICATION.md`](../../contracts/AUTHENTICATION.md) for the canonical mapping.
@@ -13,7 +13,7 @@ user views, and credential ownership still differ. See
 
 | Mode | Selected when | Initial protected render |
 |---|---|---|
-| `mock-session` | The mock BFF is available and `NEXT_PUBLIC_API_URL` targets the same-origin `/api` route | The protected Server Component verifies the signed Luas cookie and passes a definitive user or unauthenticated result to the client store. |
+| `mock-session` | The mock BFF is available and `NEXT_PUBLIC_API_URL` targets the same-origin `/api` route | The protected Server Component verifies the signed FastBuild cookie and passes a definitive user or unauthenticated result to the client store. |
 | `api-session` | `API_ADAPTER_ENABLED=true` and `NEXT_PUBLIC_API_URL` targets same-origin `/api` | The protected Server Component reads the HttpOnly API cookie, resolves `/v1/users/profile` through the fixed adapter, and passes authenticated, unauthenticated, forbidden, or unavailable state to the client store. |
 | `client-session` | A real API, a production same-origin proxy, or any non-mock target owns authentication | The client store resolves `/auth/me` once with browser credentials. |
 
@@ -99,9 +99,9 @@ success payloads remain failures.
   browser writes using `Sec-Fetch-Site` and exact `Origin` comparison; clients without browser
   fetch metadata remain usable for tests and automation.
 - The signed mock session cookie is HttpOnly and `SameSite=Lax`. Production uses a Secure
-  `__Host-luas_session` cookie with `Path=/`, no Domain attribute, and an exact-scope expiry on
+  `__Host-fastbuild_session` cookie with `Path=/`, no Domain attribute, and an exact-scope expiry on
   logout.
-- The production adapter uses a separate Secure `__Host-luas_auth` cookie. It stores the Go bearer
+- The production adapter uses a separate Secure `__Host-fastbuild_auth` cookie. It stores the Go bearer
   credential HttpOnly, validates an exact 256-bit base64url shape, caps persistence at 30 days, and
   expires no later than the API-owned `expires_in`. The credential has no client-readable claims;
   Go resolves current session, account, idle expiry, and revocation state on every protected request.
@@ -119,13 +119,13 @@ success payloads remain failures.
 - Demo credentials live in `src/features/auth/server/mock-identity.ts`. The login Server Component
   passes the preset to the Client Component only in `mock-session` mode. Production adapter and
   client-owned modes stay blank; an explicit production mock opt-in is visibly demo-only.
-- `src/proxy.ts` verifies only the Luas mock session. It deliberately passes through in
+- `src/proxy.ts` verifies only the FastBuild mock session. It deliberately passes through in
   `api-session` and `client-session` modes because only the protected Server Component or downstream
   identity provider can authoritatively resolve those credentials.
 - `AuthGuard` is navigation and rendering UX, not an authorization boundary.
 - Every real API endpoint, Route Handler, and Server Action must authenticate and authorize the
   operation independently.
-- Luas does not forward arbitrary incoming cookies to an external API from the Next.js server.
+- FastBuild does not forward arbitrary incoming cookies to an external API from the Next.js server.
   Downstream apps may replace `resolveAuthBootstrap()` with a server adapter only when credential
   ownership, forwarding policy, cache behavior, and failure handling are explicitly defined.
 - Only serializable, client-safe user fields belong in `AuthBootstrap`. Never pass access tokens,
@@ -139,7 +139,7 @@ success payloads remain failures.
 ## Downstream Adaptation
 
 1. Read `contracts/AUTHENTICATION.md`; do not assume the Go authentication-session endpoints implement the Web DTOs.
-2. Use the shipped `api-session` adapter for the Luas Go starter; configure the private API URL,
+2. Use the shipped `api-session` adapter for the FastBuild Go starter; configure the private API URL,
    timeout, ingress client-IP header, and API trusted proxies together.
 3. Keep `client-session` when another identity provider owns a cross-origin cookie or token exchange.
 4. Replace `auth-adapter-route.ts` only when the downstream server owns a different authoritative

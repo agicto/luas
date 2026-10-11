@@ -6,10 +6,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/modules/organization"
-	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/modules/organization"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 type settingTestFixture struct {

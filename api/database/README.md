@@ -1,6 +1,6 @@
 # Database Migrations
 
-Luas uses timestamped, versioned PostgreSQL migrations. Each migration is a Go type with `Up` and
+FastBuild uses timestamped, versioned PostgreSQL migrations. Each migration is a Go type with `Up` and
 `Down` methods, registered by `init()`, and owned by one starter manifest. Seeders are described in
 [SEEDERS.md](SEEDERS.md); database runtime policy lives in [../docs/DATABASE.md](../docs/DATABASE.md).
 
@@ -33,7 +33,7 @@ Filenames follow `YYYY_MM_DD_HHMMSS_description.go`; the timestamp orders execut
 ## Writing A Migration
 
 ```bash
-./luas make:migration create_posts_table --create=posts
+./fastbuild make:migration create_posts_table --create=posts
 ```
 
 The generator writes a registered type. Fill in `Up` and `Down` with frozen DDL:
@@ -107,12 +107,12 @@ The migration package ships three guards:
 - `TestMigrationsDoNotDependOnLiveModelPackages` forbids importing module or capability packages.
 
 ```bash
-LUAS_TEST_POSTGRES_DSN=postgres://... go test ./database/migrations
+FASTBUILD_TEST_POSTGRES_DSN=postgres://... go test ./database/migrations
 ```
 
 When a change adds a migration, regenerate the golden file and review its diff as the schema change:
 
 ```bash
-LUAS_UPDATE_GOLDEN_SCHEMA=1 LUAS_TEST_POSTGRES_DSN=postgres://... \
+FASTBUILD_UPDATE_GOLDEN_SCHEMA=1 FASTBUILD_TEST_POSTGRES_DSN=postgres://... \
   go test ./database/migrations -run TestMigrationsProduceGoldenSchema
 ```

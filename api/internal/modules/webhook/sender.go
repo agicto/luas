@@ -16,12 +16,12 @@ import (
 	"strings"
 	"time"
 
-	capabilitycrypto "github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
+	capabilitycrypto "github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
-const webhookUserAgent = "Luas-Webhooks/1.0"
+const webhookUserAgent = "FastBuild-Webhooks/1.0"
 
 type outboundWebhook struct {
 	URL             string

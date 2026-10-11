@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Validate Luas registered-route JSON without third-party packages."""
+"""Validate FastBuild registered-route JSON without third-party packages."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 
-KIND = "luas.route_catalog"
+KIND = "fastbuild.route_catalog"
 SCHEMA_VERSION = 1
 TOP_LEVEL_FIELDS = {"kind", "schema_version", "active_starters", "routes"}
 ROUTE_FIELDS = {"method", "path"}

@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/email"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/email"
 )
 
 type invitationEmailSenderStub struct {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	pkgenv "github.com/zgiai/luas/api/pkg/env"
+	pkgenv "github.com/fastagi/fastbuild/api/pkg/env"
 )
 
 func withoutEnv(t *testing.T, keys ...string) {
@@ -145,7 +145,7 @@ func TestLoad_EmailRequestTimeout(t *testing.T) {
 		t.Fatalf("default email timeout = %s, want %s", cfg.Email.RequestTimeout, DefaultEmailRequestTimeout)
 	}
 
-	t.Setenv("MAIL_FROM", "Luas <noreply@example.com>")
+	t.Setenv("MAIL_FROM", "FastBuild <noreply@example.com>")
 	t.Setenv("RESEND_API_KEY", "resend-key")
 	t.Setenv("MAIL_REQUEST_TIMEOUT", "3s")
 	cfg, err = LoadFresh()
@@ -611,7 +611,7 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 	t.Setenv("LOG_FILE_ENABLED", "false")
 	t.Setenv("LOG_JSON", "true")
 	t.Setenv("LOG_LEVEL", "warning")
-	t.Setenv("LOG_FILE", "var/log/luas/app.log")
+	t.Setenv("LOG_FILE", "var/log/fastbuild/app.log")
 	t.Setenv("SENTRY_DSN", "https://public@example.invalid/1")
 
 	cfg, err := LoadFresh()
@@ -621,7 +621,7 @@ func TestLoad_LogOutputEnvironment(t *testing.T) {
 	if !cfg.Log.Stdout || cfg.Log.FileEnabled || !cfg.Log.JSON {
 		t.Fatalf("log outputs = stdout:%v file:%v json:%v, want true/false/true", cfg.Log.Stdout, cfg.Log.FileEnabled, cfg.Log.JSON)
 	}
-	if cfg.Log.Level != "warning" || cfg.Log.File != "var/log/luas/app.log" {
+	if cfg.Log.Level != "warning" || cfg.Log.File != "var/log/fastbuild/app.log" {
 		t.Fatalf("log target = level:%q file:%q", cfg.Log.Level, cfg.Log.File)
 	}
 	if cfg.Sentry.DSN != "https://public@example.invalid/1" {

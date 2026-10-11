@@ -15,9 +15,9 @@ import (
 )
 
 func TestRepositoryPruneBeforePostgres(t *testing.T) {
-	dsn := os.Getenv("LUAS_TEST_POSTGRES_DSN")
+	dsn := os.Getenv("FASTBUILD_TEST_POSTGRES_DSN")
 	if dsn == "" {
-		t.Skip("LUAS_TEST_POSTGRES_DSN is required for PostgreSQL repository evidence")
+		t.Skip("FASTBUILD_TEST_POSTGRES_DSN is required for PostgreSQL repository evidence")
 	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -71,9 +71,9 @@ func TestRepositoryPruneBeforePostgres(t *testing.T) {
 }
 
 func TestRepositoryPruneBeforePostgresSkipsLockedRows(t *testing.T) {
-	dsn := os.Getenv("LUAS_TEST_POSTGRES_DSN")
+	dsn := os.Getenv("FASTBUILD_TEST_POSTGRES_DSN")
 	if dsn == "" {
-		t.Skip("LUAS_TEST_POSTGRES_DSN is required for PostgreSQL repository evidence")
+		t.Skip("FASTBUILD_TEST_POSTGRES_DSN is required for PostgreSQL repository evidence")
 	}
 
 	schema := fmt.Sprintf("audit_prune_%d", time.Now().UnixNano())

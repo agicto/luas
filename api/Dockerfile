@@ -1,5 +1,5 @@
 # syntax=docker.io/docker/dockerfile:1.24.0@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
-ARG OCI_SOURCE=https://github.com/zgiai/luas
+ARG OCI_SOURCE=https://github.com/fastagi/fastbuild
 ARG OCI_REVISION=unknown
 ARG OCI_VERSION=dev
 
@@ -18,7 +18,7 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" \
-        -o /out/ ./cmd/server ./cmd/luas
+        -o /out/ ./cmd/server ./cmd/fastbuild
 
 # Run stage - distroless static for a shell-free, non-root runtime.
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:aef9602f8710ec12bde19d593fed1f76c708531bb7aba205110f1029786ead7b
@@ -27,8 +27,8 @@ ARG OCI_SOURCE
 ARG OCI_REVISION
 ARG OCI_VERSION
 
-LABEL org.opencontainers.image.title="Luas API" \
-    org.opencontainers.image.description="Production runtime for the Luas Go API scaffold" \
+LABEL org.opencontainers.image.title="FastBuild API" \
+    org.opencontainers.image.description="Production runtime for the FastBuild Go API scaffold" \
     org.opencontainers.image.source="${OCI_SOURCE}" \
     org.opencontainers.image.revision="${OCI_REVISION}" \
     org.opencontainers.image.version="${OCI_VERSION}" \
@@ -37,8 +37,8 @@ LABEL org.opencontainers.image.title="Luas API" \
 
 WORKDIR /app
 
-COPY --from=builder /out/server /app/luas-server
-COPY --from=builder /out/luas /app/luas
+COPY --from=builder /out/server /app/fastbuild-server
+COPY --from=builder /out/fastbuild /app/fastbuild
 
 ENV TZ=UTC \
     APP_ENV=production \
@@ -53,6 +53,6 @@ ENV TZ=UTC \
 EXPOSE 8025
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-    CMD ["/app/luas", "health:check", "--timeout=2s"]
+    CMD ["/app/fastbuild", "health:check", "--timeout=2s"]
 
-ENTRYPOINT ["/app/luas-server"]
+ENTRYPOINT ["/app/fastbuild-server"]

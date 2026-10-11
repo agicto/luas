@@ -1,12 +1,12 @@
-# AGENTS.md - Luas
+# AGENTS.md - FastBuild
 
 Instructions for coding agents working in this monorepo.
 
 ## Repository Shape
 
-Luas is an AI-era scaffold, not a product application:
+FastBuild is an AI-era scaffold, not a product application:
 
-- `api/`: Go backend (`github.com/zgiai/luas/api`) using Gin, Wire, GORM, and
+- `api/`: Go backend (`github.com/fastagi/fastbuild/api`) using Gin, Wire, GORM, and
   DDD-flavored starter modules.
 - `web/`: customer-facing Next.js 16 application with React 19, TypeScript,
   Tailwind 4, shadcn, SSR, and server-owned browser adapters.
@@ -45,8 +45,8 @@ The Admin Console uses root skills plus `admin/AGENTS.md`.
 Codex loads skill metadata at discovery time and reads a full `SKILL.md` only
 after selecting it.
 
-- Use `luas-framework-review` only for an explicit framework-wide audit.
-- Use `luas-code-review` for an explicit diff/PR review, not as an automatic
+- Use `fastbuild-framework-review` only for an explicit framework-wide audit.
+- Use `fastbuild-code-review` for an explicit diff/PR review, not as an automatic
   post-edit ritual.
 - Use `business-implementation-planning` before building a new material
   business capability or cross-module workflow that lacks a complete plan.
@@ -83,8 +83,8 @@ public HTTP behavior. The nearest `AGENTS.md` wins for local implementation.
 
 1. API and browser shells never import each other's source. Browser clients
    talk to API behavior over HTTP.
-2. Keep API imports under `github.com/zgiai/luas/api/...`; Web uses `@/...`.
-3. Use `Luas` for the user-facing brand and `luas` for identifiers.
+2. Keep API imports under `github.com/fastagi/fastbuild/api/...`; Web uses `@/...`.
+3. Use `FastBuild` for the user-facing brand and `fastbuild` for identifiers.
 4. Never reintroduce the retired `LlamaFront`, `Hypership`, or `ZGO` brands.
 5. Keep starter behavior product-neutral. Downstream product behavior belongs
    outside this scaffold.

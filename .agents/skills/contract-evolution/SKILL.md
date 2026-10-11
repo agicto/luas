@@ -1,13 +1,13 @@
 ---
 name: contract-evolution
-description: Evolve public HTTP behavior across a contract and multiple Luas deployable units. Do not use for a local endpoint implementation that preserves its contract.
+description: Evolve public HTTP behavior across a contract and multiple FastBuild deployable units. Do not use for a local endpoint implementation that preserves its contract.
 ---
 
 # Contract Evolution
 
 ## Purpose
 
-Keep Luas HTTP behavior aligned across `contracts/`, `api/`, selected browser-shell services, and
+Keep FastBuild HTTP behavior aligned across `contracts/`, `api/`, selected browser-shell services, and
 the development mock BFF. Use this skill when a change can alter request shape, response shape,
 HTTP status, `error_code`, `request_id`, pagination, validation errors, or mock production
 guardrails.
@@ -64,7 +64,7 @@ Read only the authorities touched by the change:
 6. **Search for drift**
    - Search old endpoint paths, field names, `error_code` values, and legacy underscore codes.
    - Confirm docs, API behavior, Web services, adapters, mock BFF behavior, and tests describe the same ownership and mappings.
-   - Prefer explicit contract docs over generated shared source until Luas intentionally adopts codegen.
+   - Prefer explicit contract docs over generated shared source until FastBuild intentionally adopts codegen.
 
 ## Verification
 
@@ -72,9 +72,9 @@ Pick the narrowest commands that prove the whole changed contract, then run broa
 multiple deployable units move.
 
 - Contract/docs only:
-  - `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`
-  - `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py`
-  - `python3 .agents/skills/luas-framework-review/scripts/check-auth-contract-boundary.py` for authentication changes
+  - `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
+  - `python3 .agents/skills/fastbuild-framework-review/scripts/check-error-contracts.py`
+  - `python3 .agents/skills/fastbuild-framework-review/scripts/check-auth-contract-boundary.py` for authentication changes
   - `git diff --check`
 - API behavior:
   - `cd api && go test ./internal/modules/<module>/...`

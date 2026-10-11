@@ -12,7 +12,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/zgiai/luas/api/pkg/env"
+	"github.com/fastagi/fastbuild/api/pkg/env"
 )
 
 // GlobalConfig stores the global configuration
@@ -458,7 +458,7 @@ func Load() (*Config, error) {
 	isProd := isProductionEnvironment(appEnv)
 	appDebug := env.GetBool("APP_DEBUG", !isProd)
 	if legacy := configuredLegacyJWTKey(); legacy != "" {
-		return nil, fmt.Errorf("%s is no longer supported; Luas user authentication now uses opaque server-side sessions", legacy)
+		return nil, fmt.Errorf("%s is no longer supported; FastBuild user authentication now uses opaque server-side sessions", legacy)
 	}
 	databaseConfig, err := loadDatabaseConfig()
 	if err != nil {
@@ -467,7 +467,7 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		App: AppConfig{
-			Name:  env.Get("APP_NAME", "Luas"),
+			Name:  env.Get("APP_NAME", "FastBuild"),
 			Env:   appEnv,
 			Debug: appDebug,
 			URL:   env.Get("APP_URL", "http://localhost:8025"),

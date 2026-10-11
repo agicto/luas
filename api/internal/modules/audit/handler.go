@@ -7,15 +7,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/logger"
-	"github.com/zgiai/luas/api/pkg/pagination"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	infraMiddleware "github.com/fastagi/fastbuild/api/internal/infra/middleware"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/pkg/pagination"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // Handler exposes the audit log routes and global audit middleware.

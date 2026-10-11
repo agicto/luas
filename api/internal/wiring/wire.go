@@ -4,11 +4,11 @@
 package wiring
 
 import (
+	"github.com/fastagi/fastbuild/api/internal/app"
+	"github.com/fastagi/fastbuild/api/internal/infra"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 	"github.com/google/wire"
-	"github.com/zgiai/luas/api/internal/app"
-	"github.com/zgiai/luas/api/internal/infra"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/starter"
 )
 
 // InitApplication initializes the entire application with all dependencies.

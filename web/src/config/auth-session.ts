@@ -9,7 +9,7 @@ export const AUTH_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30;
 export function getAuthSessionCookieName(
   environment: NodeEnvironment = env.NODE_ENV
 ): string {
-  return environment === 'production' ? '__Host-luas_auth' : 'luas_auth';
+  return environment === 'production' ? '__Host-fastbuild_auth' : 'fastbuild_auth';
 }
 
 export function createAuthSessionCookie(

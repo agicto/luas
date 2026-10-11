@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 type fakeRepository struct {
@@ -261,7 +261,7 @@ func TestServicePreservesServiceUnavailable(t *testing.T) {
 		repo := newFakeRepository()
 		repo.findByHashErr = domain.ErrServiceUnavailable
 
-		_, err := NewService(repo).Validate(context.Background(), "luas_test.secret")
+		_, err := NewService(repo).Validate(context.Background(), "fastbuild_test.secret")
 
 		if !errors.Is(err, domain.ErrServiceUnavailable) {
 			t.Fatalf("Validate() error = %v, want service unavailable", err)

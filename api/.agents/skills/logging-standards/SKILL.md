@@ -1,6 +1,6 @@
 ---
 name: logging-standards
-description: Design or change Luas structured events, request correlation, log levels, or redaction. Use when telemetry behavior changes, not for routine code that emits no new signal.
+description: Design or change FastBuild structured events, request correlation, log levels, or redaction. Use when telemetry behavior changes, not for routine code that emits no new signal.
 ---
 
 # Logging Standards
@@ -105,6 +105,6 @@ logging-only refactor.
 
 ## Related Skills
 
-- Root `luas-code-review`: explicit diff review.
+- Root `fastbuild-code-review`: explicit diff review.
 - Root `systematic-debugging`: temporary diagnostic evidence for an unclear
   failure.

@@ -1,11 +1,11 @@
-# Luas Skill Governance Plan
+# FastBuild Skill Governance Plan
 
-This plan turns the Luas Skills System into a long-running governance layer for the scaffold.
-It borrows the useful shape of small, composable engineering skills while keeping Luas-specific
+This plan turns the FastBuild Skills System into a long-running governance layer for the scaffold.
+It borrows the useful shape of small, composable engineering skills while keeping FastBuild-specific
 vocabulary, contracts, package boundaries, and verification rules as the source of truth.
 
 Use this plan with [`CONTEXT.md`](../CONTEXT.md), [`FRAMEWORK_QUALITY_ROADMAP.md`](FRAMEWORK_QUALITY_ROADMAP.md),
-and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-framework-review/SKILL.md).
+and [`../.agents/skills/fastbuild-framework-review/SKILL.md`](../.agents/skills/fastbuild-framework-review/SKILL.md).
 
 ## Principles
 
@@ -23,7 +23,7 @@ and [`../.agents/skills/luas-framework-review/SKILL.md`](../.agents/skills/luas-
   repository gate once at an explicit release boundary, not after every local edit, commit, or push.
 - **One local governance entry point**: stable root guardrails should be reachable through
   `make governance`, and `make check` should include them before API/browser verification.
-- **Scaffold-first**: skills must preserve Luas as a starter kit. They should not turn examples,
+- **Scaffold-first**: skills must preserve FastBuild as a starter kit. They should not turn examples,
   mock BFF routes, devtools, or console pages into product behavior.
 
 ## 2026-07-23 Performance Reset
@@ -81,7 +81,7 @@ into one lifecycle-column template.
 
 Web design skills now have mutually exclusive jobs: visual direction,
 design-system implementation, UI/UX review, and explicit WCAG audit. Ordinary
-UI review uses checked-in Luas authority without a network fetch. Luas-specific
+UI review uses checked-in FastBuild authority without a network fetch. FastBuild-specific
 form and composed-control contracts moved behind an accessibility reference.
 
 | Entrypoint | Before | After | Reduction |
@@ -93,7 +93,7 @@ form and composed-control contracts moved behind an accessibility reference.
 | All active repository `SKILL.md` bodies | 138,577 bytes | 132,936 bytes | 4.1% |
 
 `web-design-guidelines` grew from 1,562 to 2,419 bytes because it now carries a
-small deterministic Luas review rubric instead of fetching an unpinned external
+small deterministic FastBuild review rubric instead of fetching an unpinned external
 rulebook. This trades 857 entrypoint bytes in an explicit-only skill for lower
 latency, reproducibility, and a stable authority boundary.
 
@@ -151,7 +151,7 @@ loss of those semantics. This keeps progressive-disclosure edits from failing
 only because a heading was renamed.
 
 The Web UI primitive guard now follows the accessibility entrypoint's checked
-link into `references/luas-controls.md` before asserting composed-button state.
+link into `references/fastbuild-controls.md` before asserting composed-button state.
 The control contract remains enforced without copying conditional detail back
 into the automatically discovered entrypoint.
 
@@ -175,11 +175,11 @@ These are high-level entry points. They orchestrate, ask questions, and select l
 
 | Skill | Role | Status |
 |---|---|---|
-| `luas-framework-review` | Explicit global scaffold review and long-running optimization router. | Existing |
+| `fastbuild-framework-review` | Explicit global scaffold review and long-running optimization router. | Existing |
 | `grill-before-build` | Resolves a blocking high-impact choice after local discovery. | Existing |
 | `pr-description-writer` | Packages a completed diff into reviewable context. | Existing |
 | `contract-evolution` | Guides HTTP contract changes across `contracts/`, `api/`, Web services, and mock BFF. | Existing |
-| `downstream-app-extraction` | Guides converting Luas into a downstream app by keeping starters and deleting/replacing scaffold examples. | Existing |
+| `downstream-app-extraction` | Guides converting FastBuild into a downstream app by keeping starters and deleting/replacing scaffold examples. | Existing |
 
 The explicit-only set also includes high-cost local workflows for deployment,
 Kest scenarios, SQL migration review, accessibility audit, design review,
@@ -199,12 +199,12 @@ These are reusable habits the agent can reach for automatically.
 | `api-error-handling` | Web/API error response contract and code vocabulary. | Existing |
 | `environment-config` | Web env source-of-truth and typed validation. | Existing |
 | `domain-modeling` | Challenges vocabulary and updates `CONTEXT.md` / ADRs when terms crystallize. | Existing |
-| `luas-code-review` | Reviews diffs on separate Standards and Spec axes. | Existing |
+| `fastbuild-code-review` | Reviews diffs on separate Standards and Spec axes. | Existing |
 | `tdd-regression` | Runs red/green/refactor for bugs and contract-sensitive behavior. | Existing |
 
 ## 30-Day Plan
 
-Goal: stop skills from reintroducing old Luas vocabulary or old architecture.
+Goal: stop skills from reintroducing old FastBuild vocabulary or old architecture.
 
 1. **Clean skill semantic drift**
    - Update Web strategy/styling/testing skills to use `mock BFF`, `(protected)`, `console`, `feature`, and
@@ -212,13 +212,13 @@ Goal: stop skills from reintroducing old Luas vocabulary or old architecture.
    - Update API coding skills so `pkg/response` owns transport defaults while internal adapters register
      domain-specific error mappings.
    - Verification: `bash .agents/skills/scripts/validate-skill.sh --all`,
-     `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`.
+     `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`.
 
 2. **Expand vocabulary guardrails**
    - Status: implemented. The vocabulary checker scans every non-template `SKILL.md`.
    - Keep intentional generic phrases, such as "framework" in third-party skill references, out of
-     Luas-specific forbidden checks unless they describe Luas itself.
-   - Verification: `bash .agents/skills/luas-framework-review/scripts/check-vocabulary.sh`.
+     FastBuild-specific forbidden checks unless they describe FastBuild itself.
+   - Verification: `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`.
 
 3. **Improve verification failure feedback**
    - Status: implemented. `verification-before-completion/scripts/run-tiers.sh` prints the
@@ -242,7 +242,7 @@ Goal: turn skills into cross-boundary governance, not just reminders.
    - Update `CONTEXT.md` inline when a canonical term is resolved.
    - Offer ADRs only for hard-to-reverse, surprising, trade-off-driven decisions.
 
-3. **Add `luas-code-review`**
+3. **Add `fastbuild-code-review`**
    - Status: implemented as a root skill.
    - Standards axis: compare the diff against `CONTEXT.md`, AGENTS, contracts, package boundaries, and skills.
    - Spec axis: compare the diff against the originating request, roadmap slice, issue, or PRD.
@@ -260,7 +260,7 @@ Goal: turn skills into cross-boundary governance, not just reminders.
 Goal: make architecture improvement visible and repeatable.
 
 1. **Add architecture review reports**
-   - Status: implemented as an optional `luas-framework-review` helper that writes HTML to `$TMPDIR`.
+   - Status: implemented as an optional `fastbuild-framework-review` helper that writes HTML to `$TMPDIR`.
    - Use it when a review has multiple architecture candidates or needs comparable evidence across turns.
    - Each candidate includes files, problem, proposed deepening, before/after flow, test impact,
      rollback notes, and recommendation strength.
@@ -322,7 +322,7 @@ Every scaffold surface should be classified as:
 - example.
 
 Status: implemented in [`SCAFFOLD_SURFACES.md`](SCAFFOLD_SURFACES.md) and guarded by
-`.agents/skills/luas-framework-review/scripts/check-surface-catalog.py`.
+`.agents/skills/fastbuild-framework-review/scripts/check-surface-catalog.py`.
 
 For each category, maintain deletion/replacement instructions and verification commands.
 
@@ -337,7 +337,7 @@ Performance claims should carry evidence:
 
 ### Phase 5: Release Discipline
 
-Before publishing Luas as a reusable starter kit release:
+Before publishing FastBuild as a reusable starter kit release:
 
 - run root `make check`,
 - confirm `make governance` covers skill validation, vocabulary, doc-link, error-contract,
@@ -348,7 +348,7 @@ Before publishing Luas as a reusable starter kit release:
 ## Operating Cadence
 
 - **Every implementation turn**: run focused proof for changed behavior and keep changes scoped.
-- **Every 3-5 framework iterations**: run `luas-framework-review` and update this plan if priorities changed.
+- **Every 3-5 framework iterations**: run `fastbuild-framework-review` and update this plan if priorities changed.
 - **Every release candidate**: run `make check` once and record unresolved risks.
 - **Whenever a new term appears**: decide whether it belongs in `CONTEXT.md`, an ADR, a local doc, or nowhere.
 

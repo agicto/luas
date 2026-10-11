@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  luas-web:
+  fastbuild-web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: luas-web
+    container_name: fastbuild-web
     restart: unless-stopped
     ports:
       - "3000:3000"

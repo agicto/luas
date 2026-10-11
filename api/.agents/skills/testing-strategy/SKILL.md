@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: Choose Luas API test seams, doubles, and unit/integration coverage. Use when test ownership or strategy is unclear, not merely to run an existing test.
+description: Choose FastBuild API test seams, doubles, and unit/integration coverage. Use when test ownership or strategy is unclear, not merely to run an existing test.
 ---
 
 # API Testing Strategy
@@ -52,7 +52,7 @@ Use the focused command in `api/AGENTS.md` to run an existing test.
 
 ## PostgreSQL Integration
 
-Use the repository's `LUAS_TEST_POSTGRES_DSN` pattern and create an isolated
+Use the repository's `FASTBUILD_TEST_POSTGRES_DSN` pattern and create an isolated
 schema per test or suite. Fail closed when a SQL-sensitive test lacks its
 required disposable database; do not silently switch dialects or point at a
 shared environment.

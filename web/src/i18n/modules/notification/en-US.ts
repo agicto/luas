@@ -11,7 +11,7 @@ const messages = {
   preferences: 'Notification preferences',
   preferencesDescription: 'These settings affect future non-required notifications only.',
   inApp: 'In-app notifications',
-  inAppDescription: 'Show new messages in the Luas console notification center.',
+  inAppDescription: 'Show new messages in the FastBuild console notification center.',
   email: 'Email notifications',
   emailDescription: 'Send new messages through the configured email provider.',
   cancel: 'Cancel',

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Luas already had filesystem and R2-shaped infrastructure helpers, but it did not have a business
+FastBuild already had filesystem and R2-shaped infrastructure helpers, but it did not have a business
 owner for uploaded bytes. A generic storage client cannot decide who owns an upload, which content
 is allowed, when bytes become visible, how account deletion behaves, or which identifiers are safe
 to expose. Treating a bucket object as the business entity would leak provider semantics into HTTP,
@@ -18,7 +18,7 @@ starter.
 
 ## Decision
 
-Luas distinguishes two concepts:
+FastBuild distinguishes two concepts:
 
 - `asset`: a user-owned business lifecycle record in the optional `asset` starter;
 - `stored object`: opaque bytes accessed through the provider-neutral storage capability.

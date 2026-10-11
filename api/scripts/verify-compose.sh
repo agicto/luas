@@ -2,8 +2,8 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-IMAGE_TAG="${1:-luas-api:compose-check}"
-PROJECT_NAME="luas-compose-check-$$"
+IMAGE_TAG="${1:-fastbuild-api:compose-check}"
+PROJECT_NAME="fastbuild-compose-check-$$"
 TMP_DIR="$(mktemp -d)"
 
 compose() {
@@ -27,11 +27,11 @@ fail() {
 # by the following db:migrate, so the check does not depend on which migration happens to be last.
 rollback_through() {
   local migration="$1" log_file="$2" steps
-  steps="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+  steps="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*) FROM migrations WHERE id >= (SELECT id FROM migrations WHERE migration = '${migration}');
 ")"
   [[ "${steps}" =~ ^[1-9][0-9]*$ ]] || fail "migration ${migration} is not applied"
-  compose exec -T api /app/luas db:rollback --step="${steps}" >"${log_file}" 2>&1
+  compose exec -T api /app/fastbuild db:rollback --step="${steps}" >"${log_file}" 2>&1
 }
 
 register_and_login_user() {
@@ -74,9 +74,9 @@ elif ! docker image inspect "${IMAGE_TAG}" >/dev/null 2>&1; then
   fail "explicit image ${IMAGE_TAG} does not exist; verify it before the Compose lifecycle"
 fi
 
-export LUAS_API_IMAGE="${IMAGE_TAG}"
-export LUAS_API_PORT=0
-export LUAS_DB_PORT=0
+export FASTBUILD_API_IMAGE="${IMAGE_TAG}"
+export FASTBUILD_API_PORT=0
+export FASTBUILD_DB_PORT=0
 
 compose config --quiet
 compose up --detach --no-build --wait --wait-timeout 120
@@ -92,8 +92,8 @@ worker_running="$(docker inspect "${worker_container}" --format '{{.State.Runnin
 [[ "${worker_running}" == "true" ]] || fail "workflow worker is not running"
 
 workflow_table="$(compose exec -T postgres psql \
-  --username luas \
-  --dbname luas \
+  --username fastbuild \
+  --dbname fastbuild \
   --tuples-only \
   --no-align \
   --command "SELECT to_regclass('public.workflow_tasks');" | tr -d '[:space:]')"
@@ -206,8 +206,8 @@ print(payload["user"]["id"], payload["access_token"])
     [[ "${notification_outsider_id}" != "${notification_user_id}" ]] || fail "notification users are not isolated"
 
     if ! notification_id="$(compose exec -T postgres psql \
-      --username luas \
-      --dbname luas \
+      --username fastbuild \
+      --dbname fastbuild \
       --set ON_ERROR_STOP=1 \
       --quiet \
       --tuples-only \
@@ -242,7 +242,7 @@ RETURNING id;
     notification_id="$(printf '%s' "${notification_id}" | tr -d '[:space:]')"
     [[ "${notification_id}" =~ ^[1-9][0-9]*$ ]] || fail "notification fixture returned invalid ID ${notification_id}"
 
-    if ! compose exec -T postgres psql --username luas --dbname luas --set ON_ERROR_STOP=1 --command "
+    if ! compose exec -T postgres psql --username fastbuild --dbname fastbuild --set ON_ERROR_STOP=1 --command "
 INSERT INTO notification_deliveries (
   notification_id,
   channel,
@@ -366,16 +366,16 @@ raise SystemExit(0 if payload == {"updated_count": 1, "unread_count": 0} else 1)
       fail "notification read high-water update returned the wrong counts"
     fi
 
-    if ! compose exec -T api /app/luas notification:work --once >"${TMP_DIR}/notification-worker.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild notification:work --once >"${TMP_DIR}/notification-worker.log" 2>&1; then
       fail "notification worker one-shot dispatch failed"
     fi
-    notification_delivery_state="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    notification_delivery_state="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT status || ':' || attempts || ':' || last_failure_code || ':' || length(destination_hash)
 FROM notification_deliveries
 WHERE notification_id = ${notification_id} AND channel = 'email';
 ")"
     [[ "${notification_delivery_state}" == "failed:1:EMAIL.NOT_CONFIGURED:64" ]] || fail "notification worker produced ${notification_delivery_state}"
-    notification_recipient_columns="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    notification_recipient_columns="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.columns
 WHERE table_schema = 'public'
@@ -388,7 +388,7 @@ WHERE table_schema = 'public'
     if ! rollback_through 2026_07_15_020000_create_notification_tables "${TMP_DIR}/notification-rollback.log"; then
       fail "notification migration rollback failed"
     fi
-    notification_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    notification_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -396,10 +396,10 @@ WHERE table_schema = 'public'
 ")"
     [[ "${notification_tables_down}" == "0" ]] || fail "notification migration rollback left ${notification_tables_down} table(s)"
 
-    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/notification-migrate.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/notification-migrate.log" 2>&1; then
       fail "notification migration re-apply failed"
     fi
-    notification_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    notification_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -430,7 +430,7 @@ case ",${OPTIONAL_STARTERS:-}," in
 import json, sys
 values = json.load(open(sys.argv[1]))["data"]
 expected = [
-    ("app", "branding.display_name", "Luas", 0, "default"),
+    ("app", "branding.display_name", "FastBuild", 0, "default"),
     ("app", "localization.locale", "en-US", 0, "default"),
 ]
 actual = [(item["scope"], item["key"], item["value"], item["version"], item["source"]) for item in values]
@@ -447,16 +447,16 @@ raise SystemExit(0 if actual == expected else 1)
       "http://127.0.0.1:${published_port}/v1/settings/public")"
     [[ "${setting_revalidate_status}" == "304" ]] || fail "public setting revalidation returned HTTP ${setting_revalidate_status}"
 
-    if ! compose exec -T api /app/luas setting:list >"${TMP_DIR}/setting-list.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild setting:list >"${TMP_DIR}/setting-list.log" 2>&1; then
       fail "setting:list failed"
     fi
     grep -q 'branding.display_name' "${TMP_DIR}/setting-list.log" || fail "setting:list omitted the branding definition"
     for writer in 1 2; do
       (
         set +e
-        compose exec -T api /app/luas setting:set \
+        compose exec -T api /app/fastbuild setting:set \
           --key=branding.display_name \
-          '--value="Compose Luas"' \
+          '--value="Compose FastBuild"' \
           --expected-version=0 >"${TMP_DIR}/setting-set-${writer}.log" 2>&1
         printf '%s\n' "$?" >"${TMP_DIR}/setting-set-${writer}.status"
       ) &
@@ -467,10 +467,10 @@ raise SystemExit(0 if actual == expected else 1)
     [[ "${setting_set_successes}" == "1" && "${setting_set_conflicts}" == "1" ]] ||
       fail "concurrent setting:set expected one success and one version conflict"
     grep -q 'version 1' "${TMP_DIR}"/setting-set-*.log || fail "setting:set did not report version 1"
-    if grep -q 'Compose Luas' "${TMP_DIR}"/setting-set-*.log; then
+    if grep -q 'Compose FastBuild' "${TMP_DIR}"/setting-set-*.log; then
       fail "setting:set output exposed the setting value"
     fi
-    setting_cli_audit_count="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    setting_cli_audit_count="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM audit_logs
 WHERE actor_type = 'system'
@@ -489,7 +489,7 @@ WHERE actor_type = 'system'
     if ! python3 -c '
 import json, sys
 item = json.load(open(sys.argv[1]))["data"][0]
-raise SystemExit(0 if item["key"] == "branding.display_name" and item["value"] == "Compose Luas" and item["version"] == 1 and item["source"] == "override" else 1)
+raise SystemExit(0 if item["key"] == "branding.display_name" and item["value"] == "Compose FastBuild" and item["version"] == 1 and item["source"] == "override" else 1)
 ' "${TMP_DIR}/setting-public-after-set.json"; then
       fail "public settings did not expose the committed app override"
     fi
@@ -568,7 +568,7 @@ raise SystemExit(0 if [(item["key"], item["value"], item["version"]) for item in
       --data '{"value":"Europe/Dublin"}' \
       "http://127.0.0.1:${published_port}/v1/settings/user/localization.timezone")"
     [[ "${setting_timezone_status}" == "200" ]] || fail "user timezone setting returned HTTP ${setting_timezone_status}"
-    setting_rows_before_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
+    setting_rows_before_delete="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
     [[ "${setting_rows_before_delete}" == "2" ]] || fail "user setting history has ${setting_rows_before_delete}/2 rows before account deletion"
     setting_account_delete_status="$(curl --noproxy '*' --silent --show-error \
       --output /dev/null \
@@ -577,7 +577,7 @@ raise SystemExit(0 if [(item["key"], item["value"], item["version"]) for item in
       --header "Authorization: Bearer ${setting_user_token}" \
       "http://127.0.0.1:${published_port}/v1/users/account")"
     [[ "${setting_account_delete_status}" == "204" ]] || fail "setting user account deletion returned HTTP ${setting_account_delete_status}"
-    setting_rows_after_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
+    setting_rows_after_delete="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM settings WHERE scope = 'user' AND user_id = ${setting_user_id};")"
     [[ "${setting_rows_after_delete}" == "0" ]] || fail "account deletion left ${setting_rows_after_delete} user setting row(s)"
     setting_account_cleanup_flow="before:${setting_rows_before_delete}/delete:${setting_account_delete_status}/after:${setting_rows_after_delete}"
 
@@ -613,7 +613,7 @@ raise SystemExit(0 if item["scope"] == "organization" and item["value"] == "zh-H
       fail "organization setting update returned an invalid effective value"
     fi
 
-    if ! compose exec -T api /app/luas setting:reset \
+    if ! compose exec -T api /app/fastbuild setting:reset \
       --key=branding.display_name \
       --expected-version=1 >"${TMP_DIR}/setting-reset.log" 2>&1; then
       fail "setting:reset failed"
@@ -623,12 +623,12 @@ raise SystemExit(0 if item["scope"] == "organization" and item["value"] == "zh-H
     if ! rollback_through 2026_07_15_040000_create_settings_table "${TMP_DIR}/setting-rollback.log"; then
       fail "setting migration rollback failed"
     fi
-    setting_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
+    setting_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
     [[ "${setting_tables_down}" == "0" ]] || fail "setting migration rollback left ${setting_tables_down} table(s)"
-    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/setting-migrate.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/setting-migrate.log" 2>&1; then
       fail "setting migration re-apply failed"
     fi
-    setting_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
+    setting_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'settings';")"
     [[ "${setting_tables_up}" == "1" ]] || fail "setting migration re-apply created ${setting_tables_up}/1 tables"
     setting_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/setting-post-migrate.json" \
@@ -649,7 +649,7 @@ case ",${OPTIONAL_STARTERS:-}," in
     )
     [[ -n "${usage_user_id}" && -n "${usage_user_token}" ]] || fail "usage user login response is incomplete"
 
-    if ! compose exec -T api /app/luas usage:quota:set \
+    if ! compose exec -T api /app/fastbuild usage:quota:set \
       --scope=user \
       --subject-id="${usage_user_id}" \
       --metric=api.requests \
@@ -662,7 +662,7 @@ case ",${OPTIONAL_STARTERS:-}," in
     for replay in 1 2; do
       (
         set +e
-        compose exec -T api /app/luas usage:consume \
+        compose exec -T api /app/fastbuild usage:consume \
           --scope=user \
           --subject-id="${usage_user_id}" \
           --metric=api.requests \
@@ -675,13 +675,13 @@ case ",${OPTIONAL_STARTERS:-}," in
     wait
     usage_replay_successes="$(awk '$1 == 0 { count++ } END { print count + 0 }' "${TMP_DIR}"/usage-replay-*.status)"
     [[ "${usage_replay_successes}" == "2" ]] || fail "concurrent exact usage replay returned ${usage_replay_successes}/2 successes"
-    usage_exact_receipts="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
-    usage_counter_after_replay="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    usage_exact_receipts="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
+    usage_counter_after_replay="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
     [[ "${usage_exact_receipts}" == "1" && "${usage_counter_after_replay}" == "2" ]] ||
       fail "exact usage replay produced ${usage_exact_receipts} receipt(s) and counter ${usage_counter_after_replay}"
 
     set +e
-    compose exec -T api /app/luas usage:consume \
+    compose exec -T api /app/fastbuild usage:consume \
       --scope=user \
       --subject-id="${usage_user_id}" \
       --metric=api.requests \
@@ -692,15 +692,15 @@ case ",${OPTIONAL_STARTERS:-}," in
     set -e
     [[ "${usage_conflict_status}" != "0" ]] || fail "usage idempotency conflict unexpectedly succeeded"
     grep -qi 'usage event idempotency conflict' "${TMP_DIR}/usage-conflict.log" || fail "usage idempotency conflict returned the wrong error"
-    usage_receipts_after_conflict="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
-    usage_counter_after_conflict="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    usage_receipts_after_conflict="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE source = 'compose.concurrent' AND event_id = 'exact-replay';")"
+    usage_counter_after_conflict="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
     [[ "${usage_receipts_after_conflict}" == "1" && "${usage_counter_after_conflict}" == "2" ]] ||
       fail "usage idempotency conflict changed receipt count or counter"
 
     for consumer in 1 2 3 4; do
       (
         set +e
-        compose exec -T api /app/luas usage:consume \
+        compose exec -T api /app/fastbuild usage:consume \
           --scope=user \
           --subject-id="${usage_user_id}" \
           --metric=api.requests \
@@ -715,8 +715,8 @@ case ",${OPTIONAL_STARTERS:-}," in
     usage_consume_denials="$(grep -il 'usage quota exceeded' "${TMP_DIR}"/usage-consumer-*.log | wc -l | tr -d ' ')"
     [[ "${usage_consume_successes}" == "1" && "${usage_consume_denials}" == "3" ]] ||
       fail "concurrent usage quota expected one success and three denials"
-    usage_final_counter="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
-    usage_denied_receipts="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE scope = 'user' AND subject_id = ${usage_user_id} AND decision = 'denied';")"
+    usage_final_counter="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT value FROM usage_counters WHERE scope = 'user' AND subject_id = ${usage_user_id} AND metric = 'api.requests';")"
+    usage_denied_receipts="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM usage_events WHERE scope = 'user' AND subject_id = ${usage_user_id} AND decision = 'denied';")"
     [[ "${usage_final_counter}" == "3" && "${usage_denied_receipts}" == "3" ]] ||
       fail "usage quota ended at counter ${usage_final_counter} with ${usage_denied_receipts} denied receipt(s)"
 
@@ -769,7 +769,7 @@ raise SystemExit(0 if valid else 1)
       fail "organization usage defaults violate scope or finite catalog semantics"
     fi
 
-    usage_rows_before_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
+    usage_rows_before_delete="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
     [[ "${usage_rows_before_delete}" -gt "0" ]] || fail "usage account cleanup fixture has no owned rows"
     usage_account_delete_status="$(curl --noproxy '*' --silent --show-error \
       --output /dev/null \
@@ -778,11 +778,11 @@ raise SystemExit(0 if valid else 1)
       --header "Authorization: Bearer ${usage_user_token}" \
       "http://127.0.0.1:${published_port}/v1/users/account")"
     [[ "${usage_account_delete_status}" == "204" ]] || fail "usage user account deletion returned HTTP ${usage_account_delete_status}"
-    usage_rows_after_delete="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
+    usage_rows_after_delete="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT (SELECT COUNT(*) FROM usage_events WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_counters WHERE user_id = ${usage_user_id}) + (SELECT COUNT(*) FROM usage_quotas WHERE user_id = ${usage_user_id});")"
     [[ "${usage_rows_after_delete}" == "0" ]] || fail "account deletion left ${usage_rows_after_delete} user usage row(s)"
     usage_account_cleanup_flow="before:${usage_rows_before_delete}/delete:${usage_account_delete_status}/after:${usage_rows_after_delete}"
 
-    if ! compose exec -T api /app/luas usage:prune \
+    if ! compose exec -T api /app/fastbuild usage:prune \
       --before=2000-01-01T00:00:00Z >"${TMP_DIR}/usage-prune.log" 2>&1; then
       fail "usage:prune failed"
     fi
@@ -791,12 +791,12 @@ raise SystemExit(0 if valid else 1)
     if ! rollback_through 2026_07_15_050000_create_usage_tables "${TMP_DIR}/usage-rollback.log"; then
       fail "usage migration rollback failed"
     fi
-    usage_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
+    usage_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
     [[ "${usage_tables_down}" == "0" ]] || fail "usage migration rollback left ${usage_tables_down} table(s)"
-    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/usage-migrate.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/usage-migrate.log" 2>&1; then
       fail "usage migration re-apply failed"
     fi
-    usage_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
+    usage_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('usage_events', 'usage_counters', 'usage_quotas');")"
     [[ "${usage_tables_up}" == "3" ]] || fail "usage migration re-apply created ${usage_tables_up}/3 tables"
     usage_post_migrate_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/usage-post-migrate.json" \
@@ -818,7 +818,7 @@ case ",${OPTIONAL_STARTERS:-}," in
     )
     [[ -n "${asset_user_id}" && -n "${asset_token}" ]] || fail "asset owner login response is incomplete"
 
-    printf 'Luas asset compose check\n' >"${TMP_DIR}/asset-upload.txt"
+    printf 'FastBuild asset compose check\n' >"${TMP_DIR}/asset-upload.txt"
     asset_size="$(wc -c <"${TMP_DIR}/asset-upload.txt" | tr -d ' ')"
     asset_intent_status="$(curl --noproxy '*' --silent --show-error \
       --output "${TMP_DIR}/asset-intent.json" \
@@ -942,7 +942,7 @@ raise SystemExit(0 if payload.get("error_code") == "ASSET.NOT_FOUND" else 1)
           "${asset_race_create_status}/${asset_race_delete_status}" != "404/204" ]]; then
       fail "asset/account race returned ${asset_race_create_status}/${asset_race_delete_status}"
     fi
-    orphaned_assets="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    orphaned_assets="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM assets AS a
 JOIN users AS u ON u.id = a.user_id
@@ -954,14 +954,14 @@ WHERE a.deleted_at IS NULL AND u.deleted_at IS NOT NULL;
     if ! rollback_through 2026_07_15_030000_create_assets_table "${TMP_DIR}/asset-rollback.log"; then
       fail "asset migration rollback failed"
     fi
-    asset_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    asset_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'assets';
 ")"
     [[ "${asset_tables_down}" == "0" ]] || fail "asset migration rollback left ${asset_tables_down} table(s)"
-    if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/asset-migrate.log" 2>&1; then
+    if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/asset-migrate.log" 2>&1; then
       fail "asset migration re-apply failed"
     fi
-    asset_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    asset_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'assets';
 ")"
     [[ "${asset_tables_up}" == "1" ]] || fail "asset migration re-apply created ${asset_tables_up}/1 tables"
@@ -1164,7 +1164,7 @@ raise SystemExit(0 if item["id"] == int(sys.argv[2]) and item["message_id"] == s
           fail "idempotent webhook endpoint test created a duplicate delivery or message ID"
         fi
 
-        if ! compose exec -T api /app/luas webhook:work --batch=10 --once >"${TMP_DIR}/webhook-worker.log" 2>&1; then
+        if ! compose exec -T api /app/fastbuild webhook:work --batch=10 --once >"${TMP_DIR}/webhook-worker.log" 2>&1; then
           fail "webhook worker batch failed"
         fi
         webhook_delivery_status="$(curl --noproxy '*' --silent --show-error \
@@ -1220,14 +1220,14 @@ raise SystemExit(0 if valid else 1)
           fail "webhook attempt ledger violates minimized outcome contract"
         fi
 
-        webhook_secret_rows="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        webhook_secret_rows="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*) FROM webhook_endpoints
 WHERE id = ${webhook_endpoint_id}
   AND secret_ciphertext NOT LIKE 'whsec_%'
   AND length(secret_ciphertext) > 32;
 ")"
         [[ "${webhook_secret_rows}" == "1" ]] || fail "webhook signing secret is not encrypted at rest"
-        webhook_forbidden_columns="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        webhook_forbidden_columns="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.columns
 WHERE table_schema = 'public'
@@ -1235,7 +1235,7 @@ WHERE table_schema = 'public'
   AND column_name IN ('url', 'payload', 'payload_json', 'signature', 'response_body', 'error', 'error_message');
 ")"
         [[ "${webhook_forbidden_columns}" == "0" ]] || fail "webhook ledger contains ${webhook_forbidden_columns} forbidden sensitive column(s)"
-        webhook_query_indexes="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        webhook_query_indexes="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM pg_indexes
 WHERE schemaname = 'public'
@@ -1255,17 +1255,17 @@ WHERE schemaname = 'public'
         if ! rollback_through 2026_07_15_060000_create_webhook_tables "${TMP_DIR}/webhook-rollback.log"; then
           fail "webhook migration rollback failed"
         fi
-        webhook_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        webhook_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_name IN ('webhook_endpoints', 'webhook_subscriptions', 'webhook_events', 'webhook_deliveries', 'webhook_delivery_attempts');
 ")"
         [[ "${webhook_tables_down}" == "0" ]] || fail "webhook migration rollback left ${webhook_tables_down} table(s)"
-        if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/webhook-migrate.log" 2>&1; then
+        if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/webhook-migrate.log" 2>&1; then
           fail "webhook migration re-apply failed"
         fi
-        webhook_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        webhook_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -1355,7 +1355,7 @@ print(payload["invitation"]["id"])
       fail "non-member organization context returned the wrong error_code"
     fi
 
-    if ! compose exec -T postgres psql --username luas --dbname luas --set ON_ERROR_STOP=1 --command "
+    if ! compose exec -T postgres psql --username fastbuild --dbname fastbuild --set ON_ERROR_STOP=1 --command "
 INSERT INTO organization_memberships (organization_id, user_id, role, created_at, updated_at)
 VALUES
   (${organization_id}, ${admin_user_id}, 'admin', NOW(), NOW()),
@@ -1503,7 +1503,7 @@ raise SystemExit(0 if valid else 1)
         if ! rollback_through 2026_07_15_010000_create_permission_tables "${TMP_DIR}/permission-rollback.log"; then
           fail "permission migration rollback failed"
         fi
-        permission_tables_down="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        permission_tables_down="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -1511,10 +1511,10 @@ WHERE table_schema = 'public'
 ")"
         [[ "${permission_tables_down}" == "0" ]] || fail "permission migration rollback left ${permission_tables_down} table(s)"
 
-        if ! compose exec -T api /app/luas db:migrate >"${TMP_DIR}/permission-migrate.log" 2>&1; then
+        if ! compose exec -T api /app/fastbuild db:migrate >"${TMP_DIR}/permission-migrate.log" 2>&1; then
           fail "permission migration re-apply failed"
         fi
-        permission_tables_up="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+        permission_tables_up="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM information_schema.tables
 WHERE table_schema = 'public'
@@ -1710,7 +1710,7 @@ print(owners[0]["id"], owners[0]["user_id"])
     if [[ "${race_statuses}" != "201/409" && "${race_statuses}" != "204/404" ]]; then
       fail "concurrent account deletion and membership creation returned HTTP ${race_statuses}"
     fi
-    orphaned_memberships="$(compose exec -T postgres psql --username luas --dbname luas --tuples-only --no-align --command "
+    orphaned_memberships="$(compose exec -T postgres psql --username fastbuild --dbname fastbuild --tuples-only --no-align --command "
 SELECT COUNT(*)
 FROM organization_memberships AS memberships
 JOIN users ON users.id = memberships.user_id

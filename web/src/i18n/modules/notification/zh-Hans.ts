@@ -14,7 +14,7 @@ const messages = {
   preferences: '通知偏好',
   preferencesDescription: '这些设置只影响后续的非必达通知。',
   inApp: '站内通知',
-  inAppDescription: '在 Luas 控制台通知中心显示新消息。',
+  inAppDescription: '在 FastBuild 控制台通知中心显示新消息。',
   email: '邮件通知',
   emailDescription: '通过已配置的邮件供应商发送新消息。',
   cancel: '取消',

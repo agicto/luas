@@ -6,14 +6,14 @@ Accepted
 
 ## Context
 
-Luas has an in-process event bus, a process-local workflow queue, durable notification delivery,
+FastBuild has an in-process event bus, a process-local workflow queue, durable notification delivery,
 organizations, audit logs, and usage accounting. Integration-heavy downstream apps still repeat a
 more security-sensitive workflow: tenant-owned endpoint configuration, signing-key custody, durable
 fan-out, retries, redelivery, delivery visibility, and SSRF controls.
 
 The memory workflow queue cannot be the durability authority because work is lost with the process.
 The notification starter cannot own third-party integration payloads because its records and
-preferences are addressed to Luas users. Treating an arbitrary callback URL as a generic capability
+preferences are addressed to FastBuild users. Treating an arbitrary callback URL as a generic capability
 would hide organization ownership, authorization, retention, and disable policy.
 
 ## Decision
@@ -23,7 +23,7 @@ catalog, organization endpoints and subscriptions, idempotent durable events, le
 minimized attempt logs, endpoint-unique encrypted signing secrets, bounded dual-signature rotation,
 automatic retry, failure-threshold disablement, and operator replay/prune seams.
 
-Trusted modules publish through `domain.WebhookPublisher`. The repository resolves Luas's bound
+Trusted modules publish through `domain.WebhookPublisher`. The repository resolves FastBuild's bound
 transaction context so a downstream business write and webhook outbox insert can commit atomically.
 The in-process event bus remains useful for best-effort reactions but is not advertised as a durable
 webhook source.
@@ -36,7 +36,7 @@ default. Production cannot enable insecure HTTP or private-target escape hatches
 The browser manages only active-organization endpoints and reads minimized delivery state. It never
 publishes arbitrary events or reads payloads, secrets after the one-time response, ciphertext,
 signatures, target-resolution details, or provider responses. The built-in `webhook.test` definition
-proves the pipeline without pretending Luas owns downstream product event semantics.
+proves the pipeline without pretending FastBuild owns downstream product event semantics.
 
 ## Consequences
 

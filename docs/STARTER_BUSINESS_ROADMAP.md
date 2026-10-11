@@ -1,6 +1,6 @@
 # Starter Business Roadmap
 
-This document records which starter-level business capabilities make Luas useful on day one for a downstream app, and which capabilities should be developed next.
+This document records which starter-level business capabilities make FastBuild useful on day one for a downstream app, and which capabilities should be developed next.
 
 Use [`../CONTEXT.md`](../CONTEXT.md) for vocabulary. A starter is a business-ready building block. A capability is a reusable technical integration that does not own an application workflow. Do not promote a capability into a starter until it owns a coherent workflow, contracts, tests, and replacement guidance.
 
@@ -94,7 +94,7 @@ undelivered boundary is an intentionally product-sensitive AI workspace.
 8. `ai-workspace` optional starter
    - Owns prompt templates, conversation/session records, run history, cost attribution, and evaluation hooks.
    - Uses the bounded execution contract in [`../api/docs/AI.md`](../api/docs/AI.md) plus workflow, usage, and organization starters.
-   - Should be optional because many Luas downstream apps will not be AI products.
+   - Should be optional because many FastBuild downstream apps will not be AI products.
 
 ## Starter Readiness Contract
 

@@ -1,4 +1,4 @@
-# AGENTS.md - Luas Web
+# AGENTS.md - FastBuild Web
 
 Rules for the Next.js frontend under `web/`.
 
@@ -18,7 +18,7 @@ guide for an ordinary component edit.
 |---|---|
 | `frontend-design` | Establishing or substantially changing visual direction |
 | `web-design-guidelines` | Explicit UI/UX review against interface guidance |
-| `ui-styling-guide` | Applying Luas tokens, Tailwind, shadcn, or component variants |
+| `ui-styling-guide` | Applying FastBuild tokens, Tailwind, shadcn, or component variants |
 | `data-state-management` | Changing TanStack Query, Zustand, forms, or optimistic state |
 | `api-error-handling` | Changing API parsing, error branching, or user error copy |
 | `environment-config` | Adding or changing runtime/build environment values |

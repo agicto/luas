@@ -12,8 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/pkg/logger"
-	"github.com/zgiai/luas/api/pkg/redact"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/pkg/redact"
 )
 
 // Config holds error handler configuration
@@ -579,7 +579,7 @@ func renderDebugHTML(data DebugPageData) string {
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>%d %s | Luas</title>
+	<title>%d %s | FastBuild</title>
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -693,8 +693,8 @@ func renderDebugHTML(data DebugPageData) string {
 	</div>
 
 	<div class="footer">
-		<div class="logo">Luas</div>
-		<div>Framework Debug Mode • <a href="https://github.com/zgiai/luas/api" target="_blank">Documentation</a></div>
+		<div class="logo">FastBuild</div>
+		<div>Framework Debug Mode • <a href="https://github.com/fastagi/fastbuild/api" target="_blank">Documentation</a></div>
 	</div>
 </body>
 </html>`,

@@ -9,7 +9,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/migration/stubs"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration/stubs"
 )
 
 // CreatorOptions configures the migration file creator.

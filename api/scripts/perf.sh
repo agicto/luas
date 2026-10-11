@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 # Runs the k6 performance baseline against a release build of the API.
 #
-#   LUAS_PERF_POSTGRES_DSN=postgres://user:pass@127.0.0.1:5432/luas_perf?sslmode=disable make perf
+#   FASTBUILD_PERF_POSTGRES_DSN=postgres://user:pass@127.0.0.1:5432/fastbuild_perf?sslmode=disable make perf
 #
 # The database must be disposable: the script migrates and seeds it. k6 comes from $K6 or PATH.
-# The k6 summary is written to $LUAS_PERF_OUTPUT (default: perf/results/summary.json).
-# LUAS_PERF_AUDIT_ROWS (default 1000000) audit rows are seeded with psql so history reads run
+# The k6 summary is written to $FASTBUILD_PERF_OUTPUT (default: perf/results/summary.json).
+# FASTBUILD_PERF_AUDIT_ROWS (default 1000000) audit rows are seeded with psql so history reads run
 # against a large table; set it to 0 to skip.
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 K6="${K6:-k6}"
-PORT="${LUAS_PERF_PORT:-18080}"
-OUTPUT="${LUAS_PERF_OUTPUT:-${ROOT_DIR}/perf/results/summary.json}"
-AUDIT_ROWS="${LUAS_PERF_AUDIT_ROWS:-1000000}"
+PORT="${FASTBUILD_PERF_PORT:-18080}"
+OUTPUT="${FASTBUILD_PERF_OUTPUT:-${ROOT_DIR}/perf/results/summary.json}"
+AUDIT_ROWS="${FASTBUILD_PERF_AUDIT_ROWS:-1000000}"
 TMP_DIR="$(mktemp -d)"
 API_PID=""
 
@@ -32,15 +32,15 @@ fail() {
   exit 1
 }
 
-[[ -n "${LUAS_PERF_POSTGRES_DSN:-}" ]] || fail "LUAS_PERF_POSTGRES_DSN must name a disposable PostgreSQL database"
+[[ -n "${FASTBUILD_PERF_POSTGRES_DSN:-}" ]] || fail "FASTBUILD_PERF_POSTGRES_DSN must name a disposable PostgreSQL database"
 command -v "${K6}" >/dev/null 2>&1 || fail "k6 not found; install it or set K6=/path/to/k6"
-[[ "${AUDIT_ROWS}" =~ ^[0-9]+$ ]] || fail "LUAS_PERF_AUDIT_ROWS must be a non-negative integer"
+[[ "${AUDIT_ROWS}" =~ ^[0-9]+$ ]] || fail "FASTBUILD_PERF_AUDIT_ROWS must be a non-negative integer"
 if (( AUDIT_ROWS > 0 )); then
-  command -v psql >/dev/null 2>&1 || fail "psql is required to seed audit rows; install it or set LUAS_PERF_AUDIT_ROWS=0"
+  command -v psql >/dev/null 2>&1 || fail "psql is required to seed audit rows; install it or set FASTBUILD_PERF_AUDIT_ROWS=0"
 fi
 
 # Split the DSN into the DB_* variables the API reads.
-assignments="$(python3 - "${LUAS_PERF_POSTGRES_DSN}" <<'PY'
+assignments="$(python3 - "${FASTBUILD_PERF_POSTGRES_DSN}" <<'PY'
 import shlex, sys
 from urllib.parse import parse_qs, unquote, urlsplit
 url = urlsplit(sys.argv[1])
@@ -57,10 +57,10 @@ values = {
 for key, value in values.items():
     print(f"export {key}={shlex.quote(value)}")
 PY
-)" || fail "LUAS_PERF_POSTGRES_DSN must be postgres://user:pass@host:port/database"
+)" || fail "FASTBUILD_PERF_POSTGRES_DSN must be postgres://user:pass@host:port/database"
 eval "${assignments}"
 
-export LUAS_ENV_FILE=""
+export FASTBUILD_ENV_FILE=""
 export APP_ENV=development
 export SERVER_MODE=release
 export SERVER_HOST=127.0.0.1
@@ -77,9 +77,9 @@ export MIDDLEWARE_RATE_LIMIT_ENABLED=false
 export AUTH_RATE_LIMIT_ENABLED=false
 
 cd "${ROOT_DIR}"
-go build -trimpath -o "${TMP_DIR}/luas" ./cmd/luas
-"${TMP_DIR}/luas" migrate >"${TMP_DIR}/migrate.log" 2>&1 || { cat "${TMP_DIR}/migrate.log" >&2; fail "migration failed"; }
-"${TMP_DIR}/luas" db:seed >"${TMP_DIR}/seed.log" 2>&1 || { cat "${TMP_DIR}/seed.log" >&2; fail "seeding failed"; }
+go build -trimpath -o "${TMP_DIR}/fastbuild" ./cmd/fastbuild
+"${TMP_DIR}/fastbuild" migrate >"${TMP_DIR}/migrate.log" 2>&1 || { cat "${TMP_DIR}/migrate.log" >&2; fail "migration failed"; }
+"${TMP_DIR}/fastbuild" db:seed >"${TMP_DIR}/seed.log" 2>&1 || { cat "${TMP_DIR}/seed.log" >&2; fail "seeding failed"; }
 if (( AUDIT_ROWS > 0 )); then
   # Half of the history belongs to the measured account, one second apart, so its reads page
   # through hundreds of thousands of rows. Reruns top up to the target instead of growing.
@@ -96,7 +96,7 @@ ANALYZE audit_logs;
 SQL
 fi
 
-"${TMP_DIR}/luas" serve >"${TMP_DIR}/api.log" 2>&1 &
+"${TMP_DIR}/fastbuild" serve >"${TMP_DIR}/api.log" 2>&1 &
 API_PID=$!
 for _ in $(seq 60); do
   curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1 && break
@@ -106,7 +106,7 @@ done
 curl -fsS "http://127.0.0.1:${PORT}/health/ready" >/dev/null 2>&1 || fail "API did not become ready"
 
 mkdir -p "$(dirname "${OUTPUT}")"
-LUAS_PERF_BASE_URL="http://127.0.0.1:${PORT}" "${K6}" run \
+FASTBUILD_PERF_BASE_URL="http://127.0.0.1:${PORT}" "${K6}" run \
   --quiet \
   --summary-export "${OUTPUT}" \
   "${ROOT_DIR}/perf/k6/baseline.js"

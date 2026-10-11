@@ -54,7 +54,7 @@ are assembled for one resolved configuration:
 
 ```bash
 cd api
-DB_ENABLED=false AI_ENABLED=false go run ./cmd/luas route:list --format=json
+DB_ENABLED=false AI_ENABLED=false go run ./cmd/fastbuild route:list --format=json
 ```
 
 The catalog is deterministic, schema-versioned, and generated through the same core and starter
@@ -194,4 +194,4 @@ Rate-limited responses must include `Retry-After` when the reset time is known. 
 - Include `request_id` when the API has one in context.
 - Add API and every changed browser-shell test for contract-sensitive changes.
 - Document adapter-owned path or DTO mappings instead of treating unlike endpoints as interchangeable.
-- From the repo root, run `python3 .agents/skills/luas-framework-review/scripts/check-error-contracts.py` after changing scaffold-level HTTP status or `error_code` behavior.
+- From the repo root, run `python3 .agents/skills/fastbuild-framework-review/scripts/check-error-contracts.py` after changing scaffold-level HTTP status or `error_code` behavior.

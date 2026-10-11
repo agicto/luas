@@ -1,9 +1,9 @@
 ---
 name: ui-styling-guide
-description: Apply Luas UI primitives, variants, Tailwind, and OKLCH tokens. Use when styling within the existing design system, not for broad visual direction.
+description: Apply FastBuild UI primitives, variants, Tailwind, and OKLCH tokens. Use when styling within the existing design system, not for broad visual direction.
 ---
 
-# Luas UI Styling
+# FastBuild UI Styling
 
 Implement an already-decided visual direction through the existing Web design
 system. Use `frontend-design` instead when audience, hierarchy, or visual

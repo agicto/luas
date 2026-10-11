@@ -111,10 +111,10 @@ function isSafeActionUrl(value: string): boolean {
     return false;
   }
   try {
-    const parsed = new URL(value, 'https://luas.invalid');
+    const parsed = new URL(value, 'https://fastbuild.invalid');
     const decodedPath = decodeURIComponent(parsed.pathname);
     return (
-      parsed.origin === 'https://luas.invalid' &&
+      parsed.origin === 'https://fastbuild.invalid' &&
       !decodedPath.startsWith('//') &&
       !decodedPath.includes('\\') &&
       !containsControl(decodedPath)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/infra/plugin"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/infra/plugin"
 )
 
 // PluginListCommand lists all installed plugins
@@ -28,7 +28,7 @@ func (c *PluginListCommand) Description() string {
 }
 
 func (c *PluginListCommand) Usage() string {
-	return "luas plugin:list"
+	return "fastbuild plugin:list"
 }
 
 func (c *PluginListCommand) Run(args []string) error {
@@ -38,7 +38,7 @@ func (c *PluginListCommand) Run(args []string) error {
 	if len(plugins) == 0 {
 		c.output.Info("No plugins installed")
 		c.output.Info("")
-		c.output.Info("A plugin is an executable named luas-<name> on PATH that answers --version.")
+		c.output.Info("A plugin is an executable named fastbuild-<name> on PATH that answers --version.")
 		return nil
 	}
 
@@ -59,8 +59,8 @@ func (c *PluginListCommand) Run(args []string) error {
 	}
 
 	c.output.Info("")
-	c.output.Info("Usage: luas <plugin-name> <command> [args...]")
-	c.output.Info("Example: luas ai docs user")
+	c.output.Info("Usage: fastbuild <plugin-name> <command> [args...]")
+	c.output.Info("Example: fastbuild ai docs user")
 
 	return nil
 }

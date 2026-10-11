@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/infra/health"
+	"github.com/fastagi/fastbuild/api/internal/infra/health"
 )
 
 func init() {

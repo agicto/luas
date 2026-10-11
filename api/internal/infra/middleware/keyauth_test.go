@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 func TestKeyAuthWithConfig_UsesValidationErrorHandler(t *testing.T) {
@@ -37,7 +37,7 @@ func TestKeyAuthWithConfig_UsesValidationErrorHandler(t *testing.T) {
 	})
 
 	request := httptest.NewRequest(http.MethodGet, "/protected", nil)
-	request.Header.Set("X-API-Key", "luas_test.secret")
+	request.Header.Set("X-API-Key", "fastbuild_test.secret")
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, request)
 

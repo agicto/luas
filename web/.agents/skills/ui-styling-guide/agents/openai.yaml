@@ -1,4 +1,4 @@
 interface:
-  display_name: "Luas UI Styling Guide"
+  display_name: "FastBuild UI Styling Guide"
   short_description: "Apply existing tokens and primitives"
-  default_prompt: "Use $ui-styling-guide to style this UI with the existing Luas tokens, variants, and primitives."
+  default_prompt: "Use $ui-styling-guide to style this UI with the existing FastBuild tokens, variants, and primitives."

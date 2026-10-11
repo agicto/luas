@@ -9,7 +9,7 @@ export const MOCK_SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 export function getMockSessionCookieName(
   environment: NodeEnvironment = env.NODE_ENV
 ): string {
-  return environment === 'production' ? '__Host-luas_session' : 'luas_session';
+  return environment === 'production' ? '__Host-fastbuild_session' : 'fastbuild_session';
 }
 
 export function createMockSessionCookie(

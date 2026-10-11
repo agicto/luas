@@ -15,7 +15,7 @@ import (
 
 // Priority order (highest to lowest):
 // 1. System environment variables (Docker, K8s, shell export)
-// 2. LUAS_ENV_FILE (explicit file selected by a system environment variable)
+// 2. FASTBUILD_ENV_FILE (explicit file selected by a system environment variable)
 // 3. .env.{APP_ENV}.local (environment-specific local overrides, not committed)
 // 4. .env.local (local overrides, not committed)
 // 5. .env.{APP_ENV} (environment-specific, e.g., .env.production)
@@ -69,10 +69,10 @@ func loadEnvFiles() error {
 		return fmt.Errorf("load .env: %w", err)
 	}
 	explicitValues := map[string]string(nil)
-	if envFile := systemEnv["LUAS_ENV_FILE"]; envFile != "" {
+	if envFile := systemEnv["FASTBUILD_ENV_FILE"]; envFile != "" {
 		explicitValues, err = readEnvFile(envFile, true)
 		if err != nil {
-			return fmt.Errorf("load LUAS_ENV_FILE %q: %w", envFile, err)
+			return fmt.Errorf("load FASTBUILD_ENV_FILE %q: %w", envFile, err)
 		}
 	}
 

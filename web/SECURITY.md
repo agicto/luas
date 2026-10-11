@@ -1,4 +1,4 @@
-# Luas Web Security
+# FastBuild Web Security
 
 The project-wide reporting and supported-version policy lives in [../SECURITY.md](../SECURITY.md). Do not report a suspected vulnerability in a public issue.
 

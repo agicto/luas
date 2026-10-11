@@ -1,5 +1,5 @@
 @echo off
-REM Luas Build Script for Windows
+REM FastBuild Build Script for Windows
 REM Usage: make.bat [command]
 
 setlocal
@@ -13,7 +13,7 @@ if "%GIT_COMMIT%"=="" set GIT_COMMIT=unknown
 
 for /f "tokens=*" %%i in ('powershell -Command "Get-Date -Format 'yyyy-MM-dd_HH:mm:ss'"') do set BUILD_TIME=%%i
 
-set BINARY_NAME=luas.exe
+set BINARY_NAME=fastbuild.exe
 set SERVER_NAME=server.exe
 set LDFLAGS=-ldflags "-s -w -X main.Version=%VERSION% -X main.GitCommit=%GIT_COMMIT% -X main.BuildTime=%BUILD_TIME%"
 
@@ -44,7 +44,7 @@ goto help
 :build
 echo Building %BINARY_NAME%...
 call :wire
-go build %LDFLAGS% -o %BINARY_NAME% cmd/luas/main.go
+go build %LDFLAGS% -o %BINARY_NAME% cmd/fastbuild/main.go
 goto end
 
 :build-server
@@ -60,7 +60,7 @@ goto end
 :install
 echo Installing %BINARY_NAME%...
 call :build
-go install %LDFLAGS% ./cmd/luas
+go install %LDFLAGS% ./cmd/fastbuild
 goto end
 
 :clean
@@ -150,7 +150,7 @@ goto end
 echo Setting up development environment...
 go mod download
 echo Dependencies downloaded
-echo Run 'make.bat install' to install luas CLI globally
+echo Run 'make.bat install' to install fastbuild CLI globally
 goto end
 
 :help

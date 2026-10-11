@@ -104,4 +104,4 @@ gh pr create --body-file /tmp/pr.md
 
 Select another skill only when the user also requests its separate job.
 
-- `luas-code-review` when the user also requests a review of the diff.
+- `fastbuild-code-review` when the user also requests a review of the diff.

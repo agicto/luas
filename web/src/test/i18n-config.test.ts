@@ -16,7 +16,7 @@ async function loadI18nConfig(overrides: EnvOverrides = {}) {
     delete process.env[key];
   }
 
-  process.env.SESSION_SECRET = 'luas-test-session-secret-at-least-32-chars';
+  process.env.SESSION_SECRET = 'fastbuild-test-session-secret-at-least-32-chars';
 
   for (const [key, value] of Object.entries(overrides)) {
     if (value === undefined) {

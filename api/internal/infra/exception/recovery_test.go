@@ -12,13 +12,13 @@ import (
 	"go.opentelemetry.io/otel"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	infraDatabase "github.com/zgiai/luas/api/internal/infra/database"
-	"github.com/zgiai/luas/api/internal/infra/exception"
-	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/infra/tracing"
-	"github.com/zgiai/luas/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	infraDatabase "github.com/fastagi/fastbuild/api/internal/infra/database"
+	"github.com/fastagi/fastbuild/api/internal/infra/exception"
+	infraMiddleware "github.com/fastagi/fastbuild/api/internal/infra/middleware"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/infra/tracing"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
 )
 
 func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
@@ -48,7 +48,7 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 
 	engine := gin.New()
 	engine.Use(infraMiddleware.RequestID())
-	engine.Use(tracing.Middleware("luas-test"))
+	engine.Use(tracing.Middleware("fastbuild-test"))
 	engine.Use(tracing.InjectTraceID())
 	engine.Use(logger.GinLogger())
 	engine.Use(exception.Recovery(true))
@@ -75,7 +75,7 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	req.Header.Set("X-Request-ID", "req-debug-page-1")
 	req.Header.Set("Authorization", "Bearer authorization-secret")
 	req.Header.Set("Cookie", "session=cookie-secret")
-	req.Header.Set("X-API-Key", "luas_header.secret")
+	req.Header.Set("X-API-Key", "fastbuild_header.secret")
 
 	recorder := httptest.NewRecorder()
 	engine.ServeHTTP(recorder, req)
@@ -94,7 +94,7 @@ func TestRecoveryRendersDebugPageWithRouteTraceSQLAndLogs(t *testing.T) {
 	require.NotContains(t, body, "query-secret")
 	require.NotContains(t, body, "authorization-secret")
 	require.NotContains(t, body, "cookie-secret")
-	require.NotContains(t, body, "luas_header.secret")
+	require.NotContains(t, body, "fastbuild_header.secret")
 	require.NotContains(t, body, "private-customer")
 	require.NotContains(t, body, "<script>alert(1)</script>")
 

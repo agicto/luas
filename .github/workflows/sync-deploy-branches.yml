@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   sync:
-    name: Sync Luas deploy branch
+    name: Sync FastBuild deploy branch
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
 
     steps:
@@ -37,11 +37,11 @@ jobs:
           case "$source_branch" in
             dev)
               deploy_branch="deploy-dev"
-              vercel_project="luas"
+              vercel_project="fastbuild"
               ;;
             dev-c)
               deploy_branch="deploy-dev-c"
-              vercel_project="luas-c"
+              vercel_project="fastbuild-c"
               ;;
             *)
               echo "Unsupported source branch: $source_branch" >&2
@@ -74,7 +74,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git checkout -B "$deploy_branch" "origin/$source_branch"
-          git commit --allow-empty -m "chore: trigger Luas Vercel deployment"
+          git commit --allow-empty -m "chore: trigger FastBuild Vercel deployment"
 
           if remote_sha="$(git ls-remote --heads origin "$deploy_branch" | awk '{print $1}')"; [ -n "$remote_sha" ]; then
             git push --force-with-lease="refs/heads/$deploy_branch:$remote_sha" origin "HEAD:refs/heads/$deploy_branch"

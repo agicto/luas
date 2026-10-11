@@ -63,7 +63,7 @@ describe('API key browser route boundary', () => {
     const created = await createdResponse.json();
     const apiKeyId = created.data.api_key.id as number;
     expect(createdResponse.status).toBe(201);
-    expect(created.data.plaintext_key).toMatch(/^luas_/);
+    expect(created.data.plaintext_key).toMatch(/^fastbuild_/);
 
     const listedResponse = await listApiKeysRoute(request('/api/api-keys'));
     const listed = await listedResponse.json();

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Luas already has user-owned API keys, AI/workflow capabilities, private assets, organizations, and
+FastBuild already has user-owned API keys, AI/workflow capabilities, private assets, organizations, and
 typed settings. Downstream API and AI products still repeat the same accounting work: deduplicating
 usage facts, aggregating periods, deciding limits, exposing current utilization, and later adapting
 those facts to billing providers.

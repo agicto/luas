@@ -13,7 +13,7 @@ also risked becoming stale authorization evidence as organizations and permissio
 
 A short access JWT plus rotating refresh token would reduce access-token lifetime, but adds two
 credentials, rotation/reuse concurrency, browser refresh coordination, and more ambiguous failure
-states. Luas already provides API keys for machine access and does not need stateless user tokens to
+states. FastBuild already provides API keys for machine access and does not need stateless user tokens to
 cross service boundaries by default.
 
 ## Decision

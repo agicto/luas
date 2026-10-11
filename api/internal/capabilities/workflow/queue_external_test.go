@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/capabilities/workflow"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/workflow"
 )
 
 // TestJob is a simple test job

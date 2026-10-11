@@ -13,11 +13,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/wiring"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/wiring"
 )
 
 var errSettingCommandUnavailable = errors.New("setting command service is unavailable")

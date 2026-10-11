@@ -33,7 +33,7 @@ const apiKey = {
   id: 42,
   user_id: 7,
   name: 'Deployment',
-  key_prefix: 'luas_abcdef123456',
+  key_prefix: 'fastbuild_abcdef123456',
   scopes: ['models:read'],
   created_at: '2026-07-15T10:00:00Z',
   updated_at: '2026-07-15T10:00:00Z',
@@ -56,13 +56,13 @@ describe('API key settings workflow', () => {
     renderWithMessages(<ApiKeyPanel />);
 
     expect(screen.getByText('Deployment')).toBeInTheDocument();
-    expect(screen.getByText('luas_abcdef123456')).toBeInTheDocument();
+    expect(screen.getByText('fastbuild_abcdef123456')).toBeInTheDocument();
     expect(screen.getByText('models:read')).toBeInTheDocument();
     expect(screen.queryByText(/sk_demo/)).not.toBeInTheDocument();
   });
 
   it('shows a created secret once and resets mutation data immediately', async () => {
-    const plaintextKey = 'luas_abcdef123456.0123456789abcdef0123456789abcdef0123456789abcdef';
+    const plaintextKey = 'fastbuild_abcdef123456.0123456789abcdef0123456789abcdef0123456789abcdef';
     state.create.mutateAsync.mockResolvedValue({
       api_key: apiKey,
       plaintext_key: plaintextKey,

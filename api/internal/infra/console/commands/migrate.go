@@ -1,4 +1,4 @@
-// Package commands provides CLI commands for the Luas scaffold.
+// Package commands provides CLI commands for the FastBuild scaffold.
 package commands
 
 import (
@@ -9,12 +9,12 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	"github.com/zgiai/luas/api/internal/infra/database"
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/starter"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/infra/database"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/starter"
 )
 
 // consoleOutputWriter implements migration.OutputWriter for console output.

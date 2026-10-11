@@ -17,9 +17,9 @@ const opaqueCredential = Buffer.from(
 
 describe('production auth session cookie', () => {
   it('uses a host-only secure cookie in production', () => {
-    expect(getAuthSessionCookieName('production')).toBe('__Host-luas_auth');
+    expect(getAuthSessionCookieName('production')).toBe('__Host-fastbuild_auth');
     expect(createAuthSessionCookie(opaqueCredential, 600, 'production')).toEqual({
-      name: '__Host-luas_auth',
+      name: '__Host-fastbuild_auth',
       value: opaqueCredential,
       httpOnly: true,
       sameSite: 'lax',
@@ -31,9 +31,9 @@ describe('production auth session cookie', () => {
   });
 
   it('uses a separate non-secure name for local HTTP development', () => {
-    expect(getAuthSessionCookieName('development')).toBe('luas_auth');
+    expect(getAuthSessionCookieName('development')).toBe('fastbuild_auth');
     expect(createAuthSessionCookie(opaqueCredential, 600, 'development')).toMatchObject({
-      name: 'luas_auth',
+      name: 'fastbuild_auth',
       secure: false,
     });
   });
@@ -48,7 +48,7 @@ describe('production auth session cookie', () => {
     ).toBe(AUTH_SESSION_MAX_AGE_SECONDS);
 
     expect(createExpiredAuthSessionCookie('production')).toMatchObject({
-      name: '__Host-luas_auth',
+      name: '__Host-fastbuild_auth',
       value: '',
       maxAge: 0,
       expires: new Date(0),

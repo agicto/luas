@@ -1397,6 +1397,7 @@ export interface components {
             /** Format: date-time */
             expires_at?: string;
             id: components["schemas"]["PositiveID"];
+            /** @description Issued with the `fastbuild_` prefix; keys created before the rename keep their original lowercase prefix. */
             key_prefix: string;
             /** Format: date-time */
             last_used_at?: string;

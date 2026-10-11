@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/console"
-	infracommands "github.com/zgiai/luas/api/internal/infra/console/commands"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
+	infracommands "github.com/fastagi/fastbuild/api/internal/infra/console/commands"
 )
 
 func TestParseUsageMutationArgumentsRequiresExplicitBoundedInput(t *testing.T) {
@@ -89,7 +89,7 @@ func TestRecordUsageOperatorAuditContainsNoEventIdentityOrDimensions(t *testing.
 }
 
 func TestUsageOperatorManifestRegistersAllCommands(t *testing.T) {
-	app := console.New("luas", "test")
+	app := console.New("fastbuild", "test")
 	infracommands.RegisterManifest(app, Manifest())
 
 	for _, command := range []string{

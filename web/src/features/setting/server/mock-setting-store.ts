@@ -38,7 +38,7 @@ export const mockSettingStore = {
         key: 'branding.display_name',
         kind: 'string',
         visibility: 'public',
-        value: 'Luas',
+        value: 'FastBuild',
         version: 0,
         source: 'default',
         updated_at: null,

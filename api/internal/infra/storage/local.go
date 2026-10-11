@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
 )
 
 // LocalStore keeps development objects under one traversal-resistant filesystem root.

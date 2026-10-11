@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/capabilities/workflow"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/workflow"
 )
 
 func TestEvent_EveryMinute(t *testing.T) {

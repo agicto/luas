@@ -1,13 +1,13 @@
 ---
 name: tdd-regression
-description: Add a red/green guard for a reproducible Luas regression with known expected behavior. Use systematic-debugging instead while the cause or reproduction is unclear.
+description: Add a red/green guard for a reproducible FastBuild regression with known expected behavior. Use systematic-debugging instead while the cause or reproduction is unclear.
 ---
 
 # TDD Regression
 
 ## Purpose
 
-Fix Luas bugs and contract-sensitive regressions with a reproducible failing test before changing production code. This skill turns "I fixed it" into "the old failure is now guarded at the right seam."
+Fix FastBuild bugs and contract-sensitive regressions with a reproducible failing test before changing production code. This skill turns "I fixed it" into "the old failure is now guarded at the right seam."
 
 ## When to Use
 

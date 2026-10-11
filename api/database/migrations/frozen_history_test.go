@@ -17,8 +17,8 @@ func TestMigrationsDoNotDependOnLiveModelPackages(t *testing.T) {
 
 	for _, pkg := range strings.Fields(string(out)) {
 		for _, forbidden := range []string{
-			"github.com/zgiai/luas/api/internal/modules/",
-			"github.com/zgiai/luas/api/internal/capabilities/",
+			"github.com/fastagi/fastbuild/api/internal/modules/",
+			"github.com/fastagi/fastbuild/api/internal/capabilities/",
 		} {
 			require.Falsef(t, strings.HasPrefix(pkg, forbidden),
 				"database/migrations depends on %s; freeze migration DDL as SQL instead", pkg)

@@ -8,9 +8,9 @@ import {
 
 describe('mock session cookie policy', () => {
   it('uses a __Host- cookie with secure production attributes', () => {
-    expect(getMockSessionCookieName('production')).toBe('__Host-luas_session');
+    expect(getMockSessionCookieName('production')).toBe('__Host-fastbuild_session');
     expect(createMockSessionCookie('signed-value', 'production')).toMatchObject({
-      name: '__Host-luas_session',
+      name: '__Host-fastbuild_session',
       value: 'signed-value',
       httpOnly: true,
       sameSite: 'lax',
@@ -22,9 +22,9 @@ describe('mock session cookie policy', () => {
   });
 
   it('keeps a non-prefixed cookie for local HTTP development', () => {
-    expect(getMockSessionCookieName('development')).toBe('luas_session');
+    expect(getMockSessionCookieName('development')).toBe('fastbuild_session');
     expect(createMockSessionCookie('signed-value', 'development')).toMatchObject({
-      name: 'luas_session',
+      name: 'fastbuild_session',
       secure: false,
     });
   });
@@ -33,7 +33,7 @@ describe('mock session cookie policy', () => {
     const expired = createExpiredMockSessionCookie('production');
 
     expect(expired).toMatchObject({
-      name: '__Host-luas_session',
+      name: '__Host-fastbuild_session',
       value: '',
       httpOnly: true,
       sameSite: 'lax',

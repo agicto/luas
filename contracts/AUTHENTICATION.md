@@ -1,6 +1,6 @@
 # Authentication Contracts
 
-Luas currently ships two authentication boundaries. They share the global HTTP envelope and
+FastBuild currently ships two authentication boundaries. They share the global HTTP envelope and
 `error_code` vocabulary, but their paths, credentials, user DTOs, and session ownership are not
 interchangeable.
 
@@ -85,7 +85,7 @@ AUTH_SESSION_RETENTION=720h
 
 `JWT_SECRET` and `JWT_EXPIRE_DAYS` no longer configure user authentication. This is an intentional
 security-breaking migration: deploying the session migration invalidates previously issued
-stateless JWTs, so existing users sign in again. Luas does not silently keep the old seven-day
+stateless JWTs, so existing users sign in again. FastBuild does not silently keep the old seven-day
 unrevocable path beside the new authority.
 
 The API user uses numeric identity and backend fields such as `username`, `nickname`, and
@@ -133,7 +133,7 @@ IP identity is accepted from forwarding headers only when the direct upstream ma
 The built-in stores are bounded and process-local. Each auth rule retains at most
 `AUTH_RATE_LIMIT_MAX_BUCKETS_PER_RULE` active identity buckets (default 10,000), then evicts the
 least recently used bucket. Multi-replica production deployments must provide equivalent distributed
-enforcement at the gateway/WAF or through an explicitly assembled shared limiter. Luas does not ship
+enforcement at the gateway/WAF or through an explicitly assembled shared limiter. FastBuild does not ship
 a built-in Redis rate-limit driver, and a shared implementation must not silently fall back to
 independent per-process buckets. These quotas are a starter baseline, not a substitute for MFA,
 breached-credential checks, adaptive bot controls, or product-specific account recovery policy.
@@ -144,7 +144,7 @@ the reset quotas admit.
 
 ## Production API Adapter
 
-Luas ships a same-origin Web adapter with explicit route handlers for the Go `user` starter and
+FastBuild ships a same-origin Web adapter with explicit route handlers for the Go `user` starter and
 enabled optional starter features. Set browser requests to the same-origin `/api` route, enable the
 adapter on the Web server, and configure its private Go API base URL:
 
@@ -188,7 +188,7 @@ issuance should add that capability to the API contract instead of hiding compen
 
 ### Session And Security Semantics
 
-- Production stores the opaque bearer token in `__Host-luas_auth`; non-production uses `luas_auth`.
+- Production stores the opaque bearer token in `__Host-fastbuild_auth`; non-production uses `fastbuild_auth`.
   The cookie is HttpOnly, `Secure` in production, `SameSite=Lax`, `Path=/`, has no `Domain`, and
   expires no later than the API-owned `expires_in` lifetime. Browser code never receives the token.
 - The Web adapter validates only the bounded opaque credential shape and positive `expires_in`

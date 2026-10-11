@@ -1,0 +1,6 @@
+interface:
+  display_name: "FastBuild Framework Review"
+  short_description: "Audit the FastBuild scaffold broadly"
+  default_prompt: "Use $fastbuild-framework-review to audit FastBuild across the requested framework quality axes."
+policy:
+  allow_implicit_invocation: false

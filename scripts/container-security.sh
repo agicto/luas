@@ -6,8 +6,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TRIVY_VERSION="0.72.0"
 TRIVY_RELEASE_URL="https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}"
 DEFAULT_CACHE_HOME="${XDG_CACHE_HOME:-${HOME:-${TMPDIR:-/tmp}}/.cache}"
-CACHE_ROOT="${LUAS_TRIVY_TOOL_CACHE_DIR:-${DEFAULT_CACHE_HOME}/luas/trivy/v${TRIVY_VERSION}}"
-DB_CACHE="${TRIVY_CACHE_DIR:-${DEFAULT_CACHE_HOME}/luas/trivy/db}"
+CACHE_ROOT="${FASTBUILD_TRIVY_TOOL_CACHE_DIR:-${DEFAULT_CACHE_HOME}/fastbuild/trivy/v${TRIVY_VERSION}}"
+DB_CACHE="${TRIVY_CACHE_DIR:-${DEFAULT_CACHE_HOME}/fastbuild/trivy/db}"
 
 usage() {
   cat <<'EOF'
@@ -166,7 +166,7 @@ export_sbom() {
   }
   output_dir="$(dirname "${output}")"
   mkdir -p "${output_dir}"
-  temporary="$(mktemp "${output_dir}/.luas-container-sbom.XXXXXX")"
+  temporary="$(mktemp "${output_dir}/.fastbuild-container-sbom.XXXXXX")"
   trap 'rm -f "${temporary:-}"' EXIT
 
   "${TRIVY}" image \
@@ -210,11 +210,11 @@ case "${command}" in
     ;;
   sbom)
     (( $# <= 1 )) || { usage >&2; exit 2; }
-    export_sbom "${image}" "${1:-${TMPDIR:-/tmp}/luas-container.cdx.json}"
+    export_sbom "${image}" "${1:-${TMPDIR:-/tmp}/fastbuild-container.cdx.json}"
     ;;
   verify)
     (( $# <= 1 )) || { usage >&2; exit 2; }
-    export_sbom "${image}" "${1:-${TMPDIR:-/tmp}/luas-container.cdx.json}"
+    export_sbom "${image}" "${1:-${TMPDIR:-/tmp}/fastbuild-container.cdx.json}"
     scan_image "${image}"
     ;;
   *)

@@ -1,4 +1,4 @@
-# Luas API Skills
+# FastBuild API Skills
 
 API skills provide task-specific workflows beyond the mandatory rules in
 `api/AGENTS.md`. Codex reads only metadata until a skill is selected.
@@ -18,7 +18,7 @@ API skills provide task-specific workflows beyond the mandatory rules in
 | `sql-migration-review` | Migration compatibility, locks, and rollback |
 
 Routine code standards stay in `api/AGENTS.md`; concrete diff review uses root
-`luas-code-review`. This avoids loading overlapping standards and review
+`fastbuild-code-review`. This avoids loading overlapping standards and review
 workflows during ordinary API implementation.
 
 ## Rules

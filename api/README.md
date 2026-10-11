@@ -1,8 +1,8 @@
-# Luas API
+# FastBuild API
 
 > A product-neutral scaffold for modular Go APIs
 
-Luas provides a stable backend project structure, dependency injection, explicit module boundaries,
+FastBuild provides a stable backend project structure, dependency injection, explicit module boundaries,
 shared HTTP responses, pagination, migrations, testing utilities, and replaceable infrastructure.
 It is a framework and starter template, not a product application. The default assembly contains
 only the minimum useful authentication, API key, and audit starters; additional business starters
@@ -10,7 +10,7 @@ must be enabled explicitly.
 
 ## Role And Boundaries
 
-`api/` is the authoritative backend for both Luas browser applications and for
+`api/` is the authoritative backend for both FastBuild browser applications and for
 other HTTP clients. It owns domain rules, PostgreSQL persistence, migrations,
 public HTTP routes, background workers, and provider integrations.
 
@@ -51,7 +51,7 @@ cp .env.example .env
 Review at least these values:
 
 ```bash
-APP_NAME=Luas
+APP_NAME=FastBuild
 APP_ENV=development
 SERVER_HOST=127.0.0.1
 SERVER_PORT=8025
@@ -61,7 +61,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_NAME=luas
+DB_NAME=fastbuild
 ```
 
 `user`, `apikey`, and `audit` are enabled by default. Organization, permission, notification,
@@ -85,7 +85,7 @@ Notifications:
 
 ```bash
 OPTIONAL_STARTERS=notification
-go run ./cmd/luas notification:work --batch=25 --poll=2s
+go run ./cmd/fastbuild notification:work --batch=25 --poll=2s
 ```
 
 The notification starter owns idempotent publication, user preferences, in-app read state, and
@@ -98,7 +98,7 @@ Private assets:
 ```bash
 OPTIONAL_STARTERS=asset
 ASSET_TRANSFER_SIGNING_KEY=replace-with-openssl-rand-hex-32
-go run ./cmd/luas asset:prune --batch=100
+go run ./cmd/fastbuild asset:prune --batch=100
 ```
 
 Development uses root-confined local storage. Production deployments that enable assets must
@@ -141,19 +141,19 @@ The default loopback listener is `127.0.0.1:8025`:
 ### 5. Use The Operator CLI
 
 ```bash
-go run ./cmd/luas version
-go run ./cmd/luas starter:list
-go run ./cmd/luas starter:list --format=json
-go run ./cmd/luas starter:enable permission --dry-run
-go run ./cmd/luas starter:enable permission
-go run ./cmd/luas starter:check
-go run ./cmd/luas starter:disable organization --cascade
-DB_ENABLED=false go run ./cmd/luas route:list
-go run ./cmd/luas migrate
-go run ./cmd/luas seed
-go run ./cmd/luas auth-session:prune --batch=500
-go run ./cmd/luas audit:prune --before=2026-04-01T00:00:00Z --batch=500
-go run ./cmd/luas ai:chat "Summarize this scaffold in one sentence"
+go run ./cmd/fastbuild version
+go run ./cmd/fastbuild starter:list
+go run ./cmd/fastbuild starter:list --format=json
+go run ./cmd/fastbuild starter:enable permission --dry-run
+go run ./cmd/fastbuild starter:enable permission
+go run ./cmd/fastbuild starter:check
+go run ./cmd/fastbuild starter:disable organization --cascade
+DB_ENABLED=false go run ./cmd/fastbuild route:list
+go run ./cmd/fastbuild migrate
+go run ./cmd/fastbuild seed
+go run ./cmd/fastbuild auth-session:prune --batch=500
+go run ./cmd/fastbuild audit:prune --before=2026-04-01T00:00:00Z --batch=500
+go run ./cmd/fastbuild ai:chat "Summarize this scaffold in one sentence"
 ```
 
 Starter commands edit only the selected runtime `.env` file and never `.env.example`. Enabling a
@@ -164,7 +164,7 @@ same-directory replacement.
 With `QUEUE_DRIVER=postgres`, `workflow:tasks`, `workflow:retry`, `workflow:cancel`, and
 `workflow:prune` inspect and repair durable tasks; see [`docs/WORKFLOW.md`](docs/WORKFLOW.md).
 
-Unknown commands run a plugin: `luas <name>` executes `luas-<name>` found on `PATH`, with the CLI's
+Unknown commands run a plugin: `fastbuild <name>` executes `fastbuild-<name>` found on `PATH`, with the CLI's
 environment, including database credentials. Plugin names must match `[a-z][a-z0-9-]*`, and the
 current directory is never searched. `plugin:list` runs each plugin with `--version`, so keep only
 trusted binaries on `PATH` in production images.
@@ -263,10 +263,10 @@ in-process, non-durable queue and cannot move work between replicas.
 ## Project Structure
 
 ```text
-luas/api/
+fastbuild/api/
 |-- cmd/
 |   |-- server/               # HTTP server entry point
-|   `-- luas/                 # Operator CLI entry point
+|   `-- fastbuild/                 # Operator CLI entry point
 |-- internal/
 |   |-- app/                  # Assembled application root
 |   |-- bootstrap/            # Startup, HTTP kernel, and shutdown
@@ -320,12 +320,12 @@ DTO -> Domain -> PO
 ## Configuration Lifecycle
 
 `internal/infra/config.Config` is the API's only typed configuration authority. Startup loads and
-validates one immutable snapshot in this order: process environment, `LUAS_ENV_FILE`,
+validates one immutable snapshot in this order: process environment, `FASTBUILD_ENV_FILE`,
 environment-local file, local file, environment file, base `.env`, then code defaults.
 Configuration changes require a process restart; `make air` rebuilds and restarts during local
 development.
 
-Luas does not expose a secret-bearing configuration cache or runtime `.env` reload that cannot
+FastBuild does not expose a secret-bearing configuration cache or runtime `.env` reload that cannot
 atomically rebuild the dependency graph. See [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) for
 the complete precedence rules, extension guidance, and `doctor` diagnostics.
 
@@ -366,8 +366,8 @@ OPENAI_API_KEY=replace-me
 ```
 
 ```bash
-go run ./cmd/luas ai:chat "Write a short project summary"
-go run ./cmd/luas ai:chat --system="Answer in JSON" --model=provider-model "List 3 scaffold priorities"
+go run ./cmd/fastbuild ai:chat "Write a short project summary"
+go run ./cmd/fastbuild ai:chat --system="Answer in JSON" --model=provider-model "List 3 scaffold priorities"
 ```
 
 Timeouts, input and output bounds, private errors, streaming behavior, and the downstream AI

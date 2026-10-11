@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/starter/assembly"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
 )
 
 var starterNamePattern = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)

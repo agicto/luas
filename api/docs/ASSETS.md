@@ -18,7 +18,7 @@ ASSET_TRANSFER_SIGNING_KEY=replace-with-openssl-rand-hex-32
 ```
 
 Outside production, selecting `asset` defaults `OBJECT_STORAGE_DRIVER` to `local`. Production
-selection fails startup unless the driver is explicitly `r2`; Luas never silently places
+selection fails startup unless the driver is explicitly `r2`; FastBuild never silently places
 production uploads on an application container filesystem.
 
 Relevant configuration:
@@ -90,7 +90,7 @@ never deletes or clears its final object.
 Run cleanup as a bounded scheduled job:
 
 ```bash
-/app/luas asset:prune --batch=100
+/app/fastbuild asset:prune --batch=100
 ```
 
 The command is safe to repeat and reports counts without names, keys, URLs, hashes, or content. It
@@ -125,9 +125,9 @@ To remove the starter:
 ```bash
 cd api
 go test ./internal/modules/asset ./internal/capabilities/storage ./internal/infra/storage
-OPTIONAL_STARTERS=asset go run ./cmd/luas route:list
-go run ./cmd/luas route:list
-go run ./cmd/luas asset:prune --batch=1
+OPTIONAL_STARTERS=asset go run ./cmd/fastbuild route:list
+go run ./cmd/fastbuild route:list
+go run ./cmd/fastbuild asset:prune --batch=1
 ```
 
 The default route list must contain no asset route. The selected route list must contain the five

@@ -5,11 +5,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
 )
 
 func TestDefaultManifestsRegisterExpectedCommands(t *testing.T) {
-	app := console.New("luas", "test")
+	app := console.New("fastbuild", "test")
 	RegisterManifests(app, DefaultManifests("test")...)
 
 	assert.True(t, app.HasCommand("make:module"))

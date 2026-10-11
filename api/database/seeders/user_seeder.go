@@ -3,7 +3,7 @@ package seeders
 import (
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
 )
 
 type UserSeeder struct{}

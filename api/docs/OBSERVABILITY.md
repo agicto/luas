@@ -1,6 +1,6 @@
 # Observability And Sensitive Data
 
-Luas treats logs, traces, local diagnostics, and audit records as durable data boundaries. They are
+FastBuild treats logs, traces, local diagnostics, and audit records as durable data boundaries. They are
 useful for correlation and operations, but they are not a second copy of requests or secrets.
 
 ## Request Logs
@@ -15,7 +15,7 @@ The default Gin request logger records status, latency, client IP, method, route
 - passes structured context through `pkg/redact` before any handler receives it.
 
 Route templates and the unmatched-route sentinel reduce credential/PII exposure and bound log
-cardinality. Do not place credentials in URLs even though Luas minimizes their telemetry surface.
+cardinality. Do not place credentials in URLs even though FastBuild minimizes their telemetry surface.
 
 ## Redaction Contract
 
@@ -49,7 +49,7 @@ stdout and the local exception timeline. OpenTelemetry uses GORM's parameterized
 `db.statement`. Do not disable parameterization to improve a debug screenshot; reproduce locally
 with explicit non-secret fixtures instead.
 
-HTTP server spans use the route template for the span name and `http.route`. Luas deliberately omits
+HTTP server spans use the route template for the span name and `http.route`. FastBuild deliberately omits
 the concrete `url.path`, raw query values, and free-form error messages from exported spans; traces
 carry status and stable `error.type` summaries while structured logs own reviewed diagnostic detail.
 Unmatched requests use only the HTTP method as the span name.
@@ -81,5 +81,5 @@ lost; `AUDIT_WRITE_MODE=sync` restores a write before every response. Commands a
 ```bash
 go test ./pkg/redact ./pkg/logger ./pkg/errors ./internal/infra/exception ./internal/infra/database ./internal/infra/tracing ./internal/modules/audit
 go test ./pkg/redact -run '^$' -bench '^BenchmarkMap$' -benchmem -count=5
-python3 ../.agents/skills/luas-framework-review/scripts/check-sensitive-telemetry.py
+python3 ../.agents/skills/fastbuild-framework-review/scripts/check-sensitive-telemetry.py
 ```

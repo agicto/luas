@@ -81,7 +81,7 @@ for_scope() {
 }
 
 echo "================================================"
-bold "Luas Skill Index"
+bold "FastBuild Skill Index"
 echo ""
 echo "Legend: S=scripts/  E=examples/  R=references/  T=templates/  r=rules/"
 echo ""

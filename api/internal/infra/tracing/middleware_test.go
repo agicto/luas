@@ -29,7 +29,7 @@ func TestMiddlewareExportsRouteShapeWithoutConcretePathOrErrorMessage(t *testing
 	})
 
 	engine := gin.New()
-	engine.Use(Middleware("luas-test"))
+	engine.Use(Middleware("fastbuild-test"))
 	engine.GET("/accounts/:account", func(c *gin.Context) {
 		_ = c.Error(assert.AnError)
 		c.Status(http.StatusInternalServerError)
@@ -70,7 +70,7 @@ func TestRecordErrorExportsTypeWithoutFreeFormMessage(t *testing.T) {
 	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
 	t.Cleanup(func() { require.NoError(t, provider.Shutdown(context.Background())) })
 
-	ctx, span := provider.Tracer("luas-test").Start(context.Background(), "database.operation")
+	ctx, span := provider.Tracer("fastbuild-test").Start(context.Background(), "database.operation")
 	RecordError(ctx, errors.New("database-free-form-secret"))
 	span.End()
 

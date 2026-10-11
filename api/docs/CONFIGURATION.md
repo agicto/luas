@@ -1,6 +1,6 @@
 # Configuration
 
-Luas uses one typed configuration authority: [`internal/infra/config.Config`](../internal/infra/config/config.go).
+FastBuild uses one typed configuration authority: [`internal/infra/config.Config`](../internal/infra/config/config.go).
 Environment files are inputs to that startup snapshot; they are not a second configuration API.
 
 ## Authority And Lifecycle
@@ -29,7 +29,7 @@ endpoint, timeout, and byte-limit validation as the full application loader.
 From highest to lowest:
 
 1. Process environment variables supplied by the shell, container runtime, or orchestrator.
-2. The file explicitly selected by process variable `LUAS_ENV_FILE`.
+2. The file explicitly selected by process variable `FASTBUILD_ENV_FILE`.
 3. `.env.<APP_ENV>.local`.
 4. `.env.local`.
 5. `.env.<APP_ENV>`.
@@ -37,7 +37,7 @@ From highest to lowest:
 7. Defaults in `config.Load()`.
 
 An explicitly present process value, including an empty string, wins over every file value.
-`APP_ENV` file selection is resolved from the process environment first, then `LUAS_ENV_FILE`, then
+`APP_ENV` file selection is resolved from the process environment first, then `FASTBUILD_ENV_FILE`, then
 the base `.env`. `GO_ENV` and `GIN_MODE` are accepted as fallback inputs and normalized to the same
 application environment. Environment-specific and local files cannot change the identity after file
 selection, so the loaded file set and production defaults cannot disagree.
@@ -45,7 +45,7 @@ selection, so the loaded file set and production defaults cannot disagree.
 `LoadFresh()` removes values injected by the previous file snapshot before resolving the layers
 again. If application or test code changed one of those values at runtime, the changed process value
 is preserved as the new highest-priority input. Missing optional files are normal, while malformed
-files and a missing explicitly selected `LUAS_ENV_FILE` fail typed configuration loading.
+files and a missing explicitly selected `FASTBUILD_ENV_FILE` fail typed configuration loading.
 
 `production`, `prod`, and `release` are equivalent production aliases. Without explicit overrides,
 they disable application debug output and local file logging, select Gin release mode, emit JSON logs
@@ -55,7 +55,7 @@ to stdout, enable the scaffold rate-limit guardrails, and keep metrics disabled.
 
 Configuration changes require a process restart. Watching `.env` and mutating a global key/value map
 would leave database pools, HTTP servers, clients, middleware, and workers on different snapshots.
-Luas therefore does not expose runtime configuration watching. `make air` rebuilds and restarts the
+FastBuild therefore does not expose runtime configuration watching. `make air` rebuilds and restarts the
 development process, which creates a complete new dependency graph.
 
 ## Database Runtime Policy
@@ -100,12 +100,12 @@ do not maintain a second starter list in a command or deployment script.
 The operator CLI reads the same catalog without initializing the database or HTTP application:
 
 ```bash
-go run ./cmd/luas starter:list
-go run ./cmd/luas starter:list --format=json
-go run ./cmd/luas starter:enable permission --dry-run
-go run ./cmd/luas starter:enable permission
-go run ./cmd/luas starter:check
-go run ./cmd/luas starter:disable organization --cascade
+go run ./cmd/fastbuild starter:list
+go run ./cmd/fastbuild starter:list --format=json
+go run ./cmd/fastbuild starter:enable permission --dry-run
+go run ./cmd/fastbuild starter:enable permission
+go run ./cmd/fastbuild starter:check
+go run ./cmd/fastbuild starter:disable organization --cascade
 ```
 
 `starter:enable` adds transitive dependencies. `starter:disable` protects selected dependents unless
@@ -137,7 +137,7 @@ restart-scoped; no JWT signing key or browser-readable claim is involved:
 
 The API remains authoritative even when a browser cookie has a longer local lifetime: revocation,
 idle expiry, account state, password security events, and persistence availability are checked on
-every protected request. Run `luas auth-session:prune --batch=500` as a bounded scheduled job.
+every protected request. Run `fastbuild auth-session:prune --batch=500` as a bounded scheduled job.
 
 `JWT_SECRET` and `JWT_EXPIRE_DAYS` are retired keys. A non-empty legacy value fails startup instead
 of creating the false impression that stateless JWTs are still accepted. See
@@ -164,7 +164,7 @@ explicit outage semantics, and owned lifecycle.
 Selecting `operator` requires `OPERATOR_ALLOWED_ORIGINS`: the exact Admin Console origins
 (`scheme://host[:port]`, comma separated, no wildcards or paths, `https` in production). Unsafe
 operator requests must carry one of these origins. `OPERATOR_SESSION_COOKIE_NAME` optionally renames
-the session cookie; the default is `__Host-luas_operator` in production and `luas_operator` elsewhere,
+the session cookie; the default is `__Host-fastbuild_operator` in production and `fastbuild_operator` elsewhere,
 and the `__Host-` prefix is rejected outside production because it requires a `Secure` cookie. See
 [`../../contracts/OPERATORS.md`](../../contracts/OPERATORS.md).
 
@@ -189,7 +189,7 @@ policy independently of application validation. See [`WEBHOOKS.md`](WEBHOOKS.md)
 ## AI Capability Configuration
 
 `AI_ENABLED` defaults to `false`. Enabling it requires an explicit `AI_DEFAULT_MODEL` and the secret
-for the selected registered provider; Luas intentionally does not choose a model whose behavior and
+for the selected registered provider; FastBuild intentionally does not choose a model whose behavior and
 availability can change independently of the scaffold. The built-in provider requires
 `OPENAI_API_KEY`. `OPENAI_BASE_URL` must be an absolute HTTP(S) URL without credentials, query, or
 fragment, and production requires HTTPS.
@@ -232,7 +232,7 @@ provider call independently and composes with caller cancellation. See [`EMAIL.m
 
 ## Secrets And Deployment
 
-Luas does not serialize a configuration cache. A cache would duplicate database
+FastBuild does not serialize a configuration cache. A cache would duplicate database
 credentials, provider keys, and other secrets on disk while bypassing the deployment platform's
 secret lifecycle. Production images also do not contain `.env` or `.env.example`; inject required
 values through the runtime or a mounted secret source.
@@ -241,7 +241,7 @@ Keep `.env.example` as the schema of available keys and safe local examples. It 
 every deployment must set every key. Required and conditional values belong in typed validation.
 
 Local file logging is intentionally simple. Production should use structured stdout and let the
-runtime platform own collection, retention, rotation, and compression; Luas does not advertise
+runtime platform own collection, retention, rotation, and compression; FastBuild does not advertise
 in-process rotation or a storage sink that does not actually persist records.
 
 ## Adding A Key
@@ -261,13 +261,13 @@ Do not add dot-notation string accessors, parallel dynamic repositories, or pack
 Run the diagnostic from the API directory:
 
 ```bash
-cd api && go run ./cmd/luas doctor
+cd api && go run ./cmd/fastbuild doctor
 ```
 
 Use `--env-example=/path/to/.env.example` for a downstream schema. Doctor rejects malformed or
 duplicate declarations, runs the same typed configuration validation as bootstrap, and reports
 security-sensitive combinations. Provider model IDs are treated as provider-owned opaque values;
-Luas only checks whether the selected provider has a built-in adapter and its required connection
+FastBuild only checks whether the selected provider has a built-in adapter and its required connection
 settings.
 
 ## Verification

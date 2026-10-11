@@ -1,6 +1,6 @@
 ---
 name: data-state-management
-description: Implement Luas feature data and client state. Use for TanStack Query, Zustand, service-hook-type flow, cache invalidation, or optimistic updates.
+description: Implement FastBuild feature data and client state. Use for TanStack Query, Zustand, service-hook-type flow, cache invalidation, or optimistic updates.
 ---
 
 # data-state-management

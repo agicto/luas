@@ -1,6 +1,6 @@
 ---
 name: api-development
-description: Implement Luas HTTP routes and handlers. Use for endpoint, validation, pagination, response, status, error_code, or route-middleware changes in the Go API.
+description: Implement FastBuild HTTP routes and handlers. Use for endpoint, validation, pagination, response, status, error_code, or route-middleware changes in the Go API.
 ---
 
 # API Development
@@ -58,7 +58,7 @@ must move together.
    - A finite code-owned catalog may use exactly one reviewed marker:
 
      ```go
-     // luas:bounded-list max=<1..100> reason=<kebab-case>
+     // fastbuild:bounded-list max=<1..100> reason=<kebab-case>
      ```
 
    - Keep ordering deterministic and queries bounded.

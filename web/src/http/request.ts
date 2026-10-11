@@ -11,7 +11,7 @@ type ResponseMode = 'data' | 'envelope';
 
 /** Axios request options accepted by HttpClient. */
 export type RequestConfig = AxiosRequestConfig & {
-  luasResponseMode?: ResponseMode;
+  fastbuildResponseMode?: ResponseMode;
 };
 
 export interface ApiSuccessEnvelope<T = unknown> {
@@ -112,7 +112,7 @@ class HttpClient {
       (response) => {
         const { data } = response;
         const config = response.config as RequestConfig;
-        if (config.luasResponseMode === 'envelope') {
+        if (config.fastbuildResponseMode === 'envelope') {
           return data;
         }
         // Standard payload extraction for { code, data, message } responses.
@@ -139,7 +139,7 @@ class HttpClient {
   ): Promise<ApiSuccessEnvelope<T>> {
     const requestConfig: RequestConfig = {
       ...config,
-      luasResponseMode: 'envelope',
+      fastbuildResponseMode: 'envelope',
     };
     return this.instance.get<ApiSuccessEnvelope<T>, ApiSuccessEnvelope<T>>(
       url,

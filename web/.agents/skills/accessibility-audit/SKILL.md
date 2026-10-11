@@ -1,6 +1,6 @@
 ---
 name: accessibility-audit
-description: Audit a completed Luas UI against WCAG 2.2 AA. Use when the user requests accessibility, a11y, or WCAG review, not for routine UI implementation.
+description: Audit a completed FastBuild UI against WCAG 2.2 AA. Use when the user requests accessibility, a11y, or WCAG review, not for routine UI implementation.
 ---
 
 # Accessibility Audit
@@ -24,7 +24,7 @@ interaction states before auditing. Read:
 
 When shared form controls, calendar/date picker, password/color controls, or
 composed buttons/links are in scope, also read
-[references/luas-controls.md](references/luas-controls.md). Do not load other
+[references/fastbuild-controls.md](references/fastbuild-controls.md). Do not load other
 design skills merely because they are adjacent to accessibility.
 
 ## Audit Procedure
@@ -81,7 +81,7 @@ Use the narrowest evidence available. Run these commands from `web/`:
 # Theme contrast changes
 corepack pnpm lint:theme-contrast
 
-# Shared Luas control contracts
+# Shared FastBuild control contracts
 corepack pnpm vitest run \
   src/test/form-control-accessibility.test.tsx \
   src/test/calendar-date-picker.test.tsx \
@@ -113,7 +113,7 @@ evidence used. Do not claim WCAG conformance from automated output alone.
 - Primary workflows complete with keyboard and screen-reader interaction.
 - Semantics, names, focus, state announcements, contrast, reflow, and motion
   have direct evidence.
-- Relevant Luas control-contract tests pass.
+- Relevant FastBuild control-contract tests pass.
 - Every finding points to an observable failure and a scoped correction.
 
 ## Related Skills

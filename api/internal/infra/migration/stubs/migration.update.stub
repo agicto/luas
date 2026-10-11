@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/infra/migration/schema"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration/schema"
 	"gorm.io/gorm"
 )
 

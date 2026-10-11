@@ -12,8 +12,8 @@ delivery ledger. The canonical cross-half behavior is
 - `domain.WebhookMaintainer` replays terminal deliveries and prunes retained terminal history.
 - `internal/modules/webhook` owns catalog, encryption adapter, endpoint policy, persistence, HTTP
   sender, service, routes, and tests.
-- `luas webhook:work` runs one or more independent database-ledger workers.
-- `luas webhook:publish-test`, `webhook:replay`, and `webhook:prune` are bounded operator tools.
+- `fastbuild webhook:work` runs one or more independent database-ledger workers.
+- `fastbuild webhook:publish-test`, `webhook:replay`, and `webhook:prune` are bounded operator tools.
 - With the `operator` starter also selected, platform operators read an organization's endpoints,
   deliveries, and attempts and replay a delivery from the Admin Console through
   `/v1/operator/organizations/:id/...` ([`OPERATORS.md`](../../contracts/OPERATORS.md)). The
@@ -53,16 +53,16 @@ silently changing the old payload.
 Run continuously:
 
 ```bash
-luas webhook:work --batch=25 --poll=2s
+fastbuild webhook:work --batch=25 --poll=2s
 ```
 
 One-shot verification and maintenance:
 
 ```bash
-luas webhook:work --once
-luas webhook:publish-test --organization=42 --endpoint=9 --actor=7 --idempotency-key=deploy-check-001
-luas webhook:replay --organization=42 --delivery=81 --actor=7
-luas webhook:prune --before=2026-06-15T00:00:00Z
+fastbuild webhook:work --once
+fastbuild webhook:publish-test --organization=42 --endpoint=9 --actor=7 --idempotency-key=deploy-check-001
+fastbuild webhook:replay --organization=42 --delivery=81 --actor=7
+fastbuild webhook:prune --before=2026-06-15T00:00:00Z
 ```
 
 Replay is at-least-once and preserves `webhook-id`. Consumers must deduplicate. Pruning never removes

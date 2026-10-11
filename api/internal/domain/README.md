@@ -1,6 +1,6 @@
 # Domain Layer
 
-`internal/domain/` is the framework-free vocabulary for Luas starter behavior. It names domain
+`internal/domain/` is the framework-free vocabulary for FastBuild starter behavior. It names domain
 entities, value objects, domain errors, repository seams, starter-owned event payloads, and stable API
 `error_code` constants that starter modules can share.
 
@@ -29,7 +29,7 @@ configuration, response helpers, or downstream product-specific workflows.
 
 These rules are enforced by
 [`../../docs/PACKAGE_BOUNDARIES.md`](../../docs/PACKAGE_BOUNDARIES.md) and
-`.agents/skills/luas-framework-review/scripts/check-api-boundaries.sh`.
+`.agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`.
 
 ## Interface Rules
 

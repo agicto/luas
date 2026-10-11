@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OSV_VERSION="2.3.8"
 OSV_RELEASE_URL="https://github.com/google/osv-scanner/releases/download/v${OSV_VERSION}"
 DEFAULT_CACHE_HOME="${XDG_CACHE_HOME:-${HOME:-${TMPDIR:-/tmp}}/.cache}"
-CACHE_ROOT="${OSV_SCANNER_CACHE_DIR:-${DEFAULT_CACHE_HOME}/luas/osv-scanner/v${OSV_VERSION}}"
+CACHE_ROOT="${OSV_SCANNER_CACHE_DIR:-${DEFAULT_CACHE_HOME}/fastbuild/osv-scanner/v${OSV_VERSION}}"
 
 usage() {
   cat <<'EOF'
@@ -123,7 +123,7 @@ export_sbom() {
   local output="$1" output_dir temporary status
   output_dir="$(dirname "${output}")"
   mkdir -p "${output_dir}"
-  temporary="$(mktemp "${output_dir}/.luas-sbom.XXXXXX")"
+  temporary="$(mktemp "${output_dir}/.fastbuild-sbom.XXXXXX")"
   trap 'rm -f "${temporary:-}"' EXIT
 
   set +e
@@ -188,7 +188,7 @@ case "${command}" in
     (( $# <= 1 )) || { usage >&2; exit 2; }
     install_scanner
     scanner_args
-    export_sbom "${1:-${TMPDIR:-/tmp}/luas.cdx.json}"
+    export_sbom "${1:-${TMPDIR:-/tmp}/fastbuild.cdx.json}"
     ;;
   -h|--help|help)
     usage

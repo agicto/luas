@@ -1,6 +1,6 @@
 package operatorcommands
 
-import infracommands "github.com/zgiai/luas/api/internal/infra/console/commands"
+import infracommands "github.com/fastagi/fastbuild/api/internal/infra/console/commands"
 
 // Manifest returns business-aware operator commands assembled outside infrastructure packages.
 func Manifest() infracommands.Manifest {

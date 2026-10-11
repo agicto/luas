@@ -1,24 +1,24 @@
 # Database Runtime
 
-Luas treats the database connection as core runtime infrastructure. `internal/infra/database` owns
+FastBuild treats the database connection as core runtime infrastructure. `internal/infra/database` owns
 GORM construction, the process-wide `database/sql` pool, startup readiness, diagnostics, and
 shutdown. Each starter still owns its tables, migrations, transactions, query shape, ordering, and
 pagination semantics.
 
 ## Dialect Authority
 
-PostgreSQL is the only relational database compatibility target for Luas. SQLite runtime code,
+PostgreSQL is the only relational database compatibility target for FastBuild. SQLite runtime code,
 drivers, dependencies, DSNs, dialect branches, fixtures, migrations, and tests must remain absent.
 GORM portability and an in-memory database pass do not prove PostgreSQL query, constraint,
 transaction, locking, index, or migration behavior.
 
 Keep pure service tests database-free through existing seams and test doubles. Tests that exercise
 SQL behavior use an isolated schema in a caller-supplied disposable PostgreSQL database, following
-the `LUAS_TEST_POSTGRES_DSN` profile below.
+the `FASTBUILD_TEST_POSTGRES_DSN` profile below.
 
 ## Supported Versions
 
-Luas 1.0 targets PostgreSQL 15, 16, 17, and 18 on their latest minor releases. PostgreSQL 16 runs
+FastBuild 1.0 targets PostgreSQL 15, 16, 17, and 18 on their latest minor releases. PostgreSQL 16 runs
 the complete API CI gate; a focused compatibility matrix runs migrations, repositories,
 transactions, locks, and durable tasks on 15, 17, and 18. PostgreSQL 14 is intentionally outside the
 1.0 support window because its community support ends in November 2026. Support follows upstream
@@ -27,7 +27,7 @@ security maintenance rather than an unbounded "or later" promise. Review the
 matrix.
 
 ```bash
-LUAS_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/luas_test?sslmode=disable' \
+FASTBUILD_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/fastbuild_test?sslmode=disable' \
   make test-postgres-compatibility
 ```
 
@@ -64,7 +64,7 @@ This preserves spaces and reserved characters in credentials and database names,
 keeps the DSN out of errors and logs. The URI includes `application_name`, `connect_timeout`,
 `sslmode`, and `timezone`.
 
-GORM automatic ping is disabled. Luas applies the finite pool policy first, then performs exactly one
+GORM automatic ping is disabled. FastBuild applies the finite pool policy first, then performs exactly one
 `PingContext` with `DB_CONNECT_TIMEOUT`. A failed ping closes the newly created pool before startup
 returns an error. The HTTP kernel closes the long-lived shared pool after request draining and trace
 shutdown.
@@ -111,7 +111,7 @@ role therefore needs temporary schema create/drop permission. It never truncates
 caller's existing schemas.
 
 ```bash
-LUAS_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/luas_profile?sslmode=disable' \
+FASTBUILD_TEST_POSTGRES_DSN='postgres://user:password@127.0.0.1:5432/fastbuild_profile?sslmode=disable' \
   make benchmark-database
 ```
 

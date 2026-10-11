@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/zgiai/luas/api/pkg/redact"
+	"github.com/fastagi/fastbuild/api/pkg/redact"
 )
 
 // Logger is the main logger struct that manages handlers

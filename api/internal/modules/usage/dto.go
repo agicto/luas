@@ -3,7 +3,7 @@ package usage
 import (
 	"time"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 // UsageSummaryResponse is one bounded current-period browser summary.

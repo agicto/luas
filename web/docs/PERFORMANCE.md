@@ -1,13 +1,13 @@
 # Web Performance Boundary
 
-This document defines how Luas measures and guards Web performance. It separates a repeatable
+This document defines how FastBuild measures and guards Web performance. It separates a repeatable
 build-time regression signal from local synthetic measurements and real-user outcomes.
 
 ## Canonical Terms
 
 **First-load JavaScript** is `firstLoadUncompressedJsBytes` from Next.js 16's generated
 `.next/diagnostics/route-bundle-stats.json`. It is the deduplicated JavaScript set Next reports for
-loading one route. Luas enforces the uncompressed value because it is deterministic across build
+loading one route. FastBuild enforces the uncompressed value because it is deterministic across build
 runs; gzip bytes are useful diagnostics but are not the gate.
 
 **Route performance budget** is the reviewed upper bound in
@@ -60,7 +60,7 @@ digest identity, image inventory, and scan policy are owned by
 [`../../docs/CONTAINER_SECURITY.md`](../../docs/CONTAINER_SECURITY.md):
 
 ```bash
-bash scripts/verify-container.sh luas-web:container-check
+bash scripts/verify-container.sh fastbuild-web:container-check
 ```
 
 ## Change Procedure
@@ -89,7 +89,7 @@ pnpm exec next start -H 127.0.0.1 -p 3110
 CHROME_PATH=/path/to/chromium pnpm dlx lighthouse@12.8.2 http://127.0.0.1:3110/ \
   --only-categories=performance \
   --output=json \
-  --output-path=/tmp/luas-home.json \
+  --output-path=/tmp/fastbuild-home.json \
   --chrome-flags="--headless --no-sandbox"
 ```
 
@@ -119,7 +119,7 @@ The comparable raw runs behind those medians were:
 
 The public `/` route's first-load JavaScript moved from 696,759 raw / 207,561 gzip bytes and 16
 chunks to 579,149 raw / 168,775 gzip bytes and 12 chunks. These measurements are local synthetic
-and build evidence; Luas does not yet ship a production RUM adapter or claim field p75 results.
+and build evidence; FastBuild does not yet ship a production RUM adapter or claim field p75 results.
 
 ## References
 

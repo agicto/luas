@@ -1,16 +1,16 @@
-// Luas API performance baseline. Each scenario drives a fixed arrival rate against one hot path and
+// FastBuild API performance baseline. Each scenario drives a fixed arrival rate against one hot path and
 // fails the run when its p95 latency or error rate leaves the budget. Run it through
 // `make perf` (api/scripts/perf.sh), which prepares a disposable database and a release build.
 import http from 'k6/http';
 import { check, fail } from 'k6';
 
-const baseURL = (__ENV.LUAS_PERF_BASE_URL || 'http://127.0.0.1:18080').replace(/\/$/, '');
-const duration = __ENV.LUAS_PERF_DURATION || '30s';
-const identifier = __ENV.LUAS_PERF_USER || 'user@example.com';
-const password = __ENV.LUAS_PERF_PASSWORD || 'secret';
+const baseURL = (__ENV.FASTBUILD_PERF_BASE_URL || 'http://127.0.0.1:18080').replace(/\/$/, '');
+const duration = __ENV.FASTBUILD_PERF_DURATION || '30s';
+const identifier = __ENV.FASTBUILD_PERF_USER || 'user@example.com';
+const password = __ENV.FASTBUILD_PERF_PASSWORD || 'secret';
 // Multiplies every p95 budget, for hardware slower than a CI runner. It never loosens error rates.
-const budgetScale = Number(__ENV.LUAS_PERF_BUDGET_SCALE || '1');
-if (!(budgetScale > 0)) throw new Error('LUAS_PERF_BUDGET_SCALE must be a positive number');
+const budgetScale = Number(__ENV.FASTBUILD_PERF_BUDGET_SCALE || '1');
+if (!(budgetScale > 0)) throw new Error('FASTBUILD_PERF_BUDGET_SCALE must be a positive number');
 
 // Budgets are p95 milliseconds on a CI-class runner with PostgreSQL on the same host. Rates stay
 // well below saturation so the numbers track per-request cost rather than queueing.

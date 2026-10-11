@@ -27,7 +27,7 @@ count and page query on every request and did not state deterministic ordering.
    `disable`.
 3. PostgreSQL DSNs use percent-encoded connection URIs with an application name, timezone, SSL mode,
    and rounded-up server connection timeout. Secrets never appear in diagnostics.
-4. GORM automatic ping is disabled. Luas configures the pool, performs one deadline-bound
+4. GORM automatic ping is disabled. FastBuild configures the pool, performs one deadline-bound
    `PingContext`, and closes the pool after failed readiness.
 5. The pool applies `SetMaxOpenConns`, `SetMaxIdleConns`, `SetConnMaxIdleTime`, and
    `SetConnMaxLifetime`; process shutdown retains one explicit close owner.

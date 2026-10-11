@@ -18,8 +18,8 @@ func projectFixture(t *testing.T) string {
 	files := map[string]string{
 		"api/go.mod":                   "module " + scaffoldModulePath + "\n\ngo 1.25\n",
 		"api/main.go":                  "package main\n\nimport _ \"" + scaffoldModulePath + "/internal/x\"\n",
-		"api/.env.example":             "APP_NAME=Luas\nOPTIONAL_STARTERS=\n",
-		"admin/.env.example":           "VITE_APP_NAME=Luas\nVITE_OPTIONAL_FEATURES=\n",
+		"api/.env.example":             "APP_NAME=FastBuild\nOPTIONAL_STARTERS=\n",
+		"admin/.env.example":           "VITE_APP_NAME=FastBuild\nVITE_OPTIONAL_FEATURES=\n",
 		"web/.env.example":             "NEXT_PUBLIC_OPTIONAL_FEATURES=\n",
 		"web/package.json":             "{\n  \"name\": \"" + scaffoldSlug + "-web\"\n}\n",
 		"admin/package.json":           "{\n  \"name\": \"" + scaffoldSlug + "-admin\"\n}\n",
@@ -27,10 +27,10 @@ func projectFixture(t *testing.T) string {
 		"contracts/openapi.yaml":       "openapi: 3.1.0\n",
 		"compose.dev.yaml":             "name: " + scaffoldSlug + "-dev\n",
 		"web/Dockerfile":               "ARG OCI_SOURCE=" + scaffoldRepository + "\n",
-		"scripts/dev.sh":               "S=\"${LUAS_DEV_STARTERS:-a,b}\"\nW=\"${LUAS_DEV_WEB_FEATURES:-a}\"\nA=\"${LUAS_DEV_ADMIN_FEATURES:-b}\"\n",
+		"scripts/dev.sh":               "S=\"${FASTBUILD_DEV_STARTERS:-a,b}\"\nW=\"${FASTBUILD_DEV_WEB_FEATURES:-a}\"\nA=\"${FASTBUILD_DEV_ADMIN_FEATURES:-b}\"\n",
 		"docs/untracked-is-ignored.md": scaffoldModulePath,
 		"api/assets/binary.bin":        "\x00" + scaffoldModulePath,
-		"README.md":                    "Luas scaffold docs stay as written.\n",
+		"README.md":                    "FastBuild scaffold docs stay as written.\n",
 	}
 	for path, content := range files {
 		full := filepath.Join(root, path)
@@ -79,13 +79,13 @@ func TestInitProjectRewritesIdentityAndSelectsStarters(t *testing.T) {
 	assert.Equal(t, "name: acme-dev\n", read(t, root, "compose.dev.yaml"))
 	assert.Equal(t, "ARG OCI_SOURCE=https://github.com/example-demo/platform\n", read(t, root, "web/Dockerfile"))
 	dev := read(t, root, "scripts/dev.sh")
-	assert.Contains(t, dev, "${LUAS_DEV_STARTERS:-organization,webhook,operator}")
-	assert.Contains(t, dev, "${LUAS_DEV_WEB_FEATURES:-organization,webhook}")
-	assert.Contains(t, dev, "${LUAS_DEV_ADMIN_FEATURES:-operator,organization,webhook}")
+	assert.Contains(t, dev, "${FASTBUILD_DEV_STARTERS:-organization,webhook,operator}")
+	assert.Contains(t, dev, "${FASTBUILD_DEV_WEB_FEATURES:-organization,webhook}")
+	assert.Contains(t, dev, "${FASTBUILD_DEV_ADMIN_FEATURES:-operator,organization,webhook}")
 
 	assert.Equal(t, scaffoldModulePath, read(t, root, "docs/untracked-is-ignored.md"), "untracked files are left alone")
 	assert.Contains(t, read(t, root, "api/assets/binary.bin"), scaffoldModulePath, "binary files are left alone")
-	assert.Equal(t, "Luas scaffold docs stay as written.\n", read(t, root, "README.md"))
+	assert.Equal(t, "FastBuild scaffold docs stay as written.\n", read(t, root, "README.md"))
 
 	var recorded ProjectMarker
 	require.NoError(t, json.Unmarshal([]byte(read(t, root, projectMarkerFile)), &recorded))
@@ -104,7 +104,7 @@ func TestInitProjectKeepsStarterDefaultsWhenNoneAreGiven(t *testing.T) {
 	}, "v0.21.1", time.Now())
 	require.NoError(t, err)
 	assert.Equal(t, "APP_NAME=Acme\nOPTIONAL_STARTERS=\n", read(t, root, "api/.env.example"))
-	assert.Contains(t, read(t, root, "scripts/dev.sh"), "${LUAS_DEV_STARTERS:-a,b}")
+	assert.Contains(t, read(t, root, "scripts/dev.sh"), "${FASTBUILD_DEV_STARTERS:-a,b}")
 }
 
 func TestInitProjectRejectsInvalidInputWithoutWriting(t *testing.T) {

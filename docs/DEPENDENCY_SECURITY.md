@@ -1,6 +1,6 @@
 # Dependency Supply-Chain Security
 
-Luas treats dependency resolution as a repository-wide operational boundary. The API, contract
+FastBuild treats dependency resolution as a repository-wide operational boundary. The API, contract
 toolchain, Next.js Web, and Admin Console keep independent module systems, while one root workflow
 inventories and scans every lock surface.
 
@@ -37,7 +37,7 @@ make dependency-scan
 make sbom
 
 # Choose an explicit artifact path
-SBOM_OUTPUT="$PWD/luas.cdx.json" make sbom
+SBOM_OUTPUT="$PWD/fastbuild.cdx.json" make sbom
 
 # Deterministic policy checks only; no vulnerability-network dependency
 make governance
@@ -70,7 +70,7 @@ advisory is proven unreachable and remediation cannot land immediately.
 
 ## License Boundary
 
-Luas inventories dependencies but does not impose a universal commercial license allowlist. License
+FastBuild inventories dependencies but does not impose a universal commercial license allowlist. License
 compatibility depends on downstream distribution, linking, and legal policy. Review production
 licenses with `corepack pnpm licenses list --prod` in each retained browser shell, inspect the SBOM,
 and apply an organization-owned policy before release. A scanner allowlist must not be presented as

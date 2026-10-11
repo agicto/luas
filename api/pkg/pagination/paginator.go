@@ -1,4 +1,4 @@
-// Package pagination provides Laravel-style pagination helpers for Luas services.
+// Package pagination provides Laravel-style pagination helpers for FastBuild services.
 //
 // This package implements full-featured pagination with:
 //   - Automatic URL generation for pagination links
@@ -30,7 +30,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // Paginator holds pagination state and generates URLs.

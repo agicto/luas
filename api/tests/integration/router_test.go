@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
 )
 
 func init() {

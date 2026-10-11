@@ -1,4 +1,4 @@
-# Top-level Luas monorepo .gitignore
+# Top-level FastBuild monorepo .gitignore
 # Deployable-unit gitignores live under api/, web/, and admin/.
 
 # OS / editor cruft
@@ -25,4 +25,4 @@ __pycache__/
 *.py[cod]
 
 # make dev build output and local object storage
-.luas-dev/
+.fastbuild-dev/

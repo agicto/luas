@@ -1,7 +1,7 @@
 # Business Implementation Plan Standard
 
 This document defines the minimum planning standard for a business capability
-before implementation begins in Luas. It is a reusable specification, not an
+before implementation begins in FastBuild. It is a reusable specification, not an
 implementation plan for a particular product.
 
 The purpose of the plan is to turn a product requirement into a reviewable set
@@ -189,7 +189,7 @@ For each new or changed table, the plan MUST specify:
 - forward migration, rollback strategy, and backfill;
 - seed data and whether it is environment-independent.
 
-Additional Luas requirements:
+Additional FastBuild requirements:
 
 - PostgreSQL is the only relational compatibility target.
 - Migrations and seeders own schema and initial data changes; plans MUST NOT
@@ -792,7 +792,7 @@ A plan is not implementation-ready when it has any of these defects:
 - an upload stores a durable public URL without a private access model;
 - an asynchronous side effect has no retry, reconciliation, or failure view;
 - an estimate is given before dependencies, migration, and acceptance scope are known;
-- database behavior is claimed from a compatibility target Luas does not support.
+- database behavior is claimed from a compatibility target FastBuild does not support.
 
 ## 8. Definition of Ready
 

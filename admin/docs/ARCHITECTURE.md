@@ -95,7 +95,7 @@ The console uses the official shadcn/ui New York theme and Sidebar composition:
   Sheet;
 - `SidebarInset` owns the route header and page content surface;
 - semantic theme variables in `src/styles/globals.css` are the visual contract;
-- the brand, selection, and focus accent is Luas Rhine blue, while green is
+- the brand, selection, and focus accent is FastBuild Rhine blue, while green is
   reserved for explicit success state;
 - Zustand persists only the selected theme, locale, and desktop sidebar state.
 

@@ -12,11 +12,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/capabilities/crypto"
-	"github.com/zgiai/luas/api/internal/capabilities/idgen"
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	auditstarter "github.com/zgiai/luas/api/internal/modules/audit"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/crypto"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/idgen"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	auditstarter "github.com/fastagi/fastbuild/api/internal/modules/audit"
 )
 
 // AuthService defines the authentication and public account flows.

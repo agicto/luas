@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 func TestReadEnvKeysRejectsDuplicateKeys(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\nAPP_NAME=Duplicate\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\nAPP_NAME=Duplicate\n")
 
 	_, err := readEnvKeys(path)
 	if err == nil || !strings.Contains(err.Error(), "duplicate key APP_NAME") {
@@ -20,7 +20,7 @@ func TestReadEnvKeysRejectsDuplicateKeys(t *testing.T) {
 }
 
 func TestReadEnvKeysRejectsMalformedEntries(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\nTHIS IS NOT AN ENV ENTRY\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\nTHIS IS NOT AN ENV ENTRY\n")
 
 	_, err := readEnvKeys(path)
 	if err == nil || !strings.Contains(err.Error(), "line 2") {
@@ -29,7 +29,7 @@ func TestReadEnvKeysRejectsMalformedEntries(t *testing.T) {
 }
 
 func TestAuditDoctorDoesNotRequireOptionalExampleKeys(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\nOPTIONAL_ADAPTER_KEY=\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\nOPTIONAL_ADAPTER_KEY=\n")
 	report := auditDoctor(path, func() (*config.Config, error) {
 		return healthyDoctorConfig(), nil
 	})
@@ -45,7 +45,7 @@ func TestAuditDoctorDoesNotRequireOptionalExampleKeys(t *testing.T) {
 }
 
 func TestAuditDoctorTreatsProviderModelIDsAsOpaque(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\n")
 	cfg := healthyDoctorConfig()
 	cfg.AI.Enabled = true
 	cfg.AI.DefaultProvider = "openai"
@@ -66,7 +66,7 @@ func TestAuditDoctorTreatsProviderModelIDsAsOpaque(t *testing.T) {
 }
 
 func TestAuditDoctorWarnsForProviderWithoutBuiltInAdapter(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\n")
 	cfg := healthyDoctorConfig()
 	cfg.AI.Enabled = true
 	cfg.AI.DefaultProvider = "downstream-provider"
@@ -80,7 +80,7 @@ func TestAuditDoctorWarnsForProviderWithoutBuiltInAdapter(t *testing.T) {
 }
 
 func TestAuditDoctorReportsConfigLoadFailure(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\n")
 	report := auditDoctor(path, func() (*config.Config, error) {
 		return nil, errors.New("invalid configuration")
 	})
@@ -91,7 +91,7 @@ func TestAuditDoctorReportsConfigLoadFailure(t *testing.T) {
 }
 
 func TestAuditDoctorPreservesProductionAliasInReport(t *testing.T) {
-	path := writeDoctorEnvExample(t, "APP_NAME=Luas\n")
+	path := writeDoctorEnvExample(t, "APP_NAME=FastBuild\n")
 	cfg := healthyDoctorConfig()
 	cfg.App.Env = "release"
 

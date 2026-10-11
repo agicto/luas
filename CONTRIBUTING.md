@@ -1,6 +1,6 @@
-# Contributing To Luas
+# Contributing To FastBuild
 
-Luas is an open-source application scaffold. Contributions are welcome when they improve the reusable foundation without turning it into a product-specific application.
+FastBuild is an open-source application scaffold. Contributions are welcome when they improve the reusable foundation without turning it into a product-specific application.
 
 ## Before You Start
 

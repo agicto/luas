@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 func TestRepositoryFindAllAfterPostgres(t *testing.T) {

@@ -1,26 +1,26 @@
-# Luas Context
+# FastBuild Context
 
-Luas is an AI-era full-stack application scaffold and starter kit. It is not a framework-only kernel, and it is not a finished product application.
+FastBuild is an AI-era full-stack application scaffold and starter kit. It is not a framework-only kernel, and it is not a finished product application.
 
 This file is the canonical glossary for the whole repository. Use these terms when naming files, packages, features, docs, issues, and agent skills.
 
 ## Glossary
 
-**Luas**
-: The scaffold itself. Luas provides stable rails for building a downstream application quickly.
+**FastBuild**
+: The scaffold itself. FastBuild provides stable rails for building a downstream application quickly.
 
 **Downstream app**
-: An application created from Luas. A downstream app replaces examples, keeps or removes starters, and adds product-specific behavior.
+: An application created from FastBuild. A downstream app replaces examples, keeps or removes starters, and adds product-specific behavior.
 
 **Scaffold**
 : The assembled starting point shipped by this repository: core runtime, default starters, browser
   applications, mock development flows, contracts, docs, and agent guidance.
 
 **Starter kit**
-: The product category Luas belongs to. Use this term in public positioning. Avoid describing Luas as only a framework unless talking specifically about reusable runtime internals.
+: The product category FastBuild belongs to. Use this term in public positioning. Avoid describing FastBuild as only a framework unless talking specifically about reusable runtime internals.
 
 **Core**
-: Reusable runtime and infrastructure that every Luas app depends on. Core owns cross-cutting concerns such as bootstrapping, configuration, HTTP plumbing, error handling, logging, testing helpers, routing, and design-system primitives.
+: Reusable runtime and infrastructure that every FastBuild app depends on. Core owns cross-cutting concerns such as bootstrapping, configuration, HTTP plumbing, error handling, logging, testing helpers, routing, and design-system primitives.
 
 **Database runtime**
 : The core, process-owned GORM and `database/sql` connection boundary. It owns typed connection
@@ -74,7 +74,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : One signed-in user's server-side, revocable login state. Its bearer credential is opaque and stored only by hash; identity, account status, absolute expiry, idle expiry, and revocation are resolved from current persistence. It is not an API key, authorization claim container, browser-visible token, or global user preference.
 
 **Browser shell**
-: A browser-facing application implementation that consumes Luas HTTP contracts. Luas ships the
+: A browser-facing application implementation that consumes FastBuild HTTP contracts. FastBuild ships the
   customer-facing Next.js Web application and the project Admin Console as
   independent deployables; downstream apps may operate either or both.
 
@@ -225,7 +225,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 : The assembly seam that groups CLI commands so registration does not drift across command packages.
 
 **Default scaffold**
-: The out-of-the-box Luas source assembled from core plus the default starter set, browser-shell
+: The out-of-the-box FastBuild source assembled from core plus the default starter set, browser-shell
   applications, contracts, docs, and verification tooling. A downstream app
   keeps the customer Web application, Admin Console, or both according to its
   delivery model.
@@ -248,7 +248,7 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 ## Relationships
 
-- Luas produces a downstream app.
+- FastBuild produces a downstream app.
 - A scaffold contains core, starters, capabilities, examples, contracts, and agent guidance.
 - The database runtime owns connections and pool lifecycle; each starter keeps schema, transaction,
   query, ordering, and pagination behavior local to its repository.
@@ -287,8 +287,8 @@ This file is the canonical glossary for the whole repository. Use these terms wh
 
 ## Flagged Ambiguities
 
-- **framework vs scaffold**: Use scaffold or starter kit for Luas as a whole. Use framework only for reusable runtime internals when that distinction matters.
-- **starter vs feature**: Use starter for default or optional Luas-provided building blocks. Use feature for downstream or product-facing slices.
+- **framework vs scaffold**: Use scaffold or starter kit for FastBuild as a whole. Use framework only for reusable runtime internals when that distinction matters.
+- **starter vs feature**: Use starter for default or optional FastBuild-provided building blocks. Use feature for downstream or product-facing slices.
 - **module vs feature**: Use module for implementation structure and seams. Use feature for user-facing behavior.
 - **mock BFF vs API**: Mock BFF routes mimic contracts for development. The API is the production backend behavior.
 - **browser auth contract vs API auth contract**: The Web shell's cookie/session endpoints and the Go API's opaque authentication-session endpoints are not interchangeable. Use the explicit production auth adapter when connecting them; changing `NEXT_PUBLIC_API_URL` alone does not perform the mapping.

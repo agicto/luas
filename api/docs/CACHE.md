@@ -1,6 +1,6 @@
 # Cache Capability
 
-Luas ships an optional cache capability under `internal/infra/cache`. It is not assembled into the
+FastBuild ships an optional cache capability under `internal/infra/cache`. It is not assembled into the
 default runtime, no starter depends on it, and there are no `REDIS_*` environment switches. A
 downstream composition root must choose an adapter and inject the resulting `cache.Store` at the
 business seam that owns keys, TTLs, invalidation, and outage behavior.
@@ -111,7 +111,7 @@ Before caching a business read, its owning starter or downstream feature must de
 go test ./internal/infra/cache
 go test -race ./internal/infra/cache -count=10
 make benchmark-cache
-LUAS_TEST_REDIS_ADDR=127.0.0.1:6379 go test ./internal/infra/cache -run '^TestRedisStoreRealServer$' -v
+FASTBUILD_TEST_REDIS_ADDR=127.0.0.1:6379 go test ./internal/infra/cache -run '^TestRedisStoreRealServer$' -v
 ```
 
 Architecture rationale is recorded in

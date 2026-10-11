@@ -56,7 +56,7 @@ The project uses `zod` to validate environment variables at runtime. If a requir
 | `NEXT_PUBLIC_LOCALE_SWITCHER_ENABLED` | No | `true` | Shows or hides the language switcher. |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | No | - | Google Analytics ID. |
 | `NODE_ENV` | No | `development` | App environment (`development` \| `production` \| `test`). |
-| `API_ADAPTER_ENABLED` | No | `false` | Enables the same-origin server adapter for the Luas Go API. |
+| `API_ADAPTER_ENABLED` | No | `false` | Enables the same-origin server adapter for the FastBuild Go API. |
 | `API_UPSTREAM_URL` | Adapter runtime | - | Server-only Go API base URL including its `/v1` prefix. |
 | `API_UPSTREAM_TIMEOUT_MS` | No | `5000` | Server-to-server timeout, from 100 to 30000 milliseconds. |
 | `API_UPSTREAM_MAX_RESPONSE_BYTES` | No | `1048576` | Largest upstream response body the adapter reads. |

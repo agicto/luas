@@ -1,4 +1,4 @@
-module github.com/zgiai/luas/api
+module github.com/fastagi/fastbuild/api
 
 go 1.26.9
 

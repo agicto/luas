@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/bootstrap"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	test_platform "github.com/zgiai/luas/api/internal/infra/testing"
-	"github.com/zgiai/luas/api/internal/wiring"
+	"github.com/fastagi/fastbuild/api/internal/bootstrap"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	test_platform "github.com/fastagi/fastbuild/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/wiring"
 )
 
 // SetupApp initializes the feature-test application by reusing the production DI graph
@@ -28,7 +28,7 @@ func SetupAppWithOptionalStarters(t *testing.T, optionalStarters ...string) *gin
 func setupApp(t *testing.T, configure func(*config.Config), optionalStarters ...string) *gin.Engine {
 	t.Helper()
 	cfg := &config.Config{}
-	cfg.App.Name = "Luas Test"
+	cfg.App.Name = "FastBuild Test"
 	cfg.App.Env = "test"
 	cfg.App.Debug = false
 	cfg.App.URL = "http://localhost:0"

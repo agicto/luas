@@ -11,14 +11,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 const (
-	defaultProductionCookieName  = "__Host-luas_operator"
-	defaultDevelopmentCookieName = "luas_operator"
+	defaultProductionCookieName  = "__Host-fastbuild_operator"
+	defaultDevelopmentCookieName = "fastbuild_operator"
 	csrfHeader                   = "X-CSRF-Token"
-	csrfContext                  = "luas-operator-csrf/v1"
+	csrfContext                  = "fastbuild-operator-csrf/v1"
 	maxCredentialLength          = 256
 )
 

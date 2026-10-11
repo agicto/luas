@@ -1,11 +1,11 @@
-# Luas Web
+# FastBuild Web
 
-`web/` is Luas's customer-facing application. It owns public pages,
+`web/` is FastBuild's customer-facing application. It owns public pages,
 authentication and account journeys, customer workspaces, and other product
 experiences intended for end users. Next.js provides SSR, Server Components,
 SEO, and same-origin server adapters where those capabilities are useful.
 
-Luas Web is independent from the project management system under `admin/`.
+FastBuild Web is independent from the project management system under `admin/`.
 It may contain a signed-in customer console, but it must not become the place
 for operator-only administration. The two applications share HTTP contracts
 and design semantics, never source code or runtime state.
@@ -57,7 +57,7 @@ can select the shipped production adapter. Mock behavior is available outside pr
 production returns `503 COMMON.SERVICE_UNAVAILABLE` unless a production backend or explicit
 demo-only `MOCK_BFF_ENABLED=true` is configured.
 
-The Go authentication-session endpoints and Web browser auth endpoints are not drop-in compatible. Luas ships a
+The Go authentication-session endpoints and Web browser auth endpoints are not drop-in compatible. FastBuild ships a
 same-origin server adapter that performs the mapping without exposing bearer tokens to browser
 JavaScript. Changing `NEXT_PUBLIC_API_URL` alone still does not enable it; read
 [../contracts/AUTHENTICATION.md](../contracts/AUTHENTICATION.md) for its server-only configuration,
@@ -126,7 +126,7 @@ browser request.
 `src/proxy.ts` and `AuthGuard` provide protected-route navigation UX. Go endpoints remain the
 authorization boundary for production operations.
 
-For the Luas Go API, enable the shipped production adapter while keeping browser requests on `/api`:
+For the FastBuild Go API, enable the shipped production adapter while keeping browser requests on `/api`:
 
 ```env
 API_ADAPTER_ENABLED=true
@@ -275,7 +275,7 @@ and materializes a non-root standalone runtime without apk, Node headers, npm, C
 Yarn. Build, start, health-check, and terminate it with:
 
 ```bash
-bash scripts/verify-container.sh luas-web:container-check
+bash scripts/verify-container.sh fastbuild-web:container-check
 ```
 
 The root [container security contract](../docs/CONTAINER_SECURITY.md) defines BuildKit evidence,
@@ -292,7 +292,7 @@ corepack pnpm test:coverage
 corepack pnpm build
 corepack pnpm bundle:check
 corepack pnpm bundle:analyze
-bash scripts/verify-container.sh luas-web:container-check
+bash scripts/verify-container.sh fastbuild-web:container-check
 ```
 
 Use `make check` from the repository root to run the canonical API, Next.js Web, and Admin Console

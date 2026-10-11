@@ -1,6 +1,6 @@
 # Container and Deployment Contract
 
-Luas provides a production-oriented API image and a local Compose stack. It does not choose a
+FastBuild provides a production-oriented API image and a local Compose stack. It does not choose a
 cloud, registry, rollout controller, secret store, or migration orchestrator for downstream apps.
 
 ## Surface Ownership
@@ -12,8 +12,8 @@ cloud, registry, rollout controller, secret store, or migration orchestrator for
 | `scripts/verify-container.sh` | Verification | Builds with reviewed material evidence and exercises the production image contract. |
 | `scripts/verify-compose.sh` | Verification | Rebuilds the local worktree or reuses one explicitly verified image, then exercises PostgreSQL and startup. |
 | `.github/workflows/container.yml` | CI | Runs the same container verifier when API or container sources change. |
-| `luas notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
-| `luas webhook:work` | Optional webhook starter | Processes signed outbound deliveries with bounded network calls and database leases. |
+| `fastbuild notification:work` | Optional notification starter | Processes durable email deliveries with bounded database leases. |
+| `fastbuild webhook:work` | Optional webhook starter | Processes signed outbound deliveries with bounded network calls and database leases. |
 | [`deploy/kubernetes`](../../deploy/kubernetes/README.md) | Example | Hardened kustomize reference for the API, workers, retention jobs, migration job, and Web. |
 | Production deployment manifests | Downstream app | Own secrets, network policy, replicas, migrations, rollout, and rollback. |
 
@@ -38,7 +38,7 @@ LOG_FILE_ENABLED=false
 LOG_JSON=true
 ```
 
-The image health check executes `/app/luas health:check`, which probes
+The image health check executes `/app/fastbuild health:check`, which probes
 `http://127.0.0.1:${SERVER_PORT}/health/live` with a two-second deadline. Override the target only
 with `HEALTHCHECK_URL` when the process genuinely listens elsewhere.
 
@@ -94,7 +94,7 @@ check proves transport and persistence behavior without pretending to validate a
 
 `docker-compose.yml` is a development convenience, not a production manifest. It exposes API and
 PostgreSQL ports on `127.0.0.1` by default, uses visibly local-only credentials, disables the optional
-AI provider, and explicitly starts the single local API process with `luas serve --migrate` after
+AI provider, and explicitly starts the single local API process with `fastbuild serve --migrate` after
 PostgreSQL becomes healthy. This local opt-in is not the production migration strategy.
 
 ```bash
@@ -102,8 +102,8 @@ docker compose up --build --wait
 docker compose down
 ```
 
-Override local ports with `LUAS_API_PORT` and `LUAS_DB_PORT`. Override the local database credential
-with `LUAS_DB_PASSWORD`. Compose supplies a visibly local-only asset transfer key when the asset
+Override local ports with `FASTBUILD_API_PORT` and `FASTBUILD_DB_PORT`. Override the local database credential
+with `FASTBUILD_DB_PASSWORD`. Compose supplies a visibly local-only asset transfer key when the asset
 starter is selected. Set `OPTIONAL_STARTERS=organization` to exercise the optional
 ownership kernel, `OPTIONAL_STARTERS=notification` for notification persistence and HTTP state, or
 `OPTIONAL_STARTERS=asset` for the private asset lifecycle using local object storage. Use
@@ -121,7 +121,7 @@ A downstream production deployment must inject at least:
 
 - `CORS_ALLOW_ORIGINS`: explicit production browser origins.
 - `CORS_ALLOW_HEADERS`: retain `Authorization` and `Organization-Id` when a cross-origin browser
-  calls active-organization routes; Luas includes both in its default allow-list.
+  calls active-organization routes; FastBuild includes both in its default allow-list.
 - `DB_DRIVER`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`, and a TLS-requiring
   `DB_SSLMODE` when the default database-backed starters remain installed. Budget
   `DB_MAX_OPEN_CONNS` per API, worker, and command replica against PostgreSQL or pooler capacity;
@@ -133,10 +133,10 @@ A downstream production deployment must inject at least:
   no optional starter is enabled.
 - Authentication policy when the defaults do not match product requirements:
   `AUTH_SESSION_TTL`, `AUTH_SESSION_IDLE_TIMEOUT`, `AUTH_SESSION_TOUCH_INTERVAL`, and
-  `AUTH_SESSION_RETENTION`. Schedule `luas auth-session:prune --batch=500`; no authentication signing
+  `AUTH_SESSION_RETENTION`. Schedule `fastbuild auth-session:prune --batch=500`; no authentication signing
   secret exists.
 - Audit retention policy: choose a reviewed cutoff from legal, privacy, security, and storage
-  requirements, then schedule bounded `luas audit:prune --before=<RFC3339> --batch=500` runs. Luas
+  requirements, then schedule bounded `fastbuild audit:prune --before=<RFC3339> --batch=500` runs. FastBuild
   never selects or applies a universal audit retention period automatically.
 - Asset deployments: `OBJECT_STORAGE_DRIVER=r2` plus the complete R2 secret group, exact provider
   CORS rules for browser PUT/GET, and a short lifecycle rule for `asset-uploads/`. Do not use a
@@ -160,7 +160,7 @@ and [`DATABASE.md`](DATABASE.md) for database startup, pool, TLS, and query meas
 Run schema migration as an explicit pre-deploy job using the same image and production environment:
 
 ```bash
-docker run --rm --entrypoint /app/luas <runtime-env-arguments> <image> migrate --force
+docker run --rm --entrypoint /app/fastbuild <runtime-env-arguments> <image> migrate --force
 ```
 
 Do not run migrations independently in every application replica. The downstream deployment owns
@@ -177,7 +177,7 @@ When `notification` is selected and any publication requests the `email` channel
 image as a separate long-running worker:
 
 ```bash
-/app/luas notification:work --batch=25 --poll=2s
+/app/fastbuild notification:work --batch=25 --poll=2s
 ```
 
 Workers require the same database, email secrets, and `OPTIONAL_STARTERS` snapshot as HTTP replicas.
@@ -193,7 +193,7 @@ batches and lets the current provider call obey its bounded context. See
 When `asset` is selected, run the same image periodically as a bounded cleanup job:
 
 ```bash
-/app/luas asset:prune --batch=100
+/app/fastbuild asset:prune --batch=100
 ```
 
 The job requires the same database, R2 secrets, object-storage policy, and `OPTIONAL_STARTERS`
@@ -206,7 +206,7 @@ URLs, checksums, or content. See [`ASSETS.md`](ASSETS.md) for lifecycle, recover
 When `webhook` is selected, deploy the same image as a separate long-running worker:
 
 ```bash
-/app/luas webhook:work --batch=25 --poll=2s
+/app/fastbuild webhook:work --batch=25 --poll=2s
 ```
 
 Workers require the same database, encryption key, delivery policy, and `OPTIONAL_STARTERS` snapshot
@@ -219,7 +219,7 @@ response bodies, or free-form network errors.
 Run retention as a bounded scheduled job:
 
 ```bash
-/app/luas webhook:prune
+/app/fastbuild webhook:prune
 ```
 
 Operator replay is explicit through `webhook:replay`; automatic retries and replay preserve the

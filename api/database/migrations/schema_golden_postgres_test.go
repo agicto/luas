@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	testplatform "github.com/zgiai/luas/api/internal/infra/testing"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	testplatform "github.com/fastagi/fastbuild/api/internal/infra/testing"
 )
 
 // updateGoldenSchemaEnv regenerates testdata/schema.golden.sql instead of comparing against it.
 // Only set it in a change that intentionally adds a new migration.
-const updateGoldenSchemaEnv = "LUAS_UPDATE_GOLDEN_SCHEMA"
+const updateGoldenSchemaEnv = "FASTBUILD_UPDATE_GOLDEN_SCHEMA"
 
 const goldenSchemaPath = "testdata/schema.golden.sql"
 

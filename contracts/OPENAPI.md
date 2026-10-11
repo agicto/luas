@@ -1,6 +1,6 @@
 # OpenAPI Contract
 
-[`openapi.yaml`](openapi.yaml) is the OpenAPI 3.1 machine contract for every Luas HTTP operation,
+[`openapi.yaml`](openapi.yaml) is the OpenAPI 3.1 machine contract for every FastBuild HTTP operation,
 including every optional starter. Only `GET /` (service banner) and `GET /metrics` (Prometheus text)
 are intentionally undocumented. The owning Markdown contract continues to define authorization,
 privacy, idempotency, retention, and other semantics that OpenAPI cannot express precisely.

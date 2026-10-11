@@ -19,17 +19,17 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/app"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/exception"
-	"github.com/zgiai/luas/api/internal/infra/health"
-	"github.com/zgiai/luas/api/internal/infra/metrics"
-	infraMiddleware "github.com/zgiai/luas/api/internal/infra/middleware"
-	"github.com/zgiai/luas/api/internal/infra/ratelimit"
-	"github.com/zgiai/luas/api/internal/infra/tracing"
-	"github.com/zgiai/luas/api/pkg/logger"
-	"github.com/zgiai/luas/api/pkg/response"
-	"github.com/zgiai/luas/api/routes"
+	"github.com/fastagi/fastbuild/api/internal/app"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/exception"
+	"github.com/fastagi/fastbuild/api/internal/infra/health"
+	"github.com/fastagi/fastbuild/api/internal/infra/metrics"
+	infraMiddleware "github.com/fastagi/fastbuild/api/internal/infra/middleware"
+	"github.com/fastagi/fastbuild/api/internal/infra/ratelimit"
+	"github.com/fastagi/fastbuild/api/internal/infra/tracing"
+	"github.com/fastagi/fastbuild/api/pkg/logger"
+	"github.com/fastagi/fastbuild/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/routes"
 )
 
 // HttpKernel handles HTTP server lifecycle
@@ -148,7 +148,7 @@ func (k *HttpKernel) Handle() {
 			slog.Info("server.started", "listen", url, "mode", cfg.Server.Mode)
 		} else {
 			log.Printf("\n")
-			log.Printf("  🚀 Luas Server Started!")
+			log.Printf("  🚀 FastBuild Server Started!")
 			log.Printf("  ➜ Listen:  \033[36m%s\033[0m", url)
 			log.Printf("  ➜ Mode:    %s", cfg.Server.Mode)
 			log.Printf("\n")

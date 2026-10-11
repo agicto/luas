@@ -3,12 +3,12 @@ package infra
 import (
 	"github.com/google/wire"
 
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/database"
-	"github.com/zgiai/luas/api/internal/infra/email"
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/migration"
-	"github.com/zgiai/luas/api/internal/infra/storage"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/database"
+	"github.com/fastagi/fastbuild/api/internal/infra/email"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/migration"
+	"github.com/fastagi/fastbuild/api/internal/infra/storage"
 )
 
 // ProviderSet aggregates all infrastructure providers for Wire DI.

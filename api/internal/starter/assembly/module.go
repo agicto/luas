@@ -3,12 +3,12 @@ package assembly
 import (
 	"context"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
-	"github.com/zgiai/luas/api/internal/infra/router"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/router"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
-// Module is the minimal assembly seam shared by all Luas modules.
+// Module is the minimal assembly seam shared by all FastBuild modules.
 // Optional capabilities are expressed via narrower interfaces below.
 type Module interface {
 	// Name returns the unique name of the module.

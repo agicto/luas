@@ -1,4 +1,4 @@
-// Merges an OpenAPI fragment (written by `luas make:module`) into openapi.yaml. It inserts the
+// Merges an OpenAPI fragment (written by `fastbuild make:module`) into openapi.yaml. It inserts the
 // fragment's tags, paths, parameters, and schemas as text at the end of each section, so the rest of
 // the file keeps its formatting, and refuses any name that already exists.
 //

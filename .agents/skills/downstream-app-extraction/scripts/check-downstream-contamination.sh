@@ -11,7 +11,7 @@ Scans the current git repository for task-specific downstream product leakage.
 Patterns are fixed strings. The script intentionally ships with no baked-in product names.
 
 Examples:
-  check-downstream-contamination.sh --expected-origin git@github.com:agicto/luas.git --pattern "product-name"
+  check-downstream-contamination.sh --expected-origin git@github.com:fastagi/fastbuild.git --pattern "product-name"
   check-downstream-contamination.sh --ignore-case --pattern "legacy-brand" --pattern "deployment-job"
 USAGE
 }

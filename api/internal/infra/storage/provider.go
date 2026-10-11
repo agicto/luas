@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/wire"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
-	"github.com/zgiai/luas/api/internal/infra/config"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
 )
 
 // ProviderSet exposes one provider-neutral store selected from the typed startup snapshot.

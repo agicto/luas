@@ -1,6 +1,6 @@
 package organization
 
-import "github.com/zgiai/luas/api/internal/infra/router"
+import "github.com/fastagi/fastbuild/api/internal/infra/router"
 
 // RegisterMiddleware exposes verified active organization context to downstream modules.
 func (h *Handler) RegisterMiddleware(r *router.Router) {

@@ -1,6 +1,6 @@
-# Luas Architecture
+# FastBuild Architecture
 
-Luas is a multi-deployable scaffold:
+FastBuild is a multi-deployable scaffold:
 
 - `api/` is the Go backend. It owns persistence, domain rules, HTTP routes, migrations, seeders, and operational integrations.
 - `web/` is the customer-facing Next.js application. It owns public and account
@@ -17,7 +17,7 @@ The units are independently deployable. A downstream application may deploy
 - API and browser-shell code must not import each other's source.
 - Both browser shells talk to API behavior over HTTP only.
 - Contracts are documented under `contracts/`.
-- The user-facing brand is `Luas`; lowercase `luas` is reserved for identifiers, packages, binaries, and env keys.
+- The user-facing brand is `FastBuild`; lowercase `fastbuild` is reserved for identifiers, packages, binaries, and env keys.
 
 ## API Shape
 
@@ -100,7 +100,7 @@ Mock BFF route handlers under `web/src/app/api/` are part of the scaffold so the
 run without a backend during development. They are replaceable development flows, not the
 production API; see `web/docs/MOCK_BFF.md` for downstream replacement steps.
 
-Production browser calls that use the Luas HttpOnly API session follow a fixed same-origin adapter
+Production browser calls that use the FastBuild HttpOnly API session follow a fixed same-origin adapter
 flow:
 
 ```text
@@ -127,7 +127,7 @@ The independent `notification` starter is selected with `notification` in the AP
 shell. Downstream
 API modules publish immutable user events through `domain.NotificationPublisher`; no public publish
 endpoint exists. The API commits notification and delivery records atomically, while independently
-deployed `luas notification:work` processes email deliveries through bounded database leases and a
+deployed `fastbuild notification:work` processes email deliveries through bounded database leases and a
 stable provider idempotency key. The Web feature owns strict same-origin adapters, development mock
 parity, unread state, preferences, and a lazy notification center; it never receives provider
 responses or recipient routing data.

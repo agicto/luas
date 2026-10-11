@@ -1,6 +1,6 @@
 # Container Supply-Chain Security
 
-Luas treats each production image as a deployable artifact with four distinct controls: immutable
+FastBuild treats each production image as a deployable artifact with four distinct controls: immutable
 build inputs, runtime verification, image inventory and vulnerability policy, and downstream
 publication identity. These controls complement the source dependency policy in
 [`DEPENDENCY_SECURITY.md`](DEPENDENCY_SECURITY.md); one must not be presented as another.
@@ -17,7 +17,7 @@ OSS/CDN assets and has no runtime container; its artifact, cache, and header con
 | Build evidence | Buildx metadata JSON emitted with maximal BuildKit provenance | Records the output digest, Dockerfile entry point, invocation, and reviewed material digests. |
 | Image SBOM | Trivy CycloneDX 1.7 JSON | Inventories the packages visible in the built runtime image, not merely source lockfiles. |
 | Vulnerability gate | Trivy 0.72.0 image scan | Fails on HIGH/CRITICAL vulnerabilities, detected secrets, or a known end-of-life base OS. |
-| Publication signature | Downstream registry plus Cosign/OIDC policy | Binds a pushed registry digest to a trusted publishing identity. Luas does not invent that identity. |
+| Publication signature | Downstream registry plus Cosign/OIDC policy | Binds a pushed registry digest to a trusted publishing identity. FastBuild does not invent that identity. |
 
 Build metadata and an SBOM are evidence about an artifact. They are not signatures. The CI artifacts
 in this repository are deliberately **unsigned** validation outputs retained for 14 days. A
@@ -48,7 +48,7 @@ Build and exercise both runtime contracts:
 
 ```bash
 cd api && make container-check
-cd web && bash scripts/verify-container.sh luas-web:container-check
+cd web && bash scripts/verify-container.sh fastbuild-web:container-check
 ```
 
 The verifiers use `docker buildx build --load`, write OCI source/revision/version labels, request
@@ -64,11 +64,11 @@ unauthenticated protected route before render work.
 Scan an already-built image and export its image-level SBOM:
 
 ```bash
-IMAGE=luas-api:container-check make container-scan
-IMAGE=luas-api:container-check make container-sbom
+IMAGE=fastbuild-api:container-check make container-scan
+IMAGE=fastbuild-api:container-check make container-sbom
 
-IMAGE=luas-web:container-check make container-scan
-SBOM_OUTPUT="$PWD/luas-web.cdx.json" IMAGE=luas-web:container-check make container-sbom
+IMAGE=fastbuild-web:container-check make container-scan
+SBOM_OUTPUT="$PWD/fastbuild-web.cdx.json" IMAGE=fastbuild-web:container-check make container-sbom
 ```
 
 `scripts/container-security.sh` downloads the official Trivy 0.72.0 archive over HTTPS, verifies a
@@ -113,8 +113,8 @@ affected runtime content.
 
 ## Downstream Publication Boundary
 
-Luas does not choose a registry, cloud identity, release environment, or trust root, and does not
-publish images. Each Luas release attaches the dependency and image SBOMs with build provenance
+FastBuild does not choose a registry, cloud identity, release environment, or trust root, and does not
+publish images. Each FastBuild release attaches the dependency and image SBOMs with build provenance
 attestations ([`VERSIONING.md`](VERSIONING.md)). A downstream publisher should:
 
 1. Build once and push by digest with registry-supported maximal provenance and SBOM attestations.

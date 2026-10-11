@@ -44,7 +44,7 @@ fi
 
 # 2. Check for TableName() method
 if ! grep -q "func.*TableName().*string" "$MODEL_FILE"; then
-    echo "❌ Missing TableName() method. Luas persistence objects define table ownership explicitly."
+    echo "❌ Missing TableName() method. FastBuild persistence objects define table ownership explicitly."
     ERRORS=$((ERRORS + 1))
 else
     echo "✅ TableName() method detected."

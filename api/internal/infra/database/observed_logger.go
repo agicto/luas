@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/zgiai/luas/api/internal/infra/exception"
+	"github.com/fastagi/fastbuild/api/internal/infra/exception"
 )
 
 type observedLogger struct {

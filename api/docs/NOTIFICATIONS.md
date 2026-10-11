@@ -64,7 +64,7 @@ Email provider I/O is outside request paths. Run at least one worker when applic
 `email` channel:
 
 ```bash
-/app/luas notification:work --batch=25 --poll=2s
+/app/fastbuild notification:work --batch=25 --poll=2s
 ```
 
 Operational flags:
@@ -122,8 +122,8 @@ dropping retained tables according to the downstream data policy.
 ```bash
 cd api
 go test ./internal/modules/notification ./internal/infra/email ./internal/infra/console/commands
-OPTIONAL_STARTERS=notification go run ./cmd/luas route:list
-go run ./cmd/luas route:list
+OPTIONAL_STARTERS=notification go run ./cmd/fastbuild route:list
+go run ./cmd/fastbuild route:list
 ```
 
 The default route list must contain no notification routes. The selected list must add exactly the

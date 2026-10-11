@@ -20,7 +20,7 @@ password `secret` for local development only.
 ## Writing A Seeder
 
 ```bash
-./luas make:seeder Product
+./fastbuild make:seeder Product
 ```
 
 Implement `Run` idempotently, keyed by a unique column, and return every error:

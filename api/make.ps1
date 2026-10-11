@@ -1,4 +1,4 @@
-# Luas Build Script for Windows PowerShell
+# FastBuild Build Script for Windows PowerShell
 # Usage: .\make.ps1 [command]
 
 param(
@@ -9,7 +9,7 @@ param(
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$BINARY_NAME = "luas.exe"
+$BINARY_NAME = "fastbuild.exe"
 $SERVER_NAME = "server.exe"
 
 # Get version information
@@ -43,7 +43,7 @@ function Test-CommandExists {
 function Build {
     Write-Host "Building $BINARY_NAME..." -ForegroundColor Green
     Wire
-    Invoke-Expression "go build $LDFLAGS -o $BINARY_NAME cmd/luas/main.go"
+    Invoke-Expression "go build $LDFLAGS -o $BINARY_NAME cmd/fastbuild/main.go"
 }
 
 # Build server
@@ -62,7 +62,7 @@ function Build-All {
 function Install {
     Write-Host "Installing $BINARY_NAME..." -ForegroundColor Green
     Build
-    Invoke-Expression "go install $LDFLAGS ./cmd/luas"
+    Invoke-Expression "go install $LDFLAGS ./cmd/fastbuild"
 }
 
 # Clean build artifacts
@@ -189,7 +189,7 @@ function Setup {
     Write-Host "Setting up development environment..." -ForegroundColor Green
     go mod download
     Write-Host "✅ Dependencies downloaded" -ForegroundColor Green
-    Write-Host "Run '.\make.ps1 install' to install luas CLI globally" -ForegroundColor Cyan
+    Write-Host "Run '.\make.ps1 install' to install fastbuild CLI globally" -ForegroundColor Cyan
 }
 
 # Show help

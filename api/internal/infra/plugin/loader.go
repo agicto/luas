@@ -14,7 +14,7 @@ import (
 // validName limits plugin names to lowercase words so a name can never become a path.
 var validName = regexp.MustCompile(`^[a-z][a-z0-9-]{0,62}$`)
 
-// ValidName reports whether name can identify a plugin binary named luas-<name>.
+// ValidName reports whether name can identify a plugin binary named fastbuild-<name>.
 func ValidName(name string) bool {
 	return validName.MatchString(name)
 }
@@ -26,11 +26,11 @@ type Plugin interface {
 	Description() string
 }
 
-// Discover finds installed plugins: executables named luas-<name> in PATH directories.
+// Discover finds installed plugins: executables named fastbuild-<name> in PATH directories.
 // Discovery runs each plugin with --version, so only PATH is searched; the current working directory
 // is never included, because a checked-out repository could otherwise plant an executable.
 //
-// To author a plugin, ship an executable named `luas-<plugin>` on the user's PATH and respond to
+// To author a plugin, ship an executable named `fastbuild-<plugin>` on the user's PATH and respond to
 // `--version` for discovery.
 func Discover() []PluginInfo {
 	var plugins []PluginInfo
@@ -51,8 +51,8 @@ func Discover() []PluginInfo {
 		if dir == "" || !filepath.IsAbs(dir) {
 			continue
 		}
-		// Find all luas-* executables
-		pattern := filepath.Join(dir, "luas-*")
+		// Find all fastbuild-* executables
+		pattern := filepath.Join(dir, "fastbuild-*")
 		matches, err := filepath.Glob(pattern)
 		if err != nil {
 			continue
@@ -64,8 +64,8 @@ func Discover() []PluginInfo {
 				continue
 			}
 
-			// Extract plugin name (remove luas- prefix)
-			name := strings.TrimPrefix(filepath.Base(match), "luas-")
+			// Extract plugin name (remove fastbuild- prefix)
+			name := strings.TrimPrefix(filepath.Base(match), "fastbuild-")
 			if !ValidName(name) {
 				continue
 			}
@@ -143,7 +143,7 @@ func Execute(pluginName string, args []string) error {
 	if !ValidName(pluginName) {
 		return fmt.Errorf("invalid plugin name %q", pluginName)
 	}
-	binary, err := exec.LookPath("luas-" + pluginName)
+	binary, err := exec.LookPath("fastbuild-" + pluginName)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func IsInstalled(pluginName string) bool {
 	if !ValidName(pluginName) {
 		return false
 	}
-	binary := "luas-" + pluginName
+	binary := "fastbuild-" + pluginName
 	_, err := exec.LookPath(binary)
 	return err == nil
 }

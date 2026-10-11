@@ -10,7 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/zgiai/luas/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/domain"
 )
 
 const (
@@ -47,7 +47,7 @@ func NewDefaultCatalog() (*Catalog, error) {
 			domain.SettingScopeApp,
 			"branding.display_name",
 			domain.SettingVisibilityPublic,
-			"Luas",
+			"FastBuild",
 			1,
 			80,
 		),

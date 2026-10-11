@@ -13,7 +13,7 @@ export default function AppError({ error, reset }: AppErrorProps) {
   const t = useT();
 
   useEffect(() => {
-    console.error('[Luas] Uncaught route error', error, {
+    console.error('[FastBuild] Uncaught route error', error, {
       digest: error.digest,
     });
   }, [error]);

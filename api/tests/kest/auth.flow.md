@@ -1,6 +1,6 @@
 ```flow
-@flow id=luas-auth-starter
-@name Luas Auth Starter Flow
+@flow id=fastbuild-auth-starter
+@name FastBuild Auth Starter Flow
 @version 1.0
 @tags auth, starter
 @env local

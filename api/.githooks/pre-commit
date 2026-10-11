@@ -14,8 +14,8 @@ echo -e "${GREEN}🔍 Running pre-commit checks...${NC}"
 
 # List of binary patterns to block
 BINARY_PATTERNS=(
-    "luas"
-    "luas-server"
+    "fastbuild"
+    "fastbuild-server"
     "server"
     "*.exe"
     "*.dll"

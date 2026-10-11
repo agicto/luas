@@ -60,7 +60,7 @@ const envSchema = z.object({
 });
 
 const parsed = envSchema.safeParse({
-  APP_NAME: import.meta.env.VITE_APP_NAME || 'Luas',
+  APP_NAME: import.meta.env.VITE_APP_NAME || 'FastBuild',
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || '/api',
   API_TIMEOUT_MS: import.meta.env.VITE_API_TIMEOUT_MS,
   API_MAX_RESPONSE_BYTES: import.meta.env.VITE_API_MAX_RESPONSE_BYTES,

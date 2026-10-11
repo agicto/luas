@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Resolve an unclear Luas verification scope. Use when the nearest AGENTS.md matrix cannot identify sufficient proof, not after every implementation.
+description: Resolve an unclear FastBuild verification scope. Use when the nearest AGENTS.md matrix cannot identify sufficient proof, not after every implementation.
 ---
 
 # Verification Before Completion

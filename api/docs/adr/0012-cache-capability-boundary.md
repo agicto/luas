@@ -51,7 +51,7 @@ misleading production contract without retaining runtime compatibility value.
 - Redis connection security, pool settings, readiness, and shutdown stay visible at the composition
   root rather than hiding behind cache configuration strings.
 - Downstream callers must inject a store and own cache policy. Existing code built against the old
-  internal global helpers must migrate deliberately; Luas itself had no production callers.
+  internal global helpers must migrate deliberately; FastBuild itself had no production callers.
 
 ## References
 

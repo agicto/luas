@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
 )
 
 // testEvent for testing

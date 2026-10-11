@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/events"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/events"
 )
 
 // handleUserCreated sends a welcome email when a user is created.

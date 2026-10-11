@@ -3,8 +3,8 @@ package permission
 import (
 	"net/http"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 // RegisterErrorMappings maps this starter's domain errors to public status codes and error codes.

@@ -1,18 +1,18 @@
 ---
 name: web-design-guidelines
-description: Review Luas UI code against interface guidelines. Use for explicit design, UX, or visual-quality review; use accessibility-audit for a dedicated WCAG pass.
+description: Review FastBuild UI code against interface guidelines. Use for explicit design, UX, or visual-quality review; use accessibility-audit for a dedicated WCAG pass.
 ---
 
 # Web Interface Review
 
-Review a completed Luas UI for design and UX quality. This skill reports
+Review a completed FastBuild UI for design and UX quality. This skill reports
 findings; it does not establish a new visual direction or run a WCAG audit.
 
 ## Review Authority
 
 Use the checked-in sources first:
 
-1. `web/AGENTS.md` for Luas UI, responsive, i18n, and component rules.
+1. `web/AGENTS.md` for FastBuild UI, responsive, i18n, and component rules.
 2. The nearest existing route, feature, primitive, and theme tokens.
 3. The requested files and their loading, empty, error, disabled, and mobile
    states.
@@ -20,7 +20,7 @@ Use the checked-in sources first:
 Do not fetch third-party guidelines during an ordinary review. If the user
 explicitly requests comparison with the latest Vercel Web Interface Guidelines,
 fetch their current primary source and label those findings as external rather
-than Luas requirements.
+than FastBuild requirements.
 
 ## Review Axes
 

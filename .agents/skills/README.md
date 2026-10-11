@@ -1,6 +1,6 @@
-# Luas Skill Index
+# FastBuild Skill Index
 
-Luas keeps repeatable task workflows in `.agents/skills/`. Codex discovers
+FastBuild keeps repeatable task workflows in `.agents/skills/`. Codex discovers
 skill metadata first and loads a full `SKILL.md` only after selecting it.
 
 ## Discovery Scope
@@ -63,11 +63,11 @@ Each row comes from the skill's `agents/openai.yaml` `short_description`.
 |---|---|
 | `business-implementation-planning` | Create implementation-ready business plans |
 | `contract-evolution` | Keep HTTP contracts aligned |
-| `domain-modeling` | Resolve Luas terms and boundaries |
-| `downstream-app-extraction` | Keep products out of Luas scaffold |
+| `domain-modeling` | Resolve FastBuild terms and boundaries |
+| `downstream-app-extraction` | Keep products out of FastBuild scaffold |
+| `fastbuild-code-review` | Review diffs on Standards and Spec |
+| `fastbuild-framework-review` | Audit the FastBuild scaffold broadly |
 | `grill-before-build` | Resolve a blocking design decision |
-| `luas-code-review` | Review diffs on Standards and Spec |
-| `luas-framework-review` | Audit the Luas scaffold broadly |
 | `pr-description-writer` | Package a diff for review |
 | `systematic-debugging` | Isolate an unclear failure |
 | `tdd-regression` | Red-green regression workflow |
@@ -77,7 +77,7 @@ Each row comes from the skill's `agents/openai.yaml` `short_description`.
 
 | Skill | Job |
 |---|---|
-| `api-development` | Implement Luas HTTP behavior |
+| `api-development` | Implement FastBuild HTTP behavior |
 | `architecture-principles` | Decide API seams and ownership |
 | `database-design` | Design PostgreSQL persistence |
 | `deployment` | Deploy and verify the API runtime |
@@ -107,10 +107,10 @@ Each row comes from the skill's `agents/openai.yaml` `short_description`.
 <!-- skill-index:tables:end -->
 
 Routine coding standards live in `api/AGENTS.md`; explicit diff review uses the
-root `luas-code-review`. Separate duplicate skills for those concerns were
+root `fastbuild-code-review`. Separate duplicate skills for those concerns were
 removed so API tasks do not load overlapping rulebooks.
 
-Codex provides the canonical `skill-creator`; Luas does not duplicate it inside
+Codex provides the canonical `skill-creator`; FastBuild does not duplicate it inside
 the Web scope.
 
 ## Skill Size And Metadata
@@ -162,7 +162,7 @@ before merging.
 
 ## Framework Guard Map
 
-All guards live under `luas-framework-review/scripts/`.
+All guards live under `fastbuild-framework-review/scripts/`.
 
 | Changed surface | Guard |
 |---|---|

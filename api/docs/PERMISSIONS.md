@@ -1,6 +1,6 @@
 # Permission Starter
 
-The optional `permission` starter is Luas's organization-scoped authorization kernel. Its public
+The optional `permission` starter is FastBuild's organization-scoped authorization kernel. Its public
 HTTP behavior is defined in [`../../contracts/PERMISSIONS.md`](../../contracts/PERMISSIONS.md).
 This document explains the API assembly and downstream extension boundary.
 
@@ -102,7 +102,7 @@ permission keys, never copied user profiles.
 ## Replace Or Remove
 
 An external policy engine may replace `domain.PermissionAuthorizer`, but retain the exact public
-failure contract and verified organization context. Decide separately whether Luas role-management
+failure contract and verified organization context. Decide separately whether FastBuild role-management
 routes remain the source of truth or are removed.
 
 To remove the starter, remove `permission` from every `OPTIONAL_STARTERS` value, deploy code without

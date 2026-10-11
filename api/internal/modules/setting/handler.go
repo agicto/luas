@@ -14,12 +14,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/zgiai/luas/api/internal/domain"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/modules/user"
-	"github.com/zgiai/luas/api/internal/starter/assembly"
-	httphandler "github.com/zgiai/luas/api/pkg/handler"
-	"github.com/zgiai/luas/api/pkg/response"
+	"github.com/fastagi/fastbuild/api/internal/domain"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/modules/user"
+	"github.com/fastagi/fastbuild/api/internal/starter/assembly"
+	httphandler "github.com/fastagi/fastbuild/api/pkg/handler"
+	"github.com/fastagi/fastbuild/api/pkg/response"
 )
 
 const maxSettingMutationBodyBytes = maxSettingValueBytes + 256
@@ -168,7 +168,7 @@ func (h *Handler) AppSet(c *gin.Context) { h.set(c, appSettingTarget) }
 // AppReset removes one app-scoped override; it requires If-Match.
 func (h *Handler) AppReset(c *gin.Context) { h.reset(c, appSettingTarget) }
 
-// luas:bounded-list max=64 reason=finite-code-owned-catalog
+// fastbuild:bounded-list max=64 reason=finite-code-owned-catalog
 func (h *Handler) list(c *gin.Context, target domain.SettingTarget) {
 	values, err := h.service.ListSettings(c.Request.Context(), target)
 	if err != nil {

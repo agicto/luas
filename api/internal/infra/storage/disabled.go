@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	storagecap "github.com/zgiai/luas/api/internal/capabilities/storage"
+	storagecap "github.com/fastagi/fastbuild/api/internal/capabilities/storage"
 )
 
 type disabledStore struct{}

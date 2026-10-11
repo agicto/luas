@@ -1,6 +1,6 @@
 # Web Browser Security Boundary
 
-This document defines the browser-facing response policy owned by the Luas Web scaffold. It keeps
+This document defines the browser-facing response policy owned by the FastBuild Web scaffold. It keeps
 application defaults, deployment controls, and downstream product policy separate so a header is
 not mistaken for a complete security architecture.
 
@@ -8,7 +8,7 @@ not mistaken for a complete security architecture.
 
 | Owner | Responsibility |
 |---|---|
-| Luas Web runtime | Emit the reviewed response-header floor from `security-headers.ts`, route it through `next.config.ts`, and keep mock-session navigation checks in `src/proxy.ts`. |
+| FastBuild Web runtime | Emit the reviewed response-header floor from `security-headers.ts`, route it through `next.config.ts`, and keep mock-session navigation checks in `src/proxy.ts`. |
 | Route or starter | Own authentication, authorization, private cache headers, cookies, CORS where applicable, and any provider-specific browser connection policy. |
 | Downstream deployment | Terminate trusted TLS, redirect HTTP to HTTPS, configure WAF/CDN behavior, avoid duplicate response headers, and decide whether subdomains and preload belong to its HSTS policy. |
 | Downstream product | Extend CSP fetch directives, framing, and browser capabilities only for reviewed integrations such as analytics, direct asset transfer, identity, payments, maps, or embeds. |
@@ -23,7 +23,7 @@ Cache behavior remains route-owned; do not add a global `Cache-Control` value to
 | `Content-Security-Policy` | `base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'` | Structural navigation and embedding floor. It is deliberately not presented as a complete script-injection policy. |
 | `Permissions-Policy` | Disables browsing topics, camera, geolocation, microphone, payment, and USB | A downstream feature must explicitly review and enable a capability before using it. |
 | `Referrer-Policy` | `strict-origin-when-cross-origin` | Keeps same-origin diagnostics while reducing cross-origin URL disclosure. |
-| `Strict-Transport-Security` | `max-age=31536000` in production builds only | Covers the current host after a trusted HTTPS response. Luas does not claim ownership of subdomains or browser preload registration. |
+| `Strict-Transport-Security` | `max-age=31536000` in production builds only | Covers the current host after a trusted HTTPS response. FastBuild does not claim ownership of subdomains or browser preload registration. |
 | `X-Content-Type-Options` | `nosniff` | Prevents MIME-type guessing. |
 | `X-DNS-Prefetch-Control` | `on` | Preserves the existing navigation-performance choice; it is not a security guarantee. |
 | `X-Frame-Options` | `DENY` | Compatibility defense for clients that do not enforce CSP `frame-ancestors`. |
@@ -33,7 +33,7 @@ Cache behavior remains route-owned; do not add a global `Cache-Control` value to
 The structural CSP intentionally omits `default-src`, `script-src`, `style-src`, `connect-src`, and
 other fetch directives. Adding a per-request nonce in Next.js requires dynamic rendering, while a
 static broad policy can silently break direct asset grants, external identity, analytics, images,
-fonts, or downstream APIs. Luas therefore does not add `'unsafe-inline'` and call the result a strict
+fonts, or downstream APIs. FastBuild therefore does not add `'unsafe-inline'` and call the result a strict
 CSP. A downstream app that owns its complete origin catalog should add a nonce- or hash-based policy
 and remeasure rendering, caching, and route bundles. See the official
 [Next.js CSP guide](https://nextjs.org/docs/app/guides/content-security-policy) and
@@ -42,7 +42,7 @@ and remeasure rendering, caching, and route bundles. See the official
 ## Next.js Proxy
 
 Next.js 16 renamed the deprecated `middleware.ts` convention to `proxy.ts`. Because this scaffold's
-App Router is under `src/app`, Luas places the convention at `src/proxy.ts` and uses it only for
+App Router is under `src/app`, FastBuild places the convention at `src/proxy.ts` and uses it only for
 early navigation checks in `mock-session` mode:
 
 - it verifies the signed mock cookie before protected render work;
@@ -72,8 +72,8 @@ the application or ingress rather than emitting conflicting duplicates.
 (cd web && pnpm vitest run src/test/security-headers.test.ts src/test/auth-runtime-boundary.test.ts)
 (cd web && pnpm build)
 (cd web && pnpm proxy:check)
-bash web/scripts/verify-container.sh luas-web:container-check
-python3 .agents/skills/luas-framework-review/scripts/check-web-security-boundary.py
+bash web/scripts/verify-container.sh fastbuild-web:container-check
+python3 .agents/skills/fastbuild-framework-review/scripts/check-web-security-boundary.py
 make governance
 ```
 

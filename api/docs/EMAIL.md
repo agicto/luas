@@ -10,7 +10,7 @@ user-facing workflows.
 Configure the sender and provider key together:
 
 ```dotenv
-MAIL_FROM=Luas <noreply@example.com>
+MAIL_FROM=FastBuild <noreply@example.com>
 RESEND_API_KEY=re_...
 MAIL_REQUEST_TIMEOUT=10s
 ```
@@ -61,7 +61,7 @@ provider failures, expose delivery receipts, or provide exactly-once semantics.
   whether the synchronous provider call was accepted, failed, or not configured. See
   [`../../contracts/ORGANIZATIONS.md`](../../contracts/ORGANIZATIONS.md).
 - The optional notification starter persists its own delivery ledger, retries transient failures in
-  `luas notification:work`, and supplies a stable provider idempotency key. Those semantics belong to
+  `fastbuild notification:work`, and supplies a stable provider idempotency key. Those semantics belong to
   the starter and do not make direct `SendEmail` calls durable. See
   [`NOTIFICATIONS.md`](NOTIFICATIONS.md).
 

@@ -401,8 +401,8 @@ function memberView(id: number, role: 'admin' | 'owner') {
 function organizationView() {
   return {
     id: 1,
-    name: 'Luas Demo',
-    slug: 'luas-demo',
+    name: 'FastBuild Demo',
+    slug: 'fastbuild-demo',
     role: 'member',
     created_at: '2026-07-15T10:00:00Z',
     updated_at: '2026-07-15T10:00:00Z',

@@ -32,7 +32,7 @@ Create only the directories the feature owns. Route entries belong under
 ## HTTP
 
 - Call `src/http/client.ts`; do not call `fetch` from components.
-- Default business responses use the standard Luas envelope.
+- Default business responses use the standard FastBuild envelope.
 - Use raw JSON mode only for an explicitly documented endpoint such as
   `/health/ready`.
 - Validate security-sensitive or state-sensitive success data with Zod.

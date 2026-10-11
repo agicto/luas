@@ -41,7 +41,7 @@ export class MockApiKeyStore {
 
   create(actor: AuthUser, input: CreateApiKeyInput): CreateApiKeyResult {
     const now = this.dependencies.now().toISOString();
-    const keyPrefix = `luas_${this.dependencies.randomHex(6)}`;
+    const keyPrefix = `fastbuild_${this.dependencies.randomHex(6)}`;
     const plaintextKey = `${keyPrefix}.${this.dependencies.randomHex(24)}`;
     const record: MockApiKeyRecord = {
       id: this.nextId++,

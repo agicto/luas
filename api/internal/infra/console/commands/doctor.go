@@ -9,9 +9,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zgiai/luas/api/internal/capabilities/ai"
-	"github.com/zgiai/luas/api/internal/infra/config"
-	"github.com/zgiai/luas/api/internal/infra/console"
+	"github.com/fastagi/fastbuild/api/internal/capabilities/ai"
+	"github.com/fastagi/fastbuild/api/internal/infra/config"
+	"github.com/fastagi/fastbuild/api/internal/infra/console"
 )
 
 // DoctorCommand validates the local configuration schema and the same typed
@@ -56,7 +56,7 @@ func (c *DoctorCommand) Run(args []string) error {
 		return err
 	}
 
-	c.output.Title("luas doctor")
+	c.output.Title("fastbuild doctor")
 	report := auditDoctor(envExample, config.Load)
 	for _, check := range report.checks {
 		switch check.level {

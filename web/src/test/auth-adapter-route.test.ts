@@ -87,13 +87,13 @@ describe('production auth adapter route boundary', () => {
     expect(JSON.stringify(body)).not.toContain(token);
     expect(cookieStore.set).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'luas_session',
+        name: 'fastbuild_session',
         maxAge: 0,
       })
     );
     expect(cookieStore.set).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'luas_auth',
+        name: 'fastbuild_auth',
         value: token,
         httpOnly: true,
         maxAge: expect.any(Number),
@@ -133,7 +133,7 @@ describe('production auth adapter route boundary', () => {
     });
     expect(cookieStore.set).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: 'luas_auth',
+        name: 'fastbuild_auth',
         maxAge: 0,
       })
     );
@@ -161,8 +161,8 @@ describe('production auth adapter route boundary', () => {
     expect(String(url)).toBe('https://api.example.com/v1/logout');
     expect(new Headers(init?.headers).get('authorization')).toBe(`Bearer ${token}`);
     expect(cookieStore.set.mock.calls.map(([cookie]) => cookie.name).sort()).toEqual([
-      'luas_auth',
-      'luas_session',
+      'fastbuild_auth',
+      'fastbuild_session',
     ]);
   });
 
@@ -224,8 +224,8 @@ describe('production auth adapter route boundary', () => {
 
     expect(response.status).toBe(503);
     expect(cookieStore.set.mock.calls.map(([cookie]) => cookie.name).sort()).toEqual([
-      'luas_auth',
-      'luas_session',
+      'fastbuild_auth',
+      'fastbuild_session',
     ]);
   });
 

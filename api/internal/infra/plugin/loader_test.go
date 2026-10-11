@@ -17,9 +17,9 @@ func writeExecutable(t *testing.T, dir, name string) {
 
 func TestDiscoverSearchesPathOnlyNotTheWorkingDirectory(t *testing.T) {
 	workdir := t.TempDir()
-	writeExecutable(t, workdir, "luas-planted")
+	writeExecutable(t, workdir, "fastbuild-planted")
 	pathDir := t.TempDir()
-	writeExecutable(t, pathDir, "luas-installed")
+	writeExecutable(t, pathDir, "fastbuild-installed")
 
 	t.Chdir(workdir)
 	t.Setenv("PATH", pathDir)
@@ -51,8 +51,8 @@ func TestPluginNamesAreValidated(t *testing.T) {
 
 func TestDiscoverSkipsInvalidNames(t *testing.T) {
 	pathDir := t.TempDir()
-	writeExecutable(t, pathDir, "luas-Bad_Name")
-	writeExecutable(t, pathDir, "luas-good")
+	writeExecutable(t, pathDir, "fastbuild-Bad_Name")
+	writeExecutable(t, pathDir, "fastbuild-good")
 	t.Setenv("PATH", pathDir)
 
 	plugins := Discover()
@@ -63,11 +63,11 @@ func TestDiscoverSkipsInvalidNames(t *testing.T) {
 
 func TestPluginVersionProbeIsBounded(t *testing.T) {
 	dir := t.TempDir()
-	hanging := filepath.Join(dir, "luas-hang")
+	hanging := filepath.Join(dir, "fastbuild-hang")
 	if err := os.WriteFile(hanging, []byte("#!/bin/sh\nexec sleep 30\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	chatty := filepath.Join(dir, "luas-chatty")
+	chatty := filepath.Join(dir, "fastbuild-chatty")
 	if err := os.WriteFile(chatty, []byte("#!/bin/sh\necho ' 2.1.0 '\necho second line\n"), 0o755); err != nil {
 		t.Fatal(err)
 	}

@@ -14,7 +14,7 @@ const messages = {
   },
   home: {
     defaultUser: '朋友',
-    welcomeDescription: '这是可替换的 Luas 控制台起始页，请用你的业务工作区替换它。',
+    welcomeDescription: '这是可替换的 FastBuild 控制台起始页，请用你的业务工作区替换它。',
     open: '打开',
     nextSteps: '后续步骤',
     quickLinks: {

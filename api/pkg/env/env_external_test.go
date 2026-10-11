@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zgiai/luas/api/pkg/env"
+	"github.com/fastagi/fastbuild/api/pkg/env"
 )
 
 func TestEnv_Get(t *testing.T) {
@@ -259,7 +259,7 @@ func TestEnv_SystemEnvPriority(t *testing.T) {
 }
 
 func TestEnv_FilePrecedence(t *testing.T) {
-	const key = "LUAS_TEST_FILE_PRECEDENCE"
+	const key = "FASTBUILD_TEST_FILE_PRECEDENCE"
 	useIsolatedEnvDir(t, key)
 
 	writeEnvFile(t, ".env", key+"=base\n")
@@ -289,7 +289,7 @@ func TestEnv_EnvironmentAliasesSelectCanonicalEnvironment(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			const key = "LUAS_TEST_ENV_ALIAS_FILE"
+			const key = "FASTBUILD_TEST_ENV_ALIAS_FILE"
 			useIsolatedEnvDir(t, key)
 			writeEnvFile(t, ".env."+test.value, key+"=selected\n")
 			if err := os.Setenv(test.selector, " "+test.value+" "); err != nil {
@@ -324,7 +324,7 @@ func TestEnv_LocalOverlayCannotChangeSelectedEnvironment(t *testing.T) {
 }
 
 func TestEnv_SystemValueOverridesFiles(t *testing.T) {
-	const key = "LUAS_TEST_SYSTEM_PRECEDENCE"
+	const key = "FASTBUILD_TEST_SYSTEM_PRECEDENCE"
 	useIsolatedEnvDir(t, key)
 
 	writeEnvFile(t, ".env", key+"=base\n")
@@ -344,7 +344,7 @@ func TestEnv_SystemValueOverridesFiles(t *testing.T) {
 }
 
 func TestEnv_ExplicitFileOverridesStandardFiles(t *testing.T) {
-	const key = "LUAS_TEST_EXPLICIT_FILE_PRECEDENCE"
+	const key = "FASTBUILD_TEST_EXPLICIT_FILE_PRECEDENCE"
 	dir := useIsolatedEnvDir(t, key)
 
 	writeEnvFile(t, ".env", key+"=base\n")
@@ -354,8 +354,8 @@ func TestEnv_ExplicitFileOverridesStandardFiles(t *testing.T) {
 	if err := os.Setenv("APP_ENV", "production"); err != nil {
 		t.Fatalf("set APP_ENV: %v", err)
 	}
-	if err := os.Setenv("LUAS_ENV_FILE", explicitPath); err != nil {
-		t.Fatalf("set LUAS_ENV_FILE: %v", err)
+	if err := os.Setenv("FASTBUILD_ENV_FILE", explicitPath); err != nil {
+		t.Fatalf("set FASTBUILD_ENV_FILE: %v", err)
 	}
 
 	mustLoadFresh(t)
@@ -367,8 +367,8 @@ func TestEnv_ExplicitFileOverridesStandardFiles(t *testing.T) {
 
 func TestEnv_LoadFreshReplacesAndRemovesFileValues(t *testing.T) {
 	const (
-		changedKey = "LUAS_TEST_RELOADED_VALUE"
-		removedKey = "LUAS_TEST_REMOVED_VALUE"
+		changedKey = "FASTBUILD_TEST_RELOADED_VALUE"
+		removedKey = "FASTBUILD_TEST_REMOVED_VALUE"
 	)
 	useIsolatedEnvDir(t, changedKey, removedKey)
 
@@ -394,7 +394,7 @@ func TestEnv_LoadFreshReplacesAndRemovesFileValues(t *testing.T) {
 
 func TestEnv_LoadFreshReportsMalformedFile(t *testing.T) {
 	useIsolatedEnvDir(t)
-	writeEnvFile(t, ".env", "APP_NAME=Luas\nTHIS IS NOT AN ENV ENTRY\n")
+	writeEnvFile(t, ".env", "APP_NAME=FastBuild\nTHIS IS NOT AN ENV ENTRY\n")
 
 	err := env.LoadFresh()
 
@@ -406,13 +406,13 @@ func TestEnv_LoadFreshReportsMalformedFile(t *testing.T) {
 func TestEnv_LoadFreshRequiresExplicitFile(t *testing.T) {
 	dir := useIsolatedEnvDir(t)
 	missingPath := filepath.Join(dir, "missing.env")
-	if err := os.Setenv("LUAS_ENV_FILE", missingPath); err != nil {
-		t.Fatalf("set LUAS_ENV_FILE: %v", err)
+	if err := os.Setenv("FASTBUILD_ENV_FILE", missingPath); err != nil {
+		t.Fatalf("set FASTBUILD_ENV_FILE: %v", err)
 	}
 
 	err := env.LoadFresh()
 
-	if err == nil || !strings.Contains(err.Error(), "LUAS_ENV_FILE") {
+	if err == nil || !strings.Contains(err.Error(), "FASTBUILD_ENV_FILE") {
 		t.Fatalf("LoadFresh() error = %v, want missing explicit file error", err)
 	}
 }
@@ -442,7 +442,7 @@ func TestEnv_GetOrFailPanic(t *testing.T) {
 func useIsolatedEnvDir(t *testing.T, keys ...string) string {
 	t.Helper()
 
-	names := append([]string{"APP_ENV", "GO_ENV", "GIN_MODE", "LUAS_ENV_FILE"}, keys...)
+	names := append([]string{"APP_ENV", "GO_ENV", "GIN_MODE", "FASTBUILD_ENV_FILE"}, keys...)
 	type originalValue struct {
 		value string
 		set   bool

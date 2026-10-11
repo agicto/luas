@@ -7,7 +7,7 @@
 
 The API assembles its dependency graph at compile time with Google Wire. The upstream
 `github.com/google/wire` repository was archived on 2025-08-25 and states that it is no longer
-maintained. Luas pins `v0.7.0` and runs the generator through `go tool wire`.
+maintained. FastBuild pins `v0.7.0` and runs the generator through `go tool wire`.
 
 A comparison with Kratos, go-zero, uber-go/fx, Goravel, GoFrame, Encore, and Grafana found no reason
 to replace compile-time injection. Grafana still uses Wire at a much larger scale. At runtime, Wire
@@ -28,7 +28,7 @@ leave a stale `wire_gen.go` that still compiled.
    `make wire`, never by hand-merging generated lines.
 4. If a supported Go release breaks the pinned generator, take the first option that works:
    switch to a maintained drop-in fork with the same annotations, vendor the generator under a
-   Luas-owned module, or, as a last resort, keep the last generated `wire_gen.go` as hand-maintained
+   FastBuild-owned module, or, as a last resort, keep the last generated `wire_gen.go` as hand-maintained
    code. Provider sets remain valid documentation in every case.
 
 ## Consequences

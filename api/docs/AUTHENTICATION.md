@@ -46,7 +46,7 @@ AUTH_SESSION_RETENTION=720h
 Run cleanup repeatedly from a scheduler or one-shot job:
 
 ```bash
-/app/luas auth-session:prune --batch=500
+/app/fastbuild auth-session:prune --batch=500
 ```
 
 The command removes only revoked or expired rows beyond the configured retention cutoff, processes
@@ -79,7 +79,7 @@ restore long-lived stateless user JWTs as an undocumented compatibility path.
 ```bash
 go test ./internal/modules/user ./database/migrations
 go test -race ./internal/modules/user
-go run ./cmd/luas auth-session:prune --batch=1
+go run ./cmd/fastbuild auth-session:prune --batch=1
 ```
 
 Cross-boundary verification also runs the Web adapter tests listed in

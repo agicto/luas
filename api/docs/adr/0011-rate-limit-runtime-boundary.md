@@ -5,7 +5,7 @@
 
 ## Context
 
-Luas enables a global client-IP quota and endpoint-specific authentication quotas in production.
+FastBuild enables a global client-IP quota and endpoint-specific authentication quotas in production.
 The authentication guard correctly uses independent source and normalized/hashed subject buckets,
 but all assembled stores are process-local.
 
@@ -24,7 +24,7 @@ snapshot's promise that documented settings have observable behavior.
    at capacity. Expired buckets are removed opportunistically without background goroutines.
 4. Global and authentication cardinality use separate typed settings because authentication owns
    several independent endpoint/dimension stores.
-5. Luas does not claim a built-in Redis rate-limit driver. The generic Redis cache adapter is a
+5. FastBuild does not claim a built-in Redis rate-limit driver. The generic Redis cache adapter is a
    separate infrastructure surface and requires explicit downstream composition.
 6. Multi-replica products must enforce shared policy at a gateway/WAF or deliberately assemble a
    shared limiter adapter. Such an adapter must specify its atomic algorithm, outage behavior,
