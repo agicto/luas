@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"errors"
@@ -9,14 +9,14 @@ import (
 
 // Stable error codes owned by this starter.
 const (
-	CodeCommentNotFound         = "COMMENTS.COMMENT_NOT_FOUND"
-	CodeResourceNotFound        = "COMMENTS.RESOURCE_NOT_FOUND"
-	CodeUnsupportedResourceType = "COMMENTS.UNSUPPORTED_RESOURCE_TYPE"
-	CodeInvalidComment          = "COMMENTS.INVALID_COMMENT"
-	CodeInvalidParent           = "COMMENTS.INVALID_PARENT"
-	CodeInvalidMentions         = "COMMENTS.INVALID_MENTIONS"
-	CodeVersionConflict         = "COMMENTS.VERSION_CONFLICT"
-	CodePreconditionRequired    = "COMMENTS.PRECONDITION_REQUIRED"
+	CodeCommentNotFound         = "COMMENT.NOT_FOUND"
+	CodeResourceNotFound        = "COMMENT.RESOURCE_NOT_FOUND"
+	CodeUnsupportedResourceType = "COMMENT.UNSUPPORTED_RESOURCE_TYPE"
+	CodeInvalidComment          = "COMMENT.INVALID"
+	CodeInvalidParent           = "COMMENT.INVALID_PARENT"
+	CodeInvalidMentions         = "COMMENT.INVALID_MENTIONS"
+	CodeVersionConflict         = "COMMENT.VERSION_CONFLICT"
+	CodePreconditionRequired    = "COMMENT.PRECONDITION_REQUIRED"
 )
 
 var (

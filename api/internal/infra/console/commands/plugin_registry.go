@@ -404,8 +404,8 @@ func (c *PluginAddCommand) Run(args []string) error {
 		return err
 	}
 	defer closeSource(source)
-	if err := requireTrust(source, args); err != nil {
-		return err
+	if trustErr := requireTrust(source, args); trustErr != nil {
+		return trustErr
 	}
 	installer, err := newProjectInstaller(root, source)
 	if err != nil {

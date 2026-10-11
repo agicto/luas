@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"encoding/base64"
@@ -37,7 +37,7 @@ func NewHandler(service Service) *Handler {
 }
 
 // Name returns the starter name.
-func (h *Handler) Name() string { return config.StarterComments }
+func (h *Handler) Name() string { return config.StarterComment }
 
 type commentResponse struct {
 	ID           uint       `json:"id"`

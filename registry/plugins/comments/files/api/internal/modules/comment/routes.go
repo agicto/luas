@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import "github.com/fastagi/fastbuild/api/internal/infra/router"
 

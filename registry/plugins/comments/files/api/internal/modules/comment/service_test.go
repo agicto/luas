@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func TestMentionsPublishOneIdempotentNotificationPerUser(t *testing.T) {
 	require.Len(t, publisher.publications, 2, "the author is never notified of their own mention")
 	first := publisher.publications[0]
 	assert.Equal(t, uint(8), first.UserID)
-	assert.Equal(t, "comments.mention:1:8", first.IdempotencyKey)
+	assert.Equal(t, "comment.mention:1:8", first.IdempotencyKey)
 	assert.Equal(t, mentionKind, first.Kind)
 	assert.Equal(t, "/console/docs/doc-1", first.ActionURL)
 	assert.NotContains(t, first.Body, "secret plan", "notifications never copy the comment body")

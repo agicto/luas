@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"context"
@@ -60,7 +60,7 @@ type ResourceCatalog struct {
 }
 
 // NewResourceCatalog validates and freezes resource types. An empty catalog is valid: every
-// comment request then answers COMMENTS.UNSUPPORTED_RESOURCE_TYPE.
+// comment request then answers COMMENT.UNSUPPORTED_RESOURCE_TYPE.
 func NewResourceCatalog(types ...ResourceType) (*ResourceCatalog, error) {
 	if len(types) > maxResourceTypes {
 		return nil, fmt.Errorf("comment resource catalog exceeds %d types", maxResourceTypes)
@@ -102,7 +102,7 @@ func (c *ResourceCatalog) Lookup(name string) (ResourceType, bool) {
 //		})
 //	}
 //
-// See contracts/COMMENTS.md.
+// See contracts/COMMENT.md.
 func ProvideResourceCatalog() (*ResourceCatalog, error) {
 	return NewResourceCatalog()
 }

@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"github.com/google/wire"
@@ -37,7 +37,7 @@ func ProvideMentionPublisher(cfg *config.Config, publisher domain.NotificationPu
 // NewStarterManifest describes the comments routes, owner dependencies, and persistence.
 func NewStarterManifest(handler *Handler) assembly.StarterManifest {
 	return assembly.NewStaticStarterManifest(
-		config.StarterComments,
+		config.StarterComment,
 		assembly.WithStarterSummary("Threaded comments on organization resources with @mentions."),
 		assembly.WithStarterDependencies(config.StarterUser, config.StarterAudit, config.StarterOrganization),
 		assembly.WithStarterModule(handler),

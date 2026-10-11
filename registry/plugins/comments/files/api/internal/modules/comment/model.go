@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ const (
 	replyPreviewLimit = 3
 	maxResourceIDLen  = 64
 	maxResourceTypes  = 64
-	mentionKind       = "comments.mention"
+	mentionKind       = "comment.mention"
 )
 
 // Comment is one comment on an organization resource. A root comment has no parent; a reply's

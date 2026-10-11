@@ -9,6 +9,6 @@ when the `notification` starter is enabled; without it, mentions are stored sile
 cd api && go run ./cmd/fastbuild plugin:add comments
 ```
 
-It installs the `comments` starter (API module, migration, contract) and needs the `organization`
+It installs the `comment` starter (API module, migration, contract) and needs the `organization`
 starter. The plugin ships no commentable resource types: each module registers its own, deciding
-who may read and comment (see `INTEGRATION.md`). The full contract ships as `contracts/COMMENTS.md`.
+who may read and comment (see `INTEGRATION.md`). The full contract ships as `contracts/COMMENT.md`.

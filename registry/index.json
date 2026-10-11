@@ -6,7 +6,7 @@
       "kind": "feature",
       "version": "0.1.0",
       "summary": "Threaded comments with @mentions on any organization resource the project registers.",
-      "description": "Adds a comments starter: members comment on and reply to organization resources such as tasks, documents, or tickets. Threads are one level deep, edits use optimistic concurrency (If-Match), deletes are soft so threads keep their shape, and owners and admins can moderate. Mentioned members get an idempotent notification when the notification starter is enabled. Each module decides which of its resources are commentable and who may read or comment through a small resource-type seam.",
+      "description": "Adds a comment starter: members comment on and reply to organization resources such as tasks, documents, or tickets. Threads are one level deep, edits use optimistic concurrency (If-Match), deletes are soft so threads keep their shape, and owners and admins can moderate. Mentioned members get an idempotent notification when the notification starter is enabled. Each module decides which of its resources are commentable and who may read or comment through a small resource-type seam.",
       "keywords": [
         "comments",
         "comment",
@@ -37,28 +37,28 @@
         ]
       },
       "starter": {
-        "name": "comments",
-        "const": "StarterComments",
-        "directory": "comments",
-        "handler": "Comments"
+        "name": "comment",
+        "const": "StarterComment",
+        "directory": "comment",
+        "handler": "Comment"
       },
       "fragment": "contracts/fragments/comments.yaml",
       "files": {
         "api/database/migrations/2026_10_11_010000_create_comments_table.go": "0f9257199580455738da03174cca79f50c73dea580a77f11e61b928c01710ab0",
-        "api/internal/modules/comments/errors.go": "a8203f5af9394ccc53c9931c33f06763125d9fe4f801c84216e82945c517a365",
-        "api/internal/modules/comments/handler.go": "7e52f0b7f7aed03e90dd3b78050b7e5abdeeb25892eb197b17d467afa77319ea",
-        "api/internal/modules/comments/handler_test.go": "380cba8d22dda5d8aade2ffbe7adaacf629476b2beb874f288cb1ae69d3d223d",
-        "api/internal/modules/comments/memory_store_test.go": "a5f0b999678643c3a78450727eaa113fd5f0a504b2c892ebb5223ec791f63427",
-        "api/internal/modules/comments/model.go": "3a4baf95054127995f92b9435ed8a863007482316f19dbca95b1032db38d530a",
-        "api/internal/modules/comments/provider.go": "f638b08f353691c98435d87b055033174a3e0e500616d6c734aac75f7618767e",
-        "api/internal/modules/comments/repository.go": "9200945f290ba12de307ee216e2d64b3bc292f16472a0b2cda2c8462808f4d09",
-        "api/internal/modules/comments/repository_postgres_test.go": "ae3c37fae3a6bc34c8d4004714f82f076e29103164ab736acfb84736b31a1832",
-        "api/internal/modules/comments/resources.go": "260afae790bd596da6f10e8e4b21befe40d94ac6e8f244c0215959679911846a",
-        "api/internal/modules/comments/routes.go": "871a537fc47e843323ae54b031b80f1195cee030127340b4b5cdbdca18ee361f",
-        "api/internal/modules/comments/service.go": "6c33ba92638e34fb977f78691b347b74dd60487ebe17d270f74ec606ebe3265e",
-        "api/internal/modules/comments/service_test.go": "9771396d1a56c3082d55761ce9c690d31516a64b3a1a4d28bb921451c4cac664",
-        "contracts/COMMENTS.md": "33db2b6b81cfcd4ff13a85338edcc595093173643edd2b36d5ea203b29df62a7",
-        "contracts/fragments/comments.yaml": "72892310561afc5f9a4f401f44ec57bd2660cb733dadc34095ed89b3fe28988a"
+        "api/internal/modules/comment/errors.go": "6fc84bdbe392a38d3a9fb3780a0a05bc280e7f82b425b98c23329652f4134c16",
+        "api/internal/modules/comment/handler.go": "c72070d230078da7979d7ece50be0943a89c7a9897de8082ac79feed42b55076",
+        "api/internal/modules/comment/handler_test.go": "4a8c5b95d7649e14ff630b4813d868590933b26d9eea70efe92d9310e6137075",
+        "api/internal/modules/comment/memory_store_test.go": "c7197e0402b41d418d0145c8b723777942dbe1e48fb167ed15f53a93abf5ffeb",
+        "api/internal/modules/comment/model.go": "90df5db7b0a12e56c07bb9f4e6bf708bd2034541f4cc14e614e8d8232af17ff6",
+        "api/internal/modules/comment/provider.go": "1e9e0848ec2db15dcb46a22a0a50bbcb44ec5a6589452d7588b549b1ca68be5b",
+        "api/internal/modules/comment/repository.go": "0da8eb92750f154dffce3bc59b1aab7aa0e1ed7d4b4e59f1da5757ede333604c",
+        "api/internal/modules/comment/repository_postgres_test.go": "6bd9ed6e10621b84c5ee0408c1cbabf72558e871824677133a8df4d1cba06164",
+        "api/internal/modules/comment/resources.go": "e3b300ef8e54b852aae7bb78553b5117d7a70bf1179f03eb844e6289d6e86b47",
+        "api/internal/modules/comment/routes.go": "5ed173130d547b932a83bd463552bef327d758f96a167f635bab0f415fea4ea6",
+        "api/internal/modules/comment/service.go": "39d733b2af825bb535006ffe5c02c489d6ed15d03663b5fcbcf07b7d3792b6a3",
+        "api/internal/modules/comment/service_test.go": "cef9b64819da3fc16eff3206cfd29a49d3e25b98e865c0ab873de56cc5c28aff",
+        "contracts/COMMENTS.md": "ddf02732951b02f3382488e0dc3539eacace33cbc8342ee6a7fec02018b8f498",
+        "contracts/fragments/comments.yaml": "b94c039a6a5e74496b94e58a690d1871e31903c64cd8786524fdf54aaf8c66b2"
       }
     },
     {

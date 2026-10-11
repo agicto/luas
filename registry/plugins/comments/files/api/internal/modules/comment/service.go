@@ -1,4 +1,4 @@
-package comments
+package comment
 
 import (
 	"context"
@@ -360,14 +360,14 @@ func (s *service) publishMentions(ctx context.Context, resourceType ResourceType
 			Channels:       []domain.NotificationChannel{domain.NotificationChannelInApp, domain.NotificationChannelEmail},
 		})
 		if err != nil {
-			slog.WarnContext(ctx, "comments.mention_notification_failed",
+			slog.WarnContext(ctx, "comment.mention_notification_failed",
 				"comment_id", comment.ID, "user_id", userID, "error_class", errorClass(err))
 		}
 	}
 }
 
 func mentionIdempotencyKey(commentID, userID uint) string {
-	return "comments.mention:" + strconv.FormatUint(uint64(commentID), 10) + ":" + strconv.FormatUint(uint64(userID), 10)
+	return "comment.mention:" + strconv.FormatUint(uint64(commentID), 10) + ":" + strconv.FormatUint(uint64(userID), 10)
 }
 
 func errorClass(err error) string {

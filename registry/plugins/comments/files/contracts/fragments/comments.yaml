@@ -1,13 +1,13 @@
 # OpenAPI fragment of the comments plugin. plugin:add merges it into contracts/openapi.yaml.
 x-error-codes:
-  - COMMENTS.COMMENT_NOT_FOUND
-  - COMMENTS.RESOURCE_NOT_FOUND
-  - COMMENTS.UNSUPPORTED_RESOURCE_TYPE
-  - COMMENTS.INVALID_COMMENT
-  - COMMENTS.INVALID_PARENT
-  - COMMENTS.INVALID_MENTIONS
-  - COMMENTS.VERSION_CONFLICT
-  - COMMENTS.PRECONDITION_REQUIRED
+  - COMMENT.NOT_FOUND
+  - COMMENT.RESOURCE_NOT_FOUND
+  - COMMENT.UNSUPPORTED_RESOURCE_TYPE
+  - COMMENT.INVALID
+  - COMMENT.INVALID_PARENT
+  - COMMENT.INVALID_MENTIONS
+  - COMMENT.VERSION_CONFLICT
+  - COMMENT.PRECONDITION_REQUIRED
 tags:
   - name: Comments
     description: Threaded comments with mentions on organization resources (comments plugin).
@@ -42,13 +42,13 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: '`COMMENTS.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
+          description: '`COMMENT.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '422':
-          description: '`COMMENTS.UNSUPPORTED_RESOURCE_TYPE`: the resource type is not registered.'
+          description: '`COMMENT.UNSUPPORTED_RESOURCE_TYPE`: the resource type is not registered.'
           content:
             application/json:
               schema:
@@ -91,7 +91,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: '`COMMENTS.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
+          description: '`COMMENT.RESOURCE_NOT_FOUND`: the resource is not in the organization or not visible to the caller.'
           content:
             application/json:
               schema:
@@ -99,9 +99,9 @@ paths:
         '413':
           $ref: '#/components/responses/RequestTooLarge'
         '422':
-          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENTS.INVALID_COMMENT` for a blank body;
-            `COMMENTS.INVALID_PARENT` for a parent that is missing, deleted, or on another resource;
-            `COMMENTS.INVALID_MENTIONS` for duplicates or non-members; `COMMENTS.UNSUPPORTED_RESOURCE_TYPE`.'
+          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENT.INVALID` for a blank body;
+            `COMMENT.INVALID_PARENT` for a parent that is missing, deleted, or on another resource;
+            `COMMENT.INVALID_MENTIONS` for duplicates or non-members; `COMMENT.UNSUPPORTED_RESOURCE_TYPE`.'
           content:
             application/json:
               schema:
@@ -146,13 +146,13 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: '`COMMENTS.COMMENT_NOT_FOUND`, also for deleted comments and other organizations'' comments.'
+          description: '`COMMENT.NOT_FOUND`, also for deleted comments and other organizations'' comments.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '412':
-          description: '`COMMENTS.VERSION_CONFLICT`: the comment changed since it was read.'
+          description: '`COMMENT.VERSION_CONFLICT`: the comment changed since it was read.'
           content:
             application/json:
               schema:
@@ -160,14 +160,14 @@ paths:
         '413':
           $ref: '#/components/responses/RequestTooLarge'
         '422':
-          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENTS.INVALID_COMMENT` for an empty edit or a
-            blank body; `COMMENTS.INVALID_MENTIONS` for duplicates or non-members.'
+          description: '`COMMON.VALIDATION_FAILED` for field errors; `COMMENT.INVALID` for an empty edit or a
+            blank body; `COMMENT.INVALID_MENTIONS` for duplicates or non-members.'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '428':
-          description: '`COMMENTS.PRECONDITION_REQUIRED`: `If-Match` is missing.'
+          description: '`COMMENT.PRECONDITION_REQUIRED`: `If-Match` is missing.'
           content:
             application/json:
               schema:
@@ -196,7 +196,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: '`COMMENTS.COMMENT_NOT_FOUND`, also for deleted comments and other organizations'' comments.'
+          description: '`COMMENT.NOT_FOUND`, also for deleted comments and other organizations'' comments.'
           content:
             application/json:
               schema:
@@ -232,7 +232,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: '`COMMENTS.COMMENT_NOT_FOUND`, also for other organizations'' comments.'
+          description: '`COMMENT.NOT_FOUND`, also for other organizations'' comments.'
           content:
             application/json:
               schema:
