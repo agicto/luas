@@ -1,0 +1,15 @@
+{
+  "name": "block-dashboard-stats",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "KPI cards with values, accessible trends, icons, and a loading state for dashboards.",
+  "description": "A Web block that renders a responsive grid of KPI cards: label, value, optional icon, an optional trend whose color follows whether the change is good news, a secondary line, and skeleton cards while loading. Built from the Card and Skeleton primitives and theme tokens; all copy arrives through props and it fetches nothing.",
+  "keywords": ["block", "dashboard", "stats", "kpi", "metrics", "cards", "analytics", "overview", "trend", "仪表盘", "统计", "指标", "卡片", "概览"],
+  "use_when": [
+    "a dashboard or overview page needs headline numbers",
+    "the builder asks for KPI, metric, or stat cards with a trend",
+    "a console home page should summarize usage, revenue, or activity"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}

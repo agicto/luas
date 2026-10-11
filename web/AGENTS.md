@@ -43,6 +43,7 @@ src/features/<feature>/  components, hooks, services, store, server, types
 src/components/ui/       shadcn primitives
 src/components/features/ shared composed feature UI
 src/components/common/   generic shared components
+src/components/blocks/   registry blocks installed with plugin:add; copy arrives via props
 src/http/                transport, envelopes, and error parsing
 src/providers/           application provider composition
 src/i18n/                locale routing and messages

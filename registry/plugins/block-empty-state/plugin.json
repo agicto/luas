@@ -1,0 +1,15 @@
+{
+  "name": "block-empty-state",
+  "kind": "block",
+  "version": "0.1.0",
+  "summary": "Empty, no-results, error, and no-access state panels with recovery actions.",
+  "description": "A Web block for the moments a page has nothing to show: empty collections, empty search results, failed loads (announced as an alert, with an optional request id), and missing access. Each variant has its own decorative icon and tone; title, description, and actions arrive through props, and a bare mode fits inside cards and table cells. Built from theme tokens and lucide-react icons; it fetches nothing.",
+  "keywords": ["block", "empty state", "error state", "no results", "no access", "forbidden", "zero state", "placeholder", "空状态", "错误", "无权限", "无结果", "占位"],
+  "use_when": [
+    "a list, table, or search can be empty and should guide the user to a next step",
+    "a page needs a consistent error or no-access panel with a retry action",
+    "the builder asks for empty, error, or permission states"
+  ],
+  "fastbuild": "0.25.0",
+  "requires": {}
+}
