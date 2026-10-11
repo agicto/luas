@@ -1,26 +1,22 @@
 name: Container
 
+# Pull requests run this only when the image's inputs change; every image is rebuilt and scanned
+# nightly, which also catches new vulnerabilities in unchanged base images.
 on:
   pull_request:
     paths:
-      - "api/**"
+      - "api/Dockerfile"
+      - "api/.dockerignore"
+      - "api/go.mod"
+      - "api/go.sum"
+      - "compose.*.yaml"
       - "scripts/container-security.sh"
       - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
       - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/container.yml"
-  push:
-    branches:
-      - main
-      - dev
-      - dev-c
-    paths:
-      - "api/**"
-      - "scripts/container-security.sh"
-      - "scripts/validate-container-sbom.py"
-      - ".trivyignore.yaml"
-      - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
-      - ".github/workflows/container.yml"
+  schedule:
+    - cron: "23 3 * * *"
   workflow_dispatch:
 
 permissions:

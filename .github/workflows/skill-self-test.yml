@@ -14,16 +14,7 @@ on:
       - '.agents/skills/**'
       - 'api/.agents/skills/**'
       - '.github/workflows/skill-self-test.yml'
-  push:
-    branches:
-      - main
-      - dev
-      - dev-c
-    paths:
-      - 'api/internal/modules/**'
-      - '.agents/skills/**'
-      - 'api/.agents/skills/**'
-      - '.github/workflows/skill-self-test.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

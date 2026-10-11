@@ -14,13 +14,34 @@ compatible with supported runners, and reviewable without trusting a movable act
 | `dependency-security.yml` | Scheduled and change-triggered OSV lockfile scan plus CycloneDX SBOM artifact | `contents: read` |
 | `release.yml` | On a `vX.Y.Z` tag: requires the tag on `main` with a changelog section, builds and scans both images, attests the SBOMs, and publishes the GitHub release | `contents: read`; the job elevates to `contents: write`, `id-token: write`, `attestations: write` |
 | `skill-self-test.yml` | Starter-module skill validators in one job (Skill metadata is validated by `make governance`) | `contents: read` |
-| `sync-deploy-branches.yml` | Mechanical `dev` / `dev-c` deployment-branch synchronization | `contents: write` |
+| `plugins.yml` | Installs, integrates, builds, tests, doctors, and removes every registry plugin (`scripts/verify-plugin.sh`) | `contents: read` |
 | `web-container.yml` | Web image identity, smoke test, SBOM, and vulnerability gate | `contents: read` |
 
-Only the deployment-branch sync workflow has write access. Do not add write permissions to validation
-workflows. Do not use `pull_request_target` for repository code verification; it combines privileged
+Only the release job elevates its permissions, to publish a release. Do not add write permissions to
+validation workflows; the branch governance check rejects workflows that push. Do not use `pull_request_target` for repository code verification; it combines privileged
 base-repository context with untrusted pull-request input. New workflow files require an explicit
 permission-policy entry in `check-ci-actions.py` and a role in the table above.
+
+## When Checks Run
+
+A pull request runs only what its change can break; everything else runs after merge, nightly,
+and before a release, so coverage is unchanged while a typical pull request runs five to eight checks.
+
+| Check | Pull request | Push to `main` | Nightly | Release tag |
+|---|---|---|---|---|
+| Governance | Always | Yes | Yes | Via `make release-check` |
+| HTTP contracts, API (PostgreSQL 16), Web, Admin | When `contracts/`, `api/`, `web/`, `admin/`, `registry/`, or CI changes, per area | Yes | Yes | Via `make release-check` |
+| Web and Admin on Node 24 | No | Yes | Yes | Via `make release-check` |
+| PostgreSQL 15, 17, 18 compatibility | No | Yes | Yes | — |
+| API and Web containers | When an image input changes (Dockerfile, dependency manifests, container scripts) | No | Yes | Built and scanned by `release.yml` |
+| End-to-end | When a browser shell, sign-in, the operator flow, or the dev stack changes | No | Yes | — |
+| Dependency security | When a dependency manifest changes | No | Weekly | — |
+| Skill self-test | When starter modules or skills change | No | — | — |
+| Plugins | When the registry or plugin machinery changes | No | Yes | — |
+| Performance baseline | — | — | Yes | — |
+
+Every workflow also has `workflow_dispatch`, so any check can be run on demand from the Actions tab.
+A nightly failure is fixed like a failing pull request: open a fix before the next release.
 
 ## Runner Contract
 

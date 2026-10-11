@@ -1,26 +1,21 @@
 name: Web Container
 
+# Pull requests run this only when the image's inputs change; nightly rebuilds and rescans it.
 on:
   pull_request:
     paths:
-      - "web/**"
+      - "web/Dockerfile"
+      - "web/.dockerignore"
+      - "web/package.json"
+      - "web/pnpm-lock.yaml"
+      - "web/next.config.*"
       - "scripts/container-security.sh"
       - "scripts/validate-container-sbom.py"
       - ".trivyignore.yaml"
       - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
       - ".github/workflows/web-container.yml"
-  push:
-    branches:
-      - main
-      - dev
-      - dev-c
-    paths:
-      - "web/**"
-      - "scripts/container-security.sh"
-      - "scripts/validate-container-sbom.py"
-      - ".trivyignore.yaml"
-      - ".agents/skills/fastbuild-framework-review/scripts/check-container-supply-chain.py"
-      - ".github/workflows/web-container.yml"
+  schedule:
+    - cron: "29 3 * * *"
   workflow_dispatch:
 
 permissions:

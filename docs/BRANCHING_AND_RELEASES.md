@@ -16,9 +16,7 @@ It is process guidance for the scaffold itself and for teams using FastBuild as 
 |---|---|---|
 | `main` | Production truth. Every commit must be reviewed, verified, and releasable. | Receives only accepted `release/*`, `hotfix/*`, or fully verified feature PRs. |
 | `feature/<name>` | Short-lived work branch for one starter, feature, capability, doc, or scaffold improvement. | Opens PRs into `dev` for shared testing and into `release/*` or `main` only after acceptance. |
-| `dev` | Shared testing branch and integration sandbox. It may contain unfinished work. | Never merge `dev` back to `main`. Reset or recreate it from `main` when needed. |
-| `dev-c` | Secondary testing branch for an alternate testing environment. It follows the same rules as `dev`. | Never merge `dev-c` back to `main`. |
-| `deploy-dev` / `deploy-dev-c` | Mechanical deployment trigger branches managed by CI. | Only CI updates them from `dev` / `dev-c`; humans do not use them as source branches. |
+| `dev` | Optional shared testing branch and integration sandbox. It may contain unfinished work. | Never merge `dev` back to `main`. Reset or recreate it from `main` when needed. |
 | `release/<date-or-version>` | Selected release candidate assembled from `main` plus accepted changes. | Merges to `main` after verification; fixes flow back to active feature branches when needed. |
 | `hotfix/<name>` | Urgent production fix from `main`. | Merges to `main`; then sync or cherry-pick to active `release/*`, `dev`, or feature branches as needed. |
 
@@ -36,7 +34,7 @@ It is process guidance for the scaffold itself and for teams using FastBuild as 
 main
   |-- feature/a -> dev test sandbox -> release/2026-07-08 -> main
   |-- feature/b -> dev test sandbox
-  `-- feature/c -> dev-c test sandbox -> release/2026-07-08 -> main
+  `-- feature/c -> release/2026-07-08 -> main
 ```
 
 ## Release Candidate Rules
@@ -51,10 +49,10 @@ main
 
 ## CI and Environment Mapping
 
-- `main`, `dev`, and `dev-c` run the full CI workflow.
-- `dev` and `dev-c` trigger CI-managed deployment branches through `.github/workflows/sync-deploy-branches.yml`.
-- `deploy-dev` and `deploy-dev-c` are deployment triggers, not collaboration branches.
-- If a future production deployment branch is added, document its source of truth here before enabling CI writes.
+- Pull requests, into any branch, run the checks for the areas they change; see [`CI.md`](CI.md).
+- Pushes to `main`, the nightly schedule, and release tags run everything.
+- The scaffold deploys nothing. A downstream project that adds deployment branches documents their
+  source of truth here before giving CI write access.
 
 ## Machine Check
 
@@ -64,9 +62,8 @@ Run the branch governance check after changing branch names, deployment branch m
 bash .agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh
 ```
 
-The check keeps this document aligned with `.github/workflows/sync-deploy-branches.yml`.
-It asserts that `dev` and `dev-c` are the only CI sync sources, `deploy-dev` and `deploy-dev-c`
-remain CI-owned deployment trigger branches, and `release/*` starts from `main` rather than `dev`.
+The check keeps the branch roles in this document explicit and asserts that `release/*` starts from
+`main` rather than `dev` and that no workflow writes to branches.
 
 ## Protection Rules
 
@@ -96,6 +93,5 @@ For contract-sensitive changes, also verify the affected API and mock BFF behavi
 
 - Merging `dev` into `main`.
 - Treating `dev` as a release candidate after unrelated work has entered it.
-- Using deployment trigger branches as human working branches.
 - Releasing a branch because it is green while ignoring whether its content was selected.
 - Hiding product-specific downstream app behavior inside FastBuild scaffold branches.
