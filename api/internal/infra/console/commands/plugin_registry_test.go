@@ -16,7 +16,7 @@ import (
 
 // The committed registry/index.json must match the plugin manifests and files it describes.
 func TestPluginRegistryIndexIsCurrent(t *testing.T) {
-	dir := filepath.Join("..", "..", "..", "..", "..", registryDir)
+	dir := scaffoldRegistry(t)
 	index, err := pluginregistry.BuildIndex(dir)
 	require.NoError(t, err)
 	want, err := index.Marshal()
@@ -27,10 +27,35 @@ func TestPluginRegistryIndexIsCurrent(t *testing.T) {
 }
 
 // fixtureRegistry copies the pluginregistry test registry and writes its index.
+// scaffoldRegistry returns the scaffold's registry/, skipping the test in an initialized project,
+// which installs plugins from its FastBuild release instead of carrying the registry.
+func scaffoldRegistry(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.Abs(filepath.Join("..", "..", "..", "..", "..", registryDir))
+	require.NoError(t, err)
+	if _, statErr := os.Stat(filepath.Join(dir, pluginregistry.IndexFile)); os.IsNotExist(statErr) {
+		t.Skip("no registry/: initialized projects install plugins from their FastBuild release")
+	}
+	return dir
+}
+
 func fixtureRegistry(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	require.NoError(t, os.CopyFS(dir, os.DirFS(filepath.Join("..", "..", "pluginregistry", "testdata", "registry"))))
+	// Registries ship the scaffold's module path; project:init rewrote it in this tracked fixture.
+	module, err := projectModulePath(filepath.Join("..", "..", "..", "..", ".."))
+	require.NoError(t, err)
+	require.NoError(t, filepath.WalkDir(dir, func(path string, entry os.DirEntry, walkErr error) error {
+		if walkErr != nil || entry.IsDir() || filepath.Ext(path) != ".go" {
+			return walkErr
+		}
+		content, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		return os.WriteFile(path, []byte(strings.ReplaceAll(string(content), module, scaffoldModulePath)), 0o644)
+	}))
 	index, err := pluginregistry.BuildIndex(dir)
 	require.NoError(t, err)
 	raw, err := index.Marshal()
@@ -198,11 +223,10 @@ func TestCommunitySourcesNeedExplicitTrust(t *testing.T) {
 // official registry: an agent that installs the top result must pick the expected plugin. Add a
 // case whenever a plugin is added or a request was matched wrongly.
 func TestPluginSearchSelectsTheRightPlugin(t *testing.T) {
-	repoRoot, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".."))
+	registry := scaffoldRegistry(t)
+	index, err := pluginregistry.NewLocalSource(registry, "local:registry").Index()
 	require.NoError(t, err)
-	index, err := pluginregistry.NewLocalSource(filepath.Join(repoRoot, registryDir), "local:registry").Index()
-	require.NoError(t, err)
-	raw, err := os.ReadFile(filepath.Join(repoRoot, registryDir, "evals", "search-cases.tsv"))
+	raw, err := os.ReadFile(filepath.Join(registry, "evals", "search-cases.tsv"))
 	require.NoError(t, err)
 
 	cases, correct := 0, 0
