@@ -4,31 +4,20 @@ name: End-to-End
 # browser shell. It proves the one-command development path, the operator flow in the Admin
 # Console, and sign-in through the server-owned API adapter in the Web application.
 
+# Pull requests run this when a browser shell, sign-in, the operator flow, or the dev stack
+# changes; the whole stack runs nightly.
 on:
   pull_request:
     paths:
-      - "api/**"
       - "admin/**"
       - "web/**"
-      - "contracts/**"
+      - "api/internal/modules/user/**"
+      - "api/internal/modules/operator/**"
       - "scripts/dev.sh"
       - "compose.dev.yaml"
-      - "Makefile"
       - ".github/workflows/e2e.yml"
-  push:
-    branches:
-      - main
-      - dev
-      - dev-c
-    paths:
-      - "api/**"
-      - "admin/**"
-      - "web/**"
-      - "contracts/**"
-      - "scripts/dev.sh"
-      - "compose.dev.yaml"
-      - "Makefile"
-      - ".github/workflows/e2e.yml"
+  schedule:
+    - cron: "37 3 * * *"
   workflow_dispatch:
 
 permissions:

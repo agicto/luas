@@ -78,7 +78,6 @@ REVIEWED_WORKFLOW_PERMISSIONS = {
     "plugins.yml": {"contents": "read"},
     "release.yml": {"contents": "read"},
     "skill-self-test.yml": {"contents": "read"},
-    "sync-deploy-branches.yml": {"contents": "write"},
     "web-container.yml": {"contents": "read"},
 }
 
@@ -197,7 +196,8 @@ def main() -> int:
     if "package_json_file: web/package.json" not in ci_workflow:
         failures.append("ci.yml must source the pnpm version from web/package.json")
     for marker in (
-        'node-version: ["22", "24"]',
+        # Pull requests run Node 22; pushes to main and the nightly run add Node 24.
+        """fromJSON('["22"]') || fromJSON('["22", "24"]')""",
         "node-version: ${{ matrix.node-version }}",
         "fail-fast: false",
     ):

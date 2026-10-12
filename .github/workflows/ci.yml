@@ -1,12 +1,15 @@
 name: CI
 
+# Pull requests run only the halves they change, on the production Node version. Pushes to main,
+# the nightly schedule, and manual runs check everything, including Node 24 and PostgreSQL 15/17/18.
 on:
   pull_request:
   push:
     branches:
       - main
-      - dev
-      - dev-c
+  schedule:
+    - cron: "41 2 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,6 +19,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Changed areas
+    runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
+    outputs:
+      api: ${{ steps.areas.outputs.api }}
+      contracts: ${{ steps.areas.outputs.contracts }}
+      web: ${{ steps.areas.outputs.web }}
+      admin: ${{ steps.areas.outputs.admin }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        with:
+          fetch-depth: 0
+
+      - id: areas
+        name: Select the halves this change touches
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            for area in api contracts web admin; do echo "$area=true" >> "$GITHUB_OUTPUT"; done
+            exit 0
+          fi
+          changed=$(git diff --name-only "$BASE_SHA" HEAD)
+          # Shared inputs: this workflow, the tier runner, and the plugin registry, which every half checks.
+          shared='^(\.github/workflows/ci\.yml|\.agents/skills/verification-before-completion/|registry/)'
+          flag() {
+            if grep -Eq "$2|$shared" <<<"$changed"; then echo "$1=true"; else echo "$1=false"; fi >> "$GITHUB_OUTPUT"
+          }
+          flag api '^(api/|Makefile)'
+          flag contracts '^(contracts/|api/)'
+          flag web '^(web/|contracts/)'
+          flag admin '^(admin/|contracts/)'
+          echo "Changed files:"; echo "$changed"
+
   governance:
     name: Governance
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
@@ -28,6 +67,8 @@ jobs:
 
   contracts:
     name: HTTP Contracts
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     steps:
       - name: Checkout
@@ -75,6 +116,8 @@ jobs:
 
   api:
     name: API
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     services:
       postgres:
@@ -128,6 +171,8 @@ jobs:
 
   postgres-compatibility:
     name: PostgreSQL ${{ matrix.postgres-version }} compatibility
+    # PostgreSQL 16 runs with the API job on every change; other versions run after merge and nightly.
+    if: github.event_name != 'pull_request'
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     strategy:
       fail-fast: false
@@ -171,11 +216,14 @@ jobs:
 
   web:
     name: Web (Node ${{ matrix.node-version }})
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "24"]
+        # Node 22 is the production baseline; Node 24 runs after merge and nightly.
+        node-version: ${{ github.event_name == 'pull_request' && fromJSON('["22"]') || fromJSON('["22", "24"]') }}
     defaults:
       run:
         working-directory: web
@@ -203,11 +251,14 @@ jobs:
 
   admin:
     name: Admin Console (Node ${{ matrix.node-version }})
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
     runs-on: ${{ fromJSON(vars.CI_RUNNER_LABELS || '["ubuntu-latest"]') }}
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "24"]
+        # Node 22 is the production baseline; Node 24 runs after merge and nightly.
+        node-version: ${{ github.event_name == 'pull_request' && fromJSON('["22"]') || fromJSON('["22", "24"]') }}
     defaults:
       run:
         working-directory: admin

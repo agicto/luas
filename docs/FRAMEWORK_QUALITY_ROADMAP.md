@@ -158,7 +158,7 @@ Use [`SKILL_GOVERNANCE_PLAN.md`](SKILL_GOVERNANCE_PLAN.md) for the 30/60/90-day 
 - Local Markdown links across docs and agent guidance are guarded by `.agents/skills/fastbuild-framework-review/scripts/check-doc-links.py` and CI.
 - API package boundary drift is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-api-boundaries.sh`, with any current exceptions documented in [`../api/docs/PACKAGE_BOUNDARIES.md`](../api/docs/PACKAGE_BOUNDARIES.md).
 - API boundary baseline exceptions are currently zero. `internal/domain` is guarded as standard-library-only, starter registry interfaces live in `internal/starter/assembly`, and the grab-bag packages (`pkg/support`, `pkg/utils`, and the `internal/infra/{queue,schedule,retry,http}` compatibility wrappers) are deleted; `make governance` rejects new `support`, `utils`, `common`, or `helpers` packages under `pkg/` and `internal/infra/`. `pkg/response` does not import `internal/domain`, and queue, retry, and scheduler primitives are owned by `internal/capabilities/workflow`.
-- Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` and `dev-c` are testing branches, deployment branches are CI-managed triggers, and `release/*` or accepted feature PRs are the normal path to `main`.
+- Branch and release governance now lives in [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md): `dev` is an optional testing branch, the scaffold deploys nothing from CI, and `release/*` or accepted feature PRs are the normal path to `main`.
 - Branch/release governance is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh` and CI so docs stay aligned with deployment branch mappings.
 - Scaffold surface classification is guarded by `.agents/skills/fastbuild-framework-review/scripts/check-surface-catalog.py` and CI so the catalog, glossary, and downstream extraction workflow stay aligned.
 - Starter business readiness is now reviewed in [`STARTER_BUSINESS_ROADMAP.md`](STARTER_BUSINESS_ROADMAP.md). Optional `organization` includes the complete ownership/member/invitation/context lifecycle; dependent `permission` adds exact grants and access roles; independent `notification` adds durable user delivery; independent `asset` adds private inspected object lifecycles; dependent `setting` adds finite typed overrides; dependent `usage` adds trusted idempotent metering and atomic quota decisions; dependent `webhook` adds signed durable outbound integration. All seven are ready when explicitly enabled in the API and Next.js Web shell. The optional `operator` starter is the Admin Console's browser gateway and gives platform operators user, audit, app-setting, and system screens plus read-mostly organization, webhook, and notification-delivery support views; tenant self-service stays in Web. Billing and AI workspace remain planned.
@@ -823,8 +823,8 @@ Problem: shared testing branches are useful for many teams, but they become unsa
 
 Recommended slice:
 
-1. Keep [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md) aligned with `.github/workflows/ci.yml` and `.github/workflows/sync-deploy-branches.yml`.
-2. Treat `dev` and `dev-c` as mutable testing branches, not release candidates.
+1. Keep [`BRANCHING_AND_RELEASES.md`](BRANCHING_AND_RELEASES.md) aligned with `.github/workflows/ci.yml` and [`CI.md`](CI.md).
+2. Treat `dev` as a mutable testing branch, not a release candidate.
 3. Assemble release content from `main` using `release/*`, accepted feature PRs, or explicit cherry-picks.
 4. Keep deployment trigger branches mechanical and CI-owned.
 
@@ -833,7 +833,7 @@ Verification:
 - `make check`
 - `bash .agents/skills/fastbuild-framework-review/scripts/check-vocabulary.sh`
 - `bash .agents/skills/fastbuild-framework-review/scripts/check-branch-governance.sh`
-- Inspect `.github/workflows/sync-deploy-branches.yml` when changing branch names or environment mappings.
+- Inspect the workflow triggers in [`CI.md`](CI.md) when changing branch names or what runs on pull requests.
 
 ### Completed P1 — Additive Optional Starter Assembly
 
