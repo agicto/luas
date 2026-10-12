@@ -11,7 +11,7 @@ has an impact level:
 Newest changes come first. Merge the upstream branch, run `make check`, then work through the
 entries in order.
 
-## Unreleased — Plugin registry
+## v0.25.0 — Plugin registry, lifecycle, and templates
 
 ### Scheduled — `plugin:list` becomes `command:list`
 

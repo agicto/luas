@@ -6,6 +6,8 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
 
 ## Unreleased
 
+## v0.25.0 — 2026-10-12
+
 ### Added
 
 - **Plugin registry.** Reviewed capabilities distributed as source: `plugin:search` and
@@ -63,6 +65,11 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
 - Admin Console design tokens moved to `admin/src/styles/tokens.css`; the default muted and
   destructive text colors are slightly darker to meet WCAG AA contrast.
 - Commands with `--format=json` no longer print a completion line after the JSON.
+- CI runs only the checks a pull request can break; Node 24, PostgreSQL 15/17/18, containers,
+  end-to-end, and the plugin matrix run after merge and nightly (see `docs/CI.md`). The unused
+  `dev`/`dev-c` deployment sync workflow is removed, and no workflow writes to branches.
+- The tracked-artifact check keeps the scaffold free of installed plugins and rejects unmerged
+  `*.fastbuild-new` files and unresolved update conflict markers.
 
 ### Deprecated
 
