@@ -25,7 +25,7 @@ func TestOfficialPluginsInstallBuildAndTest(t *testing.T) {
 	apiRoot, err := filepath.Abs(filepath.Join("..", "..", "..", ".."))
 	require.NoError(t, err)
 	repoRoot := filepath.Dir(apiRoot)
-	source := pluginregistry.NewLocalSource(filepath.Join(repoRoot, registryDir), "local:registry")
+	source := pluginregistry.NewLocalSource(scaffoldRegistry(t), "local:registry")
 	index, err := source.Index()
 	require.NoError(t, err)
 

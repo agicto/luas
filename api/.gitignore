@@ -96,9 +96,9 @@ _reference/
 # Reference code
 .ref/
 
-# Built binaries
-fastbuild
-server
+# Built binaries in api/ (anchored, so cmd/fastbuild and cmd/server sources stay visible)
+/fastbuild
+/server
 
 # Examples (keep source code but ignore build artifacts)
 examples/*/bin/

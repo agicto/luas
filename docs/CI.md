@@ -33,6 +33,7 @@ and before a release, so coverage is unchanged while a typical pull request runs
 | HTTP contracts, API (PostgreSQL 16), Web, Admin | When `contracts/`, `api/`, `web/`, `admin/`, `registry/`, or CI changes, per area | Yes | Yes | Via `make release-check` |
 | Web and Admin on Node 24 | No | Yes | Yes | Via `make release-check` |
 | PostgreSQL 15, 17, 18 compatibility | No | Yes | Yes | — |
+| Initialized project (`scripts/verify-init-project.sh`) | When `project:init`, ignore rules, root docs, or repository scripts change | Yes | Yes | — |
 | API and Web containers | When an image input changes (Dockerfile, dependency manifests, container scripts) | No | Yes | Built and scanned by `release.yml` |
 | End-to-end | When a browser shell, sign-in, the operator flow, or the dev stack changes | No | Yes | — |
 | Dependency security | When a dependency manifest changes | No | Weekly | — |

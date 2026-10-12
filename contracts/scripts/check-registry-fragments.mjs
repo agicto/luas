@@ -15,7 +15,14 @@ const contractsDir = fileURLToPath(new URL('..', import.meta.url));
 const registryDir = fileURLToPath(new URL('../../registry/', import.meta.url));
 const redocly = join(contractsDir, 'node_modules', '.bin', 'redocly');
 
-const index = JSON.parse(await readFile(join(registryDir, 'index.json'), 'utf8'));
+let index;
+try {
+  index = JSON.parse(await readFile(join(registryDir, 'index.json'), 'utf8'));
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error;
+  console.log('Registry fragment check skipped: no registry/ (projects install plugins from their release).');
+  process.exit(0);
+}
 const source = await readFile(join(contractsDir, 'openapi.yaml'), 'utf8');
 let checked = 0;
 for (const plugin of index.plugins) {

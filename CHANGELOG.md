@@ -6,6 +6,21 @@ Notable changes to FastBuild. Downstream migration steps for each change are in
 
 ## Unreleased
 
+## v0.25.1 — 2026-10-12
+
+### Fixed
+
+- Projects created with `make init-project` pass their own checks again: the README no longer links
+  the removed `registry/`, the registry fragment check and the registry tests skip without it, and
+  the plugin fixture keeps the scaffold's module path.
+- `api/.gitignore` ignored every path named `fastbuild` or `server`, including the `cmd/fastbuild`
+  and `cmd/server` sources; the rules now match only the built binaries.
+
+### Added
+
+- `scripts/verify-init-project.sh` and the **Initialized project** CI job initialize a copy of the
+  scaffold and run its governance, contract, and API checks.
+
 ## v0.25.0 — 2026-10-12
 
 ### Added

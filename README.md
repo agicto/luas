@@ -133,8 +133,9 @@ go run ./cmd/fastbuild plugin:add knowledge-base
 
 `plugin:add` verifies every file against the registry checksums, adapts imports to your module,
 wires the starter, merges the contract, and records the install in `fastbuild.plugins.lock`; the
-plugin's `INTEGRATION.md` lists the remaining steps. See [registry/README.md](registry/README.md)
-and [docs/VISION.md](docs/VISION.md).
+plugin's `INTEGRATION.md` lists the remaining steps. `plugin:doctor`, `plugin:update`, and
+`plugin:remove` manage installed plugins. See [docs/VISION.md](docs/VISION.md); plugin authors start
+with `registry/README.md` in the FastBuild repository.
 
 ### Start Everything
 
